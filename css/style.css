@@ -1,0 +1,220 @@
+html {
+  font-size: 62.5%;
+  color: #181818;
+  background-color: #fff;
+}
+.article {
+  flex-shrink: 1;
+}
+.body {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1.6em;
+  background-color: #fff;
+}
+.footer__inner {
+  background-color: #ececec;
+  margin: 0 auto;
+  min-width: 76.8rem;
+  max-width: 144rem;
+}
+.header__inner {
+  position: relative;
+  height: 20rem;
+  overflow: hidden;
+  margin: 0 auto;
+  min-width: 76.8rem;
+  max-width: 144rem;
+  background-size: cover;
+  background-image: url("/img/background.svg");
+  background-position: 50% 36%;
+}
+.header__yantene {
+  min-width: 30%;
+  height: 100%;
+  position: absolute;
+  right: 10%;
+  bottom: -10%;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-image: url("/img/yantene.svg");
+}
+.header__snow {
+  animation: snowing 30s linear infinite;
+  width: 2rem;
+  height: 2rem;
+  position: absolute;
+  border-radius: 50%;
+  background-color: #ececec;
+}
+.header__snow:nth-of-type(1) {
+  left: 84.35485937575116%;
+  animation-delay: -22.90107221259965s;
+}
+.header__snow:nth-of-type(2) {
+  left: 39.324384192378915%;
+  animation-delay: -8.296390339478073s;
+}
+.header__snow:nth-of-type(3) {
+  left: 87.37766732517682%;
+  animation-delay: -1.453859504043371s;
+}
+.header__snow:nth-of-type(4) {
+  left: 27.667684344476196%;
+  animation-delay: -12.994949133692089s;
+}
+.header__snow:nth-of-type(5) {
+  left: 17.34564324435539%;
+  animation-delay: -17.674258337413555s;
+}
+.header__snow:nth-of-type(6) {
+  left: 76.16682612738839%;
+  animation-delay: -10.60534020397271s;
+}
+.header__snow:nth-of-type(7) {
+  left: 51.26870999742048%;
+  animation-delay: -13.189986932120654s;
+}
+.header__snow:nth-of-type(8) {
+  left: 35.83417721360003%;
+  animation-delay: -23.899908821525376s;
+}
+.header__snow:nth-of-type(9) {
+  left: 86.80419095214383%;
+  animation-delay: -1.925740321187028s;
+}
+.header__snow:nth-of-type(10) {
+  left: 74.74808027102948%;
+  animation-delay: -17.583525980570545s;
+}
+.header__snow:nth-of-type(11) {
+  left: 45.92553809070283%;
+  animation-delay: -28.643689490385608s;
+}
+.header__snow:nth-of-type(12) {
+  left: 27.689311239906434%;
+  animation-delay: -6.583240776807147s;
+}
+.header__snow:nth-of-type(13) {
+  left: 20.330086851846385%;
+  animation-delay: -7.2471434894453s;
+}
+.header__snow:nth-of-type(14) {
+  left: 65.8618763684212%;
+  animation-delay: -12.150156314750465s;
+}
+.header__snow:nth-of-type(15) {
+  left: 91.72109542330944%;
+  animation-delay: -14.957377725655352s;
+}
+.header__snow:nth-of-type(16) {
+  left: 1.228887880576335%;
+  animation-delay: -25.96181498450927s;
+}
+.header__snow:nth-of-type(17) {
+  left: 33.3085840528583%;
+  animation-delay: -7.922944286807554s;
+}
+.header__snow:nth-of-type(18) {
+  left: 9.471715189576368%;
+  animation-delay: -18.050546967532565s;
+}
+.header__snow:nth-of-type(19) {
+  left: 89.46333412051672%;
+  animation-delay: -21.256519999720645s;
+}
+.header__snow:nth-of-type(20) {
+  left: 88.31772443134875%;
+  animation-delay: -12.417773881643306s;
+}
+@-moz-keyframes snowing {
+  0% {
+    top: -2rem;
+    margin-left: 3rem;
+  }
+  25% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 0;
+  }
+  100% {
+    top: 100%;
+    margin-left: 3rem;
+  }
+}
+@-webkit-keyframes snowing {
+  0% {
+    top: -2rem;
+    margin-left: 3rem;
+  }
+  25% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 0;
+  }
+  100% {
+    top: 100%;
+    margin-left: 3rem;
+  }
+}
+@-o-keyframes snowing {
+  0% {
+    top: -2rem;
+    margin-left: 3rem;
+  }
+  25% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 0;
+  }
+  100% {
+    top: 100%;
+    margin-left: 3rem;
+  }
+}
+@keyframes snowing {
+  0% {
+    top: -2rem;
+    margin-left: 3rem;
+  }
+  25% {
+    margin-left: 0;
+  }
+  50% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 0;
+  }
+  100% {
+    top: 100%;
+    margin-left: 3rem;
+  }
+}
+.main__inner {
+  display: flex;
+  background-color: #ececec;
+  margin: 0 auto;
+  min-width: 76.8rem;
+  max-width: 144rem;
+}
+.toc {
+  width: 30rem;
+  background-color: #cecece;
+}
+@media screen and (max-width: 1080px) {
+  .toc {
+    display: none;
+  }
+}
