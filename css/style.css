@@ -1,7 +1,5 @@
 html {
   font-size: 62.5%;
-  color: #181818;
-  background-color: #fff;
 }
 .article {
   flex-shrink: 1;
@@ -9,7 +7,8 @@ html {
 .body {
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 1.6em;
-  background-color: #fff;
+  color: #1f1f1f;
+  background-color: #e0e0e0;
 }
 .footer__inner {
   background-color: #fff;
@@ -38,168 +37,139 @@ html {
   background-repeat: no-repeat;
   background-image: url("/img/yantene.svg");
 }
+.header__snow-list {
+  display: flex;
+  justify-content: space-between;
+}
 .header__snow {
-  animation: snowing 30s linear infinite;
+  animation: snowing 30s linear infinite, swinging 20s linear infinite;
   width: 2rem;
   height: 2rem;
-  position: absolute;
   border-radius: 50%;
   background-color: #fff;
 }
 .header__snow:nth-of-type(1) {
-  left: 90.1064695751185%;
-  animation-delay: -9.965662202217317s;
+  animation-delay: -21.509306835608232s;
 }
 .header__snow:nth-of-type(2) {
-  left: 29.172515544696175%;
-  animation-delay: -12.442111226705821s;
+  animation-delay: -27.322162130833707s;
 }
 .header__snow:nth-of-type(3) {
-  left: 43.23999053805909%;
-  animation-delay: -26.778509171535887s;
+  animation-delay: -20.107197610983054s;
 }
 .header__snow:nth-of-type(4) {
-  left: 53.82406730080367%;
-  animation-delay: -14.89350225367688s;
+  animation-delay: -7.70351175762544s;
 }
 .header__snow:nth-of-type(5) {
-  left: 20.273694639687424%;
-  animation-delay: -7.420289939629587s;
+  animation-delay: -24.081817222890713s;
 }
 .header__snow:nth-of-type(6) {
-  left: 64.2228801207824%;
-  animation-delay: -28.255367569741484s;
+  animation-delay: -2.262205922371932s;
 }
 .header__snow:nth-of-type(7) {
-  left: 31.172097973655745%;
-  animation-delay: -29.92576452279716s;
+  animation-delay: -13.776575341908856s;
 }
 .header__snow:nth-of-type(8) {
-  left: 68.70507148340789%;
-  animation-delay: -2.243189564058017s;
+  animation-delay: -11.120442936433372s;
 }
 .header__snow:nth-of-type(9) {
-  left: 40.65656460919445%;
-  animation-delay: -25.022598561542665s;
+  animation-delay: -8.486761045645661s;
 }
 .header__snow:nth-of-type(10) {
-  left: 86.79357038987148%;
-  animation-delay: -27.768280160545455s;
+  animation-delay: -23.04542835093832s;
 }
 .header__snow:nth-of-type(11) {
-  left: 9.64721639025754%;
-  animation-delay: -13.391212904998614s;
+  animation-delay: -19.328545892686016s;
 }
 .header__snow:nth-of-type(12) {
-  left: 5.031626209956341%;
-  animation-delay: -10.744089405647268s;
+  animation-delay: -16.3529274021079s;
 }
 .header__snow:nth-of-type(13) {
-  left: 6.887570346345995%;
-  animation-delay: -28.841581587745264s;
+  animation-delay: -10.898127978750182s;
 }
 .header__snow:nth-of-type(14) {
-  left: 98.31926953307016%;
-  animation-delay: -28.98576371792267s;
+  animation-delay: -11.58234253948065s;
 }
 .header__snow:nth-of-type(15) {
-  left: 50.4654592768621%;
-  animation-delay: -1.855596812507876s;
+  animation-delay: -23.414633188909896s;
 }
 .header__snow:nth-of-type(16) {
-  left: 92.39178161973338%;
-  animation-delay: -0.579689400746959s;
+  animation-delay: -26.337744970658004s;
 }
 .header__snow:nth-of-type(17) {
-  left: 86.16017349525247%;
-  animation-delay: -14.92090935619961s;
+  animation-delay: -9.797882282863256s;
 }
 .header__snow:nth-of-type(18) {
-  left: 65.48703929421494%;
-  animation-delay: -19.84978953719873s;
+  animation-delay: -10.821171767768949s;
 }
 .header__snow:nth-of-type(19) {
-  left: 39.12655613074594%;
-  animation-delay: -5.047044395748781s;
+  animation-delay: -28.076415811872906s;
 }
 .header__snow:nth-of-type(20) {
-  left: 7.072667644313091%;
-  animation-delay: -25.710378472257286s;
+  animation-delay: -16.722376012775666s;
 }
-@-moz-keyframes snowing {
-  0% {
-    top: -2rem;
-    margin-left: 3rem;
-  }
+@-moz-keyframes swinging {
   25% {
-    margin-left: 0;
-  }
-  50% {
     margin-left: -3rem;
   }
   75% {
-    margin-left: 0;
+    margin-left: 4rem;
+  }
+}
+@-webkit-keyframes swinging {
+  25% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 4rem;
+  }
+}
+@-o-keyframes swinging {
+  25% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 4rem;
+  }
+}
+@keyframes swinging {
+  25% {
+    margin-left: -3rem;
+  }
+  75% {
+    margin-left: 4rem;
+  }
+}
+@-moz-keyframes snowing {
+  0% {
+    margin-top: -2rem;
   }
   100% {
-    top: 100%;
-    margin-left: 3rem;
+    margin-top: 20rem;
   }
 }
 @-webkit-keyframes snowing {
   0% {
-    top: -2rem;
-    margin-left: 3rem;
-  }
-  25% {
-    margin-left: 0;
-  }
-  50% {
-    margin-left: -3rem;
-  }
-  75% {
-    margin-left: 0;
+    margin-top: -2rem;
   }
   100% {
-    top: 100%;
-    margin-left: 3rem;
+    margin-top: 20rem;
   }
 }
 @-o-keyframes snowing {
   0% {
-    top: -2rem;
-    margin-left: 3rem;
-  }
-  25% {
-    margin-left: 0;
-  }
-  50% {
-    margin-left: -3rem;
-  }
-  75% {
-    margin-left: 0;
+    margin-top: -2rem;
   }
   100% {
-    top: 100%;
-    margin-left: 3rem;
+    margin-top: 20rem;
   }
 }
 @keyframes snowing {
   0% {
-    top: -2rem;
-    margin-left: 3rem;
-  }
-  25% {
-    margin-left: 0;
-  }
-  50% {
-    margin-left: -3rem;
-  }
-  75% {
-    margin-left: 0;
+    margin-top: -2rem;
   }
   100% {
-    top: 100%;
-    margin-left: 3rem;
+    margin-top: 20rem;
   }
 }
 .main__inner {
@@ -211,17 +181,18 @@ html {
 }
 .navbar {
   position: fixed;
+  z-index: 100;
   top: 0;
   left: 0;
   right: 0;
   height: 5rem;
-  background-color: #18bfa0;
+  background-color: #454545;
 }
 .toc {
-  width: 30rem;
+  width: 26rem;
   background-color: #fff;
 }
-@media screen and (max-width: 1080px) {
+@media screen and (max-width: 96rem) {
   .toc {
     display: none;
   }
