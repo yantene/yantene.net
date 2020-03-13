@@ -12,7 +12,7 @@ html {
   background-color: #fff;
 }
 .footer__inner {
-  background-color: #ececec;
+  background-color: #fff;
   margin: 0 auto;
   min-width: 76.8rem;
   max-width: 144rem;
@@ -21,7 +21,7 @@ html {
   position: relative;
   height: 20rem;
   overflow: hidden;
-  margin: 0 auto;
+  margin: 5rem auto 0;
   min-width: 76.8rem;
   max-width: 144rem;
   background-size: cover;
@@ -44,87 +44,87 @@ html {
   height: 2rem;
   position: absolute;
   border-radius: 50%;
-  background-color: #ececec;
+  background-color: #fff;
 }
 .header__snow:nth-of-type(1) {
-  left: 32.88121578023444%;
-  animation-delay: -15.259221575039808s;
+  left: 90.1064695751185%;
+  animation-delay: -9.965662202217317s;
 }
 .header__snow:nth-of-type(2) {
-  left: 75.14866695169833%;
-  animation-delay: -8.602023281002872s;
+  left: 29.172515544696175%;
+  animation-delay: -12.442111226705821s;
 }
 .header__snow:nth-of-type(3) {
-  left: 48.57206295099363%;
-  animation-delay: -9.610195410128245s;
+  left: 43.23999053805909%;
+  animation-delay: -26.778509171535887s;
 }
 .header__snow:nth-of-type(4) {
-  left: 38.4150898109997%;
-  animation-delay: -8.51319005177556s;
+  left: 53.82406730080367%;
+  animation-delay: -14.89350225367688s;
 }
 .header__snow:nth-of-type(5) {
-  left: 47.35932740433357%;
-  animation-delay: -26.85815989028764s;
+  left: 20.273694639687424%;
+  animation-delay: -7.420289939629587s;
 }
 .header__snow:nth-of-type(6) {
-  left: 81.45828603395391%;
-  animation-delay: -18.36764094910859s;
+  left: 64.2228801207824%;
+  animation-delay: -28.255367569741484s;
 }
 .header__snow:nth-of-type(7) {
-  left: 46.6517476062446%;
-  animation-delay: -6.885097563305203s;
+  left: 31.172097973655745%;
+  animation-delay: -29.92576452279716s;
 }
 .header__snow:nth-of-type(8) {
-  left: 74.43400561464763%;
-  animation-delay: -25.138722622589334s;
+  left: 68.70507148340789%;
+  animation-delay: -2.243189564058017s;
 }
 .header__snow:nth-of-type(9) {
-  left: 50.015078857658054%;
-  animation-delay: -1.838945204904396s;
+  left: 40.65656460919445%;
+  animation-delay: -25.022598561542665s;
 }
 .header__snow:nth-of-type(10) {
-  left: 62.76226262916316%;
-  animation-delay: -1.062829429898073s;
+  left: 86.79357038987148%;
+  animation-delay: -27.768280160545455s;
 }
 .header__snow:nth-of-type(11) {
-  left: 0.753875464660747%;
-  animation-delay: -26.79172726875529s;
+  left: 9.64721639025754%;
+  animation-delay: -13.391212904998614s;
 }
 .header__snow:nth-of-type(12) {
-  left: 96.7550405651225%;
-  animation-delay: -4.311168974812507s;
+  left: 5.031626209956341%;
+  animation-delay: -10.744089405647268s;
 }
 .header__snow:nth-of-type(13) {
-  left: 50.498179450837696%;
-  animation-delay: -8.502148124550487s;
+  left: 6.887570346345995%;
+  animation-delay: -28.841581587745264s;
 }
 .header__snow:nth-of-type(14) {
-  left: 99.75207106156594%;
-  animation-delay: -25.50709401923059s;
+  left: 98.31926953307016%;
+  animation-delay: -28.98576371792267s;
 }
 .header__snow:nth-of-type(15) {
-  left: 28.099493734003445%;
-  animation-delay: -22.92767417444471s;
+  left: 50.4654592768621%;
+  animation-delay: -1.855596812507876s;
 }
 .header__snow:nth-of-type(16) {
-  left: 10.156638840464405%;
-  animation-delay: -10.863592099642078s;
+  left: 92.39178161973338%;
+  animation-delay: -0.579689400746959s;
 }
 .header__snow:nth-of-type(17) {
-  left: 39.16191025394171%;
-  animation-delay: -16.843803105203303s;
+  left: 86.16017349525247%;
+  animation-delay: -14.92090935619961s;
 }
 .header__snow:nth-of-type(18) {
-  left: 0.851320188554272%;
-  animation-delay: -12.416138263343665s;
+  left: 65.48703929421494%;
+  animation-delay: -19.84978953719873s;
 }
 .header__snow:nth-of-type(19) {
-  left: 39.824474518167065%;
-  animation-delay: -17.14394194486934s;
+  left: 39.12655613074594%;
+  animation-delay: -5.047044395748781s;
 }
 .header__snow:nth-of-type(20) {
-  left: 15.792058400595987%;
-  animation-delay: -8.575340328446359s;
+  left: 7.072667644313091%;
+  animation-delay: -25.710378472257286s;
 }
 @-moz-keyframes snowing {
   0% {
@@ -204,14 +204,22 @@ html {
 }
 .main__inner {
   display: flex;
-  background-color: #ececec;
+  background-color: #fff;
   margin: 0 auto;
   min-width: 76.8rem;
   max-width: 144rem;
 }
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5rem;
+  background-color: #18bfa0;
+}
 .toc {
   width: 30rem;
-  background-color: #cecece;
+  background-color: #fff;
 }
 @media screen and (max-width: 1080px) {
   .toc {
