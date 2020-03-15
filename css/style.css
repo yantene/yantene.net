@@ -4,6 +4,13 @@ html {
 .article {
   width: calc(100% - 26rem);
 }
+.article p {
+  line-height: 1.8;
+}
+.article a:link,
+.article a:visited {
+  color: #fb3a50;
+}
 @media screen and (max-width: 960px) {
   .article {
     width: 100%;
@@ -54,64 +61,64 @@ html {
   background-color: #fff;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -14.895223732721554s;
+  animation-delay: -3.186454442263622s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -0.387902752240306s;
+  animation-delay: -28.271843288472702s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -2.435350687393369s;
+  animation-delay: -28.36108122653583s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -19.628325788896284s;
+  animation-delay: -19.748549476836015s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -7.72427182232156s;
+  animation-delay: -17.79653836077633s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -17.338462323714733s;
+  animation-delay: -28.15524748205139s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -4.689881719138032s;
+  animation-delay: -26.332463722236447s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -1.829029457870668s;
+  animation-delay: -9.6553132297263s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -17.836360032670516s;
+  animation-delay: -23.669616512518274s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -16.33775393625552s;
+  animation-delay: -19.87979720669015s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -1.076667678042249s;
+  animation-delay: -11.511365208739882s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -15.33291936692133s;
+  animation-delay: -4.04406634782668s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -4.800466192923656s;
+  animation-delay: -27.050856292651584s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -16.471950356116608s;
+  animation-delay: -22.300005472882802s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -15.981195589760507s;
+  animation-delay: -8.71224787238048s;
 }
 .header__snow:nth-of-type(16) {
-  animation-delay: -5.513871328901423s;
+  animation-delay: -3.852767342933143s;
 }
 .header__snow:nth-of-type(17) {
-  animation-delay: -20.81656726457755s;
+  animation-delay: -22.33192859439543s;
 }
 .header__snow:nth-of-type(18) {
-  animation-delay: -5.411073051126118s;
+  animation-delay: -19.97851325261027s;
 }
 .header__snow:nth-of-type(19) {
-  animation-delay: -18.474508554102407s;
+  animation-delay: -17.769936965071892s;
 }
 .header__snow:nth-of-type(20) {
-  animation-delay: -15.96492731513797s;
+  animation-delay: -19.938853718215597s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -255,11 +262,11 @@ html {
   left: 0;
   right: 0;
   height: 5rem;
-  background-color: #454545;
+  background-color: #413f4b;
 }
 .toc {
   width: 26rem;
-  background-color: #fff;
+  background-color: #413f4b;
 }
 @media screen and (max-width: 960px) {
   .toc {
