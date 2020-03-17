@@ -14,11 +14,6 @@ html {
 .article__inner {
   margin: 0 1.5rem;
 }
-@media screen and (max-width: 960px) {
-  .article {
-    width: 100%;
-  }
-}
 .body {
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 1.6em;
@@ -66,49 +61,49 @@ html {
   background-color: #fff;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -4.586619550694648s;
+  animation-delay: -17.07665509793536s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -21.593062926197092s;
+  animation-delay: -27.53675088717352s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -12.510105226628925s;
+  animation-delay: -9.12064866981872s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -3.688447968794113s;
+  animation-delay: -0.590606808808596s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -19.11295952227654s;
+  animation-delay: -8.500220780368704s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -6.687625126527292s;
+  animation-delay: -14.378279026574454s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -16.68946294655928s;
+  animation-delay: -3.504471255551036s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -6.500671506109594s;
+  animation-delay: -10.448213496615155s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -0.026624405154545s;
+  animation-delay: -25.96147512935034s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -18.542785627880214s;
+  animation-delay: -6.710249454079427s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -17.074345569542068s;
+  animation-delay: -0.949669808409646s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -16.158222645718816s;
+  animation-delay: -6.441310751490903s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -6.141737125229678s;
+  animation-delay: -0.035288016708566s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -25.745460031073858s;
+  animation-delay: -8.720721557964698s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -15.81533936559856s;
+  animation-delay: -28.528900351402115s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -172,11 +167,6 @@ html {
   }
   100% {
     margin-top: 20rem;
-  }
-}
-@media screen and (max-width: 800px) {
-  .header__inner {
-    height: 25vw;
   }
 }
 .hljs {
@@ -262,9 +252,4 @@ html {
 .toc {
   width: 26rem;
   background-color: #413f4b;
-}
-@media screen and (max-width: 960px) {
-  .toc {
-    display: none;
-  }
 }

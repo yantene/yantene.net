@@ -1,0 +1,9 @@
+.article {
+  width: 100%;
+}
+.header__inner {
+  height: 25vw;
+}
+.toc {
+  display: none;
+}
