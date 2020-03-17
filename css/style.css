@@ -60,91 +60,91 @@ html {
 }
 .header__snow {
   animation: snowing 30s linear infinite, swinging 20s linear infinite;
-  width: 2vw;
-  height: 2vw;
+  width: 1.8vw;
+  height: 1.8vw;
   border-radius: 50%;
   background-color: #fff;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -29.568215585749s;
+  animation-delay: -4.586619550694648s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -9.344336942444475s;
+  animation-delay: -21.593062926197092s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -21.86947358934105s;
+  animation-delay: -12.510105226628925s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -9.78506559077717s;
+  animation-delay: -3.688447968794113s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -29.395909577950533s;
+  animation-delay: -19.11295952227654s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -25.53394116835066s;
+  animation-delay: -6.687625126527292s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -19.818815730677628s;
+  animation-delay: -16.68946294655928s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -29.490961591071997s;
+  animation-delay: -6.500671506109594s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -8.206275991392562s;
+  animation-delay: -0.026624405154545s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -7.793397891310434s;
+  animation-delay: -18.542785627880214s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -1.744748499193967s;
+  animation-delay: -17.074345569542068s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -2.456904695094282s;
+  animation-delay: -16.158222645718816s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -27.164930075249384s;
+  animation-delay: -6.141737125229678s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -28.759403316949673s;
+  animation-delay: -25.745460031073858s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -7.014828307772685s;
+  animation-delay: -15.81533936559856s;
 }
 @-moz-keyframes swinging {
   25% {
-    margin-right: 2vw;
+    margin-right: 1.8vw;
   }
   75% {
-    margin-left: 2vw;
+    margin-left: 1.8vw;
   }
 }
 @-webkit-keyframes swinging {
   25% {
-    margin-right: 2vw;
+    margin-right: 1.8vw;
   }
   75% {
-    margin-left: 2vw;
+    margin-left: 1.8vw;
   }
 }
 @-o-keyframes swinging {
   25% {
-    margin-right: 2vw;
+    margin-right: 1.8vw;
   }
   75% {
-    margin-left: 2vw;
+    margin-left: 1.8vw;
   }
 }
 @keyframes swinging {
   25% {
-    margin-right: 2vw;
+    margin-right: 1.8vw;
   }
   75% {
-    margin-left: 2vw;
+    margin-left: 1.8vw;
   }
 }
 @-moz-keyframes snowing {
   0% {
-    margin-top: -2vw;
+    margin-top: -1.8vw;
   }
   100% {
     margin-top: 20rem;
@@ -152,7 +152,7 @@ html {
 }
 @-webkit-keyframes snowing {
   0% {
-    margin-top: -2vw;
+    margin-top: -1.8vw;
   }
   100% {
     margin-top: 20rem;
@@ -160,7 +160,7 @@ html {
 }
 @-o-keyframes snowing {
   0% {
-    margin-top: -2vw;
+    margin-top: -1.8vw;
   }
   100% {
     margin-top: 20rem;
@@ -168,7 +168,7 @@ html {
 }
 @keyframes snowing {
   0% {
-    margin-top: -2vw;
+    margin-top: -1.8vw;
   }
   100% {
     margin-top: 20rem;
