@@ -11,6 +11,13 @@ html {
 .article a:visited {
   color: #fb3a50;
 }
+.article p > code {
+  font-family: 'Source Code Pro', monospace;
+  color: #c3c6c4;
+  background-color: #323639;
+  margin: 0.2rem;
+  padding: 0.2rem 0.3rem;
+}
 .article__inner {
   margin: 0 1.5rem;
 }
@@ -21,7 +28,7 @@ html {
   background-color: #e9e2d8;
 }
 .footer__inner {
-  background-color: #fff;
+  background-color: #f5f5f5;
   margin: 0 auto;
   min-width: 32rem;
   max-width: 144rem;
@@ -58,52 +65,52 @@ html {
   width: 1.8vw;
   height: 1.8vw;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -17.07665509793536s;
+  animation-delay: -22.446298725992936s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -27.53675088717352s;
+  animation-delay: -29.20128866120953s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -9.12064866981872s;
+  animation-delay: -7.588234037105639s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -0.590606808808596s;
+  animation-delay: -1.179430615112058s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -8.500220780368704s;
+  animation-delay: -2.27553373755399s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -14.378279026574454s;
+  animation-delay: -4.920960150437075s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -3.504471255551036s;
+  animation-delay: -11.809120303744825s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -10.448213496615155s;
+  animation-delay: -29.60783491296778s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -25.96147512935034s;
+  animation-delay: -18.294628921393436s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -6.710249454079427s;
+  animation-delay: -0.611094462912798s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -0.949669808409646s;
+  animation-delay: -2.17010573974191s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -6.441310751490903s;
+  animation-delay: -24.69971813445558s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -0.035288016708566s;
+  animation-delay: -11.328619582319515s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -8.720721557964698s;
+  animation-delay: -3.281627946040271s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -28.528900351402115s;
+  animation-delay: -4.073915608357397s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -235,7 +242,7 @@ html {
 }
 .main__inner {
   display: flex;
-  background-color: #fff;
+  background-color: #f5f5f5;
   margin: 0 auto;
   min-width: 32rem;
   max-width: 144rem;
