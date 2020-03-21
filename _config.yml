@@ -39,6 +39,28 @@ render:
     newLine: Lf
     pretty: false
 
+markdown:
+  render:
+    html: true
+    xhtmlOut: false
+    breaks: false
+    linkify: false
+    typographer: false
+  anchors:
+    level: 2
+    collisionSuffix: ''
+    permalink: true
+    permalinkClass: 'headline__anchor'
+    permalinkSide: 'right'
+    permalinkSymbol: '¶'
+    case: 0
+    separator: '-'
+  plugins:
+    - markdown-it-footnote
+    - markdown-it-checkbox
+    - markdown-it-cjk-breaks
+    - markdown-it-emoji
+
 # Writing
 new_post_name: :title.md # File name of new posts
 default_layout: post

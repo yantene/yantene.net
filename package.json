@@ -16,10 +16,13 @@
     "hexo-generator-category": "^1.0.0",
     "hexo-generator-index": "^1.0.0",
     "hexo-generator-tag": "^1.0.0",
-    "hexo-renderer-marked": "^2.0.0",
+    "hexo-renderer-markdown-it": "^4.1.0",
     "hexo-renderer-pug": "^1.0.0",
     "hexo-renderer-stylus": "^1.1.0",
     "hexo-renderer-ts": "^1.2.5",
-    "hexo-server": "^1.0.0"
+    "hexo-server": "^1.0.0",
+    "markdown-it-checkbox": "^1.1.0",
+    "markdown-it-cjk-breaks": "^1.1.3",
+    "markdown-it-emoji": "^1.4.0"
   }
 }
