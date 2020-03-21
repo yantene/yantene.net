@@ -1,0 +1,7 @@
+mixin timestamp(post)
+  .timestamp
+    time.timestamp__published(datetime=date_xml(post.date), itemprop="datePublished")
+      = post.date.tz("Asia/Tokyo").format("投稿時刻: YYYY/MM/DD HH:mm:ss")
+    unless post.date.unix() === post.updated.unix()
+      time.timestamp__modified(datetime=date_xml(post.updated), itemprop="dateModified")
+        = post.updated.tz("Asia/Tokyo").format("最終更新時刻: YYYY/MM/DD HH:mm:ss")

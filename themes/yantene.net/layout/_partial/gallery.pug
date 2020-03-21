@@ -1,0 +1,7 @@
+mixin gallery(post)
+  if post.photos && post.photos.length
+    .article-gallery
+      .article-gallery-photos
+        each photo in post.photos
+          a.article-gallery-img(href=url_for(photo), rel=`gallery_${post._id}`)
+            img(src=url_for(photo), itemprop="image")

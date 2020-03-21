@@ -1,0 +1,23 @@
+head
+  meta(charset="utf-8")
+  meta(name="description", content=config.description)
+  meta(name="author", content=config.author)
+  meta(name="generator", content="hexo")
+  meta(name="theme-color", content="#378586")
+
+  meta(http-equiv="content-language", content=config.language)
+
+  meta(name='viewport', content='width=360, initial-scale=1')
+
+  title #{[page.title, config.title].filter(e => e !== undefined).join(" - ")}
+
+  link(rel="icon", href="/img/favicon.ico")
+  link(rel="icon", href="/img/favicon.svg", type="image/svg+xml")
+
+  link(rel="stylesheet", href="//fonts.googleapis.com/css?family=Noto+Sans+JP:400,700|Noto+Serif+JP:500,700|Source+Code+Pro:400,400i,700,700i&display=swap")
+  link(rel="stylesheet", href="//unpkg.com/sanitize.css")
+
+  // 60em = 960px. media query で使われる rem は html の font-size を見ないので使わない
+  != css(["css/style", { href: "css/style_sp", media: "screen and (max-width: 60em)" }])
+
+  != js({ src: "js/share", defer: true })

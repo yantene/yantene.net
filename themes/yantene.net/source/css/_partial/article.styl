@@ -1,0 +1,27 @@
+.article
+  width 'calc(100% - %s)' % sidebar-width
+
+  & h2
+    border-bottom article-h2-underline-color solid 1px
+
+  & .headline__anchor
+    font-size 70%
+    vertical-align super
+
+  & p
+    line-height 1.8
+
+  & p > code
+    font-family 'Source Code Pro', monospace
+    background-color article-code-bg-color
+    margin 0.2rem
+    padding 0.2rem 0.3rem
+
+  & blockquote
+    border-left 0.5rem solid article-blockquote-border-color
+    color article-blockquote-font-color
+    padding 0.5rem 0 0.5rem 2rem
+    margin 2rem 0
+
+  &__inner
+    margin 0 1.5rem

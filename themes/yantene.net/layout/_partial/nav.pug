@@ -1,0 +1,15 @@
+mixin nav(post)
+  if post.prev || post.next
+    nav#article-nav
+      if post.prev
+        a#article-nav-newer.article-nav-link-wrap(href=url_for(post.prev.path))
+          strong.article-nav-caption= __("newer")
+          .article-nav-title
+            if post.prev.title
+              = post.prev.title
+            else
+              span (no title)
+      if post.next
+        a#article-nav-older.article-nav-link-wrap(href=url_for(post.next.path))
+          strong.article-nav-caption= __("older")
+          .article-nav-title= post.next.title

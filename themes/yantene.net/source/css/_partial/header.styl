@@ -1,0 +1,50 @@
+.header
+  &__inner
+    position relative
+    overflow hidden
+    margin 0 auto
+    min-width inner-min-width
+    max-width inner-max-width
+    height header-height
+    overflow-y hidden
+    background-size cover
+    background-image url("/img/background.svg")
+    background-position 50% 36%
+
+  &__yantene
+    width 40%
+    height 100%
+    position absolute
+    right 10%
+    bottom 0
+    background-size 100% auto
+    background-repeat no-repeat
+    background-image url("/img/yantene.svg")
+    background-position 50% 10%
+
+  @keyframes swinging
+    25%
+      margin-right snow-size
+    75%
+      margin-left snow-size
+
+  @keyframes snowing
+    0%
+      margin-top 'calc(-1 * %s)' % snow-size
+    100%
+      margin-top header-height
+
+  &__snow-list
+    display flex
+    justify-content space-around
+
+  &__snow
+    for i in (1..15)
+      &:nth-of-type({i})
+        animation-delay unit(math(0, 'random') * -30, 's')
+
+    animation snowing 30s linear infinite, swinging 20s linear infinite
+    width snow-size
+    height snow-size
+    border-radius 50%
+    background-color snow-color

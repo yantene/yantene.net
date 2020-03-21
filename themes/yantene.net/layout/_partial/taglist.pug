@@ -1,0 +1,6 @@
+mixin taglist(post)
+  if post.tags && post.tags.length
+    ul.taglist
+      each tag in post.tags.data
+        li.taglist__item
+          a(href=tag.permalink)= tag.name

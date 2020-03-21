@@ -1,0 +1,40 @@
+.hljs
+  display block
+  margin 0 -1.5rem 1rem
+  padding 2rem 2rem
+  font-family 'Source Code Pro', monospace
+  overflow-x auto
+  color hljs-font-color
+  background hljs-bg-color
+
+  &-emphasis
+    font-style italic
+
+  &-strong
+    font-weight bold
+
+  // based on vim-hybrid theme by w0ng (https://github.com/w0ng/vim-hybrid)
+
+  &-title, &-name
+    color hsl(39, 80, 69)
+
+  &-comment, &-meta, &-meta &-keyword
+    color hsl(210, 6, 47)
+
+  &-number, &-symbol, &-literal, &-deletion, &-link
+    color hsl(0, 50, 60)
+
+  &-string, &-doctag, &-addition, &-regexp, &-selector-attr, &-selector-pseudo
+    color hsl(65, 39, 57)
+
+  &-attribute, &-code, &-selector-id
+    color hsl(286, 22, 65)
+
+  &-keyword, &-selector-tag, &-bullet, &-tag
+    color hsl(207, 31, 62)
+
+  &-subst, &-variable, &-template-tag, &-template-variable
+    color hsl(171, 28, 64)
+
+  &-type, &-built_in, &-builtin-name, &-quote, &-section, &-selector-class
+    color hsl(24, 65, 62)

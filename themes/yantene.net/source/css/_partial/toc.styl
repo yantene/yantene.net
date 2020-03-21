@@ -1,0 +1,30 @@
+.toc
+  margin 0
+  padding 1.5rem
+  position sticky
+  background-color toc-bg-color
+  overflow-y auto
+  //width 'calc(%s - 3rem)' % sidebar-width
+  max-height 'calc(100vh - %s)' % header-height
+  top 0
+
+  &-child // ol
+    padding-inline-start 2rem
+
+  &-item // li
+    list-style-type none
+
+  &-link // a
+    display block
+    margin-bottom 0.2rem
+    padding 0.3rem 0
+    padding-left 0.3rem
+
+    &__current
+      background-color toc-bg-color-current
+
+    &:hover
+      background-color toc-bg-color-hover
+
+    &:link, &:visited
+      text-decoration none

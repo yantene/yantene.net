@@ -1,0 +1,26 @@
+include category
+include gallery
+include nav
+include taglist
+include timestamp
+include title
+
+mixin article(post, index)
+  article.article(id=`${post.layout}-${post.slug}`)
+    .article__inner
+      +gallery(post)
+      +category(post)
+      if post.link || post.title
+        header.article__header
+          +title(post, index, "article__title")
+      +timestamp(post)
+      +taglist(post)
+      .article__entry(itemprop="articleBody")
+        if post.excerpt && index
+          != post.excerpt
+          p.article__more-link
+            a(href=`${url_for(post.path)}#more`) もっと見る
+        else
+          != post.content
+      //unless index
+      //  +nav.article__nav(post)
