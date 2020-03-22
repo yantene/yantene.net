@@ -1,4 +1,5 @@
 html {
+  cursor: unset;
   font-size: 62.5%;
 }
 .article {
@@ -85,49 +86,49 @@ html {
   background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -18.158886950143824s;
+  animation-delay: -25.224930133468565s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -2.517566390850356s;
+  animation-delay: -27.03232674342392s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -23.681728620146167s;
+  animation-delay: -16.613372808743065s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -15.799678625591135s;
+  animation-delay: -28.88826590843486s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -8.049878000226956s;
+  animation-delay: -20.74873849218739s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -20.721114091989257s;
+  animation-delay: -1.337053657945513s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -9.89663109288095s;
+  animation-delay: -18.173414936027214s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -1.429359585480268s;
+  animation-delay: -21.422646586282042s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -5.225588523389819s;
+  animation-delay: -1.975419181472948s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -1.764658163369124s;
+  animation-delay: -29.72145566078059s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -10.191795081580658s;
+  animation-delay: -13.998368748687549s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -7.676350220119959s;
+  animation-delay: -27.92935035268161s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -12.723264041142421s;
+  animation-delay: -22.45033318231615s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -1.243690804968358s;
+  animation-delay: -26.414725863773715s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -28.969304206267864s;
+  animation-delay: -5.407241966762484s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -270,15 +271,6 @@ html {
   background-color: #f9ebd8;
   padding: 0 1.5rem;
 }
-.sidebar .toc {
-  padding-inline-start: 0;
-}
-.sidebar .toc-child {
-  padding-inline-start: 3rem;
-}
-.sidebar .toc-item {
-  list-style-type: none;
-}
 .taglist {
   display: flex;
   flex-wrap: wrap;
@@ -305,4 +297,13 @@ html {
   color: #4d4d4d;
   font-size: 1.4rem;
   text-align: right;
+}
+.toc {
+  padding-inline-start: 0;
+}
+.toc-child {
+  padding-inline-start: 3rem;
+}
+.toc-item {
+  list-style-type: none;
 }
