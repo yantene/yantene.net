@@ -86,49 +86,49 @@ html {
   background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -25.224930133468565s;
+  animation-delay: -4.077895968846059s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -27.03232674342392s;
+  animation-delay: -17.956397931141566s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -16.613372808743065s;
+  animation-delay: -11.507795515065308s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -28.88826590843486s;
+  animation-delay: -20.052417443300996s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -20.74873849218739s;
+  animation-delay: -6.295022916991324s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -1.337053657945513s;
+  animation-delay: -27.298892005579823s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -18.173414936027214s;
+  animation-delay: -17.681484087080953s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -21.422646586282042s;
+  animation-delay: -11.88527622457074s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -1.975419181472948s;
+  animation-delay: -8.46733236397882s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -29.72145566078059s;
+  animation-delay: -1.56491205709802s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -13.998368748687549s;
+  animation-delay: -23.270103384807623s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -27.92935035268161s;
+  animation-delay: -9.215435461433882s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -22.45033318231615s;
+  animation-delay: -2.223739402143647s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -26.414725863773715s;
+  animation-delay: -15.925268620475554s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -5.407241966762484s;
+  animation-delay: -3.621724415304304s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -300,10 +300,22 @@ html {
 }
 .toc {
   padding-inline-start: 0;
+  position: sticky;
+  overflow-y: auto;
+  width: calc(26rem - 3rem);
+  top: 1.4rem;
 }
 .toc-child {
-  padding-inline-start: 3rem;
+  padding-inline-start: 2rem;
 }
 .toc-item {
   list-style-type: none;
+}
+.toc-link {
+  display: block;
+  padding: 0.1rem 0;
+}
+.toc-link:link,
+.toc-link:visited {
+  text-decoration: none;
 }
