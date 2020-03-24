@@ -1,0 +1,12 @@
+html {
+  cursor: unset;
+}
+a,
+a:link,
+a:visited {
+  color: accent-color;
+  text-decoration: none;
+}
+a:hover {
+  opacity: 0.5;
+}
