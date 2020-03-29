@@ -89,49 +89,49 @@ a:hover {
   background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -0.590913390174936s;
+  animation-delay: -25.887527217787152s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -10.233322516938873s;
+  animation-delay: -10.456190880453924s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -11.624007915286684s;
+  animation-delay: -5.698183923577207s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -26.401712295998156s;
+  animation-delay: -16.146314895203705s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -27.11562178698898s;
+  animation-delay: -29.469713897172618s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -16.85198142041259s;
+  animation-delay: -16.977724614365684s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -24.977920319054366s;
+  animation-delay: -27.186346823258635s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -19.594545334498893s;
+  animation-delay: -6.643661181538207s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -13.103238759889335s;
+  animation-delay: -24.502104721283796s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -27.84509949577722s;
+  animation-delay: -4.430765385097992s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -8.11785499148816s;
+  animation-delay: -17.811664535812596s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -8.949300859062483s;
+  animation-delay: -10.689528859599807s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -19.95845546009369s;
+  animation-delay: -27.02919661677353s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -27.725805191206174s;
+  animation-delay: -9.468955733296694s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -26.917639869476044s;
+  animation-delay: -5.385899333572779s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -167,7 +167,7 @@ a:hover {
 }
 @-moz-keyframes snowing {
   0% {
-    margin-top: -min(1.8vw, calc(144rem * 18 / 1000));
+    margin-top: calc(-1 * min(1.8vw, calc(144rem * 18 / 1000)));
   }
   100% {
     margin-top: 20rem;
@@ -175,7 +175,7 @@ a:hover {
 }
 @-webkit-keyframes snowing {
   0% {
-    margin-top: -min(1.8vw, calc(144rem * 18 / 1000));
+    margin-top: calc(-1 * min(1.8vw, calc(144rem * 18 / 1000)));
   }
   100% {
     margin-top: 20rem;
@@ -183,7 +183,7 @@ a:hover {
 }
 @-o-keyframes snowing {
   0% {
-    margin-top: -min(1.8vw, calc(144rem * 18 / 1000));
+    margin-top: calc(-1 * min(1.8vw, calc(144rem * 18 / 1000)));
   }
   100% {
     margin-top: 20rem;
@@ -191,7 +191,7 @@ a:hover {
 }
 @keyframes snowing {
   0% {
-    margin-top: -min(1.8vw, calc(144rem * 18 / 1000));
+    margin-top: calc(-1 * min(1.8vw, calc(144rem * 18 / 1000)));
   }
   100% {
     margin-top: 20rem;
