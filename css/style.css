@@ -89,49 +89,49 @@ a:hover {
   background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -25.887527217787152s;
+  animation-delay: -23.27574413959328s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -10.456190880453924s;
+  animation-delay: -0.275823998188398s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -5.698183923577207s;
+  animation-delay: -12.381451167965595s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -16.146314895203705s;
+  animation-delay: -9.684173670161417s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -29.469713897172618s;
+  animation-delay: -27.150356275928047s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -16.977724614365684s;
+  animation-delay: -6.28090561250668s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -27.186346823258635s;
+  animation-delay: -27.375162481600878s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -6.643661181538207s;
+  animation-delay: -14.668034182443826s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -24.502104721283796s;
+  animation-delay: -9.128336366320884s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -4.430765385097992s;
+  animation-delay: -26.406640358284037s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -17.811664535812596s;
+  animation-delay: -16.996447710229184s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -10.689528859599807s;
+  animation-delay: -18.422376849943454s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -27.02919661677353s;
+  animation-delay: -13.276603782479137s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -9.468955733296694s;
+  animation-delay: -8.90306229969261s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -5.385899333572779s;
+  animation-delay: -15.717236055183754s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -318,6 +318,9 @@ a:hover {
 .toc-link {
   display: block;
   padding: 0.3rem 0;
+}
+.toc-link__current {
+  background-color: #f1d2a7;
 }
 .toc-link:link,
 .toc-link:visited {
