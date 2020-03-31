@@ -11,7 +11,7 @@ a:visited {
   text-decoration: none;
 }
 a:hover {
-  opacity: 0.5;
+  color: #fc7383;
 }
 .article {
   width: calc(100% - 26rem);
@@ -28,7 +28,7 @@ a:hover {
 }
 .article p > code {
   font-family: 'Source Code Pro', monospace;
-  background-color: #e1dfec;
+  background-color: #e7ddd0;
   margin: 0.2rem;
   padding: 0.2rem 0.3rem;
 }
@@ -89,49 +89,49 @@ a:hover {
   background-color: #f5f5f5;
 }
 .header__snow:nth-of-type(1) {
-  animation-delay: -23.27574413959328s;
+  animation-delay: -28.548100735234947s;
 }
 .header__snow:nth-of-type(2) {
-  animation-delay: -0.275823998188398s;
+  animation-delay: -16.409025579627833s;
 }
 .header__snow:nth-of-type(3) {
-  animation-delay: -12.381451167965595s;
+  animation-delay: -15.736226949201583s;
 }
 .header__snow:nth-of-type(4) {
-  animation-delay: -9.684173670161417s;
+  animation-delay: -18.26961840027093s;
 }
 .header__snow:nth-of-type(5) {
-  animation-delay: -27.150356275928047s;
+  animation-delay: -7.083160158346198s;
 }
 .header__snow:nth-of-type(6) {
-  animation-delay: -6.28090561250668s;
+  animation-delay: -24.86588520448839s;
 }
 .header__snow:nth-of-type(7) {
-  animation-delay: -27.375162481600878s;
+  animation-delay: -4.376291517624898s;
 }
 .header__snow:nth-of-type(8) {
-  animation-delay: -14.668034182443826s;
+  animation-delay: -25.534126132923426s;
 }
 .header__snow:nth-of-type(9) {
-  animation-delay: -9.128336366320884s;
+  animation-delay: -14.149530585984989s;
 }
 .header__snow:nth-of-type(10) {
-  animation-delay: -26.406640358284037s;
+  animation-delay: -14.185101431597717s;
 }
 .header__snow:nth-of-type(11) {
-  animation-delay: -16.996447710229184s;
+  animation-delay: -29.556748832246633s;
 }
 .header__snow:nth-of-type(12) {
-  animation-delay: -18.422376849943454s;
+  animation-delay: -13.873064341498427s;
 }
 .header__snow:nth-of-type(13) {
-  animation-delay: -13.276603782479137s;
+  animation-delay: -22.151821432492778s;
 }
 .header__snow:nth-of-type(14) {
-  animation-delay: -8.90306229969261s;
+  animation-delay: -3.153855151718763s;
 }
 .header__snow:nth-of-type(15) {
-  animation-delay: -15.717236055183754s;
+  animation-delay: -13.376250869460812s;
 }
 @-moz-keyframes swinging {
   25% {
@@ -317,10 +317,15 @@ a:hover {
 }
 .toc-link {
   display: block;
+  margin-bottom: 0.2rem;
   padding: 0.3rem 0;
+  padding-left: 0.3rem;
 }
 .toc-link__current {
   background-color: #f1d2a7;
+}
+.toc-link:hover {
+  background-color: #f4dbb9;
 }
 .toc-link:link,
 .toc-link:visited {

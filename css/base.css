@@ -4,9 +4,9 @@ html {
 a,
 a:link,
 a:visited {
-  color: accent-color;
+  color: anchor-font-color;
   text-decoration: none;
 }
 a:hover {
-  opacity: 0.5;
+  color: anchor-font-color-hover;
 }
