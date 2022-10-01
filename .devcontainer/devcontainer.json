@@ -17,7 +17,8 @@
         "EditorConfig.EditorConfig",
         "vivaxy.vscode-conventional-commits",
         "exiasr.hadolint",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
       ]
     }
   }
