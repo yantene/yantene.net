@@ -7,8 +7,10 @@ module.exports = {
   },
   plugins: ["@typescript-eslint/eslint-plugin"],
   extends: [
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "prettier",
     "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended",
   ],
   root: true,
   env: {
@@ -17,6 +19,20 @@ module.exports = {
   },
   ignorePatterns: [".eslintrc.js"],
   rules: {
+    "class-methods-use-this": "off",
+    "import/prefer-default-export": "off",
+    "import/no-default-export": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        selector: "variable",
+        format: null,
+        modifiers: ["unused"],
+        leadingUnderscore: "require",
+      },
+    ],
+    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
