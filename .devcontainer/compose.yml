@@ -1,0 +1,14 @@
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: ./.devcontainer/docker/Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    volumes:
+      - ..:/workspace
+      - node_modules:/workspace/node_modules # volume trick
+
+volumes:
+  node_modules:
