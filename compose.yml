@@ -1,0 +1,10 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/docker/Dockerfile
+    ports:
+      - target: 3000
+        published: 3000
+        protocol: tcp
+        mode: host
