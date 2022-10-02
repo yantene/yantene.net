@@ -1,3 +1,7 @@
 /node_modules
 
 /tmp
+
+# backend/
+/backend/dist
+/backend/node_modules
