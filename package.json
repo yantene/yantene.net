@@ -15,12 +15,19 @@
   },
   "scripts": {
     "format": "run-s -c format:*",
+    "format:backend": "npm run --workspace backend format",
     "format:prettier": "prettier --write .",
-    "format:prettier-package-json": "prettier-package-json --success --write ./package.json",
+    "format:prettier-package-json": "prettier-package-json --success --write .{,/backend}/package.json",
     "postinstall": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky install",
     "lint": "run-s -c lint:*",
+    "lint:backend": "npm run --workspace backend lint",
     "lint:prettier": "prettier --check .",
-    "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json"
+    "lint:prettier-package-json": "prettier-package-json --success --list-different .{,/backend}/package.json"
+  },
+  "workspaces": {
+    "packages": [
+      "backend"
+    ]
   },
   "dependencies": {
     "npm-run-all": "^4.1.5"
