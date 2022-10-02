@@ -20,3 +20,20 @@ jobs:
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           working-directory: backend
+
+  eslint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup
+
+      - name: run eslint
+        uses: reviewdog/action-eslint@v1
+        with:
+          workdir: backend
+          reporter: github-pr-review
+          fail_on_error: true
