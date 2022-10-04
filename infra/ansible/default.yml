@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - set_hostname
+    - set_timezone
+    - create_users
+    - install_utilities

@@ -1,0 +1,30 @@
+---
+- name: create system group
+  ansible.builtin.group:
+    name: system
+
+- name: create system users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups:
+      - wheel
+      - system
+  with_items: "{{ users.system }}"
+
+- name: set authorized keys to system users
+  authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ lookup('file', './public_keys/{{ item.name }}.pub') }}"
+  with_items: "{{ users.system }}"
+
+- name: create app group
+  ansible.builtin.group:
+    name: app
+
+- name: create app users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups:
+      - app
+  with_items: "{{ users.app }}"

@@ -1,0 +1,11 @@
+---
+- name: install utility packages
+  ansible.builtin.apt:
+    name:
+      - strace
+      - ltrace
+      - dstat
+      - sysstat
+      - jq
+      - htop
+      - tmux
