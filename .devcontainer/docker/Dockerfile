@@ -103,6 +103,7 @@ RUN \
   unzip=6.0-26+deb11u1 \
   openssh-client=1:8.4p1-5+deb11u1 \
   neovim=0.4.4-1 \
+  ansible-lint=4.3.7-1 \
   ripgrep=12.1.1-1+b1 \
   bat=0.12.1-6+b2 \
   exa=0.9.0-5+b1 \
