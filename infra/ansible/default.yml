@@ -6,3 +6,4 @@
     - set_timezone
     - create_users
     - install_utilities
+    - setup_nginx
