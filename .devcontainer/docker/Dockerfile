@@ -95,6 +95,40 @@ RUN \
   @nestjs/cli \
   "
 
+# Install python
+ARG PYTHON_VERSION=3.10.7
+RUN \
+  apt-get update -y && \
+  apt-get install --no-install-recommends -y \
+  build-essential=12.9 \
+  zlib1g-dev=1:1.2.11.dfsg-2+deb11u2 \
+  libncurses5-dev=6.2+20201114-2 \
+  libgdbm-dev=1.19-2 \
+  libnss3-dev=2:3.61-1+deb11u2 \
+  libssl-dev=1.1.1n-0+deb11u3 \
+  libreadline-dev=8.1-1 \
+  libffi-dev=3.3-6 \
+  libsqlite3-dev=3.34.1-3 \
+  wget=1.21-1+deb11u1 \
+  libbz2-dev=1.0.8-4 && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  gosu ${USERNAME} fish -c " \
+  asdf plugin add python && \
+  asdf install python ${PYTHON_VERSION} && \
+  asdf global python ${PYTHON_VERSION} && \
+  python -m pip install --upgrade pip && \
+  python -m pip install pipenv && \
+  asdf reshim python \
+  "
+
+# Install ansible and ansible-lint
+RUN \
+  gosu ${USERNAME} fish -c " \
+  python -m pip install ansible ansible-lint && \
+  asdf reshim python \
+  "
+
 # Install tools
 RUN \
   apt-get update -y && \
@@ -103,7 +137,6 @@ RUN \
   unzip=6.0-26+deb11u1 \
   openssh-client=1:8.4p1-5+deb11u1 \
   neovim=0.4.4-1 \
-  ansible-lint=4.3.7-1 \
   ripgrep=12.1.1-1+b1 \
   bat=0.12.1-6+b2 \
   exa=0.9.0-5+b1 \
