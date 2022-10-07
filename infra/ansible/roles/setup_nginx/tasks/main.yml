@@ -1,10 +1,11 @@
+# vi: et ts=2 sts=2 ft=ansible
 ---
-- name: install nginx
+- name: Install nginx
   ansible.builtin.apt:
     name: nginx
     state: latest # noqa package-latest
 
-- name: put nginx.conf files
+- name: Put nginx.conf files
   ansible.builtin.template:
     src: nginx/{{ item }}.j2
     dest: /etc/nginx/{{ item }}
@@ -16,12 +17,12 @@
   notify:
     - reload_nginx
 
-- name: disable existing default site
+- name: Disable existing default site
   ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
 
-- name: put default server config
+- name: Put default server config
   ansible.builtin.template:
     src: nginx/sites/default_server.conf.j2
     dest: /etc/nginx/sites-available/default_server.conf
@@ -30,7 +31,7 @@
   notify:
     - reload_nginx
 
-- name: enable default server
+- name: Enable default server
   ansible.builtin.file:
     src: /etc/nginx/sites-available/default_server.conf
     dest: /etc/nginx/sites-enabled/default_server.conf
@@ -38,7 +39,7 @@
   notify:
     - reload_nginx
 
-- name: put proxy sites config
+- name: Put proxy sites config
   ansible.builtin.template:
     src: nginx/sites/proxy.conf.j2
     dest: /etc/nginx/sites-available/{{ item.domain_name }}.conf
@@ -48,7 +49,7 @@
   notify:
     - reload_nginx
 
-- name: enable proxy sites
+- name: Enable proxy sites
   ansible.builtin.file:
     src: /etc/nginx/sites-available/{{ item.domain_name }}.conf
     dest: /etc/nginx/sites-enabled/{{ item.domain_name }}.conf
@@ -57,7 +58,7 @@
   notify:
     - reload_nginx
 
-- name: make log directories
+- name: Make log directories
   ansible.builtin.file:
     path: /var/log/nginx/{{ item.domain_name }}
     state: directory
@@ -66,7 +67,7 @@
     mode: "0755"
   with_items: "{{ sites }}"
 
-- name: make document root directories
+- name: Make document root directories
   ansible.builtin.file:
     path: "{{ item.document_root.path }}"
     state: directory

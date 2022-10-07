@@ -1,9 +1,10 @@
+# vi: et ts=2 sts=2 ft=ansible
 ---
-- name: create system group
+- name: Create system group
   ansible.builtin.group:
     name: system
 
-- name: create system users
+- name: Create system users
   ansible.builtin.user:
     name: "{{ item.name }}"
     groups:
@@ -11,18 +12,18 @@
       - system
   with_items: "{{ users.system }}"
 
-- name: set authorized keys to system users
-  authorized_key:
+- name: Set authorized keys to system users
+  ansible.posix.authorized_key:
     user: "{{ item.name }}"
     state: present
     key: "{{ lookup('file', './public_keys/{{ item.name }}.pub') }}"
   with_items: "{{ users.system }}"
 
-- name: create app group
+- name: Create app group
   ansible.builtin.group:
     name: app
 
-- name: create app users
+- name: Create app users
   ansible.builtin.user:
     name: "{{ item.name }}"
     groups:

@@ -1,5 +1,6 @@
+# vi: et ts=2 sts=2 ft=ansible
 ---
-- name: install utility packages
+- name: Install utility packages
   ansible.builtin.apt:
     name:
       - strace
