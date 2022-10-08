@@ -125,7 +125,7 @@ RUN \
 # Install ansible and ansible-lint
 RUN \
   gosu ${USERNAME} fish -c " \
-  python -m pip install ansible ansible-lint && \
+  python -m pip install ansible ansible-lint==6.8.0 && \
   asdf reshim python \
   "
 
