@@ -31,3 +31,10 @@
     group: app
     groups: []
   with_items: "{{ users.app }}"
+
+- name: Set authorized keys to app users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ lookup('file', './public_keys/{{ item.name }}.pub') }}"
+  with_items: "{{ users.app }}"
