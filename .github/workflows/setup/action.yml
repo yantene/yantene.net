@@ -1,5 +1,10 @@
+name: setup node development environment
+
+description: |
+  setup node development environment
+
 runs:
-  using: Composite
+  using: composite
 
   steps:
     - name: read .tool-versions
