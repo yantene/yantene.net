@@ -7,9 +7,10 @@
 - name: Create system users
   ansible.builtin.user:
     name: "{{ item.name }}"
+    shell: /bin/bash
+    group: system
     groups:
       - wheel
-      - system
   with_items: "{{ users.system }}"
 
 - name: Set authorized keys to system users
@@ -26,6 +27,7 @@
 - name: Create app users
   ansible.builtin.user:
     name: "{{ item.name }}"
-    groups:
-      - app
+    shell: /bin/bash
+    group: app
+    groups: []
   with_items: "{{ users.app }}"
