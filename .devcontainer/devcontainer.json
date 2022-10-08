@@ -19,7 +19,9 @@
         "exiasr.hadolint",
         "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-        "kavod-io.vscode-jest-test-adapter"
+        "kavod-io.vscode-jest-test-adapter",
+        "redhat.ansible",
+        "chrislajoie.vscode-modelines"
       ]
     }
   }

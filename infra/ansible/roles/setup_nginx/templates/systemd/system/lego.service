@@ -1,0 +1,15 @@
+[Unit]
+Description=This service automatically renews lego certificate
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/lego \
+  --path /etc/acme/data \
+  --accept-tos \
+  --http \
+  --http.webroot /etc/acme/webroot \
+  --email {{ cert_email }} \
+  --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+  renew \
+  --days 30
+ExecStartPost=/bin/systemctl reload nginx

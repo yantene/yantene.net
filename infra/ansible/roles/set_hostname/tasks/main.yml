@@ -1,0 +1,5 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"

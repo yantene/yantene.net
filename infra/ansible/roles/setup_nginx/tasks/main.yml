@@ -1,0 +1,109 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: latest # noqa package-latest
+
+- name: Put nginx.conf files
+  ansible.builtin.template:
+    src: nginx/{{ item }}.j2
+    dest: /etc/nginx/{{ item }}
+    backup: true
+    mode: "0644"
+  with_items:
+    - nginx.conf
+    - logformat.conf
+  notify:
+    - reload_nginx
+
+- name: Empty sites-enabled/ directory
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled
+    state: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  with_items:
+    - absent
+    - directory
+
+- name: Put http default config
+  ansible.builtin.template:
+    src: nginx/sites/http_default.conf.j2
+    dest: /etc/nginx/sites-available/http_default.conf
+    backup: true
+    mode: "0644"
+  notify:
+    - reload_nginx
+
+- name: Enable http default server
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/http_default.conf
+    dest: /etc/nginx/sites-enabled/http_default.conf
+    state: link
+  notify:
+    - reload_nginx
+
+- name: Make log directories
+  ansible.builtin.file:
+    path: /var/log/nginx/default
+    state: directory
+    owner: www-data
+    group: adm
+    mode: "0755"
+  with_items: "{{ sites }}"
+
+- name: Reload nginx
+  ansible.builtin.systemd:
+    name: nginx.service
+    state: reloaded
+
+- name: Install lego
+  ansible.builtin.apt:
+    name: lego
+    state: latest # noqa package-latest
+
+- name: Make data and webroot directories for acme
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - /etc/acme/data
+    - /etc/acme/webroot
+
+- name: Check for the existence of the certificate
+  ansible.builtin.stat:
+    path: /etc/acme/data/certificates/{{ sites[0].domain_name }}.crt
+  register: check_certificate
+
+- name: Certify by lego
+  ansible.builtin.shell:
+    cmd: |
+      lego \
+        --path /etc/acme/data \
+        --accept-tos \
+        --http \
+        --http.webroot /etc/acme/webroot \
+        --email {{ cert_email }} \
+        --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+        run
+  when: not check_certificate.stat.exists
+
+- name: Put systemd files
+  ansible.builtin.template:
+    src: "systemd/system/{{ item }}"
+    dest: /etc/systemd/system/{{ item }}
+    backup: true
+    mode: "0755"
+  with_items:
+    - lego.service
+    - lego.timer
+
+- name: Enable lego timer
+  ansible.builtin.systemd:
+    name: lego.timer
+    state: started
+    enabled: true
+    daemon_reload: true

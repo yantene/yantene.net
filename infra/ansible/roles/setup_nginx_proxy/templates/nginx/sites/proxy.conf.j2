@@ -1,0 +1,66 @@
+# vi: et ts=2 sts=2 ft=nginx
+
+{% set backend_upstream = item.domain_name +'.backend_upstream' %}
+upstream {{ backend_upstream }} {
+  {% for target_server in item.target_servers %}
+  server {{ target_server }};
+  {% endfor %}
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+
+  ssl_certificate     /etc/acme/data/certificates/{{ sites[0].domain_name }}.crt;
+  ssl_certificate_key /etc/acme/data/certificates/{{ sites[0].domain_name }}.key;
+
+  server_name {{ item.domain_name }};
+  root {{ item.document_root.path }};
+  index index.html;
+
+  access_log /var/log/nginx/{{ item.domain_name }}/https_access.log ltsv;
+  error_log /var/log/nginx/{{ item.domain_name }}/https_error.log warn;
+
+  send_timeout 600;
+
+  # Security Settings
+  etag off;
+  add_header X-Frame-Options SAMEORIGIN;
+  add_header X-XSS-Protection "1; mode=block";
+  add_header X-Content-Type-Options nosniff;
+  add_header Strict-Transport-Security "max-age=3600";
+
+  client_max_body_size    500M;
+  client_body_buffer_size 128k;
+
+  location / {
+    charset utf-8;
+    gzip_static on;
+
+    expires 1m;
+
+    try_files $uri $uri.html $uri/index.html @{{ backend_upstream }};
+  }
+
+  location @{{ backend_upstream }} {
+    proxy_pass http://{{ backend_upstream }};
+    proxy_redirect off;
+
+    proxy_set_header Host                $http_host;
+    proxy_set_header X-Real-IP           $remote_addr;
+    proxy_set_header X-Forwarded-For     $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto   $http_x_forwarded_proto;
+    proxy_set_header X-HTTP-REQUEST-TIME $msec;
+
+    proxy_buffering            on;
+    proxy_connect_timeout      600;
+    proxy_send_timeout         600;
+    proxy_read_timeout         600;
+    proxy_buffer_size          128k;
+    proxy_buffers              64 64k;
+    proxy_busy_buffers_size    512k;
+    proxy_temp_file_write_size 1024k;
+    proxy_max_temp_file_size   2048m;
+    break;
+  }
+}

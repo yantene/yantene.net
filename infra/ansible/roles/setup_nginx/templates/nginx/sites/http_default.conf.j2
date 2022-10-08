@@ -1,0 +1,19 @@
+# vi: et ts=2 sts=2 ft=nginx
+
+server {
+  listen 80 default_server;
+  listen [::]:80 default_server;
+
+  server_name _;
+
+  access_log /var/log/nginx/default/http_access.log ltsv;
+  error_log /var/log/nginx/default/http_error.log warn;
+
+  location ^~ /.well-known/acme-challenge/ {
+    root /etc/acme/webroot;
+  }
+
+  location / {
+    return 301 https://$host$request_uri;
+  }
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=This is the timer to set the schedule for automated renewals
+
+[Timer]
+OnCalendar=*-*-* 00/12:00:00
+RandomizedDelaySec=12hours
+Persistent=true
+
+[Install]
+WantedBy=timers.target
