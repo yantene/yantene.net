@@ -7,3 +7,4 @@
     - create_users
     - install_utilities
     - setup_nginx
+    - setup_nginx_proxy

@@ -17,61 +17,93 @@
   notify:
     - reload_nginx
 
-- name: Disable existing default site
+- name: Empty sites-enabled/ directory
   ansible.builtin.file:
-    path: /etc/nginx/sites-enabled/default
-    state: absent
+    path: /etc/nginx/sites-enabled
+    state: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  with_items:
+    - absent
+    - directory
 
-- name: Put default server config
+- name: Put http default config
   ansible.builtin.template:
-    src: nginx/sites/default_server.conf.j2
-    dest: /etc/nginx/sites-available/default_server.conf
+    src: nginx/sites/http_default.conf.j2
+    dest: /etc/nginx/sites-available/http_default.conf
     backup: true
     mode: "0644"
   notify:
     - reload_nginx
 
-- name: Enable default server
+- name: Enable http default server
   ansible.builtin.file:
-    src: /etc/nginx/sites-available/default_server.conf
-    dest: /etc/nginx/sites-enabled/default_server.conf
+    src: /etc/nginx/sites-available/http_default.conf
+    dest: /etc/nginx/sites-enabled/http_default.conf
     state: link
-  notify:
-    - reload_nginx
-
-- name: Put proxy sites config
-  ansible.builtin.template:
-    src: nginx/sites/proxy.conf.j2
-    dest: /etc/nginx/sites-available/{{ item.domain_name }}.conf
-    backup: true
-    mode: "0644"
-  with_items: "{{ sites }}"
-  notify:
-    - reload_nginx
-
-- name: Enable proxy sites
-  ansible.builtin.file:
-    src: /etc/nginx/sites-available/{{ item.domain_name }}.conf
-    dest: /etc/nginx/sites-enabled/{{ item.domain_name }}.conf
-    state: link
-  with_items: "{{ sites }}"
   notify:
     - reload_nginx
 
 - name: Make log directories
   ansible.builtin.file:
-    path: /var/log/nginx/{{ item.domain_name }}
+    path: /var/log/nginx/default
     state: directory
     owner: www-data
     group: adm
     mode: "0755"
   with_items: "{{ sites }}"
 
-- name: Make document root directories
+- name: Reload nginx
+  ansible.builtin.systemd:
+    name: nginx.service
+    state: reloaded
+
+- name: Install lego
+  ansible.builtin.apt:
+    name: lego
+    state: latest # noqa package-latest
+
+- name: Make data and webroot directories for acme
   ansible.builtin.file:
-    path: "{{ item.document_root.path }}"
+    path: "{{ item }}"
     state: directory
-    owner: "{{ item.document_root.owner }}"
-    group: "{{ item.document_root.group }}"
     mode: "0755"
-  with_items: "{{ sites }}"
+  with_items:
+    - /etc/acme/data
+    - /etc/acme/webroot
+
+- name: Check for the existence of the certificate
+  ansible.builtin.stat:
+    path: /etc/acme/data/certificates/{{ sites[0].domain_name }}.crt
+  register: check_certificate
+
+- name: Certify by lego
+  ansible.builtin.shell:
+    cmd: |
+      lego \
+        --path /etc/acme/data \
+        --accept-tos \
+        --http \
+        --http.webroot /etc/acme/webroot \
+        --email {{ cert_email }} \
+        --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+        run
+  when: not check_certificate.stat.exists
+
+- name: Put systemd files
+  ansible.builtin.template:
+    src: "systemd/system/{{ item }}"
+    dest: /etc/systemd/system/{{ item }}
+    backup: true
+    mode: "0755"
+  with_items:
+    - lego.service
+    - lego.timer
+
+- name: Enable lego timer
+  ansible.builtin.systemd:
+    name: lego.timer
+    state: started
+    enabled: true
+    daemon_reload: true
