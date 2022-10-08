@@ -1,7 +1,7 @@
 web:
   hosts:
     yantene.net:
-      ansible_host: ###.###.###.###
+      ansible_host: 133.18.235.207
       ansible_user: system
       hostname: yantene.net
       timezone: Asia/Tokyo
