@@ -10,3 +10,4 @@
       - jq
       - htop
       - tmux
+      - git
