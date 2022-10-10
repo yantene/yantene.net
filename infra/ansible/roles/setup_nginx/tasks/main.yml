@@ -14,8 +14,6 @@
   with_items:
     - nginx.conf
     - logformat.conf
-  notify:
-    - reload_nginx
 
 - name: Disable default nginx config
   ansible.builtin.file:
@@ -28,16 +26,12 @@
     dest: /etc/nginx/sites-available/http_default.conf
     backup: true
     mode: "0644"
-  notify:
-    - reload_nginx
 
 - name: Enable http default server
   ansible.builtin.file:
     src: /etc/nginx/sites-available/http_default.conf
     dest: /etc/nginx/sites-enabled/http_default.conf
     state: link
-  notify:
-    - reload_nginx
 
 - name: Make log directories
   ansible.builtin.file:
