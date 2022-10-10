@@ -1,0 +1,58 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Make application directories
+  ansible.builtin.file:
+    path: "{{ item.1 }}"
+    state: directory
+    owner: "{{ item.0.user }}"
+    group: app
+    mode: "0755"
+  with_subelements:
+    - "{{ backend }}"
+    - directories
+
+- name: Put backend sites config
+  ansible.builtin.template:
+    src: nginx/sites/backend.conf.j2
+    dest: /etc/nginx/sites-available/{{ item.domain_name }}.conf
+    backup: true
+    mode: "0644"
+  with_items: "{{ backend }}"
+  notify:
+    - reload_nginx
+
+- name: Enable backend sites
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/{{ item.domain_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.domain_name }}.conf
+    state: link
+  with_items: "{{ backend }}"
+  notify:
+    - reload_nginx
+
+- name: Make log directories
+  ansible.builtin.file:
+    path: /var/log/nginx/{{ item.domain_name }}
+    state: directory
+    owner: www-data
+    group: adm
+    mode: "0755"
+  with_items: "{{ backend }}"
+
+- name: Install asdf node plugin
+  become_user: "{{ item.user }}"
+  ansible.builtin.shell:
+    cmd: |
+      bash -lc "asdf plugin add nodejs || true"
+  register: asdf_plugin_add_nodejs_out
+  changed_when: "'Plugin named nodejs already added' not in asdf_plugin_add_nodejs_out.stderr"
+  with_items: "{{ backend }}"
+
+- name: Install specified version node
+  become_user: "{{ item.user }}"
+  ansible.builtin.shell:
+    cmd: |
+      bash -lc "asdf install nodejs {{ item.node_version }}"
+  register: asdf_install_nodejs_version_out
+  changed_when: "'Installed node-' in asdf_install_nodejs_version_out.stderr"
+  with_items: "{{ backend }}"

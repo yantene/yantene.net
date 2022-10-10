@@ -1,0 +1,11 @@
+backend:
+  - domain_name: api.stg.yantene.net
+    user: stg-backend
+    node_version: 18.10.0
+    directories:
+      - /opt/www/api.stg.yantene.net
+      - /opt/www/api.stg.yantene.net/current
+      - /opt/www/api.stg.yantene.net/current/public
+    target_servers:
+      - 127.0.0.1:4100
+    document_root: /opt/www/api.stg.yantene.net/current/public

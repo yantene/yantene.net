@@ -33,14 +33,13 @@
     dest: /etc/nginx/sites-enabled/http_default.conf
     state: link
 
-- name: Make log directories
+- name: Make default config log directory
   ansible.builtin.file:
     path: /var/log/nginx/default
     state: directory
     owner: www-data
     group: adm
     mode: "0755"
-  with_items: "{{ sites }}"
 
 - name: Reload nginx
   ansible.builtin.systemd:
@@ -63,7 +62,7 @@
 
 - name: Check for the existence of the certificate
   ansible.builtin.stat:
-    path: /etc/acme/data/certificates/{{ sites[0].domain_name }}.crt
+    path: /etc/acme/data/certificates/{{ acme.domain_names[0] }}.crt
   register: check_certificate
 
 - name: Certify by lego
@@ -74,8 +73,8 @@
         --accept-tos \
         --http \
         --http.webroot /etc/acme/webroot \
-        --email {{ cert_email }} \
-        --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+        --email {{ acme.email }} \
+        --domains {{ acme.domain_names | join(' --domains ') }} \
         run
   when: not check_certificate.stat.exists
 

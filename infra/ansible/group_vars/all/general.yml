@@ -1,8 +1,0 @@
-cert_email: contact@yantene.net
-
-asdf:
-  root_path: /opt/asdf
-  version: v0.10.2
-
-node_versions:
-  - 18.10.0

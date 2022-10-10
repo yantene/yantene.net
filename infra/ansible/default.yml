@@ -7,6 +7,5 @@
     - create_users
     - install_utilities
     - setup_nginx
-    - setup_nginx_proxy
     - install_asdf
-    - install_node
+    - setup_backend
