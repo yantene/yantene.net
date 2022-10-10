@@ -1,0 +1,9 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Make application directory
+  ansible.builtin.file:
+    path: /opt/www
+    state: directory
+    owner: app
+    group: app
+    mode: "0755"
