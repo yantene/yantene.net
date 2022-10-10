@@ -3,6 +3,5 @@ users:
   system:
     - name: system
   app:
-    - name: app
     - name: stg-backend
     - name: stg-frontend
