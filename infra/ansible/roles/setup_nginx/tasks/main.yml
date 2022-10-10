@@ -17,16 +17,10 @@
   notify:
     - reload_nginx
 
-- name: Empty sites-enabled/ directory
+- name: Disable default nginx config
   ansible.builtin.file:
-    path: /etc/nginx/sites-enabled
-    state: "{{ item }}"
-    owner: root
-    group: root
-    mode: "0755"
-  with_items:
-    - absent
-    - directory
+    path: /etc/nginx/sites-enabled/default
+    state: absent
 
 - name: Put http default config
   ansible.builtin.template:
