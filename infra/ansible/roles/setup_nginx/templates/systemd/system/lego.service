@@ -8,8 +8,8 @@ ExecStart=/usr/bin/lego \
   --accept-tos \
   --http \
   --http.webroot /etc/acme/webroot \
-  --email {{ cert_email }} \
-  --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+  --email {{ acme.email }} \
+  --domains {{ acme.domain_names | join(' --domains ') }} \
   renew \
   --days 30
 ExecStartPost=/bin/systemctl reload nginx

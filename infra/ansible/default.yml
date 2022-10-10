@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Default
+  hosts: all
   become: true
   roles:
     - set_hostname
@@ -7,4 +8,5 @@
     - create_users
     - install_utilities
     - setup_nginx
-    - setup_nginx_proxy
+    - install_asdf
+    - setup_backend

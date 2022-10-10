@@ -1,0 +1,5 @@
+acme:
+  email: contact@yantene.net
+  domain_names:
+    - stg.yantene.net
+    - api.stg.yantene.net

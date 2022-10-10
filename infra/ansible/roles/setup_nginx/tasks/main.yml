@@ -14,19 +14,11 @@
   with_items:
     - nginx.conf
     - logformat.conf
-  notify:
-    - reload_nginx
 
-- name: Empty sites-enabled/ directory
+- name: Disable default nginx config
   ansible.builtin.file:
-    path: /etc/nginx/sites-enabled
-    state: "{{ item }}"
-    owner: root
-    group: root
-    mode: "0755"
-  with_items:
-    - absent
-    - directory
+    path: /etc/nginx/sites-enabled/default
+    state: absent
 
 - name: Put http default config
   ansible.builtin.template:
@@ -34,25 +26,20 @@
     dest: /etc/nginx/sites-available/http_default.conf
     backup: true
     mode: "0644"
-  notify:
-    - reload_nginx
 
 - name: Enable http default server
   ansible.builtin.file:
     src: /etc/nginx/sites-available/http_default.conf
     dest: /etc/nginx/sites-enabled/http_default.conf
     state: link
-  notify:
-    - reload_nginx
 
-- name: Make log directories
+- name: Make default config log directory
   ansible.builtin.file:
     path: /var/log/nginx/default
     state: directory
     owner: www-data
     group: adm
     mode: "0755"
-  with_items: "{{ sites }}"
 
 - name: Reload nginx
   ansible.builtin.systemd:
@@ -75,7 +62,7 @@
 
 - name: Check for the existence of the certificate
   ansible.builtin.stat:
-    path: /etc/acme/data/certificates/{{ sites[0].domain_name }}.crt
+    path: /etc/acme/data/certificates/{{ acme.domain_names[0] }}.crt
   register: check_certificate
 
 - name: Certify by lego
@@ -86,8 +73,8 @@
         --accept-tos \
         --http \
         --http.webroot /etc/acme/webroot \
-        --email {{ cert_email }} \
-        --domains {{ sites | map(attribute='domain_name') | join(' --domains ') }} \
+        --email {{ acme.email }} \
+        --domains {{ acme.domain_names | join(' --domains ') }} \
         run
   when: not check_certificate.stat.exists
 
