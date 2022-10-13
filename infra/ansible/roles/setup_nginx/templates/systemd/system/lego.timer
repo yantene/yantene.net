@@ -1,5 +1,5 @@
 [Unit]
-Description=This is the timer to set the schedule for automated renewals
+Description=This is the timer to set the schedule for automated renewals for {{ item.apps[0].domain_name }}
 
 [Timer]
 OnCalendar=*-*-* 00/12:00:00

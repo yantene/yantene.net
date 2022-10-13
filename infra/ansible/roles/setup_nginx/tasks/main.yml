@@ -11,7 +11,7 @@
     dest: /etc/nginx/{{ item }}
     backup: true
     mode: "0644"
-  with_items:
+  loop:
     - nginx.conf
     - logformat.conf
 
@@ -56,41 +56,47 @@
     path: "{{ item }}"
     state: directory
     mode: "0755"
-  with_items:
+  loop:
     - /etc/acme/data
     - /etc/acme/webroot
-
-- name: Check for the existence of the certificate
-  ansible.builtin.stat:
-    path: /etc/acme/data/certificates/{{ acme.domain_names[0] }}.crt
-  register: check_certificate
 
 - name: Certify by lego
   ansible.builtin.shell:
     cmd: |
-      lego \
-        --path /etc/acme/data \
-        --accept-tos \
-        --http \
-        --http.webroot /etc/acme/webroot \
-        --email {{ acme.email }} \
-        --domains {{ acme.domain_names | join(' --domains ') }} \
-        run
-  when: not check_certificate.stat.exists
+      if [ ! -f /etc/acme/data/certificates/{{ item.apps[0].domain_name }}.crt ]; then
+        lego \
+          --path /etc/acme/data \
+          --accept-tos \
+          --http \
+          --http.webroot /etc/acme/webroot \
+          --email {{ item.acme_email }} \
+          --domains {{ item.apps | map(attribute='domain_name') | join(' --domains ') }} \
+          run
+      fi
+  register: certification_out
+  changed_when: "'acme: Validations succeeded; requesting certificates' in certification_out.stdout"
+  loop: "{{ sites | dict2items | map(attribute='value') }}"
 
-- name: Put systemd files
+- name: Put systemd service file
   ansible.builtin.template:
-    src: "systemd/system/{{ item }}"
-    dest: /etc/systemd/system/{{ item }}
+    src: "systemd/system/lego.service"
+    dest: /etc/systemd/system/{{ item.apps[0].domain_name }}.lego.service
     backup: true
     mode: "0755"
-  with_items:
-    - lego.service
-    - lego.timer
+  loop: "{{ sites | dict2items | map(attribute='value') }}"
+
+- name: Put systemd timer file
+  ansible.builtin.template:
+    src: "systemd/system/lego.timer"
+    dest: /etc/systemd/system/{{ item.apps[0].domain_name }}.lego.timer
+    backup: true
+    mode: "0755"
+  loop: "{{ sites | dict2items | map(attribute='value') }}"
 
 - name: Enable lego timer
   ansible.builtin.systemd:
-    name: lego.timer
+    name: "{{ item.apps[0].domain_name }}.lego.timer"
     state: started
     enabled: true
     daemon_reload: true
+  loop: "{{ sites | dict2items | map(attribute='value') }}"
