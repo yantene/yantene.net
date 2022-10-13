@@ -1,0 +1,38 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Make application directories
+  ansible.builtin.file:
+    path: "{{ item.directory }}"
+    state: directory
+    owner: "{{ item.user }}"
+    group: app
+    mode: "0755"
+  loop: "{{ sites | dict2items | map(attribute='value') }}"
+
+- name: Put sites config
+  ansible.builtin.template:
+    src: nginx/sites/{{ item.1.mode }}.conf.j2
+    dest: /etc/nginx/sites-available/{{ item.1.domain_name }}.conf
+    backup: true
+    mode: "0644"
+  loop: "{{ sites | dict2items | map(attribute='value') | subelements('apps') }}"
+  notify:
+    - reload_nginx
+
+- name: Enable backend sites
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/{{ item.1.domain_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.1.domain_name }}.conf
+    state: link
+  loop: "{{ sites | dict2items | map(attribute='value') | subelements('apps') }}"
+  notify:
+    - reload_nginx
+
+- name: Make nginx log directories
+  ansible.builtin.file:
+    path: /var/log/nginx/{{ item.1.domain_name }}
+    state: directory
+    owner: www-data
+    group: adm
+    mode: "0755"
+  loop: "{{ sites | dict2items | map(attribute='value') | subelements('apps') }}"

@@ -8,6 +8,5 @@
     - create_users
     - install_utilities
     - setup_nginx
-    - install_asdf
     - setup_app
-    - setup_backend
+    - setup_compose

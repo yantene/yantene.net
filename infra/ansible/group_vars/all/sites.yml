@@ -1,0 +1,12 @@
+sites:
+  stg.yantene.net:
+    user: staging
+    acme_email: contact@yantene.net
+    directory: /opt/www/stg.yantene.net
+    apps:
+      - domain_name: stg.yantene.net
+        mode: proxy
+        local_port: 4000
+      - domain_name: api.stg.yantene.net
+        mode: proxy
+        local_port: 4100
