@@ -1,10 +1,19 @@
 services:
-  backend:
+  site:
+    build:
+      context: .
+      dockerfile: ./frontend/docker/Dockerfile
+    ports:
+      - target: 3000
+        published: 4000
+        protocol: tcp
+        mode: host
+  api:
     build:
       context: .
       dockerfile: ./backend/docker/Dockerfile
     ports:
-      - target: 3000
-        published: 3000
+      - target: 3100
+        published: 4100
         protocol: tcp
         mode: host
