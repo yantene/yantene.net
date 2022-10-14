@@ -1,0 +1,33 @@
+{
+  "private": true,
+  "name": "yantene.net_frontend",
+  "version": "0.0.1",
+  "description": "frontend for yantene.net",
+  "license": "UNLICENSED",
+  "author": "Shuhei YOSHIDA <contact@yantene.net> (https://yantene.net/)",
+  "homepage": "https://github.com/yantene/yantene.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yantene/yantene.net.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yantene/yantene.net/issues"
+  },
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "format": "next lint --fix",
+    "lint": "next lint",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "12.3.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "eslint": "8.25.0",
+    "eslint-config-next": "12.3.1",
+    "husky": "^8.0.1"
+  }
+}

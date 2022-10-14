@@ -5,3 +5,7 @@
 # backend/
 /backend/dist
 /backend/node_modules
+
+# frontend/
+/frontend/.next
+/frontend/node_modules
