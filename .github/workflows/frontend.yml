@@ -22,4 +22,3 @@ jobs:
           workdir: frontend
           reporter: github-pr-review
           fail_on_error: true
-
