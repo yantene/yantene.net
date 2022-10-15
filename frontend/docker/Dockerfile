@@ -24,6 +24,7 @@ RUN npm ci --workspace frontend --omit=dev
 
 # prepare assets
 COPY --from=build /usr/src/app/frontend/.next /usr/src/app/frontend/.next
+COPY ./frontend/public /usr/src/app/frontend/public
 
 WORKDIR /usr/src/app/frontend
 
