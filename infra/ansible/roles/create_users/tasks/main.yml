@@ -29,7 +29,7 @@
     name: "{{ item.name }}"
     shell: /bin/bash
     group: app
-    groups: []
+    groups: "{{ item.groups }}"
   loop: "{{ users.app }}"
 
 - name: Set authorized keys to app users

@@ -1,0 +1,7 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Reload docker
+  ansible.builtin.systemd:
+    name: docker.service
+    state: reloaded
+  listen: reload_docker

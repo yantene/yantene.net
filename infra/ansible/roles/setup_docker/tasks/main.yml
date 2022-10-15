@@ -1,0 +1,33 @@
+# vi: et ts=2 sts=2 ft=ansible
+---
+- name: Install docker dependencies
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+
+- name: Add docker's official gpg key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: Setup docker stable repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian bullseye stable"
+    state: present
+
+- name: Install docker ce
+  ansible.builtin.apt:
+    update_cache: true
+    name: docker-ce
+  notify:
+    - reload_docker
+
+- name: Install docker compose plugin
+  ansible.builtin.apt:
+    update_cache: true
+    name: docker-compose-plugin
+  notify:
+    - reload_docker

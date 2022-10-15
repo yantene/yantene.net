@@ -5,8 +5,9 @@
   roles:
     - set_hostname
     - set_timezone
-    - create_users
     - install_utilities
+    - setup_docker
     - setup_nginx
+    - create_users
     - setup_app
     - setup_compose

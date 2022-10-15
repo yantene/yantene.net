@@ -4,4 +4,7 @@ users:
     - name: system
   app:
     - name: app
+      groups: []
     - name: staging
+      groups:
+        - docker
