@@ -17,3 +17,13 @@ services:
         published: 4100
         protocol: tcp
         mode: host
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./volumes/postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
