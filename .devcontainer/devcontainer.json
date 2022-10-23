@@ -21,7 +21,8 @@
         "dbaeumer.vscode-eslint",
         "kavod-io.vscode-jest-test-adapter",
         "redhat.ansible",
-        "chrislajoie.vscode-modelines"
+        "chrislajoie.vscode-modelines",
+        "Prisma.prisma"
       ]
     }
   }
