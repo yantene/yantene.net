@@ -140,7 +140,8 @@ RUN \
   ripgrep=12.1.1-1+b1 \
   bat=0.12.1-6+b2 \
   exa=0.9.0-5+b1 \
-  fd-find=8.2.1-1+b1 && \
+  fd-find=8.2.1-1+b1 \
+  postgresql=13+225 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   ln -s /usr/bin/batcat /usr/local/bin/bat && \
