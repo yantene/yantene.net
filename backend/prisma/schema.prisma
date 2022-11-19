@@ -9,3 +9,54 @@ datasource db {
   provider = "postgresql"
   url      = env("POSTGRES_URL")
 }
+
+model User {
+  id Int @id @default(autoincrement())
+
+  name String @unique
+
+  screenName String?
+
+  createdAt  DateTime
+  modifiedAt DateTime
+
+  insertedAtForAudit DateTime @default(now())
+  updatedAtForAudit  DateTime @updatedAt
+
+  note Note[]
+}
+
+model Note {
+  id Int @id @default(autoincrement())
+
+  title String @unique
+
+  tags Tag[]
+
+  createdByUserId Int
+  author          User @relation(fields: [createdByUserId], references: [id])
+
+  emoji String
+
+  body String
+
+  createdAt  DateTime
+  modifiedAt DateTime
+
+  insertedAtForAudit DateTime @default(now())
+  updatedAtForAudit  DateTime @updatedAt
+}
+
+model Tag {
+  id Int @id @default(autoincrement())
+
+  name String @unique
+
+  notes Note[]
+
+  createdAt  DateTime
+  modifiedAt DateTime
+
+  insertedAtForAudit DateTime @default(now())
+  updatedAtForAudit  DateTime @updatedAt
+}
