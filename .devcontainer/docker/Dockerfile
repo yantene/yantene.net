@@ -1,7 +1,5 @@
 FROM debian:bullseye-slim
 
-ENV LANG "C.UTF-8"
-
 # Prepare
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN \
@@ -11,6 +9,18 @@ RUN \
   gosu=1.12-1+b6 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
+
+# Locale
+RUN \
+  apt-get update -y && \
+  apt-get install --no-install-recommends -y \
+  locales=2.31-13+deb11u5 && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* && \
+  localedef -f UTF-8 -i en_US en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 # Add dev user
 ARG UID=1000
