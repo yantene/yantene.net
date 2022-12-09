@@ -9,6 +9,17 @@ services:
     volumes:
       - ..:/workspace
       - node_modules:/workspace/node_modules # volume trick
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: backend
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
 
 volumes:
   node_modules:
+  postgres_data:
