@@ -1,8 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-} from "@nestjs/common";
+import { Controller, Get, Param } from "@nestjs/common";
 import { NotesService } from "./notes.service";
 
 @Controller("notes")
