@@ -97,7 +97,8 @@ RUN \
 RUN \
   apt-get update -y && \
   apt-get install --no-install-recommends -y \
-  procps=2:3.3.17-5 && \
+  procps=2:3.3.17-5 \
+  clang-format=1:11.0-51+nmu5 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   gosu ${USERNAME} fish -c " \

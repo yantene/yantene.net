@@ -22,7 +22,8 @@
         "kavod-io.vscode-jest-test-adapter",
         "redhat.ansible",
         "chrislajoie.vscode-modelines",
-        "Prisma.prisma"
+        "Prisma.prisma",
+        "zxh404.vscode-proto3"
       ]
     }
   }
