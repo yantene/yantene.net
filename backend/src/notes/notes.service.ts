@@ -2,11 +2,13 @@ import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class NotesService {
-  findAll() {
-    return `This action returns all notes`;
+  findAll(limit: number, order: string, cursor: string | undefined) {
+    console.log(limit, order, cursor);
+    return `This action returns some notes`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} note`;
+  findOne(title: string) {
+    console.log(title);
+    return `This action returns a ${title} note`;
   }
 }
