@@ -1,0 +1,304 @@
+openapi: 3.1.0
+x-stoplight:
+  id: 93e7b7926cf30
+info:
+  title: yantene.net
+  version: "1.0"
+  contact:
+    name: Shuhei YOSHIDA
+    url: "https://yantene.net"
+    email: contact@yantene.net
+  description: yantene.net backend api
+  summary: yantene.net
+servers:
+  - url: "http://localhost:3100/v1"
+    description: development
+  - url: "https://api.stg.yantene.net/v1"
+    description: staging
+  - url: "https://api.yantene.net/v1"
+    description: production
+paths:
+  /notes:
+    get:
+      summary: Get note summaries
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nextCursor:
+                    type: string
+                    format: date-time
+                  prevCursor:
+                    type: string
+                    format: date-time
+                  noteSummaries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NoteSummary"
+                required:
+                  - nextCursor
+                  - prevCursor
+                  - noteSummaries
+        "400":
+          description: Bad Request
+      operationId: get-note-summaries
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            format: int64
+            default: 20
+          in: query
+          name: limit
+        - schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - recently-modified
+              - least-recently-modified
+            default: newest
+          in: query
+          name: order
+        - schema:
+            type: string
+            format: date-time
+          in: query
+          name: cursor
+          description: Cursor by created time or modified time of notes
+      description: Get note summaries
+      tags:
+        - note
+  "/notes/{noteTitle}":
+    parameters:
+      - schema:
+          type: string
+        name: noteTitle
+        in: path
+        required: true
+    get:
+      summary: Get a note by title
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  note:
+                    $ref: "#/components/schemas/Note"
+                required:
+                  - note
+        "404":
+          description: Not Found
+      operationId: get-a-note-by-title
+      description: Get a note by title
+      tags:
+        - note
+  /tags:
+    get:
+      summary: Get tags
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tag"
+                required:
+                  - tags
+        "400":
+          description: Bad Request
+      operationId: get-tags
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            format: int64
+            default: 20
+          in: query
+          name: limit
+        - schema:
+            type: string
+            enum:
+              - recently-tagged
+              - most-tagged
+            default: recently-tagged
+          in: query
+          name: order
+        - schema:
+            type: string
+            format: date-time
+          in: query
+          name: noteModifiedAtCursor
+          description: Cursor by modified time of tagged note for recently-tagged and most-tagged
+        - schema:
+            type: string
+          in: query
+          name: taggedCursor
+          description: Cursor by number of notes tagged for most-tagged
+      description: Get tags
+      tags:
+        - tag
+  "/tags/{tagName}/notes":
+    parameters:
+      - schema:
+          type: string
+        name: tagName
+        in: path
+        required: true
+    get:
+      summary: Get note summaries by a tag
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: "#/components/schemas/Tag"
+                  nextCursor:
+                    type: string
+                    format: date-time
+                  prevCursor:
+                    type: string
+                    format: date-time
+                  noteSummaries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NoteSummary"
+                required:
+                  - tag
+                  - nextCursor
+                  - prevCursor
+                  - noteSummaries
+        "400":
+          description: Bad Request
+      operationId: get-note-summaries-by-a-tag
+      parameters:
+        - schema:
+            type: integer
+            format: int64
+            default: 20
+            minimum: 1
+            maximum: 200
+          in: query
+          name: limit
+        - schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - recently-modified
+              - least-recently-modified
+            default: newest
+          in: query
+          name: order
+        - schema:
+            type: string
+            format: date-time
+          in: query
+          name: cursor
+          description: Cursor by created time or modified time of notes
+      description: Get note summaries by a tag
+      tags:
+        - tag
+components:
+  schemas:
+    NoteSummary:
+      title: NoteSummary
+      x-stoplight:
+        id: 1pk74pwomi6o9
+      type: object
+      x-tags:
+        - note
+      examples: []
+      properties:
+        title:
+          type: string
+          example: もうすぐ目黒はヤバい！
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagSummary"
+        emoji:
+          type: string
+          example: "\U0001F306"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2022-04-18T12:00:00"
+        modifiedAt:
+          type: string
+          format: date-time
+          example: "2021-11-18T12:00:00"
+      required:
+        - title
+        - tags
+        - emoji
+        - createdAt
+        - modifiedAt
+    Note:
+      allOf:
+        - $ref: "#/components/schemas/NoteSummary"
+        - type: object
+          properties:
+            body:
+              type: string
+              example: <p>下目黒はとくにヤバい！</p>
+          required:
+            - body
+      x-tags:
+        - note
+    TagSummary:
+      title: TagSummary
+      x-stoplight:
+        id: 7gbvslp068e1b
+      type: object
+      x-tags:
+        - tag
+      properties:
+        name:
+          type: string
+          example: 目黒
+        createdAt:
+          type: string
+          format: date-time
+          example: "2021-04-18T12:00:00"
+        modifiedAt:
+          type: string
+          format: date-time
+          example: "2021-01-10T12:00:00"
+      required:
+        - name
+        - createdAt
+        - modifiedAt
+    Tag:
+      allOf:
+        - $ref: "#/components/schemas/TagSummary"
+        - type: object
+          properties:
+            numberOfNotes:
+              type: integer
+              example: 1
+          required:
+            - numberOfNotes
+      x-tags:
+        - tag
+tags:
+  - name: note
+  - name: tag
