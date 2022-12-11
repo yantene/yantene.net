@@ -10,7 +10,7 @@ import { ApiQuery, ApiTags } from "@nestjs/swagger";
 import { Cursor } from "./dto/cursor.input";
 import { Limit } from "./dto/limit.input";
 import { Order } from "./dto/order.input";
-import { NotesService } from "./notes.service";
+import { NotesService } from "../../domain/notes/notes.service";
 
 @ApiTags("notes")
 @Controller("notes")
