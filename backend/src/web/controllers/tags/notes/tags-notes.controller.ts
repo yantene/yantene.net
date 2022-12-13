@@ -31,7 +31,7 @@ export class TagsNotesController {
     @Param("name") tagName: string,
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query("order", new DefaultValuePipe("newest")) order: string,
-    @Query("cursor") cursor: string,
+    @Query("cursor") cursor: string | undefined,
   ) {
     if (!this.tagsService.exist(tagName)) {
       throw new HttpException("Not Found", HttpStatus.NOT_FOUND);
