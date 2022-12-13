@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { NotesService } from "../../domain/notes/notes.service";
+import { NotesService } from "../../../domain/notes/notes.service";
 import { NotesController } from "./notes.controller";
 
 @Module({

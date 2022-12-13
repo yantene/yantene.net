@@ -6,11 +6,11 @@ import {
   Query,
 } from "@nestjs/common";
 import { ApiQuery, ApiTags } from "@nestjs/swagger";
-import { Limit } from "./dto/limit.input";
-import { NoteModifiedAtCursor } from "./dto/note-modified-at-cursor.input";
-import { Order } from "./dto/order.input";
-import { TaggedCursor } from "./dto/tagged-cursor.input";
-import { TagsService } from "../../domain/tags/tags.service";
+import { Limit } from "../../requests/tags/limit.input";
+import { NoteModifiedAtCursor } from "../../requests/tags/note-modified-at-cursor.input";
+import { Order } from "../../requests/tags/order.input";
+import { TaggedCursor } from "../../requests/tags/tagged-cursor.input";
+import { TagsService } from "../../../domain/tags/tags.service";
 
 @ApiTags("tags")
 @Controller("tags")

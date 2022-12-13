@@ -9,11 +9,11 @@ import {
   Query,
 } from "@nestjs/common";
 import { ApiQuery, ApiTags } from "@nestjs/swagger";
-import { TagsService } from "../../../domain/tags/tags.service";
-import { NotesService } from "../../../domain/notes/notes.service";
-import { Cursor } from "./dto/cursor.input";
-import { Limit } from "./dto/limit.input";
-import { Order } from "./dto/order.input";
+import { TagsService } from "../../../../domain/tags/tags.service";
+import { NotesService } from "../../../../domain/notes/notes.service";
+import { Cursor } from "../../../requests/notes/cursor.input";
+import { Limit } from "../../../requests/notes/limit.input";
+import { Order } from "../../../requests/notes/order.input";
 
 @ApiTags("notes", "tags")
 @Controller("tags/:name")

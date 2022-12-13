@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { TagsService } from "../../domain/tags/tags.service";
+import { TagsService } from "../../../domain/tags/tags.service";
 import { TagsController } from "./tags.controller";
 
 @Module({
