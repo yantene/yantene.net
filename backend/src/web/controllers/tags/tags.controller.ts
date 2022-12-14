@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { TagsService } from "../../../domain/tags/tags.service";
 import { IndexQueryRequest } from "../../requests/tags/index-query.request";
 
@@ -9,6 +9,8 @@ export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 
   @Get()
+  @ApiOkResponse({ description: "OK" })
+  @ApiBadRequestResponse({ description: "BadRequest" })
   index(@Query() indexQuery: IndexQueryRequest) {
     return this.tagsService.findAll(
       indexQuery.limit,

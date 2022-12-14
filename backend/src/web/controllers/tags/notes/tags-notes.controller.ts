@@ -6,7 +6,7 @@ import {
   Param,
   Query,
 } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { TagsService } from "../../../../domain/tags/tags.service";
 import { NotesService } from "../../../../domain/notes/notes.service";
 import { IndexQueryRequest } from "../../../requests/notes/index-query.request";
@@ -20,6 +20,8 @@ export class TagsNotesController {
   ) {}
 
   @Get("notes")
+  @ApiOkResponse({ description: "OK" })
+  @ApiBadRequestResponse({ description: "BadRequest" })
   index(
     @Param("name") tagName: string,
     @Query() indexQuery: IndexQueryRequest,
