@@ -2,12 +2,7 @@ import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class NotesService {
-  findAll(
-    limit: number,
-    order: string,
-    cursor: string | undefined,
-    tagNames?: string[],
-  ) {
+  findAll(limit: number, order: string, cursor?: Date, tagNames?: string[]) {
     // eslint-disable-next-line no-console
     console.log(limit, order, cursor, tagNames);
 

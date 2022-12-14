@@ -1,32 +1,20 @@
-import {
-  Controller,
-  DefaultValuePipe,
-  Get,
-  Param,
-  ParseIntPipe,
-  Query,
-} from "@nestjs/common";
-import { ApiQuery, ApiTags } from "@nestjs/swagger";
-import { Cursor } from "../../requests/notes/cursor.input";
-import { Limit } from "../../requests/notes/limit.input";
-import { Order } from "../../requests/notes/order.input";
+import { Controller, Get, Param, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { NotesService } from "../../../domain/notes/notes.service";
+import { IndexQueryRequest } from "../../requests/notes/index-query.request";
 
 @ApiTags("notes")
 @Controller("notes")
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
-  @ApiQuery({ name: "limit", type: Limit })
-  @ApiQuery({ name: "order", type: Order })
-  @ApiQuery({ name: "cursor", type: Cursor })
   @Get()
-  findAll(
-    @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
-    @Query("order", new DefaultValuePipe("newest")) order: string,
-    @Query("cursor") cursor: string | undefined,
-  ) {
-    return this.notesService.findAll(limit, order, cursor);
+  index(@Query() indexQuery: IndexQueryRequest) {
+    return this.notesService.findAll(
+      indexQuery.limit,
+      indexQuery.order,
+      indexQuery.cursor,
+    );
   }
 
   // TODO: API spec for title param
