@@ -13,7 +13,7 @@ export class TagsService {
   findAll(
     limit: number,
     order: string,
-    notesModifiedAtCursor: string | undefined,
+    notesModifiedAtCursor: Date | undefined,
     taggedCursor: number | undefined,
   ) {
     // eslint-disable-next-line no-console
