@@ -1,13 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { Tag } from "../../tags/entities/tag.entity";
-import { User } from "../../users/entities/user.entity";
 import { Body } from "../value-objects/body.value-object";
 import { Title } from "../value-objects/title.value-object";
 
 export class Note {
   #title: Title;
-
-  #author: User;
 
   #tags: Tag[];
 
@@ -19,14 +16,11 @@ export class Note {
 
   constructor(
     title: Title,
-    author: User,
     createdAt: Temporal.Instant,
     modifiedAt: Temporal.Instant,
     body: Body,
   ) {
     this.#title = title;
-
-    this.#author = author;
 
     this.#createdAt = createdAt;
     this.#modifiedAt = modifiedAt;
@@ -36,10 +30,6 @@ export class Note {
 
   get title(): Title {
     return this.#title;
-  }
-
-  get author(): User {
-    return this.#author;
   }
 
   get tags(): Tag[] {

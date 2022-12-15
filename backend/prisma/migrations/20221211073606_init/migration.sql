@@ -1,21 +1,7 @@
 -- CreateTable
-CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "screenName" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL,
-    "modifiedAt" TIMESTAMP(3) NOT NULL,
-    "insertedAtForAudit" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAtForAudit" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Note" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
-    "createdByUserId" INTEGER NOT NULL,
     "emoji" TEXT NOT NULL,
     "body" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL,
@@ -45,9 +31,6 @@ CREATE TABLE "_NoteToTag" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Note_title_key" ON "Note"("title");
 
 -- CreateIndex
@@ -58,9 +41,6 @@ CREATE UNIQUE INDEX "_NoteToTag_AB_unique" ON "_NoteToTag"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_NoteToTag_B_index" ON "_NoteToTag"("B");
-
--- AddForeignKey
-ALTER TABLE "Note" ADD CONSTRAINT "Note_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_NoteToTag" ADD CONSTRAINT "_NoteToTag_A_fkey" FOREIGN KEY ("A") REFERENCES "Note"("id") ON DELETE CASCADE ON UPDATE CASCADE;
