@@ -1,11 +1,9 @@
 import { Module } from "@nestjs/common";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
-import { NotesModule } from "./notes/notes.module";
+import { NotesModule } from "./web/controllers/notes/notes.module";
+import { TagsNotesModule } from "./web/controllers/tags/notes/tags-notes.module";
+import { TagsModule } from "./web/controllers/tags/tags.module";
 
 @Module({
-  imports: [NotesModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [NotesModule, TagsModule, TagsNotesModule],
 })
 export class AppModule {}
