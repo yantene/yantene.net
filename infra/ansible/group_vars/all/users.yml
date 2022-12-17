@@ -5,6 +5,9 @@ users:
   app:
     - name: app
       groups: []
+    - name: production
+      groups:
+        - docker
     - name: staging
       groups:
         - docker
