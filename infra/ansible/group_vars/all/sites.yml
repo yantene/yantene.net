@@ -1,4 +1,15 @@
 sites:
+  www.yantene.net:
+    user: production
+    acme_email: contact@yantene.net
+    directory: /opt/www/www.yantene.net
+    apps:
+      - domain_name: www.yantene.net
+        mode: proxy
+        local_port: 3000
+      - domain_name: api.www.yantene.net
+        mode: proxy
+        local_port: 3100
   stg-www.yantene.net:
     user: staging
     acme_email: contact@yantene.net
