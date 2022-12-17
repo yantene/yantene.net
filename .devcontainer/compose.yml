@@ -12,8 +12,8 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: backend
-      POSTGRES_USER: backend
+      POSTGRES_DB: api.www.yantene.net
+      POSTGRES_USER: api.www.yantene.net
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data

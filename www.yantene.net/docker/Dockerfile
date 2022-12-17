@@ -4,13 +4,13 @@ WORKDIR /usr/src/app
 
 # install packages for build
 COPY ./package*.json ./
-RUN mkdir ./frontend
-COPY ./frontend/package.json ./frontend
-RUN npm ci --workspace frontend
+RUN mkdir ./www.yantene.net
+COPY ./www.yantene.net/package.json ./www.yantene.net
+RUN npm ci --workspace www.yantene.net
 
 # build
-COPY ./frontend/ ./frontend/
-RUN npm run --workspace frontend build
+COPY ./www.yantene.net/ ./www.yantene.net/
+RUN npm run --workspace www.yantene.net build
 
 FROM node:18-slim as production
 
@@ -18,15 +18,15 @@ WORKDIR /usr/src/app
 
 # install packages for production
 COPY ./package*.json ./
-RUN mkdir ./frontend
-COPY ./frontend/package.json ./frontend
-RUN npm ci --workspace frontend --omit=dev
+RUN mkdir ./www.yantene.net
+COPY ./www.yantene.net/package.json ./www.yantene.net
+RUN npm ci --workspace www.yantene.net --omit=dev
 
 # prepare assets
-COPY --from=build /usr/src/app/frontend/.next /usr/src/app/frontend/.next
-COPY ./frontend/public /usr/src/app/frontend/public
+COPY --from=build /usr/src/app/www.yantene.net/.next /usr/src/app/www.yantene.net/.next
+COPY ./www.yantene.net/public /usr/src/app/www.yantene.net/public
 
-WORKDIR /usr/src/app/frontend
+WORKDIR /usr/src/app/www.yantene.net
 
 EXPOSE 3000
 
