@@ -1,9 +1,9 @@
-name: frontend
+name: www.yantene.net
 
 on:
   pull_request:
     paths:
-      - frontend/**
+      - www.yantene.net/**
 
 jobs:
   eslint:
@@ -19,6 +19,6 @@ jobs:
       - name: run eslint
         uses: reviewdog/action-eslint@v1
         with:
-          workdir: frontend
+          workdir: www.yantene.net
           reporter: github-pr-review
           fail_on_error: true

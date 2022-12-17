@@ -1,7 +1,11 @@
 {
   "extends": ["@commitlint/config-conventional"],
   "rules": {
-    "scope-enum": [2, "always", ["frontend", "backend", "infra", "api"]],
+    "scope-enum": [
+      2,
+      "always",
+      ["www.yantene.net", "api.www.yantene.net", "infra"]
+    ],
     "subject-case": [0]
   }
 }

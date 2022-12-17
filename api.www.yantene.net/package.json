@@ -1,10 +1,10 @@
 {
   "private": true,
-  "name": "api.yantene.net",
+  "name": "api.www.yantene.net",
   "version": "0.0.1",
-  "description": "backend for yantene.net",
+  "description": "api server for www.yantene.net",
   "license": "UNLICENSED",
-  "author": "Shuhei YOSHIDA <contact@yantene.net> (https://yantene.net/)",
+  "author": "Shuhei YOSHIDA <contact@yantene.net> (https://www.yantene.net/)",
   "homepage": "https://github.com/yantene/yantene.net",
   "repository": {
     "type": "git",

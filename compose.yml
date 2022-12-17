@@ -2,7 +2,7 @@ services:
   site:
     build:
       context: .
-      dockerfile: ./frontend/docker/Dockerfile
+      dockerfile: ./www.yantene.net/docker/Dockerfile
     ports:
       - target: 3000
         published: 4000
@@ -11,7 +11,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: ./backend/docker/Dockerfile
+      dockerfile: ./api.www.yantene.net/docker/Dockerfile
     ports:
       - target: 3100
         published: 4100
@@ -20,8 +20,8 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: backend
-      POSTGRES_USER: backend
+      POSTGRES_DB: api.www.yantene.net
+      POSTGRES_USER: api.www.yantene.net
       POSTGRES_PASSWORD: password
     volumes:
       - ./volumes/postgres/data:/var/lib/postgresql/data
