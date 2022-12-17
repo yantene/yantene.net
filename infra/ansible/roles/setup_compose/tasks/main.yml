@@ -19,7 +19,7 @@
   notify:
     - reload_nginx
 
-- name: Enable backend sites
+- name: Enable sites
   ansible.builtin.file:
     src: /etc/nginx/sites-available/{{ item.1.domain_name }}.conf
     dest: /etc/nginx/sites-enabled/{{ item.1.domain_name }}.conf
