@@ -6,7 +6,7 @@ import { generateOpenAPI, title } from "./app/openapi";
 /**
  * @see {@link https://levelup.gitconnected.com/rest-api-end-to-end-test-automation-in-nestjs-9064be1b89b1}
  */
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await createApp();
 
   const document = generateOpenAPI(app);
