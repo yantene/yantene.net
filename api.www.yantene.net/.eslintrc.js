@@ -22,6 +22,12 @@ module.exports = {
     "class-methods-use-this": "off",
     "import/prefer-default-export": "off",
     "import/no-default-export": "off",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        devDependencies: ["**/*.spec.ts", "**/*.e2e-spec.ts"],
+      },
+    ],
     "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/naming-convention": [
       "error",
