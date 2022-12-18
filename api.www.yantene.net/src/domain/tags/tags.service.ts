@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Tag } from "./entities/tag.entity";
 
 @Injectable()
 export class TagsService {
@@ -15,11 +16,11 @@ export class TagsService {
     order: string,
     notesModifiedAtCursor: Date | undefined,
     taggedCursor: number | undefined,
-  ) {
+  ): Tag[] {
     // eslint-disable-next-line no-console
     console.log(limit, order, notesModifiedAtCursor, taggedCursor);
 
     // TODO: implement me!
-    return `This action returns some tags`;
+    return [];
   }
 }
