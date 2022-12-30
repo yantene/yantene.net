@@ -3,7 +3,7 @@ name: www.yantene.net
 on:
   pull_request:
     paths:
-      - www.yantene.net/**
+      - ./sites/www.yantene.net/**
 
 jobs:
   eslint:
@@ -19,6 +19,6 @@ jobs:
       - name: run eslint
         uses: reviewdog/action-eslint@v1
         with:
-          workdir: www.yantene.net
+          workdir: ./sites/www.yantene.net
           reporter: github-pr-review
           fail_on_error: true

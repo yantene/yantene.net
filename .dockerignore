@@ -2,10 +2,10 @@
 /.dockerignore
 /node_modules
 
-/api.www.yantene.net/docker
-/api.www.yantene.net/node_modules
-/api.www.yantene.net/dist
+/sites/api.www.yantene.net/docker
+/sites/api.www.yantene.net/node_modules
+/sites/api.www.yantene.net/dist
 
-/www.yantene.net/docker
-/www.yantene.net/node_modules
-/www.yantene.net/.next
+/sites/www.yantene.net/docker
+/sites/www.yantene.net/node_modules
+/sites/www.yantene.net/.next

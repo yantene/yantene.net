@@ -3,7 +3,7 @@ name: api.www.yantene.net
 on:
   pull_request:
     paths:
-      - api.www.yantene.net/**
+      - ./sites/api.www.yantene.net/**
 
 jobs:
   jest:
@@ -19,7 +19,7 @@ jobs:
       - name: run jest
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          working-directory: api.www.yantene.net
+          working-directory: ./sites/api.www.yantene.net
 
   jest-e2e:
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
 
       - name: run jest for e2e
         run: npm run test:e2e
-        working-directory: api.www.yantene.net
+        working-directory: ./sites/api.www.yantene.net
 
   eslint:
     runs-on: ubuntu-latest
@@ -48,6 +48,6 @@ jobs:
       - name: run eslint
         uses: reviewdog/action-eslint@v1
         with:
-          workdir: api.www.yantene.net
+          workdir: ./sites/api.www.yantene.net
           reporter: github-pr-review
           fail_on_error: true
