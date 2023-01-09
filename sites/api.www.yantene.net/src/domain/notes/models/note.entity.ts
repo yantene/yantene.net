@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { Tag } from "../../tags/entities/tag.entity";
-import { Body } from "../value-objects/body.value-object";
-import { Title } from "../value-objects/title.value-object";
+import { Tag } from "../../tags/models/tag.entity";
+import { Body } from "./body.value-object";
+import { Title } from "./title.value-object";
 
 export class Note {
   #title: Title;

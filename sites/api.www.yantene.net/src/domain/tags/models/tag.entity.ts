@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { Name } from "../value-objects/name.value-object";
+import { Name } from "./name.value-object";
 
 export class Tag {
   #name: Name;
