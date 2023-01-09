@@ -2,7 +2,7 @@ services:
   www.yantene.net:
     build:
       context: .
-      dockerfile: ./www.yantene.net/docker/Dockerfile
+      dockerfile: ./sites/www.yantene.net/docker/Dockerfile
     ports:
       - target: 3000
         published: "${WWW_YANTENE_NET_PORT:-3000}"
@@ -11,7 +11,7 @@ services:
   api.www.yantene.net:
     build:
       context: .
-      dockerfile: ./api.www.yantene.net/docker/Dockerfile
+      dockerfile: ./sites/api.www.yantene.net/docker/Dockerfile
     ports:
       - target: 3100
         published: "${API_WWW_YANTENE_NET_PORT:-3100}"

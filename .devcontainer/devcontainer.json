@@ -15,14 +15,15 @@
     "vscode": {
       "extensions": [
         "EditorConfig.EditorConfig",
-        "vivaxy.vscode-conventional-commits",
-        "exiasr.hadolint",
-        "esbenp.prettier-vscode",
+        "GitHub.vscode-pull-request-github",
+        "Prisma.prisma",
+        "chrislajoie.vscode-modelines",
         "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "exiasr.hadolint",
         "kavod-io.vscode-jest-test-adapter",
         "redhat.ansible",
-        "chrislajoie.vscode-modelines",
-        "Prisma.prisma"
+        "vivaxy.vscode-conventional-commits"
       ]
     }
   }

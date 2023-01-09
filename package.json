@@ -15,21 +15,21 @@
   },
   "scripts": {
     "format": "run-s -c format:*",
-    "format:api.www.yantene.net": "npm run --workspace api.www.yantene.net format",
+    "format:api.www.yantene.net": "npm run --workspace ./sites/api.www.yantene.net format",
     "format:prettier": "prettier --write .",
-    "format:prettier-package-json": "prettier-package-json --success --write .{,/api.www.yantene.net,/www.yantene.net}/package.json",
-    "format:www.yantene.net": "npm run --workspace www.yantene.net format",
+    "format:prettier-package-json": "prettier-package-json --success --write ./sites/{,api.www.yantene.net,www.yantene.net}/package.json",
+    "format:www.yantene.net": "npm run --workspace ./sites/www.yantene.net format",
     "postinstall": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky install",
     "lint": "run-s -c lint:*",
-    "lint:api.www.yantene.net": "npm run --workspace api.www.yantene.net lint",
+    "lint:api.www.yantene.net": "npm run --workspace ./sites/api.www.yantene.net lint",
     "lint:prettier": "prettier --check .",
-    "lint:prettier-package-json": "prettier-package-json --success --list-different .{,/api.www.yantene.net,/www.yantene.net}/package.json",
-    "lint:www.yantene.net": "npm run --workspace www.yantene.net lint"
+    "lint:prettier-package-json": "prettier-package-json --success --list-different ./sites/{,api.www.yantene.net,www.yantene.net}/package.json",
+    "lint:www.yantene.net": "npm run --workspace ./sites/www.yantene.net lint"
   },
   "workspaces": {
     "packages": [
-      "www.yantene.net",
-      "api.www.yantene.net"
+      "./sites/www.yantene.net",
+      "./sites/api.www.yantene.net"
     ]
   },
   "dependencies": {
