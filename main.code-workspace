@@ -1,0 +1,24 @@
+{
+  "folders": [
+    {
+      "name": "root",
+      "path": "."
+    },
+    {
+      "name": "www.yantene.net",
+      "path": "./sites/www.yantene.net"
+    },
+    {
+      "name": "api.www.yantene.net",
+      "path": "./sites/api.www.yantene.net"
+    },
+    {
+      "name": "ansible",
+      "path": "./infra/ansible"
+    }
+  ],
+  "settings": {
+    "conventionalCommits.gitmoji": false,
+    "typescript.preferences.importModuleSpecifier": "relative"
+  }
+}
