@@ -2,7 +2,6 @@
 CREATE TABLE "Note" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
-    "emoji" TEXT NOT NULL,
     "body" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL,
     "modifiedAt" TIMESTAMP(3) NOT NULL,
