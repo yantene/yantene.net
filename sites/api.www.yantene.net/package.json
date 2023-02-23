@@ -16,6 +16,9 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "db:generate-artifacts": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:push": "prisma db push",
     "format": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "generate:openapi": "nest start --entryFile generate-openapi",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
