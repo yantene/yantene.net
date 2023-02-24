@@ -16,9 +16,9 @@ export class Note {
 
   constructor(
     title: Title,
+    body: Body,
     createdAt: Temporal.Instant,
     modifiedAt: Temporal.Instant,
-    body: Body,
   ) {
     this.#title = title;
 

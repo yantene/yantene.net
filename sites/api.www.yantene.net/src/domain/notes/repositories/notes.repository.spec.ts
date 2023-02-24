@@ -1,6 +1,4 @@
-import { Temporal } from "@js-temporal/polyfill";
 import { Test, TestingModule } from "@nestjs/testing";
-import { PrismaClient } from "@prisma/client";
 import { Body } from "../models/body.value-object";
 import { Title } from "../models/title.value-object";
 import { NotesRepository } from "./notes.repository";
@@ -24,6 +22,29 @@ describe("NotesRepository", () => {
     expect(repository).toBeDefined();
   });
 
+  describe("#create()", () => {
+    it("returns a value object of the given value", async () => {
+      const title = new Title("作成するタイトル");
+      const body = new Body("記事の内容");
+      const createdNote = await repository.create(title, body);
+
+      expect(createdNote.title.value).toBe(title.value);
+      expect(createdNote.body.value).toBe(body.value);
+    });
+
+    it("increases the number of records in the Notes table by 1", async () => {
+      const beforeCount = await jestPrisma.client.note.count();
+
+      const title = new Title("作成するタイトル");
+      const body = new Body("記事の内容");
+      await repository.create(title, body);
+
+      const afterCount = await jestPrisma.client.note.count();
+
+      expect(afterCount).toBe(beforeCount + 1);
+    });
+  });
+
   describe("#findByTitle()", () => {
     it("returns undefined if a nonexistent title is given", async () => {
       const note = await repository.findByTitle(
@@ -35,23 +56,13 @@ describe("NotesRepository", () => {
 
     it("returns a note if the note title is given", async () => {
       const title = new Title("存在するタイトル");
-      const now = Temporal.Now.instant();
       const body = new Body("記事の内容");
 
-      const prisma = new PrismaClient();
+      await repository.create(title, body);
 
-      await prisma.note.create({
-        data: {
-          title: title.value,
-          createdAt: new Date(now.epochMilliseconds),
-          modifiedAt: new Date(now.epochMilliseconds),
-          body: body.value,
-        },
-      });
+      const foundNote = await repository.findByTitle(title);
 
-      const note = await repository.findByTitle(title);
-
-      expect(note?.title?.value).toBe(title.value);
+      expect(foundNote?.title?.value).toBe(title.value);
     });
   });
 });
