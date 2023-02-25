@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "yantene.net",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "yantene.net",
   "license": "UNLICENSED",
   "author": "Shuhei YOSHIDA <contact@yantene.net> (https://www.yantene.net/)",
@@ -33,14 +33,14 @@
     ]
   },
   "dependencies": {
-    "@fastify/static": "^6.6.0",
+    "@fastify/static": "^6.9.0",
     "npm-run-all": "^4.1.5"
   },
   "devDependencies": {
-    "@commitlint/cli": "^17.1.2",
-    "@commitlint/config-conventional": "^17.1.0",
-    "husky": "^8.0.1",
-    "prettier": "^2.7.1",
-    "prettier-package-json": "^2.7.0"
+    "@commitlint/cli": "^17.4.4",
+    "@commitlint/config-conventional": "^17.4.4",
+    "husky": "^8.0.3",
+    "prettier": "^2.8.4",
+    "prettier-package-json": "^2.8.0"
   }
 }
