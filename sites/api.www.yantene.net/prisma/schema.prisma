@@ -17,8 +17,6 @@ model Note {
 
   tags Tag[]
 
-  emoji String
-
   body String
 
   createdAt  DateTime

@@ -4,9 +4,7 @@
   "service": "dev",
   "workspaceFolder": "/workspace",
   "remoteEnv": {
-    "EDITOR": "code --wait",
-    // For vscode-jest-test-adapter (https://github.com/kavod-io/vscode-jest-test-adapter/issues/126)
-    "NODE_OPTIONS": "--experimental-vm-modules"
+    "EDITOR": "code --wait"
   },
   "remoteUser": "devuser",
   "initializeCommand": "${localWorkspaceFolder}/.devcontainer/commands/initialize.sh",
@@ -16,12 +14,12 @@
       "extensions": [
         "EditorConfig.EditorConfig",
         "GitHub.vscode-pull-request-github",
+        "Orta.vscode-jest",
         "Prisma.prisma",
         "chrislajoie.vscode-modelines",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "exiasr.hadolint",
-        "kavod-io.vscode-jest-test-adapter",
         "redhat.ansible",
         "vivaxy.vscode-conventional-commits"
       ]
