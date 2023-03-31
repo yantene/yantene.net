@@ -2,4 +2,15 @@
 
 set -eux
 
-sudo chown devuser:devusers ./node_modules
+# Setup development environment
+npm ci
+
+# Setup api.www.yantene.net
+cd ./sites/api.www.yantene.net
+npm ci
+cd ../..
+
+# Setup www.yantene.net
+cd ./sites/www.yantene.net
+npm ci
+cd ../..

@@ -145,10 +145,6 @@ RUN \
   curl -L 'https://github.com/hadolint/hadolint/releases/download/v2.10.0/hadolint-Linux-x86_64' -o /usr/local/bin/hadolint && \
   chmod 755 /usr/local/bin/hadolint && \
   gosu ${USERNAME} fish -c " \
-  npm install --location=global \
-  prettier@2.7.1 \
-  @nestjs/cli && \
-  asdf reshim nodejs \
   python -m pip install \
   ansible==7.2.0 \
   ansible-lint==6.8.0 && \

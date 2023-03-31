@@ -9,7 +9,6 @@ services:
         GID: ${GID:-1000}
     volumes:
       - ..:/workspace
-      - node_modules:/workspace/node_modules # volume trick
   postgres:
     image: postgres:15
     environment:
@@ -22,5 +21,4 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
 
 volumes:
-  node_modules:
   postgres_data:

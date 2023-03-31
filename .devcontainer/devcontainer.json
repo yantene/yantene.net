@@ -21,7 +21,9 @@
         "esbenp.prettier-vscode",
         "exiasr.hadolint",
         "redhat.ansible",
-        "vivaxy.vscode-conventional-commits"
+        "vivaxy.vscode-conventional-commits",
+        "yusukehirao.vscode-markuplint",
+        "GitHub.copilot"
       ]
     }
   }
