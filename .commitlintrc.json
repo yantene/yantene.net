@@ -4,8 +4,8 @@
     "scope-enum": [
       2,
       "always",
-      ["www.yantene.net", "api.www.yantene.net", "infra"]
+      ["dev", "infra", "www.yantene.net", "api.www.yantene.net", "infra"]
     ],
-    "subject-case": [0]
+    "subject-case": [0, "always"]
   }
 }

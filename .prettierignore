@@ -1,11 +1,5 @@
 /node_modules
 
+/sites
+
 /tmp
-
-# /sites/api.www.yantene.net/
-/sites/api.www.yantene.net/dist
-/sites/api.www.yantene.net/node_modules
-
-# /sites/www.yantene.net/
-/sites/www.yantene.net/.next
-/sites/www.yantene.net/node_modules
