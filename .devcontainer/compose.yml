@@ -1,3 +1,4 @@
+name: devcontainer
 services:
   dev:
     build:
