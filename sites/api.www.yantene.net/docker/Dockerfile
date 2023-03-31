@@ -3,29 +3,23 @@ FROM node:18-slim as build
 WORKDIR /usr/src/app
 
 # install packages for build
-COPY ./package*.json ./
-RUN mkdir ./api.www.yantene.net
-COPY ./api.www.yantene.net/package.json ./api.www.yantene.net
-RUN npm ci --workspace api.www.yantene.net
+COPY ./sites/api.www.yantene.net/package.json ./
+RUN npm ci
 
 # build
-COPY ./api.www.yantene.net/ ./api.www.yantene.net/
-RUN npm run --workspace api.www.yantene.net build
+COPY ./sites/api.www.yantene.net/ ./
+RUN npm run build
 
 FROM node:18-slim as production
 
 WORKDIR /usr/src/app
 
 # install packages for production
-COPY ./package*.json ./
-RUN mkdir ./api.www.yantene.net
-COPY ./api.www.yantene.net/package.json ./api.www.yantene.net
-RUN npm ci --workspace api.www.yantene.net --omit=dev
+COPY ./sites/api.www.yantene.net/ ./
+RUN npm ci --omit=dev
 
 # prepare assets
-COPY --from=build /usr/src/app/api.www.yantene.net/dist /usr/src/app/api.www.yantene.net/dist
-
-WORKDIR /usr/src/app/api.www.yantene.net
+COPY --from=build /usr/src/app/dist /usr/src/app/dist
 
 EXPOSE 3100
 

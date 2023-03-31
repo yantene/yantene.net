@@ -1,0 +1,25 @@
+name: setup node development environment for api.www.yantene.net
+
+description: |
+  setup node development environment for api.www.yantene.net
+
+runs:
+  using: composite
+
+  steps:
+    - name: read .tool-versions
+      uses: marocchino/tool-versions-action@v1
+      id: tool_versions
+      with:
+        path: ./sites/api.www.yantene.net/.tool-versions
+
+    - name: setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ steps.tool_versions.outputs.nodejs }}
+        cache: npm
+
+    - name: install npm packages
+      run: npm ci
+      shell: bash
+      working-directory: ./sites/api.www.yantene.net
