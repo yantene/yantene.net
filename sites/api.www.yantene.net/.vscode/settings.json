@@ -1,0 +1,4 @@
+{
+  "markuplint.enable": false,
+  "ansible.validation.lint.enabled": false
+}
