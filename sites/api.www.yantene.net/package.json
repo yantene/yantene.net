@@ -28,6 +28,7 @@
     "lint:eslint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:prettier": "prettier --check .",
     "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json",
+    "repl": "nest start --entryFile repl",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",
