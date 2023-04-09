@@ -46,6 +46,7 @@ RUN \
   rm -rf /var/lib/apt/lists/*
 
 # Install basic tools and libraries
+# hadolint ignore=DL3008
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
@@ -71,15 +72,16 @@ RUN \
   wget=1.21-1+deb11u1 \
   zlib1g-dev=1:1.2.11.dfsg-2+deb11u2 && \
   apt-get -t bullseye-backports install --no-install-recommends -y \
-  git=1:2.39.1-0.1~bpo11+1 && \
+  git && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
 # Setup shell
+# hadolint ignore=DL3008
 RUN \
   apt-get update -y && \
   apt-get -t bullseye-backports install --no-install-recommends -y \
-  fish=3.5.1+ds-1~bpo11+1 && \
+  fish && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   gosu ${USERNAME} fish -c ' \
