@@ -1,4 +1,4 @@
-export class Title {
+export class NotePath {
   #value: string;
 
   constructor(value: string) {

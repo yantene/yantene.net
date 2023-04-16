@@ -1,4 +1,4 @@
-export class Body {
+export class NoteFileUri {
   #value: string;
 
   constructor(value: string) {
