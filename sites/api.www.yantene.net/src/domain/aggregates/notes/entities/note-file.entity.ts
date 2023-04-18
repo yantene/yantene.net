@@ -2,8 +2,9 @@ import { Temporal } from "@js-temporal/polyfill";
 import { NoteFileId } from "../value-objects/note-file-id.value-object";
 import { NoteFileSha1 } from "../value-objects/note-file-sha1.value-object";
 import { NoteFileUri } from "../value-objects/note-file-uri.value-object";
+import { EntityInterface } from "../../../../common/interfaces/entity.interface";
 
-export class NoteFile {
+export class NoteFile implements EntityInterface {
   #id?: NoteFileId;
 
   #sha1: NoteFileSha1;
@@ -40,5 +41,20 @@ export class NoteFile {
 
   get uploadedAt(): Temporal.Instant {
     return this.#uploadedAt;
+  }
+
+  toString(): string {
+    return {
+      id: this.#id,
+      sha1: this.#sha1,
+      uri: this.#uri,
+      uploadedAt: this.#uploadedAt,
+    }.toString();
+  }
+
+  equals(other: NoteFile): boolean {
+    if (!this.id || !other.id) return false;
+
+    return this.id.equals(other.id);
   }
 }

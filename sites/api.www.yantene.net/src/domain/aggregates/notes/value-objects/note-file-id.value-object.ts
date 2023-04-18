@@ -1,4 +1,6 @@
-export class NoteFileId {
+import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
+
+export class NoteFileId implements ValueObjectInterface {
   #value: number;
 
   constructor(value: number) {
@@ -11,5 +13,13 @@ export class NoteFileId {
 
   get value(): number {
     return this.#value;
+  }
+
+  toString(): string {
+    return this.#value.toString();
+  }
+
+  equals(other: NoteFileId): boolean {
+    return this.#value === other.value;
   }
 }

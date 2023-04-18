@@ -1,4 +1,6 @@
-export class NoteBody {
+import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
+
+export class NoteBody implements ValueObjectInterface {
   #value: string;
 
   constructor(value: string) {
@@ -7,5 +9,13 @@ export class NoteBody {
 
   get value(): string {
     return this.#value;
+  }
+
+  toString(): string {
+    return this.#value;
+  }
+
+  equals(other: NoteBody): boolean {
+    return this.#value === other.value;
   }
 }

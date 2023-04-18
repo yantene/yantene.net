@@ -3,8 +3,9 @@ import { NoteTitle } from "../value-objects/note-title.value-object";
 import { NoteId } from "../value-objects/note-id.value-object";
 import { NotePath } from "../value-objects/note-path.value-object";
 import { NoteBody } from "../value-objects/note-body.value-object";
+import { EntityInterface } from "../../../../common/interfaces/entity.interface";
 
-export class Note {
+export class Note implements EntityInterface {
   #id?: NoteId;
 
   #title: NoteTitle;
@@ -57,5 +58,22 @@ export class Note {
 
   get body(): NoteBody {
     return this.#body;
+  }
+
+  toString(): string {
+    return {
+      id: this.#id,
+      title: this.#title,
+      path: this.#path,
+      createdAt: this.#createdAt,
+      modifiedAt: this.#modifiedAt,
+      body: this.#body,
+    }.toString();
+  }
+
+  equals(other: Note): boolean {
+    if (!this.id || !other.id) return false;
+
+    return this.id.equals(other.id);
   }
 }
