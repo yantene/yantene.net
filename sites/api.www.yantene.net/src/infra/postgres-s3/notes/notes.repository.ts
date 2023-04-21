@@ -1,5 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import { Temporal } from "@js-temporal/polyfill";
+import {
+  NoteAttachment as PrismaNoteAttachment,
+  NoteFile as PrismaNoteFile,
+  NoteLink as PrismaNoteLink,
+  PrismaClient,
+  Note as PrismaNote,
+} from "@prisma/client";
+import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
 import { NotesRepositoryInterface } from "../../../domain/aggregates/notes/notes.repository.interface";
 import {
   Note,
@@ -9,6 +15,15 @@ import {
 import { NotImplementedError } from "../../../common/errors/not-implemented.error";
 import { NoteId } from "../../../domain/aggregates/notes/value-objects/note-id.value-object";
 import { NoteTitle } from "../../../domain/aggregates/notes/value-objects/note-title.value-object";
+import { NotePath } from "../../../domain/aggregates/notes/value-objects/note-path.value-object";
+import { NoteBody } from "../../../domain/aggregates/notes/value-objects/note-body.value-object";
+import {
+  NoteFile,
+  PersistentNoteFile,
+} from "../../../domain/aggregates/notes/entities/note-file.entity";
+import { NoteFileId } from "../../../domain/aggregates/notes/value-objects/note-file-id.value-object";
+import { NoteFileSha1 } from "../../../domain/aggregates/notes/value-objects/note-file-sha1.value-object";
+import { NoteFileUri } from "../../../domain/aggregates/notes/value-objects/note-file-uri.value-object";
 
 export class NotesRepository implements NotesRepositoryInterface {
   #prisma: PrismaClient;
@@ -70,5 +85,39 @@ export class NotesRepository implements NotesRepositoryInterface {
   ): Promise<PersistentNote[]> {
     // TODO: IMPLEMENT
     throw new NotImplementedError();
+  }
+
+  /**
+   * Convert Prisma Note to Note Entity
+   *
+   * @param prismaNote - Prisma Note with relations
+   * @returns Note Entity
+   */
+  #toNoteEntity(
+    prismaNote: PrismaNote & {
+      links: PrismaNoteLink[];
+      attachments: (PrismaNoteAttachment & {
+        noteFile: PrismaNoteFile;
+      })[];
+    },
+  ): PersistentNote {
+    return Note.buildPersistent(
+      new NoteId(prismaNote.id),
+      new NoteTitle(prismaNote.title),
+      new NotePath(prismaNote.path),
+      toTemporalInstant.bind(prismaNote.createdAt)(),
+      toTemporalInstant.bind(prismaNote.modifiedAt)(),
+      new NoteBody(prismaNote.body),
+      prismaNote.attachments.map<PersistentNoteFile>(
+        ({ noteFile: prismaNoteFile }) =>
+          NoteFile.buildPersistent(
+            new NoteFileId(prismaNoteFile.id),
+            new NoteFileSha1(prismaNoteFile.sha1),
+            new NoteFileUri(prismaNoteFile.uri),
+            toTemporalInstant.bind(prismaNoteFile.uploadedAt)(),
+          ),
+      ),
+      prismaNote.links.map((link) => new NoteId(link.toNoteId)),
+    );
   }
 }
