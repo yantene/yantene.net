@@ -1,4 +1,39 @@
-export type EntityInterface = {
+import { ValueObjectInterface } from "./value-object.interface";
+
+export type PersistentEntityInterface = EntityInterface & {
+  id: ValueObjectInterface;
+};
+
+export type TransientEntityInterface = EntityInterface & {
+  id: undefined;
+};
+
+export interface EntityInterface {
+  /**
+   * Returns the ID of the entity.
+   */
+  get id(): ValueObjectInterface | undefined;
+
+  /**
+   * Type guard for persistent entity.
+   */
+  isPersistent(): this is PersistentEntityInterface;
+
+  /**
+   * Type guard for transient entity.
+   */
+  isTransient(): this is TransientEntityInterface;
+
+  /**
+   * Asserts that the entity is persistent.
+   */
+  assertPersistent(): asserts this is PersistentEntityInterface;
+
+  /**
+   * Asserts that the entity is transient.
+   */
+  assertTransient(): asserts this is TransientEntityInterface;
+
   /**
    * Returns a string representation of the entity.
    *
@@ -12,5 +47,5 @@ export type EntityInterface = {
    * @param other - Entity to compare
    * @returns True if the entity is equal to the other entity
    */
-  equals(other: EntityInterface): boolean;
-};
+  equals(other: PersistentEntityInterface): boolean;
+}

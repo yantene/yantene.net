@@ -3,7 +3,16 @@ import { NoteTitle } from "../value-objects/note-title.value-object";
 import { NoteId } from "../value-objects/note-id.value-object";
 import { NotePath } from "../value-objects/note-path.value-object";
 import { NoteBody } from "../value-objects/note-body.value-object";
-import { EntityInterface } from "../../../../common/interfaces/entity.interface";
+import { NoteFile } from "./note-file.entity";
+import {
+  EntityInterface,
+  PersistentEntityInterface,
+  TransientEntityInterface,
+} from "../../../../common/interfaces/entity.interface";
+
+export type PersistentNote = Note & PersistentEntityInterface;
+
+export type TransientNote = Note & TransientEntityInterface;
 
 export class Note implements EntityInterface {
   #id?: NoteId;
@@ -25,6 +34,8 @@ export class Note implements EntityInterface {
     createdAt: Temporal.Instant,
     modifiedAt: Temporal.Instant,
     body: NoteBody,
+    attachments: NoteFile[],
+    linkingNoteIds: NoteId[],
   ) {
     this.#id = id;
     this.#title = title;
@@ -34,6 +45,9 @@ export class Note implements EntityInterface {
     this.#modifiedAt = modifiedAt;
 
     this.#body = body;
+
+    this.#attachments = attachments;
+    this.#linkingNoteIds = linkingNoteIds;
   }
 
   get id(): NoteId | undefined {
@@ -60,6 +74,22 @@ export class Note implements EntityInterface {
     return this.#body;
   }
 
+  isPersistent(): this is PersistentNote {
+    return !!this.id;
+  }
+
+  assertPersistent(): asserts this is PersistentNote {
+    if (!this.isPersistent()) throw new Error("Note is not persistent");
+  }
+
+  isTransient(): this is TransientNote {
+    return !this.id;
+  }
+
+  assertTransient(): asserts this is TransientNote {
+    if (!this.isTransient()) throw new Error("Note is not transient");
+  }
+
   toString(): string {
     return {
       id: this.#id,
@@ -71,8 +101,8 @@ export class Note implements EntityInterface {
     }.toString();
   }
 
-  equals(other: Note): boolean {
-    if (!this.id || !other.id) return false;
+  equals(other: PersistentNote): boolean {
+    if (!this.isPersistent()) return false;
 
     return this.id.equals(other.id);
   }
