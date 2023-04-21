@@ -1,9 +1,9 @@
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
 export class NoteFileId implements ValueObjectInterface {
-  #value: number;
+  #value: bigint;
 
-  constructor(value: number) {
+  constructor(value: bigint) {
     if (!Number.isInteger(value)) {
       throw new TypeError("NoteFileId must be an integer.");
     }
@@ -11,7 +11,7 @@ export class NoteFileId implements ValueObjectInterface {
     this.#value = value;
   }
 
-  get value(): number {
+  get value(): bigint {
     return this.#value;
   }
 
