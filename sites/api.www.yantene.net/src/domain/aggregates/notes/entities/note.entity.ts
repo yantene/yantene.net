@@ -27,6 +27,10 @@ export class Note implements EntityInterface {
 
   #body: NoteBody;
 
+  #attachments: NoteFile[];
+
+  #linkingNoteIds: NoteId[];
+
   constructor(
     id: NoteId | undefined,
     title: NoteTitle,
@@ -72,6 +76,14 @@ export class Note implements EntityInterface {
 
   get body(): NoteBody {
     return this.#body;
+  }
+
+  get attachments(): NoteFile[] {
+    return this.#attachments;
+  }
+
+  get linkingNoteIds(): NoteId[] {
+    return this.#linkingNoteIds;
   }
 
   isPersistent(): this is PersistentNote {
