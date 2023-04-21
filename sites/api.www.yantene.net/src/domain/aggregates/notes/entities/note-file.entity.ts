@@ -71,6 +71,56 @@ export class NoteFile implements EntityInterface {
     this.#uploadedAt = uploadedAt;
   }
 
+  /**
+   * Build a persistent note file.
+   *
+   * @param id
+   * @param sha1
+   * @param uri
+   * @param uploadedAt
+   * @throws Error - If the parameters are invalid.
+   * @returns A persistent note file
+   */
+  static buildPersistent(
+    id: NoteFileId,
+    sha1: NoteFileSha1,
+    uri: NoteFileUri,
+    uploadedAt: Temporal.Instant,
+  ): PersistentNoteFile {
+    const noteFile: NoteFile = new NoteFile(
+      id,
+      undefined,
+      sha1,
+      uri,
+      uploadedAt,
+    );
+
+    noteFile.assertPersistent();
+
+    return noteFile;
+  }
+
+  /**
+   * Build a transient note file.
+   *
+   * @param path
+   * @throws Error - If the parameters are invalid.
+   * @returns A transient note file
+   */
+  static buildTransient(path: NoteFilePath): TransientNoteFile {
+    const noteFile: NoteFile = new NoteFile(
+      undefined,
+      path,
+      undefined,
+      undefined,
+      undefined,
+    );
+
+    noteFile.assertTransient();
+
+    return noteFile;
+  }
+
   get id(): NoteFileId | undefined {
     return this.#id;
   }

@@ -54,6 +54,82 @@ export class Note implements EntityInterface {
     this.#linkingNoteIds = linkingNoteIds;
   }
 
+  /**
+   * Build a persistent note.
+   *
+   * @param id
+   * @param title
+   * @param path
+   * @param createdAt
+   * @param modifiedAt
+   * @param body
+   * @param attachments
+   * @param linkingNoteIds
+   * @returns Built persistent note
+   */
+  static buildPersistent(
+    id: NoteId,
+    title: NoteTitle,
+    path: NotePath,
+    createdAt: Temporal.Instant,
+    modifiedAt: Temporal.Instant,
+    body: NoteBody,
+    attachments: NoteFile[],
+    linkingNoteIds: NoteId[],
+  ): PersistentNote {
+    const note: Note = new Note(
+      id,
+      title,
+      path,
+      createdAt,
+      modifiedAt,
+      body,
+      attachments,
+      linkingNoteIds,
+    );
+
+    note.assertPersistent();
+
+    return note;
+  }
+
+  /**
+   * Build a transient note.
+   *
+   * @param title
+   * @param path
+   * @param body
+   * @param attachments
+   * @param linkingNoteIds
+   * @param createdAt - Defaults to `Temporal.Now.instant()`.
+   * @param modifiedAt - Defaults to `Temporal.Now.instant()`.
+   * @returns Built transient note
+   */
+  static buildTransient(
+    title: NoteTitle,
+    path: NotePath,
+    body: NoteBody,
+    attachments: NoteFile[],
+    linkingNoteIds: NoteId[],
+    createdAt = Temporal.Now.instant(),
+    modifiedAt = Temporal.Now.instant(),
+  ): TransientNote {
+    const note: Note = new Note(
+      undefined,
+      title,
+      path,
+      createdAt,
+      modifiedAt,
+      body,
+      attachments,
+      linkingNoteIds,
+    );
+
+    note.assertTransient();
+
+    return note;
+  }
+
   get id(): NoteId | undefined {
     return this.#id;
   }
