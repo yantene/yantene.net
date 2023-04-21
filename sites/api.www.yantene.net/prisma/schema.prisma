@@ -29,10 +29,10 @@ model Note {
 }
 
 model NoteLink {
-  fromNote   Note   @relation("NoteBacklinking", fields: [fromNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  fromNote   Note   @relation("NoteLinking", fields: [fromNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   fromNoteId BigInt
 
-  toNote   Note   @relation("NoteLinking", fields: [toNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  toNote   Note   @relation("NoteBacklinking", fields: [toNoteId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   toNoteId BigInt
 
   insertedAtForAudit DateTime @default(now())
