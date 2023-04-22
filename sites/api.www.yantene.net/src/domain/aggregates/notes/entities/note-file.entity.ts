@@ -6,6 +6,7 @@ import {
 import { NoteFileId } from "../value-objects/note-file-id.value-object";
 import { RemoteFile } from "../value-objects/remote-file.value-object";
 import { LocalFile } from "../value-objects/local-file.value-object";
+import { Sha1 } from "../value-objects/sha1.value-object";
 
 export type PersistentNoteFile = NoteFile &
   PersistentEntityInterface & {
@@ -87,6 +88,18 @@ export class NoteFile implements EntityInterface {
 
   get localFile(): LocalFile | undefined {
     return this.#localFile;
+  }
+
+  /**
+   * @returns A SHA-1 hash of the note file
+   */
+  get sha1(): Sha1 {
+    if (this.isPersistent()) {
+      return this.remoteFile.sha1;
+    }
+
+    this.assertTransient();
+    return this.localFile.sha1;
   }
 
   isPersistent(): this is PersistentNoteFile {
