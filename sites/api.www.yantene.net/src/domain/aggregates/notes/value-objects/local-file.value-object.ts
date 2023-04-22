@@ -6,38 +6,32 @@ import { Sha1 } from "./sha1.value-object";
 export class LocalFile implements ValueObjectInterface {
   #path: string;
 
-  constructor(path: string) {
+  #sha1: Sha1;
+
+  constructor(path: string, sha1: Sha1) {
     this.#path = path.normalize(path);
+
+    this.#sha1 = sha1;
   }
 
   /**
-   * Calculate SHA-1 hash of the file.
+   * Build a local file.
    *
-   * @returns SHA-1 hash of the file
+   * @param path - Path to the file
+   * @returns A local file
    */
-  async calculateSha1(): Promise<Sha1> {
-    const hash = createHash("sha1");
-    const stream = createReadStream(this.#path);
+  async build(path: string): Promise<LocalFile> {
+    const sha1 = await Sha1.calculateFromFile(path);
 
-    return new Promise<Sha1>((resolve, reject) => {
-      stream.on("error", (error) => {
-        reject(error);
-      });
-
-      stream.on("data", (chunk) => {
-        hash.update(chunk);
-      });
-
-      stream.on("end", () => {
-        stream.close();
-
-        resolve(new Sha1(hash.digest()));
-      });
-    });
+    return new LocalFile(path, sha1);
   }
 
   get path(): string {
     return this.#path;
+  }
+
+  get sha1(): Sha1 {
+    return this.#sha1;
   }
 
   toJSON(): string {
