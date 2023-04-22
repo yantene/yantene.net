@@ -1,99 +1,61 @@
-import { Temporal } from "@js-temporal/polyfill";
 import {
   EntityInterface,
   PersistentEntityInterface,
   TransientEntityInterface,
 } from "../../../../common/interfaces/entity.interface";
 import { NoteFileId } from "../value-objects/note-file-id.value-object";
-import { NoteFilePath } from "../value-objects/note-file-path.value-object";
-import { NoteFileSha1 } from "../value-objects/note-file-sha1.value-object";
-import { NoteFileUri } from "../value-objects/note-file-uri.value-object";
+import { RemoteFile } from "../value-objects/remote-file.value-object";
+import { LocalFile } from "../value-objects/local-file.value-object";
 
 export type PersistentNoteFile = NoteFile &
   PersistentEntityInterface & {
-    path: undefined;
-    sha1: NoteFileSha1;
-    uri: NoteFileUri;
-    uploadedAt: Temporal.Instant;
+    remoteFile: RemoteFile;
   };
 
 export type TransientNoteFile = NoteFile &
   TransientEntityInterface & {
-    path: NoteFilePath;
-    sha1: undefined;
-    uri: undefined;
-    uploadedAt: undefined;
+    localFile: LocalFile;
   };
 
 export class NoteFile implements EntityInterface {
   #id?: NoteFileId;
 
-  #path?: NoteFilePath;
+  #remoteFile?: RemoteFile;
 
-  #sha1?: NoteFileSha1;
-
-  #uri?: NoteFileUri;
-
-  #uploadedAt?: Temporal.Instant;
+  #localFile?: LocalFile;
 
   /**
    * @param id
-   * @param path - If specified, the other parameters must be undefined.
-   * @param sha1
-   * @param uri
-   * @param uploadedAt
+   * @param remoteFile - If the note file is persistent, this parameter must be set.
+   * @param localFile - If the note file is transient, this parameter must be set.
    * @throws Error - If the parameters are invalid.
    */
   constructor(
     id: NoteFileId | undefined,
-    path: NoteFilePath | undefined,
-    sha1: NoteFileSha1 | undefined,
-    uri: NoteFileUri | undefined,
-    uploadedAt: Temporal.Instant | undefined,
+    remoteFile?: RemoteFile,
+    localFile?: LocalFile,
   ) {
-    if (
-      !(
-        (id && !path && sha1 && uri && uploadedAt) ||
-        (!id && path && !sha1 && !uri && !uploadedAt)
-      )
-    ) {
-      throw new Error("Invalid NoteFile");
-    }
-
     this.#id = id;
 
-    this.#path = path;
+    this.#remoteFile = remoteFile;
+    this.#localFile = localFile;
 
-    this.#sha1 = sha1;
-
-    this.#uri = uri;
-
-    this.#uploadedAt = uploadedAt;
+    this.assertValid();
   }
 
   /**
    * Build a persistent note file.
    *
    * @param id
-   * @param sha1
-   * @param uri
-   * @param uploadedAt
+   * @param remoteFile
    * @throws Error - If the parameters are invalid.
    * @returns A persistent note file
    */
   static buildPersistent(
     id: NoteFileId,
-    sha1: NoteFileSha1,
-    uri: NoteFileUri,
-    uploadedAt: Temporal.Instant,
+    remoteFile: RemoteFile,
   ): PersistentNoteFile {
-    const noteFile: NoteFile = new NoteFile(
-      id,
-      undefined,
-      sha1,
-      uri,
-      uploadedAt,
-    );
+    const noteFile: NoteFile = new NoteFile(id, remoteFile);
 
     noteFile.assertPersistent();
 
@@ -103,18 +65,12 @@ export class NoteFile implements EntityInterface {
   /**
    * Build a transient note file.
    *
-   * @param path
+   * @param localFile
    * @throws Error - If the parameters are invalid.
    * @returns A transient note file
    */
-  static buildTransient(path: NoteFilePath): TransientNoteFile {
-    const noteFile: NoteFile = new NoteFile(
-      undefined,
-      path,
-      undefined,
-      undefined,
-      undefined,
-    );
+  static buildTransient(localFile: LocalFile): TransientNoteFile {
+    const noteFile: NoteFile = new NoteFile(undefined, undefined, localFile);
 
     noteFile.assertTransient();
 
@@ -125,30 +81,16 @@ export class NoteFile implements EntityInterface {
     return this.#id;
   }
 
-  get path(): NoteFilePath | undefined {
-    return this.#path;
+  get remoteFile(): RemoteFile | undefined {
+    return this.#remoteFile;
   }
 
-  get sha1(): NoteFileSha1 | undefined {
-    return this.#sha1;
-  }
-
-  get uri(): NoteFileUri | undefined {
-    return this.#uri;
-  }
-
-  get uploadedAt(): Temporal.Instant | undefined {
-    return this.#uploadedAt;
+  get localFile(): LocalFile | undefined {
+    return this.#localFile;
   }
 
   isPersistent(): this is PersistentNoteFile {
-    return (
-      !this.#id ||
-      !!this.#path ||
-      !this.#sha1 ||
-      !this.#uri ||
-      !this.#uploadedAt
-    );
+    return !!this.#id && !!this.#remoteFile && !this.#localFile;
   }
 
   assertPersistent(): asserts this is PersistentNoteFile {
@@ -158,13 +100,7 @@ export class NoteFile implements EntityInterface {
   }
 
   isTransient(): this is TransientNoteFile {
-    return (
-      !!this.#id ||
-      !this.#path ||
-      !!this.#sha1 ||
-      !!this.#uri ||
-      !!this.#uploadedAt
-    );
+    return !this.#id && !this.#remoteFile && !!this.#localFile;
   }
 
   assertTransient(): asserts this is TransientNoteFile {
@@ -173,14 +109,32 @@ export class NoteFile implements EntityInterface {
     }
   }
 
-  toString(): string {
+  isValid(): boolean {
+    return this.isPersistent() || this.isTransient();
+  }
+
+  assertValid(): void {
+    if (!this.isValid()) {
+      throw new Error("NoteFile is invalid");
+    }
+  }
+
+  toJSON(): {
+    id: ReturnType<InstanceType<typeof NoteFileId>["toJSON"]> | undefined;
+    remoteFile:
+      | ReturnType<InstanceType<typeof RemoteFile>["toJSON"]>
+      | undefined;
+    localFile: ReturnType<InstanceType<typeof LocalFile>["toJSON"]> | undefined;
+  } {
     return {
-      id: this.#id,
-      path: this.#path,
-      sha1: this.#sha1,
-      uri: this.#uri,
-      uploadedAt: this.#uploadedAt,
-    }.toString();
+      id: this.#id?.toJSON(),
+      remoteFile: this.#remoteFile?.toJSON(),
+      localFile: this.#localFile?.toJSON(),
+    };
+  }
+
+  toString(): string {
+    return JSON.stringify(this.toJSON());
   }
 
   equals(other: PersistentNoteFile): boolean {

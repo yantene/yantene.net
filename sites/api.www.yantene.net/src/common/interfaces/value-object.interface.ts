@@ -1,4 +1,11 @@
+import { JSONValue } from "../types/json.types";
+
 export type ValueObjectInterface = {
+  /**
+   * Returns a JSON representation of the value object.
+   */
+  toJSON(): JSONValue;
+
   /**
    * Returns a string representation of the value object.
    *

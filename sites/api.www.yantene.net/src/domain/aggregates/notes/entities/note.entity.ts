@@ -178,15 +178,34 @@ export class Note implements EntityInterface {
     if (!this.isTransient()) throw new Error("Note is not transient");
   }
 
-  toString(): string {
+  isValid(): boolean {
+    return this.isPersistent() || this.isTransient();
+  }
+
+  assertValid(): void {
+    if (!this.isValid()) throw new Error("Note is invalid");
+  }
+
+  toJSON(): {
+    id: ReturnType<InstanceType<typeof NoteId>["toJSON"]> | undefined;
+    title: ReturnType<InstanceType<typeof NoteTitle>["toJSON"]> | undefined;
+    path: ReturnType<InstanceType<typeof NotePath>["toJSON"]> | undefined;
+    createdAt: number;
+    modifiedAt: number;
+    body: ReturnType<InstanceType<typeof NoteBody>["toJSON"]> | undefined;
+  } {
     return {
-      id: this.#id,
-      title: this.#title,
-      path: this.#path,
-      createdAt: this.#createdAt,
-      modifiedAt: this.#modifiedAt,
-      body: this.#body,
-    }.toString();
+      id: this.#id?.toJSON(),
+      title: this.#title.toJSON(),
+      path: this.#path.toJSON(),
+      createdAt: this.#createdAt.epochMilliseconds,
+      modifiedAt: this.#modifiedAt.epochMilliseconds,
+      body: this.#body.toJSON(),
+    };
+  }
+
+  toString(): string {
+    return JSON.stringify(this.toJSON());
   }
 
   equals(other: PersistentNote): boolean {

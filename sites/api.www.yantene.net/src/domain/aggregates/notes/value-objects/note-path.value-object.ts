@@ -11,8 +11,12 @@ export class NotePath implements ValueObjectInterface {
     return this.#value;
   }
 
-  toString(): string {
+  toJSON(): string {
     return this.#value;
+  }
+
+  toString(): string {
+    return JSON.stringify(this.toJSON());
   }
 
   equals(other: NotePath): boolean {

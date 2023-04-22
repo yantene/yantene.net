@@ -44,7 +44,7 @@ model NoteLink {
 model NoteFile {
   id BigInt @id @default(autoincrement())
 
-  sha1 String @unique
+  sha1 Bytes @unique
 
   uri String
 

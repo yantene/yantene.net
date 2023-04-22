@@ -1,3 +1,4 @@
+import { JSONValue } from "../types/json.types";
 import { ValueObjectInterface } from "./value-object.interface";
 
 export type PersistentEntityInterface = EntityInterface & {
@@ -33,6 +34,21 @@ export interface EntityInterface {
    * Asserts that the entity is transient.
    */
   assertTransient(): asserts this is TransientEntityInterface;
+
+  /**
+   * Returns true if the entity is valid.
+   */
+  isValid(): boolean;
+
+  /**
+   * Asserts that the entity is valid.
+   */
+  assertValid(): void;
+
+  /**
+   * Returns a JSON representation of the value object.
+   */
+  toJSON(): JSONValue;
 
   /**
    * Returns a string representation of the entity.

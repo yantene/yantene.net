@@ -25,7 +25,7 @@ CREATE TABLE "NoteLink" (
 -- CreateTable
 CREATE TABLE "NoteFile" (
     "id" BIGSERIAL NOT NULL,
-    "sha1" TEXT NOT NULL,
+    "sha1" BYTEA NOT NULL,
     "uri" TEXT NOT NULL,
     "uploadedAt" TIMESTAMP(3) NOT NULL,
     "insertedAtForAudit" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

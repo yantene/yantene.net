@@ -11,8 +11,12 @@ export class NoteId implements ValueObjectInterface {
     return this.#value;
   }
 
-  toString(): string {
+  toJSON(): string {
     return this.#value.toString();
+  }
+
+  toString(): string {
+    return JSON.stringify(this.toJSON());
   }
 
   equals(other: NoteId): boolean {

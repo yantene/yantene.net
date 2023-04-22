@@ -1,6 +1,6 @@
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
-export class NoteFileSha1 implements ValueObjectInterface {
+export class RemoteFileUri implements ValueObjectInterface {
   #value: string;
 
   constructor(value: string) {
@@ -11,11 +11,15 @@ export class NoteFileSha1 implements ValueObjectInterface {
     return this.#value;
   }
 
-  toString(): string {
-    return this.#value.toString();
+  toJSON(): string {
+    return this.#value;
   }
 
-  equals(other: NoteFileSha1): boolean {
+  toString(): string {
+    return JSON.stringify(this.toJSON());
+  }
+
+  equals(other: RemoteFileUri): boolean {
     return this.#value === other.value;
   }
 }
