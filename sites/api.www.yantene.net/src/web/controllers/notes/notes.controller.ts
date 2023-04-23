@@ -5,10 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { NotesService } from "../../../domain/notes/notes.service";
 import { IndexQueryRequest } from "../../requests/notes/index-query.request";
 import { NotesIndexResponse } from "../../responses/notes/notes-index.response";
 import { NotesShowResponse } from "../../responses/notes/notes-show.response";
+import { NotesService } from "../../../domain/aggregates/notes/services/notes.service";
 
 @ApiTags("notes")
 @Controller("notes")
