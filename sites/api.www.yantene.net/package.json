@@ -16,6 +16,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "console": "nest start --entryFile console",
     "db:generate-artifacts": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -28,7 +29,6 @@
     "lint:eslint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:prettier": "prettier --check .",
     "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json",
-    "repl": "nest start --entryFile repl",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",
