@@ -151,6 +151,13 @@ RUN \
   ansible==7.2.0 \
   ansible-lint==6.8.0 && \
   asdf reshim python \
+  " && \
+  gosu ${USERNAME} fish -c " \
+  mkdir /tmp/awscliv2 && \
+  cd /tmp/awscliv2 && \
+  curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip' && \
+  unzip awscliv2.zip && \
+  sudo ./aws/install \
   "
 
 # Copy .config/
