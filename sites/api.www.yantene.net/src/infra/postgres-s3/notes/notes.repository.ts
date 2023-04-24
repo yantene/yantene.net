@@ -17,20 +17,18 @@ import { NoteId } from "../../../domain/aggregates/notes/value-objects/note-id.v
 import { NoteTitle } from "../../../domain/aggregates/notes/value-objects/note-title.value-object";
 import { NotePath } from "../../../domain/aggregates/notes/value-objects/note-path.value-object";
 import { NoteBody } from "../../../domain/aggregates/notes/value-objects/note-body.value-object";
-import {
-  NoteFile,
-  PersistentNoteFile,
-} from "../../../domain/aggregates/notes/entities/note-file.entity";
-import { NoteFileId } from "../../../domain/aggregates/notes/value-objects/note-file-id.value-object";
-import { RemoteFile } from "../../../domain/aggregates/notes/value-objects/remote-file.value-object";
-import { Sha1 } from "../../../domain/aggregates/notes/value-objects/sha1.value-object";
-import { RemoteFileUri } from "../../../domain/aggregates/notes/value-objects/remote-file-uri.value-object";
+import { PersistentNoteFile } from "../../../domain/aggregates/notes/entities/note-file.entity";
+import { NoteFilesRepository } from "./note-files.repository";
 
 export class NotesRepository implements NotesRepositoryInterface {
   #prisma: PrismaClient;
 
-  constructor() {
-    this.#prisma = new PrismaClient();
+  #noteFilesRepository: NoteFilesRepository;
+
+  constructor(prisma = new PrismaClient()) {
+    this.#prisma = prisma;
+
+    this.#noteFilesRepository = new NoteFilesRepository(prisma);
   }
 
   findByCreatedAt(
@@ -94,7 +92,7 @@ export class NotesRepository implements NotesRepositoryInterface {
    * @param prismaNote - Prisma Note with relations
    * @returns Note Entity
    */
-  #toNoteEntity(
+  static toNoteEntity(
     prismaNote: PrismaNote & {
       links: PrismaNoteLink[];
       attachments: (PrismaNoteAttachment & {
@@ -111,26 +109,9 @@ export class NotesRepository implements NotesRepositoryInterface {
       new NoteBody(prismaNote.body),
       prismaNote.attachments.map<PersistentNoteFile>(
         ({ noteFile: prismaNoteFile }) =>
-          this.#toNoteFileEntity(prismaNoteFile),
+          NoteFilesRepository.toNoteFileEntity(prismaNoteFile),
       ),
       prismaNote.links.map((link) => new NoteId(link.toNoteId)),
-    );
-  }
-
-  /**
-   * Convert Prisma NoteFile to NoteFile Entity
-   *
-   * @param prismaNoteFile - Prisma NoteFile
-   * @returns NoteFile Entity
-   */
-  #toNoteFileEntity(prismaNoteFile: PrismaNoteFile): PersistentNoteFile {
-    return NoteFile.buildPersistent(
-      new NoteFileId(prismaNoteFile.id),
-      new RemoteFile(
-        new RemoteFileUri(prismaNoteFile.uri),
-        new Sha1(prismaNoteFile.sha1),
-        toTemporalInstant.bind(prismaNoteFile.uploadedAt)(),
-      ),
     );
   }
 }
