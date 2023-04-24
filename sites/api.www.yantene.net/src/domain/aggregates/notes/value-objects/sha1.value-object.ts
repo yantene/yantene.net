@@ -9,6 +9,16 @@ export class Sha1 implements ValueObjectInterface {
     this.#value = value;
   }
 
+  /**
+   * Build a SHA-1 hash from a hex string.
+   *
+   * @param hex - Hex string
+   * @returns SHA-1 hash
+   */
+  static buildFromHex(hex: string): Sha1 {
+    return new Sha1(Buffer.from(hex, "hex"));
+  }
+
   get value(): Buffer {
     return this.#value;
   }

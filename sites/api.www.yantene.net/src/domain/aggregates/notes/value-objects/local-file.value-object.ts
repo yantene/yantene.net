@@ -1,5 +1,3 @@
-import { createHash } from "crypto";
-import { createReadStream } from "fs";
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 import { Sha1 } from "./sha1.value-object";
 
