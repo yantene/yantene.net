@@ -5,10 +5,10 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { NotesService } from "../../../domain/notes/notes.service";
 import { IndexQueryRequest } from "../../requests/notes/index-query.request";
 import { NotesIndexResponse } from "../../responses/notes/notes-index.response";
 import { NotesShowResponse } from "../../responses/notes/notes-show.response";
+import { NotesService } from "../../../domain/aggregates/notes/services/notes.service";
 
 @ApiTags("notes")
 @Controller("notes")
@@ -18,12 +18,8 @@ export class NotesController {
   @Get()
   @ApiOkResponse({ description: "OK", type: NotesIndexResponse })
   @ApiBadRequestResponse({ description: "BadRequest" })
-  index(@Query() indexQuery: IndexQueryRequest): NotesIndexResponse {
-    this.notesService.findAll(
-      indexQuery.limit,
-      indexQuery.order,
-      indexQuery.cursor,
-    );
+  index(@Query() _indexQuery: IndexQueryRequest): NotesIndexResponse {
+    // TODO: IMPLEMENT
 
     return { nextCursor: "", notes: [] };
   }
@@ -32,8 +28,8 @@ export class NotesController {
   @Get(":title")
   @ApiOkResponse({ description: "OK", type: NotesShowResponse })
   @ApiNotFoundResponse({ description: "Not Found" })
-  show(@Param("title") title: string): NotesShowResponse {
-    this.notesService.findOne(title);
+  show(@Param("title") _title: string): NotesShowResponse {
+    // TODO: IMPLEMENT
 
     return {
       note: {

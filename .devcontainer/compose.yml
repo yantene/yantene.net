@@ -19,6 +19,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
+  minio:
+    image: minio/minio:RELEASE.2023-04-20T17-56-55Z.fips
+    environment:
+      MINIO_ROOT_USER: api.www.yantene.net
+      MINIO_ROOT_PASSWORD: password
+    command: server --console-address ":9001" /data
+    ports:
+      - 9000:9000
+      - 9001:9001
 
 volumes:
   postgres_data:

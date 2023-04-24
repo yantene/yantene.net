@@ -16,6 +16,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "console": "nest start --entryFile console",
     "db:generate-artifacts": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -28,7 +29,6 @@
     "lint:eslint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:prettier": "prettier --check .",
     "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json",
-    "repl": "nest start --entryFile repl",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:dev": "nest start --watch",
@@ -40,9 +40,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.317.0",
     "@fastify/static": "^6.9.0",
     "@js-temporal/polyfill": "^0.4.3",
     "@nestjs/common": "^9.3.9",
+    "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.3.9",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-fastify": "^9.3.9",

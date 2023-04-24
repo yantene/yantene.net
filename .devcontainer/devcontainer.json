@@ -23,7 +23,8 @@
         "redhat.ansible",
         "vivaxy.vscode-conventional-commits",
         "yusukehirao.vscode-markuplint",
-        "GitHub.copilot"
+        "GitHub.copilot",
+        "yoavbls.pretty-ts-errors"
       ]
     }
   }
