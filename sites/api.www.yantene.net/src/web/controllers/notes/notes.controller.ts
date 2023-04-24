@@ -18,12 +18,8 @@ export class NotesController {
   @Get()
   @ApiOkResponse({ description: "OK", type: NotesIndexResponse })
   @ApiBadRequestResponse({ description: "BadRequest" })
-  index(@Query() indexQuery: IndexQueryRequest): NotesIndexResponse {
-    this.notesService.findAll(
-      indexQuery.limit,
-      indexQuery.order,
-      indexQuery.cursor,
-    );
+  index(@Query() _indexQuery: IndexQueryRequest): NotesIndexResponse {
+    // TODO: IMPLEMENT
 
     return { nextCursor: "", notes: [] };
   }
@@ -32,8 +28,8 @@ export class NotesController {
   @Get(":title")
   @ApiOkResponse({ description: "OK", type: NotesShowResponse })
   @ApiNotFoundResponse({ description: "Not Found" })
-  show(@Param("title") title: string): NotesShowResponse {
-    this.notesService.findOne(title);
+  show(@Param("title") _title: string): NotesShowResponse {
+    // TODO: IMPLEMENT
 
     return {
       note: {
