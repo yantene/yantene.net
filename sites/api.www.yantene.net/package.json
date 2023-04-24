@@ -44,6 +44,7 @@
     "@fastify/static": "^6.9.0",
     "@js-temporal/polyfill": "^0.4.3",
     "@nestjs/common": "^9.3.9",
+    "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.3.9",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-fastify": "^9.3.9",
