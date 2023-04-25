@@ -3,11 +3,7 @@ import { createReadStream } from "fs";
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
 export class Sha1 implements ValueObjectInterface {
-  #value: Buffer;
-
-  constructor(value: Buffer) {
-    this.#value = value;
-  }
+  constructor(readonly value: Buffer) {}
 
   /**
    * Build a SHA-1 hash from a hex string.
@@ -17,10 +13,6 @@ export class Sha1 implements ValueObjectInterface {
    */
   static buildFromHex(hex: string): Sha1 {
     return new Sha1(Buffer.from(hex, "hex"));
-  }
-
-  get value(): Buffer {
-    return this.#value;
   }
 
   /**
@@ -51,7 +43,7 @@ export class Sha1 implements ValueObjectInterface {
   }
 
   toJSON(): string {
-    return this.#value.toString("hex");
+    return this.value.toString("hex");
   }
 
   toString(): string {
@@ -59,6 +51,6 @@ export class Sha1 implements ValueObjectInterface {
   }
 
   equals(other: Sha1): boolean {
-    return this.#value.equals(other.value);
+    return this.value.equals(other.value);
   }
 }

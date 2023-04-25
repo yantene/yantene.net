@@ -2,14 +2,10 @@ import { ValueObjectInterface } from "../../../../common/interfaces/value-object
 import { Sha1 } from "./sha1.value-object";
 
 export class LocalFile implements ValueObjectInterface {
-  #path: string;
+  readonly path: string;
 
-  #sha1: Sha1;
-
-  constructor(path: string, sha1: Sha1) {
-    this.#path = path.normalize(path);
-
-    this.#sha1 = sha1;
+  constructor(path: string, readonly sha1: Sha1) {
+    this.path = path.normalize(path);
   }
 
   /**
@@ -24,16 +20,8 @@ export class LocalFile implements ValueObjectInterface {
     return new LocalFile(path, sha1);
   }
 
-  get path(): string {
-    return this.#path;
-  }
-
-  get sha1(): Sha1 {
-    return this.#sha1;
-  }
-
   toJSON(): string {
-    return this.#path;
+    return this.path;
   }
 
   toString(): string {
@@ -41,6 +29,6 @@ export class LocalFile implements ValueObjectInterface {
   }
 
   equals(other: LocalFile): boolean {
-    return this.#path === other.#path;
+    return this.path === other.path;
   }
 }

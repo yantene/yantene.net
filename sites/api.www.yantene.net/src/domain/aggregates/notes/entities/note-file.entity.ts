@@ -19,12 +19,6 @@ export type TransientNoteFile = NoteFile &
   };
 
 export class NoteFile implements EntityInterface {
-  #id?: NoteFileId;
-
-  #remoteFile?: RemoteFile;
-
-  #localFile?: LocalFile;
-
   /**
    * @param id
    * @param remoteFile - If the note file is persistent, this parameter must be set.
@@ -32,15 +26,10 @@ export class NoteFile implements EntityInterface {
    * @throws Error - If the parameters are invalid.
    */
   constructor(
-    id: NoteFileId | undefined,
-    remoteFile?: RemoteFile,
-    localFile?: LocalFile,
+    readonly id: NoteFileId | undefined,
+    readonly remoteFile?: RemoteFile,
+    readonly localFile?: LocalFile,
   ) {
-    this.#id = id;
-
-    this.#remoteFile = remoteFile;
-    this.#localFile = localFile;
-
     this.assertValid();
   }
 
@@ -78,18 +67,6 @@ export class NoteFile implements EntityInterface {
     return noteFile;
   }
 
-  get id(): NoteFileId | undefined {
-    return this.#id;
-  }
-
-  get remoteFile(): RemoteFile | undefined {
-    return this.#remoteFile;
-  }
-
-  get localFile(): LocalFile | undefined {
-    return this.#localFile;
-  }
-
   /**
    * @returns A SHA-1 hash of the note file
    */
@@ -103,7 +80,7 @@ export class NoteFile implements EntityInterface {
   }
 
   isPersistent(): this is PersistentNoteFile {
-    return !!this.#id && !!this.#remoteFile && !this.#localFile;
+    return !!this.id && !!this.remoteFile && !this.localFile;
   }
 
   assertPersistent(): asserts this is PersistentNoteFile {
@@ -113,7 +90,7 @@ export class NoteFile implements EntityInterface {
   }
 
   isTransient(): this is TransientNoteFile {
-    return !this.#id && !this.#remoteFile && !!this.#localFile;
+    return !this.id && !this.remoteFile && !!this.localFile;
   }
 
   assertTransient(): asserts this is TransientNoteFile {
@@ -140,9 +117,9 @@ export class NoteFile implements EntityInterface {
     localFile: ReturnType<InstanceType<typeof LocalFile>["toJSON"]> | undefined;
   } {
     return {
-      id: this.#id?.toJSON(),
-      remoteFile: this.#remoteFile?.toJSON(),
-      localFile: this.#localFile?.toJSON(),
+      id: this.id?.toJSON(),
+      remoteFile: this.remoteFile?.toJSON(),
+      localFile: this.localFile?.toJSON(),
     };
   }
 

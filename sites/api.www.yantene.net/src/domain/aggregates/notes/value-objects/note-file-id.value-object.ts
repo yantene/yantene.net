@@ -1,22 +1,14 @@
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
 export class NoteFileId implements ValueObjectInterface {
-  #value: bigint;
-
-  constructor(value: bigint) {
+  constructor(readonly value: bigint) {
     if (!Number.isInteger(value)) {
       throw new TypeError("NoteFileId must be an integer.");
     }
-
-    this.#value = value;
-  }
-
-  get value(): bigint {
-    return this.#value;
   }
 
   toJSON(): string {
-    return this.#value.toString();
+    return this.value.toString();
   }
 
   toString(): string {
@@ -24,6 +16,6 @@ export class NoteFileId implements ValueObjectInterface {
   }
 
   equals(other: NoteFileId): boolean {
-    return this.#value === other.value;
+    return this.value === other.value;
   }
 }

@@ -1,18 +1,10 @@
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
 export class NoteId implements ValueObjectInterface {
-  #value: bigint;
-
-  constructor(value: bigint) {
-    this.#value = value;
-  }
-
-  get value(): bigint {
-    return this.#value;
-  }
+  constructor(readonly value: bigint) {}
 
   toJSON(): string {
-    return this.#value.toString();
+    return this.value.toString();
   }
 
   toString(): string {
@@ -20,6 +12,6 @@ export class NoteId implements ValueObjectInterface {
   }
 
   equals(other: NoteId): boolean {
-    return this.#value === other.value;
+    return this.value === other.value;
   }
 }
