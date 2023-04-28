@@ -1,18 +1,10 @@
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 
 export class NoteBody implements ValueObjectInterface {
-  #value: string;
-
-  constructor(value: string) {
-    this.#value = value;
-  }
-
-  get value(): string {
-    return this.#value;
-  }
+  constructor(readonly value: string) {}
 
   toJSON(): string {
-    return this.#value;
+    return this.value;
   }
 
   toString(): string {
@@ -20,6 +12,6 @@ export class NoteBody implements ValueObjectInterface {
   }
 
   equals(other: NoteBody): boolean {
-    return this.#value === other.value;
+    return this.value === other.value;
   }
 }

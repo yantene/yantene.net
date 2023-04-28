@@ -15,44 +15,16 @@ export type PersistentNote = Note & PersistentEntityInterface;
 export type TransientNote = Note & TransientEntityInterface;
 
 export class Note implements EntityInterface {
-  #id?: NoteId;
-
-  #title: NoteTitle;
-
-  #path: NotePath;
-
-  #createdAt: Temporal.Instant;
-
-  #modifiedAt: Temporal.Instant;
-
-  #body: NoteBody;
-
-  #attachments: NoteFile[];
-
-  #linkingNoteIds: NoteId[];
-
   constructor(
-    id: NoteId | undefined,
-    title: NoteTitle,
-    path: NotePath,
-    createdAt: Temporal.Instant,
-    modifiedAt: Temporal.Instant,
-    body: NoteBody,
-    attachments: NoteFile[],
-    linkingNoteIds: NoteId[],
-  ) {
-    this.#id = id;
-    this.#title = title;
-    this.#path = path;
-
-    this.#createdAt = createdAt;
-    this.#modifiedAt = modifiedAt;
-
-    this.#body = body;
-
-    this.#attachments = attachments;
-    this.#linkingNoteIds = linkingNoteIds;
-  }
+    readonly id: NoteId | undefined,
+    readonly title: NoteTitle,
+    readonly path: NotePath,
+    readonly createdAt: Temporal.Instant,
+    readonly modifiedAt: Temporal.Instant,
+    readonly body: NoteBody,
+    readonly attachments: NoteFile[],
+    readonly linkingNoteIds: NoteId[],
+  ) {}
 
   /**
    * Build a persistent note.
@@ -130,38 +102,6 @@ export class Note implements EntityInterface {
     return note;
   }
 
-  get id(): NoteId | undefined {
-    return this.#id;
-  }
-
-  get title(): NoteTitle {
-    return this.#title;
-  }
-
-  get path(): NotePath {
-    return this.#path;
-  }
-
-  get createdAt(): Temporal.Instant {
-    return this.#createdAt;
-  }
-
-  get modifiedAt(): Temporal.Instant {
-    return this.#modifiedAt;
-  }
-
-  get body(): NoteBody {
-    return this.#body;
-  }
-
-  get attachments(): NoteFile[] {
-    return this.#attachments;
-  }
-
-  get linkingNoteIds(): NoteId[] {
-    return this.#linkingNoteIds;
-  }
-
   isPersistent(): this is PersistentNote {
     return !!this.id;
   }
@@ -195,12 +135,12 @@ export class Note implements EntityInterface {
     body: ReturnType<InstanceType<typeof NoteBody>["toJSON"]> | undefined;
   } {
     return {
-      id: this.#id?.toJSON(),
-      title: this.#title.toJSON(),
-      path: this.#path.toJSON(),
-      createdAt: this.#createdAt.epochMilliseconds,
-      modifiedAt: this.#modifiedAt.epochMilliseconds,
-      body: this.#body.toJSON(),
+      id: this.id?.toJSON(),
+      title: this.title.toJSON(),
+      path: this.path.toJSON(),
+      createdAt: this.createdAt.epochMilliseconds,
+      modifiedAt: this.modifiedAt.epochMilliseconds,
+      body: this.body.toJSON(),
     };
   }
 
