@@ -2,10 +2,11 @@ import {
   NoteAttachment as PrismaNoteAttachment,
   NoteFile as PrismaNoteFile,
   NoteLink as PrismaNoteLink,
-  PrismaClient,
   Note as PrismaNote,
+  PrismaClient,
 } from "@prisma/client";
 import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
+import { Injectable } from "@nestjs/common";
 import { NotesRepositoryInterface } from "../../../domain/aggregates/notes/notes.repository.interface";
 import {
   Note,
@@ -20,12 +21,13 @@ import { NoteBody } from "../../../domain/aggregates/notes/value-objects/note-bo
 import { PersistentNoteFile } from "../../../domain/aggregates/notes/entities/note-file.entity";
 import { NoteFilesRepository } from "./note-files.repository";
 
+@Injectable()
 export class NotesRepository implements NotesRepositoryInterface {
   #prisma: PrismaClient;
 
   #noteFilesRepository: NoteFilesRepository;
 
-  constructor(prisma = new PrismaClient()) {
+  constructor(prisma: PrismaClient) {
     this.#prisma = prisma;
 
     this.#noteFilesRepository = new NoteFilesRepository(prisma);

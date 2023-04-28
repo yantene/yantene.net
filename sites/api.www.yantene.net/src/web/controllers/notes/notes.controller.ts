@@ -8,12 +8,16 @@ import {
 import { IndexQueryRequest } from "../../requests/notes/index-query.request";
 import { NotesIndexResponse } from "../../responses/notes/notes-index.response";
 import { NotesShowResponse } from "../../responses/notes/notes-show.response";
-import { NotesService } from "../../../domain/aggregates/notes/services/notes.service";
+import { NotesUseCase } from "../../../domain/use-cases/notes/notes.use-case";
 
 @ApiTags("notes")
 @Controller("notes")
 export class NotesController {
-  constructor(private readonly notesService: NotesService) {}
+  readonly #notesUseCase: NotesUseCase;
+
+  constructor(notesUseCase: NotesUseCase) {
+    this.#notesUseCase = notesUseCase;
+  }
 
   @Get()
   @ApiOkResponse({ description: "OK", type: NotesIndexResponse })
