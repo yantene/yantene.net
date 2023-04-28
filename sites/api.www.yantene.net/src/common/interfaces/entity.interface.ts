@@ -13,7 +13,7 @@ export interface EntityInterface {
   /**
    * Returns the ID of the entity.
    */
-  get id(): ValueObjectInterface | undefined;
+  readonly id?: ValueObjectInterface;
 
   /**
    * Type guard for persistent entity.
