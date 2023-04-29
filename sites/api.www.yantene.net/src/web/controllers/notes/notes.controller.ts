@@ -41,7 +41,6 @@ export class NotesController {
   @ApiOkResponse({ description: "OK", type: NotesShowResponse })
   @ApiNotFoundResponse({ description: "Not Found" })
   async show(@Param("title") title: string): Promise<NotesShowResponse> {
-    // TODO: IMPLEMENT
     const { note, linkingNotes, linkedNotes } =
       await this.#notesUseCase.findNote(new NoteTitle(title));
 
