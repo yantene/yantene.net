@@ -3,7 +3,7 @@ name: api.www.yantene.net
 on:
   pull_request:
     paths:
-      - ./sites/api.www.yantene.net/**
+      - sites/api.www.yantene.net/**
 
 jobs:
   jest:
