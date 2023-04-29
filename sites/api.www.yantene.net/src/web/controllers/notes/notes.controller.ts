@@ -11,11 +11,14 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
 import { IndexQueryRequest } from "../../requests/notes/index-query.request";
 import { NotesIndexResponse } from "../../responses/notes/notes-index.response";
 import { NotesShowResponse } from "../../responses/notes/notes-show.response";
 import { NotesUseCase } from "../../../domain/use-cases/notes/notes.use-case";
 import { NoteTitle } from "../../../domain/aggregates/notes/value-objects/note-title.value-object";
+import { ExhaustiveError } from "../../../common/errors/exhaustive.error";
+import { Note } from "../../../domain/aggregates/notes/entities/note.entity";
 
 @ApiTags("notes")
 @Controller("notes")
@@ -29,11 +32,43 @@ export class NotesController {
   @Get()
   @ApiOkResponse({ description: "OK", type: NotesIndexResponse })
   @ApiBadRequestResponse({ description: "BadRequest" })
-  index(@Query() _indexQuery: IndexQueryRequest): NotesIndexResponse {
-    // TODO: IMPLEMENT
-    this.#notesUseCase.findNotesByCreatedAt();
+  async index(
+    @Query() indexQuery: IndexQueryRequest,
+  ): Promise<NotesIndexResponse> {
+    const { limit, order, cursor } = indexQuery;
 
-    return { nextCursor: "", notes: [] };
+    const { notes, nextCursor } = await (async (): Promise<{
+      notes: Note[];
+      nextCursor: Temporal.Instant;
+    }> => {
+      switch (order) {
+        case "newest":
+        case "oldest":
+          return this.#notesUseCase.findNotesByCreatedAt(
+            limit,
+            order === "newest" ? "desc" : "asc",
+            cursor && toTemporalInstant.bind(cursor)(),
+          );
+        case "recently-modified":
+        case "least-recently-modified":
+          return this.#notesUseCase.findNotesByCreatedAt(
+            limit,
+            order === "recently-modified" ? "desc" : "asc",
+            cursor && toTemporalInstant.bind(cursor)(),
+          );
+        default:
+          throw new ExhaustiveError(order);
+      }
+    })();
+
+    return {
+      notes: notes.map((note) => ({
+        title: note.title.value,
+        createdAt: note.createdAt.toString(),
+        modifiedAt: note.modifiedAt.toString(),
+      })),
+      nextCursor: nextCursor.toString(),
+    };
   }
 
   // TODO: API spec for title param

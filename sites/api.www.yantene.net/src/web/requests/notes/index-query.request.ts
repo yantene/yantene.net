@@ -23,7 +23,11 @@ export class IndexQueryRequest {
     required: false,
   })
   @IsIn(["newest", "oldest", "recently-modified", "least-recently-modified"])
-  readonly order: string = "newest";
+  readonly order:
+    | "newest"
+    | "oldest"
+    | "recently-modified"
+    | "least-recently-modified" = "newest";
 
   @ApiProperty({
     type: "string",

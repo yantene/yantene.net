@@ -18,10 +18,7 @@ describe("NotesController (e2e)", () => {
   });
 
   it("GET /notes", () =>
-    request(app.getHttpServer()).get("/notes").expect(200).expect({
-      nextCursor: "",
-      notes: [],
-    }));
+    request(app.getHttpServer()).get("/notes").expect(200));
 
   it("GET /notes/徒然草52", () => {
     const noteTitle = "徒然草52";
