@@ -18,7 +18,10 @@ describe("NotesController (e2e)", () => {
   });
 
   it("GET /notes", () =>
-    request(app.getHttpServer()).get("/notes").expect(200));
+    request(app.getHttpServer())
+      // NOTE: In e2e, if no parameters are passed, the parameters are undefined.
+      .get("/notes?limit=20&order=newest")
+      .expect(200));
 
   it("GET /notes/徒然草52", () => {
     const noteTitle = "徒然草52";
