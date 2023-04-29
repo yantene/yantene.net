@@ -1,5 +1,4 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { TagSummary } from "../tags/tag-summary";
 
 export class NoteSummary {
   @ApiProperty({
@@ -7,20 +6,6 @@ export class NoteSummary {
     example: "徒然草52",
   })
   readonly title: string;
-
-  @ApiProperty({
-    description: "tags associated with the note",
-    type: [TagSummary],
-  })
-  readonly tags: TagSummary[];
-
-  @ApiProperty({
-    description: "emoji of the note",
-    maxLength: 1,
-    minLength: 1,
-    example: "🦲",
-  })
-  readonly emoji: string;
 
   @ApiProperty({
     description: "time of creation",
