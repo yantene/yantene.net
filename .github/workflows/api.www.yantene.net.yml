@@ -35,32 +35,6 @@ jobs:
         run: npm run test:e2e
         working-directory: ./sites/api.www.yantene.net
 
-  prettier:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-
-      - name: setup
-        uses: ./.github/workflows/setup_api.www.yantene.net
-
-      - name: run prettier
-        run: npm run lint:prettier
-
-  prettier-package-json:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-
-      - name: setup
-        uses: ./.github/workflows/setup_api.www.yantene.net
-
-      - name: run prettier-package-json
-        run: npm run lint:prettier-package-json
-
   eslint:
     runs-on: ubuntu-latest
 
