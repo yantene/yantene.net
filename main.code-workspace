@@ -9,6 +9,10 @@
       "path": "./sites/api.www.yantene.net"
     },
     {
+      "name": "api.yantene.net",
+      "path": "./sites/api.yantene.net"
+    },
+    {
       "name": "ansible",
       "path": "./infra/ansible"
     }
