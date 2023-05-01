@@ -12,5 +12,17 @@
   },
   "bugs": {
     "url": "https://github.com/yantene/yantene.net/issues"
+  },
+  "scripts": {
+    "format": "run-s -c format:*",
+    "format:prettier": "prettier --write .",
+    "format:prettier-package-json": "prettier-package-json --success --write ./package.json",
+    "lint": "run-s -c lint:*",
+    "lint:prettier": "prettier --list-different .",
+    "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8",
+    "prettier-package-json": "^2.8.0"
   }
 }
