@@ -13,6 +13,7 @@
   "bugs": {
     "url": "https://github.com/yantene/yantene.net/issues"
   },
+  "type": "module",
   "scripts": {
     "format": "run-s -c format:*",
     "format:eslint": "eslint \"src/**/*.ts\" --fix",
@@ -21,12 +22,14 @@
     "lint": "run-s -c lint:*",
     "lint:eslint": "eslint \"src/**/*.ts\"",
     "lint:prettier": "prettier --list-different .",
-    "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json"
+    "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json",
+    "server": "ts-node --esm src/entrypoints/server.ts"
   },
   "devDependencies": {
     "@tsconfig/esm": "^1.0.3",
     "@tsconfig/node20": "^1.0.0",
     "@tsconfig/strictest": "^2.0.1",
+    "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "eslint": "^8.39.0",
@@ -35,9 +38,12 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-import": "^2.27.5",
     "prettier": "^2.8.8",
-    "prettier-package-json": "^2.8.0"
+    "prettier-package-json": "^2.8.0",
+    "ts-node": "github:TypeStrong/ts-node#71dcfd7",
+    "tslib": "^2.5.0"
   },
   "dependencies": {
+    "fastify": "^4.17.0",
     "typescript": "^5.0.4"
   }
 }
