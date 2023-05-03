@@ -1,6 +1,9 @@
 name: api.www.yantene.net
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     paths:
       - sites/api.www.yantene.net/**
