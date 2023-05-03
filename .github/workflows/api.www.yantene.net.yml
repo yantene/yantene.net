@@ -1,11 +1,44 @@
 name: api.www.yantene.net
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     paths:
       - sites/api.www.yantene.net/**
 
 jobs:
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_dev
+
+      - name: run prettier
+        run: npm run lint:prettier
+        with:
+          working-directory: ./sites/api.www.yantene.net
+
+  prettier-package-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_dev
+
+      - name: run prettier-package-json
+        run: npm run lint:prettier-package-json
+        with:
+          working-directory: ./sites/api.www.yantene.net
+
   jest:
     runs-on: ubuntu-latest
 
