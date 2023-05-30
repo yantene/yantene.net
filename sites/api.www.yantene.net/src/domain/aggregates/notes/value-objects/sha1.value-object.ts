@@ -43,11 +43,11 @@ export class Sha1 implements ValueObjectInterface {
   }
 
   toJSON(): string {
-    return this.value.toString("hex");
+    return JSON.stringify(this.toString());
   }
 
   toString(): string {
-    return JSON.stringify(this.toJSON());
+    return this.value.toString("hex");
   }
 
   equals(other: Sha1): boolean {

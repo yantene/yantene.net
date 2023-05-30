@@ -1,3 +1,4 @@
+import * as nodePath from "path";
 import { ValueObjectInterface } from "../../../../common/interfaces/value-object.interface";
 import { Sha1 } from "./sha1.value-object";
 
@@ -5,7 +6,7 @@ export class LocalFile implements ValueObjectInterface {
   readonly path: string;
 
   constructor(path: string, readonly sha1: Sha1) {
-    this.path = path.normalize(path);
+    this.path = nodePath.normalize(path);
   }
 
   /**
@@ -14,7 +15,7 @@ export class LocalFile implements ValueObjectInterface {
    * @param path - Path to the file
    * @returns A local file
    */
-  async build(path: string): Promise<LocalFile> {
+  static async build(path: string): Promise<LocalFile> {
     const sha1 = await Sha1.calculateFromFile(path);
 
     return new LocalFile(path, sha1);

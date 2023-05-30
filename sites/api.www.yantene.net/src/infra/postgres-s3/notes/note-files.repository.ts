@@ -1,5 +1,6 @@
 import { NoteFile as PrismaNoteFile, PrismaClient } from "@prisma/client";
-import { toTemporalInstant } from "@js-temporal/polyfill";
+import { Temporal, toTemporalInstant } from "@js-temporal/polyfill";
+import { createReadStream } from "fs";
 import { NoteFileId } from "../../../domain/aggregates/notes/value-objects/note-file-id.value-object";
 import { Sha1 } from "../../../domain/aggregates/notes/value-objects/sha1.value-object";
 import { NotImplementedError } from "../../../common/errors/not-implemented.error";
@@ -14,6 +15,10 @@ import { LocalFile } from "../../../domain/aggregates/notes/value-objects/local-
 
 export class NoteFilesRepository {
   #prisma: PrismaClient;
+
+  #bucketName: string;
+
+  #minioUriPrefix: string;
 
   constructor(prisma: PrismaClient) {
     this.#prisma = prisma;
@@ -39,10 +44,15 @@ export class NoteFilesRepository {
    * @returns Found note files
    */
   async findMany(
-    _idsOrSha1s: NoteFileId[] | Sha1[],
+    idsOrSha1s: NoteFileId[] | Sha1[],
   ): Promise<PersistentNoteFile[]> {
-    // TODO: IMPLEMENT
-    throw new NotImplementedError();
+    const prismaNoteFiles = await this.#prisma.noteFile.findMany({
+      where: ((a): a is NoteFileId[] => a[0] instanceof NoteFileId)(idsOrSha1s)
+        ? { id: { in: idsOrSha1s.map((id) => id.value) } }
+        : { sha1: { in: idsOrSha1s.map((sha1) => sha1.value) } },
+    });
+
+    return prismaNoteFiles.map(NoteFilesRepository.toNoteFileEntity);
   }
 
   /**
@@ -66,9 +76,45 @@ export class NoteFilesRepository {
    * @param noteFiles - Note files to create
    * @returns Created or found note files
    */
-  async createMissingMany(_noteFiles: TransientNoteFile[]): Promise<void> {
-    // TODO: IMPLEMENT
-    throw new NotImplementedError();
+  async createMissingMany(noteFiles: TransientNoteFile[]): Promise<void> {
+    const presentNoteFiles = await this.findMany(
+      noteFiles.map((nf) => nf.sha1),
+    );
+
+    const presentNoteFileSha1HexSet = new Set(
+      presentNoteFiles.map((noteFile) => noteFile.sha1.value.toString("hex")),
+    );
+
+    const missingNoteFiles = noteFiles.filter(
+      (noteFile) =>
+        !presentNoteFileSha1HexSet.has(noteFile.sha1.value.toString("hex")),
+    );
+
+    await this.#createMany(missingNoteFiles);
+  }
+
+  /**
+   * Creates note files.
+   */
+  async #createMany(noteFiles: TransientNoteFile[]): Promise<void> {
+    // TODO: If the note files already exist, they will be removed.
+    const remoteFiles = await Promise.all(
+      noteFiles.map((nf) => this.uploadLocalFile(nf.localFile)),
+    );
+
+    await this.#prisma.noteFile.createMany({
+      data: await Promise.all(
+        noteFiles.map(async (noteFile, idx) => {
+          const remoteFile = remoteFiles[idx];
+
+          return {
+            sha1: noteFile.sha1.value,
+            uri: remoteFile.uri.value,
+            uploadedAt: new Date(remoteFile.uploadedAt.epochMilliseconds),
+          };
+        }),
+      ),
+    });
   }
 
   /**
@@ -80,14 +126,31 @@ export class NoteFilesRepository {
   }
 
   /**
-   * Upload local file to S3.
+   * Upload local file to Minio.
    *
    * @param localFile - Local files
    * @returns Remote files
    */
-  async uploadLocalFile(_localFile: LocalFile): Promise<RemoteFile> {
-    // TODO: IMPLEMENT
+  async uploadLocalFile(localFile: LocalFile): Promise<RemoteFile> {
     throw new NotImplementedError();
+
+    /*
+    // Upload to Minio
+    const response = await this.#minio.fPutObject(
+      this.#bucketName,
+      localFile.sha1.toString(),
+      localFile.path,
+    );
+
+    console.log(localFile.sha1.toString());
+    console.log(response);
+
+    return new RemoteFile(
+      new RemoteFileUri(`${this.#minioUriPrefix}/${localFile.sha1}`),
+      localFile.sha1,
+      Temporal.Now.instant(),
+    );
+    */
   }
 
   /**

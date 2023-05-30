@@ -1,5 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { NoteFilesRepository } from "./note-files.repository";
+import { LocalFile } from "../../../domain/aggregates/notes/value-objects/local-file.value-object";
 
 jest.mock("@prisma/client", () => ({
   PrismaClient: jest.fn().mockImplementation(() => jestPrisma.client),
@@ -30,5 +31,17 @@ describe("NoteFilesRepository", () => {
 
   describe("cleanUp()", () => {});
 
-  describe("uploadLocalFile()", () => {});
+  describe("uploadLocalFile()", () => {
+    describe("when a local file is not found", () => {});
+
+    describe("when a local file is found", () => {
+      it("should be able to download the remote file", async () => {
+        const localFile = await LocalFile.build("./test/repo/assets/b1.jpg");
+
+        const remoteFile = await repository.uploadLocalFile(localFile);
+
+        console.log(localFile, remoteFile);
+      });
+    });
+  });
 });
