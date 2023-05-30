@@ -29,7 +29,7 @@ ARG GROUPNAME=devusers
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
-  sudo=1.9.5p2-3 && \
+  sudo=1.9.5p2-3+deb11u1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   groupadd --gid ${GID} -o ${GROUPNAME} && \
@@ -52,7 +52,7 @@ RUN \
   apt-get -t stable install --no-install-recommends -y \
   build-essential=12.9 \
   ca-certificates=20210119 \
-  curl=7.74.0-1.3+deb11u3 \
+  curl=7.74.0-1.3+deb11u7 \
   g++=4:10.2.1-1 \
   gcc-multilib=4:10.2.1-1 \
   gcc=4:10.2.1-1 \
@@ -60,8 +60,8 @@ RUN \
   libbz2-dev=1.0.8-4 \
   libffi-dev=3.3-6 \
   libgdbm-dev=1.19-2 \
-  libncurses5-dev=6.2+20201114-2 \
-  libnss3-dev=2:3.61-1+deb11u2 \
+  libncurses5-dev=6.2+20201114-2+deb11u1 \
+  libnss3-dev=2:3.61-1+deb11u3 \
   libreadline-dev=8.1-1 \
   libsqlite3-dev=3.34.1-3 \
   libssl-dev=1.1.1n-0+deb11u4 \
