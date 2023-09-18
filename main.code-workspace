@@ -5,6 +5,10 @@
       "path": "."
     },
     {
+      "name": "www.yantene.net",
+      "path": "./sites/www.yantene.net"
+    },
+    {
       "name": "api.www.yantene.net",
       "path": "./sites/api.www.yantene.net"
     },
