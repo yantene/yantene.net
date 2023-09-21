@@ -1,0 +1,70 @@
+name: www.yantene.net
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - sites/www.yantene.net/**
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_www.yantene.net
+
+      - name: run prettier
+        run: npm run lint:prettier
+        working-directory: ./sites/www.yantene.net
+
+  prettier-package-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_www.yantene.net
+
+      - name: run prettier-package-json
+        run: npm run lint:prettier-package-json
+        working-directory: ./sites/www.yantene.net
+
+  jest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_www.yantene.net
+
+      - name: run jest
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: ./sites/www.yantene.net
+
+  eslint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: setup
+        uses: ./.github/workflows/setup_www.yantene.net
+
+      - name: run eslint
+        uses: reviewdog/action-eslint@v1
+        with:
+          workdir: ./sites/www.yantene.net
+          reporter: github-pr-review
+          fall_on_error: true
