@@ -1,11 +1,11 @@
-FROM debian:bullseye-20230208-slim
+FROM debian:bookworm-20230904-slim
 
 # Prepare
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
-  gosu=1.12-1+b6 && \
+  gosu=1.14-1+b6 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
@@ -13,7 +13,7 @@ RUN \
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
-  locales=2.31-13+deb11u5 && \
+  locales=2.36-9+deb12u1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   localedef -f UTF-8 -i en_US en_US.UTF-8
@@ -29,21 +29,12 @@ ARG GROUPNAME=devusers
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
-  sudo=1.9.5p2-3+deb11u1 && \
+  sudo=1.9.13p3-1+deb12u1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   groupadd --gid ${GID} -o ${GROUPNAME} && \
   useradd --uid ${UID} --gid ${GID} --shell /usr/bin/fish -m -o ${USERNAME} && \
   echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME}
-
-# Enable bullseye-backports repository
-RUN \
-  apt-get update -y && \
-  apt-get -t stable install --no-install-recommends -y \
-  software-properties-common=0.96.20.2-2.1 && \
-  add-apt-repository "deb http://deb.debian.org/debian bullseye-backports main" && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
 
 # Install basic tools and libraries
 # hadolint ignore=DL3008
@@ -51,28 +42,28 @@ RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
   build-essential=12.9 \
-  ca-certificates=20210119 \
-  curl=7.74.0-1.3+deb11u7 \
-  g++=4:10.2.1-1 \
-  gcc-multilib=4:10.2.1-1 \
-  gcc=4:10.2.1-1 \
-  less=551-2 \
-  libbz2-dev=1.0.8-4 \
-  libffi-dev=3.3-6 \
-  libgdbm-dev=1.19-2 \
-  libncurses5-dev=6.2+20201114-2+deb11u1 \
-  libnss3-dev=2:3.61-1+deb11u3 \
-  libreadline-dev=8.1-1 \
-  libsqlite3-dev=3.34.1-3 \
-  libssl-dev=1.1.1n-0+deb11u4 \
+  ca-certificates=20230311 \
+  g++=4:12.2.0-3 \
+  gcc-multilib=4:12.2.0-3 \
+  gcc=4:12.2.0-3 \
+  git=1:2.39.2-1.1 \
+  less=590-2 \
+  libbz2-dev=1.0.8-5+b1 \
+  libffi-dev=3.4.4-1 \
+  libgdbm-dev=1.23-3 \
+  libncurses5-dev=6.4-4 \
+  libnss3-dev=2:3.87.1-1 \
+  libreadline-dev=8.2-1.3 \
+  libsqlite3-dev=3.40.1-2 \
+  libssl-dev=3.0.9-1 \
   make=4.3-4.1 \
-  pkg-config=0.29.2-1 \
-  procps=2:3.3.17-5 \
-  unzip=6.0-26+deb11u1 \
-  wget=1.21-1+deb11u1 \
-  zlib1g-dev=1:1.2.11.dfsg-2+deb11u2 && \
-  apt-get -t bullseye-backports install --no-install-recommends -y \
-  git && \
+  pkg-config=1.8.1-1 \
+  procps=2:4.0.2-3 \
+  unzip=6.0-28 \
+  wget=1.21.3-1+b2 \
+  zlib1g-dev=1:1.2.13.dfsg-1 && \
+  apt-get -t stable-security install --no-install-recommends -y \
+  curl=7.88.1-10+deb12u1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
@@ -80,7 +71,7 @@ RUN \
 # hadolint ignore=DL3008
 RUN \
   apt-get update -y && \
-  apt-get -t bullseye-backports install --no-install-recommends -y \
+  apt-get -t stable install --no-install-recommends -y \
   fish && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
@@ -91,7 +82,7 @@ RUN \
   '
 
 # Install asdf
-ARG ASDF_VERSION=0.10.2
+ARG ASDF_VERSION=0.13.1
 RUN \
   gosu ${USERNAME} fish -c " \
   git clone https://github.com/asdf-vm/asdf.git /home/${USERNAME}/.asdf --branch v${ASDF_VERSION} && \
@@ -103,12 +94,11 @@ RUN \
 
 # Install nodejs
 # cf. https://github.com/nodejs/node/blob/main/BUILDING.md#building-nodejs-on-supported-platforms
-ARG NODE_VERSION=20.0.0
+ARG NODE_VERSIONS="20.0.0 20.6.1"
 RUN \
   gosu ${USERNAME} fish -c " \
   asdf plugin add nodejs && \
-  asdf install nodejs ${NODE_VERSION} && \
-  asdf global nodejs ${NODE_VERSION} \
+  echo ${NODE_VERSIONS} | xargs -d' ' -n1 asdf install nodejs \
   "
 
 # Install python
@@ -127,29 +117,29 @@ RUN \
 RUN \
   apt-get update -y && \
   apt-get -t stable install --no-install-recommends -y \
-  tmux=3.1c-1+deb11u1 \
-  unzip=6.0-26+deb11u1 \
-  openssh-client=1:8.4p1-5+deb11u1 \
-  neovim=0.4.4-1 \
-  ripgrep=12.1.1-1+b1 \
-  bat=0.12.1-6+b2 \
-  exa=0.9.0-5+b1 \
-  fd-find=8.2.1-1+b1 \
-  postgresql=13+225 && \
+  bat=0.22.1-4 \
+  exa=0.10.1-4+b1 \
+  fd-find=8.6.0-3 \
+  neovim=0.7.2-7 \
+  openssh-client=1:9.2p1-2 \
+  postgresql=15+248 \
+  ripgrep=13.0.0-4+b2 \
+  tmux=3.3a-3 \
+  unzip=6.0-28 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   ln -s /usr/bin/batcat /usr/local/bin/bat && \
-  curl -L 'https://github.com/dandavison/delta/releases/download/0.13.0/delta-0.13.0-x86_64-unknown-linux-musl.tar.gz' | tar xz -C /tmp && \
-  mv /tmp/delta-0.13.0-x86_64-unknown-linux-musl/delta /usr/local/bin && \
-  rm -rf /tmp/delta-0.13.0-x86_64-unknown-linux-musl && \
+  curl -L 'https://github.com/dandavison/delta/releases/download/0.16.5/delta-0.16.5-x86_64-unknown-linux-gnu.tar.gz' | tar xz -C /tmp && \
+  mv /tmp/delta-0.16.5-x86_64-unknown-linux-gnu/delta /usr/local/bin && \
+  rm -rf /tmp/delta-0.16.5-x86_64-unknown-linux-gnu && \
   curl -L 'https://github.com/lotabout/skim/releases/download/v0.9.4/skim-v0.9.4-x86_64-unknown-linux-musl.tar.gz' | tar xz -C /tmp && \
   mv /tmp/sk /usr/local/bin && \
-  curl -L 'https://github.com/hadolint/hadolint/releases/download/v2.10.0/hadolint-Linux-x86_64' -o /usr/local/bin/hadolint && \
+  curl -L 'https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64' -o /usr/local/bin/hadolint && \
   chmod 755 /usr/local/bin/hadolint && \
   gosu ${USERNAME} fish -c " \
   python -m pip install \
-  ansible==7.2.0 \
-  ansible-lint==6.8.0 && \
+  ansible==8.4.0 \
+  ansible-lint==6.19.0 && \
   asdf reshim python \
   " && \
   gosu ${USERNAME} fish -c " \
