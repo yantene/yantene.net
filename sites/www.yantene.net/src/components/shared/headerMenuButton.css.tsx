@@ -7,5 +7,11 @@ export const styles = {
     border: "none",
     height: "100%",
     width: variables.header.height,
+    cursor: "pointer",
+    ":hover": {
+      transition: "0.3s ease",
+      color: variables.colors.textOnSecondary,
+      backgroundColor: variables.colors.secondary,
+    },
   }),
 };

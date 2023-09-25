@@ -49,7 +49,6 @@ export const styles = {
     listStyleType: "none",
   }),
   item: style({
-    padding: "0 10px",
     borderBottom: `1px solid ${variables.colors.borderOnSecondary}`,
     ":first-of-type": {
       borderTop: `1px solid ${variables.colors.borderOnSecondary}`,
@@ -58,9 +57,15 @@ export const styles = {
     height: 60,
   }),
   itemAnchor: style({
+    padding: "0 10px",
     display: "flex",
     height: "100%",
     alignItems: "center",
+    ":hover": {
+      transition: "0.3s ease",
+      color: variables.colors.textOnPrimary,
+      backgroundColor: variables.colors.primary,
+    },
   }),
   itemIcon: style({
     width: 42,
