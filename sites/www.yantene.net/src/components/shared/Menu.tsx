@@ -21,7 +21,9 @@ export default function Menu() {
   const [menuOpen, _setMenuOpen] = useAtom(menuOpenAtom);
 
   return (
-    <nav className={`${styles.nav} ${menuOpen ? "" : styles.hidden}`}>
+    <nav
+      className={`${styles.nav} ${menuOpen ? styles.fadeIn : styles.fadeOut}`}
+    >
       <ul className={styles.list}>
         <li className={styles.item}>
           <Link href="/" className={styles.itemAnchor}>
