@@ -58,7 +58,11 @@ export default function Menu() {
           </Link>
         </li>
         <li className={styles.item}>
-          <a href="https://github.com/yantene" className={styles.itemAnchor}>
+          <a
+            href="https://github.com/yantene"
+            target="_blank"
+            className={styles.itemAnchor}
+          >
             <div className={styles.itemIcon}>
               <FaGithub size={iconSize} />
             </div>
@@ -68,6 +72,7 @@ export default function Menu() {
         <li className={styles.item}>
           <a
             href="https://bsky.app/profile/yantene.net"
+            target="_blank"
             className={styles.itemAnchor}
           >
             <div className={styles.itemIcon}>
@@ -77,7 +82,11 @@ export default function Menu() {
           </a>
         </li>
         <li className={styles.item}>
-          <a href="https://fla.red/@yantene" className={styles.itemAnchor}>
+          <a
+            href="https://fla.red/@yantene"
+            target="_blank"
+            className={styles.itemAnchor}
+          >
             <div className={styles.itemIcon}>
               <FaMastodon size={iconSize} />
             </div>
