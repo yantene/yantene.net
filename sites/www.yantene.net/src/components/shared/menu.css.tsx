@@ -28,6 +28,7 @@ export const styles = {
   nav: style({
     backgroundColor: variables.colors.secondary,
     position: "fixed",
+    overflowY: "auto",
     width: 200,
     height: `calc(100vh - ${
       variables.header.height + variables.footer.height
