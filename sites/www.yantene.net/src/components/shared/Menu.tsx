@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAtom } from "jotai";
 import { styles } from "./menu.css";
 
 import {
@@ -10,13 +13,12 @@ import {
   FaCircle,
   FaMastodon,
 } from "react-icons/fa6";
-import { useContext } from "react";
-import { MenuContext } from "../../contexts/MenuContext";
+import { menuOpenAtom } from "../../stores/menuOpenAtom";
 
 export default function Menu() {
   const iconSize = 32;
 
-  const { menuOpen, toggle: _toggle } = useContext(MenuContext);
+  const [menuOpen, _setMenuOpen] = useAtom(menuOpenAtom);
 
   return (
     <nav className={`${styles.nav} ${menuOpen ? "" : styles.hidden}`}>
