@@ -25,7 +25,7 @@ const fadeOut = keyframes({
 });
 
 export const styles = {
-  nav: style({
+  aside: style({
     backgroundColor: variables.colors.secondary,
     position: "fixed",
     overflowY: "auto",
