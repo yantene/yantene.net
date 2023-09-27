@@ -25,16 +25,20 @@ const fadeOut = keyframes({
 });
 
 export const styles = {
-  nav: style({
+  aside: style({
     backgroundColor: variables.colors.secondary,
     position: "fixed",
     overflowY: "auto",
     width: 200,
-    height: `calc(100vh - ${
-      variables.header.height + variables.footer.height
-    }px)`,
-    top: variables.header.height,
-    filter: "drop-shadow(0 0 10px #0007)",
+    height: `calc(100vh - ${variables.size.header.height.mobile}px)`,
+    top: variables.size.header.height.mobile,
+    filter: `drop-shadow(0 0 10px #0007)`,
+    "@media": {
+      [`screen and (${variables.size.mobileMaxWidth}px < width)`]: {
+        height: `calc(100vh - ${variables.size.header.height.desktop}px)`,
+        top: variables.size.header.height.desktop,
+      },
+    },
   }),
   fadeIn: style({
     display: "unset",
