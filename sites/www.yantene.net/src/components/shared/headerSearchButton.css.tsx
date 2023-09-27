@@ -6,7 +6,7 @@ export const styles = {
     backgroundColor: "transparent",
     border: "none",
     height: "100%",
-    width: variables.header.height,
+    width: variables.size.header.height.desktop,
     cursor: "pointer",
     ":hover": {
       transition: "0.3s ease",

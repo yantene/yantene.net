@@ -8,7 +8,13 @@ export const variables = {
     textOnSecondary: "#606060",
     borderOnSecondary: "#d0d0d0",
   },
-  header: {
-    height: 60,
+  size: {
+    mobileMaxWidth: 1280,
+    header: {
+      height: {
+        mobile: 60,
+        desktop: 80,
+      },
+    },
   },
 };
