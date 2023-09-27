@@ -2,7 +2,7 @@ import { style, keyframes } from "@vanilla-extract/css";
 import { variables } from "../variables";
 
 const yanteneHeight = `calc((100vh - ${
-  variables.header.height + variables.footer.height
+  variables.header.height
 }px) * 0.7)`;
 
 const yura2 = keyframes({
@@ -30,7 +30,6 @@ export const styles = {
     alignItems: "center",
     height: "100vh",
     paddingTop: variables.header.height,
-    paddingBottom: variables.footer.height,
     backgroundImage: "url(/images/background.svg)",
     backgroundSize: "cover",
     backgroundPosition: "center",

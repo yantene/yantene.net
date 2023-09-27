@@ -11,7 +11,4 @@ export const variables = {
   header: {
     height: 60,
   },
-  footer: {
-    height: 40,
-  },
 };

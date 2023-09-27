@@ -31,7 +31,7 @@ export const styles = {
     overflowY: "auto",
     width: 200,
     height: `calc(100vh - ${
-      variables.header.height + variables.footer.height
+      variables.header.height
     }px)`,
     top: variables.header.height,
     filter: "drop-shadow(0 0 10px #0007)",
