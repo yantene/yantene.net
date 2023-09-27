@@ -22,10 +22,9 @@ export default function Menu() {
 
   return (
     <aside
-        className={`${styles.aside} ${menuOpen ? styles.fadeIn : styles.fadeOut}`}
+      className={`${styles.aside} ${menuOpen ? styles.fadeIn : styles.fadeOut}`}
     >
-      <nav
-      >
+      <nav>
         <ul className={styles.list}>
           <li className={styles.item}>
             <Link href="/" className={styles.itemAnchor}>

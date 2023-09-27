@@ -1,9 +1,7 @@
 import { style, keyframes } from "@vanilla-extract/css";
 import { variables } from "../variables";
 
-const yanteneHeight = `calc((100vh - ${
-  variables.size.header.height.desktop
-}px) * 0.7)`;
+const yanteneHeight = `calc((100vh - ${variables.size.header.height.desktop}px) * 0.7)`;
 
 const yura2 = keyframes({
   "0%": {
