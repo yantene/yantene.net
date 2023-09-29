@@ -1,17 +1,19 @@
 import { style } from "@vanilla-extract/css";
-import { variables } from "../../variables";
+import { vars } from "../../app/theme.css";
+import { size } from "../../variables/size";
 
 export const styles = {
   button: style({
     backgroundColor: "transparent",
     border: "none",
     height: "100%",
-    width: variables.size.header.height.desktop,
+    width: size.header.height.desktop,
     cursor: "pointer",
+    color: vars.color.textOnPrimary,
     ":hover": {
       transition: "0.3s ease",
-      color: variables.colors.textOnSecondary,
-      backgroundColor: variables.colors.secondary,
+      color: vars.color.textOnSecondary,
+      backgroundColor: vars.color.secondary,
     },
   }),
 };
