@@ -1,5 +1,6 @@
 import { style, keyframes } from "@vanilla-extract/css";
-import { variables } from "../../variables";
+import { vars } from "../../app/theme.css";
+import { size } from "../../variables/size";
 
 const fadeIn = keyframes({
   from: {
@@ -26,17 +27,17 @@ const fadeOut = keyframes({
 
 export const styles = {
   aside: style({
-    backgroundColor: variables.colors.secondary,
+    backgroundColor: vars.color.secondary,
     position: "fixed",
     overflowY: "auto",
     width: 200,
-    height: `calc(100vh - ${variables.size.header.height.mobile}px)`,
-    top: variables.size.header.height.mobile,
+    height: `calc(100vh - ${size.header.height.mobile}px)`,
+    top: size.header.height.mobile,
     filter: `drop-shadow(0 0 10px #0007)`,
     "@media": {
-      [`screen and (${variables.size.mobileMaxWidth}px < width)`]: {
-        height: `calc(100vh - ${variables.size.header.height.desktop}px)`,
-        top: variables.size.header.height.desktop,
+      [`screen and (${size.mobileMaxWidth}px < width)`]: {
+        height: `calc(100vh - ${size.header.height.desktop}px)`,
+        top: size.header.height.desktop,
       },
     },
   }),
@@ -53,11 +54,11 @@ export const styles = {
     listStyleType: "none",
   }),
   item: style({
-    borderBottom: `1px solid ${variables.colors.borderOnSecondary}`,
+    borderBottom: `1px solid ${vars.color.borderOnSecondary}`,
     ":first-of-type": {
-      borderTop: `1px solid ${variables.colors.borderOnSecondary}`,
+      borderTop: `1px solid ${vars.color.borderOnSecondary}`,
     },
-    color: variables.colors.textOnSecondary,
+    color: vars.color.textOnSecondary,
     height: 60,
   }),
   itemAnchor: style({
@@ -67,8 +68,8 @@ export const styles = {
     alignItems: "center",
     ":hover": {
       transition: "0.3s ease",
-      color: variables.colors.textOnPrimary,
-      backgroundColor: variables.colors.primary,
+      color: vars.color.textOnPrimary,
+      backgroundColor: vars.color.primary,
     },
   }),
   itemIcon: style({

@@ -1,11 +1,12 @@
 import { style } from "@vanilla-extract/css";
-import { variables } from "../../variables";
+import { vars } from "../../app/theme.css";
+import { size } from "../../variables/size";
 
 export const styles = {
   header: style({
-    backgroundColor: variables.colors.primary,
+    backgroundColor: vars.color.primary,
     filter: `drop-shadow(0 0 10px #0007)`,
-    height: variables.size.header.height.mobile,
+    height: size.header.height.mobile,
     position: "fixed",
     top: 0,
     display: "flex",
@@ -13,8 +14,8 @@ export const styles = {
     justifyContent: "space-between",
     width: "100%",
     "@media": {
-      [`screen and (${variables.size.mobileMaxWidth}px < width)`]: {
-        height: variables.size.header.height.desktop,
+      [`screen and (${size.mobileMaxWidth}px < width)`]: {
+        height: size.header.height.desktop,
       },
     },
   }),
@@ -24,7 +25,7 @@ export const styles = {
     border: "none",
     // 高さを親要素いっぱいにする
     height: "100%",
-    width: variables.size.header.height.mobile,
+    width: size.header.height.mobile,
   }),
   buttonIcon: style({
     width: "30px",
