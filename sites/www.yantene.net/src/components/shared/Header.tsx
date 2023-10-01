@@ -1,10 +1,9 @@
+import Image from "next/image";
 import HeaderMenuButton from "./HeaderMenuButton";
 import HeaderSearchButton from "./HeaderSearchButton";
 import { styles } from "./header.css";
 
-import Image from "next/image";
-
-export default function Header() {
+export default function Header(): JSX.Element {
   return (
     <header className={styles.header}>
       <HeaderMenuButton />

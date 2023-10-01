@@ -1,3 +1,3 @@
-export default function Social() {
+export default function Social(): JSX.Element {
   return <main>social</main>;
 }
