@@ -1,10 +1,9 @@
 "use client";
 
-import { menuOpenAtom } from "../../stores/menuOpenAtom";
 import { useAtom } from "jotai";
-import { styles } from "./headerMenuButton.css";
-
 import { FaBars, FaXmark } from "react-icons/fa6";
+import { menuOpenAtom } from "../../stores/menuOpenAtom";
+import { styles } from "./headerMenuButton.css";
 
 export default function HeaderMenuButton() {
   const [menuOpen, setMenuOpen] = useAtom(menuOpenAtom);

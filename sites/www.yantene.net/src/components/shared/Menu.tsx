@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useAtom } from "jotai";
-import { styles } from "./menu.css";
-
 import {
   FaHouseChimney,
   FaFaceKissWinkHeart,
@@ -13,6 +11,8 @@ import {
   FaCircle,
   FaMastodon,
 } from "react-icons/fa6";
+import { styles } from "./menu.css";
+
 import { menuOpenAtom } from "../../stores/menuOpenAtom";
 
 export default function Menu() {

@@ -1,6 +1,5 @@
-import { styles } from "./headerSearchButton.css";
-
 import { FaMagnifyingGlass } from "react-icons/fa6";
+import { styles } from "./headerSearchButton.css";
 
 export default function HeaderSearchButton() {
   return (
