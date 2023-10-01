@@ -15,7 +15,7 @@ import { styles } from "./menu.css";
 
 import { menuOpenAtom } from "../../stores/menuOpenAtom";
 
-export default function Menu() {
+export default function Menu(): JSX.Element {
   const iconSize = 32;
 
   const [menuOpen, _setMenuOpen] = useAtom(menuOpenAtom);

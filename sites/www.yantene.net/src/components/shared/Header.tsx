@@ -3,7 +3,7 @@ import HeaderMenuButton from "./HeaderMenuButton";
 import HeaderSearchButton from "./HeaderSearchButton";
 import { styles } from "./header.css";
 
-export default function Header() {
+export default function Header(): JSX.Element {
   return (
     <header className={styles.header}>
       <HeaderMenuButton />
