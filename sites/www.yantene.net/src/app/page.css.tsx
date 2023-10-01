@@ -1,5 +1,4 @@
 import { style, keyframes } from "@vanilla-extract/css";
-import { vars } from "./theme.css";
 import { size } from "../variables/size";
 
 const yanteneHeight = `calc((100vh - ${size.header.height.desktop}px) * 0.7)`;
