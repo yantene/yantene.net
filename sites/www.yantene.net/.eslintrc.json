@@ -6,6 +6,7 @@
     "tsconfigRootDir": ".",
     "sourceType": "module"
   },
+  "ignorePatterns": ["next.config.mjs"],
   "plugins": ["@typescript-eslint/eslint-plugin"],
   "extends": [
     "airbnb-base",
