@@ -3,7 +3,8 @@
   "name": "www.yantene.net",
   "version": "0.1.0",
   "scripts": {
-    "build": "next build",
+    "build:production": "npx env-cmd -f .env.production next build",
+    "build:staging": "npx env-cmd -f .env.staging next build",
     "dev": "next dev",
     "format": "run-s -c format:*",
     "format:next": "next lint --fix",
@@ -36,6 +37,7 @@
     "@types/react-dom": "^18.2.8",
     "@types/react-icons": "^3.0.0",
     "@vanilla-extract/next-plugin": "^2.3.1",
+    "env-cmd": "^10.1.0",
     "eslint": "^8.50.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^17.1.0",
