@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - sites/www.yantene.net/**
-  /www.yantene.net/**
-
+  release:
+    types:
       - created
 
 jobs:
