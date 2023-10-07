@@ -1,4 +1,4 @@
-name: www.yantene.net
+name: www.yantene.net lint
 
 on:
   push:

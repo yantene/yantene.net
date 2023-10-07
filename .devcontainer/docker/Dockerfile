@@ -94,7 +94,7 @@ RUN \
 
 # Install nodejs
 # cf. https://github.com/nodejs/node/blob/main/BUILDING.md#building-nodejs-on-supported-platforms
-ARG NODE_VERSIONS="20.0.0 20.6.1"
+ARG NODE_VERSIONS="20.0.0 20.8.0"
 RUN \
   gosu ${USERNAME} fish -c " \
   asdf plugin add nodejs && \
