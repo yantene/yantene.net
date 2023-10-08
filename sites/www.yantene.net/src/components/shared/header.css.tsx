@@ -20,14 +20,15 @@ export const styles = {
     },
   }),
   logo: style({}),
-  button: style({
-    backgroundColor: "transparent",
-    border: "none",
-    // 高さを親要素いっぱいにする
+  rightArea: style({
     height: "100%",
-    width: size.header.height.mobile,
   }),
-  buttonIcon: style({
-    width: "30px",
+  centerArea: style({
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+  }),
+  leftArea: style({
+    height: "100%",
   }),
 };

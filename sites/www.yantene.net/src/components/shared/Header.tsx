@@ -6,15 +6,21 @@ import { styles } from "./header.css";
 export default function Header(): JSX.Element {
   return (
     <header className={styles.header}>
-      <HeaderMenuButton />
-      <Image
-        className={styles.logo}
-        src="/images/logo.svg"
-        alt="やんてね！"
-        width={200}
-        height={54}
-      />
-      <HeaderSearchButton />
+      <div className={styles.rightArea}>
+        <HeaderMenuButton />
+      </div>
+      <div className={styles.centerArea}>
+        <Image
+          className={styles.logo}
+          src="/images/logo.svg"
+          alt="やんてね！"
+          width={200}
+          height={54}
+        />
+      </div>
+      <div className={styles.leftArea}>
+        <HeaderSearchButton />
+      </div>
     </header>
   );
 }
