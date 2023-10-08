@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: build and push staging image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v5
         if: github.event_name == 'push'
         with:
           context: ./sites/www.yantene.net
