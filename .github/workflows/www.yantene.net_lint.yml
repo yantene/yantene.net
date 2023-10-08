@@ -67,4 +67,4 @@ jobs:
         with:
           workdir: ./sites/www.yantene.net
           reporter: github-pr-review
-          fall_on_error: true
+          fail_on_error: true
