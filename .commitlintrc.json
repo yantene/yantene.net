@@ -4,7 +4,13 @@
     "scope-enum": [
       2,
       "always",
-      ["dev", "infra", "www.yantene.net", "api.www.yantene.net"]
+      [
+        "dev",
+        "infra",
+        "www.yantene.net",
+        "api.yantene.net",
+        "api.www.yantene.net"
+      ]
     ],
     "subject-case": [0, "always"]
   }

@@ -1,0 +1,49 @@
+{
+  "private": true,
+  "name": "api.yantene.net",
+  "version": "0.1.0",
+  "description": "API server for yantene.net",
+  "license": "UNLICENSED",
+  "author": "Shuhei YOSHIDA <contact@yantene.net> (https://yantene.net/)",
+  "homepage": "https://github.com/yantene/yantene.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yantene/yantene.net.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yantene/yantene.net/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "format": "run-s -c format:*",
+    "format:eslint": "eslint \"src/**/*.ts\" --fix",
+    "format:prettier": "prettier --write .",
+    "format:prettier-package-json": "prettier-package-json --success --write ./package.json",
+    "lint": "run-s -c lint:*",
+    "lint:eslint": "eslint \"src/**/*.ts\"",
+    "lint:prettier": "prettier --list-different .",
+    "lint:prettier-package-json": "prettier-package-json --success --list-different ./package.json",
+    "server": "ts-node --esm src/entrypoints/server.ts"
+  },
+  "devDependencies": {
+    "@tsconfig/esm": "^1.0.3",
+    "@tsconfig/node20": "^1.0.0",
+    "@tsconfig/strictest": "^2.0.1",
+    "@types/node": "^18.16.3",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "eslint": "^8.39.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
+    "prettier": "^2.8.8",
+    "prettier-package-json": "^2.8.0",
+    "ts-node": "github:TypeStrong/ts-node#71dcfd7",
+    "tslib": "^2.5.0"
+  },
+  "dependencies": {
+    "fastify": "^4.17.0",
+    "typescript": "^5.0.4"
+  }
+}
