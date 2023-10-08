@@ -42,7 +42,7 @@ jobs:
         with:
           context: ./sites/www.yantene.net
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ github.sha }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           target: runner
@@ -55,7 +55,7 @@ jobs:
         with:
           context: ./sites/www.yantene.net
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-${{ github.event.release.tag_name }}
+          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-${{ github.event.release.tag_name }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:production,ghcr.io/${{ github.repository_owner }}/www.yantene.net:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           target: runner
