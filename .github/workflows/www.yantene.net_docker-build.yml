@@ -3,12 +3,7 @@ name: www.yantene.net docker build
 on:
   push:
     branches:
-      - main
-    paths:
-      - sites/www.yantene.net/**
-  release:
-    types:
-      - created
+      - issue-103
 
 jobs:
   build:
@@ -36,28 +31,19 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: get version from package.json
+        id: package
+        run: |
+          echo "::set-output name=version::$(jq -r .version sites/www.yantene.net/package.json)"
+
       - name: build and push staging image
         uses: docker/build-push-action@v5
-        if: github.event_name == 'push'
         with:
           context: ./sites/www.yantene.net
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ github.sha }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging
+          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ steps.package.outputs.version }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           target: runner
           build-args: |
             APP_ENV=staging
-
-      - name: build and push production image
-        uses: docker/build-push-action@v5
-        if: github.event_name == 'release'
-        with:
-          context: ./sites/www.yantene.net
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-${{ github.event.release.tag_name }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:production,ghcr.io/${{ github.repository_owner }}/www.yantene.net:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
-          target: runner
-          build-args: |
-            APP_ENV=production
