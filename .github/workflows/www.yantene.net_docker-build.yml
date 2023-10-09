@@ -25,8 +25,9 @@ jobs:
 
       - name: get version from package.json
         id: package
-        run: |
-          echo "version=$(jq -r .version sites/www.yantene.net/package.json)" >> $GITHUB_ENV
+        uses: codex-team/action-nodejs-package-info@v1.1
+        with:
+          path: sites/www.yantene.net
 
       - name: staging cache
         uses: actions/cache@v3
