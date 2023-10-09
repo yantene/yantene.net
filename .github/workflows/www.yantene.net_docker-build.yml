@@ -41,7 +41,9 @@ jobs:
         with:
           context: ./sites/www.yantene.net
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ steps.package.outputs.version }},ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ steps.package.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging
           cache-from: type=local,src=/tmp/.buildx-cache-staging
           cache-to: type=local,dest=/tmp/.buildx-cache-staging,mode=max
           target: runner
