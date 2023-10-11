@@ -24,10 +24,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: get version from package.json
-        id: package
-        uses: codex-team/action-nodejs-package-info@v1.1
-        with:
-          path: sites/www.yantene.net
+        run: |
+          echo "PACKAGE_VERSION=$(jq -r '.version' ./sites/www.yantene.net/package.json)" >> "$GITHUB_ENV"
 
       - name: staging cache
         uses: actions/cache@v3
@@ -53,7 +51,7 @@ jobs:
 
       - name: check if versioned staging image exists
         run: |
-          if docker manifest inspect "ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ steps.package.outputs.version }}" > /dev/null 2>&1; then
+          if docker manifest inspect "ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ env.PACKAGE_VERSION }}" > /dev/null 2>&1; then
             echo "VERSIONED_STAGING_IMAGE_PUSHED=true" >> "$GITHUB_ENV"
           else
             echo "VERSIONED_STAGING_IMAGE_PUSHED=false" >> "$GITHUB_ENV"
@@ -66,7 +64,7 @@ jobs:
           context: ./sites/www.yantene.net
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ steps.package.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:staging-${{ env.PACKAGE_VERSION }}
           cache-from: type=local,src=/tmp/.buildx-cache-staging
           cache-to: type=local,dest=/tmp/.buildx-cache-staging,mode=max
           target: runner
