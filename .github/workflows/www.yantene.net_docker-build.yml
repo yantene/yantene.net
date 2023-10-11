@@ -70,3 +70,48 @@ jobs:
           target: runner
           build-args: |
             APP_ENV=staging
+
+      - name: production cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-production
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-production
+          restore-keys: |
+            ${{ runner.os }}-buildx-production-
+
+      - name: build and push latest production image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./sites/www.yantene.net
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:latest
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-latest
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:production
+          cache-from: type=local,src=/tmp/.buildx-cache-production
+          cache-to: type=local,dest=/tmp/.buildx-cache-production,mode=max
+          target: runner
+          build-args: |
+            APP_ENV=production
+
+      - name: check if versioned production image exists
+        run: |
+          if docker manifest inspect "ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-${{ env.PACKAGE_VERSION }}" > /dev/null 2>&1; then
+            echo "VERSIONED_PRODUCTION_IMAGE_PUSHED=true" >> "$GITHUB_ENV"
+          else
+            echo "VERSIONED_PRODUCTION_IMAGE_PUSHED=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: build and push versioned production image
+        if: env.VERSIONED_PRODUCTION_IMAGE_PUSHED != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./sites/www.yantene.net
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/www.yantene.net:production-${{ env.PACKAGE_VERSION }}
+          cache-from: type=local,src=/tmp/.buildx-cache-production
+          cache-to: type=local,dest=/tmp/.buildx-cache-production,mode=max
+          target: runner
+          build-args: |
+            APP_ENV=production
