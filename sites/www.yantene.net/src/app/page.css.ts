@@ -1,7 +1,7 @@
 import { style, keyframes } from "@vanilla-extract/css";
 import { size } from "../variables/size";
 
-const yanteneHeight = `calc((100vh - ${size.header.height.desktop}px) * 0.7)`;
+const yanteneHeight = `calc((100vh - ${size.header.height}px) * 0.7)`;
 
 const yura2 = keyframes({
   "0%": {
@@ -27,7 +27,7 @@ export const styles = {
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    paddingTop: size.header.height.desktop,
+    paddingTop: size.header.height,
     backgroundImage: "url(/images/background.svg)",
     backgroundSize: "cover",
     backgroundPosition: "center",

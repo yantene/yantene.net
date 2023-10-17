@@ -1,10 +1,10 @@
 {
-  "name": "yantene.net",
-  "short_name": "yantene.net",
+  "name": "やんてね！",
+  "short_name": "やんてね！",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#242424",
-  "theme_color": "#1a9dc1",
+  "theme_color": "#78a2d2",
   "icons": [
     {
       "src": "/icon.svg",

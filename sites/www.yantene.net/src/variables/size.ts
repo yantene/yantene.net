@@ -3,9 +3,6 @@
 export const size = {
   mobileMaxWidth: 1280,
   header: {
-    height: {
-      mobile: 60,
-      desktop: 80,
-    },
+    height: 48,
   },
 };
