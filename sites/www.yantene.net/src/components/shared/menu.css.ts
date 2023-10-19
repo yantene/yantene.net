@@ -1,35 +1,14 @@
-import { style, keyframes } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { vars } from "../../app/theme.css";
 import { size } from "../../variables/size";
-
-const fadeIn = keyframes({
-  from: {
-    opacity: 0,
-    transform: "translateX(-100%)",
-  },
-  to: {
-    opacity: 1,
-    transform: "translateX(0)",
-  },
-});
-
-const fadeOut = keyframes({
-  from: {
-    visibility: "visible",
-    opacity: 1,
-    transform: "translateX(0)",
-  },
-  to: {
-    opacity: 0,
-    transform: "translateX(-100%)",
-  },
-});
 
 export const styles = {
   aside: style([
     {
       position: "fixed",
       top: size.header.height,
+      left: -300,
+      transition: "left 0.3s ease",
     },
     {
       width: 300,
@@ -41,20 +20,9 @@ export const styles = {
       filter: "drop-shadow(0 0 10px #0007)",
     },
   ]),
-  fadeIn: style([
+  open: style([
     {
-      visibility: "visible",
-    },
-    {
-      animation: `${fadeIn} 0.15s`,
-    },
-  ]),
-  fadeOut: style([
-    {
-      visibility: "hidden",
-    },
-    {
-      animation: `${fadeOut} 0.15s`,
+      left: 0,
     },
   ]),
   list: style([

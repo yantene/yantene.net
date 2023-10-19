@@ -24,11 +24,7 @@ export default function Menu(): JSX.Element {
   return (
     <>
       <Overlay show={menuOpen} onClick={(): void => setMenuOpen(false)} />
-      <aside
-        className={`${styles.aside} ${
-          menuOpen ? styles.fadeIn : styles.fadeOut
-        }`}
-      >
+      <aside className={`${styles.aside} ${menuOpen ? styles.open : ""}`}>
         <nav>
           <ul className={styles.list}>
             <li className={styles.item}>
