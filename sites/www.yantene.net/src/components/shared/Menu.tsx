@@ -14,7 +14,7 @@ import {
 import { styles } from "./menu.css";
 
 import { menuOpenAtom } from "../../stores/menuOpenAtom";
-import Overlay from "./overlay";
+import Overlay from "./Overlay";
 
 export default function Menu(): JSX.Element {
   const iconSize = 32;
