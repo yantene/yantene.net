@@ -1,4 +1,3 @@
-import { Welcome } from "../welcome/welcome";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs) {
@@ -9,9 +8,9 @@ export function meta(_args: Route.MetaArgs) {
 }
 
 export function loader({ context }: Route.LoaderArgs) {
-  return { message: context.cloudflare.env.VALUE_FROM_CLOUDFLARE };
+  return { env: context.cloudflare.env.APP_ENV };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  return <Welcome message={loaderData.message} />;
+  return <p>{loaderData.env}</p>;
 }
