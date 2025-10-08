@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
-const app = new Hono<{Bindings: Env}>();
+const app = new Hono<{ Bindings: Env }>();
 
-app.get('/hono', (c) => {
-  return c.text('Hello Hono!');
-})
+app.get("/hono", (c) => {
+  return c.text("Hello Hono!");
+});
 
 export const getApp = (
   handler: (
