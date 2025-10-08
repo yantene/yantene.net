@@ -1,4 +1,5 @@
 import { createRequestHandler } from "react-router";
+import { getApp } from "server";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -14,10 +15,10 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE
 );
 
-export default {
-  async fetch(request, env, ctx) {
-    return requestHandler(request, {
-      cloudflare: { env, ctx },
-    });
-  },
-} satisfies ExportedHandler<Env>;
+const app = getApp(async (request, env, ctx) => {
+  return requestHandler(request, {
+    cloudflare: { env, ctx },
+  });
+});
+
+export default app satisfies ExportedHandler<Env>;
