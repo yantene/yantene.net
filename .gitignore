@@ -1,6 +1,7 @@
 .DS_Store
 .env
 /node_modules/
+/.pnpm-store/
 /tmp/
 *.tsbuildinfo
 
@@ -13,7 +14,6 @@
 .wrangler
 .dev.vars*
 worker-configuration.d.ts
-
 
 !.dev.vars.example
 !.env.example
