@@ -1,10 +1,7 @@
 import { Hono } from "hono";
+import { apiApp } from "./handlers/api";
 
-const app = new Hono<{ Bindings: Env }>();
-
-app.get("/hono", (c) => {
-  return c.text("Hello Hono!");
-});
+export const app = new Hono<{ Bindings: Env }>().route("/api", apiApp);
 
 export const getApp = (
   handler: (

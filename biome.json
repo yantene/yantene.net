@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!app/app.css"]
+    "includes": ["**", "!app/frontend/app.css"]
   },
   "formatter": {
     "enabled": true,

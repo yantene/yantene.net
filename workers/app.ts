@@ -1,5 +1,5 @@
 import { createRequestHandler } from "react-router";
-import { getApp } from "server";
+import { getApp } from "~/backend";
 
 declare module "react-router" {
   export interface AppLoadContext {
