@@ -21,6 +21,7 @@
     "react-router": "^7.9.2"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^2.0.13",
     "@biomejs/biome": "^2.2.5",
     "@cloudflare/vite-plugin": "^1.13.5",
     "@react-router/dev": "^7.9.2",

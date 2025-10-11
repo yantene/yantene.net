@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "/workspaces",
+        "--enable-web-dashboard",
+        "false"
+      ]
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "chrome-devtools-mcp@0.6.0",
+        "--headless",
+        "--executablePath",
+        "/usr/bin/chromium",
+        "--isolated"
+      ],
+      "env": {}
+    }
+  }
+}

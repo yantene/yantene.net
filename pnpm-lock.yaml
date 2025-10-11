@@ -24,6 +24,9 @@ importers:
         specifier: ^7.9.2
         version: 7.9.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     devDependencies:
+      '@anthropic-ai/claude-code':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@biomejs/biome':
         specifier: ^2.2.5
         version: 2.2.5
@@ -62,6 +65,11 @@ importers:
         version: 4.42.1
 
 packages:
+
+  '@anthropic-ai/claude-code@2.0.13':
+    resolution: {integrity: sha512-T5ZRNIHt/iKf443c9TWeXgzyRchfsicV00Tz4dgLlXfzehvjgTtvgeJBfk9p3AW412zpqwqXDKL4/UvOmhNffg==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -1767,6 +1775,15 @@ packages:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
 snapshots:
+
+  '@anthropic-ai/claude-code@2.0.13':
+    optionalDependencies:
+      '@img/sharp-darwin-arm64': 0.33.5
+      '@img/sharp-darwin-x64': 0.33.5
+      '@img/sharp-linux-arm': 0.33.5
+      '@img/sharp-linux-arm64': 0.33.5
+      '@img/sharp-linux-x64': 0.33.5
+      '@img/sharp-win32-x64': 0.33.5
 
   '@babel/code-frame@7.27.1':
     dependencies:
