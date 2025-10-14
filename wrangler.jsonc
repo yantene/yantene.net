@@ -13,11 +13,27 @@
   "observability": {
     "enabled": true
   },
+  "d1_databases": [
+    {
+      "binding": "D1",
+      "database_name": "yantene-development",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "./migrations"
+    }
+  ],
   "env": {
     "staging": {
       "vars": {
         "APP_ENV": "staging"
-      }
+      },
+      "d1_databases": [
+        {
+          "binding": "D1",
+          "database_name": "yantene-staging",
+          "database_id": "af5e9bdc-1a1c-4e91-ba18-7eb7ed8b9a9b",
+          "migrations_dir": "./migrations"
+        }
+      ]
     }
   }
   /**
