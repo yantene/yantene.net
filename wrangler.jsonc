@@ -21,6 +21,12 @@
       "migrations_dir": "./migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "yantene-development"
+    }
+  ],
   "env": {
     "staging": {
       "vars": {
@@ -32,6 +38,12 @@
           "database_name": "yantene-staging",
           "database_id": "af5e9bdc-1a1c-4e91-ba18-7eb7ed8b9a9b",
           "migrations_dir": "./migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "yantene-staging"
         }
       ]
     }
