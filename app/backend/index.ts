@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import { apiApp } from "./handlers/api";
+import { errorHandler } from "./handlers/error-handler";
 
-export const app = new Hono<{ Bindings: Env }>().route("/api", apiApp);
+export const app = new Hono<{ Bindings: Env }>()
+  .route("/api", apiApp)
+  .onError(errorHandler);
 
 export const getApp = (
   handler: (
