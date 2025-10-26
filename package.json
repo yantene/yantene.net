@@ -10,6 +10,8 @@
     "postinstall": "npm run cf-typegen",
     "preview": "pnpm run build && vite preview",
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "biome check .",
     "fix": "biome check . --write --unsafe",
     "db:generate-migration": "drizzle-kit generate --name",
@@ -27,6 +29,7 @@
     "db:stg:schema": "pnpm run db:stg:execute \"SELECT * FROM sqlite_master\""
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "drizzle-orm": "^0.44.6",
     "hono": "^4.9.10",
     "isbot": "^5.1.31",
@@ -48,6 +51,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
     "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.3",
     "wrangler": "^4.42.1"
   }
 }

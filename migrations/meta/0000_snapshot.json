@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ed94b5e2-2e42-4bee-9512-817effa4aba7",
+  "id": "9724b266-fecb-4638-a6e1-19d2ca309b0c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "error_logs": {
@@ -9,10 +9,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "level": {
           "name": "level",
@@ -45,19 +45,19 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "integer",
+          "type": "real",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "(unixepoch('subsec'))"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "integer",
+          "type": "real",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "(unixepoch('subsec'))"
         }
       },
       "indexes": {},
