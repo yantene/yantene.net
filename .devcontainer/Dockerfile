@@ -9,6 +9,7 @@ RUN apt-get update && \
     fonts-noto-color-emoji
 
 # Install asdf
+SHELL ["/bin/bash", "-c"]
 RUN set -e -o pipefail && \
     curl -L 'https://github.com/asdf-vm/asdf/releases/download/v0.18.0/asdf-v0.18.0-linux-amd64.tar.gz' -o /tmp/asdf.tar.gz && \
     tar -xz -C /usr/local/bin -f /tmp/asdf.tar.gz && \
