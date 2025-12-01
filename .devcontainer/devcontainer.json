@@ -1,0 +1,28 @@
+{
+  "name": "yantene.net",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspaces",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  "containerEnv": {},
+
+  "forwardPorts": [5173],
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "fish"
+      },
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "Anthropic.claude-code"
+      ]
+    }
+  },
+  "postCreateCommand": "./.devcontainer/post_create.fish"
+}
