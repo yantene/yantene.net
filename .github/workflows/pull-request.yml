@@ -1,0 +1,43 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-title:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Check Pull Request Title follows Conventional Commits
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Conventional Commits pattern (without breaking change support)
+          # Format: type(scope): subject
+          # - type: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+          # - scope: kebab-case (optional)
+          # - subject: free text
+
+          PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z][a-z0-9-]*\))?: "
+
+          if [[ "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "✅ Pull Request title follows Conventional Commits format"
+            echo "Pull Request Title: $PR_TITLE"
+          else
+            echo "❌ Pull Request title does not follow Conventional Commits format"
+            echo "Pull Request Title: $PR_TITLE"
+            echo ""
+            echo "Expected format: <type>(<scope>): <subject>"
+            echo ""
+            echo "Rules:"
+            echo "  - type: one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            echo "  - scope: optional, must be kebab-case (lowercase with hyphens)"
+            echo "  - subject: must start with lowercase letter"
+            echo ""
+            echo "Valid examples:"
+            echo "  - feat: add new feature"
+            echo "  - fix: resolve bug in login"
+            echo "  - docs(readme): update installation guide"
+            echo "  - refactor(user-service): simplify authentication logic"
+            exit 1
+          fi
