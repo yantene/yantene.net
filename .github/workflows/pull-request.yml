@@ -32,7 +32,7 @@ jobs:
             echo "Rules:"
             echo "  - type: one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
             echo "  - scope: optional, must be kebab-case (lowercase with hyphens)"
-            echo "  - subject: must start with lowercase letter"
+            echo "  - subject: brief description of the change"
             echo ""
             echo "Valid examples:"
             echo "  - feat: add new feature"
