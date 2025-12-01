@@ -1,8 +1,5 @@
 import { Hono } from "hono";
 
-const app = new Hono<{ Bindings: Env }>()
-  .get("/hello", (c) => c.text("Hello, World!"));
-
 export const getApp = (
   handler: (
     request: Request,
@@ -10,13 +7,15 @@ export const getApp = (
     ctx: ExecutionContext,
   ) => Promise<Response>,
 ) => {
-  app.all("*", async (context) => {
-    return handler(
-      context.req.raw,
-      context.env,
-      context.executionCtx as ExecutionContext,
-    );
-  });
+  const app = new Hono<{ Bindings: Env }>()
+    .get("/hello", (c) => c.text("Hello, World!"))
+    .all("*", async (context) => {
+      return handler(
+        context.req.raw,
+        context.env,
+        context.executionCtx as ExecutionContext,
+      );
+    });
 
   return app;
 }
