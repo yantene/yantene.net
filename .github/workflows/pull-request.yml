@@ -41,3 +41,35 @@ jobs:
             echo "  - refactor(user-service): simplify authentication logic"
             exit 1
           fi
+
+  check-branch:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Check branch name starts with issue-{number}/
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+
+          # Branch name pattern: issue-{number}/{description}
+          # Example: issue-123/add-feature
+          PATTERN="^issue-[0-9]+/"
+
+          if [[ "$BRANCH_NAME" =~ $PATTERN ]]; then
+            echo "✅ Branch name follows the required format"
+            echo "Branch name: $BRANCH_NAME"
+          else
+            echo "❌ Branch name does not follow the required format"
+            echo "Branch name: $BRANCH_NAME"
+            echo ""
+            echo "Expected format: issue-{number}/{description}"
+            echo ""
+            echo "Valid examples:"
+            echo "  - issue-1/add-feature"
+            echo "  - issue-123/fix-bug"
+            echo "  - issue-456/update-docs"
+            echo ""
+            echo "Invalid examples:"
+            echo "  - feature/add-feature (missing issue- prefix)"
+            echo "  - issue-abc/add-feature (number must be numeric)"
+            echo "  - issue-123-add-feature (missing slash separator)"
+            exit 1
+          fi
