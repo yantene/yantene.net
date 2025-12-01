@@ -9,7 +9,7 @@ services:
       - ..:/workspaces:cached
       - ./fish/config.fish:/home/vscode/.config/fish/config.fish
       - ./fish/conf.d/abbrs.fish:/home/vscode/.config/fish/conf.d/abbrs.fish
-      - ./fish/functions/git.fish:/home/vscode/.config/fish/conf.d/git.fish
+      - ./fish/functions/git.fish:/home/vscode/.config/fish/functions/git.fish
       # Chrome sandbox needs access to /dev/shm
       - /dev/shm:/dev/shm
     command: sleep infinity
