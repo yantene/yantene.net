@@ -1,0 +1,18 @@
+name: Setup Node.js and pnpm
+description: Setup Node.js with asdf and install pnpm dependencies
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js with asdf
+      uses: asdf-vm/actions/install@v3
+      with:
+        tool: nodejs
+
+    - name: Install pnpm
+      shell: bash
+      run: npm install -g pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
