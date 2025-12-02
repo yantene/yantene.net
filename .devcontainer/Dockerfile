@@ -16,4 +16,5 @@ RUN set -e -o pipefail && \
     rm /tmp/asdf.tar.gz && \
     mkdir -p /home/vscode/.config/fish/conf.d && \
     curl -L 'https://raw.githubusercontent.com/asdf-vm/asdf/refs/tags/v0.18.0/asdf.fish' > /home/vscode/.config/fish/conf.d/asdf.fish && \
+    curl -L 'https://raw.githubusercontent.com/asdf-vm/asdf/refs/tags/v0.18.0/asdf.sh' > /etc/profile.d/asdf.sh && \
     chown -R vscode:vscode /home/vscode/.config
