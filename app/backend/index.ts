@@ -6,7 +6,7 @@ export const getApp = (
     env: Env,
     ctx: ExecutionContext,
   ) => Promise<Response>,
-) => {
+): Hono<{ Bindings: Env }> => {
   const app = new Hono<{ Bindings: Env }>()
     .get("/hello", (c) => c.text("Hello, World!"))
     .all("*", async (context) => {

@@ -16,3 +16,7 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
+
+    - name: Generate type definitions
+      shell: bash
+      run: pnpm run cf-typegen && pnpm run rr-typegen

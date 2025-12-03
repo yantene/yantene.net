@@ -21,6 +21,18 @@ jobs:
       - name: Run Prettier check
         run: pnpm run format
 
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Run ESLint check
+        run: pnpm run lint
+
   typecheck:
     runs-on: ubuntu-latest
     steps:

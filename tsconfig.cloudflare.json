@@ -6,6 +6,7 @@
     "app/frontend/**/.server/**/*",
     "app/frontend/**/.client/**/*",
     "app/backend/**/*",
+    "app/lib/**/*",
     "workers/**/*",
     "worker-configuration.d.ts"
   ],
