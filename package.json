@@ -5,15 +5,17 @@
   "scripts": {
     "build": "react-router build",
     "cf-typegen": "wrangler types",
+    "rr-typegen": "react-router typegen",
     "deploy": "pnpm run build && wrangler deploy",
     "dev": "react-router dev --host 0.0.0.0",
     "postinstall": "pnpm run cf-typegen",
     "preview": "pnpm run build && vite preview",
-    "typecheck": "pnpm run cf-typegen && react-router typegen && tsc -b",
+    "typecheck": "pnpm run cf-typegen && pnpm run rr-typegen && tsc -b",
     "format": "prettier --ignore-path .gitignore --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:fix": "prettier --ignore-path .gitignore --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "fix": "pnpm run lint:fix && pnpm run format:fix",
     "test": "vitest",
     "test:run": "vitest run"
   },
