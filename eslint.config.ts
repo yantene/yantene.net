@@ -80,6 +80,15 @@ const config: Linter.Config[] = [
     },
   },
 
+  // テストファイル用の設定
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
+    },
+  },
+
   // Prettier との競合を回避
   prettierConfig,
 ];

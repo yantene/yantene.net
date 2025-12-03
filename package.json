@@ -14,6 +14,7 @@
     "format:fix": "prettier --ignore-path .gitignore --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "fix": "pnpm run lint:fix && pnpm run format:fix",
     "test": "vitest",
     "test:run": "vitest run"
   },
