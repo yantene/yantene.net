@@ -18,7 +18,11 @@
       "settings": {
         "terminal.integrated.defaultProfile.linux": "fish"
       },
-      "extensions": ["EditorConfig.EditorConfig", "Anthropic.claude-code"]
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "Anthropic.claude-code",
+        "vitest.explorer"
+      ]
     }
   },
   "postCreateCommand": "./.devcontainer/post_create.fish"
