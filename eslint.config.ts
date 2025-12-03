@@ -61,7 +61,6 @@ const config: Linter.Config[] = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/explicit-module-boundary-types": "error",
       "@typescript-eslint/no-confusing-void-expression": [
         "error",
         { ignoreArrowShorthand: true },
