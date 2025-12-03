@@ -18,4 +18,4 @@ export const getApp = (
     });
 
   return app;
-}
+};
