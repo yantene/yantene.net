@@ -1,23 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { getApp } from "./index";
+import { HTTP_STATUS } from "~/lib/constants/http-status";
 
 describe("getApp", () => {
   const mockEnv = {} as Env;
   const mockCtx = {} as ExecutionContext;
 
   it("/hello エンドポイントにレスポンスを返すこと", async () => {
-    const mockHandler = async () => new Response("mock response");
+    const mockHandler = async (): Promise<Response> => {
+      return new Response("mock response");
+    };
     const app = getApp(mockHandler);
 
     const req = new Request("http://localhost/hello");
     const res = await app.fetch(req, mockEnv, mockCtx);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP_STATUS.OK);
     expect(await res.text()).toBe("Hello, World!");
   });
 
   it("その他のリクエストをハンドラーに渡すこと", async () => {
-    const mockHandler = async (request: Request) => {
+    const mockHandler = async (request: Request): Promise<Response> => {
       return new Response(`handler received: ${request.url}`);
     };
     const app = getApp(mockHandler);
@@ -25,7 +28,7 @@ describe("getApp", () => {
     const req = new Request("http://localhost/some-other-path");
     const res = await app.fetch(req, mockEnv, mockCtx);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP_STATUS.OK);
     expect(await res.text()).toBe(
       "handler received: http://localhost/some-other-path",
     );
@@ -36,11 +39,11 @@ describe("getApp", () => {
       _request: Request,
       env: Env,
       ctx: ExecutionContext,
-    ) => {
+    ): Promise<Response> => {
       return new Response(
         JSON.stringify({
-          hasEnv: !!env,
-          hasCtx: !!ctx,
+          hasEnv: typeof env === "object",
+          hasCtx: typeof ctx === "object",
         }),
       );
     };
@@ -53,9 +56,8 @@ describe("getApp", () => {
     const testCtx = {} as ExecutionContext;
 
     const res = await app.fetch(req, testEnv, testCtx);
-    const data = (await res.json()) as { hasEnv: boolean; hasCtx: boolean };
+    const data = await res.json();
 
-    expect(data.hasEnv).toBe(true);
-    expect(data.hasCtx).toBe(true);
+    expect(data).toEqual({ hasEnv: true, hasCtx: true });
   });
 });

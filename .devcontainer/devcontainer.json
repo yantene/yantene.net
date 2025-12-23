@@ -21,7 +21,8 @@
       "extensions": [
         "EditorConfig.EditorConfig",
         "Anthropic.claude-code",
-        "vitest.explorer"
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint"
       ]
     }
   },
