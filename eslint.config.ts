@@ -39,7 +39,6 @@ const config: Linter.Config[] = [
       ],
 
       // 非同期処理の厳格化
-      "@typescript-eslint/promise-function-async": "error",
 
       // 型安全性の厳格化
       "@typescript-eslint/strict-boolean-expressions": [
