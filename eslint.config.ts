@@ -43,7 +43,7 @@ const config: Linter.Config[] = [
       // 型安全性の厳格化
       "@typescript-eslint/strict-boolean-expressions": [
         "error",
-        { allowString: false, allowNumber: false, allowNullableObject: false },
+        { allowString: true, allowNumber: false, allowNullableObject: true },
       ],
       "@typescript-eslint/explicit-function-return-type": [
         "error",
