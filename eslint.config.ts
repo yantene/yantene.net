@@ -65,16 +65,6 @@ const config: Linter.Config[] = [
         { ignoreArrowShorthand: true },
       ],
       "@typescript-eslint/prefer-readonly": "error",
-      "@typescript-eslint/no-magic-numbers": [
-        "error",
-        {
-          ignore: [0, 1, -1],
-          ignoreArrayIndexes: true,
-          ignoreDefaultValues: true,
-          ignoreEnums: true,
-          ignoreReadonlyClassProperties: true,
-        },
-      ],
     },
   },
 
