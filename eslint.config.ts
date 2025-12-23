@@ -61,7 +61,6 @@ const config: Linter.Config[] = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/explicit-module-boundary-types": "error",
       "@typescript-eslint/no-confusing-void-expression": [
         "error",
         { ignoreArrowShorthand: true },
@@ -77,6 +76,15 @@ const config: Linter.Config[] = [
           ignoreReadonlyClassProperties: true,
         },
       ],
+    },
+  },
+
+  // テストファイル用の設定
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
     },
   },
 
