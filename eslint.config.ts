@@ -4,6 +4,17 @@ import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import noSecrets from "eslint-plugin-no-secrets";
+// @ts-expect-error - no type definitions available
+import promisePlugin from "eslint-plugin-promise";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import security from "eslint-plugin-security";
+import sonarjs from "eslint-plugin-sonarjs";
+import unicorn from "eslint-plugin-unicorn";
+import vitest from "eslint-plugin-vitest";
 import tseslint from "typescript-eslint";
 import type { Linter } from "eslint";
 
@@ -11,9 +22,16 @@ const filename: string = fileURLToPath(import.meta.url);
 const dirname: string = path.dirname(filename);
 const gitignorePath: string = path.resolve(dirname, ".gitignore");
 
-const config: Linter.Config[] = [
+// Note: 一部のプラグイン（特に react-hooks）の型定義が ESLint 9 flat config と
+// 完全に互換性がないため、型アサーションを使用しています
+const config = [
   // .gitignore の内容を使用して ignore する
   includeIgnoreFile(gitignorePath),
+
+  // eslint.config.ts 自体を除外（型定義のないプラグインを使用しているため）
+  {
+    ignores: ["eslint.config.ts"],
+  },
 
   // JavaScript の推奨設定
   js.configs.recommended,
@@ -34,6 +52,14 @@ const config: Linter.Config[] = [
       parserOptions: {
         projectService: true,
         tsconfigRootDir: dirname,
+      },
+    },
+    settings: {
+      "import/resolver": {
+        typescript: {
+          alwaysTryTypes: true,
+          project: "./tsconfig.json",
+        },
       },
     },
     rules: {
@@ -140,17 +166,117 @@ const config: Linter.Config[] = [
     },
   },
 
-  // テストファイル用の設定
+  // React の設定
+  {
+    files: ["**/*.jsx", "**/*.tsx"],
+    plugins: {
+      react,
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+      "jsx-a11y": jsxA11y,
+    },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+    rules: {
+      // React の推奨ルール
+      ...react.configs.recommended.rules,
+      ...react.configs["jsx-runtime"].rules,
+
+      // React Hooks のルール
+      ...reactHooks.configs.recommended.rules,
+
+      // React Refresh のルール
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
+
+      // アクセシビリティのルール（推奨設定）
+      ...jsxA11y.flatConfigs.recommended.rules,
+
+      // React 固有の調整
+      "react/prop-types": "off", // TypeScript を使用するため不要
+      "react/react-in-jsx-scope": "off", // React 17+ では不要
+    },
+  },
+
+  // React Router のルートファイルと root.tsx では関数エクスポートを許可
+  {
+    files: ["**/routes/**/*.tsx", "**/root.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+
+  // コード品質・バグ検出のルール
+  {
+    plugins: {
+      unicorn,
+      sonarjs,
+      promise: promisePlugin,
+    },
+    rules: {
+      // Unicorn の推奨ルール（一部調整）
+      ...unicorn.configs.recommended.rules,
+      "unicorn/prevent-abbreviations": "off", // 略語を許可
+      "unicorn/no-null": "off", // null の使用を許可
+      "unicorn/filename-case": [
+        "error",
+        {
+          cases: {
+            camelCase: true,
+            pascalCase: true,
+            kebabCase: true,
+          },
+        },
+      ],
+
+      // SonarJS の推奨ルール
+      ...sonarjs.configs.recommended.rules,
+
+      // Promise の推奨ルール
+      ...promisePlugin.configs.recommended.rules,
+    },
+  },
+
+  // セキュリティのルール
+  {
+    plugins: {
+      security,
+      "no-secrets": noSecrets,
+    },
+    rules: {
+      // Security の推奨ルール
+      ...security.configs.recommended.rules,
+
+      // シークレット検出
+      "no-secrets/no-secrets": "error",
+    },
+  },
+
+  // Vitest テストファイルの設定（最後に配置してルールを上書き）
   {
     files: ["**/*.test.ts", "**/*.test.tsx"],
+    plugins: {
+      vitest,
+    },
     rules: {
+      ...vitest.configs.recommended.rules,
+
+      // テストファイルでは緩和するルール
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-magic-numbers": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "unicorn/consistent-function-scoping": "off", // テストケース内でのモック定義を許可
     },
   },
 
   // Prettier との競合を回避
   prettierConfig,
-];
+] as Linter.Config[];
 
 export default config;

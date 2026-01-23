@@ -40,11 +40,11 @@ describe("getApp", () => {
       env: Env,
       ctx: ExecutionContext,
     ): Promise<Response> => {
-      return new Response(
-        JSON.stringify({
+      return Response.json(
+        {
           hasEnv: typeof env === "object",
           hasCtx: typeof ctx === "object",
-        }),
+        },
       );
     };
     const app = getApp(mockHandler);
