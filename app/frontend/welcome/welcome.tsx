@@ -2,7 +2,9 @@ import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 import type React from "react";
 
-export function Welcome({ message }: { message: string }): React.JSX.Element {
+export function Welcome({
+  message,
+}: Readonly<{ message: string }>): React.JSX.Element {
   return (
     <main className="flex items-center justify-center pt-16 pb-4">
       <div className="flex-1 flex flex-col items-center gap-16 min-h-0">

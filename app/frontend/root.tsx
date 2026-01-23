@@ -25,9 +25,9 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}): React.JSX.Element {
+}>): React.JSX.Element {
   return (
     <html lang="en">
       <head>
@@ -58,12 +58,11 @@ export function ErrorBoundary({
 
   if (isRouteErrorResponse(error)) {
     message = error.status === httpStatus.NOT_FOUND ? "404" : "Error";
-    details =
-      error.status === httpStatus.NOT_FOUND
-        ? "The requested page could not be found."
-        : error.statusText.length > 0
-          ? error.statusText
-          : details;
+    if (error.status === httpStatus.NOT_FOUND) {
+      details = "The requested page could not be found.";
+    } else if (error.statusText.length > 0) {
+      details = error.statusText;
+    }
   } else if (import.meta.env.DEV && error != null && error instanceof Error) {
     details = error.message;
     stack = error.stack;
