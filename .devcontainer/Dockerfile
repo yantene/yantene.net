@@ -31,3 +31,18 @@ RUN set -e -o pipefail && \
         '/home/vscode/.config/fish/conf.d/asdf.fish' \
         'c5e06629af2235a25971e2abb6d51fdf83b80ae766a493b2a6e3b1a70722dc9f' && \
     chown -R vscode:vscode /home/vscode/.config
+
+# Install Claude Code CLI
+USER vscode
+RUN set -e -o pipefail && \
+    download_and_verify() { \
+        local url="$1" output="$2" expected_sha256="$3"; \
+        curl -fsSL "$url" | tee "$output" | sha256sum -c <(echo "$expected_sha256  -"); \
+    } && \
+    download_and_verify \
+        'https://claude.ai/install.sh' \
+        '/tmp/claude-install.sh' \
+        '363382bed8849f78692bd2f15167a1020e1f23e7da1476ab8808903b6bebae05' && \
+    bash /tmp/claude-install.sh && \
+    rm /tmp/claude-install.sh
+USER root
