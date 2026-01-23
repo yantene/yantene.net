@@ -28,11 +28,6 @@ const config = [
   // .gitignore の内容を使用して ignore する
   includeIgnoreFile(gitignorePath),
 
-  // eslint.config.ts 自体を除外（型定義のないプラグインを使用しているため）
-  {
-    ignores: ["eslint.config.ts"],
-  },
-
   // JavaScript の推奨設定
   js.configs.recommended,
 
@@ -216,8 +211,10 @@ const config = [
     plugins: {
       unicorn,
       sonarjs,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       promise: promisePlugin,
     },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rules: {
       // Unicorn の推奨ルール（一部調整）
       ...unicorn.configs.recommended.rules,
@@ -238,6 +235,7 @@ const config = [
       ...sonarjs.configs.recommended.rules,
 
       // Promise の推奨ルール
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       ...promisePlugin.configs.recommended.rules,
     },
   },
