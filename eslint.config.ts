@@ -1,14 +1,15 @@
-import type { Linter } from "eslint";
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import prettierConfig from "eslint-config-prettier";
-import { includeIgnoreFile } from "@eslint/compat";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { includeIgnoreFile } from "@eslint/compat";
+import js from "@eslint/js";
+import prettierConfig from "eslint-config-prettier";
+import importPlugin from "eslint-plugin-import";
+import tseslint from "typescript-eslint";
+import type { Linter } from "eslint";
 
-const __filename: string = fileURLToPath(import.meta.url);
-const __dirname: string = path.dirname(__filename);
-const gitignorePath: string = path.resolve(__dirname, ".gitignore");
+const filename: string = fileURLToPath(import.meta.url);
+const dirname: string = path.dirname(filename);
+const gitignorePath: string = path.resolve(dirname, ".gitignore");
 
 const config: Linter.Config[] = [
   // .gitignore の内容を使用して ignore する
@@ -26,10 +27,13 @@ const config: Linter.Config[] = [
   // プロジェクト固有のカスタマイズ
   {
     files: ["**/*.ts", "**/*.tsx"],
+    plugins: {
+      import: importPlugin,
+    },
     languageOptions: {
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: dirname,
       },
     },
     rules: {
@@ -38,7 +42,53 @@ const config: Linter.Config[] = [
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
 
+      // 命名規則（具体的なルールを先に、一般的なルールを後に配置）
+      "@typescript-eslint/naming-convention": [
+        "error",
+        // boolean 変数は is/has などのプレフィックスを強制（プレフィックス後は PascalCase）
+        {
+          selector: "variable",
+          types: ["boolean"],
+          format: ["PascalCase"],
+          prefix: ["is", "has", "should", "can", "will", "did"],
+        },
+        // 定数（string/number 型）は UPPER_CASE または camelCase
+        {
+          selector: "variable",
+          modifiers: ["const"],
+          types: ["string", "number"],
+          format: ["UPPER_CASE", "camelCase"],
+        },
+        // 変数は camelCase
+        {
+          selector: "variable",
+          format: ["camelCase"],
+          leadingUnderscore: "allow",
+        },
+        // 関数は camelCase または PascalCase（React コンポーネント対応）
+        {
+          selector: "function",
+          format: ["camelCase", "PascalCase"],
+          leadingUnderscore: "allow",
+        },
+        // 型・インターフェースは PascalCase
+        {
+          selector: ["typeLike"],
+          format: ["PascalCase"],
+        },
+        // プライベートクラスメンバーは camelCase（先頭アンダースコア許可）
+        {
+          selector: "classProperty",
+          modifiers: ["private"],
+          format: ["camelCase"],
+          leadingUnderscore: "allow",
+        },
+      ],
+
       // 非同期処理の厳格化
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/require-await": "error",
 
       // 型安全性の厳格化
       "@typescript-eslint/strict-boolean-expressions": [
@@ -51,6 +101,28 @@ const config: Linter.Config[] = [
           allowExpressions: true,
           allowTypedFunctionExpressions: true,
           allowHigherOrderFunctions: true,
+          allowDirectConstAssertionInArrowFunctions: true,
+          allowIIFEs: true,
+        },
+      ],
+
+      // インポート管理
+      "import/no-duplicates": "error",
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+            "object",
+            "type",
+          ],
+          "newlines-between": "never",
+          alphabetize: { order: "asc", caseInsensitive: true },
         },
       ],
 

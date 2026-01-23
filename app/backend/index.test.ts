@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getApp } from "./index";
-import { HTTP_STATUS } from "~/lib/constants/http-status";
+import { httpStatus } from "~/lib/constants/http-status";
 
 describe("getApp", () => {
   const mockEnv = {} as Env;
@@ -15,7 +15,7 @@ describe("getApp", () => {
     const req = new Request("http://localhost/hello");
     const res = await app.fetch(req, mockEnv, mockCtx);
 
-    expect(res.status).toBe(HTTP_STATUS.OK);
+    expect(res.status).toBe(httpStatus.OK);
     expect(await res.text()).toBe("Hello, World!");
   });
 
@@ -28,7 +28,7 @@ describe("getApp", () => {
     const req = new Request("http://localhost/some-other-path");
     const res = await app.fetch(req, mockEnv, mockCtx);
 
-    expect(res.status).toBe(HTTP_STATUS.OK);
+    expect(res.status).toBe(httpStatus.OK);
     expect(await res.text()).toBe(
       "handler received: http://localhost/some-other-path",
     );

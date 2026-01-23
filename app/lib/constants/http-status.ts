@@ -2,7 +2,7 @@
  * HTTP Status Codes
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
  */
-export const HTTP_STATUS = {
+export const httpStatus = {
   // 2xx Success
   OK: 200,
   CREATED: 201,

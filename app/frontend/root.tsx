@@ -6,10 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-
 import type { Route } from "./+types/root";
 import "./app.css";
-import { HTTP_STATUS } from "~/lib/constants/http-status";
+import { httpStatus } from "~/lib/constants/http-status";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -58,9 +57,9 @@ export function ErrorBoundary({
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === HTTP_STATUS.NOT_FOUND ? "404" : "Error";
+    message = error.status === httpStatus.NOT_FOUND ? "404" : "Error";
     details =
-      error.status === HTTP_STATUS.NOT_FOUND
+      error.status === httpStatus.NOT_FOUND
         ? "The requested page could not be found."
         : error.statusText.length > 0
           ? error.statusText

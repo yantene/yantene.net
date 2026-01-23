@@ -1,6 +1,6 @@
-import type React from "react";
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
+import type React from "react";
 
 export function Welcome({ message }: { message: string }): React.JSX.Element {
   return (
