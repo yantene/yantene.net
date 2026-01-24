@@ -1,17 +1,17 @@
 name: Setup Node.js and pnpm
-description: Setup Node.js with asdf and install pnpm dependencies
+description: Setup Node.js and install pnpm dependencies
 
 runs:
   using: composite
   steps:
-    - name: Setup Node.js with asdf
-      uses: asdf-vm/actions/install@v3
-      with:
-        tool: nodejs
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
 
-    - name: Install pnpm
-      shell: bash
-      run: npm install -g pnpm
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: package.json
+        cache: pnpm
 
     - name: Install dependencies
       shell: bash
