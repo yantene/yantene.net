@@ -7,13 +7,16 @@ argument-hint: <feature-name> [task-numbers]
 # Implementation Task Executor
 
 ## Parse Arguments
+
 - Feature name: `$1`
 - Task numbers: `$2` (optional)
   - Format: "1.1" (single task) or "1,2,3" (multiple tasks)
   - If not provided: Execute all pending tasks
 
 ## Validate
+
 Check that tasks have been generated:
+
 - Verify `.kiro/specs/$1/` exists
 - Verify `.kiro/specs/$1/tasks.md` exists
 
@@ -22,6 +25,7 @@ If validation fails, inform user to complete tasks generation first.
 ## Task Selection Logic
 
 **Parse task numbers from `$2`** (perform this in Slash Command before invoking Subagent):
+
 - If `$2` provided: Parse task numbers (e.g., "1.1", "1,2,3")
 - Otherwise: Read `.kiro/specs/$1/tasks.md` and find all unchecked tasks (`- [ ]`)
 
@@ -56,13 +60,16 @@ Show Subagent summary to user, then provide next step guidance:
 ### Task Execution
 
 **Execute specific task(s)**:
+
 - `/kiro:spec-impl $1 1.1` - Single task
 - `/kiro:spec-impl $1 1,2,3` - Multiple tasks
 
 **Execute all pending**:
+
 - `/kiro:spec-impl $1` - All unchecked tasks
 
 **Before Starting Implementation**:
+
 - **IMPORTANT**: Clear conversation history and free up context before running `/kiro:spec-impl`
 - This applies when starting first task OR switching between tasks
 - Fresh context ensures clean state and proper task focus

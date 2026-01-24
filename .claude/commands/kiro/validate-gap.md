@@ -7,10 +7,13 @@ argument-hint: <feature-name>
 # Implementation Gap Validation
 
 ## Parse Arguments
+
 - Feature name: `$1`
 
 ## Validate
+
 Check that requirements have been completed:
+
 - Verify `.kiro/specs/$1/` exists
 - Verify `.kiro/specs/$1/requirements.md` exists
 
@@ -46,6 +49,7 @@ Show Subagent summary to user, then provide next step guidance:
 ### Next Phase: Design Generation
 
 **If Gap Analysis Complete**:
+
 - Review gap analysis insights
 - Run `/kiro:spec-design $1` to create technical design document
 - Or `/kiro:spec-design $1 -y` to auto-approve requirements and proceed directly

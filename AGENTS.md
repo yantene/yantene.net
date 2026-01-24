@@ -11,6 +11,7 @@ This is a React Router 7 application with server-side rendering (SSR) deployed o
 **Package Manager**: This project uses `pnpm`, not `npm`.
 
 ### Essential Commands
+
 ```bash
 pnpm install              # Install dependencies
 pnpm run dev              # Start dev server (runs on http://0.0.0.0:5173)
@@ -20,6 +21,7 @@ pnpm run typecheck        # Run TypeScript type checking
 ```
 
 ### Testing
+
 ```bash
 pnpm run test             # Run tests in watch mode
 pnpm run test:run         # Run tests once
@@ -28,6 +30,7 @@ pnpm run test:run         # Run tests once
 Test files follow the pattern `**/*.test.{ts,tsx}` and use Vitest with happy-dom environment.
 
 ### Code Quality
+
 ```bash
 pnpm run lint             # Lint with ESLint
 pnpm run lint:fix         # Lint and auto-fix
@@ -37,6 +40,7 @@ pnpm run fix              # Run both lint:fix and format:fix
 ```
 
 ### Deployment
+
 ```bash
 pnpm run deploy           # Build and deploy to Cloudflare Workers
 npx wrangler versions upload    # Deploy preview version
@@ -104,6 +108,7 @@ The backend uses a factory pattern: `getApp(handler)` creates a Hono app that wr
 ### Import Ordering
 
 Imports are automatically ordered by ESLint:
+
 1. builtin (Node.js)
 2. external (npm packages)
 3. internal
@@ -118,6 +123,7 @@ No newlines between groups, alphabetically sorted.
 ### Type Imports
 
 Use inline type imports:
+
 ```typescript
 import { type User, getUser } from "~/lib/user";
 ```
@@ -137,6 +143,7 @@ import { type User, getUser } from "~/lib/user";
 ### Test Files
 
 Test files have relaxed rules:
+
 - `require-await` disabled
 - Magic numbers allowed
 - Unsafe assignments/member access allowed for mocking
@@ -158,6 +165,7 @@ Test files have relaxed rules:
 ## Security
 
 The ESLint configuration includes security plugins:
+
 - `eslint-plugin-security`: Detects security issues
 - `eslint-plugin-no-secrets`: Prevents committing secrets
 
@@ -168,6 +176,7 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 ### Project Context
 
 #### Paths
+
 - Steering: `.kiro/steering/`
 - Specs: `.kiro/specs/`
 
@@ -177,13 +186,16 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 **Specs** (`.kiro/specs/`) - Formalize development process for individual features
 
 #### Active Specifications
+
 - Check `.kiro/specs/` for active specifications
 - Use `/kiro:spec-status [feature-name]` to check progress
 
 ### Development Guidelines
+
 - Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
 
 ### Minimal Workflow
+
 - Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
 - Phase 1 (Specification):
   - `/kiro:spec-init "description"`
@@ -197,12 +209,14 @@ Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life
 - Progress check: `/kiro:spec-status {feature}` (use anytime)
 
 ### Development Rules
+
 - 3-phase approval workflow: Requirements → Design → Tasks → Implementation
 - Human review required each phase; use `-y` only for intentional fast-track
 - Keep steering current and verify alignment with `/kiro:spec-status`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
 ### Steering Configuration
+
 - Load entire `.kiro/steering/` as project memory
 - Default files: `product.md`, `tech.md`, `structure.md`
 - Custom files are supported (managed via `/kiro:steering-custom`)

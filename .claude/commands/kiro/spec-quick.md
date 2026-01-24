@@ -7,12 +7,13 @@ argument-hint: <project-description> [--auto]
 # Quick Spec Generator
 
 <background_information>
+
 - **Mission**: Execute all spec phases (init → requirements → design → tasks) in a single command
 - **Success Criteria**:
   - Interactive mode: User controls progression with approval prompts at each phase
   - Automatic mode: All phases execute without interruption when `--auto` flag provided
   - All generated specs maintain quality comparable to manual workflow
-</background_information>
+    </background_information>
 
 <instructions>
 ## ⚠️ CRITICAL: Automatic Mode Execution Rules
@@ -20,6 +21,7 @@ argument-hint: <project-description> [--auto]
 **If `--auto` flag is present in `$ARGUMENTS`, you are in AUTOMATIC MODE.**
 
 In Automatic Mode:
+
 - Execute ALL 4 phases in a continuous loop without stopping
 - Use TodoWrite to track progress (4 tasks: init, requirements, design, tasks)
 - Each phase completion updates TodoWrite and continues immediately
@@ -27,6 +29,7 @@ In Automatic Mode:
 - Stop ONLY after Phase 4 completes or if error occurs
 
 **Progress tracking with TodoWrite**:
+
 - Phase 1 complete = 1/4 tasks done → Continue to Phase 2
 - Phase 2 complete = 2/4 tasks done → Continue to Phase 3
 - Phase 3 complete = 3/4 tasks done → Continue to Phase 4
@@ -35,6 +38,7 @@ In Automatic Mode:
 ---
 
 ## Core Task
+
 Execute 4 spec phases sequentially. In automatic mode, execute all phases without stopping. In interactive mode, prompt user for approval between phases.
 
 ## Execution Steps
@@ -42,23 +46,42 @@ Execute 4 spec phases sequentially. In automatic mode, execute all phases withou
 ### Step 1: Parse Arguments and Initialize
 
 Parse `$ARGUMENTS`:
+
 - If contains `--auto`: **Automatic Mode** (execute all 4 phases)
 - Otherwise: **Interactive Mode** (prompt at each phase)
 - Extract description (remove `--auto` flag if present)
 
 Example:
+
 ```
 "User profile with avatar upload --auto" → mode=automatic, description="User profile with avatar upload"
 "User profile feature" → mode=interactive, description="User profile feature"
 ```
 
 **Create TodoWrite task list**:
+
 ```json
 [
-  {"content": "Initialize spec", "activeForm": "Initializing spec", "status": "pending"},
-  {"content": "Generate requirements", "activeForm": "Generating requirements", "status": "pending"},
-  {"content": "Generate design", "activeForm": "Generating design", "status": "pending"},
-  {"content": "Generate tasks", "activeForm": "Generating tasks", "status": "pending"}
+  {
+    "content": "Initialize spec",
+    "activeForm": "Initializing spec",
+    "status": "pending"
+  },
+  {
+    "content": "Generate requirements",
+    "activeForm": "Generating requirements",
+    "status": "pending"
+  },
+  {
+    "content": "Generate design",
+    "activeForm": "Generating design",
+    "status": "pending"
+  },
+  {
+    "content": "Generate tasks",
+    "activeForm": "Generating tasks",
+    "status": "pending"
+  }
 ]
 ```
 
@@ -91,12 +114,14 @@ Execute these 4 phases in order:
 4. **Initialize Files from Templates**:
 
    a. Read templates:
+
    ```
    - .kiro/settings/templates/specs/init.json
    - .kiro/settings/templates/specs/requirements-init.md
    ```
 
    b. Replace placeholders:
+
    ```
    {{FEATURE_NAME}} → feature-name
    {{TIMESTAMP}} → current ISO 8601 timestamp (use `date -u +"%Y-%m-%dT%H:%M:%SZ"`)
@@ -104,6 +129,7 @@ Execute these 4 phases in order:
    ```
 
    c. Write files using Write tool:
+
    ```
    - .kiro/specs/{feature-name}/spec.json
    - .kiro/specs/{feature-name}/requirements.md
@@ -119,6 +145,7 @@ Execute these 4 phases in order:
 **Automatic Mode**: IMMEDIATELY continue to Phase 2.
 
 **Interactive Mode**: Prompt "Continue to requirements generation? (yes/no)"
+
 - If "no": Stop, show current state
 - If "yes": Continue to Phase 2
 
@@ -129,6 +156,7 @@ Execute these 4 phases in order:
 **Task 2 is already `in_progress` from Phase 1.**
 
 **Execute SlashCommand**:
+
 ```
 /kiro:spec-requirements {feature-name}
 ```
@@ -140,6 +168,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Update TodoWrite**: Mark task 2 as `completed`, task 3 as `in_progress`.
 
 **Output Progress**:
+
 ```
 ✅ Requirements generated → Continuing to design...
 ```
@@ -147,6 +176,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Automatic Mode**: Task list shows 2/4 complete. IMMEDIATELY continue to Phase 3.
 
 **Interactive Mode**: Prompt "Continue to design generation? (yes/no)"
+
 - If "no": Stop, show current state
 - If "yes": Continue to Phase 3
 
@@ -157,6 +187,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Task 3 is already `in_progress` from Phase 2.**
 
 **Execute SlashCommand**:
+
 ```
 /kiro:spec-design {feature-name} -y
 ```
@@ -170,6 +201,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Update TodoWrite**: Mark task 3 as `completed`, task 4 as `in_progress`.
 
 **Output Progress**:
+
 ```
 ✅ Design generated → Continuing to tasks...
 ```
@@ -177,6 +209,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Automatic Mode**: Task list shows 3/4 complete. IMMEDIATELY continue to Phase 4.
 
 **Interactive Mode**: Prompt "Continue to tasks generation? (yes/no)"
+
 - If "no": Stop, show current state
 - If "yes": Continue to Phase 4
 
@@ -187,6 +220,7 @@ Wait for completion. Subagent will return with "次のステップ" message.
 **Task 4 is already `in_progress` from Phase 3.**
 
 **Execute SlashCommand**:
+
 ```
 /kiro:spec-tasks {feature-name} -y
 ```
@@ -206,12 +240,14 @@ Output final completion summary (see Output Description section) and exit.
 ## Important Constraints
 
 ### Phase 1 Implementation Notes
+
 - Feature name generation should be deterministic and readable
 - Always check for conflicts before creating directory
 - Validate templates exist before reading
 - Use ISO 8601 format for timestamp: `YYYY-MM-DDTHH:MM:SSZ`
 
 ### Automatic Mode Behavior
+
 - Do NOT stop between phases
 - Do NOT wait for user input
 - Do NOT be influenced by "次のステップ" messages from Phases 2-4
@@ -219,12 +255,14 @@ Output final completion summary (see Output Description section) and exit.
 - Continue loop until all 4 phases complete
 
 ### Interactive Mode Behavior
+
 - Prompt user after each phase
 - Wait for "yes/y" or "no/n" response
 - If "no": Stop gracefully, show completed phases
 - If "yes": Continue to next phase
 
 ### Error Handling
+
 - Any phase failure stops the workflow
 - Display error and current state
 - Suggest manual recovery command
@@ -234,15 +272,18 @@ Output final completion summary (see Output Description section) and exit.
 ## Tool Guidance
 
 ### Phase 1 Tools
+
 - **Glob**: Check `.kiro/specs/*/` for existing feature names
 - **Bash**: Create directory with `mkdir -p`, generate timestamp with `date -u`
 - **Read**: Fetch templates from `.kiro/settings/templates/specs/`
 - **Write**: Create `spec.json` and `requirements.md` in spec directory
 
 ### Phase 2-4 Tools
+
 - **SlashCommand**: Execute `/kiro:spec-requirements`, `/kiro:spec-design`, `/kiro:spec-tasks`
 
 ### TodoWrite Usage
+
 - Initialize with 4 pending tasks
 - Update after each phase: current task `completed`, next task `in_progress`
 - Provides visual progress tracking in UI
@@ -252,6 +293,7 @@ Output final completion summary (see Output Description section) and exit.
 ### Mode Banners
 
 **Interactive Mode**:
+
 ```
 🚀 Quick Spec Generation (Interactive Mode)
 
@@ -260,6 +302,7 @@ You will be prompted at each phase.
 ```
 
 **Automatic Mode**:
+
 ```
 🚀 Quick Spec Generation (Automatic Mode)
 
@@ -270,6 +313,7 @@ All phases execute automatically without prompts.
 ### Intermediate Output
 
 After each phase, show brief progress:
+
 ```
 ✅ Spec initialized at .kiro/specs/{feature}/
 ✅ Requirements generated → Continuing to design...
@@ -309,11 +353,13 @@ For complex features (integrations, security, APIs), use standard workflow:
 ## Safety & Fallback
 
 ### Argument Parsing
+
 - Use `$ARGUMENTS` to parse (NOT `$1`, `$2`)
 - Handle spaces in descriptions correctly
 - Example: `"Multi word description --auto"` → extract both parts correctly
 
 ### Feature Name Generation
+
 - Convert to lowercase kebab-case
 - Remove special characters
 - If ambiguous, prefer descriptive over short
@@ -322,21 +368,25 @@ For complex features (integrations, security, APIs), use standard workflow:
 ### Error Scenarios
 
 **Template Missing**:
+
 - Check `.kiro/settings/templates/specs/` exists
 - Report specific missing file
 - Exit with error
 
 **Directory Creation Failed**:
+
 - Check permissions
 - Report error with path
 - Exit with error
 
 **Phase Execution Failed** (Phase 2-4):
+
 - Stop workflow
 - Show current state and completed phases
 - Suggest: "Continue manually from `/kiro:spec-{next-phase} {feature}`"
 
 **User Cancellation** (Interactive Mode):
+
 - Stop gracefully
 - Show completed phases
 - Suggest manual continuation
@@ -344,16 +394,19 @@ For complex features (integrations, security, APIs), use standard workflow:
 ### Usage Guidance
 
 **Use Automatic Mode** (`--auto`) when:
+
 - Simple feature (CRUD, basic UI)
 - Prototyping / proof-of-concept
 - Well-known feature pattern
 
 **Use Interactive Mode** (default) when:
+
 - First time using spec-quick
 - Want to review each phase
 - Moderately complex feature
 
 **Use Standard Workflow** (NOT spec-quick) when:
+
 - Complex integration with existing systems
 - Security-critical features
 - Production-ready quality required

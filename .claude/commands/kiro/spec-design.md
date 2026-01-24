@@ -7,11 +7,14 @@ argument-hint: <feature-name> [-y]
 # Technical Design Generator
 
 ## Parse Arguments
+
 - Feature name: `$1`
 - Auto-approve flag: `$2` (optional, "-y")
 
 ## Validate
+
 Check that requirements have been completed:
+
 - Verify `.kiro/specs/$1/` exists
 - Verify `.kiro/specs/$1/requirements.md` exists
 
@@ -53,11 +56,13 @@ Show Subagent summary to user, then provide next step guidance:
 ### Next Phase: Task Generation
 
 **If Design Approved**:
+
 - Review generated design at `.kiro/specs/$1/design.md`
 - **Optional**: Run `/kiro:validate-design $1` for interactive quality review
 - Then `/kiro:spec-tasks $1 -y` to generate implementation tasks
 
 **If Modifications Needed**:
+
 - Provide feedback and re-run `/kiro:spec-design $1`
 - Existing design used as reference (merge mode)
 

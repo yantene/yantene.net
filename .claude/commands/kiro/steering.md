@@ -10,6 +10,7 @@ allowed-tools: Read, Task, Glob
 **Perform detection before invoking Subagent**:
 
 Check `.kiro/steering/` status:
+
 - **Bootstrap Mode**: Empty OR missing core files (product.md, tech.md, structure.md)
 - **Sync Mode**: All core files exist
 
@@ -43,10 +44,12 @@ JIT Strategy: Fetch codebase files when needed, not upfront
 Show Subagent summary to user:
 
 ### Bootstrap:
+
 - Generated steering files: product.md, tech.md, structure.md
 - Review and approve as Source of Truth
 
 ### Sync:
+
 - Updated steering files
 - Code drift warnings
 - Recommendations for custom steering

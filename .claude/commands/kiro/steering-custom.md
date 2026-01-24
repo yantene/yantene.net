@@ -8,6 +8,7 @@ allowed-tools: Task
 ## Interactive Workflow
 
 This command starts an interactive process with the Subagent:
+
 1. Subagent asks user for domain/topic
 2. Subagent checks for available templates
 3. Subagent analyzes codebase for relevant patterns
@@ -38,6 +39,7 @@ JIT Strategy: Analyze codebase for relevant patterns as needed
 ## Display Result
 
 Show Subagent summary to user:
+
 - Custom steering file created
 - Template used (if any)
 - Codebase patterns analyzed
@@ -46,6 +48,7 @@ Show Subagent summary to user:
 ## Available Templates
 
 Available templates in `.kiro/settings/templates/steering-custom/`:
+
 - api-standards.md, testing.md, security.md, database.md
 - error-handling.md, authentication.md, deployment.md
 
