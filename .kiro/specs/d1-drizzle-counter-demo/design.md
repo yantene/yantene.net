@@ -114,23 +114,25 @@ graph TB
 
 ### テクノロジースタック
 
-| レイヤー                       | 選択 / バージョン                | 機能での役割                                                             | 備考                                                 |
-| ------------------------------ | -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
-| フロントエンド                 | React 19.1.1, React Router 7.9.2 | カウンター UI、API 通信、状態管理                                        | 既存スタック維持                                     |
-| バックエンド                   | Hono 4.10.7                      | API ハンドラー層、ユースケースとの連携                                   | 既存スタック維持、ファクトリパターン拡張             |
-| ドメイン層                     | TypeScript strict mode           | エンティティ、Value Object、リポジトリインターフェース、ユースケース定義 | クリーンアーキテクチャの核心、インフラ層に依存しない |
-| データ / ストレージ            | **Drizzle ORM 0.45.1** (新規)    | 型安全な D1 データベース操作、スキーマ定義                               | プロダクション対応、D1 完全サポート                  |
-| データ / ストレージ            | **Cloudflare D1** (新規)         | SQLite ベースのエッジデータベース、clicks テーブル保存                   | Cloudflare Workers エッジ環境で動作                  |
-| インフラ / ランタイム          | Cloudflare Workers               | エッジデプロイメント、D1 バインディング提供                              | 既存スタック維持                                     |
+| レイヤー                        | 選択 / バージョン                | 機能での役割                                                             | 備考                                                 |
+| ------------------------------- | -------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| フロントエンド                  | React 19.1.1, React Router 7.9.2 | カウンター UI、API 通信、状態管理                                        | 既存スタック維持                                     |
+| バックエンド                    | Hono 4.10.7                      | API ハンドラー層、ユースケースとの連携                                   | 既存スタック維持、ファクトリパターン拡張             |
+| ドメイン層                      | TypeScript strict mode           | エンティティ、Value Object、リポジトリインターフェース、ユースケース定義 | クリーンアーキテクチャの核心、インフラ層に依存しない |
+| データ / ストレージ             | **Drizzle ORM 0.45.1** (新規)    | 型安全な D1 データベース操作、スキーマ定義                               | プロダクション対応、D1 完全サポート                  |
+| データ / ストレージ             | **Cloudflare D1** (新規)         | SQLite ベースのエッジデータベース、clicks テーブル保存                   | Cloudflare Workers エッジ環境で動作                  |
+| インフラ / ランタイム           | Cloudflare Workers               | エッジデプロイメント、D1 バインディング提供                              | 既存スタック維持                                     |
 | ビルドツール / マイグレーション | **Drizzle Kit 0.31.8** (新規)    | マイグレーション生成、スキーマ管理                                       | 開発時のみ使用                                       |
-| ビルドツール / マイグレーション | **Wrangler 4.51.0**              | D1 マイグレーション適用、ローカルエミュレーション                        | 既存バージョン維持、D1 コマンドを追加               |
-| スタイリング                   | TailwindCSS 4.1.13               | カウンター UI のスタイリング                                             | 既存スタック維持                                     |
+| ビルドツール / マイグレーション | **Wrangler 4.51.0**              | D1 マイグレーション適用、ローカルエミュレーション                        | 既存バージョン維持、D1 コマンドを追加                |
+| スタイリング                    | TailwindCSS 4.1.13               | カウンター UI のスタイリング                                             | 既存スタック維持                                     |
 
 **新規依存関係の追加**:
+
 - `drizzle-orm@0.45.1`: D1 データベース操作用 ORM
 - `drizzle-kit@0.31.8`: マイグレーション生成とスキーマ管理（devDependencies）
 
 **設定変更**:
+
 - `wrangler.jsonc`: D1 バインディング設定と `nodejs_compat` フラグ追加
 - `drizzle.config.ts`: Drizzle Kit 設定ファイル新規作成
 - `package.json`: npm scripts 追加（`db:generate`, `db:dev:migrate`, `db:dev:reset`, `db:prod:migrate`, `db:prod:reset`）
@@ -189,6 +191,7 @@ sequenceDiagram
 ```
 
 **主要な判断**:
+
 - **CQRS パターン採用**: Command（書き込み）と Query（読み込み）を分離し、将来的な最適化を可能にする
 - **エンティティの永続化状態管理**: ジェネリクス `<IPersisted | IUnpersisted>` で永続化前後の状態を型レベルで表現
 - **依存性逆転の原則**: ドメイン層がリポジトリインターフェースを定義し、インフラ層が実装を提供
@@ -209,6 +212,7 @@ graph LR
 ```
 
 **主要な判断**:
+
 - **マイグレーション生成**: Drizzle Kit を使用してスキーマから SQL を自動生成
 - **マイグレーション適用**: Wrangler CLI を使用してローカル（`--local`）または本番（`--env production --remote`）に適用
 - **リセット機能**: `db:dev:reset` / `db:prod:reset` で全テーブル削除 + マイグレーション再適用（開発時のみ推奨）
@@ -218,50 +222,50 @@ graph LR
 
 以下の表は、各要件が設計要素（コンポーネント、インターフェース、フロー）によって実現されることを示します。
 
-| 要件 | 概要                                      | コンポーネント                                      | インターフェース                                   | フロー                                 |
-| ---- | ----------------------------------------- | --------------------------------------------------- | -------------------------------------------------- | -------------------------------------- |
-| 1.1  | clicks テーブルスキーマ定義               | Database Schema (app/backend/infra/d1/schema/clicks.table.ts) | Drizzle スキーマ定義                               | マイグレーション管理フロー             |
-| 1.2  | Drizzle スキーマ定義ファイル              | Database Schema (app/backend/infra/d1/schema/clicks.table.ts) | clicks テーブル型定義                              | —                                      |
-| 1.3  | マイグレーション生成仕組み                | Drizzle Kit 設定 (drizzle.config.ts)                | npm scripts (db:generate)                          | マイグレーション管理フロー             |
-| 1.4  | Wrangler D1 バインディング設定            | Wrangler 設定 (wrangler.jsonc)                      | D1 バインディング (D1)                             | —                                      |
-| 1.5  | ローカル開発環境初期化ドキュメント        | README.md 更新                                      | npm scripts (db:dev:migrate)                       | マイグレーション管理フロー             |
-| 1.6  | 本番 D1 バインディング検証                | Wrangler 設定 (wrangler.jsonc)                      | D1 バインディング (D1)                             | —                                      |
-| 2.1  | Drizzle ORM クライアント初期化            | ClickCommandRepository Implementation               | drizzle(c.env.D1)                                  | クリックカウンター操作フロー           |
-| 2.2  | Hono コンテキストから D1 アクセス         | Counter API Handler (app/backend/handlers/api/counter/index.ts) | c.env.D1                                           | クリックカウンター操作フロー           |
-| 2.3  | /api/counter/increment POST 処理          | Counter API Handler (app/backend/handlers/api/counter/index.ts) | POST /api/counter/increment                        | クリックカウンター操作フロー           |
-| 2.4  | clicks テーブルにレコード挿入             | IncrementClickUsecase, ClickCommandRepository       | save(click: Click<IUnpersisted>)                   | クリックカウンター操作フロー           |
-| 2.5  | 総クリック数取得                          | GetTotalCountUsecase, ClickCommandRepository        | count(): Promise<number>                           | クリックカウンター操作フロー           |
-| 2.6  | JSON レスポンス返却                       | Counter API Handler                                 | c.json({ count: number })                          | クリックカウンター操作フロー           |
-| 2.7  | エラーハンドリング                        | Counter API Handler                                 | try-catch, c.json({ error }, 500)                  | クリックカウンター操作フロー（エラー） |
-| 2.8  | 明示的な戻り値型定義                      | Counter API Handler, Usecases, Repositories         | Promise<Response>, Promise<Click<IPersisted>>      | —                                      |
-| 3.1  | /counter ルート提供                       | Counter Route (app/frontend/routes/counter.tsx)     | React Router ルート                                | —                                      |
-| 3.2  | 総クリック数表示                          | Counter Route (app/frontend/routes/counter.tsx)     | useState<number>                                   | クリックカウンター操作フロー           |
-| 3.3  | カウントアップボタン配置                  | Counter Route (app/frontend/routes/counter.tsx)     | <button onClick={handleIncrement}>                 | —                                      |
-| 3.4  | POST リクエスト送信                       | Counter Route (app/frontend/routes/counter.tsx)     | fetch("/api/counter/increment", { method: "POST" }) | クリックカウンター操作フロー           |
-| 3.5  | ローディング状態表示                      | Counter Route (app/frontend/routes/counter.tsx)     | useState<boolean>, disabled={isLoading}            | クリックカウンター操作フロー           |
-| 3.6  | カウンター数値更新                        | Counter Route (app/frontend/routes/counter.tsx)     | setCount(data.count)                               | クリックカウンター操作フロー           |
-| 3.7  | エラーメッセージ表示                      | Counter Route (app/frontend/routes/counter.tsx)     | useState<string \| null>, setErrorMessage          | クリックカウンター操作フロー（エラー） |
-| 3.8  | TailwindCSS スタイリング                  | Counter Route (app/frontend/routes/counter.tsx)     | className="..."                                    | —                                      |
-| 3.9  | Boolean 変数命名規則                      | Counter Route (app/frontend/routes/counter.tsx)     | isLoading, errorMessage                            | —                                      |
-| 4.1  | Drizzle スキーマからの型定義              | Database Schema, Domain Entities                    | clicks テーブル型、Click エンティティ             | —                                      |
-| 4.2  | API レスポンス型定義共有                  | Shared Types (app/lib/types/counter.ts)             | CounterResponse                                    | —                                      |
-| 4.3  | 明示的な戻り値型アノテーション            | Counter API Handler, Usecases, Repositories         | Promise<Response>, Promise<Click<IPersisted>>      | —                                      |
-| 4.4  | ESLint 厳格ルール適用                     | 既存 ESLint 設定                                    | —                                                  | —                                      |
-| 4.5  | pnpm run typecheck 完了                   | TypeScript strict mode                              | —                                                  | —                                      |
-| 4.6  | インライン型インポート                    | All TypeScript files                                | import { type CounterResponse }                    | —                                      |
-| 4.7  | Vitest テスト環境                         | 既存 Vitest 設定                                    | —                                                  | —                                      |
-| 5.1  | pnpm run dev で D1 エミュレート           | Wrangler 設定, npm scripts                          | wrangler dev                                       | —                                      |
-| 5.2  | マイグレーション適用ドキュメント          | README.md 更新                                      | npm scripts (db:dev:migrate, db:prod:migrate)      | マイグレーション管理フロー             |
-| 5.3  | pnpm run build                            | 既存ビルド設定                                      | —                                                  | —                                      |
-| 5.4  | pnpm run deploy                           | 既存デプロイ設定                                    | —                                                  | —                                      |
-| 5.5  | D1 セットアップ手順ドキュメント           | README.md 更新                                      | —                                                  | マイグレーション管理フロー             |
-| 5.6  | D1 バインディング名定義                   | Wrangler 設定 (wrangler.jsonc)                      | "binding": "D1"                                    | —                                      |
-| 6.1  | D1 接続エラーハンドリング                 | Counter API Handler                                 | try-catch, c.json({ error }, 500)                  | クリックカウンター操作フロー（エラー） |
-| 6.2  | Drizzle クエリエラーハンドリング          | Counter API Handler, Repository Implementations     | try-catch, console.error                           | クリックカウンター操作フロー（エラー） |
-| 6.3  | 不正な HTTP メソッドエラー                | Hono デフォルト動作                                 | 405 Method Not Allowed                             | —                                      |
-| 6.4  | フェッチエラー検出                        | Counter Route (app/frontend/routes/counter.tsx)     | try-catch, setErrorMessage                         | クリックカウンター操作フロー（エラー） |
-| 6.5  | 構造化エラーログ出力                      | Counter API Handler                                 | console.error("Counter increment error:", error)   | —                                      |
-| 6.6  | マイグレーション失敗ドキュメント          | README.md 更新                                      | —                                                  | マイグレーション管理フロー             |
+| 要件 | 概要                               | コンポーネント                                                  | インターフェース                                    | フロー                                 |
+| ---- | ---------------------------------- | --------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------- |
+| 1.1  | clicks テーブルスキーマ定義        | Database Schema (app/backend/infra/d1/schema/clicks.table.ts)   | Drizzle スキーマ定義                                | マイグレーション管理フロー             |
+| 1.2  | Drizzle スキーマ定義ファイル       | Database Schema (app/backend/infra/d1/schema/clicks.table.ts)   | clicks テーブル型定義                               | —                                      |
+| 1.3  | マイグレーション生成仕組み         | Drizzle Kit 設定 (drizzle.config.ts)                            | npm scripts (db:generate)                           | マイグレーション管理フロー             |
+| 1.4  | Wrangler D1 バインディング設定     | Wrangler 設定 (wrangler.jsonc)                                  | D1 バインディング (D1)                              | —                                      |
+| 1.5  | ローカル開発環境初期化ドキュメント | README.md 更新                                                  | npm scripts (db:dev:migrate)                        | マイグレーション管理フロー             |
+| 1.6  | 本番 D1 バインディング検証         | Wrangler 設定 (wrangler.jsonc)                                  | D1 バインディング (D1)                              | —                                      |
+| 2.1  | Drizzle ORM クライアント初期化     | ClickCommandRepository Implementation                           | drizzle(c.env.D1)                                   | クリックカウンター操作フロー           |
+| 2.2  | Hono コンテキストから D1 アクセス  | Counter API Handler (app/backend/handlers/api/counter/index.ts) | c.env.D1                                            | クリックカウンター操作フロー           |
+| 2.3  | /api/counter/increment POST 処理   | Counter API Handler (app/backend/handlers/api/counter/index.ts) | POST /api/counter/increment                         | クリックカウンター操作フロー           |
+| 2.4  | clicks テーブルにレコード挿入      | IncrementClickUsecase, ClickCommandRepository                   | save(click: Click<IUnpersisted>)                    | クリックカウンター操作フロー           |
+| 2.5  | 総クリック数取得                   | GetTotalCountUsecase, ClickCommandRepository                    | count(): Promise<number>                            | クリックカウンター操作フロー           |
+| 2.6  | JSON レスポンス返却                | Counter API Handler                                             | c.json({ count: number })                           | クリックカウンター操作フロー           |
+| 2.7  | エラーハンドリング                 | Counter API Handler                                             | try-catch, c.json({ error }, 500)                   | クリックカウンター操作フロー（エラー） |
+| 2.8  | 明示的な戻り値型定義               | Counter API Handler, Usecases, Repositories                     | Promise<Response>, Promise<Click<IPersisted>>       | —                                      |
+| 3.1  | /counter ルート提供                | Counter Route (app/frontend/routes/counter.tsx)                 | React Router ルート                                 | —                                      |
+| 3.2  | 総クリック数表示                   | Counter Route (app/frontend/routes/counter.tsx)                 | useState<number>                                    | クリックカウンター操作フロー           |
+| 3.3  | カウントアップボタン配置           | Counter Route (app/frontend/routes/counter.tsx)                 | <button onClick={handleIncrement}>                  | —                                      |
+| 3.4  | POST リクエスト送信                | Counter Route (app/frontend/routes/counter.tsx)                 | fetch("/api/counter/increment", { method: "POST" }) | クリックカウンター操作フロー           |
+| 3.5  | ローディング状態表示               | Counter Route (app/frontend/routes/counter.tsx)                 | useState<boolean>, disabled={isLoading}             | クリックカウンター操作フロー           |
+| 3.6  | カウンター数値更新                 | Counter Route (app/frontend/routes/counter.tsx)                 | setCount(data.count)                                | クリックカウンター操作フロー           |
+| 3.7  | エラーメッセージ表示               | Counter Route (app/frontend/routes/counter.tsx)                 | useState<string \| null>, setErrorMessage           | クリックカウンター操作フロー（エラー） |
+| 3.8  | TailwindCSS スタイリング           | Counter Route (app/frontend/routes/counter.tsx)                 | className="..."                                     | —                                      |
+| 3.9  | Boolean 変数命名規則               | Counter Route (app/frontend/routes/counter.tsx)                 | isLoading, errorMessage                             | —                                      |
+| 4.1  | Drizzle スキーマからの型定義       | Database Schema, Domain Entities                                | clicks テーブル型、Click エンティティ               | —                                      |
+| 4.2  | API レスポンス型定義共有           | Shared Types (app/lib/types/counter.ts)                         | CounterResponse                                     | —                                      |
+| 4.3  | 明示的な戻り値型アノテーション     | Counter API Handler, Usecases, Repositories                     | Promise<Response>, Promise<Click<IPersisted>>       | —                                      |
+| 4.4  | ESLint 厳格ルール適用              | 既存 ESLint 設定                                                | —                                                   | —                                      |
+| 4.5  | pnpm run typecheck 完了            | TypeScript strict mode                                          | —                                                   | —                                      |
+| 4.6  | インライン型インポート             | All TypeScript files                                            | import { type CounterResponse }                     | —                                      |
+| 4.7  | Vitest テスト環境                  | 既存 Vitest 設定                                                | —                                                   | —                                      |
+| 5.1  | pnpm run dev で D1 エミュレート    | Wrangler 設定, npm scripts                                      | wrangler dev                                        | —                                      |
+| 5.2  | マイグレーション適用ドキュメント   | README.md 更新                                                  | npm scripts (db:dev:migrate, db:prod:migrate)       | マイグレーション管理フロー             |
+| 5.3  | pnpm run build                     | 既存ビルド設定                                                  | —                                                   | —                                      |
+| 5.4  | pnpm run deploy                    | 既存デプロイ設定                                                | —                                                   | —                                      |
+| 5.5  | D1 セットアップ手順ドキュメント    | README.md 更新                                                  | —                                                   | マイグレーション管理フロー             |
+| 5.6  | D1 バインディング名定義            | Wrangler 設定 (wrangler.jsonc)                                  | "binding": "D1"                                     | —                                      |
+| 6.1  | D1 接続エラーハンドリング          | Counter API Handler                                             | try-catch, c.json({ error }, 500)                   | クリックカウンター操作フロー（エラー） |
+| 6.2  | Drizzle クエリエラーハンドリング   | Counter API Handler, Repository Implementations                 | try-catch, console.error                            | クリックカウンター操作フロー（エラー） |
+| 6.3  | 不正な HTTP メソッドエラー         | Hono デフォルト動作                                             | 405 Method Not Allowed                              | —                                      |
+| 6.4  | フェッチエラー検出                 | Counter Route (app/frontend/routes/counter.tsx)                 | try-catch, setErrorMessage                          | クリックカウンター操作フロー（エラー） |
+| 6.5  | 構造化エラーログ出力               | Counter API Handler                                             | console.error("Counter increment error:", error)    | —                                      |
+| 6.6  | マイグレーション失敗ドキュメント   | README.md 更新                                                  | —                                                   | マイグレーション管理フロー             |
 
 ## コンポーネントとインターフェース
 
@@ -269,30 +273,30 @@ graph LR
 
 以下のコンポーネントが新規作成または拡張されます。
 
-| コンポーネント                     | ドメイン / レイヤー | 意図                                                       | 要件カバレッジ                        | 主要な依存関係（P0/P1）                     | 契約                           |
-| ---------------------------------- | ------------------- | ---------------------------------------------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------ |
-| Click Entity                       | ドメイン            | クリックの概念をドメインモデルとして表現                   | 4.1                                   | —                                           | State                          |
-| IClickCommandRepository Interface  | ドメイン            | Click の書き込み操作のリポジトリ契約を定義                 | 2.4, 2.5                              | —                                           | Service                        |
-| IncrementClickUsecase              | ドメイン            | クリックを記録し、総カウント数を返すビジネスロジック       | 2.3, 2.4, 2.5, 2.6                    | IClickCommandRepository (P0)                | Service                        |
-| ClickCommandRepository Implementation | インフラ         | D1 + Drizzle ORM による Click リポジトリの実装             | 2.1, 2.4, 2.5                         | Drizzle ORM (P0), Database Schema (P0)      | Service                        |
-| Database Schema                    | インフラ            | clicks テーブルのスキーマ定義と型安全性提供                | 1.1, 1.2, 4.1                         | Drizzle ORM (P0)                            | State                          |
-| Counter API Handler                | ハンドラー          | /api/counter/increment エンドポイントの実装                | 2.2, 2.3, 2.6, 2.7, 2.8, 6.1, 6.2, 6.5 | IncrementClickUsecase (P0), ClickCommandRepository (P0) | API                            |
-| Counter Route                      | フロントエンド      | カウンター UI とユーザーインタラクション                   | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 6.4 | Counter API Handler (P0)                    | State                          |
-| Shared Types                       | 共有ユーティリティ  | フロントエンドとバックエンド間の型定義共有                 | 4.2, 4.6                              | —                                           | —                              |
-| Drizzle Kit 設定                   | ビルドツール        | マイグレーション生成とスキーマ管理                         | 1.3                                   | Database Schema (P0)                        | —                              |
-| Wrangler 設定                      | インフラ            | D1 バインディング設定とマイグレーション適用                | 1.4, 1.6, 5.6                         | —                                           | —                              |
-| npm scripts                        | ビルドツール        | データベース操作の自動化                                   | 1.5, 5.2                              | Drizzle Kit (P0), Wrangler (P0)             | —                              |
-| README.md 更新                     | ドキュメント        | D1 セットアップ手順とマイグレーション手順のドキュメント化  | 1.5, 5.5, 6.6                         | —                                           | —                              |
+| コンポーネント                        | ドメイン / レイヤー | 意図                                                      | 要件カバレッジ                                   | 主要な依存関係（P0/P1）                                 | 契約    |
+| ------------------------------------- | ------------------- | --------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- | ------- |
+| Click Entity                          | ドメイン            | クリックの概念をドメインモデルとして表現                  | 4.1                                              | —                                                       | State   |
+| IClickCommandRepository Interface     | ドメイン            | Click の書き込み操作のリポジトリ契約を定義                | 2.4, 2.5                                         | —                                                       | Service |
+| IncrementClickUsecase                 | ドメイン            | クリックを記録し、総カウント数を返すビジネスロジック      | 2.3, 2.4, 2.5, 2.6                               | IClickCommandRepository (P0)                            | Service |
+| ClickCommandRepository Implementation | インフラ            | D1 + Drizzle ORM による Click リポジトリの実装            | 2.1, 2.4, 2.5                                    | Drizzle ORM (P0), Database Schema (P0)                  | Service |
+| Database Schema                       | インフラ            | clicks テーブルのスキーマ定義と型安全性提供               | 1.1, 1.2, 4.1                                    | Drizzle ORM (P0)                                        | State   |
+| Counter API Handler                   | ハンドラー          | /api/counter/increment エンドポイントの実装               | 2.2, 2.3, 2.6, 2.7, 2.8, 6.1, 6.2, 6.5           | IncrementClickUsecase (P0), ClickCommandRepository (P0) | API     |
+| Counter Route                         | フロントエンド      | カウンター UI とユーザーインタラクション                  | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 6.4 | Counter API Handler (P0)                                | State   |
+| Shared Types                          | 共有ユーティリティ  | フロントエンドとバックエンド間の型定義共有                | 4.2, 4.6                                         | —                                                       | —       |
+| Drizzle Kit 設定                      | ビルドツール        | マイグレーション生成とスキーマ管理                        | 1.3                                              | Database Schema (P0)                                    | —       |
+| Wrangler 設定                         | インフラ            | D1 バインディング設定とマイグレーション適用               | 1.4, 1.6, 5.6                                    | —                                                       | —       |
+| npm scripts                           | ビルドツール        | データベース操作の自動化                                  | 1.5, 5.2                                         | Drizzle Kit (P0), Wrangler (P0)                         | —       |
+| README.md 更新                        | ドキュメント        | D1 セットアップ手順とマイグレーション手順のドキュメント化 | 1.5, 5.5, 6.6                                    | —                                                       | —       |
 
 ### ドメイン層
 
 #### Click Entity
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | クリックの概念をドメインモデルとして表現し、永続化状態を型レベルで管理 |
-| 要件                   | 4.1                                                    |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                                   |
+| --------------------- | ---------------------------------------------------------------------- |
+| 意図                  | クリックの概念をドメインモデルとして表現し、永続化状態を型レベルで管理 |
+| 要件                  | 4.1                                                                    |
+| オーナー / レビュアー | （省略可）                                                             |
 
 **責務と制約**:
 
@@ -319,9 +323,9 @@ import type { IEntity } from "../entity.interface";
 import type { IPersisted } from "../persisted.interface";
 import type { IUnpersisted } from "../unpersisted.interface";
 
-export class Click<P extends IPersisted | IUnpersisted>
-  implements IEntity<Click<P>>
-{
+export class Click<P extends IPersisted | IUnpersisted> implements IEntity<
+  Click<P>
+> {
   private constructor(
     readonly id: P["id"],
     readonly timestamp: number,
@@ -329,15 +333,8 @@ export class Click<P extends IPersisted | IUnpersisted>
     readonly updatedAt: P["updatedAt"],
   ) {}
 
-  static create(params: {
-    timestamp: number;
-  }): Click<IUnpersisted> {
-    return new Click(
-      undefined,
-      params.timestamp,
-      undefined,
-      undefined,
-    );
+  static create(params: { timestamp: number }): Click<IUnpersisted> {
+    return new Click(undefined, params.timestamp, undefined, undefined);
   }
 
   static reconstruct(params: {
@@ -383,11 +380,11 @@ export class Click<P extends IPersisted | IUnpersisted>
 
 #### IClickCommandRepository Interface
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | Click の書き込み操作のリポジトリ契約を定義し、依存性逆転の原則を適用 |
-| 要件                   | 2.4, 2.5                                               |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                                 |
+| --------------------- | -------------------------------------------------------------------- |
+| 意図                  | Click の書き込み操作のリポジトリ契約を定義し、依存性逆転の原則を適用 |
+| 要件                  | 2.4, 2.5                                                             |
+| オーナー / レビュアー | （省略可）                                                           |
 
 **責務と制約**:
 
@@ -438,11 +435,11 @@ export interface IClickCommandRepository {
 
 #### IncrementClickUsecase
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | クリックを記録し、総カウント数を返すビジネスロジックをオーケストレート |
-| 要件                   | 2.3, 2.4, 2.5, 2.6                                     |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                                   |
+| --------------------- | ---------------------------------------------------------------------- |
+| 意図                  | クリックを記録し、総カウント数を返すビジネスロジックをオーケストレート |
+| 要件                  | 2.3, 2.4, 2.5, 2.6                                                     |
+| オーナー / レビュアー | （省略可）                                                             |
 
 **責務と制約**:
 
@@ -466,9 +463,7 @@ import type { IClickCommandRepository } from "../click.command-repository.interf
 import { Click } from "../click.entity";
 
 export class IncrementClickUsecase {
-  constructor(
-    private readonly clickRepository: IClickCommandRepository,
-  ) {}
+  constructor(private readonly clickRepository: IClickCommandRepository) {}
 
   async execute(): Promise<{ count: number }> {
     const click = Click.create({ timestamp: Date.now() });
@@ -504,11 +499,11 @@ export class IncrementClickUsecase {
 
 #### Database Schema
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | clicks テーブルのスキーマ定義と型安全性提供            |
-| 要件                   | 1.1, 1.2, 4.1                                          |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                        |
+| --------------------- | ------------------------------------------- |
+| 意図                  | clicks テーブルのスキーマ定義と型安全性提供 |
+| 要件                  | 1.1, 1.2, 4.1                               |
+| オーナー / レビュアー | （省略可）                                  |
 
 **責務と制約**:
 
@@ -584,11 +579,11 @@ export { clicks } from "./clicks.table";
 
 #### ClickCommandRepository Implementation
 
-| フィールド             | 詳細                                                                   |
-| ---------------------- | ---------------------------------------------------------------------- |
-| 意図                   | IClickCommandRepository インターフェースを D1 + Drizzle ORM で実装     |
-| 要件                   | 2.1, 2.4, 2.5                                                          |
-| オーナー / レビュアー  | （省略可）                                                             |
+| フィールド            | 詳細                                                               |
+| --------------------- | ------------------------------------------------------------------ |
+| 意図                  | IClickCommandRepository インターフェースを D1 + Drizzle ORM で実装 |
+| 要件                  | 2.1, 2.4, 2.5                                                      |
+| オーナー / レビュアー | （省略可）                                                         |
 
 **責務と制約**:
 
@@ -629,11 +624,7 @@ export class ClickCommandRepository implements IClickCommandRepository {
       timestamp: click.timestamp,
     };
 
-    const result = await this.db
-      .insert(clicks)
-      .values(data)
-      .returning()
-      .get();
+    const result = await this.db.insert(clicks).values(data).returning().get();
 
     return Click.reconstruct({
       id: result.id,
@@ -680,11 +671,11 @@ export class ClickCommandRepository implements IClickCommandRepository {
 
 #### Counter API Handler
 
-| フィールド             | 詳細                                                                   |
-| ---------------------- | ---------------------------------------------------------------------- |
-| 意図                   | /api/counter/increment エンドポイントで IncrementClickUsecase を実行し、JSON レスポンスを返す |
-| 要件                   | 2.2, 2.3, 2.6, 2.7, 2.8, 6.1, 6.2, 6.5                                 |
-| オーナー / レビュアー  | （省略可）                                                             |
+| フィールド            | 詳細                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| 意図                  | /api/counter/increment エンドポイントで IncrementClickUsecase を実行し、JSON レスポンスを返す |
+| 要件                  | 2.2, 2.3, 2.6, 2.7, 2.8, 6.1, 6.2, 6.5                                                        |
+| オーナー / レビュアー | （省略可）                                                                                    |
 
 **責務と制約**:
 
@@ -707,16 +698,18 @@ export class ClickCommandRepository implements IClickCommandRepository {
 
 ##### API Contract
 
-| メソッド | エンドポイント            | リクエスト | レスポンス                   | エラー |
-| -------- | ------------------------- | ---------- | ---------------------------- | ------ |
-| POST     | /api/counter/increment    | なし       | `{ count: number }`          | 500    |
+| メソッド | エンドポイント         | リクエスト | レスポンス          | エラー |
+| -------- | ---------------------- | ---------- | ------------------- | ------ |
+| POST     | /api/counter/increment | なし       | `{ count: number }` | 500    |
 
 **リクエスト**:
+
 - メソッド: POST
 - ボディ: なし
 - ヘッダー: なし
 
 **レスポンス（成功）**:
+
 ```json
 {
   "count": 42
@@ -724,6 +717,7 @@ export class ClickCommandRepository implements IClickCommandRepository {
 ```
 
 **レスポンス（エラー）**:
+
 ```json
 {
   "error": "Failed to increment counter"
@@ -731,6 +725,7 @@ export class ClickCommandRepository implements IClickCommandRepository {
 ```
 
 **エラー処理**:
+
 - **500 Internal Server Error**: D1 接続エラー、Drizzle クエリ失敗、予期しないエラー
 
 **実装ノート**:
@@ -743,8 +738,9 @@ import { IncrementClickUsecase } from "../../../domain/click/usecases/increment-
 import { ClickCommandRepository } from "../../../infra/d1/click/click.command-repository";
 import type { CounterResponse } from "~/lib/types/counter";
 
-export const counterApp = new Hono<{ Bindings: Env }>()
-  .post("/increment", async (c): Promise<Response> => {
+export const counterApp = new Hono<{ Bindings: Env }>().post(
+  "/increment",
+  async (c): Promise<Response> => {
     try {
       const db = drizzle(c.env.D1);
       const clickRepository = new ClickCommandRepository(db);
@@ -759,12 +755,10 @@ export const counterApp = new Hono<{ Bindings: Env }>()
       return c.json(response);
     } catch (error) {
       console.error("Counter increment error:", error);
-      return c.json(
-        { error: "Failed to increment counter" },
-        500,
-      );
+      return c.json({ error: "Failed to increment counter" }, 500);
     }
-  });
+  },
+);
 ```
 
 - **統合**: `app/backend/index.ts` の `getApp()` ファクトリ関数で `.route("/api/counter", counterApp)` を追加
@@ -775,11 +769,11 @@ export const counterApp = new Hono<{ Bindings: Env }>()
 
 #### Counter Route
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | /counter ルートでカウンター UI を表示し、クリックイベントを処理 |
-| 要件                   | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 6.4      |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                            |
+| --------------------- | --------------------------------------------------------------- |
+| 意図                  | /counter ルートでカウンター UI を表示し、クリックイベントを処理 |
+| 要件                  | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 6.4                |
+| オーナー / レビュアー | （省略可）                                                      |
 
 **責務と制約**:
 
@@ -883,11 +877,11 @@ export default function Counter(): JSX.Element {
 
 #### Shared Types
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | フロントエンドとバックエンド間で API レスポンス型を共有 |
-| 要件                   | 4.2, 4.6                                               |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                    |
+| --------------------- | ------------------------------------------------------- |
+| 意図                  | フロントエンドとバックエンド間で API レスポンス型を共有 |
+| 要件                  | 4.2, 4.6                                                |
+| オーナー / レビュアー | （省略可）                                              |
 
 **責務と制約**:
 
@@ -915,11 +909,11 @@ export type CounterResponse = {
 
 #### Drizzle Kit 設定
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | Drizzle Kit を設定し、マイグレーション生成を自動化     |
-| 要件                   | 1.3                                                    |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                               |
+| --------------------- | -------------------------------------------------- |
+| 意図                  | Drizzle Kit を設定し、マイグレーション生成を自動化 |
+| 要件                  | 1.3                                                |
+| オーナー / レビュアー | （省略可）                                         |
 
 **責務と制約**:
 
@@ -950,11 +944,11 @@ export default defineConfig({
 
 #### Wrangler 設定
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | D1 バインディング設定とマイグレーション適用            |
-| 要件                   | 1.4, 1.6, 5.6                                          |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                        |
+| --------------------- | ------------------------------------------- |
+| 意図                  | D1 バインディング設定とマイグレーション適用 |
+| 要件                  | 1.4, 1.6, 5.6                               |
+| オーナー / レビュアー | （省略可）                                  |
 
 **責務と制約**:
 
@@ -977,18 +971,18 @@ export default defineConfig({
   "compatibility_flags": ["nodejs_compat"],
   "main": "./workers/app.ts",
   "vars": {
-    "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare"
+    "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
   },
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
   "d1_databases": [
     {
       "binding": "D1",
       "database_name": "yantene-development",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "./migrations"
-    }
+      "migrations_dir": "./migrations",
+    },
   ],
   "env": {
     "production": {
@@ -997,11 +991,11 @@ export default defineConfig({
           "binding": "D1",
           "database_name": "yantene-production",
           "database_id": "<本番環境で作成したD1データベースのID>",
-          "migrations_dir": "./migrations"
-        }
-      ]
-    }
-  }
+          "migrations_dir": "./migrations",
+        },
+      ],
+    },
+  },
 }
 ```
 
@@ -1015,11 +1009,11 @@ export default defineConfig({
 
 #### npm scripts
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | データベース操作の自動化（マイグレーション生成、適用、リセット） |
-| 要件                   | 1.5, 5.2                                               |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                             |
+| --------------------- | ---------------------------------------------------------------- |
+| 意図                  | データベース操作の自動化（マイグレーション生成、適用、リセット） |
+| 要件                  | 1.5, 5.2                                                         |
+| オーナー / レビュアー | （省略可）                                                       |
 
 **責務と制約**:
 
@@ -1067,11 +1061,11 @@ export default defineConfig({
 
 #### README.md 更新
 
-| フィールド             | 詳細                                                   |
-| ---------------------- | ------------------------------------------------------ |
-| 意図                   | D1 セットアップ手順とマイグレーション手順のドキュメント化 |
-| 要件                   | 1.5, 5.5, 6.6                                          |
-| オーナー / レビュアー  | （省略可）                                             |
+| フィールド            | 詳細                                                      |
+| --------------------- | --------------------------------------------------------- |
+| 意図                  | D1 セットアップ手順とマイグレーション手順のドキュメント化 |
+| 要件                  | 1.5, 5.5, 6.6                                             |
+| オーナー / レビュアー | （省略可）                                                |
 
 **責務と制約**:
 
@@ -1087,7 +1081,7 @@ export default defineConfig({
 
 README.md に以下のセクションを追加:
 
-```markdown
+````markdown
 ## D1 Database Setup
 
 ### ローカル開発環境
@@ -1096,18 +1090,22 @@ README.md に以下のセクションを追加:
    ```bash
    pnpm install
    ```
+````
 
 2. マイグレーション生成:
+
    ```bash
    pnpm run db:generate
    ```
 
 3. マイグレーション適用:
+
    ```bash
    pnpm run db:dev:migrate
    ```
 
 4. 開発サーバー起動:
+
    ```bash
    pnpm run dev
    ```
@@ -1130,19 +1128,23 @@ pnpm run db:dev:reset
    - 作成後、データベース ID をコピー
 
 2. `wrangler.jsonc` の `env.production.d1_databases[0].database_id` を更新:
+
    ```jsonc
    {
      "env": {
        "production": {
-         "d1_databases": [{
-           "database_id": "<コピーしたデータベースID>"
-         }]
-       }
-     }
+         "d1_databases": [
+           {
+             "database_id": "<コピーしたデータベースID>",
+           },
+         ],
+       },
+     },
    }
    ```
 
 3. マイグレーション適用（本番環境）:
+
    ```bash
    pnpm run db:prod:migrate
    ```
@@ -1153,9 +1155,11 @@ pnpm run db:dev:reset
    ```
 
 **注意**:
+
 - 本番環境のマイグレーション適用は慎重に実行してください。
 - `db:prod:reset` は本番データベースの全テーブルを削除します。開発初期段階でのみ使用し、本番運用開始後は使用しないでください。
-```
+
+````
 
 - **統合**: README.md に上記セクションを追加
 - **検証**: ドキュメントの内容が正確で、手順が実行可能であることを確認
@@ -1196,7 +1200,7 @@ erDiagram
         REAL created_at "NOT NULL, DEFAULT unixepoch(subsec)"
         REAL updated_at "NOT NULL, DEFAULT unixepoch(subsec)"
     }
-```
+````
 
 **エンティティ関係とカーディナリティ**:
 
@@ -1258,9 +1262,11 @@ CREATE TABLE clicks (
 **API データ転送**:
 
 **リクエストスキーマ**:
+
 - `/api/counter/increment` はリクエストボディなし
 
 **レスポンススキーマ**:
+
 ```typescript
 // app/lib/types/counter.ts
 export type CounterResponse = {
@@ -1269,10 +1275,12 @@ export type CounterResponse = {
 ```
 
 **バリデーションルール**:
+
 - `count` は 0 以上の整数
 - レスポンスは常に JSON 形式
 
 **シリアライゼーションフォーマット**:
+
 - JSON (Content-Type: application/json)
 
 **イベントスキーマ**:

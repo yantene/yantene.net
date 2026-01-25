@@ -55,6 +55,7 @@ app/backend/
 ```
 
 **主要パターン**:
+
 1. **CQRS Pattern**: Command/Query Repository 分離
 2. **Value Object Pattern**: ドメインロジックをVOに集約
 3. **Custom Types**: Drizzle ORM とドメイン層を型安全に統合
@@ -63,6 +64,7 @@ app/backend/
 #### Drizzle Configuration
 
 **drizzle.config.ts**:
+
 ```typescript
 export default defineConfig({
   dialect: "sqlite",
@@ -73,6 +75,7 @@ export default defineConfig({
 ```
 
 **特徴**:
+
 - `schema` パスは schema ディレクトリ全体を指定（個別ファイルではなく）
 - `out` はプロジェクトルートの `./migrations` ディレクトリ
 - `driver: "d1-http"` で D1 HTTP API を使用
@@ -80,6 +83,7 @@ export default defineConfig({
 #### Wrangler D1 Configuration
 
 **wrangler.jsonc** の D1 設定:
+
 ```jsonc
 {
   "d1_databases": [
@@ -87,8 +91,8 @@ export default defineConfig({
       "binding": "D1",
       "database_name": "yantene-development",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "./migrations"
-    }
+      "migrations_dir": "./migrations",
+    },
   ],
   "env": {
     "staging": {
@@ -97,15 +101,16 @@ export default defineConfig({
           "binding": "D1",
           "database_name": "yantene-staging",
           "database_id": "af5e9bdc-1a1c-4e91-ba18-7eb7ed8b9a9b",
-          "migrations_dir": "./migrations"
-        }
-      ]
-    }
-  }
+          "migrations_dir": "./migrations",
+        },
+      ],
+    },
+  },
 }
 ```
 
 **重要ポイント**:
+
 - **binding名**: `"D1"` (現在のコードベースではまだ定義されていない)
 - **環境分離**: development / staging で異なるデータベース
 - **database_id**: ローカルは dummy UUID、本番環境は実際の ID
@@ -114,6 +119,7 @@ export default defineConfig({
 #### Database Schema Patterns
 
 **Custom Types for Temporal API** (`temporal.custom-type.ts`):
+
 ```typescript
 export const instant = customType<{
   data: Temporal.Instant;
@@ -133,9 +139,10 @@ export const instant = customType<{
 ```
 
 **Custom Types for Domain VOs** (`entry.custom-type.ts`):
+
 ```typescript
 export const slug = customType<{
-  data: Slug;  // ドメイン VO
+  data: Slug; // ドメイン VO
   driverData: string;
 }>({
   dataType() {
@@ -151,6 +158,7 @@ export const slug = customType<{
 ```
 
 **Table Definition Example** (`error-logs.table.ts`):
+
 ```typescript
 export const errorLogs = sqliteTable("error_logs", {
   id: text("id").notNull().primaryKey(),
@@ -168,6 +176,7 @@ export const errorLogs = sqliteTable("error_logs", {
 ```
 
 **パターン**:
+
 - `id`: UUID を text で保存（`crypto.randomUUID()` で生成）
 - `createdAt/updatedAt`: Temporal.Instant カスタム型、SQLite の `unixepoch('subsec')` でデフォルト値
 - Nullable カラムは `stack: text("stack")` のように `.notNull()` なし
@@ -175,6 +184,7 @@ export const errorLogs = sqliteTable("error_logs", {
 #### Repository Pattern
 
 **Command Repository** (書き込み操作):
+
 ```typescript
 export class ErrorLogCommandRepository implements IErrorLogCommandRepository {
   constructor(private readonly db: DrizzleD1Database) {}
@@ -204,6 +214,7 @@ export class ErrorLogCommandRepository implements IErrorLogCommandRepository {
 ```
 
 **Query Repository** (読み込み操作):
+
 ```typescript
 export class ErrorLogQueryRepository implements IErrorLogQueryRepository {
   constructor(private readonly db: DrizzleD1Database) {}
@@ -219,12 +230,15 @@ export class ErrorLogQueryRepository implements IErrorLogQueryRepository {
       return undefined;
     }
 
-    return ErrorLog.reconstruct({ /* ... */ });
+    return ErrorLog.reconstruct({
+      /* ... */
+    });
   }
 }
 ```
 
 **パターン**:
+
 - コンストラクタで `DrizzleD1Database` を DI
 - `.returning().get()` で挿入したレコードを取得
 - `.get()` で単一レコード、`.all()` で複数レコード
@@ -233,26 +247,27 @@ export class ErrorLogQueryRepository implements IErrorLogQueryRepository {
 #### API Handler Pattern
 
 **Hono での DI と使用例** (`handlers/api/debug/error-logs/index.ts`):
+
 ```typescript
-export const errorLogApp = new Hono<{ Bindings: Env }>()
-  .get("/", async (c) => {
-    const db = drizzle(c.env.D1);  // D1 バインディングから Drizzle クライアント作成
-    const errorLogQueryRepo = new ErrorLogQueryRepository(db);
-    const findErrorLogsUsecase = new FindErrorLogsUsecase(errorLogQueryRepo);
+export const errorLogApp = new Hono<{ Bindings: Env }>().get("/", async (c) => {
+  const db = drizzle(c.env.D1); // D1 バインディングから Drizzle クライアント作成
+  const errorLogQueryRepo = new ErrorLogQueryRepository(db);
+  const findErrorLogsUsecase = new FindErrorLogsUsecase(errorLogQueryRepo);
 
-    const limit = Math.min(Number(c.req.query("limit")) || 50, 100);
-    const offset = Number(c.req.query("offset")) || 0;
+  const limit = Math.min(Number(c.req.query("limit")) || 50, 100);
+  const offset = Number(c.req.query("offset")) || 0;
 
-    const result = await findErrorLogsUsecase.execute({ limit, offset });
+  const result = await findErrorLogsUsecase.execute({ limit, offset });
 
-    return c.json({
-      data: result.logs.map((log) => log.toJSON()),
-      pagination: { limit, offset, total: result.total },
-    });
+  return c.json({
+    data: result.logs.map((log) => log.toJSON()),
+    pagination: { limit, offset, total: result.total },
   });
+});
 ```
 
 **パターン**:
+
 - `c.env.D1` で D1 バインディングにアクセス
 - `drizzle(c.env.D1)` で Drizzle クライアント初期化
 - リポジトリ → ユースケース → レスポンスの順で DI
@@ -261,6 +276,7 @@ export const errorLogApp = new Hono<{ Bindings: Env }>()
 #### Migration Management
 
 **Generated SQL** (`migrations/0000_create_error_logs.sql`):
+
 ```sql
 CREATE TABLE `error_logs` (
 	`id` text PRIMARY KEY NOT NULL,
@@ -274,10 +290,12 @@ CREATE TABLE `error_logs` (
 ```
 
 **Meta Files** (`migrations/meta/`):
+
 - `0000_snapshot.json`: マイグレーション適用前のスキーマスナップショット
 - `_journal.json`: マイグレーション履歴
 
 **npm Scripts**:
+
 ```json
 {
   "db:generate-migration": "drizzle-kit generate --name",
@@ -297,6 +315,7 @@ CREATE TABLE `error_logs` (
 ```
 
 **スクリプトパターン**:
+
 - `generate-migration`: Drizzle Kit でマイグレーション生成（`--name` で名前指定）
 - `migrate`: wrangler でマイグレーション適用
 - `status`: マイグレーション適用状況確認
@@ -307,6 +326,7 @@ CREATE TABLE `error_logs` (
 - `dev:*` はローカル、`stg:*` は `--remote` でリモート実行
 
 **Drop Script** (`scripts/d1/drop-all-tables.sh`):
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -341,6 +361,7 @@ package.json                  ✅ pnpm 依存関係（Drizzle なし）
 ```
 
 **既存の再利用可能な資産**:
+
 - ✅ Hono バックエンドファクトリパターン (`getApp()`)
 - ✅ React Router ルートパターン (`loader`, `action`)
 - ✅ TailwindCSS v4 設定
@@ -349,6 +370,7 @@ package.json                  ✅ pnpm 依存関係（Drizzle なし）
 - ✅ エラーバウンダリ（404, 500）
 
 **欠落している部分**:
+
 - ❌ D1 データベースバインディング設定（wrangler.jsonc）
 - ❌ Drizzle ORM 依存関係（drizzle-orm, drizzle-kit）
 - ❌ Drizzle スキーマ定義
@@ -358,16 +380,16 @@ package.json                  ✅ pnpm 依存関係（Drizzle なし）
 
 ### 1.3 Gap Summary
 
-| カテゴリ | 現在の状態 | 必要な状態 | ギャップ |
-|---------|-----------|----------|---------|
-| **npm 依存関係** | Hono, React Router のみ | Drizzle ORM, Drizzle Kit 追加 | ❌ 未インストール |
-| **Wrangler 設定** | D1 バインディングなし | D1 バインディング設定 | ❌ 未設定 |
-| **Drizzle 設定** | drizzle.config.ts なし | drizzle.config.ts 作成 | ❌ 未作成 |
-| **スキーマ定義** | データベース層なし | clicks テーブルスキーマ定義 | ❌ 未定義 |
-| **マイグレーション** | migrations/ なし | migrations/ + meta/ 作成 | ❌ 未作成 |
-| **API エンドポイント** | /hello のみ | /api/counter/increment 追加 | ❌ 未実装 |
-| **フロントエンドルート** | /home のみ | /counter ルート追加 | ❌ 未実装 |
-| **npm scripts** | build, dev, deploy のみ | db:* scripts 追加 | ❌ 未追加 |
+| カテゴリ                 | 現在の状態              | 必要な状態                    | ギャップ          |
+| ------------------------ | ----------------------- | ----------------------------- | ----------------- |
+| **npm 依存関係**         | Hono, React Router のみ | Drizzle ORM, Drizzle Kit 追加 | ❌ 未インストール |
+| **Wrangler 設定**        | D1 バインディングなし   | D1 バインディング設定         | ❌ 未設定         |
+| **Drizzle 設定**         | drizzle.config.ts なし  | drizzle.config.ts 作成        | ❌ 未作成         |
+| **スキーマ定義**         | データベース層なし      | clicks テーブルスキーマ定義   | ❌ 未定義         |
+| **マイグレーション**     | migrations/ なし        | migrations/ + meta/ 作成      | ❌ 未作成         |
+| **API エンドポイント**   | /hello のみ             | /api/counter/increment 追加   | ❌ 未実装         |
+| **フロントエンドルート** | /home のみ              | /counter ルート追加           | ❌ 未実装         |
+| **npm scripts**          | build, dev, deploy のみ | db:\* scripts 追加            | ❌ 未追加         |
 
 ---
 
@@ -429,6 +451,7 @@ package.json                  ✅ pnpm 依存関係（Drizzle なし）
 **実現可能性**: ✅ **Very High** - 参照実装を簡略化して適用可能
 
 **実装アプローチの選択**:
+
 - **Option A (シンプル)**: `app/backend/index.ts` に直接実装（リポジトリパターンなし）
 - **Option B (参照準拠)**: リポジトリパターンを採用（`app/lib/db/` に分離）
 
@@ -542,6 +565,7 @@ package.json                  # 依存関係と scripts 追加（拡張）
 #### File Structure Detail
 
 **app/lib/db/schema.ts** (新規):
+
 ```typescript
 import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
 
@@ -552,6 +576,7 @@ export const clicks = sqliteTable("clicks", {
 ```
 
 **app/lib/types/counter.ts** (新規):
+
 ```typescript
 export type CounterResponse = {
   count: number;
@@ -559,6 +584,7 @@ export type CounterResponse = {
 ```
 
 **app/backend/index.ts** (拡張):
+
 ```typescript
 import { drizzle } from "drizzle-orm/d1";
 import { count } from "drizzle-orm";
@@ -600,6 +626,7 @@ export const getApp = (handler: HandlerFunction): Hono<{ Bindings: Env }> => {
 ```
 
 **app/frontend/routes/counter.tsx** (新規):
+
 ```typescript
 import { useState } from "react";
 import type { Route } from "./+types/counter";
@@ -663,6 +690,7 @@ export default function Counter() {
 ```
 
 **drizzle.config.ts** (新規):
+
 ```typescript
 import { defineConfig } from "drizzle-kit";
 
@@ -675,6 +703,7 @@ export default defineConfig({
 ```
 
 **wrangler.jsonc** (拡張):
+
 ```jsonc
 {
   // ... 既存設定 ...
@@ -683,13 +712,14 @@ export default defineConfig({
       "binding": "D1",
       "database_name": "yantene-counter-development",
       "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "./migrations"
-    }
-  ]
+      "migrations_dir": "./migrations",
+    },
+  ],
 }
 ```
 
 **package.json** (拡張):
+
 ```json
 {
   "scripts": {
@@ -712,12 +742,14 @@ export default defineConfig({
 #### Trade-offs
 
 **Pros**:
+
 - ✅ シンプルで理解しやすい（ファイル数最小）
 - ✅ 参照実装のパターンを活用（wrangler 設定、npm scripts、Drizzle 設定）
 - ✅ 既存の Hono + React Router パターンに自然に統合
 - ✅ カウンターデモに適したスコープ
 
 **Cons**:
+
 - ❌ クリーンアーキテクチャの full implementation ではない
 - ❌ 将来的に複雑なデータベース操作を追加する場合はリファクタリングが必要
 
@@ -771,11 +803,13 @@ package.json
 #### Trade-offs
 
 **Pros**:
+
 - ✅ 参照実装との一貫性が高い
 - ✅ 将来的な拡張性が非常に高い
 - ✅ テスト容易性（リポジトリをモック可能）
 
 **Cons**:
+
 - ❌ カウンターデモには過剰な抽象化
 - ❌ ファイル数が多い（10+ 個の新規ファイル）
 - ❌ 学習曲線が急（クリーンアーキテクチャの理解が必要）
@@ -793,11 +827,13 @@ package.json
 **サイズ**: **S-M (Small to Medium, 2-4 days)**
 
 **理由**:
+
 - 参照実装のパターンを活用できるため、学習曲線が緩やか
 - Drizzle + D1 の設定は参照実装をほぼそのまま適用可能
 - カウンターデモはシンプルな CRUD 操作のみ
 
 **作業内訳**:
+
 1. **環境セットアップ**: 0.5 日
    - npm 依存関係のインストール
    - wrangler.jsonc の設定
@@ -829,6 +865,7 @@ package.json
 **リスクレベル**: **Low-Medium**
 
 **理由**:
+
 - 参照実装のパターンが確立済み
 - Drizzle + D1 の統合は文書化されている
 - カウンターデモはシンプルな CRUD 操作のみ
@@ -848,6 +885,7 @@ package.json
    - **緩和策**: TypeScript strict mode と ESLint の活用
 
 **リスクの総合評価**:
+
 - ✅ **技術的には実現可能**: 参照実装のパターンをそのまま適用可能
 - ✅ **学習曲線が緩やか**: 参照実装から学べる
 - ✅ **シンプルなスコープ**: カウンターデモは過度に複雑ではない
@@ -861,6 +899,7 @@ package.json
 **推奨アプローチ**: **Option A: Simplified Approach**
 
 **理由**:
+
 - 参照実装のベストプラクティスを活用しつつ、カウンターデモに特化
 - ファイル数が少なく、理解しやすい
 - 将来的にリファクタリング可能（Option B へ移行可能）
@@ -933,33 +972,42 @@ package.json
 デザインフェーズで作成すべきドキュメント:
 
 1. **D1 セットアップガイド** (README.md に追記):
-   ```markdown
+
+   ````markdown
    ## D1 Database Setup
 
    1. Install dependencies:
       ```bash
       pnpm install
       ```
+   ````
 
    2. Generate migration:
+
       ```bash
       pnpm run db:generate
       ```
 
    3. Apply migration:
+
       ```bash
       pnpm run db:migrate
       ```
 
    4. Start dev server:
+
       ```bash
       pnpm run dev
       ```
 
    5. Visit http://localhost:5173/counter
+
+   ```
+
    ```
 
 2. **API 仕様書** (README.md または API.md):
+
    ```markdown
    ### POST /api/counter/increment
 
