@@ -148,6 +148,31 @@ Test files have relaxed rules:
 - Magic numbers allowed
 - Unsafe assignments/member access allowed for mocking
 
+## Git Workflow
+
+### Commit Messages and Pull Requests
+
+This project uses **squash merge** for Pull Requests. Individual commit messages do not need to follow conventional commit format. Only the Pull Request title should follow conventional commit format.
+
+**Conventional Commit Format for PR Titles**:
+
+- `feat: description` - New features
+- `fix: description` - Bug fixes
+- `docs: description` - Documentation changes
+- `chore: description` - Maintenance tasks
+- `ci: description` - CI/CD changes
+- `refactor: description` - Code refactoring
+- `test: description` - Test additions or modifications
+- `style: description` - Code style changes (formatting, etc.)
+
+**Example Workflow**:
+
+1. Create feature branch and make commits with descriptive messages (conventional commit format is optional)
+2. Open Pull Request with title in conventional commit format (e.g., `feat: add user authentication`)
+3. Squash merge to main - the PR title becomes the commit message on main branch
+
+**Note**: Since all commits are squashed on merge, focus on clear, descriptive commit messages during development without worrying about strict conventional commit format. The PR title is what matters for the final commit history on the main branch.
+
 ## Language
 
 **Japanese for Reviews**: According to `.github/copilot-instructions.md`, code reviews and feedback should be provided in Japanese.
