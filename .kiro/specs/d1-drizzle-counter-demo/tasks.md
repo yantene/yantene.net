@@ -44,7 +44,7 @@
 - [ ] 3.1 Temporal カスタム型の定義
   - instant カスタム型を定義（data: Temporal.Instant, driverData: number）
   - toDriver() メソッドで Temporal.Instant を SQLite REAL 値に変換（epochMilliseconds / 1000）
-  - fromDriver() メソッドで SQLite REAL 値を Temporal.Instant に変換（* 1000）
+  - fromDriver() メソッドで SQLite REAL 値を Temporal.Instant に変換（\* 1000）
   - _Requirements: 1.1, 1.2, 4.1_
 
 - [ ] 3.2 データベーススキーマの定義
