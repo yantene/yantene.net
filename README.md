@@ -66,7 +66,7 @@ pnpm run preview     # ローカルでプロダクションビルドを確認
 ## デプロイ
 
 ```bash
-pnpm run deploy                     # ビルド & デプロイ
+pnpm run deploy:production          # production 環境へのビルド & デプロイ
 pnpm exec wrangler versions upload   # プレビューバージョンをアップロード
 pnpm exec wrangler versions deploy   # バージョンをプロモート
 ```

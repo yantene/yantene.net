@@ -58,6 +58,20 @@ describe("Click Entity", () => {
       expect(click1.equals(click2)).toBe(true);
     });
 
+    it("should return false for different unpersisted entities", () => {
+      const timestamp = Date.now();
+      const click1 = Click.create({ timestamp });
+      const click2 = Click.create({ timestamp });
+
+      expect(click1.equals(click2)).toBe(false);
+    });
+
+    it("should return true for the same unpersisted entity reference", () => {
+      const click = Click.create({ timestamp: Date.now() });
+
+      expect(click.equals(click)).toBe(true);
+    });
+
     it("should return false for entities with different id", () => {
       const timestamp = Date.now();
       const instant = Temporal.Now.instant();

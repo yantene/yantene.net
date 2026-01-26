@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Route } from "./+types/counter";
 import type { CounterResponse } from "~/lib/types/counter";
 
@@ -11,10 +11,14 @@ export function meta(_args: Route.MetaArgs): ReturnType<Route.MetaFunction> {
 
 export default function Counter(): React.JSX.Element {
   const [count, setCount] = useState<number | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchCount = useCallback((): void => {
+    setIsInitialLoading(true);
+    setErrorMessage(null);
+
     void (async (): Promise<void> => {
       try {
         const response = await fetch("/api/counter");
@@ -29,9 +33,15 @@ export default function Counter(): React.JSX.Element {
         setErrorMessage(
           error instanceof Error ? error.message : "Unknown error occurred",
         );
+      } finally {
+        setIsInitialLoading(false);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    fetchCount();
+  }, [fetchCount]);
 
   const handleIncrement = (): void => {
     setIsLoading(true);
@@ -59,6 +69,17 @@ export default function Counter(): React.JSX.Element {
     })();
   };
 
+  if (isInitialLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <h1 className="mb-4 text-2xl font-bold">Click Counter</h1>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="rounded-lg bg-white p-8 shadow-md">
@@ -73,8 +94,16 @@ export default function Counter(): React.JSX.Element {
         >
           {isLoading ? "Loading..." : "Increment"}
         </button>
-        {errorMessage !== null && errorMessage !== "" && (
-          <p className="mt-4 text-red-500">{errorMessage}</p>
+        {errorMessage !== null && (
+          <div className="mt-4">
+            <p className="text-red-500">{errorMessage}</p>
+            <button
+              onClick={fetchCount}
+              className="mt-2 rounded bg-gray-500 px-3 py-1 text-sm text-white hover:bg-gray-600"
+            >
+              Retry
+            </button>
+          </div>
         )}
       </div>
     </div>

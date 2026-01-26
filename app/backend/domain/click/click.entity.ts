@@ -32,6 +32,9 @@ export class Click<P extends IPersisted | IUnpersisted> implements IEntity<
   }
 
   equals(other: Click<P>): boolean {
+    if (this.id == null || other.id == null) {
+      return this === other;
+    }
     return this.id === other.id;
   }
 
