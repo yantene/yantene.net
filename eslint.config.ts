@@ -269,6 +269,7 @@ const config = [
       "@typescript-eslint/no-magic-numbers": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/unbound-method": "off", // モック関数の分離代入を許可
       "unicorn/consistent-function-scoping": "off", // テストケース内でのモック定義を許可
     },
   },

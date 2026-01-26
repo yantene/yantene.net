@@ -6,12 +6,33 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "yantene",
 	"compatibility_date": "2025-04-04",
+	"compatibility_flags": ["nodejs_compat"],
 	"main": "./workers/app.ts",
 	"vars": {
 		"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare"
 	},
 	"observability": {
 		"enabled": true
+	},
+	"d1_databases": [
+		{
+			"binding": "D1",
+			"database_name": "yantene-development",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "./migrations"
+		}
+	],
+	"env": {
+		"production": {
+			"d1_databases": [
+				{
+					"binding": "D1",
+					"database_name": "yantene-production",
+					"database_id": "a69aece1-4506-4256-b7f8-1709c2e4a889",
+					"migrations_dir": "./migrations"
+				}
+			]
+		}
 	}
 	/**
 	 * Smart Placement
