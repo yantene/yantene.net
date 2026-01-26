@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { counterApp } from "./handlers/api/counter";
 
 export const getApp = (
   handler: (
@@ -9,6 +10,7 @@ export const getApp = (
 ): Hono<{ Bindings: Env }> => {
   const app = new Hono<{ Bindings: Env }>()
     .get("/hello", (c) => c.text("Hello, World!"))
+    .route("/api/counter", counterApp)
     .all("*", async (context) => {
       return handler(
         context.req.raw,
