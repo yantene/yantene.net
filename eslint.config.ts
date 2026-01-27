@@ -114,7 +114,12 @@ const config = [
       // 型安全性の厳格化
       "@typescript-eslint/strict-boolean-expressions": [
         "error",
-        { allowString: true, allowNumber: false, allowNullableObject: true },
+        {
+          allowString: true,
+          allowNullableString: true,
+          allowNumber: false,
+          allowNullableObject: true,
+        },
       ],
       "@typescript-eslint/explicit-function-return-type": [
         "error",
