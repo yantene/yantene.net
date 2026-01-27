@@ -1,79 +1,82 @@
-# Welcome to React Router!
+# yantene.net
 
-A modern, production-ready template for building full-stack React applications using React Router.
+React Router 7 + Hono + Cloudflare Workers で構築されたやんてねの実験室です。
 
-## Features
-
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
-
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+## セットアップ
 
 ```bash
-npm install
+pnpm install
 ```
 
-### Development
+## 開発
 
-Start the development server with HMR:
+### 開発サーバーの起動
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+http://localhost:5173 でアクセスできます。
 
-## Previewing the Production Build
+### データベースのセットアップ
 
-Preview the production build locally:
+初回、またはスキーマ変更後にマイグレーションを適用してください。
 
 ```bash
-npm run preview
+pnpm run db:dev:migrate
 ```
 
-## Building for Production
-
-Create a production build:
+### スキーマ変更時のマイグレーション生成
 
 ```bash
-npm run build
+pnpm run db:generate
 ```
 
-## Deployment
+### データベースのリセット
 
-Deployment is done using the Wrangler CLI.
+全テーブルを DROP してマイグレーションを再適用します:
 
-To build and deploy directly to production:
-
-```sh
-npm run deploy
+```bash
+pnpm run db:dev:reset
 ```
 
-To deploy a preview URL:
+## テスト
 
-```sh
-npx wrangler versions upload
+```bash
+pnpm run test        # ウォッチモード
+pnpm run test:run    # 単発実行
 ```
 
-You can then promote a version to production after verification or roll it out progressively.
+## コード品質
 
-```sh
-npx wrangler versions deploy
+```bash
+pnpm run lint        # ESLint
+pnpm run format      # Prettier チェック
+pnpm run fix         # lint + format を自動修正
+pnpm run typecheck   # TypeScript 型検査
 ```
 
-## Styling
+## ビルド
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+```bash
+pnpm run build
+pnpm run preview     # ローカルでプロダクションビルドを確認
+```
 
----
+## デプロイ
 
-Built with ❤️ using React Router.
+```bash
+pnpm run deploy:production          # production 環境へのビルド & デプロイ
+pnpm exec wrangler versions upload   # プレビューバージョンをアップロード
+pnpm exec wrangler versions deploy   # バージョンをプロモート
+```
+
+### 本番データベースのセットアップ
+
+1. Cloudflare ダッシュボードで D1 データベース `yantene-production` を作成
+2. `wrangler.jsonc` の `env.production.d1_databases[0].database_id` を更新
+3. マイグレーション適用:
+
+   ```bash
+   pnpm run db:prod:migrate
+   ```
