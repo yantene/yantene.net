@@ -25,6 +25,7 @@ tables=$(pnpm exec wrangler d1 execute "$DB_NAME" \
   | jq -r ".[0].results[].name")
 
 sql_file=$(mktemp)
+trap 'rm -f "$sql_file"' EXIT
 
 echo "PRAGMA foreign_keys = OFF;" > "$sql_file"
 for table in $tables; do
