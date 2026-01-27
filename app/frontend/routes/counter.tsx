@@ -94,7 +94,7 @@ export default function Counter(): React.JSX.Element {
         >
           {isLoading ? "Loading..." : "Increment"}
         </button>
-        {errorMessage !== null && (
+        {errorMessage && (
           <div className="mt-4">
             <p className="text-red-500">{errorMessage}</p>
             <button
