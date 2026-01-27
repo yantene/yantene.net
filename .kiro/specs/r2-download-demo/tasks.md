@@ -6,14 +6,14 @@
   - `wrangler types` を実行して `worker-configuration.d.ts` を再生成し、`Env` 型に `R2: R2Bucket` プロパティが含まれることを確認する
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 2. ドメイン層の構築（値オブジェクト・エンティティ・インターフェース）
-- [ ] 2.1 (P) 値オブジェクトの共通インターフェースを作成する
+- [x] 2. ドメイン層の構築（値オブジェクト・エンティティ・インターフェース）
+- [x] 2.1 (P) 値オブジェクトの共通インターフェースを作成する
   - `IValueObject<T>` インターフェースを新規作成し、`equals` と `toJSON` メソッドの契約を定義する
   - 関連する JSON ユーティリティ型（`JsonPrimitive`, `JsonValue`, `IJsonObject`, `IJsonArray`）も同ファイルに定義する
   - 参考プロジェクトのパターンに準拠する
   - _Requirements: 5.2_
 
-- [ ] 2.2 (P) R2 ファイル関連の値オブジェクトを作成する
+- [x] 2.2 (P) R2 ファイル関連の値オブジェクトを作成する
   - `ObjectKey` 値オブジェクト: R2 オブジェクトキーを不変に表現し、空文字列を拒否するバリデーションを含める
   - `ContentType` 値オブジェクト: MIME タイプを不変に表現し、`isImage()` と `isMarkdown()` のヘルパーメソッドを提供する
   - `ETag` 値オブジェクト: R2 オブジェクトの ETag を不変に表現し、キャッシュ検証用途に対応する
@@ -21,7 +21,7 @@
   - 2.1 の `IValueObject` インターフェースに依存する
   - _Requirements: 5.2, 6.5_
 
-- [ ] 2.3 R2 ファイルメタデータエンティティを作成する
+- [x] 2.3 R2 ファイルメタデータエンティティを作成する
   - `R2FileMetadata` エンティティを `IEntity<T>` + `IPersisted` / `IUnpersisted` ジェネリクスパターンで定義する
   - `ObjectKey`, `ContentType`, `ETag` 値オブジェクトを内包し、`size` フィールドが 0 以上であることを検証する
   - `create`（未永続化インスタンス生成）と `reconstruct`（永続化済みインスタンス復元）のファクトリメソッドを提供する
@@ -29,13 +29,13 @@
   - 2.2 の値オブジェクトに依存する
   - _Requirements: 5.1, 6.1_
 
-- [ ] 2.4 (P) R2 ストレージとメタデータリポジトリのドメインインターフェースを定義する
+- [x] 2.4 (P) R2 ストレージとメタデータリポジトリのドメインインターフェースを定義する
   - `IR2FileStorage` インターフェース: `get(objectKey)` メソッドで R2 オブジェクトコンテンツの取得契約を定義する
   - `R2FileContent` 型: `body`（ReadableStream）、`contentType`、`size`、`etag` を含むコンテンツ応答型を定義する
   - `IR2FileMetadataRepository` インターフェース: `findAll()` と `findByObjectKey(objectKey)` メソッドで D1 メタデータアクセス契約を定義する
   - _Requirements: 5.1, 5.4, 6.2_
 
-- [ ]*2.5 (P) 値オブジェクトとエンティティの単体テストを作成する
+- [x] 2.5 (P) 値オブジェクトとエンティティの単体テストを作成する
   - `ObjectKey.create` のバリデーション（有効値で生成成功、空文字列で例外）をテストする
   - `ContentType.create` のバリデーションと `isImage()`, `isMarkdown()` ヘルパーの正確性をテストする
   - `ETag.create` のバリデーションをテストする
