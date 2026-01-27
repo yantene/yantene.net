@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. R2 バケットバインディングと Env 型の設定
+- [x] 1. R2 バケットバインディングと Env 型の設定
   - wrangler.jsonc に `r2_buckets` セクションを追加し、バインディング名 `R2` で開発環境用バケットを設定する
   - 本番環境用の `env.production` にも R2 バケット設定を追加する
   - `wrangler types` を実行して `worker-configuration.d.ts` を再生成し、`Env` 型に `R2: R2Bucket` プロパティが含まれることを確認する

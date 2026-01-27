@@ -22,6 +22,12 @@
 			"migrations_dir": "./migrations"
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "R2",
+			"bucket_name": "yantene-development"
+		}
+	],
 	"env": {
 		"production": {
 			"d1_databases": [
@@ -30,6 +36,12 @@
 					"database_name": "yantene-production",
 					"database_id": "a69aece1-4506-4256-b7f8-1709c2e4a889",
 					"migrations_dir": "./migrations"
+				}
+			],
+			"r2_buckets": [
+				{
+					"binding": "R2",
+					"bucket_name": "yantene-production"
 				}
 			]
 		}
