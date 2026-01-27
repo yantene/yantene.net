@@ -10,7 +10,7 @@
     "build": "react-router build",
     "cf-typegen": "wrangler types",
     "rr-typegen": "react-router typegen",
-    "deploy:production": "CLOUDFLARE_ENV=production pnpm run build && wrangler deploy",
+    "deploy:production": "pnpm run build && wrangler deploy --env production",
     "dev": "react-router dev --host 0.0.0.0",
     "postinstall": "pnpm run cf-typegen",
     "preview": "pnpm run build && vite preview",
