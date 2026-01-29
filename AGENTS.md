@@ -80,6 +80,30 @@ workers/
 
 The backend uses a factory pattern: `getApp(handler)` creates a Hono app that wraps the React Router handler. This allows API routes to coexist with the SSR frontend.
 
+### Domain Layer Design Principles
+
+This project follows **Dependency Inversion Principle (DIP)** with a clean separation between domain and infrastructure layers.
+
+**Domain Layer** (`app/backend/domain/`):
+- Must be **infrastructure-agnostic**
+- Class names, interface names, and type names must NOT contain infrastructure technology names (R2, D1, S3, Cloudflare, AWS, etc.)
+- Examples:
+  - ✅ `StoredObjectMetadata`, `IStoredObjectStorage`, `ObjectKey`, `ISyncService`
+  - ❌ `R2FileMetadata`, `IR2FileStorage`, `S3ObjectKey`, `CloudflareSyncService`
+- Domain defines interfaces; infrastructure implements them
+- This allows swapping infrastructure (e.g., R2 → S3) without changing domain code
+
+**Infrastructure Layer** (`app/backend/infra/`):
+- **May use specific technology names** in directory and file names
+- Examples: `infra/r2/`, `infra/d1/`, `infra/s3/`
+- Implements domain interfaces with concrete technology
+- Contains technology-specific adapters and configurations
+
+**Why this matters**:
+- Future flexibility: Can switch from R2 to S3 without domain changes
+- Testability: Domain logic can be tested with mock implementations
+- Clean architecture: Business logic is decoupled from infrastructure details
+
 ### SSR Configuration
 
 - SSR is enabled in `react-router.config.ts`

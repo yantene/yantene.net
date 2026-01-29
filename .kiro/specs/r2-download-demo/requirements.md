@@ -2,103 +2,83 @@
 
 ## Project Description (Input)
 
-Cloudflare R2 のセットアップをしてください。bucket に配置した画像ファイルや Markdown ファイルをアプリケーションから取得できるようにします。D1 のときと同じように、デモアプリを作ります。
+Cloudflare R2 バケットに配置したファイルの一覧表示とダウンロードができるデモアプリを作成する。D1 クリックカウンターデモの改造版として、ファイルダウンロードカウンターを実装する。
 
 ## Introduction
 
-本仕様は、Cloudflare R2 オブジェクトストレージをプロジェクトにセットアップし、R2 バケットに配置された画像ファイルおよび Markdown ファイルをアプリケーションから取得・表示するデモアプリケーションを構築するための要件を定義する。既存の D1 デモ（Counter Demo）と同様のパターンに従い、Hono バックエンド API + React Router フロントエンドの構成で実装する。参考プロジェクト（`tmp/yantene.net.old`）の R2 利用パターン（`R2Bucket` バインディング、DDD 値オブジェクト、ストレージインターフェース、D1 メタデータ管理、Hono RPC クライアント）を踏襲する。
+本仕様は、オブジェクトストレージ内のファイル一覧表示とダウンロード機能を提供するデモアプリケーションを定義する。既存の D1 クリックカウンターデモを拡張し、ファイルのダウンロード回数をカウントする機能を実装する。オブジェクトストレージのメタデータをデータベースに同期し、ダウンロード時にカウンターをインクリメントする。既存のドメイン層（`ObjectKey`, `ContentType`, `ETag`, `StoredObjectMetadata`）を活用する。
+
+**インフラストラクチャ実装**: Cloudflare R2（オブジェクトストレージ）、Cloudflare D1（リレーショナルデータベース）
 
 ## Requirements
 
-### Requirement 1: R2 バケットバインディングの設定
+### Requirement 1: ファイル一覧画面
 
-**Objective:** As a 開発者, I want wrangler.jsonc に R2 バケットのバインディング設定を追加する, so that アプリケーションコードから `context.env.R2` 経由で R2 バケットにアクセスできるようになる
-
-#### Acceptance Criteria
-
-1. The wrangler.jsonc shall `r2_buckets` セクションにバインディング名 `R2` でバケット設定を含む
-2. The wrangler.jsonc shall 開発環境用バケット名（例: `yantene-development`）を設定する
-3. Where 本番環境設定が含まれる場合, the wrangler.jsonc shall `env.production` にも本番用 R2 バケット設定を含む
-4. The Env 型定義 shall `R2` プロパティとして `R2Bucket` 型を含む
-
-### Requirement 2: R2 ファイル一覧取得 API
-
-**Objective:** As a フロントエンド開発者, I want R2 バケット内のファイル一覧を取得する API エンドポイントを利用する, so that バケットに格納されたオブジェクトをブラウザ上で一覧表示できる
+**Objective:** As a ユーザー, I want オブジェクトストレージ内のファイル一覧を閲覧する, so that ダウンロード可能なファイルを確認できる
 
 #### Acceptance Criteria
 
-1. The Hono バックエンド shall `/api/r2/files` エンドポイントで R2 バケット内のオブジェクト一覧を JSON 形式で返却する
-2. When `/api/r2/files` にGETリクエストが送信された場合, the API shall 各オブジェクトのキー名、サイズ、Content-Type を含むリストを返却する
-3. The API レスポンス shall 画像ファイルと Markdown ファイルの両方を含む
-4. If R2 バケットへのアクセスに失敗した場合, the API shall 適切な HTTP エラーステータスとエラーメッセージを返却する
+1. The フロントエンド shall `GET /files` でファイル一覧画面を表示する
+2. When 一覧画面が表示された場合, the UI shall 各ファイルのキー名、サイズ、Content-Type、ダウンロード回数を表示する
+3. The 一覧画面 shall 各ファイルへのダウンロードリンクを提供する
+4. If ファイルが存在しない場合, the UI shall 「ファイルがありません」メッセージを表示する
 
-### Requirement 3: R2 ファイルコンテンツ取得 API
+### Requirement 2: ファイルダウンロードエンドポイント
 
-**Objective:** As a フロントエンド開発者, I want R2 バケットから個別のファイルコンテンツを取得する API エンドポイントを利用する, so that 画像や Markdown のコンテンツをブラウザ上でレンダリングできる
-
-#### Acceptance Criteria
-
-1. The Hono バックエンド shall `/api/r2/files/:key` エンドポイントで指定されたキーのオブジェクトコンテンツを返却する
-2. When 画像ファイルのキーが指定された場合, the API shall 適切な Content-Type ヘッダー（例: `image/png`, `image/jpeg`）付きでバイナリデータを返却する
-3. When Markdown ファイルのキーが指定された場合, the API shall `text/plain` または `text/markdown` の Content-Type ヘッダー付きでテキストデータを返却する
-4. If 指定されたキーのオブジェクトが存在しない場合, the API shall HTTP 404 ステータスとエラーメッセージを返却する
-5. If R2 バケットへのアクセスに失敗した場合, the API shall HTTP 500 ステータスとエラーメッセージを返却する
-
-### Requirement 4: R2 デモページ（フロントエンド）
-
-**Objective:** As a ユーザー, I want R2 バケットのファイルをブラウザで閲覧できるデモページを利用する, so that R2 統合が正しく動作していることを確認できる
+**Objective:** As a ユーザー, I want ファイルをダウンロードする, so that オブジェクトストレージ内のコンテンツを取得できる
 
 #### Acceptance Criteria
 
-1. The React Router フロントエンド shall `/r2` パスで R2 デモページを表示する
-2. When R2 デモページが読み込まれた場合, the デモページ shall Hono RPC クライアントを使用して R2 バケット内のファイル一覧を取得して表示する
-3. The ファイル一覧 shall 各ファイルのキー名とファイルタイプ（画像 / Markdown）を表示する
-4. When ファイル一覧の中の画像ファイルが選択された場合, the デモページ shall 画像をインラインでプレビュー表示する
-5. When ファイル一覧の中の Markdown ファイルが選択された場合, the デモページ shall Markdown のテキスト内容を表示する
-6. While ファイル一覧またはコンテンツを取得中の場合, the デモページ shall ローディング状態を表示する
-7. If ファイル取得でエラーが発生した場合, the デモページ shall エラーメッセージを表示する
-8. The デモページ shall React Router の loader を使用せず、クライアントサイドから Hono RPC クライアント経由で API を呼び出す
+1. The バックエンド shall `GET /files/:key` でオブジェクトストレージからファイルを取得して返却する
+2. When ファイルがダウンロードされた場合, the システム shall 当該ファイルのダウンロード回数を 1 インクリメントする
+3. The レスポンス shall 適切な Content-Type ヘッダーを設定する
+4. The レスポンス shall Content-Disposition ヘッダーでダウンロードファイル名を指定する
+5. If 指定されたキーのファイルがメタデータに存在しない場合, the API shall HTTP 404 ステータスを返却する
+6. If オブジェクトストレージからの取得に失敗した場合, the API shall HTTP 500 ステータスを返却する
 
-### Requirement 5: DDD アーキテクチャ（参考プロジェクト準拠）
+### Requirement 3: メタデータ同期 API
 
-**Objective:** As a 開発者, I want R2 アクセス層が参考プロジェクトの DDD アーキテクチャパターンに従う, so that コードベースの一貫性と保守性が維持される
+**Objective:** As a システム管理者, I want オブジェクトストレージのメタデータをデータベースに同期する, so that ファイル一覧を高速に取得できる
 
 #### Acceptance Criteria
 
-1. The ドメイン層 shall R2 ストレージアクセスのインターフェース（`app/backend/domain/` 配下）を定義する
-2. The ドメイン層 shall R2 オブジェクトを表現する値オブジェクト（例: `ObjectKey`, `ETag` 等）を定義し、バリデーションロジックを含む
-3. The インフラ層 shall R2 ストレージインターフェースの具体実装（`app/backend/infra/r2/` 配下）を提供する
-4. The R2 ストレージ実装 shall `R2Bucket` バインディングを受け取り、オブジェクトの一覧取得と個別取得の操作を提供する
-5. The Hono API ハンドラー shall `app/backend/handlers/api/r2/` 配下に配置し、ハンドラー内でストレージ実装をインスタンス化する
+1. The バックエンド shall `POST /api/admin/files/sync` で同期処理を実行する API を提供する
+2. When 同期処理が実行された場合, the Sync Service shall オブジェクトストレージ内の全オブジェクト一覧を取得する
+3. When 新規オブジェクトが存在する場合, the Sync Service shall メタデータをデータベースに INSERT する（ダウンロード回数は 0 で初期化）
+4. When オブジェクトが削除されている場合, the Sync Service shall 対応するレコードをデータベースから DELETE する
+5. When オブジェクトの ETag が変更されている場合, the Sync Service shall メタデータを UPDATE する（ダウンロード回数は維持）
+6. The API shall 同期結果（追加・削除・更新件数）を JSON 形式で返却する
 
-### Requirement 6: D1 メタデータ管理
+### Requirement 4: ファイル一覧取得 API
 
-**Objective:** As a 開発者, I want R2 オブジェクトのメタデータを D1 データベースで管理する, so that 高速なメタデータ検索と R2 オブジェクトのキャッシュ検証が可能になる
-
-#### Acceptance Criteria
-
-1. The D1 スキーマ shall R2 オブジェクトのメタデータテーブル（キー名、サイズ、Content-Type、ETag 等）を含む
-2. The バックエンド shall D1 メタデータリポジトリのインターフェース（`app/backend/domain/` 配下）を定義する
-3. The バックエンド shall D1 メタデータリポジトリの具体実装（`app/backend/infra/d1/` 配下）を Drizzle ORM で提供する
-4. The ファイル一覧 API shall D1 からメタデータを取得してレスポンスを構築する
-5. The D1 メタデータ shall R2 オブジェクトの ETag を保持し、キャッシュ検証に利用できる
-
-### Requirement 7: Hono RPC クライアント統合
-
-**Objective:** As a フロントエンド開発者, I want Hono RPC クライアントを使用して R2 API を呼び出す, so that 型安全な API 通信を実現できる
+**Objective:** As a フロントエンド, I want ファイルメタデータ一覧を取得する API を利用する, so that 一覧画面を描画できる
 
 #### Acceptance Criteria
 
-1. The R2 API ハンドラー shall Hono の型推論が有効なルート定義を提供する
-2. The フロントエンド shall `hc` (Hono Client) を使用して R2 API エンドポイントを型安全に呼び出す
-3. The API レスポンス型 shall フロントエンドとバックエンドで共有され、型の不整合が発生しない
+1. The バックエンド shall `GET /api/files` でメタデータ一覧を JSON 形式で返却する
+2. The レスポンス shall 各ファイルのキー名、サイズ、Content-Type、ETag、ダウンロード回数を含む
+3. The API shall Hono RPC の型推論が有効なルート定義を提供する
+4. If データベースへのアクセスに失敗した場合, the API shall HTTP 500 ステータスを返却する
 
-### Requirement 8: ルーティング統合
+### Requirement 5: メタデータスキーマ
 
-**Objective:** As a 開発者, I want R2 デモのルーティングが既存のルーティング構成に統合される, so that アプリケーション全体のナビゲーションが一貫する
+**Objective:** As a 開発者, I want ファイルメタデータとダウンロード回数をデータベースで管理する, so that 高速なクエリとカウント更新が可能になる
 
 #### Acceptance Criteria
 
-1. The `app/frontend/routes.ts` shall `/r2` ルートを含む
-2. The Hono バックエンド shall `/api/r2` 配下のルートを既存の API ルーティングに追加する
-3. The R2 デモページ shall D1 Counter デモと同様に、meta 情報（title, description）を設定する
+1. The データベーススキーマ shall `stored_object_metadata` テーブルにオブジェクトキー、サイズ、Content-Type、ETag、ダウンロード回数、作成日時、更新日時を含む
+2. The データベーススキーマ shall オブジェクトキーをユニークキーとして設定する
+3. The ダウンロード回数カラム shall デフォルト値 0 で NOT NULL 制約を持つ
+4. The インフラ層 shall Drizzle ORM を使用してスキーマを定義する
+
+### Requirement 6: DDD アーキテクチャの維持
+
+**Objective:** As a 開発者, I want 既存のドメイン層を活用する, so that コードベースの一貫性が保たれる
+
+#### Acceptance Criteria
+
+1. The 実装 shall 既存の値オブジェクト（`ObjectKey`, `ContentType`, `ETag`）を再利用する
+2. The 実装 shall 既存のエンティティ（`StoredObjectMetadata`）を拡張してダウンロード回数を追加する
+3. The ドメイン層 shall インフラ固有の名前（R2, D1 等）を含まない
+4. The インフラ層 shall オブジェクトストレージ実装を `app/backend/infra/r2/` 配下に配置する
+5. The インフラ層 shall データベースリポジトリ実装を `app/backend/infra/d1/` 配下に配置する
