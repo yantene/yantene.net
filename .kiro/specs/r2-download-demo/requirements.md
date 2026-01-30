@@ -6,7 +6,7 @@ Cloudflare R2 バケットに配置したファイルの一覧表示とダウン
 
 ## Introduction
 
-本仕様は、オブジェクトストレージ内のファイル一覧表示とダウンロード機能を提供するデモアプリケーションを定義する。既存の D1 クリックカウンターデモを拡張し、ファイルのダウンロード回数をカウントする機能を実装する。オブジェクトストレージのメタデータをデータベースに同期し、ダウンロード時にカウンターをインクリメントする。既存のドメイン層（`ObjectKey`, `ContentType`, `ETag`, `StoredObjectMetadata`）を活用する。
+本仕様は、オブジェクトストレージ内のファイル一覧表示とダウンロード機能を提供するデモアプリケーションを定義する。既存の D1 クリックカウンターデモを拡張し、ファイルのダウンロード回数をカウントする機能を実装する。オブジェクトストレージのメタデータをデータベースに同期し、ダウンロード時にカウンターをインクリメントする。既存のドメイン層（`ObjectKey`, `ContentType`, `ETag`, `ObjectStorageFileMetadata`）を活用する。
 
 **インフラストラクチャ実装**: Cloudflare R2（オブジェクトストレージ）、Cloudflare D1（リレーショナルデータベース）
 
@@ -66,7 +66,7 @@ Cloudflare R2 バケットに配置したファイルの一覧表示とダウン
 
 #### Acceptance Criteria
 
-1. The データベーススキーマ shall `stored_object_metadata` テーブルにオブジェクトキー、サイズ、Content-Type、ETag、ダウンロード回数、作成日時、更新日時を含む
+1. The データベーススキーマ shall `object_storage_file_metadata` テーブルにオブジェクトキー、サイズ、Content-Type、ETag、作成日時、更新日時を含み、`file_download_counts` テーブルにダウンロード回数を含む
 2. The データベーススキーマ shall オブジェクトキーをユニークキーとして設定する
 3. The ダウンロード回数カラム shall デフォルト値 0 で NOT NULL 制約を持つ
 4. The インフラ層 shall Drizzle ORM を使用してスキーマを定義する
@@ -78,7 +78,7 @@ Cloudflare R2 バケットに配置したファイルの一覧表示とダウン
 #### Acceptance Criteria
 
 1. The 実装 shall 既存の値オブジェクト（`ObjectKey`, `ContentType`, `ETag`）を再利用する
-2. The 実装 shall 既存のエンティティ（`StoredObjectMetadata`）を拡張してダウンロード回数を追加する
+2. The 実装 shall 既存のエンティティ（`ObjectStorageFileMetadata`）を拡張してダウンロード回数を追加する
 3. The ドメイン層 shall インフラ固有の名前（R2, D1 等）を含まない
 4. The インフラ層 shall オブジェクトストレージ実装を `app/backend/infra/r2/` 配下に配置する
 5. The インフラ層 shall データベースリポジトリ実装を `app/backend/infra/d1/` 配下に配置する

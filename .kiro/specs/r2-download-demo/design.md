@@ -2,26 +2,27 @@
 
 ## Overview
 
-本機能は、Cloudflare R2 オブジェクトストレージをプロジェクトに統合し、R2 バケットに配置された画像ファイルおよび Markdown ファイルをアプリケーションから取得・表示するデモアプリケーションを構築する。既存の D1 Counter Demo と同様のアーキテクチャパターン（Hono バックエンド API + React Router フロントエンド）に従い、参考プロジェクト（`tmp/yantene.net.old`）の DDD パターンを踏襲する。
+本機能は、オブジェクトストレージ内のファイル一覧表示とダウンロード回数カウント機能を提供するデモアプリケーションである。既存の D1 クリックカウンターデモのアーキテクチャパターンを踏襲し、ファイルダウンロード時にカウンターをインクリメントする機能を実装する。
 
-**ユーザー**: 開発者およびエンドユーザーが、R2 統合の動作確認とファイルブラウジングを行う。
+**ユーザー**: 開発者およびエンドユーザーが、オブジェクトストレージ内のファイルを一覧表示・ダウンロードし、ダウンロード回数を確認する。
 
-**影響**: 既存の Hono バックエンドに R2 API ルートを追加し、D1 スキーマにメタデータテーブルを追加する。フロントエンドに新規デモページを追加する。`getApp` 関数の戻り値型アノテーションを削除して Hono RPC 型推論チェーンを有効化する。
+**影響**: 新規テーブル `object_storage_file_metadata`（ファイルメタデータ）と `file_download_counts`（ダウンロード回数、デモ用）を作成する。既存のドメイン層（`ObjectStorageFileMetadata` エンティティ）を活用しつつ、ダウンロード回数は別テーブルで管理する。新規のフロントエンドルート `/files` とバックエンド API を追加する。
+
+**テーブル分離の理由**: ダウンロードカウンターはデモ機能であり、将来的に削除予定。メタデータテーブルとカウントテーブルを分離することで、デモ機能の削除時にカラム削除ではなくテーブル削除で済み、マイグレーションが容易になる。
 
 ### Goals
 
-- R2 バケットバインディングを設定し、アプリケーションから R2 にアクセス可能にする
-- DDD アーキテクチャに従った R2 ストレージ層と D1 メタデータ管理層を構築する
-- Hono RPC クライアントを使用した型安全なクライアントサイド API 呼び出しを実現する
-- ファイル一覧表示・プレビュー機能を備えたデモページを提供する
+- オブジェクトストレージ内のファイル一覧を表示する UI を提供する
+- ファイルダウンロード時にダウンロード回数をインクリメントする
+- オブジェクトストレージのメタデータをデータベースに同期する API を提供する
+- 既存のドメイン層（`ObjectKey`, `ContentType`, `ETag`, `ObjectStorageFileMetadata`）を活用する
 
 ### Non-Goals
 
 - ファイルアップロード機能（読み取り専用デモ）
-- Markdown のリッチレンダリング（テキスト表示のみ）
 - 認証・認可によるアクセス制御
-- R2 オブジェクトのキャッシュ戦略の最適化（ETag 保持のみ、キャッシュ制御は将来スコープ）
-- メタデータ同期の自動化（手動 or スクリプトでの同期を前提）
+- キャッシュ戦略の最適化
+- メタデータ同期の自動化（手動 API 呼び出しを前提）
 
 ## Architecture
 
@@ -30,37 +31,37 @@
 現在のアーキテクチャは以下のパターンに従っている。
 
 - **Hono ファクトリパターン**: `getApp(handler)` が Hono アプリを作成し、API ルートと React Router SSR ハンドラーを統合
-- **DDD 3 層構造**: `domain/`（エンティティ・インターフェース）、`infra/`（D1 リポジトリ実装）、`handlers/`（API ハンドラー）
+- **DDD 3 層構造**: `domain/`（エンティティ・インターフェース）、`infra/`（D1/R2 実装）、`handlers/`（API ハンドラー）
 - **エンティティの永続化状態型**: `IEntity<T>` + `IPersisted` / `IUnpersisted` ジェネリクスパターン
-- **値オブジェクト**: `IValueObject<T>` インターフェースは現在のコードベースに存在しない。参考プロジェクト（`tmp/yantene.net.old/app/backend/domain/value-object.interface.ts`）から移植して新規作成する
+- **値オブジェクト**: `IValueObject<T>` インターフェースが既に存在し、`ObjectKey`, `ContentType`, `ETag` が実装済み
+- **ドメイン層の命名規則**: インフラ固有名（R2, D1 等）を含まず、`object-storage` のような汎用名を使用
 - **Drizzle ORM**: D1 スキーマ定義とカスタム型（`instant` 等）
-- **Env 型**: `worker-configuration.d.ts` で `Cloudflare.Env` として定義、`wrangler types` で自動生成
-- **`getApp` 戻り値型**: 現在 `getApp` は明示的な戻り値型 `: Hono<{ Bindings: Env }>` を持つ。Hono RPC 型推論チェーンを有効化するためにこのアノテーションを削除する必要がある
 
-本機能は既存パターンを拡張し、R2 ストレージ層と D1 メタデータ層を追加する。
+本機能は既存の `object-storage` ドメインを拡張し、ダウンロード回数の管理機能を追加する。
 
 ### Architecture Pattern & Boundary Map
 
 ```mermaid
 graph TB
     subgraph Frontend
-        R2Page[R2 Demo Page]
-        HonoClient[Hono RPC Client hc]
+        FilesPage[Files Demo Page]
     end
 
     subgraph Backend
         subgraph Handlers
-            R2Handler[R2 API Handler]
+            FilesHandler[Files API Handler]
+            AdminHandler[Admin Files Handler]
         end
         subgraph Domain
-            ValueObjectIF[IValueObject Interface]
-            R2StorageIF[IR2FileStorage Interface]
-            MetaRepoIF[IR2FileMetadataRepository Interface]
+            ObjectStorageFileMetadata[ObjectStorageFileMetadata Entity]
+            MetaRepoIF[IObjectStorageFileMetadataRepository]
+            StorageIF[IObjectStorage]
             ValueObjects[Value Objects]
         end
         subgraph Infra
-            R2Storage[R2FileStorage Implementation]
-            D1MetaRepo[R2FileMetadataRepository Implementation]
+            D1MetaRepo[D1 MetadataRepository]
+            R2Storage[R2 Storage]
+            SyncService[Sync Service]
         end
     end
 
@@ -69,36 +70,35 @@ graph TB
         D1DB[D1 Database]
     end
 
-    R2Page -->|file list via hc RPC| HonoClient
-    R2Page -->|image via img src URL| R2Handler
-    R2Page -->|markdown via fetch URL| R2Handler
-    HonoClient -->|typed HTTP| R2Handler
-    R2Handler --> R2StorageIF
-    R2Handler --> MetaRepoIF
-    R2StorageIF -.->|implements| R2Storage
+    FilesPage -->|GET /api/files| FilesHandler
+    FilesPage -->|GET /files/:key| FilesHandler
+    AdminHandler -->|POST /api/admin/files/sync| SyncService
+    FilesHandler --> MetaRepoIF
+    FilesHandler --> StorageIF
+    SyncService --> MetaRepoIF
+    SyncService --> StorageIF
     MetaRepoIF -.->|implements| D1MetaRepo
-    R2Storage --> R2Bucket
+    StorageIF -.->|implements| R2Storage
     D1MetaRepo --> D1DB
+    R2Storage --> R2Bucket
 ```
 
 **Architecture Integration**:
 
 - **選択パターン**: DDD レイヤードアーキテクチャ（既存プロジェクトと同一）
-- **ドメイン境界**: `r2-file` 集約を新設し、R2 オブジェクトのメタデータとコンテンツアクセスを管轄する
-- **既存パターン維持**: `IEntity`, `IPersisted`, `IUnpersisted` インターフェース群を再利用
-- **新規コンポーネント**: `IValueObject<T>` インターフェースを `app/backend/domain/value-object.interface.ts` に新規作成（参考プロジェクトから移植）。R2 ストレージアクセスは D1 とは異なるインフラ層を必要とし、メタデータ管理は D1 側に配置することでクエリ性能を確保する
-- **Hono RPC 型推論**: `getApp` の明示的な戻り値型アノテーションを削除し、TypeScript の型推論に依存することで `hc` クライアントのルート型推論チェーンを維持する
-- **API アクセス戦略**: ファイル一覧 API（`/api/r2/files`）のみ Hono RPC (`hc`) 経由で型安全に呼び出す。ファイルコンテンツ API（`/api/r2/files/:key`）はバイナリ/テキスト混合レスポンスのため `hc` の型推論と相性が悪く、画像は `<img src>` の URL 直接指定、Markdown は素の `fetch` で取得する
-- **Steering 準拠**: 型安全性、DDD パターン、ファクトリパターンを維持
+- **ドメイン境界**: 既存の `object-storage` 集約を拡張し、ダウンロード回数を追加
+- **既存パターン維持**: `IEntity`, `IPersisted`, `IUnpersisted`, `IValueObject` インターフェース群を再利用
+- **新規コンポーネント**: リポジトリインターフェースの拡張（upsert, delete, incrementDownloadCount）、同期サービスの追加
+- **Steering 準拠**: 型安全性、DDD パターン、ファクトリパターンを維持。ドメイン層にインフラ固有名を含めない
 
 ### Technology Stack
 
 | Layer | Choice / Version | Role in Feature | Notes |
 | --- | --- | --- | --- |
-| Frontend | React 19 + React Router 7 | デモページ UI、クライアントサイドレンダリング | loader 不使用、クライアントサイドのみ |
-| Backend | Hono v4 | API ハンドラー、RPC 型エクスポート | `hc` クライアント用型推論 |
+| Frontend | React 19 + React Router 7 | ファイル一覧画面 | クライアントサイドから API 呼び出し |
+| Backend | Hono v4 | API ハンドラー | 既存パターン踏襲 |
 | Data / Storage | Cloudflare R2 + D1 (Drizzle ORM) | オブジェクトストレージ + メタデータ DB | R2 はコンテンツ、D1 はメタデータ |
-| Infrastructure | Cloudflare Workers + Wrangler | R2 バケットバインディング | `r2_buckets` 設定追加 |
+| Infrastructure | Cloudflare Workers | R2/D1 バインディング | 既に設定済み |
 
 ## System Flows
 
@@ -106,255 +106,145 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant Browser as R2 Demo Page
-    participant HC as Hono RPC Client
-    participant Handler as R2 API Handler
+    participant Browser as Files Demo Page
+    participant Handler as Files API Handler
     participant MetaRepo as D1 MetadataRepository
     participant D1 as D1 Database
 
-    Browser->>HC: api.r2.files.$get()
-    HC->>Handler: typed GET /api/r2/files
+    Browser->>Handler: GET /api/files
     Handler->>MetaRepo: findAll()
-    MetaRepo->>D1: SELECT from r2_file_metadata
+    MetaRepo->>D1: SELECT from object_storage_file_metadata JOIN file_download_counts
     D1-->>MetaRepo: rows
-    MetaRepo-->>Handler: R2FileMetadata[]
-    Handler-->>HC: JSON response
-    HC-->>Browser: typed R2FileListResponse
+    MetaRepo-->>Handler: ObjectStorageFileMetadata[]
+    Handler-->>Browser: JSON response with download_count
 ```
 
-### ファイルコンテンツ取得フロー（画像）
-
-画像コンテンツの取得は Hono RPC クライアントを経由せず、直接 URL を `<img>` タグの `src` 属性に指定する。
+### ファイルダウンロードフロー
 
 ```mermaid
 sequenceDiagram
-    participant Browser as R2 Demo Page
-    participant Handler as R2 API Handler
-    participant Storage as R2FileStorage
+    participant Browser as Files Demo Page
+    participant Handler as Files API Handler
+    participant MetaRepo as D1 MetadataRepository
+    participant Storage as R2 Storage
+    participant D1 as D1 Database
     participant R2 as R2 Bucket
 
-    Browser->>Handler: img src /api/r2/files/images/photo.png
-    Handler->>Storage: get(objectKey)
-    Storage->>R2: R2Bucket.get(key)
-    R2-->>Storage: R2ObjectBody or null
-    alt Object found
-        Storage-->>Handler: R2FileContent
-        Handler-->>Browser: binary response with Content-Type
-    else Object not found
-        Handler-->>Browser: 404 JSON error
+    Browser->>Handler: GET /files/:key
+    Handler->>MetaRepo: findByObjectKey(key)
+    MetaRepo->>D1: SELECT WHERE object_key = key
+    alt Metadata found
+        D1-->>MetaRepo: row
+        MetaRepo-->>Handler: ObjectStorageFileMetadata
+        Handler->>Storage: get(objectKey)
+        Storage->>R2: R2Bucket.get(key)
+        alt Object found in R2
+            R2-->>Storage: R2ObjectBody
+            Storage-->>Handler: ObjectStorageContent
+            Handler->>MetaRepo: incrementDownloadCount(objectKey)
+            MetaRepo->>D1: UPDATE download_count + 1
+            Handler-->>Browser: binary response with Content-Disposition
+        else Object not found in R2
+            Handler-->>Browser: 500 Internal Server Error
+        end
+    else Metadata not found
+        Handler-->>Browser: 404 Not Found
     end
 ```
 
-### ファイルコンテンツ取得フロー（Markdown）
-
-Markdown コンテンツの取得は素の `fetch` API で直接 URL にアクセスし、テキストとして取得する。
+### メタデータ同期フロー
 
 ```mermaid
 sequenceDiagram
-    participant Browser as R2 Demo Page
-    participant Handler as R2 API Handler
-    participant Storage as R2FileStorage
+    participant Admin as Administrator
+    participant Handler as Admin Files Handler
+    participant SyncService as Sync Service
+    participant Storage as R2 Storage
+    participant MetaRepo as D1 MetadataRepository
     participant R2 as R2 Bucket
+    participant D1 as D1 Database
 
-    Browser->>Handler: fetch /api/r2/files/docs/readme.md
-    Handler->>Storage: get(objectKey)
-    Storage->>R2: R2Bucket.get(key)
-    R2-->>Storage: R2ObjectBody or null
-    alt Object found
-        Storage-->>Handler: R2FileContent
-        Handler-->>Browser: text response with Content-Type
-    else Object not found
-        Handler-->>Browser: 404 JSON error
+    Admin->>Handler: POST /api/admin/files/sync
+    Handler->>SyncService: execute()
+    SyncService->>Storage: list()
+    Storage->>R2: R2Bucket.list()
+    R2-->>Storage: R2Objects[]
+    SyncService->>MetaRepo: findAll()
+    MetaRepo->>D1: SELECT all
+    D1-->>MetaRepo: existing rows
+
+    Note over SyncService: Compare R2 objects with DB records
+
+    loop For each new object
+        SyncService->>MetaRepo: upsert(metadata) with download_count=0
     end
+    loop For each deleted object
+        SyncService->>MetaRepo: deleteByObjectKey(key)
+    end
+    loop For each changed ETag
+        SyncService->>MetaRepo: upsert(metadata) preserving download_count
+    end
+
+    SyncService-->>Handler: SyncResult
+    Handler-->>Admin: JSON with added/deleted/updated counts
 ```
 
 ## Requirements Traceability
 
 | Requirement | Summary | Components | Interfaces | Flows |
 | --- | --- | --- | --- | --- |
-| 1.1 - 1.4 | R2 バケットバインディング設定 | wrangler.jsonc, Env 型 | - | - |
-| 2.1 - 2.4 | ファイル一覧取得 API | R2FilesHandler, D1 R2FileMetadataRepository | IR2FileMetadataRepository | ファイル一覧取得フロー |
-| 3.1 - 3.5 | ファイルコンテンツ取得 API | R2FilesHandler, R2FileStorage | IR2FileStorage | ファイルコンテンツ取得フロー |
-| 4.1 - 4.8 | R2 デモページ | R2DemoPage | Hono RPC Client (一覧のみ), fetch/img src (コンテンツ) | 全フロー |
-| 5.1 - 5.5 | DDD アーキテクチャ | IValueObject, Domain interfaces, Value Objects, Infra implementations | IValueObject, IR2FileStorage, IR2FileMetadataRepository | - |
-| 6.1 - 6.5 | D1 メタデータ管理 | r2FileMetadata テーブル, D1 R2FileMetadataRepository | IR2FileMetadataRepository | ファイル一覧取得フロー |
-| 7.1 - 7.3 | Hono RPC クライアント統合 | app 変数エクスポート, getApp 戻り値型削除, Hono Client | typeof app | ファイル一覧取得フロー |
-| 8.1 - 8.3 | ルーティング統合 | routes.ts, backend/index.ts, R2DemoPage meta | - | - |
+| 1.1 - 1.4 | ファイル一覧画面 | FilesPage, FilesHandler | IObjectStorageFileMetadataRepository | ファイル一覧取得フロー |
+| 2.1 - 2.6 | ファイルダウンロードエンドポイント | FilesHandler, R2Storage, D1MetadataRepository | IObjectStorage, IObjectStorageFileMetadataRepository | ファイルダウンロードフロー |
+| 3.1 - 3.6 | メタデータ同期 API | AdminFilesHandler, SyncService | IObjectStorage, IObjectStorageFileMetadataRepository | メタデータ同期フロー |
+| 4.1 - 4.4 | ファイル一覧取得 API | FilesHandler | IObjectStorageFileMetadataRepository | ファイル一覧取得フロー |
+| 5.1 - 5.4 | メタデータスキーマ | object_storage_file_metadata, file_download_counts テーブル | - | - |
+| 6.1 - 6.5 | DDD アーキテクチャの維持 | 全ドメインコンポーネント | IObjectStorage, IObjectStorageFileMetadataRepository | - |
 
 ## Components and Interfaces
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 | --- | --- | --- | --- | --- | --- |
-| wrangler.jsonc R2 設定 | Infra/Config | R2 バケットバインディング定義 | 1.1 - 1.4 | Cloudflare Wrangler (P0) | - |
-| IValueObject | Domain/Interface | 値オブジェクトの共通インターフェース（新規作成） | 5.2 | - | Service |
-| ObjectKey | Domain/VO | R2 オブジェクトキーの値オブジェクト | 5.2 | IValueObject (P0) | Service |
-| ContentType | Domain/VO | Content-Type の値オブジェクト | 5.2 | IValueObject (P0) | Service |
-| ETag | Domain/VO | ETag の値オブジェクト | 5.2, 6.5 | IValueObject (P0) | Service |
-| R2FileMetadata | Domain/Entity | R2 ファイルメタデータエンティティ | 5.1, 6.1 | IEntity, ValueObjects (P0) | Service |
-| IR2FileStorage | Domain/Interface | R2 ストレージアクセス契約 | 5.1, 5.4 | - | Service |
-| IR2FileMetadataRepository | Domain/Interface | D1 メタデータリポジトリ契約 | 5.1, 6.2 | - | Service |
-| R2FileStorage | Infra/R2 | R2 ストレージ実装 | 5.3, 5.4 | R2Bucket (P0, External) | Service |
-| R2FileMetadataRepository | Infra/D1 | D1 メタデータリポジトリ実装 | 6.3 | Drizzle ORM (P0), D1Database (P0, External) | Service |
-| r2FileMetadata テーブル | Infra/D1 Schema | D1 メタデータテーブル定義 | 6.1 | Drizzle ORM (P0) | - |
-| R2FilesHandler | Handlers/API | R2 API エンドポイント | 2.1 - 2.4, 3.1 - 3.5, 7.1 | IR2FileStorage (P0), IR2FileMetadataRepository (P0) | API |
-| R2DemoPage | Frontend/Route | R2 デモページ UI | 4.1 - 4.8, 8.1, 8.3 | Hono RPC Client (P0), fetch API (P0) | State |
-| routes.ts 更新 | Frontend/Config | R2 ルート追加 | 8.1 | React Router (P0) | - |
-| backend/index.ts 更新 | Backend/Config | R2 API ルート統合、app 変数エクスポート、getApp 戻り値型アノテーション削除 | 7.1 - 7.3, 8.2 | Hono (P0) | - |
+| ObjectStorageFileMetadata | Domain/Entity | メタデータエンティティ（download_count 追加） | 5.1, 6.1, 6.2 | ValueObjects (P0) | Service |
+| IObjectStorage | Domain/Interface | ストレージアクセス契約 | 6.1 | - | Service |
+| IObjectStorageFileMetadataRepository | Domain/Interface | メタデータリポジトリ契約 | 6.1 | - | Service |
+| R2Storage | Infra/R2 | R2 ストレージ実装 | 6.4 | R2Bucket (P0, External) | Service |
+| D1MetadataRepository | Infra/D1 | D1 メタデータリポジトリ実装 | 6.5 | Drizzle ORM (P0), D1Database (P0, External) | Service |
+| SyncService | Infra/Service | メタデータ同期サービス | 3.1 - 3.6 | IObjectStorage (P0), IObjectStorageFileMetadataRepository (P0) | Service |
+| FilesHandler | Handlers/API | ファイル一覧・ダウンロード API | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4 | Repository (P0), Storage (P0) | API |
+| AdminFilesHandler | Handlers/API | 管理者向け同期 API | 3.1 - 3.6 | SyncService (P0) | API |
+| FilesPage | Frontend/Route | ファイル一覧画面 | 1.1 - 1.4 | fetch API (P0) | State |
+| object_storage_file_metadata, file_download_counts テーブル | Infra/D1 Schema | メタデータテーブル・ダウンロードカウントテーブル定義 | 5.1 - 5.4 | Drizzle ORM (P0) | - |
 
 ### Domain Layer
 
-#### IValueObject（新規作成）
+#### ObjectStorageFileMetadata (エンティティ拡張)
 
 | Field | Detail |
 | --- | --- |
-| Intent | 値オブジェクトの共通インターフェースを定義する |
-| Requirements | 5.2 |
+| Intent | 既存の ObjectStorageFileMetadata エンティティに downloadCount プロパティを追加する |
+| Requirements | 5.1, 6.1, 6.2 |
 
 **Responsibilities & Constraints**
 
-- 現在のコードベースには存在しないインターフェースであり、`app/backend/domain/value-object.interface.ts` に新規作成する
-- 参考プロジェクト（`tmp/yantene.net.old/app/backend/domain/value-object.interface.ts`）から移植する
-- `equals` メソッドによる値の等価比較と `toJSON` メソッドによる JSON シリアライズを契約する
-- 関連する JSON ユーティリティ型（`JsonPrimitive`, `JsonValue`, `IJsonObject`, `IJsonArray`）も同ファイルに定義する
+- 既存のエンティティ構造を維持しつつ `downloadCount: number` プロパティを追加する
+- `create` メソッドは `downloadCount` を 0 で初期化する
+- `reconstruct` メソッドは永続化された `downloadCount` を受け取る
+- `toJSON` メソッドは `downloadCount` を含める
 
 **Contracts**: Service [x]
 
 ##### Service Interface
 
 ```typescript
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | IJsonObject | IJsonArray;
-interface IJsonObject {
-  [key: string]: JsonValue;
-}
-interface IJsonArray extends Array<JsonValue> {}
-
-interface IValueObject<T> {
-  equals(other: T): boolean;
-  toJSON(): JsonValue;
-}
-```
-
-- Preconditions: 型パラメータ `T` は実装クラス自身を指定する
-- Postconditions: `equals` は値ベースの等価比較を返却する。`toJSON` は JSON シリアライズ可能な値を返却する
-- Invariants: 値オブジェクトは不変である
-
-#### ObjectKey (値オブジェクト)
-
-| Field | Detail |
-| --- | --- |
-| Intent | R2 オブジェクトのキー名を表現する値オブジェクト |
-| Requirements | 5.2 |
-
-**Responsibilities & Constraints**
-
-- R2 バケット内のオブジェクトキー（パス）を不変に表現する
-- 空文字列を許容しない
-- 参考プロジェクトの `Slug` パターンに準拠する
-
-**Contracts**: Service [x]
-
-##### Service Interface
-
-```typescript
-class ObjectKey implements IValueObject<ObjectKey> {
-  private constructor(readonly value: string);
-  static create(value: string): ObjectKey;
-  equals(other: ObjectKey): boolean;
-  toJSON(): string;
-}
-```
-
-- Preconditions: `value` は空文字列でないこと
-- Postconditions: 不変のキー値を保持する
-- Invariants: `value.length > 0`
-
-#### ContentType (値オブジェクト)
-
-| Field | Detail |
-| --- | --- |
-| Intent | MIME タイプを表現する値オブジェクト |
-| Requirements | 5.2 |
-
-**Responsibilities & Constraints**
-
-- `image/png`, `text/markdown` 等の MIME タイプを不変に表現する
-- 空文字列を許容しない
-
-**Contracts**: Service [x]
-
-##### Service Interface
-
-```typescript
-class ContentType implements IValueObject<ContentType> {
-  private constructor(readonly value: string);
-  static create(value: string): ContentType;
-  equals(other: ContentType): boolean;
-  toJSON(): string;
-  isImage(): boolean;
-  isMarkdown(): boolean;
-}
-```
-
-- Preconditions: `value` は空文字列でないこと
-- Postconditions: MIME タイプ文字列を保持する
-- Invariants: `value.length > 0`
-
-#### ETag (値オブジェクト)
-
-| Field | Detail |
-| --- | --- |
-| Intent | R2 オブジェクトの ETag を表現する値オブジェクト |
-| Requirements | 5.2, 6.5 |
-
-**Responsibilities & Constraints**
-
-- R2 オブジェクトの ETag（httpEtag）を不変に表現する
-- 参考プロジェクトの `ETag` パターンに準拠する
-- キャッシュ検証用途に利用可能
-
-**Contracts**: Service [x]
-
-##### Service Interface
-
-```typescript
-class ETag implements IValueObject<ETag> {
-  private constructor(readonly value: string);
-  static create(value: string): ETag;
-  equals(other: ETag): boolean;
-  toJSON(): string;
-}
-```
-
-- Preconditions: `value` は空文字列でないこと
-- Invariants: `value.length > 0`
-
-#### R2FileMetadata (エンティティ)
-
-| Field | Detail |
-| --- | --- |
-| Intent | R2 ファイルのメタデータを表現する DDD エンティティ |
-| Requirements | 5.1, 6.1 |
-
-**Responsibilities & Constraints**
-
-- D1 に永続化される R2 オブジェクトメタデータのドメイン表現
-- `IEntity<T>` + `IPersisted` / `IUnpersisted` ジェネリクスパターンに準拠する
-- 値オブジェクト（`ObjectKey`, `ContentType`, `ETag`）を内包する
-
-**Contracts**: Service [x]
-
-##### Service Interface
-
-```typescript
-class R2FileMetadata<P extends IPersisted | IUnpersisted>
-  implements IEntity<R2FileMetadata<P>> {
+class ObjectStorageFileMetadata<P extends IPersisted | IUnpersisted>
+  implements IEntity<ObjectStorageFileMetadata<P>> {
   private constructor(
     readonly id: P["id"],
     readonly objectKey: ObjectKey,
     readonly size: number,
     readonly contentType: ContentType,
     readonly etag: ETag,
+    readonly downloadCount: number,
     readonly createdAt: P["createdAt"],
     readonly updatedAt: P["updatedAt"],
   );
@@ -364,7 +254,7 @@ class R2FileMetadata<P extends IPersisted | IUnpersisted>
     size: number;
     contentType: ContentType;
     etag: ETag;
-  }): R2FileMetadata<IUnpersisted>;
+  }): ObjectStorageFileMetadata<IUnpersisted>;
 
   static reconstruct(params: {
     id: string;
@@ -372,106 +262,126 @@ class R2FileMetadata<P extends IPersisted | IUnpersisted>
     size: number;
     contentType: ContentType;
     etag: ETag;
+    downloadCount: number;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
-  }): R2FileMetadata<IPersisted>;
+  }): ObjectStorageFileMetadata<IPersisted>;
 
-  equals(other: R2FileMetadata<P>): boolean;
-  toJSON(): { ... };
+  equals(other: ObjectStorageFileMetadata<P>): boolean;
+  toJSON(): {
+    id: P["id"];
+    objectKey: string;
+    size: number;
+    contentType: string;
+    etag: string;
+    downloadCount: number;
+    createdAt: string | undefined;
+    updatedAt: string | undefined;
+  };
 }
 ```
 
-- Preconditions: `size >= 0`
-- Invariants: `objectKey`, `contentType`, `etag` は有効な値オブジェクトであること
+- Preconditions: `size >= 0`, `downloadCount >= 0`
+- Postconditions: `create` は `downloadCount: 0` で初期化する
+- Invariants: 値オブジェクトは有効であること
 
-#### IR2FileStorage (インターフェース)
+#### IObjectStorage (インターフェース)
 
 | Field | Detail |
 | --- | --- |
-| Intent | R2 バケットへのアクセス契約を定義する |
-| Requirements | 5.1, 5.4 |
+| Intent | オブジェクトストレージへのアクセス契約を定義する |
+| Requirements | 6.1 |
 
 **Responsibilities & Constraints**
 
-- R2 バケットからのオブジェクト取得操作を抽象化する
-- 参考プロジェクトの `IEntryStorage` パターンに準拠する
-- ファイルコンテンツ取得 API（3.1 - 3.5）が依存する
+- オブジェクトストレージからのオブジェクト取得・一覧取得操作を抽象化する
+- インフラ固有名（R2）を含まない
+- 読み取り専用操作のみを提供する
 
 **Dependencies**
 
-- Outbound: R2Bucket -- R2 オブジェクトストレージ (P0, External)
+- Outbound: R2Bucket (External) -- オブジェクトストレージ (P0)
 
 **Contracts**: Service [x]
 
 ##### Service Interface
 
 ```typescript
-interface IR2FileStorage {
-  get(objectKey: ObjectKey): Promise<R2FileContent | undefined>;
+interface IObjectStorage {
+  get(objectKey: ObjectKey): Promise<ObjectStorageContent | undefined>;
+  list(): Promise<readonly ObjectStorageListItem[]>;
 }
 
-type R2FileContent = {
+type ObjectStorageContent = {
   body: ReadableStream;
   contentType: ContentType;
+  size: number;
+  etag: ETag;
+};
+
+type ObjectStorageListItem = {
+  objectKey: ObjectKey;
   size: number;
   etag: ETag;
 };
 ```
 
 - Preconditions: `objectKey` は有効な `ObjectKey` であること
-- Postconditions: オブジェクトが存在すれば `R2FileContent` を返却、存在しなければ `undefined`
+- Postconditions: `get` はオブジェクトが存在すれば `ObjectStorageContent` を返却、存在しなければ `undefined`。`list` は全オブジェクトのリストを返却
 - Invariants: 読み取り専用操作のみ
 
-#### IR2FileMetadataRepository (インターフェース)
+#### IObjectStorageFileMetadataRepository (インターフェース)
 
 | Field | Detail |
 | --- | --- |
-| Intent | D1 に永続化された R2 ファイルメタデータへのアクセス契約を定義する |
-| Requirements | 5.1, 6.2 |
+| Intent | メタデータリポジトリへのアクセス契約を定義する |
+| Requirements | 6.1 |
 
 **Responsibilities & Constraints**
 
-- D1 からメタデータの一覧取得を抽象化する
-- 参考プロジェクトの `IClickCommandRepository` パターンに準拠する
-- ファイル一覧 API（2.1 - 2.4）が依存する
+- メタデータの CRUD 操作とダウンロード回数のインクリメント操作を抽象化する
+- インフラ固有名（D1）を含まない
 
 **Dependencies**
 
-- Outbound: D1Database -- D1 データベース (P0, External)
+- Outbound: D1Database (External) -- データベース (P0)
 
 **Contracts**: Service [x]
 
 ##### Service Interface
 
 ```typescript
-interface IR2FileMetadataRepository {
-  findAll(): Promise<readonly R2FileMetadata<IPersisted>[]>;
-  findByObjectKey(objectKey: ObjectKey): Promise<R2FileMetadata<IPersisted> | undefined>;
+interface IObjectStorageFileMetadataRepository {
+  findAll(): Promise<readonly ObjectStorageFileMetadata<IPersisted>[]>;
+  findByObjectKey(objectKey: ObjectKey): Promise<ObjectStorageFileMetadata<IPersisted> | undefined>;
+  upsert(metadata: ObjectStorageFileMetadata<IUnpersisted>, preserveDownloadCount?: boolean): Promise<ObjectStorageFileMetadata<IPersisted>>;
+  deleteByObjectKey(objectKey: ObjectKey): Promise<void>;
+  incrementDownloadCount(objectKey: ObjectKey): Promise<void>;
 }
 ```
 
-- Preconditions: D1 データベースが利用可能であること
-- Postconditions: `findAll` は全メタデータレコードを返却、`findByObjectKey` は一致するレコードまたは `undefined` を返却
-- Invariants: 読み取り専用操作のみ
+- Preconditions: 引数は有効な値であること
+- Postconditions: `upsert` は INSERT または UPDATE を実行し、永続化されたエンティティを返却。`preserveDownloadCount: true` の場合、既存の `download_count` を維持する
+- Invariants: `incrementDownloadCount` はアトミックに実行される
 
 ### Infra Layer
 
-#### R2FileStorage (R2 実装)
+#### R2Storage (R2 実装)
 
 | Field | Detail |
 | --- | --- |
-| Intent | `IR2FileStorage` の R2 バケット実装 |
-| Requirements | 5.3, 5.4 |
+| Intent | `IObjectStorage` の R2 バケット実装 |
+| Requirements | 6.4 |
 
 **Responsibilities & Constraints**
 
-- `R2Bucket` バインディングを受け取り、オブジェクトの取得操作を提供する
-- 参考プロジェクトの `EntryStorage` パターンに準拠する
-- `R2ObjectBody` から `R2FileContent` へのマッピングを行う
+- `R2Bucket` バインディングを受け取り、オブジェクトの取得・一覧操作を提供する
+- `R2ObjectBody` から `ObjectStorageContent` へのマッピングを行う
+- Content-Type が未設定の場合、キーの拡張子から推定する
 
 **Dependencies**
 
-- Inbound: R2FilesHandler -- API ハンドラーから呼び出される (P0)
+- Inbound: FilesHandler, SyncService -- 呼び出し元 (P0)
 - External: R2Bucket (Cloudflare Workers Runtime API) -- R2 バケットアクセス (P0)
 
 **Contracts**: Service [x]
@@ -479,34 +389,35 @@ interface IR2FileMetadataRepository {
 ##### Service Interface
 
 ```typescript
-class R2FileStorage implements IR2FileStorage {
+class R2Storage implements IObjectStorage {
   constructor(private readonly r2: R2Bucket);
-  async get(objectKey: ObjectKey): Promise<R2FileContent | undefined>;
+  async get(objectKey: ObjectKey): Promise<ObjectStorageContent | undefined>;
+  async list(): Promise<readonly ObjectStorageListItem[]>;
 }
 ```
 
 **Implementation Notes**
 
 - `R2Bucket.get()` の戻り値が `null` の場合は `undefined` を返却する
-- `R2ObjectBody` の `httpMetadata.contentType` が未設定の場合、キーの拡張子から推定する
-- `R2ObjectBody.body` を `ReadableStream` として `R2FileContent` に格納する
+- `R2ObjectBody.httpMetadata.contentType` が未設定の場合、`ObjectKey` の拡張子から推定する（例: `.png` -> `image/png`）
+- `list()` は `R2Bucket.list()` を使用し、`R2Objects.objects` から `ObjectStorageListItem` に変換する
 
-#### R2FileMetadataRepository (D1 実装)
+#### D1MetadataRepository (D1 実装)
 
 | Field | Detail |
 | --- | --- |
-| Intent | `IR2FileMetadataRepository` の D1 / Drizzle 実装 |
-| Requirements | 6.3 |
+| Intent | `IObjectStorageFileMetadataRepository` の D1 / Drizzle 実装 |
+| Requirements | 6.5 |
 
 **Responsibilities & Constraints**
 
-- Drizzle ORM を使用して D1 からメタデータを取得する
+- Drizzle ORM を使用して D1 からメタデータを取得・更新する
 - 既存の `ClickCommandRepository` パターンに準拠する
-- カスタム型（`objectKey`, `contentType`, `etag`, `instant`）を使用する
+- `incrementDownloadCount` は SQL の `UPDATE ... SET download_count = download_count + 1` でアトミックに実行する
 
 **Dependencies**
 
-- Inbound: R2FilesHandler -- API ハンドラーから呼び出される (P0)
+- Inbound: FilesHandler, SyncService -- 呼び出し元 (P0)
 - External: DrizzleD1Database (Drizzle ORM) -- D1 アクセス (P0)
 
 **Contracts**: Service [x]
@@ -514,130 +425,219 @@ class R2FileStorage implements IR2FileStorage {
 ##### Service Interface
 
 ```typescript
-class R2FileMetadataRepository implements IR2FileMetadataRepository {
+class D1MetadataRepository implements IObjectStorageFileMetadataRepository {
   constructor(private readonly db: DrizzleD1Database);
-  async findAll(): Promise<readonly R2FileMetadata<IPersisted>[]>;
-  async findByObjectKey(objectKey: ObjectKey): Promise<R2FileMetadata<IPersisted> | undefined>;
+  async findAll(): Promise<readonly ObjectStorageFileMetadata<IPersisted>[]>;
+  async findByObjectKey(objectKey: ObjectKey): Promise<ObjectStorageFileMetadata<IPersisted> | undefined>;
+  async upsert(metadata: ObjectStorageFileMetadata<IUnpersisted>, preserveDownloadCount?: boolean): Promise<ObjectStorageFileMetadata<IPersisted>>;
+  async deleteByObjectKey(objectKey: ObjectKey): Promise<void>;
+  async incrementDownloadCount(objectKey: ObjectKey): Promise<void>;
 }
 ```
 
 **Implementation Notes**
 
-- `findAll` は `r2FileMetadata` テーブルから全レコードを取得し、`R2FileMetadata.reconstruct` でエンティティに変換する
-- カスタム型定義は `app/backend/infra/d1/schema/custom-types/r2-file.custom-type.ts` に配置する
+- `upsert` は Drizzle の `onConflictDoUpdate` を使用する
+- `preserveDownloadCount: true` の場合、既存の `download_count` を維持するため `COALESCE` を使用する
+- `incrementDownloadCount` は `sql\`download_count + 1\`` で直接インクリメントする
 
-#### r2FileMetadata テーブル (D1 スキーマ)
-
-| Field | Detail |
-| --- | --- |
-| Intent | R2 ファイルメタデータの D1 テーブル定義 |
-| Requirements | 6.1 |
-
-**Implementation Notes**
-
-- `app/backend/infra/d1/schema/r2-file-metadata.table.ts` に配置する
-- マイグレーションファイル `migrations/0001_create_r2_file_metadata.sql` を生成する
-
-### Handlers Layer
-
-#### R2FilesHandler (API ハンドラー)
+#### SyncService (同期サービス)
 
 | Field | Detail |
 | --- | --- |
-| Intent | R2 ファイル一覧取得・コンテンツ取得の API エンドポイントを提供する |
-| Requirements | 2.1 - 2.4, 3.1 - 3.5, 7.1 |
+| Intent | オブジェクトストレージのメタデータをデータベースに同期する |
+| Requirements | 3.1 - 3.6 |
 
 **Responsibilities & Constraints**
 
-- `/api/r2/files` (GET): D1 メタデータから一覧を取得し JSON で返却する。このエンドポイントのみ Hono RPC クライアント (`hc`) の型推論対象とする
-- `/api/r2/files/:key` (GET): R2 バケットから個別ファイルコンテンツを取得し、適切な Content-Type で返却する。バイナリ/テキスト混合レスポンスのため `hc` クライアントの型推論対象外とし、フロントエンドからは `<img src>` URL 直接指定（画像）または素の `fetch`（Markdown）で呼び出す
-- ハンドラー内で `R2FileStorage` と `R2FileMetadataRepository` をインスタンス化する（既存 Counter パターン準拠）
-- Hono の型推論が有効なルート定義を提供する（7.1）
+- オブジェクトストレージ内の全オブジェクト一覧を取得し、データベースと比較する
+- 新規オブジェクトは INSERT（`download_count: 0`）
+- 削除されたオブジェクトは DELETE
+- ETag が変更されたオブジェクトは UPDATE（`download_count` を維持）
+
+**Dependencies**
+
+- Inbound: AdminFilesHandler -- 呼び出し元 (P0)
+- Outbound: IObjectStorage -- オブジェクト一覧取得 (P0)
+- Outbound: IObjectStorageFileMetadataRepository -- メタデータ操作 (P0)
+
+**Contracts**: Service [x]
+
+##### Service Interface
+
+```typescript
+type SyncResult = {
+  added: number;
+  deleted: number;
+  updated: number;
+};
+
+class SyncService {
+  constructor(
+    private readonly storage: IObjectStorage,
+    private readonly repository: IObjectStorageFileMetadataRepository,
+  );
+  async execute(): Promise<SyncResult>;
+}
+```
+
+**Implementation Notes**
+
+- R2 の `list()` と DB の `findAll()` を比較して差分を検出する
+- 新規オブジェクトの Content-Type は R2 から取得するか、拡張子から推定する
+- ETag の比較で変更を検出する
+
+#### object_storage_file_metadata テーブル (D1 スキーマ)
+
+| Field | Detail |
+| --- | --- |
+| Intent | オブジェクトストレージのファイルメタデータを格納するテーブル |
+| Requirements | 5.1 - 5.4 |
+
+**Implementation Notes**
+
+- `app/backend/infra/d1/schema/object-storage-file-metadata.table.ts` に配置する
+- 既存の `stored_object_metadata` テーブルからリネーム（マイグレーションで対応）
+
+#### file_download_counts テーブル (D1 スキーマ、デモ用)
+
+| Field | Detail |
+| --- | --- |
+| Intent | ファイルダウンロード回数を格納するテーブル（デモ用、将来削除予定） |
+| Requirements | 5.1 - 5.4 |
+
+**Implementation Notes**
+
+- `app/backend/infra/d1/schema/file-download-counts.table.ts` に配置する
+- `object_key` を主キーとし、`object_storage_file_metadata` との外部キー関係を持つ
+- デモ機能削除時はこのテーブルを DROP するだけで済む
+
+### Handlers Layer
+
+#### FilesHandler (API ハンドラー)
+
+| Field | Detail |
+| --- | --- |
+| Intent | ファイル一覧取得・ダウンロードの API エンドポイントを提供する |
+| Requirements | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4 |
+
+**Responsibilities & Constraints**
+
+- `/api/files` (GET): D1 メタデータから一覧を取得し JSON で返却する
+- `/files/:key` (GET): メタデータを確認し、存在すれば R2 からコンテンツを取得してダウンロード回数をインクリメントする
+- ハンドラー内で `R2Storage` と `D1MetadataRepository` をインスタンス化する（既存 Counter パターン準拠）
 
 **Dependencies**
 
 - Inbound: Hono Router (backend/index.ts) -- API ルーティング (P0)
-- Outbound: IR2FileStorage -- R2 コンテンツ取得 (P0)
-- Outbound: IR2FileMetadataRepository -- D1 メタデータ取得 (P0)
+- Outbound: IObjectStorage -- R2 コンテンツ取得 (P0)
+- Outbound: IObjectStorageFileMetadataRepository -- D1 メタデータ取得・更新 (P0)
 
 **Contracts**: API [x]
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors | RPC Target |
-| --- | --- | --- | --- | --- | --- |
-| GET | `/api/r2/files` | - | `R2FileListResponse` (JSON) | 500 | Yes (`hc` 経由) |
-| GET | `/api/r2/files/:key` | path param: `key` | binary/text with Content-Type header | 404, 500 | No (URL 直接アクセス) |
+| Method | Endpoint | Request | Response | Errors |
+| --- | --- | --- | --- | --- |
+| GET | `/api/files` | - | `FileListResponse` (JSON) | 500 |
+| GET | `/files/:key` | path param: `key` | binary with Content-Type, Content-Disposition | 404, 500 |
 
 **API レスポンス型**:
 
 ```typescript
-type R2FileListItem = {
+type FileListItem = {
   key: string;
   size: number;
   contentType: string;
-  etag: string;
+  downloadCount: number;
 };
 
-type R2FileListResponse = {
-  files: R2FileListItem[];
+type FileListResponse = {
+  files: FileListItem[];
 };
 
-type R2ErrorResponse = {
+type ErrorResponse = {
   error: string;
 };
 ```
 
 **Implementation Notes**
 
-- `app/backend/handlers/api/r2/index.ts` に配置する
-- `:key` パラメータはネストされたパスを含む可能性があるため、ワイルドカードパス `files/*` を使用する
-- 画像ファイルは `R2ObjectBody.body` を `ReadableStream` としてレスポンスに渡す
-- Markdown ファイルは `text()` でテキスト化してレスポンスする
+- `app/backend/handlers/api/files/index.ts` に配置する
+- `/files/:key` のパスパラメータはネストされたパスを含む可能性があるため、ワイルドカードパス `/files/*` を使用する
+- `Content-Disposition: attachment; filename="<filename>"` ヘッダーを設定してダウンロードを促す
 - エラーハンドリングは既存 Counter パターン（try-catch + console.error + JSON error response）に準拠する
-- ファイルコンテンツエンドポイントは `hc` クライアントで使用しないため、レスポンス型の `hc` 互換性を考慮しない。Hono の `c.body()` や `c.newResponse()` でバイナリ/テキストを直接返却する
 
-### Frontend Layer
-
-#### R2DemoPage (ルートコンポーネント)
+#### AdminFilesHandler (管理者 API ハンドラー)
 
 | Field | Detail |
 | --- | --- |
-| Intent | R2 バケットのファイルをブラウザで閲覧するデモページ |
-| Requirements | 4.1 - 4.8, 8.1, 8.3 |
+| Intent | メタデータ同期 API エンドポイントを提供する |
+| Requirements | 3.1 - 3.6 |
 
 **Responsibilities & Constraints**
 
-- `/r2` パスで表示される React Router ルートコンポーネント
+- `/api/admin/files/sync` (POST): SyncService を実行し、同期結果を返却する
+- ハンドラー内で `SyncService` をインスタンス化する
+
+**Dependencies**
+
+- Inbound: Hono Router (backend/index.ts) -- API ルーティング (P0)
+- Outbound: SyncService -- 同期処理 (P0)
+
+**Contracts**: API [x]
+
+##### API Contract
+
+| Method | Endpoint | Request | Response | Errors |
+| --- | --- | --- | --- | --- |
+| POST | `/api/admin/files/sync` | - | `SyncResponse` (JSON) | 500 |
+
+**API レスポンス型**:
+
+```typescript
+type SyncResponse = {
+  added: number;
+  deleted: number;
+  updated: number;
+};
+```
+
+**Implementation Notes**
+
+- `app/backend/handlers/api/admin/files/index.ts` に配置する
+- 将来的に認証を追加する場合のために `/api/admin/` パスプレフィックスを使用する
+
+### Frontend Layer
+
+#### FilesPage (ルートコンポーネント)
+
+| Field | Detail |
+| --- | --- |
+| Intent | オブジェクトストレージ内のファイル一覧を表示するデモページ |
+| Requirements | 1.1 - 1.4 |
+
+**Responsibilities & Constraints**
+
+- `/files` パスで表示される React Router ルートコンポーネント
 - React Router の `loader` を使用しない -- クライアントサイドから API を呼び出す
-- ファイル一覧取得: Hono RPC クライアント (`hc`) 経由で `/api/r2/files` を型安全に呼び出す
-- ファイルコンテンツ取得: 画像は `<img src="/api/r2/files/{key}">` で URL 直接指定、Markdown は素の `fetch("/api/r2/files/{key}")` でテキスト取得する
+- ファイル一覧取得: `fetch("/api/files")` で API 呼び出し
+- ファイルダウンロード: `<a href="/files/{key}" download>` でダウンロードリンクを提供
 - ローディング・エラー状態の管理
 
 **Dependencies**
 
-- External: hono/client (`hc`) -- ファイル一覧の型安全な API 呼び出し (P0)
-- External: fetch API -- Markdown コンテンツ取得 (P0)
+- External: fetch API -- API 呼び出し (P0)
 
 **Contracts**: State [x]
 
 ##### State Management
 
 ```typescript
-type R2DemoState = {
-  files: R2FileListItem[];
-  selectedFile: R2FileListItem | null;
-  isFilesLoading: boolean;
-  isContentLoading: boolean;
-  filesError: string | null;
-  contentError: string | null;
-  previewContent: {
-    type: "image";
-    url: string;
-  } | {
-    type: "markdown";
-    text: string;
-  } | null;
+type FilesPageState = {
+  files: FileListItem[];
+  isLoading: boolean;
+  errorMessage: string | null;
 };
 ```
 
@@ -647,78 +647,43 @@ type R2DemoState = {
 
 **Implementation Notes**
 
-- `app/frontend/routes/r2.tsx` に配置する
+- `app/frontend/routes/files.tsx` に配置する
 - `meta` 関数で title と description を設定する（Counter Demo パターン準拠）
-- ファイル一覧取得は `hc<typeof app>` を使用。`app` 変数を `~/backend` からインポートする（参考プロジェクトの `hc<typeof app>(window.location.origin)` パターンに準拠）
-- 画像プレビューは `/api/r2/files/{key}` エンドポイントの URL を `<img>` タグの `src` に直接指定する（`hc` 経由ではない）
-- Markdown コンテンツは素の `fetch("/api/r2/files/{key}")` でテキスト取得し、`<pre>` タグ等で表示する（`hc` 経由ではない）
+- ファイル一覧は `useEffect` でマウント時に取得する
+- 各ファイル行にはキー名、サイズ、Content-Type、ダウンロード回数、ダウンロードリンクを表示する
+- ファイルが存在しない場合は「ファイルがありません」メッセージを表示する
 
 ### Configuration Updates
 
-#### wrangler.jsonc 更新 (1.1 - 1.3)
-
-`r2_buckets` セクションを追加し、開発環境と本番環境の両方で R2 バケットバインディングを設定する。
-
-```jsonc
-{
-  "r2_buckets": [
-    {
-      "binding": "R2",
-      "bucket_name": "yantene-development"
-    }
-  ],
-  "env": {
-    "production": {
-      "r2_buckets": [
-        {
-          "binding": "R2",
-          "bucket_name": "yantene-production"
-        }
-      ]
-    }
-  }
-}
-```
-
-#### Env 型更新 (1.4)
-
-`wrangler types` の再実行により `worker-configuration.d.ts` が自動更新され、`Cloudflare.Env` に `R2: R2Bucket` が追加される。
-
-#### routes.ts 更新 (8.1)
+#### routes.ts 更新
 
 ```typescript
 // app/frontend/routes.ts に追加
-route("r2", "routes/r2.tsx"),
+route("files", "routes/files.tsx"),
 ```
 
-#### backend/index.ts 更新 (7.1 - 7.3, 8.2)
-
-**重要**: `getApp` 関数の明示的な戻り値型アノテーション `: Hono<{ Bindings: Env }>` を削除し、TypeScript の型推論に依存する。これにより `.route()` チェーンで構築されたルート情報が戻り値の型に保持され、`hc` クライアントが各エンドポイントのパスとレスポンス型を推論できるようになる。
-
-現在の `getApp` は明示的な戻り値型を持つため、チェーン内の `.route("/api/r2", r2App)` 等のルート型情報が消失する。参考プロジェクトでは `getApp` に明示的な戻り値型を付けていないため、型推論チェーンが正しく動作している。
-
-ESLint の `@typescript-eslint/explicit-function-return-type` ルールがエラーを報告する場合は、`getApp` 関数定義の直前に `// eslint-disable-next-line @typescript-eslint/explicit-function-return-type` コメントを追加する。
+#### backend/index.ts 更新
 
 ```typescript
 // app/backend/index.ts
 import { Hono } from "hono";
 import { counterApp } from "./handlers/api/counter";
-import { r2App } from "./handlers/api/r2";
+import { filesApp } from "./handlers/api/files";
+import { adminFilesApp } from "./handlers/api/admin/files";
 
-// Hono RPC 型推論チェーンを維持するため、明示的な戻り値型を付けない。
-// hc<typeof app> が各ルートのパスとレスポンス型を推論するために必要。
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const getApp = (
   handler: (
     request: Request,
     env: Env,
     ctx: ExecutionContext,
   ) => Promise<Response>,
-) => {
+): Hono<{ Bindings: Env }> => {
   const app = new Hono<{ Bindings: Env }>()
     .get("/hello", (c) => c.text("Hello, World!"))
     .route("/api/counter", counterApp)
-    .route("/api/r2", r2App)
+    .route("/api/files", filesApp)
+    .route("/api/admin/files", adminFilesApp)
+    .route("/files", filesApp)  // /files/:key for downloads
     .all("*", async (context) => {
       return handler(
         context.req.raw,
@@ -729,52 +694,6 @@ export const getApp = (
 
   return app;
 };
-```
-
-**Hono RPC 型エクスポート (7.1 - 7.3)**:
-
-参考プロジェクトのパターンに従い、Hono アプリインスタンス（`app` 変数）を `backend/index.ts` からエクスポートする。フロントエンドでは `hc<typeof app>` を使用して型安全なクライアントを生成する。
-
-`getApp` 内部のローカル変数 `app` を直接エクスポートすることはできないため、以下の2つのアプローチのいずれかを採用する。
-
-**アプローチ A**: 参考プロジェクトと同様に `app` をモジュールスコープで定義し、`getApp` はその `app` に `all("*")` ハンドラーを追加する形に変更する。
-
-```typescript
-// app/backend/index.ts
-export const app = new Hono<{ Bindings: Env }>()
-  .get("/hello", (c) => c.text("Hello, World!"))
-  .route("/api/counter", counterApp)
-  .route("/api/r2", r2App);
-
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const getApp = (
-  handler: (...) => Promise<Response>,
-) => {
-  app.all("*", async (context) => { ... });
-  return app;
-};
-```
-
-**アプローチ B**: `getApp` の戻り値型を `ReturnType<typeof getApp>` として `AppType` をエクスポートし、`hc<AppType>` を使用する。
-
-```typescript
-export type AppType = ReturnType<typeof getApp>;
-// フロントエンド: hc<AppType>(window.location.origin)
-```
-
-いずれのアプローチでも `getApp` の明示的な戻り値型アノテーションを削除する必要がある。アプローチ A は参考プロジェクトとの一貫性が高い。アプローチ B は既存構造の変更が最小限で済む。実装時に既存テストへの影響を考慮して選択する。
-
-フロントエンドでは以下のように使用する。
-
-```typescript
-// フロントエンド側
-import { hc } from "hono/client";
-import { type app } from "~/backend"; // type-only import
-
-const client = hc<typeof app>(window.location.origin);
-// ファイル一覧取得（型安全）
-const response = await client.api.r2.files.$get();
-const data = await response.json();
 ```
 
 ## Data Models
@@ -789,23 +708,26 @@ classDiagram
         +toJSON() JsonValue
     }
 
-    class R2FileMetadata {
+    class ObjectStorageFileMetadata {
         +id: string | undefined
         +objectKey: ObjectKey
         +size: number
         +contentType: ContentType
         +etag: ETag
+        +downloadCount: number
         +createdAt: Temporal.Instant | undefined
         +updatedAt: Temporal.Instant | undefined
-        +create(params) R2FileMetadata~IUnpersisted~
-        +reconstruct(params) R2FileMetadata~IPersisted~
+        +create(params) ObjectStorageFileMetadata~IUnpersisted~
+        +reconstruct(params) ObjectStorageFileMetadata~IPersisted~
         +equals(other) boolean
+        +toJSON() object
     }
 
     class ObjectKey {
         +value: string
         +create(value) ObjectKey
         +equals(other) boolean
+        +toJSON() string
     }
 
     class ContentType {
@@ -814,60 +736,69 @@ classDiagram
         +isImage() boolean
         +isMarkdown() boolean
         +equals(other) boolean
+        +toJSON() string
     }
 
     class ETag {
         +value: string
         +create(value) ETag
         +equals(other) boolean
+        +toJSON() string
     }
 
     IValueObject~T~ <|.. ObjectKey
     IValueObject~T~ <|.. ContentType
     IValueObject~T~ <|.. ETag
-    R2FileMetadata --> ObjectKey
-    R2FileMetadata --> ContentType
-    R2FileMetadata --> ETag
+    ObjectStorageFileMetadata --> ObjectKey
+    ObjectStorageFileMetadata --> ContentType
+    ObjectStorageFileMetadata --> ETag
 ```
 
 **ビジネスルール & 不変条件**:
 
 - `ObjectKey.value` は空文字列でないこと
-- `ContentType.value` は空文字列でないこと（MIME タイプ形式）
+- `ContentType.value` は空文字列でないこと
 - `ETag.value` は空文字列でないこと
-- `R2FileMetadata.size` は 0 以上であること
+- `ObjectStorageFileMetadata.size` は 0 以上であること
+- `ObjectStorageFileMetadata.downloadCount` は 0 以上であること
 
 ### Logical Data Model
 
-**r2_file_metadata テーブル**:
+**object_storage_file_metadata テーブル**:
 
 | Column | Type | Constraints | Description |
 | --- | --- | --- | --- |
 | id | TEXT | PRIMARY KEY, NOT NULL | UUID v4 |
-| object_key | TEXT | NOT NULL, UNIQUE | R2 オブジェクトキー |
+| object_key | TEXT | NOT NULL, UNIQUE | オブジェクトキー |
 | size | INTEGER | NOT NULL | ファイルサイズ（バイト） |
 | content_type | TEXT | NOT NULL | MIME タイプ |
-| etag | TEXT | NOT NULL | R2 httpEtag |
+| etag | TEXT | NOT NULL | httpEtag |
 | created_at | REAL | NOT NULL, DEFAULT unixepoch('subsec') | 作成日時 |
 | updated_at | REAL | NOT NULL, DEFAULT unixepoch('subsec') | 更新日時 |
 
-**インデックス**: `object_key` に UNIQUE 制約（一意インデックスとして機能）
+**file_download_counts テーブル（デモ用）**:
+
+| Column | Type | Constraints | Description |
+| --- | --- | --- | --- |
+| object_key | TEXT | PRIMARY KEY, NOT NULL, FK | オブジェクトキー（外部キー） |
+| count | INTEGER | NOT NULL, DEFAULT 0 | ダウンロード回数 |
+
+**インデックス**: `object_storage_file_metadata.object_key` に UNIQUE 制約（一意インデックスとして機能）
 
 ### Physical Data Model
 
 ```typescript
-// app/backend/infra/d1/schema/r2-file-metadata.table.ts
+// app/backend/infra/d1/schema/object-storage-file-metadata.table.ts
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { objectKey, contentType, etag } from "./custom-types/r2-file.custom-type";
 import { instant } from "./custom-types/temporal.custom-type";
 
-export const r2FileMetadata = sqliteTable("r2_file_metadata", {
+export const objectStorageFileMetadata = sqliteTable("object_storage_file_metadata", {
   id: text("id").notNull().primaryKey(),
-  objectKey: objectKey("object_key").notNull().unique(),
+  objectKey: text("object_key").notNull().unique(),
   size: integer("size").notNull(),
-  contentType: contentType("content_type").notNull(),
-  etag: etag("etag").notNull(),
+  contentType: text("content_type").notNull(),
+  etag: text("etag").notNull(),
   createdAt: instant("created_at")
     .notNull()
     .default(sql`(unixepoch('subsec'))`),
@@ -877,17 +808,64 @@ export const r2FileMetadata = sqliteTable("r2_file_metadata", {
 });
 ```
 
+```typescript
+// app/backend/infra/d1/schema/file-download-counts.table.ts（デモ用）
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { objectStorageFileMetadata } from "./object-storage-file-metadata.table";
+
+export const fileDownloadCounts = sqliteTable("file_download_counts", {
+  objectKey: text("object_key")
+    .notNull()
+    .primaryKey()
+    .references(() => objectStorageFileMetadata.objectKey),
+  count: integer("count").notNull().default(0),
+});
+```
+
+**マイグレーション**:
+
+既存の `stored_object_metadata` テーブルをリネームし、新規テーブルを作成する。
+
+```sql
+-- migrations/XXXX_rename_to_object_storage_file_metadata.sql
+ALTER TABLE `stored_object_metadata` RENAME TO `object_storage_file_metadata`;
+
+-- migrations/XXXX_create_file_download_counts.sql
+CREATE TABLE `file_download_counts` (
+  `object_key` text PRIMARY KEY NOT NULL REFERENCES `object_storage_file_metadata`(`object_key`),
+  `count` integer NOT NULL DEFAULT 0
+);
+```
+
 ### Data Contracts & Integration
 
 **API レスポンススキーマ**:
 
-ファイル一覧レスポンスは D1 メタデータから生成する。`R2FileListItem` の各フィールドは値オブジェクトの `toJSON()` で文字列化される。このレスポンスは Hono RPC クライアントの型推論対象であり、`c.json()` で返却することで `hc` クライアントがレスポンス型を自動推論する。
-
-ファイルコンテンツレスポンスは R2 から直接取得した `ReadableStream`（画像）またはテキスト（Markdown）を返却する。Content-Type ヘッダーはメタデータの `contentType` を使用する。このレスポンスは `hc` クライアントの型推論対象外であり、フロントエンドからは URL 直接アクセスで取得する。
+ファイル一覧レスポンスは D1 メタデータから生成する。`downloadCount` を含む全フィールドを JSON で返却する。
 
 **フロントエンド・バックエンド型共有**:
 
-ファイル一覧 API のレスポンス型は Hono RPC の型推論により自動的に共有される。`R2FileListItem` および `R2FileListResponse` 型は `app/lib/types/r2.ts` に配置し、バックエンドのハンドラーで明示的に使用する。フロントエンドでは `hc` の型推論経由で自動的に型が伝搬するため、直接インポートする必要はない。
+ファイル一覧 API のレスポンス型は `app/lib/types/object-storage.ts` に配置し、バックエンドとフロントエンドで共有する。
+
+```typescript
+// app/lib/types/object-storage.ts
+export type FileListItem = {
+  key: string;
+  size: number;
+  contentType: string;
+  downloadCount: number;
+};
+
+export type FileListResponse = {
+  files: FileListItem[];
+};
+
+export type SyncResponse = {
+  added: number;
+  deleted: number;
+  updated: number;
+};
+```
 
 ## Error Handling
 
@@ -899,15 +877,17 @@ export const r2FileMetadata = sqliteTable("r2_file_metadata", {
 
 **User Errors (4xx)**:
 
-- `404 Not Found`: 指定されたキーのオブジェクトが R2 バケットに存在しない場合。`{ error: "File not found: {key}" }` を返却する。
+- `404 Not Found`: 指定されたキーのファイルがメタデータに存在しない場合。`{ error: "File not found: {key}" }` を返却する。
 
 **System Errors (5xx)**:
 
-- `500 Internal Server Error`: R2 バケットまたは D1 データベースへのアクセスに失敗した場合。`{ error: "Failed to fetch files" }` または `{ error: "Failed to fetch file content" }` を返却する。
+- `500 Internal Server Error`:
+  - R2 バケットからのファイル取得に失敗した場合: `{ error: "Failed to fetch file content" }`
+  - D1 データベースへのアクセスに失敗した場合: `{ error: "Failed to fetch files" }` または `{ error: "Failed to sync files" }`
 
 **フロントエンドエラー表示**:
 
-- API エラーはデモページ上にエラーメッセージとして表示する
+- API エラーはファイル一覧画面上にエラーメッセージとして表示する
 - Counter Demo と同様の `errorMessage` state パターンを使用する
 
 ### Monitoring
@@ -919,22 +899,22 @@ export const r2FileMetadata = sqliteTable("r2_file_metadata", {
 
 ### Unit Tests
 
-- **値オブジェクト**: `ObjectKey.create`, `ContentType.create`, `ETag.create` のバリデーション（有効値・無効値）
-- **ContentType ヘルパー**: `isImage()`, `isMarkdown()` メソッドの正確性
-- **R2FileMetadata エンティティ**: `create`, `reconstruct`, `equals`, `toJSON` メソッド
+- **ObjectStorageFileMetadata エンティティ**: `create`, `reconstruct`, `equals`, `toJSON` メソッド（`downloadCount` 含む）
+- **SyncService**: 新規追加、削除、更新の各ケースのロジック検証
 
 ### Integration Tests
 
-- **R2FilesHandler**: `/api/r2/files` エンドポイントの正常系・エラー系レスポンス検証
-- **R2FilesHandler**: `/api/r2/files/:key` エンドポイントの正常系（画像・Markdown）・404・500 レスポンス検証
-- **backend/index.ts**: R2 API ルートが正しく統合されていることの確認
+- **FilesHandler**: `/api/files` エンドポイントの正常系・エラー系レスポンス検証
+- **FilesHandler**: `/files/:key` エンドポイントの正常系・404・500 レスポンス検証
+- **AdminFilesHandler**: `/api/admin/files/sync` エンドポイントの正常系・エラー系レスポンス検証
+- **D1MetadataRepository**: `incrementDownloadCount` のアトミック性検証
 
 ### E2E/UI Tests
 
-- **R2DemoPage**: ファイル一覧の表示確認
-- **R2DemoPage**: 画像ファイル選択時のプレビュー表示確認
-- **R2DemoPage**: Markdown ファイル選択時のテキスト表示確認
-- **R2DemoPage**: ローディング状態・エラー状態の表示確認
+- **FilesPage**: ファイル一覧の表示確認（キー名、サイズ、Content-Type、ダウンロード回数）
+- **FilesPage**: ダウンロードリンクの動作確認
+- **FilesPage**: ローディング状態・エラー状態の表示確認
+- **FilesPage**: ファイルが存在しない場合のメッセージ表示確認
 
 ## File Structure Summary
 
@@ -942,41 +922,42 @@ export const r2FileMetadata = sqliteTable("r2_file_metadata", {
 app/
 ├── backend/
 │   ├── domain/
-│   │   ├── value-object.interface.ts  ← 新規作成（IValueObject<T> + JSON ユーティリティ型）
-│   │   └── r2-file/
-│   │       ├── object-key.vo.ts
-│   │       ├── content-type.vo.ts
-│   │       ├── etag.vo.ts
-│   │       ├── r2-file-metadata.entity.ts
-│   │       ├── r2-file-storage.interface.ts
-│   │       └── r2-file-metadata-repository.interface.ts
+│   │   └── object-storage/
+│   │       ├── object-key.vo.ts (既存)
+│   │       ├── content-type.vo.ts (既存)
+│   │       ├── etag.vo.ts (既存)
+│   │       ├── object-storage-file-metadata.entity.ts (拡張: downloadCount 追加)
+│   │       ├── object-storage.interface.ts (新規)
+│   │       └── object-storage-file-metadata-repository.interface.ts (新規)
 │   ├── handlers/
 │   │   └── api/
-│   │       └── r2/
-│   │           └── index.ts
+│   │       ├── files/
+│   │       │   └── index.ts (新規)
+│   │       └── admin/
+│   │           └── files/
+│   │               └── index.ts (新規)
 │   ├── infra/
 │   │   ├── d1/
-│   │   │   ├── r2-file/
-│   │   │   │   └── r2-file-metadata.repository.ts
+│   │   │   ├── object-storage/
+│   │   │   │   └── object-storage-file-metadata.repository.ts (新規)
 │   │   │   └── schema/
-│   │   │       ├── custom-types/
-│   │   │       │   └── r2-file.custom-type.ts
-│   │   │       ├── r2-file-metadata.table.ts
+│   │   │       ├── object-storage-file-metadata.table.ts (新規)
+│   │   │       ├── file-download-counts.table.ts (新規、デモ用)
 │   │   │       └── index.ts (更新)
 │   │   └── r2/
-│   │       └── r2-file.storage.ts
-│   └── index.ts (更新: getApp 戻り値型アノテーション削除、app エクスポート、r2App ルート追加)
+│   │       └── object-storage.storage.ts (新規)
+│   ├── services/
+│   │   └── sync.service.ts (新規)
+│   └── index.ts (更新: files, admin/files ルート追加)
 ├── frontend/
 │   ├── routes/
-│   │   └── r2.tsx
+│   │   └── files.tsx (新規)
 │   └── routes.ts (更新)
 └── lib/
     └── types/
-        └── r2.ts
+        └── object-storage.ts (新規)
 
 migrations/
-└── 0001_create_r2_file_metadata.sql
-
-wrangler.jsonc (更新)
-worker-configuration.d.ts (自動更新)
+├── XXXX_rename_to_object_storage_file_metadata.sql (新規)
+└── XXXX_create_file_download_counts.sql (新規)
 ```
