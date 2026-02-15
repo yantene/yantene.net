@@ -10,6 +10,7 @@ describe("StoredObjectStorage", () => {
   beforeEach(() => {
     mockR2Bucket = {
       get: vi.fn(),
+      list: vi.fn(),
     } as unknown as R2Bucket;
   });
 
@@ -152,6 +153,80 @@ describe("StoredObjectStorage", () => {
           ContentType.create(testCase.expected),
         );
       }
+    });
+  });
+
+  describe("list", () => {
+    it("should return list of StoredObjectListItem from R2", async () => {
+      // Arrange
+      const mockR2Objects: R2Objects = {
+        objects: [
+          {
+            key: "file1.png",
+            size: 1024,
+            etag: "etag1",
+            httpEtag: '"etag1"',
+            uploaded: new Date(),
+            version: "v1",
+            storageClass: "Standard",
+            checksums: { toJSON: vi.fn() },
+            customMetadata: {},
+            httpMetadata: {},
+            writeHttpMetadata: vi.fn(),
+          },
+          {
+            key: "file2.md",
+            size: 512,
+            etag: "etag2",
+            httpEtag: '"etag2"',
+            uploaded: new Date(),
+            version: "v1",
+            storageClass: "Standard",
+            checksums: { toJSON: vi.fn() },
+            customMetadata: {},
+            httpMetadata: {},
+            writeHttpMetadata: vi.fn(),
+          },
+        ],
+        truncated: false,
+        delimitedPrefixes: [],
+      };
+
+      vi.mocked(mockR2Bucket.list).mockResolvedValue(mockR2Objects);
+
+      const storage = new StoredObjectStorage(mockR2Bucket);
+
+      // Act
+      const result = await storage.list();
+
+      // Assert
+      expect(mockR2Bucket.list).toHaveBeenCalled();
+      expect(result).toHaveLength(2);
+      expect(result[0].objectKey.value).toBe("file1.png");
+      expect(result[0].size).toBe(1024);
+      expect(result[0].etag.value).toBe("etag1");
+      expect(result[1].objectKey.value).toBe("file2.md");
+      expect(result[1].size).toBe(512);
+      expect(result[1].etag.value).toBe("etag2");
+    });
+
+    it("should return empty array when no objects exist", async () => {
+      // Arrange
+      const mockR2Objects: R2Objects = {
+        objects: [],
+        truncated: false,
+        delimitedPrefixes: [],
+      };
+
+      vi.mocked(mockR2Bucket.list).mockResolvedValue(mockR2Objects);
+
+      const storage = new StoredObjectStorage(mockR2Bucket);
+
+      // Act
+      const result = await storage.list();
+
+      // Assert
+      expect(result).toHaveLength(0);
     });
   });
 });

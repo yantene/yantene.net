@@ -9,6 +9,13 @@ export type StoredObjectContent = {
   etag: ETag;
 };
 
+export type StoredObjectListItem = {
+  objectKey: ObjectKey;
+  size: number;
+  etag: ETag;
+};
+
 export interface IStoredObjectStorage {
   get(objectKey: ObjectKey): Promise<StoredObjectContent | undefined>;
+  list(): Promise<readonly StoredObjectListItem[]>;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ContentType } from "./content-type.vo";
+import { ObjectKey } from "./object-key.vo";
 
 describe("ContentType Value Object", () => {
   describe("create()", () => {
@@ -99,6 +100,57 @@ describe("ContentType Value Object", () => {
       const contentType = ContentType.create("text/plain");
 
       expect(contentType.isMarkdown()).toBe(false);
+    });
+  });
+
+  describe("inferFromObjectKey()", () => {
+    it("should infer image/png from .png extension", () => {
+      const objectKey = ObjectKey.create("test.png");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("image/png");
+    });
+
+    it("should infer image/jpeg from .jpg extension", () => {
+      const objectKey = ObjectKey.create("photo.jpg");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("image/jpeg");
+    });
+
+    it("should infer image/jpeg from .jpeg extension", () => {
+      const objectKey = ObjectKey.create("photo.jpeg");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("image/jpeg");
+    });
+
+    it("should infer text/markdown from .md extension", () => {
+      const objectKey = ObjectKey.create("readme.md");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("text/markdown");
+    });
+
+    it("should return application/octet-stream for unknown extension", () => {
+      const objectKey = ObjectKey.create("file.unknown");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("application/octet-stream");
+    });
+
+    it("should return application/octet-stream for no extension", () => {
+      const objectKey = ObjectKey.create("file");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("application/octet-stream");
+    });
+
+    it("should handle nested paths", () => {
+      const objectKey = ObjectKey.create("images/photo.png");
+      const contentType = ContentType.inferFromObjectKey(objectKey);
+
+      expect(contentType.value).toBe("image/png");
     });
   });
 });

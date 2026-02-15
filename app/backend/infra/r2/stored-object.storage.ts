@@ -1,9 +1,10 @@
 import { ContentType } from "../../domain/stored-object/content-type.vo";
 import { ETag } from "../../domain/stored-object/etag.vo";
-import type { ObjectKey } from "../../domain/stored-object/object-key.vo";
+import { ObjectKey } from "../../domain/stored-object/object-key.vo";
 import type {
   IStoredObjectStorage,
   StoredObjectContent,
+  StoredObjectListItem,
 } from "../../domain/stored-object/stored-object-storage.interface";
 
 const extensionToMimeType: Record<string, string> = {
@@ -41,6 +42,16 @@ export class StoredObjectStorage implements IStoredObjectStorage {
       size: r2Object.size,
       etag: ETag.create(r2Object.etag),
     };
+  }
+
+  async list(): Promise<readonly StoredObjectListItem[]> {
+    const r2Objects = await this.r2.list();
+
+    return r2Objects.objects.map((obj) => ({
+      objectKey: ObjectKey.create(obj.key),
+      size: obj.size,
+      etag: ETag.create(obj.etag),
+    }));
   }
 
   private getContentType(

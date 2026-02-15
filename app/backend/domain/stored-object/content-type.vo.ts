@@ -1,4 +1,19 @@
+import type { ObjectKey } from "./object-key.vo";
 import type { IValueObject } from "../value-object.interface";
+
+const extensionToMimeType: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  txt: "text/plain",
+  md: "text/markdown",
+  html: "text/html",
+  json: "application/json",
+};
+
+const defaultMimeType = "application/octet-stream";
 
 export class ContentType implements IValueObject<ContentType> {
   private constructor(readonly value: string) {}
@@ -8,6 +23,17 @@ export class ContentType implements IValueObject<ContentType> {
       throw new Error(`Invalid content type: ${value}`);
     }
     return new ContentType(value);
+  }
+
+  static inferFromObjectKey(objectKey: ObjectKey): ContentType {
+    const extension = objectKey.value.split(".").pop()?.toLowerCase();
+
+    if (extension && extension in extensionToMimeType) {
+      // eslint-disable-next-line security/detect-object-injection
+      return ContentType.create(extensionToMimeType[extension]);
+    }
+
+    return ContentType.create(defaultMimeType);
   }
 
   equals(other: ContentType): boolean {
