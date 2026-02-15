@@ -6,8 +6,7 @@
     "vitest.setup.ts",
     "eslint.config.ts",
     "react-router.config.ts",
-    "drizzle.config.ts",
-    "migrations/**/*.test.ts"
+    "drizzle.config.ts"
   ],
   "compilerOptions": {
     "composite": true,
