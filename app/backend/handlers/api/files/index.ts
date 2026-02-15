@@ -62,11 +62,16 @@ export const filesApp = new Hono<{ Bindings: Env }>()
       await repository.incrementDownloadCount(objectKey);
 
       const filename = key.split("/").pop() ?? key;
+      // RFC 5987: encode filename for Content-Disposition header
+      // This prevents header injection attacks and properly handles non-ASCII characters
+      const encodedFilename = encodeURIComponent(filename);
+      // Escape quotes and backslashes in filename for Content-Disposition header
+      const escapedFilename = filename.replaceAll(/["\\]/g, String.raw`\$&`);
 
       return new Response(content.body, {
         headers: {
           "Content-Type": content.contentType.value,
-          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Content-Disposition": `attachment; filename="${escapedFilename}"; filename*=UTF-8''${encodedFilename}`,
         },
       });
     } catch (error) {

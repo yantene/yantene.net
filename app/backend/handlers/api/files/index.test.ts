@@ -155,10 +155,10 @@ describe("Files API Handler", () => {
         },
       );
 
-      const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
+      const app = new Hono<{ Bindings: Env }>().route("/api/files", filesApp);
 
       const res = await app.request(
-        "/files/test.png",
+        "/api/files/test.png",
         {
           method: "GET",
         },
@@ -193,10 +193,10 @@ describe("Files API Handler", () => {
         },
       );
 
-      const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
+      const app = new Hono<{ Bindings: Env }>().route("/api/files", filesApp);
 
       const res = await app.request(
-        "/files/notfound.png",
+        "/api/files/notfound.png",
         {
           method: "GET",
         },
@@ -253,10 +253,10 @@ describe("Files API Handler", () => {
         };
       });
 
-      const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
+      const app = new Hono<{ Bindings: Env }>().route("/api/files", filesApp);
 
       const res = await app.request(
-        "/files/test.png",
+        "/api/files/test.png",
         {
           method: "GET",
         },

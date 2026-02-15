@@ -98,7 +98,10 @@ export default function FilesPage(): React.JSX.Element {
                   </td>
                   <td className="px-6 py-4 border-b text-sm">
                     <a
-                      href={`/api/files/${file.key}`}
+                      href={`/api/files/${file.key
+                        .split("/")
+                        .map((segment) => encodeURIComponent(segment))
+                        .join("/")}`}
                       download
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
