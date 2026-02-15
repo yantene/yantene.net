@@ -6,9 +6,9 @@ import type { ETag } from "./etag.vo";
 import type { ObjectKey } from "./object-key.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 
-export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
-  implements IEntity<StoredObjectMetadata<P>>
-{
+export class StoredObjectMetadata<
+  P extends IPersisted | IUnpersisted,
+> implements IEntity<StoredObjectMetadata<P>> {
   private constructor(
     readonly id: P["id"],
     readonly objectKey: ObjectKey,

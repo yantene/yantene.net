@@ -16,20 +16,29 @@ describe("D1 Migrations", () => {
     expect(content).toContain("`size` integer NOT NULL");
     expect(content).toContain("`content_type` text NOT NULL");
     expect(content).toContain("`etag` text NOT NULL");
-    expect(content).toContain("`created_at` real DEFAULT (unixepoch('subsec')) NOT NULL");
-    expect(content).toContain("`updated_at` real DEFAULT (unixepoch('subsec')) NOT NULL");
+    expect(content).toContain(
+      "`created_at` real DEFAULT (unixepoch('subsec')) NOT NULL",
+    );
+    expect(content).toContain(
+      "`updated_at` real DEFAULT (unixepoch('subsec')) NOT NULL",
+    );
     expect(content).toContain("CREATE UNIQUE INDEX");
     expect(content).toContain("`object_key`");
   });
 
   it("should have file_download_counts migration file", () => {
-    const migrationPath = join(__dirname, "0002_create_file_download_counts.sql");
+    const migrationPath = join(
+      __dirname,
+      "0002_create_file_download_counts.sql",
+    );
     const content = readFileSync(migrationPath, "utf-8");
 
     expect(content).toContain("CREATE TABLE `file_download_counts`");
     expect(content).toContain("`object_key` text PRIMARY KEY NOT NULL");
     expect(content).toContain("`count` integer DEFAULT 0 NOT NULL");
-    expect(content).toContain("FOREIGN KEY (`object_key`) REFERENCES `object_storage_file_metadata`");
+    expect(content).toContain(
+      "FOREIGN KEY (`object_key`) REFERENCES `object_storage_file_metadata`",
+    );
   });
 
   it("should have valid SQL syntax for object_storage_file_metadata", () => {
@@ -45,7 +54,10 @@ describe("D1 Migrations", () => {
   });
 
   it("should have valid SQL syntax for file_download_counts", () => {
-    const migrationPath = join(__dirname, "0002_create_file_download_counts.sql");
+    const migrationPath = join(
+      __dirname,
+      "0002_create_file_download_counts.sql",
+    );
     const content = readFileSync(migrationPath, "utf-8");
 
     // Basic SQL syntax validation

@@ -85,6 +85,7 @@ The backend uses a factory pattern: `getApp(handler)` creates a Hono app that wr
 This project follows **Dependency Inversion Principle (DIP)** with a clean separation between domain and infrastructure layers.
 
 **Domain Layer** (`app/backend/domain/`):
+
 - Must be **infrastructure-agnostic**
 - Class names, interface names, and type names must NOT contain infrastructure technology names (R2, D1, S3, Cloudflare, AWS, etc.)
 - Examples:
@@ -94,12 +95,14 @@ This project follows **Dependency Inversion Principle (DIP)** with a clean separ
 - This allows swapping infrastructure (e.g., R2 → S3) without changing domain code
 
 **Infrastructure Layer** (`app/backend/infra/`):
+
 - **May use specific technology names** in directory and file names
 - Examples: `infra/r2/`, `infra/d1/`, `infra/s3/`
 - Implements domain interfaces with concrete technology
 - Contains technology-specific adapters and configurations
 
 **Why this matters**:
+
 - Future flexibility: Can switch from R2 to S3 without domain changes
 - Testability: Domain logic can be tested with mock implementations
 - Clean architecture: Business logic is decoupled from infrastructure details

@@ -35,7 +35,9 @@ export class SyncService {
     // Add new objects
     for (const [key, storageObj] of storageMap) {
       if (!dbMap.has(key)) {
-        const contentType = ContentType.inferFromObjectKey(storageObj.objectKey);
+        const contentType = ContentType.inferFromObjectKey(
+          storageObj.objectKey,
+        );
         const newMetadata = StoredObjectMetadata.create({
           objectKey: storageObj.objectKey,
           size: storageObj.size,
@@ -51,7 +53,9 @@ export class SyncService {
     for (const [key, storageObj] of storageMap) {
       const dbObj = dbMap.get(key);
       if (dbObj && !storageObj.etag.equals(dbObj.etag)) {
-        const contentType = ContentType.inferFromObjectKey(storageObj.objectKey);
+        const contentType = ContentType.inferFromObjectKey(
+          storageObj.objectKey,
+        );
         const updatedMetadata = StoredObjectMetadata.create({
           objectKey: storageObj.objectKey,
           size: storageObj.size,

@@ -93,12 +93,12 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Choice / Version | Role in Feature | Notes |
-| --- | --- | --- | --- |
-| Frontend | React 19 + React Router 7 | ファイル一覧画面 | クライアントサイドから API 呼び出し |
-| Backend | Hono v4 | API ハンドラー | 既存パターン踏襲 |
-| Data / Storage | Cloudflare R2 + D1 (Drizzle ORM) | オブジェクトストレージ + メタデータ DB | R2 はコンテンツ、D1 はメタデータ |
-| Infrastructure | Cloudflare Workers | R2/D1 バインディング | 既に設定済み |
+| Layer          | Choice / Version                 | Role in Feature                        | Notes                               |
+| -------------- | -------------------------------- | -------------------------------------- | ----------------------------------- |
+| Frontend       | React 19 + React Router 7        | ファイル一覧画面                       | クライアントサイドから API 呼び出し |
+| Backend        | Hono v4                          | API ハンドラー                         | 既存パターン踏襲                    |
+| Data / Storage | Cloudflare R2 + D1 (Drizzle ORM) | オブジェクトストレージ + メタデータ DB | R2 はコンテンツ、D1 はメタデータ    |
+| Infrastructure | Cloudflare Workers               | R2/D1 バインディング                   | 既に設定済み                        |
 
 ## System Flows
 
@@ -191,38 +191,38 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-| --- | --- | --- | --- | --- |
-| 1.1 - 1.4 | ファイル一覧画面 | FilesPage, FilesHandler | IObjectStorageFileMetadataRepository | ファイル一覧取得フロー |
-| 2.1 - 2.6 | ファイルダウンロードエンドポイント | FilesHandler, R2Storage, D1MetadataRepository | IObjectStorage, IObjectStorageFileMetadataRepository | ファイルダウンロードフロー |
-| 3.1 - 3.6 | メタデータ同期 API | AdminFilesHandler, SyncService | IObjectStorage, IObjectStorageFileMetadataRepository | メタデータ同期フロー |
-| 4.1 - 4.4 | ファイル一覧取得 API | FilesHandler | IObjectStorageFileMetadataRepository | ファイル一覧取得フロー |
-| 5.1 - 5.4 | メタデータスキーマ | object_storage_file_metadata, file_download_counts テーブル | - | - |
-| 6.1 - 6.5 | DDD アーキテクチャの維持 | 全ドメインコンポーネント | IObjectStorage, IObjectStorageFileMetadataRepository | - |
+| Requirement | Summary                            | Components                                                  | Interfaces                                           | Flows                      |
+| ----------- | ---------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- | -------------------------- |
+| 1.1 - 1.4   | ファイル一覧画面                   | FilesPage, FilesHandler                                     | IObjectStorageFileMetadataRepository                 | ファイル一覧取得フロー     |
+| 2.1 - 2.6   | ファイルダウンロードエンドポイント | FilesHandler, R2Storage, D1MetadataRepository               | IObjectStorage, IObjectStorageFileMetadataRepository | ファイルダウンロードフロー |
+| 3.1 - 3.6   | メタデータ同期 API                 | AdminFilesHandler, SyncService                              | IObjectStorage, IObjectStorageFileMetadataRepository | メタデータ同期フロー       |
+| 4.1 - 4.4   | ファイル一覧取得 API               | FilesHandler                                                | IObjectStorageFileMetadataRepository                 | ファイル一覧取得フロー     |
+| 5.1 - 5.4   | メタデータスキーマ                 | object_storage_file_metadata, file_download_counts テーブル | -                                                    | -                          |
+| 6.1 - 6.5   | DDD アーキテクチャの維持           | 全ドメインコンポーネント                                    | IObjectStorage, IObjectStorageFileMetadataRepository | -                          |
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
-| --- | --- | --- | --- | --- | --- |
-| ObjectStorageFileMetadata | Domain/Entity | メタデータエンティティ（download_count 追加） | 5.1, 6.1, 6.2 | ValueObjects (P0) | Service |
-| IObjectStorage | Domain/Interface | ストレージアクセス契約 | 6.1 | - | Service |
-| IObjectStorageFileMetadataRepository | Domain/Interface | メタデータリポジトリ契約 | 6.1 | - | Service |
-| R2Storage | Infra/R2 | R2 ストレージ実装 | 6.4 | R2Bucket (P0, External) | Service |
-| D1MetadataRepository | Infra/D1 | D1 メタデータリポジトリ実装 | 6.5 | Drizzle ORM (P0), D1Database (P0, External) | Service |
-| SyncService | Infra/Service | メタデータ同期サービス | 3.1 - 3.6 | IObjectStorage (P0), IObjectStorageFileMetadataRepository (P0) | Service |
-| FilesHandler | Handlers/API | ファイル一覧・ダウンロード API | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4 | Repository (P0), Storage (P0) | API |
-| AdminFilesHandler | Handlers/API | 管理者向け同期 API | 3.1 - 3.6 | SyncService (P0) | API |
-| FilesPage | Frontend/Route | ファイル一覧画面 | 1.1 - 1.4 | fetch API (P0) | State |
-| object_storage_file_metadata, file_download_counts テーブル | Infra/D1 Schema | メタデータテーブル・ダウンロードカウントテーブル定義 | 5.1 - 5.4 | Drizzle ORM (P0) | - |
+| Component                                                   | Domain/Layer     | Intent                                               | Req Coverage                    | Key Dependencies                                               | Contracts |
+| ----------------------------------------------------------- | ---------------- | ---------------------------------------------------- | ------------------------------- | -------------------------------------------------------------- | --------- |
+| ObjectStorageFileMetadata                                   | Domain/Entity    | メタデータエンティティ（download_count 追加）        | 5.1, 6.1, 6.2                   | ValueObjects (P0)                                              | Service   |
+| IObjectStorage                                              | Domain/Interface | ストレージアクセス契約                               | 6.1                             | -                                                              | Service   |
+| IObjectStorageFileMetadataRepository                        | Domain/Interface | メタデータリポジトリ契約                             | 6.1                             | -                                                              | Service   |
+| R2Storage                                                   | Infra/R2         | R2 ストレージ実装                                    | 6.4                             | R2Bucket (P0, External)                                        | Service   |
+| D1MetadataRepository                                        | Infra/D1         | D1 メタデータリポジトリ実装                          | 6.5                             | Drizzle ORM (P0), D1Database (P0, External)                    | Service   |
+| SyncService                                                 | Infra/Service    | メタデータ同期サービス                               | 3.1 - 3.6                       | IObjectStorage (P0), IObjectStorageFileMetadataRepository (P0) | Service   |
+| FilesHandler                                                | Handlers/API     | ファイル一覧・ダウンロード API                       | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4 | Repository (P0), Storage (P0)                                  | API       |
+| AdminFilesHandler                                           | Handlers/API     | 管理者向け同期 API                                   | 3.1 - 3.6                       | SyncService (P0)                                               | API       |
+| FilesPage                                                   | Frontend/Route   | ファイル一覧画面                                     | 1.1 - 1.4                       | fetch API (P0)                                                 | State     |
+| object_storage_file_metadata, file_download_counts テーブル | Infra/D1 Schema  | メタデータテーブル・ダウンロードカウントテーブル定義 | 5.1 - 5.4                       | Drizzle ORM (P0)                                               | -         |
 
 ### Domain Layer
 
 #### ObjectStorageFileMetadata (エンティティ拡張)
 
-| Field | Detail |
-| --- | --- |
-| Intent | 既存の ObjectStorageFileMetadata エンティティに downloadCount プロパティを追加する |
-| Requirements | 5.1, 6.1, 6.2 |
+| Field        | Detail                                                                             |
+| ------------ | ---------------------------------------------------------------------------------- |
+| Intent       | 既存の ObjectStorageFileMetadata エンティティに downloadCount プロパティを追加する |
+| Requirements | 5.1, 6.1, 6.2                                                                      |
 
 **Responsibilities & Constraints**
 
@@ -287,10 +287,10 @@ class ObjectStorageFileMetadata<P extends IPersisted | IUnpersisted>
 
 #### IObjectStorage (インターフェース)
 
-| Field | Detail |
-| --- | --- |
-| Intent | オブジェクトストレージへのアクセス契約を定義する |
-| Requirements | 6.1 |
+| Field        | Detail                                           |
+| ------------ | ------------------------------------------------ |
+| Intent       | オブジェクトストレージへのアクセス契約を定義する |
+| Requirements | 6.1                                              |
 
 **Responsibilities & Constraints**
 
@@ -332,10 +332,10 @@ type ObjectStorageListItem = {
 
 #### IObjectStorageFileMetadataRepository (インターフェース)
 
-| Field | Detail |
-| --- | --- |
-| Intent | メタデータリポジトリへのアクセス契約を定義する |
-| Requirements | 6.1 |
+| Field        | Detail                                         |
+| ------------ | ---------------------------------------------- |
+| Intent       | メタデータリポジトリへのアクセス契約を定義する |
+| Requirements | 6.1                                            |
 
 **Responsibilities & Constraints**
 
@@ -353,8 +353,13 @@ type ObjectStorageListItem = {
 ```typescript
 interface IObjectStorageFileMetadataRepository {
   findAll(): Promise<readonly ObjectStorageFileMetadata<IPersisted>[]>;
-  findByObjectKey(objectKey: ObjectKey): Promise<ObjectStorageFileMetadata<IPersisted> | undefined>;
-  upsert(metadata: ObjectStorageFileMetadata<IUnpersisted>, preserveDownloadCount?: boolean): Promise<ObjectStorageFileMetadata<IPersisted>>;
+  findByObjectKey(
+    objectKey: ObjectKey,
+  ): Promise<ObjectStorageFileMetadata<IPersisted> | undefined>;
+  upsert(
+    metadata: ObjectStorageFileMetadata<IUnpersisted>,
+    preserveDownloadCount?: boolean,
+  ): Promise<ObjectStorageFileMetadata<IPersisted>>;
   deleteByObjectKey(objectKey: ObjectKey): Promise<void>;
   incrementDownloadCount(objectKey: ObjectKey): Promise<void>;
 }
@@ -368,10 +373,10 @@ interface IObjectStorageFileMetadataRepository {
 
 #### R2Storage (R2 実装)
 
-| Field | Detail |
-| --- | --- |
-| Intent | `IObjectStorage` の R2 バケット実装 |
-| Requirements | 6.4 |
+| Field        | Detail                              |
+| ------------ | ----------------------------------- |
+| Intent       | `IObjectStorage` の R2 バケット実装 |
+| Requirements | 6.4                                 |
 
 **Responsibilities & Constraints**
 
@@ -404,10 +409,10 @@ class R2Storage implements IObjectStorage {
 
 #### D1MetadataRepository (D1 実装)
 
-| Field | Detail |
-| --- | --- |
-| Intent | `IObjectStorageFileMetadataRepository` の D1 / Drizzle 実装 |
-| Requirements | 6.5 |
+| Field        | Detail                                                      |
+| ------------ | ----------------------------------------------------------- |
+| Intent       | `IObjectStorageFileMetadataRepository` の D1 / Drizzle 実装 |
+| Requirements | 6.5                                                         |
 
 **Responsibilities & Constraints**
 
@@ -443,10 +448,10 @@ class D1MetadataRepository implements IObjectStorageFileMetadataRepository {
 
 #### SyncService (同期サービス)
 
-| Field | Detail |
-| --- | --- |
-| Intent | オブジェクトストレージのメタデータをデータベースに同期する |
-| Requirements | 3.1 - 3.6 |
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | オブジェクトストレージのメタデータをデータベースに同期する |
+| Requirements | 3.1 - 3.6                                                  |
 
 **Responsibilities & Constraints**
 
@@ -489,10 +494,10 @@ class SyncService {
 
 #### object_storage_file_metadata テーブル (D1 スキーマ)
 
-| Field | Detail |
-| --- | --- |
-| Intent | オブジェクトストレージのファイルメタデータを格納するテーブル |
-| Requirements | 5.1 - 5.4 |
+| Field        | Detail                                                       |
+| ------------ | ------------------------------------------------------------ |
+| Intent       | オブジェクトストレージのファイルメタデータを格納するテーブル |
+| Requirements | 5.1 - 5.4                                                    |
 
 **Implementation Notes**
 
@@ -501,10 +506,10 @@ class SyncService {
 
 #### file_download_counts テーブル (D1 スキーマ、デモ用)
 
-| Field | Detail |
-| --- | --- |
-| Intent | ファイルダウンロード回数を格納するテーブル（デモ用、将来削除予定） |
-| Requirements | 5.1 - 5.4 |
+| Field        | Detail                                                             |
+| ------------ | ------------------------------------------------------------------ |
+| Intent       | ファイルダウンロード回数を格納するテーブル（デモ用、将来削除予定） |
+| Requirements | 5.1 - 5.4                                                          |
 
 **Implementation Notes**
 
@@ -516,10 +521,10 @@ class SyncService {
 
 #### FilesHandler (API ハンドラー)
 
-| Field | Detail |
-| --- | --- |
-| Intent | ファイル一覧取得・ダウンロードの API エンドポイントを提供する |
-| Requirements | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4 |
+| Field        | Detail                                                        |
+| ------------ | ------------------------------------------------------------- |
+| Intent       | ファイル一覧取得・ダウンロードの API エンドポイントを提供する |
+| Requirements | 1.1 - 1.4, 2.1 - 2.6, 4.1 - 4.4                               |
 
 **Responsibilities & Constraints**
 
@@ -537,10 +542,10 @@ class SyncService {
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-| --- | --- | --- | --- | --- |
-| GET | `/api/files` | - | `FileListResponse` (JSON) | 500 |
-| GET | `/files/:key` | path param: `key` | binary with Content-Type, Content-Disposition | 404, 500 |
+| Method | Endpoint      | Request           | Response                                      | Errors   |
+| ------ | ------------- | ----------------- | --------------------------------------------- | -------- |
+| GET    | `/api/files`  | -                 | `FileListResponse` (JSON)                     | 500      |
+| GET    | `/files/:key` | path param: `key` | binary with Content-Type, Content-Disposition | 404, 500 |
 
 **API レスポンス型**:
 
@@ -570,10 +575,10 @@ type ErrorResponse = {
 
 #### AdminFilesHandler (管理者 API ハンドラー)
 
-| Field | Detail |
-| --- | --- |
-| Intent | メタデータ同期 API エンドポイントを提供する |
-| Requirements | 3.1 - 3.6 |
+| Field        | Detail                                      |
+| ------------ | ------------------------------------------- |
+| Intent       | メタデータ同期 API エンドポイントを提供する |
+| Requirements | 3.1 - 3.6                                   |
 
 **Responsibilities & Constraints**
 
@@ -589,9 +594,9 @@ type ErrorResponse = {
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-| --- | --- | --- | --- | --- |
-| POST | `/api/admin/files/sync` | - | `SyncResponse` (JSON) | 500 |
+| Method | Endpoint                | Request | Response              | Errors |
+| ------ | ----------------------- | ------- | --------------------- | ------ |
+| POST   | `/api/admin/files/sync` | -       | `SyncResponse` (JSON) | 500    |
 
 **API レスポンス型**:
 
@@ -612,10 +617,10 @@ type SyncResponse = {
 
 #### FilesPage (ルートコンポーネント)
 
-| Field | Detail |
-| --- | --- |
-| Intent | オブジェクトストレージ内のファイル一覧を表示するデモページ |
-| Requirements | 1.1 - 1.4 |
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | オブジェクトストレージ内のファイル一覧を表示するデモページ |
+| Requirements | 1.1 - 1.4                                                  |
 
 **Responsibilities & Constraints**
 
@@ -683,7 +688,7 @@ export const getApp = (
     .route("/api/counter", counterApp)
     .route("/api/files", filesApp)
     .route("/api/admin/files", adminFilesApp)
-    .route("/files", filesApp)  // /files/:key for downloads
+    .route("/files", filesApp) // /files/:key for downloads
     .all("*", async (context) => {
       return handler(
         context.req.raw,
@@ -766,22 +771,22 @@ classDiagram
 
 **object_storage_file_metadata テーブル**:
 
-| Column | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| id | TEXT | PRIMARY KEY, NOT NULL | UUID v4 |
-| object_key | TEXT | NOT NULL, UNIQUE | オブジェクトキー |
-| size | INTEGER | NOT NULL | ファイルサイズ（バイト） |
-| content_type | TEXT | NOT NULL | MIME タイプ |
-| etag | TEXT | NOT NULL | httpEtag |
-| created_at | REAL | NOT NULL, DEFAULT unixepoch('subsec') | 作成日時 |
-| updated_at | REAL | NOT NULL, DEFAULT unixepoch('subsec') | 更新日時 |
+| Column       | Type    | Constraints                           | Description              |
+| ------------ | ------- | ------------------------------------- | ------------------------ |
+| id           | TEXT    | PRIMARY KEY, NOT NULL                 | UUID v4                  |
+| object_key   | TEXT    | NOT NULL, UNIQUE                      | オブジェクトキー         |
+| size         | INTEGER | NOT NULL                              | ファイルサイズ（バイト） |
+| content_type | TEXT    | NOT NULL                              | MIME タイプ              |
+| etag         | TEXT    | NOT NULL                              | httpEtag                 |
+| created_at   | REAL    | NOT NULL, DEFAULT unixepoch('subsec') | 作成日時                 |
+| updated_at   | REAL    | NOT NULL, DEFAULT unixepoch('subsec') | 更新日時                 |
 
 **file_download_counts テーブル（デモ用）**:
 
-| Column | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| object_key | TEXT | PRIMARY KEY, NOT NULL, FK | オブジェクトキー（外部キー） |
-| count | INTEGER | NOT NULL, DEFAULT 0 | ダウンロード回数 |
+| Column     | Type    | Constraints               | Description                  |
+| ---------- | ------- | ------------------------- | ---------------------------- |
+| object_key | TEXT    | PRIMARY KEY, NOT NULL, FK | オブジェクトキー（外部キー） |
+| count      | INTEGER | NOT NULL, DEFAULT 0       | ダウンロード回数             |
 
 **インデックス**: `object_storage_file_metadata.object_key` に UNIQUE 制約（一意インデックスとして機能）
 
@@ -793,19 +798,22 @@ import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { instant } from "./custom-types/temporal.custom-type";
 
-export const objectStorageFileMetadata = sqliteTable("object_storage_file_metadata", {
-  id: text("id").notNull().primaryKey(),
-  objectKey: text("object_key").notNull().unique(),
-  size: integer("size").notNull(),
-  contentType: text("content_type").notNull(),
-  etag: text("etag").notNull(),
-  createdAt: instant("created_at")
-    .notNull()
-    .default(sql`(unixepoch('subsec'))`),
-  updatedAt: instant("updated_at")
-    .notNull()
-    .default(sql`(unixepoch('subsec'))`),
-});
+export const objectStorageFileMetadata = sqliteTable(
+  "object_storage_file_metadata",
+  {
+    id: text("id").notNull().primaryKey(),
+    objectKey: text("object_key").notNull().unique(),
+    size: integer("size").notNull(),
+    contentType: text("content_type").notNull(),
+    etag: text("etag").notNull(),
+    createdAt: instant("created_at")
+      .notNull()
+      .default(sql`(unixepoch('subsec'))`),
+    updatedAt: instant("updated_at")
+      .notNull()
+      .default(sql`(unixepoch('subsec'))`),
+  },
+);
 ```
 
 ```typescript

@@ -3,7 +3,10 @@ import { Hono } from "hono";
 import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
 import { StoredObjectMetadataRepository } from "../../../infra/d1/stored-object/stored-object-metadata.repository";
 import { StoredObjectStorage } from "../../../infra/r2/stored-object.storage";
-import type { ErrorResponse, FileListResponse } from "~/lib/types/object-storage";
+import type {
+  ErrorResponse,
+  FileListResponse,
+} from "~/lib/types/object-storage";
 
 export const filesApp = new Hono<{ Bindings: Env }>()
   .get("/", async (c): Promise<Response> => {

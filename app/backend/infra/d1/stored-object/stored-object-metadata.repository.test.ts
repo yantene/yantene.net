@@ -48,7 +48,10 @@ const createMockDb = () => {
                 // Find existing record by objectKey
                 let existingId: string | null = null;
                 for (const [id, record] of mockData.entries()) {
-                  if ((record as Record<string, unknown>).objectKey === insertValue?.objectKey) {
+                  if (
+                    (record as Record<string, unknown>).objectKey ===
+                    insertValue?.objectKey
+                  ) {
                     existingId = id;
                     break;
                   }
@@ -56,7 +59,10 @@ const createMockDb = () => {
 
                 if (existingId) {
                   // Update existing record
-                  const existing = mockData.get(existingId) as Record<string, unknown>;
+                  const existing = mockData.get(existingId) as Record<
+                    string,
+                    unknown
+                  >;
                   const updated = { ...existing, ...config.set };
                   mockData.set(existingId, updated);
                   return [updated];
@@ -73,7 +79,10 @@ const createMockDb = () => {
               returning: async () => {
                 // Check if record exists
                 for (const record of mockData.values()) {
-                  if ((record as Record<string, unknown>).objectKey === insertValue?.objectKey) {
+                  if (
+                    (record as Record<string, unknown>).objectKey ===
+                    insertValue?.objectKey
+                  ) {
                     return [record]; // Return existing, don't update
                   }
                 }
@@ -102,7 +111,10 @@ const createMockDb = () => {
             run: async () => {
               // Update all matching records
               for (const [id, record] of mockData.entries()) {
-                const updated = { ...(record as Record<string, unknown>), ...updateValue };
+                const updated = {
+                  ...(record as Record<string, unknown>),
+                  ...updateValue,
+                };
                 mockData.set(id, updated);
               }
               return { success: true };
@@ -234,14 +246,18 @@ describe("StoredObjectMetadataRepository", () => {
   describe("deleteByObjectKey", () => {
     it("should delete metadata by object key", async () => {
       const objectKey = ObjectKey.create("delete-me");
-      await expect(repository.deleteByObjectKey(objectKey)).resolves.not.toThrow();
+      await expect(
+        repository.deleteByObjectKey(objectKey),
+      ).resolves.not.toThrow();
     });
   });
 
   describe("incrementDownloadCount", () => {
     it("should increment download count atomically", async () => {
       const objectKey = ObjectKey.create("test-key");
-      await expect(repository.incrementDownloadCount(objectKey)).resolves.not.toThrow();
+      await expect(
+        repository.incrementDownloadCount(objectKey),
+      ).resolves.not.toThrow();
     });
   });
 });

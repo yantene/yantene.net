@@ -26,7 +26,7 @@ export default function FilesPage() {
           throw new Error(`Failed to fetch files: ${response.statusText}`);
         }
 
-        const data = (await response.json());
+        const data = (await response.json()) as FileListResponse;
         setFiles(data.files);
       } catch (error) {
         console.error("Error fetching files:", error);
@@ -45,9 +45,7 @@ export default function FilesPage() {
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-8">Object Storage Files</h1>
 
-      {isLoading && (
-        <div className="text-gray-600">Loading files...</div>
-      )}
+      {isLoading && <div className="text-gray-600">Loading files...</div>}
 
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -124,9 +122,7 @@ export default function FilesPage() {
                 throw new Error(`Sync failed: ${response.statusText}`);
               }
               const data = await response.json();
-              alert(
-                `Sync completed: ${JSON.stringify(data, null, 2)}`,
-              );
+              alert(`Sync completed: ${JSON.stringify(data, null, 2)}`);
               globalThis.location.reload();
             } catch (error) {
               alert(`Sync failed: ${String(error)}`);

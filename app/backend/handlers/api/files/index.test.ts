@@ -16,28 +16,31 @@ vi.mock("drizzle-orm/d1", () => ({
 }));
 
 // Mock repository
-vi.mock("../../../infra/d1/stored-object/stored-object-metadata.repository", () => ({
-  StoredObjectMetadataRepository: vi.fn(function (this: unknown) {
-    return {
-      findAll: vi.fn().mockResolvedValue([
-        StoredObjectMetadata.reconstruct({
-          id: "test-id",
-          objectKey: ObjectKey.create("test.png"),
-          size: 1024,
-          contentType: ContentType.create("image/png"),
-          etag: ETag.create("test-etag"),
-          downloadCount: 5,
-          createdAt: Temporal.Now.instant(),
-          updatedAt: Temporal.Now.instant(),
-        }),
-      ]),
-      findByObjectKey: vi.fn(),
-      upsert: vi.fn(),
-      deleteByObjectKey: vi.fn(),
-      incrementDownloadCount: vi.fn(),
-    };
+vi.mock(
+  "../../../infra/d1/stored-object/stored-object-metadata.repository",
+  () => ({
+    StoredObjectMetadataRepository: vi.fn(function (this: unknown) {
+      return {
+        findAll: vi.fn().mockResolvedValue([
+          StoredObjectMetadata.reconstruct({
+            id: "test-id",
+            objectKey: ObjectKey.create("test.png"),
+            size: 1024,
+            contentType: ContentType.create("image/png"),
+            etag: ETag.create("test-etag"),
+            downloadCount: 5,
+            createdAt: Temporal.Now.instant(),
+            updatedAt: Temporal.Now.instant(),
+          }),
+        ]),
+        findByObjectKey: vi.fn(),
+        upsert: vi.fn(),
+        deleteByObjectKey: vi.fn(),
+        incrementDownloadCount: vi.fn(),
+      };
+    }),
   }),
-}));
+);
 
 // Mock storage
 vi.mock("../../../infra/r2/stored-object.storage", () => ({
@@ -59,16 +62,20 @@ describe("Files API Handler", () => {
     it("should return file list", async () => {
       const app = new Hono<{ Bindings: Env }>().route("/api/files", filesApp);
 
-      const res = await app.request("/api/files", {
-        method: "GET",
-      }, {
-        D1: {} as D1Database,
-        R2: {} as R2Bucket,
-        VALUE_FROM_CLOUDFLARE: "test",
-      });
+      const res = await app.request(
+        "/api/files",
+        {
+          method: "GET",
+        },
+        {
+          D1: {} as D1Database,
+          R2: {} as R2Bucket,
+          VALUE_FROM_CLOUDFLARE: "test",
+        },
+      );
 
       expect(res.status).toBe(200);
-      const json = (await res.json());
+      const json = (await res.json()) as { files: unknown[] };
       expect(json).toHaveProperty("files");
       expect(Array.isArray(json.files)).toBe(true);
       expect(json.files).toHaveLength(1);
@@ -81,72 +88,82 @@ describe("Files API Handler", () => {
     });
 
     it("should return 500 when repository throws", async () => {
-      const { StoredObjectMetadataRepository } = await import(
-        "../../../infra/d1/stored-object/stored-object-metadata.repository"
-      );
+      const { StoredObjectMetadataRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(function (this: unknown) {
-        return {
-          findAll: vi.fn().mockRejectedValue(new Error("DB error")),
-          findByObjectKey: vi.fn(),
-          upsert: vi.fn(),
-          deleteByObjectKey: vi.fn(),
-          incrementDownloadCount: vi.fn(),
-        };
-      });
+      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+        function (this: unknown) {
+          return {
+            findAll: vi.fn().mockRejectedValue(new Error("DB error")),
+            findByObjectKey: vi.fn(),
+            upsert: vi.fn(),
+            deleteByObjectKey: vi.fn(),
+            incrementDownloadCount: vi.fn(),
+          };
+        },
+      );
 
       const app = new Hono<{ Bindings: Env }>().route("/api/files", filesApp);
 
-      const res = await app.request("/api/files", {
-        method: "GET",
-      }, {
-        D1: {} as D1Database,
-        R2: {} as R2Bucket,
-        VALUE_FROM_CLOUDFLARE: "test",
-      });
+      const res = await app.request(
+        "/api/files",
+        {
+          method: "GET",
+        },
+        {
+          D1: {} as D1Database,
+          R2: {} as R2Bucket,
+          VALUE_FROM_CLOUDFLARE: "test",
+        },
+      );
 
       expect(res.status).toBe(500);
-      const json = await res.json();
+      const json = (await res.json()) as { error: string };
       expect(json).toHaveProperty("error");
     });
   });
 
   describe("GET /files/:key", () => {
     it("should return file content with proper headers", async () => {
-      const { StoredObjectMetadataRepository } = await import(
-        "../../../infra/d1/stored-object/stored-object-metadata.repository"
-      );
+      const { StoredObjectMetadataRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(function (this: unknown) {
-        return {
-          findAll: vi.fn(),
-          findByObjectKey: vi.fn().mockResolvedValue(
-            StoredObjectMetadata.reconstruct({
-              id: "test-id",
-              objectKey: ObjectKey.create("test.png"),
-              size: 1024,
-              contentType: ContentType.create("image/png"),
-              etag: ETag.create("test-etag"),
-              downloadCount: 5,
-              createdAt: Temporal.Now.instant(),
-              updatedAt: Temporal.Now.instant(),
-            }),
-          ),
-          upsert: vi.fn(),
-          deleteByObjectKey: vi.fn(),
-          incrementDownloadCount: vi.fn(),
-        };
-      });
+      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+        function (this: unknown) {
+          return {
+            findAll: vi.fn(),
+            findByObjectKey: vi.fn().mockResolvedValue(
+              StoredObjectMetadata.reconstruct({
+                id: "test-id",
+                objectKey: ObjectKey.create("test.png"),
+                size: 1024,
+                contentType: ContentType.create("image/png"),
+                etag: ETag.create("test-etag"),
+                downloadCount: 5,
+                createdAt: Temporal.Now.instant(),
+                updatedAt: Temporal.Now.instant(),
+              }),
+            ),
+            upsert: vi.fn(),
+            deleteByObjectKey: vi.fn(),
+            incrementDownloadCount: vi.fn(),
+          };
+        },
+      );
 
       const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
 
-      const res = await app.request("/files/test.png", {
-        method: "GET",
-      }, {
-        D1: {} as D1Database,
-        R2: {} as R2Bucket,
-        VALUE_FROM_CLOUDFLARE: "test",
-      });
+      const res = await app.request(
+        "/files/test.png",
+        {
+          method: "GET",
+        },
+        {
+          D1: {} as D1Database,
+          R2: {} as R2Bucket,
+          VALUE_FROM_CLOUDFLARE: "test",
+        },
+      );
 
       expect(res.status).toBe(200);
       expect(res.headers.get("Content-Type")).toBe("image/png");
@@ -155,29 +172,34 @@ describe("Files API Handler", () => {
     });
 
     it("should return 404 when metadata not found", async () => {
-      const { StoredObjectMetadataRepository } = await import(
-        "../../../infra/d1/stored-object/stored-object-metadata.repository"
-      );
+      const { StoredObjectMetadataRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(function (this: unknown) {
-        return {
-          findAll: vi.fn(),
-          findByObjectKey: vi.fn().mockResolvedValue(),
-          upsert: vi.fn(),
-          deleteByObjectKey: vi.fn(),
-          incrementDownloadCount: vi.fn(),
-        };
-      });
+      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+        function (this: unknown) {
+          return {
+            findAll: vi.fn(),
+            findByObjectKey: vi.fn().mockResolvedValue(undefined),
+            upsert: vi.fn(),
+            deleteByObjectKey: vi.fn(),
+            incrementDownloadCount: vi.fn(),
+          };
+        },
+      );
 
       const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
 
-      const res = await app.request("/files/notfound.png", {
-        method: "GET",
-      }, {
-        D1: {} as D1Database,
-        R2: {} as R2Bucket,
-        VALUE_FROM_CLOUDFLARE: "test",
-      });
+      const res = await app.request(
+        "/files/notfound.png",
+        {
+          method: "GET",
+        },
+        {
+          D1: {} as D1Database,
+          R2: {} as R2Bucket,
+          VALUE_FROM_CLOUDFLARE: "test",
+        },
+      );
 
       expect(res.status).toBe(404);
       const json = await res.json();
@@ -185,53 +207,59 @@ describe("Files API Handler", () => {
     });
 
     it("should return 500 when storage returns undefined", async () => {
-      const { StoredObjectMetadataRepository } = await import(
-        "../../../infra/d1/stored-object/stored-object-metadata.repository"
-      );
-      const { StoredObjectStorage } = await import(
-        "../../../infra/r2/stored-object.storage"
+      const { StoredObjectMetadataRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      const { StoredObjectStorage } =
+        await import("../../../infra/r2/stored-object.storage");
+
+      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+        function (this: unknown) {
+          return {
+            findAll: vi.fn(),
+            findByObjectKey: vi.fn().mockResolvedValue(
+              StoredObjectMetadata.reconstruct({
+                id: "test-id",
+                objectKey: ObjectKey.create("test.png"),
+                size: 1024,
+                contentType: ContentType.create("image/png"),
+                etag: ETag.create("test-etag"),
+                downloadCount: 5,
+                createdAt: Temporal.Now.instant(),
+                updatedAt: Temporal.Now.instant(),
+              }),
+            ),
+            upsert: vi.fn(),
+            deleteByObjectKey: vi.fn(),
+            incrementDownloadCount: vi.fn(),
+          };
+        },
       );
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(function (this: unknown) {
+      vi.mocked(StoredObjectStorage).mockImplementationOnce(function (
+        this: unknown,
+      ) {
         return {
-          findAll: vi.fn(),
-          findByObjectKey: vi.fn().mockResolvedValue(
-            StoredObjectMetadata.reconstruct({
-              id: "test-id",
-              objectKey: ObjectKey.create("test.png"),
-              size: 1024,
-              contentType: ContentType.create("image/png"),
-              etag: ETag.create("test-etag"),
-              downloadCount: 5,
-              createdAt: Temporal.Now.instant(),
-              updatedAt: Temporal.Now.instant(),
-            }),
-          ),
-          upsert: vi.fn(),
-          deleteByObjectKey: vi.fn(),
-          incrementDownloadCount: vi.fn(),
-        };
-      });
-
-      vi.mocked(StoredObjectStorage).mockImplementationOnce(function (this: unknown) {
-        return {
-          get: vi.fn().mockResolvedValue(),
+          get: vi.fn().mockResolvedValue(undefined),
           list: vi.fn(),
         };
       });
 
       const app = new Hono<{ Bindings: Env }>().route("/files", filesApp);
 
-      const res = await app.request("/files/test.png", {
-        method: "GET",
-      }, {
-        D1: {} as D1Database,
-        R2: {} as R2Bucket,
-        VALUE_FROM_CLOUDFLARE: "test",
-      });
+      const res = await app.request(
+        "/files/test.png",
+        {
+          method: "GET",
+        },
+        {
+          D1: {} as D1Database,
+          R2: {} as R2Bucket,
+          VALUE_FROM_CLOUDFLARE: "test",
+        },
+      );
 
       expect(res.status).toBe(500);
-      const json = await res.json();
+      const json = (await res.json()) as { error: string };
       expect(json).toHaveProperty("error");
     });
   });

@@ -22,9 +22,7 @@ type StoredObjectWithCount = {
   downloadCount: number | null;
 };
 
-export class StoredObjectMetadataRepository
-  implements IStoredObjectMetadataRepository
-{
+export class StoredObjectMetadataRepository implements IStoredObjectMetadataRepository {
   constructor(private readonly db: DrizzleD1Database) {}
 
   async findAll(): Promise<readonly StoredObjectMetadata<IPersisted>[]> {
@@ -171,7 +169,9 @@ export class StoredObjectMetadataRepository
       .run();
   }
 
-  private toEntity(row: StoredObjectWithCount): StoredObjectMetadata<IPersisted> {
+  private toEntity(
+    row: StoredObjectWithCount,
+  ): StoredObjectMetadata<IPersisted> {
     return StoredObjectMetadata.reconstruct({
       id: row.id,
       objectKey: ObjectKey.create(row.objectKey),

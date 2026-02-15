@@ -69,10 +69,10 @@
 
 ## Architecture Pattern Evaluation
 
-| Option | Description | Strengths | Risks / Limitations | Notes |
-| --- | --- | --- | --- | --- |
-| DDD レイヤード（採用） | 既存パターンの拡張（domain/infra/handlers） | コードベース一貫性、参考プロジェクト準拠 | 小規模デモには overengineering の可能性 | Steering 準拠、チーム学習効果 |
-| シンプル Handler 直接実装 | Handler 内で直接 R2/D1 アクセス | 実装速度が速い | DDD パターン不一致、テスト困難 | 要件 5 で DDD が明示的に要求 |
+| Option                    | Description                                 | Strengths                                | Risks / Limitations                     | Notes                         |
+| ------------------------- | ------------------------------------------- | ---------------------------------------- | --------------------------------------- | ----------------------------- |
+| DDD レイヤード（採用）    | 既存パターンの拡張（domain/infra/handlers） | コードベース一貫性、参考プロジェクト準拠 | 小規模デモには overengineering の可能性 | Steering 準拠、チーム学習効果 |
+| シンプル Handler 直接実装 | Handler 内で直接 R2/D1 アクセス             | 実装速度が速い                           | DDD パターン不一致、テスト困難          | 要件 5 で DDD が明示的に要求  |
 
 ## Design Decisions
 
