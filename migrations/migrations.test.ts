@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable security/detect-non-literal-fs-filename */
 import { readFileSync } from "node:fs";
 import path from "node:path";
