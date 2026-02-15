@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-nested-functions */
 import { Temporal } from "@js-temporal/polyfill";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ContentType } from "../../../domain/stored-object/content-type.vo";
@@ -8,6 +9,7 @@ import { StoredObjectMetadataRepository } from "./stored-object-metadata.reposit
 import type { IUnpersisted } from "../../../domain/unpersisted.interface";
 
 // Mock D1 database
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 const createMockDb = () => {
   const mockData: Map<string, unknown> = new Map();
 
@@ -66,13 +68,12 @@ const createMockDb = () => {
                   const updated = { ...existing, ...config.set };
                   mockData.set(existingId, updated);
                   return [updated];
-                } else {
-                  // Insert new record
-                  const id = `id-${mockData.size}`;
-                  const record = { ...insertValue, id };
-                  mockData.set(id, record);
-                  return [record];
                 }
+                // Insert new record
+                const id = `id-${String(mockData.size)}`;
+                const record = { ...insertValue, id };
+                mockData.set(id, record);
+                return [record];
               },
             }),
             onConflictDoNothing: () => ({
@@ -87,14 +88,14 @@ const createMockDb = () => {
                   }
                 }
                 // Insert new record
-                const id = `id-${mockData.size}`;
+                const id = `id-${String(mockData.size)}`;
                 const record = { ...insertValue, id };
                 mockData.set(id, record);
                 return [record];
               },
             }),
             returning: async () => {
-              const id = `id-${mockData.size}`;
+              const id = `id-${String(mockData.size)}`;
               const record = { ...insertValue, id };
               mockData.set(id, record);
               return [record];

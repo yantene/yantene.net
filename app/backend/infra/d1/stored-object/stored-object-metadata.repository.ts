@@ -84,7 +84,7 @@ export class StoredObjectMetadataRepository implements IStoredObjectMetadataRepo
     const now = Temporal.Now.instant();
 
     // Upsert metadata table
-    const [metadataRow] = await this.db
+    const rows = await this.db
       .insert(objectStorageFileMetadata)
       .values({
         id,
@@ -106,11 +106,12 @@ export class StoredObjectMetadataRepository implements IStoredObjectMetadataRepo
       })
       .returning();
 
-    if (!metadataRow) {
+    if (rows.length === 0) {
       throw new Error("Failed to upsert metadata");
     }
 
     // Upsert download count table
+    // eslint-disable-next-line unicorn/prefer-ternary
     if (preserveDownloadCount) {
       // Use COALESCE to preserve existing count
       await this.db

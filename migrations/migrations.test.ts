@@ -1,14 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable security/detect-non-literal-fs-filename */
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("D1 Migrations", () => {
   it("should have object_storage_file_metadata migration file", () => {
-    const migrationPath = join(
+    const migrationPath = path.join(
       __dirname,
       "0001_create_object_storage_file_metadata.sql",
     );
-    const content = readFileSync(migrationPath, "utf-8");
+    const content = readFileSync(migrationPath, "utf8");
 
     expect(content).toContain("CREATE TABLE `object_storage_file_metadata`");
     expect(content).toContain("`id` text PRIMARY KEY NOT NULL");
@@ -27,11 +29,11 @@ describe("D1 Migrations", () => {
   });
 
   it("should have file_download_counts migration file", () => {
-    const migrationPath = join(
+    const migrationPath = path.join(
       __dirname,
       "0002_create_file_download_counts.sql",
     );
-    const content = readFileSync(migrationPath, "utf-8");
+    const content = readFileSync(migrationPath, "utf8");
 
     expect(content).toContain("CREATE TABLE `file_download_counts`");
     expect(content).toContain("`object_key` text PRIMARY KEY NOT NULL");
@@ -42,11 +44,11 @@ describe("D1 Migrations", () => {
   });
 
   it("should have valid SQL syntax for object_storage_file_metadata", () => {
-    const migrationPath = join(
+    const migrationPath = path.join(
       __dirname,
       "0001_create_object_storage_file_metadata.sql",
     );
-    const content = readFileSync(migrationPath, "utf-8");
+    const content = readFileSync(migrationPath, "utf8");
 
     // Basic SQL syntax validation
     expect(content).toMatch(/CREATE TABLE/);
@@ -54,11 +56,11 @@ describe("D1 Migrations", () => {
   });
 
   it("should have valid SQL syntax for file_download_counts", () => {
-    const migrationPath = join(
+    const migrationPath = path.join(
       __dirname,
       "0002_create_file_download_counts.sql",
     );
-    const content = readFileSync(migrationPath, "utf-8");
+    const content = readFileSync(migrationPath, "utf8");
 
     // Basic SQL syntax validation
     expect(content).toMatch(/CREATE TABLE/);

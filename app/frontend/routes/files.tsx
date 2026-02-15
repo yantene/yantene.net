@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import type { Route } from "./+types/files";
 import type { FileListResponse } from "~/lib/types/object-storage";
 
-export function meta(_args: Route.MetaArgs) {
+export function meta(
+  _args: Route.MetaArgs,
+): Array<{ title: string } | { name: string; content: string }> {
   return [
     { title: "Files Demo" },
     { name: "description", content: "R2 Object Storage File Download Demo" },
   ];
 }
 
-export default function FilesPage() {
+export default function FilesPage(): React.JSX.Element {
   const [files, setFiles] = useState<FileListResponse["files"]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -26,8 +28,8 @@ export default function FilesPage() {
           throw new Error(`Failed to fetch files: ${response.statusText}`);
         }
 
-        const data = (await response.json()) as FileListResponse;
-        setFiles(data.files);
+        const data = await response.json();
+        setFiles((data as FileListResponse).files);
       } catch (error) {
         console.error("Error fetching files:", error);
         setErrorMessage(
@@ -113,20 +115,22 @@ export default function FilesPage() {
       <div className="mt-8 p-4 bg-gray-100 rounded">
         <h2 className="text-xl font-semibold mb-2">Admin Actions</h2>
         <button
-          onClick={async () => {
-            try {
-              const response = await fetch("/api/admin/files/sync", {
-                method: "POST",
-              });
-              if (!response.ok) {
-                throw new Error(`Sync failed: ${response.statusText}`);
+          onClick={() => {
+            void (async () => {
+              try {
+                const response = await fetch("/api/admin/files/sync", {
+                  method: "POST",
+                });
+                if (!response.ok) {
+                  throw new Error(`Sync failed: ${response.statusText}`);
+                }
+                const data = await response.json();
+                alert(`Sync completed: ${JSON.stringify(data, null, 2)}`);
+                globalThis.location.reload();
+              } catch (error) {
+                alert(`Sync failed: ${String(error)}`);
               }
-              const data = await response.json();
-              alert(`Sync completed: ${JSON.stringify(data, null, 2)}`);
-              globalThis.location.reload();
-            } catch (error) {
-              alert(`Sync failed: ${String(error)}`);
-            }
+            })();
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >

@@ -79,7 +79,8 @@ describe("Admin Files API Handler", () => {
     });
 
     it("should return 500 when sync throws", async () => {
-      const { SyncService: syncService } = await import("../../../../services/sync.service");
+      const { SyncService: syncService } =
+        await import("../../../../services/sync.service");
 
       vi.mocked(syncService).mockImplementationOnce(function (this: unknown) {
         return {

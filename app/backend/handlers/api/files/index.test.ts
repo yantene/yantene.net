@@ -75,6 +75,7 @@ describe("Files API Handler", () => {
       );
 
       expect(res.status).toBe(200);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const json = (await res.json()) as { files: unknown[] };
       expect(json).toHaveProperty("files");
       expect(Array.isArray(json.files)).toBe(true);
@@ -88,6 +89,7 @@ describe("Files API Handler", () => {
     });
 
     it("should return 500 when repository throws", async () => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectMetadataRepository } =
         await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
@@ -118,6 +120,7 @@ describe("Files API Handler", () => {
       );
 
       expect(res.status).toBe(500);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const json = (await res.json()) as { error: string };
       expect(json).toHaveProperty("error");
     });
@@ -125,6 +128,7 @@ describe("Files API Handler", () => {
 
   describe("GET /files/:key", () => {
     it("should return file content with proper headers", async () => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectMetadataRepository } =
         await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
@@ -172,6 +176,7 @@ describe("Files API Handler", () => {
     });
 
     it("should return 404 when metadata not found", async () => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectMetadataRepository } =
         await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
 
@@ -179,6 +184,7 @@ describe("Files API Handler", () => {
         function (this: unknown) {
           return {
             findAll: vi.fn(),
+            // eslint-disable-next-line unicorn/no-useless-undefined
             findByObjectKey: vi.fn().mockResolvedValue(undefined),
             upsert: vi.fn(),
             deleteByObjectKey: vi.fn(),
@@ -207,8 +213,10 @@ describe("Files API Handler", () => {
     });
 
     it("should return 500 when storage returns undefined", async () => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectMetadataRepository } =
         await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectStorage } =
         await import("../../../infra/r2/stored-object.storage");
 
@@ -239,6 +247,7 @@ describe("Files API Handler", () => {
         this: unknown,
       ) {
         return {
+          // eslint-disable-next-line unicorn/no-useless-undefined
           get: vi.fn().mockResolvedValue(undefined),
           list: vi.fn(),
         };
@@ -259,6 +268,7 @@ describe("Files API Handler", () => {
       );
 
       expect(res.status).toBe(500);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const json = (await res.json()) as { error: string };
       expect(json).toHaveProperty("error");
     });
