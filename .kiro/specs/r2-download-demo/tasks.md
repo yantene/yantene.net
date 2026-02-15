@@ -42,8 +42,8 @@
   - `R2FileMetadata` の `create`, `reconstruct`, `equals`, `toJSON` メソッドをテストする
   - _Requirements: 5.2, 5.1, 6.1_
 
-- [ ] 3. D1 メタデータ管理層の構築
-- [ ] 3.1 D1 メタデータテーブルのスキーマとカスタム型を定義する
+- [x] 3. D1 メタデータ管理層の構築
+- [x] 3.1 D1 メタデータテーブルのスキーマとカスタム型を定義する
   - `r2_file_metadata` テーブルを Drizzle ORM で定義し、`id`, `object_key`, `size`, `content_type`, `etag`, `created_at`, `updated_at` カラムを含める
   - `objectKey`, `contentType`, `etag` のカスタム型を作成し、値オブジェクトとの変換を定義する
   - 既存の `instant` カスタム型を `created_at` と `updated_at` に適用する
@@ -51,12 +51,12 @@
   - スキーマの `index.ts` にテーブルエクスポートを追加する
   - _Requirements: 6.1, 6.5_
 
-- [ ] 3.2 D1 マイグレーションファイルを生成する
+- [x] 3.2 D1 マイグレーションファイルを生成する
   - `r2_file_metadata` テーブル作成の SQL マイグレーションを生成する
   - Drizzle Kit の `generate` コマンドでマイグレーションを作成し、SQL の正確性を確認する
   - _Requirements: 6.1_
 
-- [ ] 3.3 D1 メタデータリポジトリの具体実装を作成する
+- [x] 3.3 D1 メタデータリポジトリの具体実装を作成する
   - `IR2FileMetadataRepository` インターフェースを実装し、Drizzle ORM で D1 からメタデータを取得する
   - `findAll` メソッド: 全レコードを取得し `R2FileMetadata.reconstruct` でエンティティに変換する
   - `findByObjectKey` メソッド: 指定キーのレコードを取得し、存在しなければ `undefined` を返却する
