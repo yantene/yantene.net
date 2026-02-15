@@ -15,6 +15,7 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
     readonly size: number,
     readonly contentType: ContentType,
     readonly etag: ETag,
+    readonly downloadCount: number,
     readonly createdAt: P["createdAt"],
     readonly updatedAt: P["updatedAt"],
   ) {}
@@ -32,6 +33,7 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
       params.size,
       params.contentType,
       params.etag,
+      0,
       undefined,
       undefined,
     );
@@ -43,16 +45,19 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
     size: number;
     contentType: ContentType;
     etag: ETag;
+    downloadCount: number;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
   }): StoredObjectMetadata<IPersisted> {
     StoredObjectMetadata.validateSize(params.size);
+    StoredObjectMetadata.validateDownloadCount(params.downloadCount);
     return new StoredObjectMetadata(
       params.id,
       params.objectKey,
       params.size,
       params.contentType,
       params.etag,
+      params.downloadCount,
       params.createdAt,
       params.updatedAt,
     );
@@ -71,6 +76,7 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
     size: number;
     contentType: string;
     etag: string;
+    downloadCount: number;
     createdAt: string | undefined;
     updatedAt: string | undefined;
   } {
@@ -80,6 +86,7 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
       size: this.size,
       contentType: this.contentType.toJSON(),
       etag: this.etag.toJSON(),
+      downloadCount: this.downloadCount,
       createdAt: this.createdAt?.toString(),
       updatedAt: this.updatedAt?.toString(),
     };
@@ -88,6 +95,12 @@ export class StoredObjectMetadata<P extends IPersisted | IUnpersisted>
   private static validateSize(size: number): void {
     if (size < 0) {
       throw new Error(`Invalid size: ${String(size)}`);
+    }
+  }
+
+  private static validateDownloadCount(downloadCount: number): void {
+    if (downloadCount < 0) {
+      throw new Error(`Invalid downloadCount: ${String(downloadCount)}`);
     }
   }
 }

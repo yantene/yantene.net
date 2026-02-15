@@ -22,6 +22,7 @@ describe("StoredObjectMetadata Entity", () => {
       expect(metadata.size).toBe(1024);
       expect(metadata.contentType.value).toBe("image/png");
       expect(metadata.etag.value).toBe('"abc123"');
+      expect(metadata.downloadCount).toBe(0);
       expect(metadata.createdAt).toBeUndefined();
       expect(metadata.updatedAt).toBeUndefined();
     });
@@ -54,6 +55,7 @@ describe("StoredObjectMetadata Entity", () => {
       const metadata = StoredObjectMetadata.reconstruct({
         id,
         ...validParams,
+        downloadCount: 5,
         createdAt,
         updatedAt,
       });
@@ -63,6 +65,7 @@ describe("StoredObjectMetadata Entity", () => {
       expect(metadata.size).toBe(1024);
       expect(metadata.contentType.value).toBe("image/png");
       expect(metadata.etag.value).toBe('"abc123"');
+      expect(metadata.downloadCount).toBe(5);
       expect(metadata.createdAt).toBe(createdAt);
       expect(metadata.updatedAt).toBe(updatedAt);
     });
@@ -73,10 +76,23 @@ describe("StoredObjectMetadata Entity", () => {
           id: "test-uuid",
           ...validParams,
           size: -1,
+          downloadCount: 0,
           createdAt: Temporal.Now.instant(),
           updatedAt: Temporal.Now.instant(),
         }),
       ).toThrow("Invalid size");
+    });
+
+    it("should throw an error for negative downloadCount", () => {
+      expect(() =>
+        StoredObjectMetadata.reconstruct({
+          id: "test-uuid",
+          ...validParams,
+          downloadCount: -1,
+          createdAt: Temporal.Now.instant(),
+          updatedAt: Temporal.Now.instant(),
+        }),
+      ).toThrow("Invalid downloadCount");
     });
   });
 
@@ -88,6 +104,7 @@ describe("StoredObjectMetadata Entity", () => {
       const metadata1 = StoredObjectMetadata.reconstruct({
         id,
         ...validParams,
+        downloadCount: 0,
         createdAt: instant,
         updatedAt: instant,
       });
@@ -97,6 +114,7 @@ describe("StoredObjectMetadata Entity", () => {
         size: 2048,
         contentType: ContentType.create("text/markdown"),
         etag: ETag.create('"def456"'),
+        downloadCount: 0,
         createdAt: instant,
         updatedAt: instant,
       });
@@ -110,12 +128,14 @@ describe("StoredObjectMetadata Entity", () => {
       const metadata1 = StoredObjectMetadata.reconstruct({
         id: "uuid-1",
         ...validParams,
+        downloadCount: 0,
         createdAt: instant,
         updatedAt: instant,
       });
       const metadata2 = StoredObjectMetadata.reconstruct({
         id: "uuid-2",
         ...validParams,
+        downloadCount: 0,
         createdAt: instant,
         updatedAt: instant,
       });
@@ -146,6 +166,7 @@ describe("StoredObjectMetadata Entity", () => {
       const metadata = StoredObjectMetadata.reconstruct({
         id,
         ...validParams,
+        downloadCount: 10,
         createdAt,
         updatedAt,
       });
@@ -157,6 +178,7 @@ describe("StoredObjectMetadata Entity", () => {
       expect(json.size).toBe(1024);
       expect(json.contentType).toBe("image/png");
       expect(json.etag).toBe('"abc123"');
+      expect(json.downloadCount).toBe(10);
       expect(json.createdAt).toBe(createdAt.toString());
       expect(json.updatedAt).toBe(updatedAt.toString());
     });
@@ -171,6 +193,7 @@ describe("StoredObjectMetadata Entity", () => {
       expect(json.size).toBe(1024);
       expect(json.contentType).toBe("image/png");
       expect(json.etag).toBe('"abc123"');
+      expect(json.downloadCount).toBe(0);
       expect(json.createdAt).toBeUndefined();
       expect(json.updatedAt).toBeUndefined();
     });
