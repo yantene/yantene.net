@@ -1,9 +1,8 @@
 import { Hono } from "hono";
-import { counterApp } from "./handlers/api/counter";
-import { filesApp } from "./handlers/api/files";
 import { adminFilesApp } from "./handlers/api/admin/files";
+import { filesApp } from "./handlers/api/files";
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 export const getApp = (
   handler: (
     request: Request,
@@ -13,7 +12,6 @@ export const getApp = (
 ) => {
   const app = new Hono<{ Bindings: Env }>()
     .get("/hello", (c) => c.text("Hello, World!"))
-    .route("/api/counter", counterApp)
     .route("/api/files", filesApp)
     .route("/api/admin/files", adminFilesApp)
     .all("*", async (context) => {
@@ -26,5 +24,6 @@ export const getApp = (
 
   return app;
 };
+/* eslint-enable @typescript-eslint/explicit-function-return-type */
 
 export type AppType = ReturnType<typeof getApp>;

@@ -4,8 +4,8 @@ import { ContentType } from "../../../domain/stored-object/content-type.vo";
 import { ETag } from "../../../domain/stored-object/etag.vo";
 import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
 import { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";
-import type { IUnpersisted } from "../../../domain/unpersisted.interface";
 import { StoredObjectMetadataRepository } from "./stored-object-metadata.repository";
+import type { IUnpersisted } from "../../../domain/unpersisted.interface";
 
 // Mock D1 database
 const createMockDb = () => {
@@ -16,23 +16,23 @@ const createMockDb = () => {
       from: () => ({
         leftJoin: () => ({
           all: async () => {
-            return Array.from(mockData.values());
+            return [...mockData.values()];
           },
           where: () => ({
             get: async () => {
-              return mockData.size > 0 ? Array.from(mockData.values())[0] : undefined;
+              return mockData.size > 0 ? [...mockData.values()][0] : undefined;
             },
           }),
         }),
         all: async () => {
-          return Array.from(mockData.values());
+          return [...mockData.values()];
         },
         where: () => ({
           all: async () => {
-            return Array.from(mockData.values());
+            return [...mockData.values()];
           },
           get: async () => {
-            return mockData.size > 0 ? Array.from(mockData.values())[0] : undefined;
+            return mockData.size > 0 ? [...mockData.values()][0] : undefined;
           },
         }),
       }),
@@ -108,7 +108,7 @@ const createMockDb = () => {
               return { success: true };
             },
             returning: async () => {
-              return Array.from(mockData.values());
+              return [...mockData.values()];
             },
           }),
         };

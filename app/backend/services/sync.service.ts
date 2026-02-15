@@ -1,7 +1,7 @@
 import { ContentType } from "../domain/stored-object/content-type.vo";
+import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
 import type { IStoredObjectMetadataRepository } from "../domain/stored-object/stored-object-metadata-repository.interface";
 import type { IStoredObjectStorage } from "../domain/stored-object/stored-object-storage.interface";
-import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
 
 export type SyncResult = {
   added: number;

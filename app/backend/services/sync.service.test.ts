@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { ContentType } from "../domain/stored-object/content-type.vo";
 import { ETag } from "../domain/stored-object/etag.vo";
 import { ObjectKey } from "../domain/stored-object/object-key.vo";
+import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
+import { SyncService } from "./sync.service";
 import type { IStoredObjectMetadataRepository } from "../domain/stored-object/stored-object-metadata-repository.interface";
 import type {
   IStoredObjectStorage,
   StoredObjectListItem,
 } from "../domain/stored-object/stored-object-storage.interface";
-import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
-import { SyncService } from "./sync.service";
 
 describe("SyncService", () => {
   describe("execute", () => {

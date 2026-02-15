@@ -26,7 +26,7 @@ export default function FilesPage() {
           throw new Error(`Failed to fetch files: ${response.statusText}`);
         }
 
-        const data = (await response.json()) as FileListResponse;
+        const data = (await response.json());
         setFiles(data.files);
       } catch (error) {
         console.error("Error fetching files:", error);
@@ -127,7 +127,7 @@ export default function FilesPage() {
               alert(
                 `Sync completed: ${JSON.stringify(data, null, 2)}`,
               );
-              window.location.reload();
+              globalThis.location.reload();
             } catch (error) {
               alert(`Sync failed: ${String(error)}`);
             }

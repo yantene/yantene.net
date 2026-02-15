@@ -1,11 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { describe, expect, it, vi } from "vitest";
 import { Hono } from "hono";
-import { filesApp } from ".";
+import { describe, expect, it, vi } from "vitest";
 import { ContentType } from "../../../domain/stored-object/content-type.vo";
 import { ETag } from "../../../domain/stored-object/etag.vo";
 import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
 import { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";
+import { filesApp } from ".";
 
 // Mock drizzle
 vi.mock("drizzle-orm/d1", () => ({
@@ -68,7 +68,7 @@ describe("Files API Handler", () => {
       });
 
       expect(res.status).toBe(200);
-      const json = (await res.json()) as { files: unknown[] };
+      const json = (await res.json());
       expect(json).toHaveProperty("files");
       expect(Array.isArray(json.files)).toBe(true);
       expect(json.files).toHaveLength(1);
@@ -162,7 +162,7 @@ describe("Files API Handler", () => {
       vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(function (this: unknown) {
         return {
           findAll: vi.fn(),
-          findByObjectKey: vi.fn().mockResolvedValue(undefined),
+          findByObjectKey: vi.fn().mockResolvedValue(),
           upsert: vi.fn(),
           deleteByObjectKey: vi.fn(),
           incrementDownloadCount: vi.fn(),
@@ -215,7 +215,7 @@ describe("Files API Handler", () => {
 
       vi.mocked(StoredObjectStorage).mockImplementationOnce(function (this: unknown) {
         return {
-          get: vi.fn().mockResolvedValue(undefined),
+          get: vi.fn().mockResolvedValue(),
           list: vi.fn(),
         };
       });
