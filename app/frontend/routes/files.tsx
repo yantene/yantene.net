@@ -98,7 +98,7 @@ export default function FilesPage() {
                   </td>
                   <td className="px-6 py-4 border-b text-sm">
                     <a
-                      href={`/files/${file.key}`}
+                      href={`/api/files/${file.key}`}
                       download
                       className="text-blue-600 hover:text-blue-800 underline"
                     >

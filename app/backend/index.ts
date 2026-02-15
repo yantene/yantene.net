@@ -15,7 +15,6 @@ export const getApp = (
     .get("/hello", (c) => c.text("Hello, World!"))
     .route("/api/counter", counterApp)
     .route("/api/files", filesApp)
-    .route("/files", filesApp)
     .route("/api/admin/files", adminFilesApp)
     .all("*", async (context) => {
       return handler(
