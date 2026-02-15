@@ -63,12 +63,12 @@
   - 既存の `ClickCommandRepository` パターンに準拠する
   - _Requirements: 6.3, 6.4_
 
-- [ ] 4. R2 ストレージ実装を作成する (P)
-  - `IR2FileStorage` インターフェースを実装し、`R2Bucket` バインディングを受け取ってオブジェクト取得操作を提供する
-  - `get` メソッド: `R2Bucket.get(key)` を呼び出し、`R2ObjectBody` から `R2FileContent` にマッピングする
+- [x] 4. R2 ストレージ実装を作成する (P)
+  - `IStoredObjectStorage` インターフェースを実装し、`R2Bucket` バインディングを受け取ってオブジェクト取得操作を提供する
+  - `get` メソッド: `R2Bucket.get(key)` を呼び出し、`R2ObjectBody` から `StoredObjectContent` にマッピングする
   - オブジェクトが存在しない場合（`null` 返却時）は `undefined` を返却する
   - `httpMetadata.contentType` が未設定の場合、キーの拡張子から MIME タイプを推定する
-  - `R2ObjectBody.body` を `ReadableStream` として `R2FileContent` に格納する
+  - `R2ObjectBody.body` を `ReadableStream` として `StoredObjectContent` に格納する
   - _Requirements: 5.3, 5.4_
 
 - [ ] 5. 共有型定義と Hono RPC 基盤の整備
