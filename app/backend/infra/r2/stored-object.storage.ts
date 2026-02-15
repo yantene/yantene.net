@@ -7,20 +7,6 @@ import type {
   StoredObjectListItem,
 } from "../../domain/stored-object/stored-object-storage.interface";
 
-const extensionToMimeType: Record<string, string> = {
-  png: "image/png",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  gif: "image/gif",
-  webp: "image/webp",
-  txt: "text/plain",
-  md: "text/markdown",
-  html: "text/html",
-  json: "application/json",
-};
-
-const defaultMimeType = "application/octet-stream";
-
 export class StoredObjectStorage implements IStoredObjectStorage {
   constructor(private readonly r2: R2Bucket) {}
 
@@ -31,14 +17,14 @@ export class StoredObjectStorage implements IStoredObjectStorage {
       return undefined;
     }
 
-    const contentType = this.getContentType(
-      r2Object.httpMetadata?.contentType,
-      objectKey.value,
-    );
+    // Use R2's httpMetadata.contentType if available, otherwise infer from object key
+    const contentType = r2Object.httpMetadata?.contentType
+      ? ContentType.create(r2Object.httpMetadata.contentType)
+      : ContentType.inferFromObjectKey(objectKey);
 
     return {
       body: r2Object.body,
-      contentType: ContentType.create(contentType),
+      contentType,
       size: r2Object.size,
       etag: ETag.create(r2Object.etag),
     };
@@ -52,24 +38,5 @@ export class StoredObjectStorage implements IStoredObjectStorage {
       size: obj.size,
       etag: ETag.create(obj.etag),
     }));
-  }
-
-  private getContentType(
-    r2ContentType: string | undefined,
-    objectKey: string,
-  ): string {
-    if (r2ContentType) {
-      return r2ContentType;
-    }
-
-    // Infer content type from file extension
-    const extension = objectKey.split(".").pop()?.toLowerCase();
-
-    if (extension && extension in extensionToMimeType) {
-      // eslint-disable-next-line security/detect-object-injection
-      return extensionToMimeType[extension];
-    }
-
-    return defaultMimeType;
   }
 }

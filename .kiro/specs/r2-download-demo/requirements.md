@@ -29,7 +29,7 @@ Cloudflare R2 バケットに配置したファイルの一覧表示とダウン
 
 #### Acceptance Criteria
 
-1. The バックエンド shall `GET /files/:key` でオブジェクトストレージからファイルを取得して返却する
+1. The バックエンド shall `GET /api/files/:key` でオブジェクトストレージからファイルを取得して返却する
 2. When ファイルがダウンロードされた場合, the システム shall 当該ファイルのダウンロード回数を 1 インクリメントする
 3. The レスポンス shall 適切な Content-Type ヘッダーを設定する
 4. The レスポンス shall Content-Disposition ヘッダーでダウンロードファイル名を指定する
@@ -56,7 +56,7 @@ Cloudflare R2 バケットに配置したファイルの一覧表示とダウン
 #### Acceptance Criteria
 
 1. The バックエンド shall `GET /api/files` でメタデータ一覧を JSON 形式で返却する
-2. The レスポンス shall 各ファイルのキー名、サイズ、Content-Type、ETag、ダウンロード回数を含む
+2. The レスポンス shall 各ファイルのキー名、サイズ、Content-Type、ダウンロード回数を含む
 3. The API shall Hono RPC の型推論が有効なルート定義を提供する
 4. If データベースへのアクセスに失敗した場合, the API shall HTTP 500 ステータスを返却する
 
