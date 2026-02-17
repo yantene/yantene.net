@@ -1,6 +1,7 @@
 import { ContentType } from "../domain/stored-object/content-type.vo";
 import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
-import type { IStoredObjectMetadataRepository } from "../domain/stored-object/stored-object-metadata-repository.interface";
+import type { IStoredObjectMetadataCommandRepository } from "../domain/stored-object/stored-object-metadata-command-repository.interface";
+import type { IStoredObjectMetadataQueryRepository } from "../domain/stored-object/stored-object-metadata-query-repository.interface";
 import type { IStoredObjectStorage } from "../domain/stored-object/stored-object-storage.interface";
 
 export type SyncResult = {
@@ -12,13 +13,14 @@ export type SyncResult = {
 export class SyncService {
   constructor(
     private readonly storage: IStoredObjectStorage,
-    private readonly repository: IStoredObjectMetadataRepository,
+    private readonly queryRepository: IStoredObjectMetadataQueryRepository,
+    private readonly commandRepository: IStoredObjectMetadataCommandRepository,
   ) {}
 
   async execute(): Promise<SyncResult> {
     const [storageObjects, dbMetadata] = await Promise.all([
       this.storage.list(),
-      this.repository.findAll(),
+      this.queryRepository.findAll(),
     ]);
 
     const storageMap = new Map(
@@ -44,7 +46,7 @@ export class SyncService {
           contentType,
           etag: storageObj.etag,
         });
-        await this.repository.upsert(newMetadata, false);
+        await this.commandRepository.upsert(newMetadata, false);
         added++;
       }
     }
@@ -62,7 +64,7 @@ export class SyncService {
           contentType,
           etag: storageObj.etag,
         });
-        await this.repository.upsert(updatedMetadata, true);
+        await this.commandRepository.upsert(updatedMetadata, true);
         updated++;
       }
     }
@@ -70,7 +72,7 @@ export class SyncService {
     // Delete removed objects
     for (const [key, dbObj] of dbMap) {
       if (!storageMap.has(key)) {
-        await this.repository.deleteByObjectKey(dbObj.objectKey);
+        await this.commandRepository.deleteByObjectKey(dbObj.objectKey);
         deleted++;
       }
     }

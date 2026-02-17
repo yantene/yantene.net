@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
-import { StoredObjectMetadataRepository } from "../../../infra/d1/stored-object/stored-object-metadata.repository";
+import { StoredObjectMetadataCommandRepository } from "../../../infra/d1/stored-object/stored-object-metadata.command-repository";
+import { StoredObjectMetadataQueryRepository } from "../../../infra/d1/stored-object/stored-object-metadata.query-repository";
 import { StoredObjectStorage } from "../../../infra/r2/stored-object.storage";
 import type {
   ErrorResponse,
@@ -12,8 +13,8 @@ export const filesApp = new Hono<{ Bindings: Env }>()
   .get("/", async (c): Promise<Response> => {
     try {
       const db = drizzle(c.env.D1);
-      const repository = new StoredObjectMetadataRepository(db);
-      const allMetadata = await repository.findAll();
+      const queryRepository = new StoredObjectMetadataQueryRepository(db);
+      const allMetadata = await queryRepository.findAll();
 
       const response: FileListResponse = {
         files: allMetadata.map((metadata) => ({
@@ -39,8 +40,8 @@ export const filesApp = new Hono<{ Bindings: Env }>()
       const objectKey = ObjectKey.create(key);
 
       const db = drizzle(c.env.D1);
-      const repository = new StoredObjectMetadataRepository(db);
-      const metadata = await repository.findByObjectKey(objectKey);
+      const queryRepository = new StoredObjectMetadataQueryRepository(db);
+      const metadata = await queryRepository.findByObjectKey(objectKey);
 
       if (!metadata) {
         const errorResponse: ErrorResponse = {
@@ -59,7 +60,11 @@ export const filesApp = new Hono<{ Bindings: Env }>()
         return c.json(errorResponse, 500);
       }
 
-      await repository.incrementDownloadCount(objectKey);
+      const commandRepository = new StoredObjectMetadataCommandRepository(
+        db,
+        queryRepository,
+      );
+      await commandRepository.incrementDownloadCount(objectKey);
 
       const filename = key.split("/").pop() ?? key;
       // RFC 5987: encode filename for Content-Disposition header

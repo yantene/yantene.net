@@ -15,11 +15,11 @@ vi.mock("drizzle-orm/d1", () => ({
   })),
 }));
 
-// Mock repository
+// Mock query repository
 vi.mock(
-  "../../../infra/d1/stored-object/stored-object-metadata.repository",
+  "../../../infra/d1/stored-object/stored-object-metadata.query-repository",
   () => ({
-    StoredObjectMetadataRepository: vi.fn(function (this: unknown) {
+    StoredObjectMetadataQueryRepository: vi.fn(function (this: unknown) {
       return {
         findAll: vi.fn().mockResolvedValue([
           StoredObjectMetadata.reconstruct({
@@ -34,6 +34,17 @@ vi.mock(
           }),
         ]),
         findByObjectKey: vi.fn(),
+      };
+    }),
+  }),
+);
+
+// Mock command repository
+vi.mock(
+  "../../../infra/d1/stored-object/stored-object-metadata.command-repository",
+  () => ({
+    StoredObjectMetadataCommandRepository: vi.fn(function (this: unknown) {
+      return {
         upsert: vi.fn(),
         deleteByObjectKey: vi.fn(),
         incrementDownloadCount: vi.fn(),
@@ -90,17 +101,14 @@ describe("Files API Handler", () => {
 
     it("should return 500 when repository throws", async () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { StoredObjectMetadataRepository } =
-        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      const { StoredObjectMetadataQueryRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.query-repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+      vi.mocked(StoredObjectMetadataQueryRepository).mockImplementationOnce(
         function (this: unknown) {
           return {
             findAll: vi.fn().mockRejectedValue(new Error("DB error")),
             findByObjectKey: vi.fn(),
-            upsert: vi.fn(),
-            deleteByObjectKey: vi.fn(),
-            incrementDownloadCount: vi.fn(),
           };
         },
       );
@@ -129,10 +137,10 @@ describe("Files API Handler", () => {
   describe("GET /files/:key", () => {
     it("should return file content with proper headers", async () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { StoredObjectMetadataRepository } =
-        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      const { StoredObjectMetadataQueryRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.query-repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+      vi.mocked(StoredObjectMetadataQueryRepository).mockImplementationOnce(
         function (this: unknown) {
           return {
             findAll: vi.fn(),
@@ -148,9 +156,6 @@ describe("Files API Handler", () => {
                 updatedAt: Temporal.Now.instant(),
               }),
             ),
-            upsert: vi.fn(),
-            deleteByObjectKey: vi.fn(),
-            incrementDownloadCount: vi.fn(),
           };
         },
       );
@@ -177,18 +182,15 @@ describe("Files API Handler", () => {
 
     it("should return 404 when metadata not found", async () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { StoredObjectMetadataRepository } =
-        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      const { StoredObjectMetadataQueryRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.query-repository");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+      vi.mocked(StoredObjectMetadataQueryRepository).mockImplementationOnce(
         function (this: unknown) {
           return {
             findAll: vi.fn(),
             // eslint-disable-next-line unicorn/no-useless-undefined
             findByObjectKey: vi.fn().mockResolvedValue(undefined),
-            upsert: vi.fn(),
-            deleteByObjectKey: vi.fn(),
-            incrementDownloadCount: vi.fn(),
           };
         },
       );
@@ -214,13 +216,13 @@ describe("Files API Handler", () => {
 
     it("should return 500 when storage returns undefined", async () => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { StoredObjectMetadataRepository } =
-        await import("../../../infra/d1/stored-object/stored-object-metadata.repository");
+      const { StoredObjectMetadataQueryRepository } =
+        await import("../../../infra/d1/stored-object/stored-object-metadata.query-repository");
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const { StoredObjectStorage } =
         await import("../../../infra/r2/stored-object.storage");
 
-      vi.mocked(StoredObjectMetadataRepository).mockImplementationOnce(
+      vi.mocked(StoredObjectMetadataQueryRepository).mockImplementationOnce(
         function (this: unknown) {
           return {
             findAll: vi.fn(),
@@ -236,9 +238,6 @@ describe("Files API Handler", () => {
                 updatedAt: Temporal.Now.instant(),
               }),
             ),
-            upsert: vi.fn(),
-            deleteByObjectKey: vi.fn(),
-            incrementDownloadCount: vi.fn(),
           };
         },
       );

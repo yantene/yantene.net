@@ -3,11 +3,7 @@ import type { IUnpersisted } from "../unpersisted.interface";
 import type { ObjectKey } from "./object-key.vo";
 import type { StoredObjectMetadata } from "./stored-object-metadata.entity";
 
-export interface IStoredObjectMetadataRepository {
-  findAll(): Promise<readonly StoredObjectMetadata<IPersisted>[]>;
-  findByObjectKey(
-    objectKey: ObjectKey,
-  ): Promise<StoredObjectMetadata<IPersisted> | undefined>;
+export interface IStoredObjectMetadataCommandRepository {
   upsert(
     metadata: StoredObjectMetadata<IUnpersisted>,
     preserveDownloadCount?: boolean,

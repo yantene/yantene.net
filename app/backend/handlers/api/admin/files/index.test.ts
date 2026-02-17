@@ -23,14 +23,25 @@ vi.mock("../../../../services/sync.service", () => ({
   }),
 }));
 
-// Mock repository
+// Mock query repository
 vi.mock(
-  "../../../../infra/d1/stored-object/stored-object-metadata.repository",
+  "../../../../infra/d1/stored-object/stored-object-metadata.query-repository",
   () => ({
-    StoredObjectMetadataRepository: vi.fn(function (this: unknown) {
+    StoredObjectMetadataQueryRepository: vi.fn(function (this: unknown) {
       return {
         findAll: vi.fn(),
         findByObjectKey: vi.fn(),
+      };
+    }),
+  }),
+);
+
+// Mock command repository
+vi.mock(
+  "../../../../infra/d1/stored-object/stored-object-metadata.command-repository",
+  () => ({
+    StoredObjectMetadataCommandRepository: vi.fn(function (this: unknown) {
+      return {
         upsert: vi.fn(),
         deleteByObjectKey: vi.fn(),
         incrementDownloadCount: vi.fn(),

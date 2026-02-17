@@ -5,7 +5,8 @@ import { ETag } from "../domain/stored-object/etag.vo";
 import { ObjectKey } from "../domain/stored-object/object-key.vo";
 import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
 import { SyncService } from "./sync.service";
-import type { IStoredObjectMetadataRepository } from "../domain/stored-object/stored-object-metadata-repository.interface";
+import type { IStoredObjectMetadataCommandRepository } from "../domain/stored-object/stored-object-metadata-command-repository.interface";
+import type { IStoredObjectMetadataQueryRepository } from "../domain/stored-object/stored-object-metadata-query-repository.interface";
 import type {
   IStoredObjectStorage,
   StoredObjectListItem,
@@ -25,9 +26,12 @@ describe("SyncService", () => {
         ]),
       };
 
-      const repository: IStoredObjectMetadataRepository = {
+      const queryRepository: IStoredObjectMetadataQueryRepository = {
         findAll: vi.fn().mockResolvedValue([]),
         findByObjectKey: vi.fn(),
+      };
+
+      const commandRepository: IStoredObjectMetadataCommandRepository = {
         upsert: vi.fn().mockResolvedValue(
           StoredObjectMetadata.reconstruct({
             id: "new-id",
@@ -44,13 +48,17 @@ describe("SyncService", () => {
         incrementDownloadCount: vi.fn(),
       };
 
-      const service = new SyncService(storage, repository);
+      const service = new SyncService(
+        storage,
+        queryRepository,
+        commandRepository,
+      );
       const result = await service.execute();
 
       expect(result.added).toBe(1);
       expect(result.deleted).toBe(0);
       expect(result.updated).toBe(0);
-      expect(repository.upsert).toHaveBeenCalledWith(
+      expect(commandRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           objectKey: expect.objectContaining({ value: "new-file.png" }),
           size: 1024,
@@ -66,7 +74,7 @@ describe("SyncService", () => {
         list: vi.fn().mockResolvedValue([]),
       };
 
-      const repository: IStoredObjectMetadataRepository = {
+      const queryRepository: IStoredObjectMetadataQueryRepository = {
         findAll: vi.fn().mockResolvedValue([
           StoredObjectMetadata.reconstruct({
             id: "deleted-id",
@@ -80,18 +88,25 @@ describe("SyncService", () => {
           }),
         ]),
         findByObjectKey: vi.fn(),
+      };
+
+      const commandRepository: IStoredObjectMetadataCommandRepository = {
         upsert: vi.fn(),
         deleteByObjectKey: vi.fn(),
         incrementDownloadCount: vi.fn(),
       };
 
-      const service = new SyncService(storage, repository);
+      const service = new SyncService(
+        storage,
+        queryRepository,
+        commandRepository,
+      );
       const result = await service.execute();
 
       expect(result.added).toBe(0);
       expect(result.deleted).toBe(1);
       expect(result.updated).toBe(0);
-      expect(repository.deleteByObjectKey).toHaveBeenCalledWith(
+      expect(commandRepository.deleteByObjectKey).toHaveBeenCalledWith(
         expect.objectContaining({ value: "deleted-file.png" }),
       );
     });
@@ -110,7 +125,7 @@ describe("SyncService", () => {
         ]),
       };
 
-      const repository: IStoredObjectMetadataRepository = {
+      const queryRepository: IStoredObjectMetadataQueryRepository = {
         findAll: vi.fn().mockResolvedValue([
           StoredObjectMetadata.reconstruct({
             id: "updated-id",
@@ -124,6 +139,9 @@ describe("SyncService", () => {
           }),
         ]),
         findByObjectKey: vi.fn(),
+      };
+
+      const commandRepository: IStoredObjectMetadataCommandRepository = {
         upsert: vi.fn().mockResolvedValue(
           StoredObjectMetadata.reconstruct({
             id: "updated-id",
@@ -140,13 +158,17 @@ describe("SyncService", () => {
         incrementDownloadCount: vi.fn(),
       };
 
-      const service = new SyncService(storage, repository);
+      const service = new SyncService(
+        storage,
+        queryRepository,
+        commandRepository,
+      );
       const result = await service.execute();
 
       expect(result.added).toBe(0);
       expect(result.deleted).toBe(0);
       expect(result.updated).toBe(1);
-      expect(repository.upsert).toHaveBeenCalledWith(
+      expect(commandRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           objectKey: expect.objectContaining({ value: "updated-file.png" }),
           etag: expect.objectContaining({ value: "etag-new" }),
@@ -170,7 +192,7 @@ describe("SyncService", () => {
         ]),
       };
 
-      const repository: IStoredObjectMetadataRepository = {
+      const queryRepository: IStoredObjectMetadataQueryRepository = {
         findAll: vi.fn().mockResolvedValue([
           StoredObjectMetadata.reconstruct({
             id: "unchanged-id",
@@ -184,19 +206,26 @@ describe("SyncService", () => {
           }),
         ]),
         findByObjectKey: vi.fn(),
+      };
+
+      const commandRepository: IStoredObjectMetadataCommandRepository = {
         upsert: vi.fn(),
         deleteByObjectKey: vi.fn(),
         incrementDownloadCount: vi.fn(),
       };
 
-      const service = new SyncService(storage, repository);
+      const service = new SyncService(
+        storage,
+        queryRepository,
+        commandRepository,
+      );
       const result = await service.execute();
 
       expect(result.added).toBe(0);
       expect(result.deleted).toBe(0);
       expect(result.updated).toBe(0);
-      expect(repository.upsert).not.toHaveBeenCalled();
-      expect(repository.deleteByObjectKey).not.toHaveBeenCalled();
+      expect(commandRepository.upsert).not.toHaveBeenCalled();
+      expect(commandRepository.deleteByObjectKey).not.toHaveBeenCalled();
     });
 
     it("should handle mixed operations", async () => {
@@ -221,7 +250,7 @@ describe("SyncService", () => {
         ] satisfies StoredObjectListItem[]),
       };
 
-      const repository: IStoredObjectMetadataRepository = {
+      const queryRepository: IStoredObjectMetadataQueryRepository = {
         findAll: vi.fn().mockResolvedValue([
           StoredObjectMetadata.reconstruct({
             id: "updated-id",
@@ -255,6 +284,9 @@ describe("SyncService", () => {
           }),
         ]),
         findByObjectKey: vi.fn(),
+      };
+
+      const commandRepository: IStoredObjectMetadataCommandRepository = {
         upsert: vi.fn().mockResolvedValue(
           StoredObjectMetadata.reconstruct({
             id: "mock-id",
@@ -271,7 +303,11 @@ describe("SyncService", () => {
         incrementDownloadCount: vi.fn(),
       };
 
-      const service = new SyncService(storage, repository);
+      const service = new SyncService(
+        storage,
+        queryRepository,
+        commandRepository,
+      );
       const result = await service.execute();
 
       expect(result.added).toBe(1);
