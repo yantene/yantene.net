@@ -59,65 +59,65 @@ export default function FilesPage(): React.JSX.Element {
 
   return (
     <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Object Storage Files</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">Object Storage Files</h1>
 
-      {isLoading && <div className="text-gray-600">Loading files...</div>}
+      {isLoading && <div className="text-gray-700">Loading files...</div>}
 
       {errorMessage && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-100 border border-red-500 text-red-800 px-4 py-3 rounded mb-4">
           Error: {errorMessage}
         </div>
       )}
 
       {!isLoading && !errorMessage && files.length === 0 && (
-        <div className="text-gray-600">ファイルがありません</div>
+        <div className="text-gray-700">ファイルがありません</div>
       )}
 
       {!isLoading && !errorMessage && files.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">
+          <table className="min-w-full border border-gray-400">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="px-6 py-3 border-b border-gray-400 text-left text-sm font-semibold text-gray-900">
                   File Name
                 </th>
-                <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 border-b border-gray-400 text-left text-sm font-semibold text-gray-900">
                   Size (bytes)
                 </th>
-                <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 border-b border-gray-400 text-left text-sm font-semibold text-gray-900">
                   Content Type
                 </th>
-                <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 border-b border-gray-400 text-left text-sm font-semibold text-gray-900">
                   Downloads
                 </th>
-                <th className="px-6 py-3 border-b text-left text-sm font-semibold text-gray-700">
+                <th className="px-6 py-3 border-b border-gray-400 text-left text-sm font-semibold text-gray-900">
                   Action
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white">
               {files.map((file) => (
                 <tr key={file.key} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 border-b text-sm text-gray-900">
+                  <td className="px-6 py-4 border-b border-gray-300 text-sm text-gray-900">
                     {file.key}
                   </td>
-                  <td className="px-6 py-4 border-b text-sm text-gray-600">
+                  <td className="px-6 py-4 border-b border-gray-300 text-sm text-gray-800">
                     {file.size.toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 border-b text-sm text-gray-600">
+                  <td className="px-6 py-4 border-b border-gray-300 text-sm text-gray-800">
                     {file.contentType}
                   </td>
-                  <td className="px-6 py-4 border-b text-sm text-gray-600">
+                  <td className="px-6 py-4 border-b border-gray-300 text-sm text-gray-800">
                     {file.downloadCount}
                   </td>
-                  <td className="px-6 py-4 border-b text-sm">
+                  <td className="px-6 py-4 border-b border-gray-300 text-sm">
                     <a
                       href={`/api/files/${file.key
                         .split("/")
                         .map((segment) => encodeURIComponent(segment))
                         .join("/")}`}
                       download
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="text-blue-700 hover:text-blue-900 underline font-medium"
                     >
                       Download
                     </a>
@@ -129,11 +129,11 @@ export default function FilesPage(): React.JSX.Element {
         </div>
       )}
 
-      <div className="mt-8 p-4 bg-gray-100 rounded">
-        <h2 className="text-xl font-semibold mb-2">Admin Actions</h2>
+      <div className="mt-8 p-4 bg-gray-200 border border-gray-300 rounded">
+        <h2 className="text-xl font-semibold mb-2 text-gray-900">Admin Actions</h2>
         <button
           onClick={() => void handleSync()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-700 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded"
         >
           Sync Files from R2
         </button>
