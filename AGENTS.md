@@ -107,6 +107,96 @@ This project follows **Dependency Inversion Principle (DIP)** with a clean separ
 - Testability: Domain logic can be tested with mock implementations
 - Clean architecture: Business logic is decoupled from infrastructure details
 
+### CQRS Pattern (Mandatory)
+
+Repositories MUST be split into Command (write) and Query (read) following the pattern in the existing codebase.
+
+**File naming**:
+- `*.command-repository.interface.ts` — write-only interface in domain layer
+- `*.query-repository.interface.ts` — read-only interface in domain layer
+- `*.command-repository.ts` — Command implementation in infra layer
+- `*.query-repository.ts` — Query implementation in infra layer
+
+**Example**:
+```typescript
+// domain/error-log/error-log.command-repository.interface.ts
+export interface IErrorLogCommandRepository {
+  save(errorLog: ErrorLog<IUnpersisted>): Promise<ErrorLog<IPersisted>>;
+  delete(id: string): Promise<void>;
+}
+
+// domain/error-log/error-log.query-repository.interface.ts
+export interface IErrorLogQueryRepository {
+  findById(id: string): Promise<ErrorLog<IPersisted> | undefined>;
+  findAll(): Promise<ErrorLog<IPersisted>[]>;
+}
+```
+
+### Value Object (VO) Pattern
+
+**File naming**: `*.vo.ts` (e.g., `slug.vo.ts`, `log-level.vo.ts`)
+
+**Required structure**:
+```typescript
+export class Slug implements IValueObject<Slug> {
+  private constructor(readonly value: string) {}   // private constructor
+
+  static create(value: string): Slug {             // factory with validation
+    if (!Slug.isValid(value)) throw new Error(`Invalid slug: ${value}`);
+    return new Slug(value);
+  }
+
+  equals(other: Slug): boolean { return this.value === other.value; }
+  toJSON(): string { return this.value; }
+
+  private static isValid(value: string): boolean { return value.length > 0; }
+}
+```
+
+### Entity Persistence State Pattern
+
+Use `IPersisted` / `IUnpersisted` generics to distinguish database state at compile-time.
+
+```typescript
+// New entity (not saved yet)
+static create(params: { ... }): ErrorLog<IUnpersisted>
+
+// Reconstructed from DB
+static reconstruct(params: { id: string; createdAt: Temporal.Instant; ... }): ErrorLog<IPersisted>
+```
+
+This makes it a compile-time error to pass an unsaved entity where a persisted one is required.
+
+### Domain Directory Structure
+
+```
+domain/
+├── aggregate-name/
+│   ├── aggregate-name.entity.ts
+│   ├── aggregate-name.entity.test.ts
+│   ├── aggregate-name.command-repository.interface.ts
+│   ├── aggregate-name.query-repository.interface.ts
+│   ├── some-concept.vo.ts
+│   ├── some-concept.vo.test.ts
+│   └── usecases/
+│       └── do-something.usecase.ts
+├── entity.interface.ts
+├── value-object.interface.ts
+├── persisted.interface.ts
+└── unpersisted.interface.ts
+
+infra/
+├── d1/
+│   ├── schema/
+│   │   ├── index.ts
+│   │   └── *.table.ts
+│   └── aggregate-name/
+│       ├── aggregate-name.command-repository.ts
+│       └── aggregate-name.query-repository.ts
+└── r2/
+    └── aggregate-name.storage.ts
+```
+
 ### SSR Configuration
 
 - SSR is enabled in `react-router.config.ts`
