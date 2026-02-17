@@ -30,7 +30,7 @@
   - TDD で実装する：正常 URL での生成、空文字列でのエラー、不正 URL 形式でのエラー、equals / toJSON の動作を検証するテストを先に書く
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 3. Note エンティティを定義する
+- [x] 3. Note エンティティを定義する
   - 記事を表すドメインエンティティを IPersisted / IUnpersisted ジェネリクスに対応した形で定義する
   - create ファクトリメソッドで id, createdAt, updatedAt が undefined の IUnpersisted 状態のインスタンスを返す
   - reconstruct ファクトリメソッドで id, createdAt, updatedAt を含む全フィールドが設定された IPersisted 状態のインスタンスを返す
