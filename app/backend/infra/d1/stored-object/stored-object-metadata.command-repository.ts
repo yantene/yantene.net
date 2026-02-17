@@ -18,8 +18,9 @@ export class StoredObjectMetadataCommandRepository implements IStoredObjectMetad
 
   async upsert(
     metadata: StoredObjectMetadata<IUnpersisted>,
-    preserveDownloadCount = false,
+    options: { preserveDownloadCount?: boolean } = {},
   ): Promise<StoredObjectMetadata<IPersisted>> {
+    const shouldPreserveDownloadCount = options.preserveDownloadCount ?? false;
     const id = crypto.randomUUID();
     const now = Temporal.Now.instant();
 
@@ -52,7 +53,7 @@ export class StoredObjectMetadataCommandRepository implements IStoredObjectMetad
 
     // Upsert download count table
     // eslint-disable-next-line unicorn/prefer-ternary
-    if (preserveDownloadCount) {
+    if (shouldPreserveDownloadCount) {
       // Use COALESCE to preserve existing count
       await this.db
         .insert(fileDownloadCounts)

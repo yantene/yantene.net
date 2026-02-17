@@ -11,6 +11,20 @@ export function meta(
   ];
 }
 
+async function handleSync(): Promise<void> {
+  try {
+    const response = await fetch("/api/admin/files/sync", { method: "POST" });
+    if (!response.ok) {
+      throw new Error(`Sync failed: ${response.statusText}`);
+    }
+    const data = await response.json();
+    alert(`Sync completed: ${JSON.stringify(data, null, 2)}`);
+    globalThis.location.reload();
+  } catch (error) {
+    alert(`Sync failed: ${String(error)}`);
+  }
+}
+
 export default function FilesPage(): React.JSX.Element {
   const [files, setFiles] = useState<FileListResponse["files"]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,23 +132,7 @@ export default function FilesPage(): React.JSX.Element {
       <div className="mt-8 p-4 bg-gray-100 rounded">
         <h2 className="text-xl font-semibold mb-2">Admin Actions</h2>
         <button
-          onClick={() => {
-            void (async () => {
-              try {
-                const response = await fetch("/api/admin/files/sync", {
-                  method: "POST",
-                });
-                if (!response.ok) {
-                  throw new Error(`Sync failed: ${response.statusText}`);
-                }
-                const data = await response.json();
-                alert(`Sync completed: ${JSON.stringify(data, null, 2)}`);
-                globalThis.location.reload();
-              } catch (error) {
-                alert(`Sync failed: ${String(error)}`);
-              }
-            })();
-          }}
+          onClick={() => void handleSync()}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Sync Files from R2

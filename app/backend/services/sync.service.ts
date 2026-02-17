@@ -30,53 +30,45 @@ export class SyncService {
       dbMetadata.map((meta) => [meta.objectKey.value, meta]),
     );
 
-    let added = 0;
-    let deleted = 0;
-    let updated = 0;
+    const storageEntries = [...storageMap.values()];
+    const toAdd = storageEntries.filter((obj) => !dbMap.has(obj.objectKey.value));
+    const toUpdate = storageEntries.filter((obj) => {
+      const dbObj = dbMap.get(obj.objectKey.value);
+      return dbObj !== undefined && !obj.etag.equals(dbObj.etag);
+    });
+    const toDelete = [...dbMap.values()].filter(
+      (meta) => !storageMap.has(meta.objectKey.value),
+    );
 
-    // Add new objects
-    for (const [key, storageObj] of storageMap) {
-      if (!dbMap.has(key)) {
-        const contentType = ContentType.inferFromObjectKey(
-          storageObj.objectKey,
-        );
-        const newMetadata = StoredObjectMetadata.create({
+    for (const storageObj of toAdd) {
+      const contentType = ContentType.inferFromObjectKey(storageObj.objectKey);
+      await this.commandRepository.upsert(
+        StoredObjectMetadata.create({
           objectKey: storageObj.objectKey,
           size: storageObj.size,
           contentType,
           etag: storageObj.etag,
-        });
-        await this.commandRepository.upsert(newMetadata, false);
-        added++;
-      }
+        }),
+      );
     }
 
-    // Update changed objects
-    for (const [key, storageObj] of storageMap) {
-      const dbObj = dbMap.get(key);
-      if (dbObj && !storageObj.etag.equals(dbObj.etag)) {
-        const contentType = ContentType.inferFromObjectKey(
-          storageObj.objectKey,
-        );
-        const updatedMetadata = StoredObjectMetadata.create({
+    for (const storageObj of toUpdate) {
+      const contentType = ContentType.inferFromObjectKey(storageObj.objectKey);
+      await this.commandRepository.upsert(
+        StoredObjectMetadata.create({
           objectKey: storageObj.objectKey,
           size: storageObj.size,
           contentType,
           etag: storageObj.etag,
-        });
-        await this.commandRepository.upsert(updatedMetadata, true);
-        updated++;
-      }
+        }),
+        { preserveDownloadCount: true },
+      );
     }
 
-    // Delete removed objects
-    for (const [key, dbObj] of dbMap) {
-      if (!storageMap.has(key)) {
-        await this.commandRepository.deleteByObjectKey(dbObj.objectKey);
-        deleted++;
-      }
+    for (const dbObj of toDelete) {
+      await this.commandRepository.deleteByObjectKey(dbObj.objectKey);
     }
 
-    return { added, deleted, updated };
+    return { added: toAdd.length, deleted: toDelete.length, updated: toUpdate.length };
   }
 }

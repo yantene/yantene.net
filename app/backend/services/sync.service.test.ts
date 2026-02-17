@@ -64,7 +64,6 @@ describe("SyncService", () => {
           size: 1024,
           downloadCount: 0,
         }),
-        false,
       );
     });
 
@@ -173,7 +172,7 @@ describe("SyncService", () => {
           objectKey: expect.objectContaining({ value: "updated-file.png" }),
           etag: expect.objectContaining({ value: "etag-new" }),
         }),
-        true,
+        { preserveDownloadCount: true },
       );
     });
 

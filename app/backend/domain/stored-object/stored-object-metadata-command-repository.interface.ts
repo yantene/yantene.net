@@ -6,7 +6,7 @@ import type { StoredObjectMetadata } from "./stored-object-metadata.entity";
 export interface IStoredObjectMetadataCommandRepository {
   upsert(
     metadata: StoredObjectMetadata<IUnpersisted>,
-    preserveDownloadCount?: boolean,
+    options?: { preserveDownloadCount?: boolean },
   ): Promise<StoredObjectMetadata<IPersisted>>;
   deleteByObjectKey(objectKey: ObjectKey): Promise<void>;
   incrementDownloadCount(objectKey: ObjectKey): Promise<void>;
