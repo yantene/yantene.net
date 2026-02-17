@@ -64,7 +64,7 @@
   - D1 スキーマのエクスポートファイルに notes テーブルのエクスポートを追加する
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 6. NoteQueryRepository の D1 実装を作成する
+- [x] 6. NoteQueryRepository の D1 実装を作成する
   - INoteQueryRepository インターフェースを実装する D1 具象クラスをインフラ層に作成する
   - findAll メソッドで notes テーブルの全レコードを取得し、各行を値オブジェクトの再構築と Note.reconstruct を通じて IPersisted 状態の Note 配列として返す
   - findBySlug メソッドで slug 一致レコードを取得し、存在すれば IPersisted 状態の Note を返し、存在しなければ undefined を返す
@@ -72,7 +72,7 @@
   - TDD で実装する：findAll による全件取得、findBySlug による一致レコード取得、存在しない slug での undefined 返却を検証するテストを先に書く
   - _Requirements: 10.1, 10.2, 10.3, 10.4_
 
-- [ ] 7. NoteCommandRepository の D1 実装を作成する
+- [x] 7. NoteCommandRepository の D1 実装を作成する
   - INoteCommandRepository インターフェースを実装する D1 具象クラスをインフラ層に作成する
   - save メソッドで UUID 生成とタイムスタンプ設定を行い、notes テーブルにレコードを挿入し、NoteQueryRepository 経由で挿入結果を取得して IPersisted 状態の Note を返す
   - delete メソッドで指定 id のレコードを notes テーブルから削除する
