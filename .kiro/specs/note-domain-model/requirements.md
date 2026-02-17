@@ -55,14 +55,18 @@
 4. The ImageUrl 値オブジェクト shall `equals` メソッドにより値の等価比較を行う
 5. The ImageUrl 値オブジェクト shall `toJSON` メソッドにより文字列値を返す
 
-### Requirement 5: ETag 値オブジェクトの再利用
+### Requirement 5: ETag 値オブジェクトの共有カーネルへの移動と再利用
 
-**Objective:** As a 開発者, I want Note エンティティで既存の ETag 値オブジェクトを再利用したい, so that ドメイン全体で一貫した ETag の扱いを維持し、コードの重複を避けられる
+**Objective:** As a 開発者, I want ETag 値オブジェクトを集約横断の共有カーネルに移動し、Note エンティティおよび StoredObjectMetadata エンティティの両方から参照したい, so that 集約境界を適切に維持しつつ、ドメイン全体で一貫した ETag の扱いを実現できる
 
 #### Acceptance Criteria
 
-1. The Note エンティティ shall 既存の `app/backend/domain/stored-object/etag.vo.ts` で定義された ETag 値オブジェクトを直接インポートして使用する
-2. The Note ドメイン shall ETag 値オブジェクトを新規に定義しない
+1. The ETag 値オブジェクト shall `app/backend/domain/stored-object/etag.vo.ts` から `app/backend/domain/shared/etag.vo.ts` に移動される
+2. The ETag 値オブジェクトのテストファイル shall `app/backend/domain/stored-object/etag.vo.test.ts` から `app/backend/domain/shared/etag.vo.test.ts` に移動される
+3. The StoredObjectMetadata エンティティ shall 移動後の `app/backend/domain/shared/etag.vo.ts` から ETag をインポートするように更新される
+4. The Note エンティティ shall `app/backend/domain/shared/etag.vo.ts` から ETag をインポートして使用する
+5. The Note ドメイン shall ETag 値オブジェクトを新規に定義しない
+6. The 既存のインフラ層（D1 リポジトリ等）の ETag インポートパス shall 共有カーネルのパスに更新される
 
 ### Requirement 6: notes テーブルの定義
 
