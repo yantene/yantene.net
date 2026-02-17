@@ -97,7 +97,10 @@ export default function FilesPage(): React.JSX.Element {
             </thead>
             <tbody className="bg-white dark:bg-gray-800">
               {files.map((file) => (
-                <tr key={file.key} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr
+                  key={file.key}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   <td className="px-6 py-4 border-b border-gray-300 dark:border-gray-600 text-sm">
                     {file.key}
                   </td>

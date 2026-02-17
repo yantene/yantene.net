@@ -31,7 +31,9 @@ export class SyncService {
     );
 
     const storageEntries = [...storageMap.values()];
-    const toAdd = storageEntries.filter((obj) => !dbMap.has(obj.objectKey.value));
+    const toAdd = storageEntries.filter(
+      (obj) => !dbMap.has(obj.objectKey.value),
+    );
     const toUpdate = storageEntries.filter((obj) => {
       const dbObj = dbMap.get(obj.objectKey.value);
       return dbObj !== undefined && !obj.etag.equals(dbObj.etag);
@@ -69,6 +71,10 @@ export class SyncService {
       await this.commandRepository.deleteByObjectKey(dbObj.objectKey);
     }
 
-    return { added: toAdd.length, deleted: toDelete.length, updated: toUpdate.length };
+    return {
+      added: toAdd.length,
+      deleted: toDelete.length,
+      updated: toUpdate.length,
+    };
   }
 }

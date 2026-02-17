@@ -112,12 +112,14 @@ This project follows **Dependency Inversion Principle (DIP)** with a clean separ
 Repositories MUST be split into Command (write) and Query (read) following the pattern in the existing codebase.
 
 **File naming**:
+
 - `*.command-repository.interface.ts` — write-only interface in domain layer
 - `*.query-repository.interface.ts` — read-only interface in domain layer
 - `*.command-repository.ts` — Command implementation in infra layer
 - `*.query-repository.ts` — Query implementation in infra layer
 
 **Example**:
+
 ```typescript
 // domain/error-log/error-log.command-repository.interface.ts
 export interface IErrorLogCommandRepository {
@@ -137,19 +139,27 @@ export interface IErrorLogQueryRepository {
 **File naming**: `*.vo.ts` (e.g., `slug.vo.ts`, `log-level.vo.ts`)
 
 **Required structure**:
+
 ```typescript
 export class Slug implements IValueObject<Slug> {
-  private constructor(readonly value: string) {}   // private constructor
+  private constructor(readonly value: string) {} // private constructor
 
-  static create(value: string): Slug {             // factory with validation
+  static create(value: string): Slug {
+    // factory with validation
     if (!Slug.isValid(value)) throw new Error(`Invalid slug: ${value}`);
     return new Slug(value);
   }
 
-  equals(other: Slug): boolean { return this.value === other.value; }
-  toJSON(): string { return this.value; }
+  equals(other: Slug): boolean {
+    return this.value === other.value;
+  }
+  toJSON(): string {
+    return this.value;
+  }
 
-  private static isValid(value: string): boolean { return value.length > 0; }
+  private static isValid(value: string): boolean {
+    return value.length > 0;
+  }
 }
 ```
 
@@ -280,8 +290,8 @@ obj.key = value;
 
 // ✅ Non-destructive (required)
 const newArray = [...array, item];
-const sorted = array.toSorted(compareFn);    // ES2023
-const sliced = array.toSpliced(0, 1);        // ES2023
+const sorted = array.toSorted(compareFn); // ES2023
+const sliced = array.toSpliced(0, 1); // ES2023
 const newObj = { ...obj, key: value };
 ```
 
@@ -292,10 +302,14 @@ Prefer ES2023 non-destructive array methods: `toSorted()`, `toReversed()`, `toSp
 ```typescript
 // ❌ Impure (forbidden)
 let total = 0;
-function addToTotal(n: number): void { total += n; }
+function addToTotal(n: number): void {
+  total += n;
+}
 
 // ✅ Pure (required)
-function add(a: number, b: number): number { return a + b; }
+function add(a: number, b: number): number {
+  return a + b;
+}
 ```
 
 **Declarative style** — Express _what_ to compute, not _how_ to iterate:
@@ -324,6 +338,7 @@ Follow the Red → Green → Refactor cycle for all implementation work:
 3. **Refactor**: Clean up the code while keeping all tests green.
 
 Rules:
+
 - Never write implementation code without a corresponding test written first.
 - Each test must target a single behavior or edge case.
 - Tests are the living specification — if a behavior is not tested, it does not exist.
@@ -368,7 +383,8 @@ try {
   const result = await useCase.execute(key);
   return c.json(result);
 } catch (err) {
-  if (err instanceof ObjectNotFoundError) return c.json({ error: err.message }, 404);
+  if (err instanceof ObjectNotFoundError)
+    return c.json({ error: err.message }, 404);
   throw err;
 }
 ```
