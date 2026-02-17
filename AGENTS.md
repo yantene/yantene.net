@@ -265,6 +265,163 @@ Test files have relaxed rules:
 - Magic numbers allowed
 - Unsafe assignments/member access allowed for mocking
 
+### Functional Programming (Mandatory)
+
+This project enforces functional programming principles throughout.
+
+**Non-destructive operations** — Never mutate existing data structures:
+
+```typescript
+// ❌ Destructive (forbidden)
+array.push(item);
+array.sort(compareFn);
+array.splice(0, 1);
+obj.key = value;
+
+// ✅ Non-destructive (required)
+const newArray = [...array, item];
+const sorted = array.toSorted(compareFn);    // ES2023
+const sliced = array.toSpliced(0, 1);        // ES2023
+const newObj = { ...obj, key: value };
+```
+
+Prefer ES2023 non-destructive array methods: `toSorted()`, `toReversed()`, `toSpliced()`, `with()`.
+
+**Pure functions** — Functions must not produce side effects and must return the same output for the same input:
+
+```typescript
+// ❌ Impure (forbidden)
+let total = 0;
+function addToTotal(n: number): void { total += n; }
+
+// ✅ Pure (required)
+function add(a: number, b: number): number { return a + b; }
+```
+
+**Declarative style** — Express _what_ to compute, not _how_ to iterate:
+
+```typescript
+// ❌ Imperative (avoid)
+const result = [];
+for (const item of items) {
+  if (item.active) result.push(item.value * 2);
+}
+
+// ✅ Declarative (required)
+const result = items
+  .filter((item) => item.active)
+  .map((item) => item.value * 2);
+```
+
+Use `map()`, `filter()`, `reduce()`, `flatMap()` and similar higher-order functions in place of imperative loops wherever practical.
+
+### Test-Driven Development (Mandatory)
+
+Follow the Red → Green → Refactor cycle for all implementation work:
+
+1. **Red**: Write a failing test that captures the desired behavior before writing any implementation code.
+2. **Green**: Write the minimum implementation to make the test pass.
+3. **Refactor**: Clean up the code while keeping all tests green.
+
+Rules:
+- Never write implementation code without a corresponding test written first.
+- Each test must target a single behavior or edge case.
+- Tests are the living specification — if a behavior is not tested, it does not exist.
+
+### Immutability
+
+Use `readonly` on all properties and array types that should not be mutated. Use `as const` for literal values used as constants.
+
+```typescript
+// ✅
+interface Config {
+  readonly baseUrl: string;
+  readonly retries: number;
+}
+
+function process(items: readonly string[]): readonly string[] { ... }
+
+const ALLOWED_EXTENSIONS = ["png", "jpg", "webp"] as const;
+```
+
+Never use `readonly` as a workaround for a design problem — if a property genuinely needs to change, model it as a new value (return a new object).
+
+### Error Handling Strategy
+
+**Domain errors** are modeled as typed classes, not plain `Error`. Define custom error classes in the domain layer:
+
+```typescript
+// domain/stored-object/errors.ts
+export class ObjectNotFoundError extends Error {
+  constructor(objectKey: string) {
+    super(`Object not found: ${objectKey}`);
+    this.name = "ObjectNotFoundError";
+  }
+}
+```
+
+**HTTP mapping** is done exclusively in the handler layer — never inside domain or service code:
+
+```typescript
+// handler
+try {
+  const result = await useCase.execute(key);
+  return c.json(result);
+} catch (err) {
+  if (err instanceof ObjectNotFoundError) return c.json({ error: err.message }, 404);
+  throw err;
+}
+```
+
+Domain and service layers must not import Hono or any HTTP primitives.
+
+### Guard Clauses (Early Return)
+
+Reduce nesting by returning or throwing early instead of wrapping logic in `if` blocks:
+
+```typescript
+// ❌ Nested (avoid)
+function process(user: User | undefined): string {
+  if (user) {
+    if (user.isActive) {
+      return user.name;
+    }
+  }
+  return "";
+}
+
+// ✅ Guard clauses (required)
+function process(user: User | undefined): string {
+  if (!user) return "";
+  if (!user.isActive) return "";
+  return user.name;
+}
+```
+
+### No Boolean Flag Parameters
+
+Boolean arguments hide intent at the call site. Replace them with named options or separate functions:
+
+```typescript
+// ❌ Unclear at call site
+upsert(metadata, true);
+
+// ✅ Named option
+upsert(metadata, { preserveDownloadCount: true });
+
+// ✅ Or separate functions
+insert(metadata);
+update(metadata);
+```
+
+### Single Responsibility
+
+Each function and class must do exactly one thing. When you find yourself writing "and" to describe what a function does, split it.
+
+- Functions: aim for ≤ 20 lines; anything longer is a candidate for extraction.
+- Classes: one reason to change. A repository class must not also contain business logic.
+- Files: one primary export. Co-locate related helpers, but avoid mixing unrelated concerns.
+
 ## Git Workflow
 
 ### Commit Messages and Pull Requests
