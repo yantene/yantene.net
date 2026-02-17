@@ -42,22 +42,22 @@
   - TDD で実装する：create による IUnpersisted 生成、reconstruct による IPersisted 生成、equals の比較動作、toJSON の出力、readonly プロパティの確認を検証するテストを先に書く
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 5.4, 5.5, 11.1, 11.2, 11.3_
 
-- [ ] 4. CQRS リポジトリインターフェースを定義する
-- [ ] 4.1 (P) NoteCommandRepository インターフェースを定義する
+- [x] 4. CQRS リポジトリインターフェースを定義する
+- [x] 4.1 (P) NoteCommandRepository インターフェースを定義する
   - 書き込み専用のリポジトリインターフェースをドメイン層に定義する
   - IUnpersisted 状態の Note を受け取り IPersisted 状態の Note を返す保存メソッドを定義する
   - 指定 id の Note を削除する削除メソッドを定義する
   - インターフェース名・型名にインフラ技術名を含めない
   - _Requirements: 7.1, 7.2, 7.3, 11.1, 11.2, 11.3_
 
-- [ ] 4.2 (P) NoteQueryRepository インターフェースを定義する
+- [x] 4.2 (P) NoteQueryRepository インターフェースを定義する
   - 読み取り専用のリポジトリインターフェースをドメイン層に定義する
   - 全件取得メソッドで IPersisted 状態の Note の readonly 配列を返す
   - スラッグによる検索メソッドで IPersisted 状態の Note または undefined を返す
   - インターフェース名・型名にインフラ技術名を含めない
   - _Requirements: 8.1, 8.2, 8.3, 11.1, 11.2, 11.3_
 
-- [ ] 5. notes テーブルスキーマを定義する
+- [x] 5. notes テーブルスキーマを定義する
   - D1 上の notes テーブルを Drizzle ORM スキーマとして定義する
   - id（テキスト型・主キー）、title（テキスト型・必須）、slug（テキスト型・必須・ユニーク制約）、etag（テキスト型・必須）、imageUrl（テキスト型・必須）、createdAt（instant カスタム型・必須・デフォルト値）、updatedAt（instant カスタム型・必須・デフォルト値）のカラムを含める
   - 既存の instant カスタム型を createdAt / updatedAt に使用する

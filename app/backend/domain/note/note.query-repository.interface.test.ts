@@ -1,0 +1,76 @@
+import { Temporal } from "@js-temporal/polyfill";
+import { describe, expect, it } from "vitest";
+import type { IPersisted } from "../persisted.interface";
+import { ETag } from "../shared/etag.vo";
+import { ImageUrl } from "./image-url.vo";
+import { Note } from "./note.entity";
+import type { INoteQueryRepository } from "./note.query-repository.interface";
+import { NoteSlug } from "./note-slug.vo";
+import { NoteTitle } from "./note-title.vo";
+
+const createPersistedNote = (): Note<IPersisted> =>
+  Note.reconstruct({
+    id: "test-id-1",
+    title: NoteTitle.create("Test Title"),
+    slug: NoteSlug.create("test-slug"),
+    etag: ETag.create("test-etag"),
+    imageUrl: ImageUrl.create("https://example.com/image.png"),
+    createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
+    updatedAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
+  });
+
+const createMockQueryRepository = (
+  notes: readonly Note<IPersisted>[],
+): INoteQueryRepository => ({
+  findAll: async (): Promise<readonly Note<IPersisted>[]> => notes,
+  findBySlug: async (
+    slug: NoteSlug,
+  ): Promise<Note<IPersisted> | undefined> =>
+    notes.find((note) => note.slug.equals(slug)),
+});
+
+describe("INoteQueryRepository", () => {
+  describe("findAll", () => {
+    it("IPersisted 状態の Note の readonly 配列を返す", async () => {
+      const note = createPersistedNote();
+      const repository = createMockQueryRepository([note]);
+
+      const result = await repository.findAll();
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(note);
+    });
+
+    it("Note が存在しない場合は空配列を返す", async () => {
+      const repository = createMockQueryRepository([]);
+
+      const result = await repository.findAll();
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe("findBySlug", () => {
+    it("一致するスラッグの Note を返す", async () => {
+      const note = createPersistedNote();
+      const repository = createMockQueryRepository([note]);
+
+      const result = await repository.findBySlug(
+        NoteSlug.create("test-slug"),
+      );
+
+      expect(result).toBe(note);
+    });
+
+    it("一致するスラッグが存在しない場合は undefined を返す", async () => {
+      const note = createPersistedNote();
+      const repository = createMockQueryRepository([note]);
+
+      const result = await repository.findBySlug(
+        NoteSlug.create("non-existent"),
+      );
+
+      expect(result).toBeUndefined();
+    });
+  });
+});
