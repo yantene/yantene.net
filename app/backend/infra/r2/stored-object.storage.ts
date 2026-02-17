@@ -1,5 +1,5 @@
 import { ContentType } from "../../domain/stored-object/content-type.vo";
-import { ETag } from "../../domain/stored-object/etag.vo";
+import { ETag } from "../../domain/shared/etag.vo";
 import { ObjectKey } from "../../domain/stored-object/object-key.vo";
 import type {
   IStoredObjectStorage,
