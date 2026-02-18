@@ -26,6 +26,8 @@ export class NoteCommandRepository implements INoteCommandRepository {
         slug: note.slug.value,
         etag: note.etag.value,
         imageUrl: note.imageUrl.value,
+        publishedOn: note.publishedOn,
+        lastModifiedOn: note.lastModifiedOn,
         createdAt: now,
         updatedAt: now,
       })

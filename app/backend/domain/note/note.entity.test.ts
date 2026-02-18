@@ -7,11 +7,16 @@ import { NoteTitle } from "./note-title.vo";
 import { Note } from "./note.entity";
 
 describe("Note Entity", () => {
+  const validPublishedOn = Temporal.PlainDate.from("2026-02-17");
+  const validLastModifiedOn = Temporal.PlainDate.from("2026-02-18");
+
   const validParams = {
     title: NoteTitle.create("My First Post"),
     slug: NoteSlug.create("my-first-post"),
     etag: ETag.create('"abc123"'),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    publishedOn: validPublishedOn,
+    lastModifiedOn: validLastModifiedOn,
   };
 
   describe("create()", () => {
@@ -23,6 +28,8 @@ describe("Note Entity", () => {
       expect(note.slug.value).toBe("my-first-post");
       expect(note.etag.value).toBe('"abc123"');
       expect(note.imageUrl.value).toBe("https://example.com/image.png");
+      expect(note.publishedOn.toString()).toBe("2026-02-17");
+      expect(note.lastModifiedOn.toString()).toBe("2026-02-18");
       expect(note.createdAt).toBeUndefined();
       expect(note.updatedAt).toBeUndefined();
     });
@@ -46,6 +53,8 @@ describe("Note Entity", () => {
       expect(note.slug.value).toBe("my-first-post");
       expect(note.etag.value).toBe('"abc123"');
       expect(note.imageUrl.value).toBe("https://example.com/image.png");
+      expect(note.publishedOn.toString()).toBe("2026-02-17");
+      expect(note.lastModifiedOn.toString()).toBe("2026-02-18");
       expect(note.createdAt).toBe(createdAt);
       expect(note.updatedAt).toBe(updatedAt);
     });
@@ -68,6 +77,8 @@ describe("Note Entity", () => {
         slug: NoteSlug.create("different-slug"),
         etag: ETag.create('"def456"'),
         imageUrl: ImageUrl.create("https://example.com/other.png"),
+        publishedOn: Temporal.PlainDate.from("2025-01-01"),
+        lastModifiedOn: Temporal.PlainDate.from("2025-06-15"),
         createdAt: instant,
         updatedAt: instant,
       });
@@ -128,6 +139,8 @@ describe("Note Entity", () => {
       expect(json.slug).toBe("my-first-post");
       expect(json.etag).toBe('"abc123"');
       expect(json.imageUrl).toBe("https://example.com/image.png");
+      expect(json.publishedOn).toBe("2026-02-17");
+      expect(json.lastModifiedOn).toBe("2026-02-18");
       expect(json.createdAt).toBe(createdAt.toString());
       expect(json.updatedAt).toBe(updatedAt.toString());
     });
@@ -142,6 +155,8 @@ describe("Note Entity", () => {
       expect(json.slug).toBe("my-first-post");
       expect(json.etag).toBe('"abc123"');
       expect(json.imageUrl).toBe("https://example.com/image.png");
+      expect(json.publishedOn).toBe("2026-02-17");
+      expect(json.lastModifiedOn).toBe("2026-02-18");
       expect(json.createdAt).toBeUndefined();
       expect(json.updatedAt).toBeUndefined();
     });

@@ -11,6 +11,8 @@ import type { IPersisted } from "../../../domain/persisted.interface";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
 const testInstant = Temporal.Instant.from("2026-01-01T00:00:00Z");
+const testPublishedOn = Temporal.PlainDate.from("2026-02-17");
+const testLastModifiedOn = Temporal.PlainDate.from("2026-02-18");
 
 function createMockDb(): DrizzleD1Database & {
   _mockValues: ReturnType<typeof vi.fn>;
@@ -43,6 +45,8 @@ function createPersistedNote(): Note<IPersisted> {
     slug: NoteSlug.create("test-slug"),
     etag: ETag.create("test-etag"),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    publishedOn: testPublishedOn,
+    lastModifiedOn: testLastModifiedOn,
     createdAt: testInstant,
     updatedAt: testInstant,
   });
@@ -81,6 +85,8 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        publishedOn: testPublishedOn,
+        lastModifiedOn: testLastModifiedOn,
       });
 
       db._mockRun.mockResolvedValue({ rowsAffected: 1 });
@@ -92,6 +98,30 @@ describe("NoteCommandRepository", () => {
       expect(result.slug.toJSON()).toBe("test-slug");
       expect(result.etag.toJSON()).toBe("test-etag");
       expect(result.imageUrl.toJSON()).toBe("https://example.com/image.png");
+      expect(result.publishedOn.toString()).toBe("2026-02-17");
+      expect(result.lastModifiedOn.toString()).toBe("2026-02-18");
+    });
+
+    it("INSERT 時に publishedOn と lastModifiedOn をテーブルに含める", async () => {
+      const unpersistedNote = Note.create({
+        title: NoteTitle.create("Test Title"),
+        slug: NoteSlug.create("test-slug"),
+        etag: ETag.create("test-etag"),
+        imageUrl: ImageUrl.create("https://example.com/image.png"),
+        publishedOn: testPublishedOn,
+        lastModifiedOn: testLastModifiedOn,
+      });
+
+      db._mockRun.mockResolvedValue({ rowsAffected: 1 });
+
+      await repository.save(unpersistedNote);
+
+      expect(db._mockValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          publishedOn: testPublishedOn,
+          lastModifiedOn: testLastModifiedOn,
+        }),
+      );
     });
 
     it("save 後に queryRepository.findBySlug を呼び出して結果を取得する", async () => {
@@ -100,6 +130,8 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        publishedOn: testPublishedOn,
+        lastModifiedOn: testLastModifiedOn,
       });
 
       db._mockRun.mockResolvedValue({ rowsAffected: 1 });
@@ -115,6 +147,8 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        publishedOn: testPublishedOn,
+        lastModifiedOn: testLastModifiedOn,
       });
 
       db._mockRun.mockResolvedValue({ rowsAffected: 1 });

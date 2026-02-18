@@ -16,6 +16,8 @@ describe("INoteCommandRepository", () => {
       slug: NoteSlug.create("test-article"),
       etag: ETag.create("abc123"),
       imageUrl: ImageUrl.create("https://example.com/image.png"),
+      publishedOn: Temporal.PlainDate.from("2026-02-17"),
+      lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
     });
 
   const createPersistedNote = (): Note<IPersisted> =>
@@ -25,6 +27,8 @@ describe("INoteCommandRepository", () => {
       slug: NoteSlug.create("test-article"),
       etag: ETag.create("abc123"),
       imageUrl: ImageUrl.create("https://example.com/image.png"),
+      publishedOn: Temporal.PlainDate.from("2026-02-17"),
+      lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
       createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
       updatedAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
     });

@@ -15,6 +15,8 @@ describe("notes table schema", () => {
     expect(columns).toContain("slug");
     expect(columns).toContain("etag");
     expect(columns).toContain("imageUrl");
+    expect(columns).toContain("publishedOn");
+    expect(columns).toContain("lastModifiedOn");
     expect(columns).toContain("createdAt");
     expect(columns).toContain("updatedAt");
   });
@@ -39,6 +41,16 @@ describe("notes table schema", () => {
 
   it("should have imageUrl as not null text", () => {
     expect(notes.imageUrl.notNull).toBe(true);
+  });
+
+  it("should have publishedOn as not null without default value", () => {
+    expect(notes.publishedOn.notNull).toBe(true);
+    expect(notes.publishedOn.hasDefault).toBe(false);
+  });
+
+  it("should have lastModifiedOn as not null without default value", () => {
+    expect(notes.lastModifiedOn.notNull).toBe(true);
+    expect(notes.lastModifiedOn.hasDefault).toBe(false);
   });
 
   it("should have createdAt with default value", () => {

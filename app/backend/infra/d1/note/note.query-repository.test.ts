@@ -30,6 +30,8 @@ function createMockDb(): DrizzleD1Database & {
 }
 
 const testInstant = Temporal.Instant.from("2026-01-01T00:00:00Z");
+const testPublishedOn = Temporal.PlainDate.from("2026-02-17");
+const testLastModifiedOn = Temporal.PlainDate.from("2026-02-18");
 
 const createDbRow = (): {
   id: string;
@@ -37,6 +39,8 @@ const createDbRow = (): {
   slug: string;
   etag: string;
   imageUrl: string;
+  publishedOn: Temporal.PlainDate;
+  lastModifiedOn: Temporal.PlainDate;
   createdAt: Temporal.Instant;
   updatedAt: Temporal.Instant;
 } => ({
@@ -45,6 +49,8 @@ const createDbRow = (): {
   slug: "test-slug",
   etag: "test-etag",
   imageUrl: "https://example.com/image.png",
+  publishedOn: testPublishedOn,
+  lastModifiedOn: testLastModifiedOn,
   createdAt: testInstant,
   updatedAt: testInstant,
 });
@@ -78,6 +84,8 @@ describe("NoteQueryRepository", () => {
       expect(note.slug.toJSON()).toBe("test-slug");
       expect(note.etag.toJSON()).toBe("test-etag");
       expect(note.imageUrl.toJSON()).toBe("https://example.com/image.png");
+      expect(note.publishedOn.toString()).toBe("2026-02-17");
+      expect(note.lastModifiedOn.toString()).toBe("2026-02-18");
       expect(note.createdAt).toBe(testInstant);
       expect(note.updatedAt).toBe(testInstant);
     });
@@ -123,6 +131,8 @@ describe("NoteQueryRepository", () => {
       expect(note.slug.toJSON()).toBe("test-slug");
       expect(note.etag.toJSON()).toBe("test-etag");
       expect(note.imageUrl.toJSON()).toBe("https://example.com/image.png");
+      expect(note.publishedOn.toString()).toBe("2026-02-17");
+      expect(note.lastModifiedOn.toString()).toBe("2026-02-18");
       expect(note.createdAt).toBe(testInstant);
       expect(note.updatedAt).toBe(testInstant);
     });

@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { instant } from "./custom-types/temporal.custom-type";
+import { instant, plainDate } from "./custom-types/temporal.custom-type";
 
 export const notes = sqliteTable("notes", {
   id: text("id").notNull().primaryKey(),
@@ -8,6 +8,8 @@ export const notes = sqliteTable("notes", {
   slug: text("slug").notNull().unique(),
   etag: text("etag").notNull(),
   imageUrl: text("image_url").notNull(),
+  publishedOn: plainDate("published_on").notNull(),
+  lastModifiedOn: plainDate("last_modified_on").notNull(),
   createdAt: instant("created_at")
     .notNull()
     .default(sql`(unixepoch('subsec'))`),

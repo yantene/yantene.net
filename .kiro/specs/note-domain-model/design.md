@@ -85,63 +85,63 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Choice / Version | Role in Feature | Notes |
-| --- | --- | --- | --- |
-| Backend / Services | TypeScript (strict mode) | エンティティ・VO・リポジトリの型安全な定義 | 既存設定を使用 |
-| Data / Storage | Drizzle ORM + Cloudflare D1 | notes テーブル定義とリポジトリ実装 | `instant` カスタム型を再利用 |
-| Infrastructure / Runtime | Cloudflare Workers | D1 データベースアクセス | 既存の D1 バインディングを使用 |
+| Layer                    | Choice / Version            | Role in Feature                            | Notes                          |
+| ------------------------ | --------------------------- | ------------------------------------------ | ------------------------------ |
+| Backend / Services       | TypeScript (strict mode)    | エンティティ・VO・リポジトリの型安全な定義 | 既存設定を使用                 |
+| Data / Storage           | Drizzle ORM + Cloudflare D1 | notes テーブル定義とリポジトリ実装         | `instant` カスタム型を再利用   |
+| Infrastructure / Runtime | Cloudflare Workers          | D1 データベースアクセス                    | 既存の D1 バインディングを使用 |
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-| --- | --- | --- | --- | --- |
-| 1.1 | IEntity 実装、private コンストラクタ、create / reconstruct | Note Entity | IEntity | - |
-| 1.2 | create で IUnpersisted 状態を返す | Note Entity | - | - |
-| 1.3 | reconstruct で IPersisted 状態を返す | Note Entity | - | - |
-| 1.4 | NoteTitle, NoteSlug, ETag, ImageUrl をプロパティ保持 | Note Entity | - | - |
-| 1.5 | 全プロパティ readonly | Note Entity | - | - |
-| 1.6 | equals メソッド（id 比較 / 参照一致） | Note Entity | IEntity | - |
-| 1.7 | toJSON メソッド | Note Entity | - | - |
-| 2.1 | IValueObject 実装、private コンストラクタ、create | NoteTitle VO | IValueObject | - |
-| 2.2 | 空文字列でエラー | NoteTitle VO | - | - |
-| 2.3 | equals メソッド | NoteTitle VO | IValueObject | - |
-| 2.4 | toJSON メソッド | NoteTitle VO | IValueObject | - |
-| 3.1 | IValueObject 実装、private コンストラクタ、create | NoteSlug VO | IValueObject | - |
-| 3.2 | 空文字列でエラー | NoteSlug VO | - | - |
-| 3.3 | 不正な文字列でエラー | NoteSlug VO | - | - |
-| 3.4 | equals メソッド | NoteSlug VO | IValueObject | - |
-| 3.5 | toJSON メソッド | NoteSlug VO | IValueObject | - |
-| 4.1 | IValueObject 実装、private コンストラクタ、create | ImageUrl VO | IValueObject | - |
-| 4.2 | 空文字列でエラー | ImageUrl VO | - | - |
-| 4.3 | 不正な URL 形式でエラー | ImageUrl VO | - | - |
-| 4.4 | equals メソッド | ImageUrl VO | IValueObject | - |
-| 4.5 | toJSON メソッド | ImageUrl VO | IValueObject | - |
-| 5.1 | ETag VO を domain/shared/ に移動 | ETag VO | - | - |
-| 5.2 | ETag テストファイルも domain/shared/ に移動 | ETag VO Test | - | - |
-| 5.3 | StoredObjectMetadata のインポートパス更新 | StoredObjectMetadata Entity | - | - |
-| 5.4 | Note エンティティが shared/etag.vo からインポート | Note Entity | - | - |
-| 5.5 | ETag VO を新規定義しない | - | - | - |
-| 5.6 | インフラ層の ETag インポートパス更新 | D1 Repositories | - | - |
-| 6.1 | notes テーブルカラム定義 | notes table schema | - | - |
-| 6.2 | instant カスタム型を使用 | notes table schema | - | - |
-| 6.3 | index.ts からエクスポート | notes table schema | - | - |
-| 7.1 | save メソッド（IUnpersisted → IPersisted） | INoteCommandRepository | INoteCommandRepository | Save Flow |
-| 7.2 | delete メソッド | INoteCommandRepository | INoteCommandRepository | - |
-| 7.3 | ドメイン層に配置 | INoteCommandRepository | - | - |
-| 8.1 | findAll メソッド | INoteQueryRepository | INoteQueryRepository | - |
-| 8.2 | findBySlug メソッド | INoteQueryRepository | INoteQueryRepository | - |
-| 8.3 | ドメイン層に配置 | INoteQueryRepository | - | - |
-| 9.1 | INoteCommandRepository を実装 | D1 NoteCommandRepository | INoteCommandRepository | - |
-| 9.2 | infra/d1/note/ に配置 | D1 NoteCommandRepository | - | - |
-| 9.3 | save で insert + IPersisted 返却 | D1 NoteCommandRepository | INoteCommandRepository | Save Flow |
-| 9.4 | delete で notes レコード削除 | D1 NoteCommandRepository | INoteCommandRepository | - |
-| 10.1 | INoteQueryRepository を実装 | D1 NoteQueryRepository | INoteQueryRepository | - |
-| 10.2 | infra/d1/note/ に配置 | D1 NoteQueryRepository | - | - |
-| 10.3 | findAll で全レコード取得 | D1 NoteQueryRepository | INoteQueryRepository | - |
-| 10.4 | findBySlug で該当レコード取得 | D1 NoteQueryRepository | INoteQueryRepository | - |
-| 11.1 | クラス名・型名にインフラ技術名を含まない | 全ドメインコンポーネント | - | - |
-| 11.2 | HTTP プリミティブをインポートしない | 全ドメインコンポーネント | - | - |
-| 11.3 | Drizzle ORM をインポートしない | 全ドメインコンポーネント | - | - |
+| Requirement | Summary                                                    | Components                  | Interfaces             | Flows     |
+| ----------- | ---------------------------------------------------------- | --------------------------- | ---------------------- | --------- |
+| 1.1         | IEntity 実装、private コンストラクタ、create / reconstruct | Note Entity                 | IEntity                | -         |
+| 1.2         | create で IUnpersisted 状態を返す                          | Note Entity                 | -                      | -         |
+| 1.3         | reconstruct で IPersisted 状態を返す                       | Note Entity                 | -                      | -         |
+| 1.4         | NoteTitle, NoteSlug, ETag, ImageUrl をプロパティ保持       | Note Entity                 | -                      | -         |
+| 1.5         | 全プロパティ readonly                                      | Note Entity                 | -                      | -         |
+| 1.6         | equals メソッド（id 比較 / 参照一致）                      | Note Entity                 | IEntity                | -         |
+| 1.7         | toJSON メソッド                                            | Note Entity                 | -                      | -         |
+| 2.1         | IValueObject 実装、private コンストラクタ、create          | NoteTitle VO                | IValueObject           | -         |
+| 2.2         | 空文字列でエラー                                           | NoteTitle VO                | -                      | -         |
+| 2.3         | equals メソッド                                            | NoteTitle VO                | IValueObject           | -         |
+| 2.4         | toJSON メソッド                                            | NoteTitle VO                | IValueObject           | -         |
+| 3.1         | IValueObject 実装、private コンストラクタ、create          | NoteSlug VO                 | IValueObject           | -         |
+| 3.2         | 空文字列でエラー                                           | NoteSlug VO                 | -                      | -         |
+| 3.3         | 不正な文字列でエラー                                       | NoteSlug VO                 | -                      | -         |
+| 3.4         | equals メソッド                                            | NoteSlug VO                 | IValueObject           | -         |
+| 3.5         | toJSON メソッド                                            | NoteSlug VO                 | IValueObject           | -         |
+| 4.1         | IValueObject 実装、private コンストラクタ、create          | ImageUrl VO                 | IValueObject           | -         |
+| 4.2         | 空文字列でエラー                                           | ImageUrl VO                 | -                      | -         |
+| 4.3         | 不正な URL 形式でエラー                                    | ImageUrl VO                 | -                      | -         |
+| 4.4         | equals メソッド                                            | ImageUrl VO                 | IValueObject           | -         |
+| 4.5         | toJSON メソッド                                            | ImageUrl VO                 | IValueObject           | -         |
+| 5.1         | ETag VO を domain/shared/ に移動                           | ETag VO                     | -                      | -         |
+| 5.2         | ETag テストファイルも domain/shared/ に移動                | ETag VO Test                | -                      | -         |
+| 5.3         | StoredObjectMetadata のインポートパス更新                  | StoredObjectMetadata Entity | -                      | -         |
+| 5.4         | Note エンティティが shared/etag.vo からインポート          | Note Entity                 | -                      | -         |
+| 5.5         | ETag VO を新規定義しない                                   | -                           | -                      | -         |
+| 5.6         | インフラ層の ETag インポートパス更新                       | D1 Repositories             | -                      | -         |
+| 6.1         | notes テーブルカラム定義                                   | notes table schema          | -                      | -         |
+| 6.2         | instant カスタム型を使用                                   | notes table schema          | -                      | -         |
+| 6.3         | index.ts からエクスポート                                  | notes table schema          | -                      | -         |
+| 7.1         | save メソッド（IUnpersisted → IPersisted）                 | INoteCommandRepository      | INoteCommandRepository | Save Flow |
+| 7.2         | delete メソッド                                            | INoteCommandRepository      | INoteCommandRepository | -         |
+| 7.3         | ドメイン層に配置                                           | INoteCommandRepository      | -                      | -         |
+| 8.1         | findAll メソッド                                           | INoteQueryRepository        | INoteQueryRepository   | -         |
+| 8.2         | findBySlug メソッド                                        | INoteQueryRepository        | INoteQueryRepository   | -         |
+| 8.3         | ドメイン層に配置                                           | INoteQueryRepository        | -                      | -         |
+| 9.1         | INoteCommandRepository を実装                              | D1 NoteCommandRepository    | INoteCommandRepository | -         |
+| 9.2         | infra/d1/note/ に配置                                      | D1 NoteCommandRepository    | -                      | -         |
+| 9.3         | save で insert + IPersisted 返却                           | D1 NoteCommandRepository    | INoteCommandRepository | Save Flow |
+| 9.4         | delete で notes レコード削除                               | D1 NoteCommandRepository    | INoteCommandRepository | -         |
+| 10.1        | INoteQueryRepository を実装                                | D1 NoteQueryRepository      | INoteQueryRepository   | -         |
+| 10.2        | infra/d1/note/ に配置                                      | D1 NoteQueryRepository      | -                      | -         |
+| 10.3        | findAll で全レコード取得                                   | D1 NoteQueryRepository      | INoteQueryRepository   | -         |
+| 10.4        | findBySlug で該当レコード取得                              | D1 NoteQueryRepository      | INoteQueryRepository   | -         |
+| 11.1        | クラス名・型名にインフラ技術名を含まない                   | 全ドメインコンポーネント    | -                      | -         |
+| 11.2        | HTTP プリミティブをインポートしない                        | 全ドメインコンポーネント    | -                      | -         |
+| 11.3        | Drizzle ORM をインポートしない                             | 全ドメインコンポーネント    | -                      | -         |
 
 ## System Flows
 
@@ -170,26 +170,26 @@ sequenceDiagram
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
-| --- | --- | --- | --- | --- | --- |
-| Note Entity | domain/note | 記事エンティティの定義と永続化状態管理 | 1.1-1.7, 5.1, 5.2, 11.1-11.3 | NoteTitle, NoteSlug, ImageUrl, ETag (P0) | - |
-| NoteTitle VO | domain/note | 記事タイトルのバリデーションとカプセル化 | 2.1-2.4 | - | - |
-| NoteSlug VO | domain/note | URL スラッグのバリデーションとカプセル化 | 3.1-3.5 | - | - |
-| ImageUrl VO | domain/note | 画像 URL のバリデーションとカプセル化 | 4.1-4.5 | - | - |
-| INoteCommandRepository | domain/note | 書き込み専用リポジトリインターフェース | 7.1-7.3, 11.1-11.3 | Note Entity (P0) | Service |
-| INoteQueryRepository | domain/note | 読み取り専用リポジトリインターフェース | 8.1-8.3, 11.1-11.3 | Note Entity, NoteSlug (P0) | Service |
-| notes table schema | infra/d1/schema | D1 上の notes テーブル定義 | 6.1-6.3 | instant custom type (P0) | - |
-| D1 NoteCommandRepository | infra/d1/note | INoteCommandRepository の D1 実装 | 9.1-9.4 | INoteCommandRepository (P0), D1 NoteQueryRepository (P1) | Service |
-| D1 NoteQueryRepository | infra/d1/note | INoteQueryRepository の D1 実装 | 10.1-10.4 | INoteQueryRepository (P0) | Service |
+| Component                | Domain/Layer    | Intent                                   | Req Coverage                 | Key Dependencies                                         | Contracts |
+| ------------------------ | --------------- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------- | --------- |
+| Note Entity              | domain/note     | 記事エンティティの定義と永続化状態管理   | 1.1-1.7, 5.1, 5.2, 11.1-11.3 | NoteTitle, NoteSlug, ImageUrl, ETag (P0)                 | -         |
+| NoteTitle VO             | domain/note     | 記事タイトルのバリデーションとカプセル化 | 2.1-2.4                      | -                                                        | -         |
+| NoteSlug VO              | domain/note     | URL スラッグのバリデーションとカプセル化 | 3.1-3.5                      | -                                                        | -         |
+| ImageUrl VO              | domain/note     | 画像 URL のバリデーションとカプセル化    | 4.1-4.5                      | -                                                        | -         |
+| INoteCommandRepository   | domain/note     | 書き込み専用リポジトリインターフェース   | 7.1-7.3, 11.1-11.3           | Note Entity (P0)                                         | Service   |
+| INoteQueryRepository     | domain/note     | 読み取り専用リポジトリインターフェース   | 8.1-8.3, 11.1-11.3           | Note Entity, NoteSlug (P0)                               | Service   |
+| notes table schema       | infra/d1/schema | D1 上の notes テーブル定義               | 6.1-6.3                      | instant custom type (P0)                                 | -         |
+| D1 NoteCommandRepository | infra/d1/note   | INoteCommandRepository の D1 実装        | 9.1-9.4                      | INoteCommandRepository (P0), D1 NoteQueryRepository (P1) | Service   |
+| D1 NoteQueryRepository   | infra/d1/note   | INoteQueryRepository の D1 実装          | 10.1-10.4                    | INoteQueryRepository (P0)                                | Service   |
 
 ### Domain Layer
 
 #### Note Entity
 
-| Field | Detail |
-| --- | --- |
-| Intent | 記事を表すドメインエンティティ。IPersisted / IUnpersisted ジェネリクスで永続化状態を型レベルで管理する |
-| Requirements | 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 5.1, 5.2, 11.1, 11.2, 11.3 |
+| Field        | Detail                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| Intent       | 記事を表すドメインエンティティ。IPersisted / IUnpersisted ジェネリクスで永続化状態を型レベルで管理する |
+| Requirements | 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 5.1, 5.2, 11.1, 11.2, 11.3                                          |
 
 **Responsibilities & Constraints**
 
@@ -261,10 +261,10 @@ class Note<P extends IPersisted | IUnpersisted> implements IEntity<Note<P>> {
 
 #### NoteTitle Value Object
 
-| Field | Detail |
-| --- | --- |
-| Intent | 記事タイトルをカプセル化し、空文字列バリデーションを行う値オブジェクト |
-| Requirements | 2.1, 2.2, 2.3, 2.4 |
+| Field        | Detail                                                                 |
+| ------------ | ---------------------------------------------------------------------- |
+| Intent       | 記事タイトルをカプセル化し、空文字列バリデーションを行う値オブジェクト |
+| Requirements | 2.1, 2.2, 2.3, 2.4                                                     |
 
 **Responsibilities & Constraints**
 
@@ -296,10 +296,10 @@ class NoteTitle implements IValueObject<NoteTitle> {
 
 #### NoteSlug Value Object
 
-| Field | Detail |
-| --- | --- |
-| Intent | URL スラッグをカプセル化し、URL 安全性のバリデーションを行う値オブジェクト |
-| Requirements | 3.1, 3.2, 3.3, 3.4, 3.5 |
+| Field        | Detail                                                                     |
+| ------------ | -------------------------------------------------------------------------- |
+| Intent       | URL スラッグをカプセル化し、URL 安全性のバリデーションを行う値オブジェクト |
+| Requirements | 3.1, 3.2, 3.3, 3.4, 3.5                                                    |
 
 **Responsibilities & Constraints**
 
@@ -331,10 +331,10 @@ class NoteSlug implements IValueObject<NoteSlug> {
 
 #### ImageUrl Value Object
 
-| Field | Detail |
-| --- | --- |
-| Intent | 画像 URL をカプセル化し、URL 形式のバリデーションを行う値オブジェクト |
-| Requirements | 4.1, 4.2, 4.3, 4.4, 4.5 |
+| Field        | Detail                                                                |
+| ------------ | --------------------------------------------------------------------- |
+| Intent       | 画像 URL をカプセル化し、URL 形式のバリデーションを行う値オブジェクト |
+| Requirements | 4.1, 4.2, 4.3, 4.4, 4.5                                               |
 
 **Responsibilities & Constraints**
 
@@ -366,10 +366,10 @@ class ImageUrl implements IValueObject<ImageUrl> {
 
 #### INoteCommandRepository Interface
 
-| Field | Detail |
-| --- | --- |
-| Intent | Note の書き込み操作（保存・削除）を定義する CQRS コマンドリポジトリインターフェース |
-| Requirements | 7.1, 7.2, 7.3, 11.1, 11.2, 11.3 |
+| Field        | Detail                                                                              |
+| ------------ | ----------------------------------------------------------------------------------- |
+| Intent       | Note の書き込み操作（保存・削除）を定義する CQRS コマンドリポジトリインターフェース |
+| Requirements | 7.1, 7.2, 7.3, 11.1, 11.2, 11.3                                                     |
 
 **Responsibilities & Constraints**
 
@@ -398,10 +398,10 @@ interface INoteCommandRepository {
 
 #### INoteQueryRepository Interface
 
-| Field | Detail |
-| --- | --- |
-| Intent | Note の読み取り操作（全件取得・スラッグ検索）を定義する CQRS クエリリポジトリインターフェース |
-| Requirements | 8.1, 8.2, 8.3, 11.1, 11.2, 11.3 |
+| Field        | Detail                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| Intent       | Note の読み取り操作（全件取得・スラッグ検索）を定義する CQRS クエリリポジトリインターフェース |
+| Requirements | 8.1, 8.2, 8.3, 11.1, 11.2, 11.3                                                               |
 
 **Responsibilities & Constraints**
 
@@ -432,10 +432,10 @@ interface INoteQueryRepository {
 
 #### notes Table Schema
 
-| Field | Detail |
-| --- | --- |
-| Intent | D1 上の notes テーブルを Drizzle ORM スキーマとして定義する |
-| Requirements | 6.1, 6.2, 6.3 |
+| Field        | Detail                                                      |
+| ------------ | ----------------------------------------------------------- |
+| Intent       | D1 上の notes テーブルを Drizzle ORM スキーマとして定義する |
+| Requirements | 6.1, 6.2, 6.3                                               |
 
 **Responsibilities & Constraints**
 
@@ -456,10 +456,10 @@ interface INoteQueryRepository {
 
 #### D1 NoteCommandRepository
 
-| Field | Detail |
-| --- | --- |
-| Intent | INoteCommandRepository の D1 具象実装。Note の保存・削除を D1 データベースに対して実行する |
-| Requirements | 9.1, 9.2, 9.3, 9.4 |
+| Field        | Detail                                                                                     |
+| ------------ | ------------------------------------------------------------------------------------------ |
+| Intent       | INoteCommandRepository の D1 具象実装。Note の保存・削除を D1 データベースに対して実行する |
+| Requirements | 9.1, 9.2, 9.3, 9.4                                                                         |
 
 **Responsibilities & Constraints**
 
@@ -480,10 +480,7 @@ interface INoteQueryRepository {
 
 ```typescript
 class NoteCommandRepository implements INoteCommandRepository {
-  constructor(
-    db: DrizzleD1Database,
-    queryRepository: INoteQueryRepository,
-  );
+  constructor(db: DrizzleD1Database, queryRepository: INoteQueryRepository);
 
   save(note: Note<IUnpersisted>): Promise<Note<IPersisted>>;
   delete(id: string): Promise<void>;
@@ -502,10 +499,10 @@ class NoteCommandRepository implements INoteCommandRepository {
 
 #### D1 NoteQueryRepository
 
-| Field | Detail |
-| --- | --- |
-| Intent | INoteQueryRepository の D1 具象実装。D1 データベースから Note を取得する |
-| Requirements | 10.1, 10.2, 10.3, 10.4 |
+| Field        | Detail                                                                   |
+| ------------ | ------------------------------------------------------------------------ |
+| Intent       | INoteQueryRepository の D1 具象実装。D1 データベースから Note を取得する |
+| Requirements | 10.1, 10.2, 10.3, 10.4                                                   |
 
 **Responsibilities & Constraints**
 
@@ -611,15 +608,15 @@ classDiagram
 
 **notes テーブル定義**:
 
-| Column | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| id | TEXT | PRIMARY KEY, NOT NULL | UUID 形式の一意識別子 |
-| title | TEXT | NOT NULL | 記事タイトル |
-| slug | TEXT | NOT NULL, UNIQUE | URL スラッグ |
-| etag | TEXT | NOT NULL | ETag 値 |
-| image_url | TEXT | NOT NULL | 画像 URL |
-| created_at | REAL | NOT NULL, DEFAULT | 作成日時（epoch 秒、`instant` カスタム型） |
-| updated_at | REAL | NOT NULL, DEFAULT | 更新日時（epoch 秒、`instant` カスタム型） |
+| Column     | Type | Constraints           | Description                                |
+| ---------- | ---- | --------------------- | ------------------------------------------ |
+| id         | TEXT | PRIMARY KEY, NOT NULL | UUID 形式の一意識別子                      |
+| title      | TEXT | NOT NULL              | 記事タイトル                               |
+| slug       | TEXT | NOT NULL, UNIQUE      | URL スラッグ                               |
+| etag       | TEXT | NOT NULL              | ETag 値                                    |
+| image_url  | TEXT | NOT NULL              | 画像 URL                                   |
+| created_at | REAL | NOT NULL, DEFAULT     | 作成日時（epoch 秒、`instant` カスタム型） |
+| updated_at | REAL | NOT NULL, DEFAULT     | 更新日時（epoch 秒、`instant` カスタム型） |
 
 ## Error Handling
 
@@ -631,18 +628,18 @@ classDiagram
 
 **Validation Errors（ドメイン層）**:
 
-| Error | Trigger | Message Format |
-| --- | --- | --- |
-| Invalid NoteTitle | 空文字列 | `Invalid note title: {value}` |
-| Invalid NoteSlug | 空文字列 or 不正フォーマット | `Invalid note slug: {value}` |
-| Invalid ImageUrl | 空文字列 or 不正 URL | `Invalid image url: {value}` |
-| Invalid ETag | 空文字列（既存） | `Invalid etag: {value}` |
+| Error             | Trigger                      | Message Format                |
+| ----------------- | ---------------------------- | ----------------------------- |
+| Invalid NoteTitle | 空文字列                     | `Invalid note title: {value}` |
+| Invalid NoteSlug  | 空文字列 or 不正フォーマット | `Invalid note slug: {value}`  |
+| Invalid ImageUrl  | 空文字列 or 不正 URL         | `Invalid image url: {value}`  |
+| Invalid ETag      | 空文字列（既存）             | `Invalid etag: {value}`       |
 
 **Infrastructure Errors（インフラ層）**:
 
-| Error | Trigger | Handling |
-| --- | --- | --- |
-| Slug 重複 | UNIQUE 制約違反 | D1 データベースエラーとして伝播 |
+| Error     | Trigger             | Handling                                |
+| --------- | ------------------- | --------------------------------------- |
+| Slug 重複 | UNIQUE 制約違反     | D1 データベースエラーとして伝播         |
 | Save 失敗 | INSERT 後の取得失敗 | `Error("Failed to save note")` をスロー |
 
 ## Testing Strategy

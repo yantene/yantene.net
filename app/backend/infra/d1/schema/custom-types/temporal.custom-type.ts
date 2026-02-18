@@ -1,6 +1,21 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { customType } from "drizzle-orm/sqlite-core";
 
+export const plainDate = customType<{
+  data: Temporal.PlainDate;
+  driverData: string;
+}>({
+  dataType(): string {
+    return "text";
+  },
+  toDriver(value: Temporal.PlainDate): string {
+    return value.toString();
+  },
+  fromDriver(value: string): Temporal.PlainDate {
+    return Temporal.PlainDate.from(value);
+  },
+});
+
 export const instant = customType<{
   data: Temporal.Instant;
   driverData: number;

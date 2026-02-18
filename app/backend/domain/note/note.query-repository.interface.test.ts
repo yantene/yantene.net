@@ -1,12 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import type { IPersisted } from "../persisted.interface";
 import { ETag } from "../shared/etag.vo";
 import { ImageUrl } from "./image-url.vo";
-import { Note } from "./note.entity";
-import type { INoteQueryRepository } from "./note.query-repository.interface";
 import { NoteSlug } from "./note-slug.vo";
 import { NoteTitle } from "./note-title.vo";
+import { Note } from "./note.entity";
+import type { INoteQueryRepository } from "./note.query-repository.interface";
+import type { IPersisted } from "../persisted.interface";
 
 const createPersistedNote = (): Note<IPersisted> =>
   Note.reconstruct({
@@ -15,6 +15,8 @@ const createPersistedNote = (): Note<IPersisted> =>
     slug: NoteSlug.create("test-slug"),
     etag: ETag.create("test-etag"),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    publishedOn: Temporal.PlainDate.from("2026-02-17"),
+    lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
     createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
     updatedAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
   });
@@ -23,9 +25,7 @@ const createMockQueryRepository = (
   notes: readonly Note<IPersisted>[],
 ): INoteQueryRepository => ({
   findAll: async (): Promise<readonly Note<IPersisted>[]> => notes,
-  findBySlug: async (
-    slug: NoteSlug,
-  ): Promise<Note<IPersisted> | undefined> =>
+  findBySlug: async (slug: NoteSlug): Promise<Note<IPersisted> | undefined> =>
     notes.find((note) => note.slug.equals(slug)),
 });
 
@@ -55,9 +55,7 @@ describe("INoteQueryRepository", () => {
       const note = createPersistedNote();
       const repository = createMockQueryRepository([note]);
 
-      const result = await repository.findBySlug(
-        NoteSlug.create("test-slug"),
-      );
+      const result = await repository.findBySlug(NoteSlug.create("test-slug"));
 
       expect(result).toBe(note);
     });
