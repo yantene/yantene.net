@@ -451,6 +451,19 @@ Each function and class must do exactly one thing. When you find yourself writin
 - Classes: one reason to change. A repository class must not also contain business logic.
 - Files: one primary export. Co-locate related helpers, but avoid mixing unrelated concerns.
 
+## Quality Gates
+
+Before every commit, run the following checks and fix any issues:
+
+```bash
+pnpm run lint:fix        # Lint and auto-fix
+pnpm run format:fix      # Format with Prettier
+pnpm run typecheck       # TypeScript type checking
+pnpm run test:run        # Run all tests
+```
+
+All four must pass before committing. Do not skip any of these checks.
+
 ## Git Workflow
 
 ### Commit Messages and Pull Requests

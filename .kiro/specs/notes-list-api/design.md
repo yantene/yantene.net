@@ -75,11 +75,11 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Choice / Version | Role in Feature | Notes |
-|-------|-----------------|----------------|-------|
-| Backend / Services | Hono v4 | API ルーティングとリクエスト処理 | 既存の `notesApp` ルートグループを拡張 |
-| Data / Storage | Drizzle ORM + Cloudflare D1 | ページネーション付きクエリ実行 | `offset()` / `limit()` / `orderBy()` / `count()` を使用 |
-| Infrastructure / Runtime | Cloudflare Workers | エッジでの API 実行環境 | 変更なし |
+| Layer                    | Choice / Version            | Role in Feature                  | Notes                                                   |
+| ------------------------ | --------------------------- | -------------------------------- | ------------------------------------------------------- |
+| Backend / Services       | Hono v4                     | API ルーティングとリクエスト処理 | 既存の `notesApp` ルートグループを拡張                  |
+| Data / Storage           | Drizzle ORM + Cloudflare D1 | ページネーション付きクエリ実行   | `offset()` / `limit()` / `orderBy()` / `count()` を使用 |
+| Infrastructure / Runtime | Cloudflare Workers          | エッジでの API 実行環境          | 変更なし                                                |
 
 ## System Flows
 
@@ -117,51 +117,51 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-|-------------|---------|------------|------------|-------|
-| 1.1 | 公開日降順ソート | NoteQueryRepository | INoteQueryRepository.findPaginated | 正常系フロー |
-| 1.2 | レスポンスフィールド | ListNotesUseCase, Handler | NoteListItem | 正常系フロー |
-| 1.3 | HTTP 200 ステータス | Handler | API Contract | 正常系フロー |
-| 1.4 | Content-Type application/json | Handler | API Contract | 正常系フロー |
-| 2.1 | page パラメータ | PaginationParams, NoteQueryRepository | INoteQueryRepository.findPaginated | 正常系フロー |
-| 2.2 | page デフォルト値 | PaginationParams | PaginationParams.create | 正常系フロー |
-| 2.3 | per-page パラメータ | PaginationParams, NoteQueryRepository | INoteQueryRepository.findPaginated | 正常系フロー |
-| 2.4 | per-page デフォルト値 | PaginationParams | PaginationParams.create | 正常系フロー |
-| 2.5 | ページネーションメタデータ | ListNotesUseCase, Handler | PaginatedResult, API Contract | 正常系フロー |
-| 3.1 | page バリデーション | PaginationParams | PaginationParams.create | 異常系フロー |
-| 3.2 | per-page バリデーション | PaginationParams | PaginationParams.create | 異常系フロー |
-| 3.3 | per-page 最大値制限 | PaginationParams | PaginationParams.create | 異常系フロー |
-| 3.4 | 範囲外ページ指定 | ListNotesUseCase, Handler | PaginatedResult | 正常系フロー |
-| 4.1 | レスポンス構造 | Handler | API Contract, NotesListResponse | 正常系フロー |
-| 4.2 | notes フィールド | Handler | NoteListItem | 正常系フロー |
-| 4.3 | pagination フィールド | Handler | PaginationMeta | 正常系フロー |
-| 4.4 | 日付の ISO 8601 形式 | Note Entity (toJSON) | NoteListItem | 正常系フロー |
-| 5.1 | DB エラー時 500 | Handler | ProblemDetails | 異常系フロー |
-| 5.2 | エラーログ出力 | Handler | console.error | 異常系フロー |
-| 5.3 | エラー Content-Type | Handler | API Contract | 異常系フロー |
-| 6.1 | notesApp 統合 | Handler | notesApp.get | - |
-| 6.2 | refresh エンドポイント非影響 | Handler | notesApp | - |
-| 6.3 | 既存リポジトリ活用 | NoteQueryRepository | INoteQueryRepository | - |
+| Requirement | Summary                       | Components                            | Interfaces                         | Flows        |
+| ----------- | ----------------------------- | ------------------------------------- | ---------------------------------- | ------------ |
+| 1.1         | 公開日降順ソート              | NoteQueryRepository                   | INoteQueryRepository.findPaginated | 正常系フロー |
+| 1.2         | レスポンスフィールド          | ListNotesUseCase, Handler             | NoteListItem                       | 正常系フロー |
+| 1.3         | HTTP 200 ステータス           | Handler                               | API Contract                       | 正常系フロー |
+| 1.4         | Content-Type application/json | Handler                               | API Contract                       | 正常系フロー |
+| 2.1         | page パラメータ               | PaginationParams, NoteQueryRepository | INoteQueryRepository.findPaginated | 正常系フロー |
+| 2.2         | page デフォルト値             | PaginationParams                      | PaginationParams.create            | 正常系フロー |
+| 2.3         | per-page パラメータ           | PaginationParams, NoteQueryRepository | INoteQueryRepository.findPaginated | 正常系フロー |
+| 2.4         | per-page デフォルト値         | PaginationParams                      | PaginationParams.create            | 正常系フロー |
+| 2.5         | ページネーションメタデータ    | ListNotesUseCase, Handler             | PaginatedResult, API Contract      | 正常系フロー |
+| 3.1         | page バリデーション           | PaginationParams                      | PaginationParams.create            | 異常系フロー |
+| 3.2         | per-page バリデーション       | PaginationParams                      | PaginationParams.create            | 異常系フロー |
+| 3.3         | per-page 最大値制限           | PaginationParams                      | PaginationParams.create            | 異常系フロー |
+| 3.4         | 範囲外ページ指定              | ListNotesUseCase, Handler             | PaginatedResult                    | 正常系フロー |
+| 4.1         | レスポンス構造                | Handler                               | API Contract, NotesListResponse    | 正常系フロー |
+| 4.2         | notes フィールド              | Handler                               | NoteListItem                       | 正常系フロー |
+| 4.3         | pagination フィールド         | Handler                               | PaginationMeta                     | 正常系フロー |
+| 4.4         | 日付の ISO 8601 形式          | Note Entity (toJSON)                  | NoteListItem                       | 正常系フロー |
+| 5.1         | DB エラー時 500               | Handler                               | ProblemDetails                     | 異常系フロー |
+| 5.2         | エラーログ出力                | Handler                               | console.error                      | 異常系フロー |
+| 5.3         | エラー Content-Type           | Handler                               | API Contract                       | 異常系フロー |
+| 6.1         | notesApp 統合                 | Handler                               | notesApp.get                       | -            |
+| 6.2         | refresh エンドポイント非影響  | Handler                               | notesApp                           | -            |
+| 6.3         | 既存リポジトリ活用            | NoteQueryRepository                   | INoteQueryRepository               | -            |
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
-|-----------|-------------|--------|-------------|-----------------|-----------|
-| PaginationParams | Domain/Note | ページネーションパラメータの検証と保持 | 2.1-2.4, 3.1-3.3 | なし | Service |
-| PaginatedResult | Domain/Note | ページネーション結果の型定義 | 2.5, 4.1, 4.3 | Note Entity (P0) | Service |
-| INoteQueryRepository (拡張) | Domain/Note | ページネーション付きクエリインターフェース | 6.3 | PaginationParams (P0), PaginatedResult (P0) | Service |
-| ListNotesUseCase | Domain/Note | 記事一覧取得のユースケース | 1.1, 1.2, 3.4 | INoteQueryRepository (P0), PaginationParams (P0) | Service |
-| NoteQueryRepository (拡張) | Infra/D1 | ページネーション付きクエリの D1 実装 | 1.1, 2.1-2.4 | Drizzle ORM (P0), notes Table (P0) | Service |
-| Notes List Handler | Handler/API | HTTP リクエスト処理とレスポンス生成 | 1.3, 1.4, 4.1-4.4, 5.1-5.3, 6.1, 6.2 | ListNotesUseCase (P0), PaginationParams (P0) | API |
+| Component                   | Domain/Layer | Intent                                     | Req Coverage                         | Key Dependencies                                 | Contracts |
+| --------------------------- | ------------ | ------------------------------------------ | ------------------------------------ | ------------------------------------------------ | --------- |
+| PaginationParams            | Domain/Note  | ページネーションパラメータの検証と保持     | 2.1-2.4, 3.1-3.3                     | なし                                             | Service   |
+| PaginatedResult             | Domain/Note  | ページネーション結果の型定義               | 2.5, 4.1, 4.3                        | Note Entity (P0)                                 | Service   |
+| INoteQueryRepository (拡張) | Domain/Note  | ページネーション付きクエリインターフェース | 6.3                                  | PaginationParams (P0), PaginatedResult (P0)      | Service   |
+| ListNotesUseCase            | Domain/Note  | 記事一覧取得のユースケース                 | 1.1, 1.2, 3.4                        | INoteQueryRepository (P0), PaginationParams (P0) | Service   |
+| NoteQueryRepository (拡張)  | Infra/D1     | ページネーション付きクエリの D1 実装       | 1.1, 2.1-2.4                         | Drizzle ORM (P0), notes Table (P0)               | Service   |
+| Notes List Handler          | Handler/API  | HTTP リクエスト処理とレスポンス生成        | 1.3, 1.4, 4.1-4.4, 5.1-5.3, 6.1, 6.2 | ListNotesUseCase (P0), PaginationParams (P0)     | API       |
 
 ### Domain Layer
 
 #### PaginationParams (Value Object)
 
-| Field | Detail |
-|-------|--------|
-| Intent | ページネーションクエリパラメータのバリデーションと不変保持 |
-| Requirements | 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3 |
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | ページネーションクエリパラメータのバリデーションと不変保持 |
+| Requirements | 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3                          |
 
 **Responsibilities & Constraints**
 
@@ -216,10 +216,10 @@ class PaginationParams {
 
 #### PaginatedResult (型定義)
 
-| Field | Detail |
-|-------|--------|
-| Intent | ページネーション付き結果の汎用型定義 |
-| Requirements | 2.5, 4.1, 4.3 |
+| Field        | Detail                               |
+| ------------ | ------------------------------------ |
+| Intent       | ページネーション付き結果の汎用型定義 |
+| Requirements | 2.5, 4.1, 4.3                        |
 
 **Responsibilities & Constraints**
 
@@ -257,10 +257,10 @@ type PaginatedResult<T> = {
 
 #### INoteQueryRepository (拡張)
 
-| Field | Detail |
-|-------|--------|
-| Intent | 既存インターフェースにページネーション付きクエリメソッドを追加 |
-| Requirements | 6.3 |
+| Field        | Detail                                                         |
+| ------------ | -------------------------------------------------------------- |
+| Intent       | 既存インターフェースにページネーション付きクエリメソッドを追加 |
+| Requirements | 6.3                                                            |
 
 **Responsibilities & Constraints**
 
@@ -281,7 +281,9 @@ type PaginatedResult<T> = {
 interface INoteQueryRepository {
   findAll(): Promise<readonly Note<IPersisted>[]>;
   findBySlug(slug: NoteSlug): Promise<Note<IPersisted> | undefined>;
-  findPaginated(params: PaginationParams): Promise<PaginatedResult<Note<IPersisted>>>;
+  findPaginated(
+    params: PaginationParams,
+  ): Promise<PaginatedResult<Note<IPersisted>>>;
 }
 ```
 
@@ -291,10 +293,10 @@ interface INoteQueryRepository {
 
 #### ListNotesUseCase
 
-| Field | Detail |
-|-------|--------|
-| Intent | ページネーション付き記事一覧取得のビジネスロジックを実行する |
-| Requirements | 1.1, 1.2, 3.4 |
+| Field        | Detail                                                       |
+| ------------ | ------------------------------------------------------------ |
+| Intent       | ページネーション付き記事一覧取得のビジネスロジックを実行する |
+| Requirements | 1.1, 1.2, 3.4                                                |
 
 **Responsibilities & Constraints**
 
@@ -313,9 +315,7 @@ interface INoteQueryRepository {
 
 ```typescript
 class ListNotesUseCase {
-  constructor(
-    private readonly queryRepository: INoteQueryRepository,
-  ) {}
+  constructor(private readonly queryRepository: INoteQueryRepository) {}
 
   execute(params: PaginationParams): Promise<PaginatedResult<Note<IPersisted>>>;
 }
@@ -334,10 +334,10 @@ class ListNotesUseCase {
 
 #### NoteQueryRepository (拡張)
 
-| Field | Detail |
-|-------|--------|
-| Intent | D1 データベースに対するページネーション付きクエリの実装 |
-| Requirements | 1.1, 2.1, 2.2, 2.3, 2.4 |
+| Field        | Detail                                                  |
+| ------------ | ------------------------------------------------------- |
+| Intent       | D1 データベースに対するページネーション付きクエリの実装 |
+| Requirements | 1.1, 2.1, 2.2, 2.3, 2.4                                 |
 
 **Responsibilities & Constraints**
 
@@ -362,7 +362,9 @@ class NoteQueryRepository implements INoteQueryRepository {
 
   async findAll(): Promise<readonly Note<IPersisted>[]>;
   async findBySlug(slug: NoteSlug): Promise<Note<IPersisted> | undefined>;
-  async findPaginated(params: PaginationParams): Promise<PaginatedResult<Note<IPersisted>>>;
+  async findPaginated(
+    params: PaginationParams,
+  ): Promise<PaginatedResult<Note<IPersisted>>>;
 }
 ```
 
@@ -380,10 +382,10 @@ class NoteQueryRepository implements INoteQueryRepository {
 
 #### Notes List Handler
 
-| Field | Detail |
-|-------|--------|
-| Intent | HTTP リクエストの受信、パラメータバリデーション、レスポンス生成 |
-| Requirements | 1.3, 1.4, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 6.1, 6.2 |
+| Field        | Detail                                                          |
+| ------------ | --------------------------------------------------------------- |
+| Intent       | HTTP リクエストの受信、パラメータバリデーション、レスポンス生成 |
+| Requirements | 1.3, 1.4, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 6.1, 6.2           |
 
 **Responsibilities & Constraints**
 
@@ -406,9 +408,9 @@ class NoteQueryRepository implements INoteQueryRepository {
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-|--------|----------|---------|----------|--------|
-| GET | /api/v1/notes | Query: `page?`, `per-page?` | NotesListResponse (200) | 400 (ProblemDetails), 500 (ProblemDetails) |
+| Method | Endpoint      | Request                     | Response                | Errors                                     |
+| ------ | ------------- | --------------------------- | ----------------------- | ------------------------------------------ |
+| GET    | /api/v1/notes | Query: `page?`, `per-page?` | NotesListResponse (200) | 400 (ProblemDetails), 500 (ProblemDetails) |
 
 **成功レスポンス (200)**:
 
@@ -418,7 +420,7 @@ type NoteListItem = {
   readonly title: string;
   readonly slug: string;
   readonly imageUrl: string;
-  readonly publishedOn: string;   // ISO 8601 (YYYY-MM-DD)
+  readonly publishedOn: string; // ISO 8601 (YYYY-MM-DD)
   readonly lastModifiedOn: string; // ISO 8601 (YYYY-MM-DD)
 };
 
@@ -482,17 +484,17 @@ type ProblemDetails = {
 
 **Note エンティティからレスポンスへのフィールドマッピング**:
 
-| Note Entity Field | Response Field | 変換 |
-|-------------------|---------------|------|
-| `id` | `id` | そのまま |
-| `title.value` | `title` | VO から文字列抽出 |
-| `slug.value` | `slug` | VO から文字列抽出 |
-| `imageUrl.value` | `imageUrl` | VO から文字列抽出 |
-| `publishedOn.toString()` | `publishedOn` | Temporal.PlainDate を ISO 8601 文字列に変換 |
+| Note Entity Field           | Response Field   | 変換                                        |
+| --------------------------- | ---------------- | ------------------------------------------- |
+| `id`                        | `id`             | そのまま                                    |
+| `title.value`               | `title`          | VO から文字列抽出                           |
+| `slug.value`                | `slug`           | VO から文字列抽出                           |
+| `imageUrl.value`            | `imageUrl`       | VO から文字列抽出                           |
+| `publishedOn.toString()`    | `publishedOn`    | Temporal.PlainDate を ISO 8601 文字列に変換 |
 | `lastModifiedOn.toString()` | `lastModifiedOn` | Temporal.PlainDate を ISO 8601 文字列に変換 |
-| `etag` | (除外) | レスポンスに含めない |
-| `createdAt` | (除外) | レスポンスに含めない |
-| `updatedAt` | (除外) | レスポンスに含めない |
+| `etag`                      | (除外)           | レスポンスに含めない                        |
+| `createdAt`                 | (除外)           | レスポンスに含めない                        |
+| `updatedAt`                 | (除外)           | レスポンスに含めない                        |
 
 ## Error Handling
 

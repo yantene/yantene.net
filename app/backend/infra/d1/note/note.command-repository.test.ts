@@ -61,6 +61,7 @@ function createMockQueryRepository(): INoteQueryRepository {
   return {
     findAll: vi.fn(async () => [persistedNote]),
     findBySlug: vi.fn(async () => persistedNote),
+    findPaginated: vi.fn(),
   };
 }
 
