@@ -231,6 +231,9 @@ infra/
 - **Functions**: camelCase or PascalCase (PascalCase for React components)
 - **Types/Interfaces**: PascalCase
 - **Constants (string/number)**: UPPER_CASE or camelCase
+- **URL path segments and query parameters**: kebab-case
+  - ✅ `/api/v1/notes?per-page=20&sort-by=date`
+  - ❌ `/api/v1/notes?per_page=20&sortBy=date`
 
 ### Import Ordering
 

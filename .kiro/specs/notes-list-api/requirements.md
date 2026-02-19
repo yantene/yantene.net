@@ -25,8 +25,8 @@
 
 1. When `page` クエリパラメータが指定された, the Notes List API shall 該当ページの記事一覧を返却する
 2. When `page` クエリパラメータが省略された, the Notes List API shall 1ページ目の記事一覧を返却する
-3. When `per_page` クエリパラメータが指定された, the Notes List API shall 指定された件数分の記事を返却する
-4. When `per_page` クエリパラメータが省略された, the Notes List API shall デフォルトのページサイズ (20件) で記事を返却する
+3. When `per-page` クエリパラメータが指定された, the Notes List API shall 指定された件数分の記事を返却する
+4. When `per-page` クエリパラメータが省略された, the Notes List API shall デフォルトのページサイズ (20件) で記事を返却する
 5. The Notes List API shall レスポンスにページネーションメタデータ (現在のページ番号, 1ページあたりの件数, 総件数, 総ページ数) を含める
 
 ### Requirement 3: ページネーションパラメータのバリデーション
@@ -36,8 +36,8 @@
 #### Acceptance Criteria
 
 1. If `page` パラメータが正の整数でない値を指定された, the Notes List API shall HTTP ステータスコード 400 と RFC 9457 準拠の Problem Details エラーレスポンスを返却する
-2. If `per_page` パラメータが正の整数でない値を指定された, the Notes List API shall HTTP ステータスコード 400 と RFC 9457 準拠の Problem Details エラーレスポンスを返却する
-3. If `per_page` パラメータが許容最大値 (100件) を超えた値を指定された, the Notes List API shall HTTP ステータスコード 400 と RFC 9457 準拠の Problem Details エラーレスポンスを返却する
+2. If `per-page` パラメータが正の整数でない値を指定された, the Notes List API shall HTTP ステータスコード 400 と RFC 9457 準拠の Problem Details エラーレスポンスを返却する
+3. If `per-page` パラメータが許容最大値 (100件) を超えた値を指定された, the Notes List API shall HTTP ステータスコード 400 と RFC 9457 準拠の Problem Details エラーレスポンスを返却する
 4. If `page` パラメータが総ページ数を超える値を指定された, the Notes List API shall 空の記事配列とページネーションメタデータを含むレスポンスを返却する
 
 ### Requirement 4: レスポンス形式
