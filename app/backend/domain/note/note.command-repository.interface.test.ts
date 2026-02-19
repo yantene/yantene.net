@@ -9,6 +9,14 @@ import type { INoteCommandRepository } from "./note.command-repository.interface
 import type { IPersisted } from "../persisted.interface";
 import type { IUnpersisted } from "../unpersisted.interface";
 
+// Type-level test: verify the interface requires upsert and deleteBySlug
+const _typeCheck: INoteCommandRepository = {
+  save: async () => ({}) as Note<IPersisted>,
+  upsert: async () => ({}) as Note<IPersisted>,
+  delete: async () => {},
+  deleteBySlug: async () => {},
+};
+
 describe("INoteCommandRepository", () => {
   const createUnpersistedNote = (): Note<IUnpersisted> =>
     Note.create({
@@ -39,7 +47,10 @@ describe("INoteCommandRepository", () => {
     const repository: INoteCommandRepository = {
       save: async (_note: Note<IUnpersisted>): Promise<Note<IPersisted>> =>
         persistedNote,
+      upsert: async (_note: Note<IUnpersisted>): Promise<Note<IPersisted>> =>
+        persistedNote,
       delete: async (_id: string): Promise<void> => {},
+      deleteBySlug: async (_slug: NoteSlug): Promise<void> => {},
     };
 
     const unpersistedNote = createUnpersistedNote();
@@ -56,9 +67,12 @@ describe("INoteCommandRepository", () => {
     const repository: INoteCommandRepository = {
       save: async (_note: Note<IUnpersisted>): Promise<Note<IPersisted>> =>
         createPersistedNote(),
+      upsert: async (_note: Note<IUnpersisted>): Promise<Note<IPersisted>> =>
+        createPersistedNote(),
       delete: async (id: string): Promise<void> => {
         deletedId = id;
       },
+      deleteBySlug: async (_slug: NoteSlug): Promise<void> => {},
     };
 
     await repository.delete("550e8400-e29b-41d4-a716-446655440000");
