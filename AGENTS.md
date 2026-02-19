@@ -375,7 +375,9 @@ export class ObjectNotFoundError extends Error {
 }
 ```
 
-**HTTP mapping** is done exclusively in the handler layer — never inside domain or service code:
+**HTTP mapping** is done exclusively in the handler layer — never inside domain or service code.
+
+**API error responses** MUST follow [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457) format with `Content-Type: application/problem+json`. Use the shared `ProblemDetails` type defined in `app/lib/types/problem-details.ts`:
 
 ```typescript
 // handler
@@ -384,7 +386,15 @@ try {
   return c.json(result);
 } catch (err) {
   if (err instanceof ObjectNotFoundError)
-    return c.json({ error: err.message }, 404);
+    return c.json(
+      {
+        type: "about:blank",
+        title: "Not Found",
+        status: 404,
+        detail: err.message,
+      } satisfies ProblemDetails,
+      { status: 404, headers: { "Content-Type": "application/problem+json" } },
+    );
   throw err;
 }
 ```
