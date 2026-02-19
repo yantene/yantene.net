@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
+import { ObjectKey } from "../../../domain/shared/object-key.vo";
 import { StoredObjectMetadataCommandRepository } from "../../../infra/d1/stored-object/stored-object-metadata.command-repository";
 import { StoredObjectMetadataQueryRepository } from "../../../infra/d1/stored-object/stored-object-metadata.query-repository";
 import { StoredObjectStorage } from "../../../infra/r2/stored-object.storage";

@@ -20,7 +20,11 @@ function createMockDb(): DrizzleD1Database & {
   _mockWhere: ReturnType<typeof vi.fn>;
 } {
   const mockRun = vi.fn();
-  const mockValues = vi.fn(() => ({ run: mockRun }));
+  const mockOnConflictDoUpdate = vi.fn(() => ({ run: mockRun }));
+  const mockValues = vi.fn(() => ({
+    run: mockRun,
+    onConflictDoUpdate: mockOnConflictDoUpdate,
+  }));
   const mockInsert = vi.fn(() => ({ values: mockValues }));
   const mockWhere = vi.fn(() => ({ run: mockRun }));
   const mockDelete = vi.fn(() => ({ where: mockWhere }));
@@ -75,7 +79,9 @@ describe("NoteCommandRepository", () => {
   it("INoteCommandRepository を実装するクラスである", () => {
     expect(NoteCommandRepository).toBeDefined();
     expect(repository.save).toBeDefined();
+    expect(repository.upsert).toBeDefined();
     expect(repository.delete).toBeDefined();
+    expect(repository.deleteBySlug).toBeDefined();
   });
 
   describe("save()", () => {
@@ -161,11 +167,42 @@ describe("NoteCommandRepository", () => {
     });
   });
 
+  describe("upsert()", () => {
+    it("IUnpersisted 状態の Note を受け取り UPSERT し IPersisted 状態の Note を返す", async () => {
+      const unpersistedNote = Note.create({
+        title: NoteTitle.create("Test Title"),
+        slug: NoteSlug.create("test-slug"),
+        etag: ETag.create("test-etag"),
+        imageUrl: ImageUrl.create("https://example.com/image.png"),
+        publishedOn: testPublishedOn,
+        lastModifiedOn: testLastModifiedOn,
+      });
+
+      db._mockRun.mockResolvedValue({ rowsAffected: 1 });
+
+      const result = await repository.upsert(unpersistedNote);
+
+      expect(result.id).toBe("test-uuid-1234");
+      expect(result.title.toJSON()).toBe("Test Title");
+      expect(result.slug.toJSON()).toBe("test-slug");
+    });
+  });
+
   describe("delete()", () => {
     it("指定された id のレコードを notes テーブルから削除する", async () => {
       db._mockRun.mockResolvedValue({ rowsAffected: 1 });
 
       await repository.delete("test-uuid-1234");
+
+      expect(db._mockRun).toHaveBeenCalled();
+    });
+  });
+
+  describe("deleteBySlug()", () => {
+    it("指定された slug のレコードを notes テーブルから削除する", async () => {
+      db._mockRun.mockResolvedValue({ rowsAffected: 1 });
+
+      await repository.deleteBySlug(NoteSlug.create("test-slug"));
 
       expect(db._mockRun).toHaveBeenCalled();
     });

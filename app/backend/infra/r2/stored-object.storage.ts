@@ -1,11 +1,11 @@
+import { ContentType } from "../../domain/shared/content-type.vo";
 import { ETag } from "../../domain/shared/etag.vo";
-import { ContentType } from "../../domain/stored-object/content-type.vo";
-import { ObjectKey } from "../../domain/stored-object/object-key.vo";
+import { ObjectKey } from "../../domain/shared/object-key.vo";
 import type {
   IStoredObjectStorage,
   StoredObjectContent,
   StoredObjectListItem,
-} from "../../domain/stored-object/stored-object-storage.interface";
+} from "../../domain/shared/object-storage.interface";
 
 export class StoredObjectStorage implements IStoredObjectStorage {
   constructor(private readonly r2: R2Bucket) {}

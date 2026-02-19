@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
+import { ContentType } from "../../../domain/shared/content-type.vo";
 import { ETag } from "../../../domain/shared/etag.vo";
-import { ContentType } from "../../../domain/stored-object/content-type.vo";
-import { ObjectKey } from "../../../domain/stored-object/object-key.vo";
+import { ObjectKey } from "../../../domain/shared/object-key.vo";
 import { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";
 import { fileDownloadCounts } from "../schema/file-download-counts.table";
 import { objectStorageFileMetadata } from "../schema/object-storage-file-metadata.table";

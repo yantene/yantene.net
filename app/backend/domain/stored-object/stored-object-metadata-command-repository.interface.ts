@@ -1,6 +1,6 @@
 import type { IPersisted } from "../persisted.interface";
+import type { ObjectKey } from "../shared/object-key.vo";
 import type { IUnpersisted } from "../unpersisted.interface";
-import type { ObjectKey } from "./object-key.vo";
 import type { StoredObjectMetadata } from "./stored-object-metadata.entity";
 
 export interface IStoredObjectMetadataCommandRepository {

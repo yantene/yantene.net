@@ -1,9 +1,9 @@
 import type { IEntity } from "../entity.interface";
 import type { IPersisted } from "../persisted.interface";
-import type { IUnpersisted } from "../unpersisted.interface";
-import type { ContentType } from "./content-type.vo";
-import type { ObjectKey } from "./object-key.vo";
+import type { ContentType } from "../shared/content-type.vo";
 import type { ETag } from "../shared/etag.vo";
+import type { ObjectKey } from "../shared/object-key.vo";
+import type { IUnpersisted } from "../unpersisted.interface";
 import type { Temporal } from "@js-temporal/polyfill";
 
 export class StoredObjectMetadata<

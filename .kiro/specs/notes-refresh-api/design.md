@@ -88,13 +88,13 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Choice / Version | Role in Feature | Notes |
-| --- | --- | --- | --- |
-| Backend / Services | Hono v4, TypeScript | API ハンドラ、サービス層 | 既存パターン準拠 |
-| Data / Storage | Cloudflare D1 (Drizzle ORM) | notes テーブルの CRUD | 既存スキーマ利用 |
-| Data / Storage | Cloudflare R2 | Markdown ファイルの読み取り | 新規バインディング `NOTES_R2` |
-| Library | unified, remark-parse, remark-frontmatter, vfile-matter | YAML frontmatter パース | 新規依存。将来の Markdown AST 活用に対応 |
-| Library | @js-temporal/polyfill | 日付処理 | 既存依存 |
+| Layer              | Choice / Version                                        | Role in Feature             | Notes                                    |
+| ------------------ | ------------------------------------------------------- | --------------------------- | ---------------------------------------- |
+| Backend / Services | Hono v4, TypeScript                                     | API ハンドラ、サービス層    | 既存パターン準拠                         |
+| Data / Storage     | Cloudflare D1 (Drizzle ORM)                             | notes テーブルの CRUD       | 既存スキーマ利用                         |
+| Data / Storage     | Cloudflare R2                                           | Markdown ファイルの読み取り | 新規バインディング `NOTES_R2`            |
+| Library            | unified, remark-parse, remark-frontmatter, vfile-matter | YAML frontmatter パース     | 新規依存。将来の Markdown AST 活用に対応 |
+| Library            | @js-temporal/polyfill                                   | 日付処理                    | 既存依存                                 |
 
 ## System Flows
 
@@ -150,52 +150,52 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-| --- | --- | --- | --- | --- |
-| 1.1 | R2 から全 Markdown ファイル一覧取得 | NoteObjectStorage | INoteObjectStorage.list() | 記事再構築処理フロー |
-| 1.2 | オブジェクトキーと etag の一覧返却 | NoteObjectStorage | INoteObjectStorage.list() | 記事再構築処理フロー |
-| 1.3 | R2 バケット空の場合は空一覧 | NoteObjectStorage | INoteObjectStorage.list() | 記事再構築処理フロー |
-| 2.1 | YAML frontmatter からメタデータパース | parseNoteContent | parseNoteContent() | 記事再構築処理フロー |
-| 2.2 | ファイル名 (拡張子除く) を slug として使用 | NotesRefreshService | INoteObjectStorage.list() | 記事再構築処理フロー |
-| 2.3 | パースエラー時にエラー発生 | parseNoteContent | parseNoteContent() | 記事再構築処理フロー |
-| 2.4 | 必須メタデータ欠落時にバリデーションエラー | parseNoteContent | parseNoteContent() | 記事再構築処理フロー |
-| 3.1 | D1 から全レコードの slug と etag 取得 | NoteQueryRepository | INoteQueryRepository.findAll() | 記事再構築処理フロー |
-| 3.2 | R2 にあり D1 にない slug を追加対象として検出 | NotesRefreshService | -- | 記事再構築処理フロー |
-| 3.3 | etag 不一致の slug を更新対象として検出 | NotesRefreshService | -- | 記事再構築処理フロー |
-| 3.4 | D1 にあり R2 にない slug を削除対象として検出 | NotesRefreshService | -- | 記事再構築処理フロー |
-| 3.5 | etag 一致の slug をスキップ | NotesRefreshService | -- | 記事再構築処理フロー |
-| 4.1 | 追加対象の R2 本文取得とパース | NotesRefreshService | INoteObjectStorage.get(), parseNoteContent() | 記事再構築処理フロー |
-| 4.2 | パース成功時に Note 生成し D1 保存 | NotesRefreshService, NoteCommandRepository | INoteCommandRepository.upsert() | 記事再構築処理フロー |
-| 4.3 | slug, title, imageUrl, publishedOn, lastModifiedOn, etag を含めて保存 | Note Entity | INoteCommandRepository.upsert() | 記事再構築処理フロー |
-| 5.1 | 更新対象の R2 本文取得と再パース | NotesRefreshService | INoteObjectStorage.get(), parseNoteContent() | 記事再構築処理フロー |
-| 5.2 | 既存レコードのメタデータと etag を更新 | NotesRefreshService, NoteCommandRepository | INoteCommandRepository.upsert() | 記事再構築処理フロー |
-| 6.1 | 削除対象のレコードを D1 から削除 | NoteCommandRepository | INoteCommandRepository.deleteBySlug() | 記事再構築処理フロー |
-| 7.1 | POST /api/v1/notes/refresh で処理実行 | NotesRefreshHandler | -- | 記事再構築処理フロー |
-| 7.2 | 成功時に追加・更新・削除件数を返却 | NotesRefreshHandler | -- | 記事再構築処理フロー |
-| 7.3 | エラー時にステータス 500 で返却 | NotesRefreshHandler | -- | 記事再構築処理フロー |
-| 8.1 | 同期結果として added, updated, deleted を返却 | NotesRefreshService | RefreshResult 型 | 記事再構築処理フロー |
-| 8.2 | 変更なしの場合は全件数 0 | NotesRefreshService | RefreshResult 型 | 記事再構築処理フロー |
+| Requirement | Summary                                                               | Components                                 | Interfaces                                   | Flows                |
+| ----------- | --------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------- | -------------------- |
+| 1.1         | R2 から全 Markdown ファイル一覧取得                                   | NoteObjectStorage                          | INoteObjectStorage.list()                    | 記事再構築処理フロー |
+| 1.2         | オブジェクトキーと etag の一覧返却                                    | NoteObjectStorage                          | INoteObjectStorage.list()                    | 記事再構築処理フロー |
+| 1.3         | R2 バケット空の場合は空一覧                                           | NoteObjectStorage                          | INoteObjectStorage.list()                    | 記事再構築処理フロー |
+| 2.1         | YAML frontmatter からメタデータパース                                 | parseNoteContent                           | parseNoteContent()                           | 記事再構築処理フロー |
+| 2.2         | ファイル名 (拡張子除く) を slug として使用                            | NotesRefreshService                        | INoteObjectStorage.list()                    | 記事再構築処理フロー |
+| 2.3         | パースエラー時にエラー発生                                            | parseNoteContent                           | parseNoteContent()                           | 記事再構築処理フロー |
+| 2.4         | 必須メタデータ欠落時にバリデーションエラー                            | parseNoteContent                           | parseNoteContent()                           | 記事再構築処理フロー |
+| 3.1         | D1 から全レコードの slug と etag 取得                                 | NoteQueryRepository                        | INoteQueryRepository.findAll()               | 記事再構築処理フロー |
+| 3.2         | R2 にあり D1 にない slug を追加対象として検出                         | NotesRefreshService                        | --                                           | 記事再構築処理フロー |
+| 3.3         | etag 不一致の slug を更新対象として検出                               | NotesRefreshService                        | --                                           | 記事再構築処理フロー |
+| 3.4         | D1 にあり R2 にない slug を削除対象として検出                         | NotesRefreshService                        | --                                           | 記事再構築処理フロー |
+| 3.5         | etag 一致の slug をスキップ                                           | NotesRefreshService                        | --                                           | 記事再構築処理フロー |
+| 4.1         | 追加対象の R2 本文取得とパース                                        | NotesRefreshService                        | INoteObjectStorage.get(), parseNoteContent() | 記事再構築処理フロー |
+| 4.2         | パース成功時に Note 生成し D1 保存                                    | NotesRefreshService, NoteCommandRepository | INoteCommandRepository.upsert()              | 記事再構築処理フロー |
+| 4.3         | slug, title, imageUrl, publishedOn, lastModifiedOn, etag を含めて保存 | Note Entity                                | INoteCommandRepository.upsert()              | 記事再構築処理フロー |
+| 5.1         | 更新対象の R2 本文取得と再パース                                      | NotesRefreshService                        | INoteObjectStorage.get(), parseNoteContent() | 記事再構築処理フロー |
+| 5.2         | 既存レコードのメタデータと etag を更新                                | NotesRefreshService, NoteCommandRepository | INoteCommandRepository.upsert()              | 記事再構築処理フロー |
+| 6.1         | 削除対象のレコードを D1 から削除                                      | NoteCommandRepository                      | INoteCommandRepository.deleteBySlug()        | 記事再構築処理フロー |
+| 7.1         | POST /api/v1/notes/refresh で処理実行                                 | NotesRefreshHandler                        | --                                           | 記事再構築処理フロー |
+| 7.2         | 成功時に追加・更新・削除件数を返却                                    | NotesRefreshHandler                        | --                                           | 記事再構築処理フロー |
+| 7.3         | エラー時にステータス 500 で返却                                       | NotesRefreshHandler                        | --                                           | 記事再構築処理フロー |
+| 8.1         | 同期結果として added, updated, deleted を返却                         | NotesRefreshService                        | RefreshResult 型                             | 記事再構築処理フロー |
+| 8.2         | 変更なしの場合は全件数 0                                              | NotesRefreshService                        | RefreshResult 型                             | 記事再構築処理フロー |
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
-| --- | --- | --- | --- | --- | --- |
-| INoteObjectStorage | Domain (note) | Notes 用 R2 バケットへのアクセスインタフェース | 1.1, 1.2, 1.3 | -- | Service |
-| NoteObjectStorage | Infra (r2) | INoteObjectStorage の R2 実装 | 1.1, 1.2, 1.3 | NOTES_R2 バインディング (P0) | Service |
-| parseNoteContent | Domain (note) | YAML frontmatter パース関数 (unified/remark 使用) | 2.1, 2.2, 2.3, 2.4 | unified + remark-parse + remark-frontmatter + vfile-matter | -- |
-| NotesRefreshService | Service | R2/D1 突合と同期オーケストレーション | 3.1-3.5, 4.1-4.3, 5.1-5.2, 6.1, 8.1-8.2 | INoteObjectStorage (P0), INoteQueryRepository (P0), INoteCommandRepository (P0), parseNoteContent | Service |
-| INoteCommandRepository (拡張) | Domain (note) | upsert, deleteBySlug メソッドの追加 | 4.2, 5.2, 6.1 | -- | Service |
-| NoteCommandRepository (拡張) | Infra (d1/note) | 拡張インタフェースの D1 実装 | 4.2, 5.2, 6.1 | D1 バインディング (P0) | Service |
-| NotesRefreshHandler | Handler (api) | API エンドポイント定義と DI | 7.1, 7.2, 7.3 | NotesRefreshService (P0) | API |
+| Component                     | Domain/Layer    | Intent                                            | Req Coverage                            | Key Dependencies                                                                                  | Contracts |
+| ----------------------------- | --------------- | ------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
+| INoteObjectStorage            | Domain (note)   | Notes 用 R2 バケットへのアクセスインタフェース    | 1.1, 1.2, 1.3                           | --                                                                                                | Service   |
+| NoteObjectStorage             | Infra (r2)      | INoteObjectStorage の R2 実装                     | 1.1, 1.2, 1.3                           | NOTES_R2 バインディング (P0)                                                                      | Service   |
+| parseNoteContent              | Domain (note)   | YAML frontmatter パース関数 (unified/remark 使用) | 2.1, 2.2, 2.3, 2.4                      | unified + remark-parse + remark-frontmatter + vfile-matter                                        | --        |
+| NotesRefreshService           | Service         | R2/D1 突合と同期オーケストレーション              | 3.1-3.5, 4.1-4.3, 5.1-5.2, 6.1, 8.1-8.2 | INoteObjectStorage (P0), INoteQueryRepository (P0), INoteCommandRepository (P0), parseNoteContent | Service   |
+| INoteCommandRepository (拡張) | Domain (note)   | upsert, deleteBySlug メソッドの追加               | 4.2, 5.2, 6.1                           | --                                                                                                | Service   |
+| NoteCommandRepository (拡張)  | Infra (d1/note) | 拡張インタフェースの D1 実装                      | 4.2, 5.2, 6.1                           | D1 バインディング (P0)                                                                            | Service   |
+| NotesRefreshHandler           | Handler (api)   | API エンドポイント定義と DI                       | 7.1, 7.2, 7.3                           | NotesRefreshService (P0)                                                                          | API       |
 
 ### Domain Layer
 
 #### INoteObjectStorage
 
-| Field | Detail |
-| --- | --- |
-| Intent | Notes 用 R2 バケットからの Markdown ファイル一覧取得・個別取得 |
-| Requirements | 1.1, 1.2, 1.3, 4.1, 5.1 |
+| Field        | Detail                                                         |
+| ------------ | -------------------------------------------------------------- |
+| Intent       | Notes 用 R2 バケットからの Markdown ファイル一覧取得・個別取得 |
+| Requirements | 1.1, 1.2, 1.3, 4.1, 5.1                                        |
 
 **Responsibilities & Constraints**
 
@@ -243,10 +243,10 @@ interface INoteObjectStorage {
 
 #### parseNoteContent (パース関数)
 
-| Field | Detail |
-| --- | --- |
-| Intent | Markdown テキストの YAML frontmatter からメタデータをパースする |
-| Requirements | 2.1, 2.2, 2.3, 2.4 |
+| Field        | Detail                                                          |
+| ------------ | --------------------------------------------------------------- |
+| Intent       | Markdown テキストの YAML frontmatter からメタデータをパースする |
+| Requirements | 2.1, 2.2, 2.3, 2.4                                              |
 
 **Responsibilities & Constraints**
 
@@ -289,10 +289,10 @@ function parseNoteContent(content: string, slug: NoteSlug): NoteMetadata;
 
 #### INoteCommandRepository (拡張)
 
-| Field | Detail |
-| --- | --- |
-| Intent | Note の永続化操作に upsert と slug ベース削除を追加 |
-| Requirements | 4.2, 4.3, 5.2, 6.1 |
+| Field        | Detail                                              |
+| ------------ | --------------------------------------------------- |
+| Intent       | Note の永続化操作に upsert と slug ベース削除を追加 |
+| Requirements | 4.2, 4.3, 5.2, 6.1                                  |
 
 **Responsibilities & Constraints**
 
@@ -332,9 +332,9 @@ interface INoteCommandRepository {
 
 #### NotesRefreshService
 
-| Field | Detail |
-| --- | --- |
-| Intent | R2/D1 の突合処理と同期オーケストレーションを実行する |
+| Field        | Detail                                                          |
+| ------------ | --------------------------------------------------------------- |
+| Intent       | R2/D1 の突合処理と同期オーケストレーションを実行する            |
 | Requirements | 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 5.1, 5.2, 6.1, 8.1, 8.2 |
 
 **Responsibilities & Constraints**
@@ -392,10 +392,10 @@ class NotesRefreshService {
 
 #### NotesRefreshHandler
 
-| Field | Detail |
-| --- | --- |
-| Intent | POST /api/v1/notes/refresh エンドポイントの定義と DI の実行 |
-| Requirements | 7.1, 7.2, 7.3 |
+| Field        | Detail                                                      |
+| ------------ | ----------------------------------------------------------- |
+| Intent       | POST /api/v1/notes/refresh エンドポイントの定義と DI の実行 |
+| Requirements | 7.1, 7.2, 7.3                                               |
 
 **Responsibilities & Constraints**
 
@@ -414,9 +414,9 @@ class NotesRefreshService {
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-| --- | --- | --- | --- | --- |
-| POST | /api/v1/notes/refresh | (empty body) | NotesRefreshResponse | 500 |
+| Method | Endpoint              | Request      | Response             | Errors |
+| ------ | --------------------- | ------------ | -------------------- | ------ |
+| POST   | /api/v1/notes/refresh | (empty body) | NotesRefreshResponse | 500    |
 
 **Response Schema (200)**:
 
@@ -476,17 +476,17 @@ type ErrorResponse = {
 
 **notes テーブル**:
 
-| Column | Type | Constraints | Description |
-| --- | --- | --- | --- |
-| id | TEXT | PK, NOT NULL | UUID |
-| title | TEXT | NOT NULL | 記事タイトル |
-| slug | TEXT | NOT NULL, UNIQUE | ファイル名由来のスラグ |
-| etag | TEXT | NOT NULL | R2 オブジェクトの ETag |
-| image_url | TEXT | NOT NULL | 記事画像 URL |
-| published_on | TEXT | NOT NULL | 公開日 (PlainDate) |
-| last_modified_on | TEXT | NOT NULL | 最終更新日 (PlainDate) |
-| created_at | REAL | NOT NULL, DEFAULT | 作成日時 (Instant) |
-| updated_at | REAL | NOT NULL, DEFAULT | 更新日時 (Instant) |
+| Column           | Type | Constraints       | Description            |
+| ---------------- | ---- | ----------------- | ---------------------- |
+| id               | TEXT | PK, NOT NULL      | UUID                   |
+| title            | TEXT | NOT NULL          | 記事タイトル           |
+| slug             | TEXT | NOT NULL, UNIQUE  | ファイル名由来のスラグ |
+| etag             | TEXT | NOT NULL          | R2 オブジェクトの ETag |
+| image_url        | TEXT | NOT NULL          | 記事画像 URL           |
+| published_on     | TEXT | NOT NULL          | 公開日 (PlainDate)     |
+| last_modified_on | TEXT | NOT NULL          | 最終更新日 (PlainDate) |
+| created_at       | REAL | NOT NULL, DEFAULT | 作成日時 (Instant)     |
+| updated_at       | REAL | NOT NULL, DEFAULT | 更新日時 (Instant)     |
 
 **整合性**:
 

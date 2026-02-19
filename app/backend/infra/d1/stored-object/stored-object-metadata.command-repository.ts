@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { fileDownloadCounts } from "../schema/file-download-counts.table";
 import { objectStorageFileMetadata } from "../schema/object-storage-file-metadata.table";
 import type { IPersisted } from "../../../domain/persisted.interface";
-import type { ObjectKey } from "../../../domain/stored-object/object-key.vo";
+import type { ObjectKey } from "../../../domain/shared/object-key.vo";
 import type { IStoredObjectMetadataCommandRepository } from "../../../domain/stored-object/stored-object-metadata-command-repository.interface";
 import type { IStoredObjectMetadataQueryRepository } from "../../../domain/stored-object/stored-object-metadata-query-repository.interface";
 import type { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";

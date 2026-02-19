@@ -19,6 +19,9 @@ export class NoteSlug implements IValueObject<NoteSlug> {
   }
 
   private static isValid(value: string): boolean {
-    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+    if (value.length === 0) return false;
+    if (value.startsWith("-") || value.endsWith("-")) return false;
+    if (value.includes("--")) return false;
+    return /^[a-z0-9-]+$/.test(value);
   }
 }

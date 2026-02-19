@@ -69,10 +69,10 @@
 
 ## Architecture Pattern Evaluation
 
-| Option | Description | Strengths | Risks / Limitations | Notes |
-| --- | --- | --- | --- | --- |
-| SyncService 拡張パターン | 既存 SyncService と同構造で NotesRefreshService を新規作成 | 一貫したパターン、既存テストを参考にできる | R2 からの本文取得が追加フェーズとなり I/O 増 | 採用: steering の既存パターン準拠 |
-| 汎用 SyncService 抽象化 | SyncService をジェネリクスで抽象化し Note/StoredObject 両方を統一 | コード重複削減 | 抽象化コストが高く、ドメイン固有ロジック (frontmatter) の差異が大きい | 不採用: 過剰抽象化 |
+| Option                   | Description                                                       | Strengths                                  | Risks / Limitations                                                   | Notes                             |
+| ------------------------ | ----------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------- | --------------------------------- |
+| SyncService 拡張パターン | 既存 SyncService と同構造で NotesRefreshService を新規作成        | 一貫したパターン、既存テストを参考にできる | R2 からの本文取得が追加フェーズとなり I/O 増                          | 採用: steering の既存パターン準拠 |
+| 汎用 SyncService 抽象化  | SyncService をジェネリクスで抽象化し Note/StoredObject 両方を統一 | コード重複削減                             | 抽象化コストが高く、ドメイン固有ロジック (frontmatter) の差異が大きい | 不採用: 過剰抽象化                |
 
 ## Design Decisions
 
