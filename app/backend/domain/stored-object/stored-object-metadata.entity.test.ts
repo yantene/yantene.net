@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
+import { ETag } from "../shared/etag.vo";
 import { ContentType } from "./content-type.vo";
-import { ETag } from "./etag.vo";
 import { ObjectKey } from "./object-key.vo";
 import { StoredObjectMetadata } from "./stored-object-metadata.entity";
 

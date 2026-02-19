@@ -1,6 +1,6 @@
 import type { ContentType } from "./content-type.vo";
-import type { ETag } from "./etag.vo";
 import type { ObjectKey } from "./object-key.vo";
+import type { ETag } from "../shared/etag.vo";
 
 export type StoredObjectContent = {
   body: ReadableStream;
