@@ -172,6 +172,33 @@ describe("resolveImageUrls", () => {
     expect(originalImage.url).toBe("photo.png");
   });
 
+  it("'./' プレフィックス付きの相対パスを正規化して変換する", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "image",
+              url: "./hero.png",
+              alt: "Hero",
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = resolveImageUrls(tree, slug);
+
+    const paragraph = result.children[0];
+    if (paragraph.type !== "paragraph") throw new Error("unexpected");
+    const image = paragraph.children[0];
+    if (image.type !== "image") throw new Error("unexpected");
+
+    expect(image.url).toBe("/api/v1/notes/my-article/assets/hero.png");
+  });
+
   it("複数の image ノードを含むツリーですべて変換する", () => {
     const tree: Root = {
       type: "root",

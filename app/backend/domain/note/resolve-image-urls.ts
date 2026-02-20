@@ -5,8 +5,11 @@ import type { Image, Root } from "mdast";
 const isAbsoluteUrl = (url: string): boolean =>
   url.startsWith("http://") || url.startsWith("https://");
 
+const normalizePath = (path: string): string =>
+  path.startsWith("./") ? path.slice(2) : path;
+
 const toAssetApiUrl = (slug: NoteSlug, relativePath: string): string =>
-  `/api/v1/notes/${slug.value}/assets/${relativePath}`;
+  `/api/v1/notes/${slug.value}/assets/${normalizePath(relativePath)}`;
 
 export function resolveImageUrls(tree: Root, slug: NoteSlug): Root {
   const cloned = structuredClone(tree);
