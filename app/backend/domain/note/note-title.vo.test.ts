@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { InvalidNoteTitleError } from "./errors";
 import { NoteTitle } from "./note-title.vo";
 
 describe("NoteTitle Value Object", () => {
@@ -22,7 +23,7 @@ describe("NoteTitle Value Object", () => {
     });
 
     it("should throw an error for an empty string", () => {
-      expect(() => NoteTitle.create("")).toThrow("Invalid note title: ");
+      expect(() => NoteTitle.create("")).toThrow(InvalidNoteTitleError);
     });
   });
 

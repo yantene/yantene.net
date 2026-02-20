@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { InvalidNoteSlugError } from "./errors";
 import { NoteSlug } from "./note-slug.vo";
 
 describe("NoteSlug Value Object", () => {
@@ -34,60 +35,56 @@ describe("NoteSlug Value Object", () => {
     });
 
     it("should throw an error for an empty string", () => {
-      expect(() => NoteSlug.create("")).toThrow("Invalid note slug: ");
+      expect(() => NoteSlug.create("")).toThrow(InvalidNoteSlugError);
     });
 
     it("should throw an error for a string with uppercase letters", () => {
       expect(() => NoteSlug.create("Hello-World")).toThrow(
-        "Invalid note slug: Hello-World",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string with spaces", () => {
       expect(() => NoteSlug.create("hello world")).toThrow(
-        "Invalid note slug: hello world",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string starting with a hyphen", () => {
-      expect(() => NoteSlug.create("-hello")).toThrow(
-        "Invalid note slug: -hello",
-      );
+      expect(() => NoteSlug.create("-hello")).toThrow(InvalidNoteSlugError);
     });
 
     it("should throw an error for a string ending with a hyphen", () => {
-      expect(() => NoteSlug.create("hello-")).toThrow(
-        "Invalid note slug: hello-",
-      );
+      expect(() => NoteSlug.create("hello-")).toThrow(InvalidNoteSlugError);
     });
 
     it("should throw an error for a string with consecutive hyphens", () => {
       expect(() => NoteSlug.create("hello--world")).toThrow(
-        "Invalid note slug: hello--world",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string with special characters", () => {
       expect(() => NoteSlug.create("hello@world")).toThrow(
-        "Invalid note slug: hello@world",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string with underscores", () => {
       expect(() => NoteSlug.create("hello_world")).toThrow(
-        "Invalid note slug: hello_world",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string with dots", () => {
       expect(() => NoteSlug.create("hello.world")).toThrow(
-        "Invalid note slug: hello.world",
+        InvalidNoteSlugError,
       );
     });
 
     it("should throw an error for a string with slashes", () => {
       expect(() => NoteSlug.create("hello/world")).toThrow(
-        "Invalid note slug: hello/world",
+        InvalidNoteSlugError,
       );
     });
   });

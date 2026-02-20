@@ -1,3 +1,4 @@
+import { InvalidNoteTitleError } from "./errors";
 import type { IValueObject } from "../shared/value-object.interface";
 
 export class NoteTitle implements IValueObject<NoteTitle> {
@@ -5,7 +6,7 @@ export class NoteTitle implements IValueObject<NoteTitle> {
 
   static create(value: string): NoteTitle {
     if (!NoteTitle.isValid(value)) {
-      throw new Error(`Invalid note title: ${value}`);
+      throw new InvalidNoteTitleError(value);
     }
     return new NoteTitle(value);
   }

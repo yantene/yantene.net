@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { InvalidImageUrlError } from "./errors";
 import { ImageUrl } from "./image-url.vo";
 
 describe("ImageUrl Value Object", () => {
@@ -26,18 +27,16 @@ describe("ImageUrl Value Object", () => {
     });
 
     it("should throw an error for an empty string", () => {
-      expect(() => ImageUrl.create("")).toThrow("Invalid image url: ");
+      expect(() => ImageUrl.create("")).toThrow(InvalidImageUrlError);
     });
 
     it("should throw an error for an invalid URL format", () => {
-      expect(() => ImageUrl.create("not-a-url")).toThrow(
-        "Invalid image url: not-a-url",
-      );
+      expect(() => ImageUrl.create("not-a-url")).toThrow(InvalidImageUrlError);
     });
 
     it("should throw an error for a string without protocol", () => {
       expect(() => ImageUrl.create("example.com/image.png")).toThrow(
-        "Invalid image url: example.com/image.png",
+        InvalidImageUrlError,
       );
     });
   });

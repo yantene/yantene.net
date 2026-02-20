@@ -1,6 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
+import {
+  NoteMetadataValidationError,
+  NoteParseError,
+} from "../../../../domain/note/errors";
 import { ImageUrl } from "../../../../domain/note/image-url.vo";
 import { NoteSlug } from "../../../../domain/note/note-slug.vo";
 import { NoteTitle } from "../../../../domain/note/note-title.vo";
@@ -140,6 +144,75 @@ describe("Notes API Handler", () => {
         status: 500,
         detail: "Refresh failed",
       });
+    });
+
+    it("NoteParseError 時に 422 Unprocessable Entity を返す", async () => {
+      const { NotesRefreshService: service } =
+        await import("../../../../services/notes-refresh.service");
+
+      vi.mocked(service).mockImplementationOnce(function (this: unknown) {
+        return {
+          execute: vi
+            .fn()
+            .mockRejectedValue(new NoteParseError("broken-article")),
+        };
+      });
+
+      const app = createApp();
+
+      const res = await app.request(
+        "/api/v1/notes/refresh",
+        { method: "POST" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(422);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Unprocessable Entity",
+        status: 422,
+      });
+      expect(json.detail).toContain("broken-article");
+    });
+
+    it("NoteMetadataValidationError 時に 422 Unprocessable Entity を返す", async () => {
+      const { NotesRefreshService: service } =
+        await import("../../../../services/notes-refresh.service");
+
+      vi.mocked(service).mockImplementationOnce(function (this: unknown) {
+        return {
+          execute: vi
+            .fn()
+            .mockRejectedValue(
+              new NoteMetadataValidationError("bad-article", [
+                "title",
+                "imageUrl",
+              ]),
+            ),
+        };
+      });
+
+      const app = createApp();
+
+      const res = await app.request(
+        "/api/v1/notes/refresh",
+        { method: "POST" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(422);
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Unprocessable Entity",
+        status: 422,
+      });
+      expect(json.detail).toContain("title");
+      expect(json.detail).toContain("imageUrl");
     });
   });
 

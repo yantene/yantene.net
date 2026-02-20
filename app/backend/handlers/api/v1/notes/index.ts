@@ -1,5 +1,11 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
+import {
+  InvalidImageUrlError,
+  InvalidNoteTitleError,
+  NoteMetadataValidationError,
+  NoteParseError,
+} from "../../../../domain/note/errors";
 import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
 import {
   PaginationParams,
@@ -112,6 +118,25 @@ export const notesApp = new Hono<{ Bindings: Env }>()
 
       return c.json(response);
     } catch (error) {
+      if (
+        error instanceof NoteParseError ||
+        error instanceof NoteMetadataValidationError ||
+        error instanceof InvalidNoteTitleError ||
+        error instanceof InvalidImageUrlError
+      ) {
+        const problemDetails: ProblemDetails = {
+          type: "about:blank",
+          title: "Unprocessable Entity",
+          status: 422,
+          detail: error.message,
+        };
+
+        return Response.json(problemDetails, {
+          status: 422,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
       console.error("Notes refresh error:", error);
 
       const detail =
