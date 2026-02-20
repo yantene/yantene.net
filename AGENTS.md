@@ -231,6 +231,9 @@ infra/
 - **Functions**: camelCase or PascalCase (PascalCase for React components)
 - **Types/Interfaces**: PascalCase
 - **Constants (string/number)**: UPPER_CASE or camelCase
+- **URL path segments and query parameters**: kebab-case
+  - ✅ `/api/v1/notes?per-page=20&sort-by=date`
+  - ❌ `/api/v1/notes?per_page=20&sortBy=date`
 
 ### Import Ordering
 
@@ -375,7 +378,9 @@ export class ObjectNotFoundError extends Error {
 }
 ```
 
-**HTTP mapping** is done exclusively in the handler layer — never inside domain or service code:
+**HTTP mapping** is done exclusively in the handler layer — never inside domain or service code.
+
+**API error responses** MUST follow [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457) format with `Content-Type: application/problem+json`. Use the shared `ProblemDetails` type defined in `app/lib/types/problem-details.ts`:
 
 ```typescript
 // handler
@@ -384,7 +389,15 @@ try {
   return c.json(result);
 } catch (err) {
   if (err instanceof ObjectNotFoundError)
-    return c.json({ error: err.message }, 404);
+    return c.json(
+      {
+        type: "about:blank",
+        title: "Not Found",
+        status: 404,
+        detail: err.message,
+      } satisfies ProblemDetails,
+      { status: 404, headers: { "Content-Type": "application/problem+json" } },
+    );
   throw err;
 }
 ```
@@ -437,6 +450,19 @@ Each function and class must do exactly one thing. When you find yourself writin
 - Functions: aim for ≤ 20 lines; anything longer is a candidate for extraction.
 - Classes: one reason to change. A repository class must not also contain business logic.
 - Files: one primary export. Co-locate related helpers, but avoid mixing unrelated concerns.
+
+## Quality Gates
+
+Before every commit, run the following checks and fix any issues:
+
+```bash
+pnpm run lint:fix        # Lint and auto-fix
+pnpm run format:fix      # Format with Prettier
+pnpm run typecheck       # TypeScript type checking
+pnpm run test:run        # Run all tests
+```
+
+All four must pass before committing. Do not skip any of these checks.
 
 ## Git Workflow
 

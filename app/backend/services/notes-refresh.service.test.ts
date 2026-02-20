@@ -80,6 +80,7 @@ function createMockQueryRepository(
   return {
     findAll: vi.fn().mockResolvedValue(notes),
     findBySlug: vi.fn(),
+    findPaginated: vi.fn(),
   };
 }
 
