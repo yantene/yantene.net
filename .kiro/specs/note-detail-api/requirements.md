@@ -3,6 +3,7 @@
 ## Introduction
 
 記事詳細 API の要件定義書。2つの API エンドポイントを定義する。
+
 1. **記事詳細 API** (`GET /api/v1/notes/{noteSlug}`) -- 記事のメタデータに加え、Markdown 本文を mdast (Markdown Abstract Syntax Tree) 形式で返す。mdast 内の相対画像パスはアセット配信 API の URL に解決する。
 2. **アセット配信 API** (`GET /api/v1/notes/{noteSlug}/assets/{assetPath}`) -- 記事に紐づく画像等のアセットファイルをバイナリストリームとして配信する。
 

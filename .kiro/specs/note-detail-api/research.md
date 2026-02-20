@@ -64,10 +64,10 @@
 
 ## Architecture Pattern Evaluation
 
-| Option | Description | Strengths | Risks / Limitations | Notes |
-| --- | --- | --- | --- | --- |
-| UseCase パターン (採用) | 既存の `ListNotesUseCase` と同様にドメインユースケースクラスを追加 | 既存パターンとの一貫性、テスト容易性 | 追加クラスが増える | 既存アーキテクチャに完全準拠 |
-| Service パターン | `NotesRefreshService` のようにサービス層にロジックを配置 | 複合操作に適する | 既存の UseCase パターンと不整合 | 本機能は単一集約への問い合わせなので UseCase が適切 |
+| Option                  | Description                                                        | Strengths                            | Risks / Limitations             | Notes                                               |
+| ----------------------- | ------------------------------------------------------------------ | ------------------------------------ | ------------------------------- | --------------------------------------------------- |
+| UseCase パターン (採用) | 既存の `ListNotesUseCase` と同様にドメインユースケースクラスを追加 | 既存パターンとの一貫性、テスト容易性 | 追加クラスが増える              | 既存アーキテクチャに完全準拠                        |
+| Service パターン        | `NotesRefreshService` のようにサービス層にロジックを配置           | 複合操作に適する                     | 既存の UseCase パターンと不整合 | 本機能は単一集約への問い合わせなので UseCase が適切 |
 
 ## Design Decisions
 

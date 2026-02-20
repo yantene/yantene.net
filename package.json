@@ -41,6 +41,7 @@
     "remark-frontmatter": "^5.0.0",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",
+    "unist-util-visit": "5",
     "vfile": "^6.0.3",
     "vfile-matter": "^5.0.1"
   },
@@ -56,6 +57,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/eslint-plugin-jsx-a11y": "^6.10.1",
     "@types/eslint-plugin-security": "^3.0.1",
+    "@types/mdast": "4",
     "@types/node": "^22",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",

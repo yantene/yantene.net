@@ -88,15 +88,15 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Choice / Version | Role in Feature | Notes |
-| --- | --- | --- | --- |
-| Backend / Services | Hono v4 | ルートハンドラ定義 | 既存 |
-| Backend / Domain | unified v11 + remark-parse v11 | Markdown to mdast 変換 | 既存依存 |
-| Backend / Domain | remark-frontmatter v5 | frontmatter 除去 | 既存依存 |
-| Backend / Domain | unist-util-visit v5 | mdast ツリー走査 | **新規追加** |
-| Backend / Domain | @types/mdast v4 | mdast 型定義 | **新規追加 (devDependency)** |
-| Data / Storage | Cloudflare D1 | 記事メタデータ取得 | 既存 |
-| Data / Storage | Cloudflare R2 | Markdown・アセット取得 | 既存 |
+| Layer              | Choice / Version               | Role in Feature        | Notes                        |
+| ------------------ | ------------------------------ | ---------------------- | ---------------------------- |
+| Backend / Services | Hono v4                        | ルートハンドラ定義     | 既存                         |
+| Backend / Domain   | unified v11 + remark-parse v11 | Markdown to mdast 変換 | 既存依存                     |
+| Backend / Domain   | remark-frontmatter v5          | frontmatter 除去       | 既存依存                     |
+| Backend / Domain   | unist-util-visit v5            | mdast ツリー走査       | **新規追加**                 |
+| Backend / Domain   | @types/mdast v4                | mdast 型定義           | **新規追加 (devDependency)** |
+| Data / Storage     | Cloudflare D1                  | 記事メタデータ取得     | 既存                         |
+| Data / Storage     | Cloudflare R2                  | Markdown・アセット取得 | 既存                         |
 
 ## System Flows
 
@@ -161,59 +161,59 @@ sequenceDiagram
 
 ## Requirements Traceability
 
-| Requirement | Summary | Components | Interfaces | Flows |
-| --- | --- | --- | --- | --- |
-| 1.1 | slug 指定でメタデータ + Markdown 取得 | GetNoteDetailUseCase, notesApp Handler | INoteQueryRepository.findBySlug, IMarkdownStorage.get | 記事詳細取得 |
-| 1.2 | メタデータフィールドの定義 | GetNoteDetailUseCase | NoteDetailResponse 型 | 記事詳細取得 |
-| 1.3 | HTTP 200 レスポンス | notesApp Handler | -- | 記事詳細取得 |
-| 1.4 | Content-Type: application/json | notesApp Handler | -- | 記事詳細取得 |
-| 2.1 | frontmatter 除去 + mdast 変換 | markdownToMdast | unified + remark-parse + remark-frontmatter | 記事詳細取得 |
-| 2.2 | content フィールドに mdast を含める | GetNoteDetailUseCase | NoteDetailResponse 型 | 記事詳細取得 |
-| 2.3 | unist/mdast 準拠パーサー使用 | markdownToMdast | unified, remark-parse | 記事詳細取得 |
-| 3.1 | 相対画像パスをアセット配信 URL に解決 | resolveImageUrls | -- | 記事詳細取得 |
-| 3.2 | 絶対 URL はそのまま保持 | resolveImageUrls | -- | 記事詳細取得 |
-| 3.3 | 全 image ノードを走査 | resolveImageUrls | unist-util-visit | 記事詳細取得 |
-| 4.1 | アセットバイナリデータ返却 | notesApp Handler | IAssetStorage.get | アセット配信 |
-| 4.2 | Content-Type にメディアタイプ設定 | notesApp Handler | AssetContent.contentType | アセット配信 |
-| 4.3 | HTTP 200 レスポンス | notesApp Handler | -- | アセット配信 |
-| 4.4 | ETag ヘッダー付与 | notesApp Handler | AssetContent.etag | アセット配信 |
-| 5.1 | DB に記事が存在しない場合 404 | GetNoteDetailUseCase, notesApp Handler | NoteNotFoundError | 記事詳細取得 |
-| 5.2 | Markdown ファイルが存在しない場合 404 | GetNoteDetailUseCase, notesApp Handler | MarkdownNotFoundError | 記事詳細取得 |
-| 5.3 | 不正な slug 形式の場合 400 | notesApp Handler | InvalidNoteSlugError | 記事詳細取得 |
-| 6.1 | アセットが存在しない場合 404 | notesApp Handler | -- | アセット配信 |
-| 6.2 | 不正な slug 形式の場合 400 | notesApp Handler | InvalidNoteSlugError | アセット配信 |
-| 7.1 | 内部エラー時 500 | notesApp Handler | ProblemDetails | 両フロー |
-| 7.2 | 内部エラーのログ出力 | notesApp Handler | console.error | 両フロー |
-| 7.3 | エラーの Content-Type: application/problem+json | notesApp Handler | -- | 両フロー |
-| 7.4 | アセット配信の内部エラー時 500 | notesApp Handler | ProblemDetails | アセット配信 |
-| 7.5 | アセット配信エラーの Content-Type | notesApp Handler | -- | アセット配信 |
-| 8.1 | レスポンス構造定義 | GetNoteDetailUseCase | NoteDetailResponse 型 | 記事詳細取得 |
-| 8.2 | content に mdast Root ノード | markdownToMdast | Root (mdast) | 記事詳細取得 |
-| 8.3 | 日付フィールド ISO 8601 形式 | GetNoteDetailUseCase | -- | 記事詳細取得 |
-| 9.1 | notesApp に GET /:noteSlug 追加 | notesApp Handler | -- | 記事詳細取得 |
-| 9.2 | notesApp に GET /:noteSlug/assets/* 追加 | notesApp Handler | -- | アセット配信 |
-| 9.3 | 既存エンドポイントへの非影響 | notesApp Handler | -- | -- |
-| 9.4 | 既存インターフェースの活用 | GetNoteDetailUseCase, notesApp Handler | INoteQueryRepository, IMarkdownStorage, IAssetStorage | 両フロー |
+| Requirement | Summary                                         | Components                             | Interfaces                                            | Flows        |
+| ----------- | ----------------------------------------------- | -------------------------------------- | ----------------------------------------------------- | ------------ |
+| 1.1         | slug 指定でメタデータ + Markdown 取得           | GetNoteDetailUseCase, notesApp Handler | INoteQueryRepository.findBySlug, IMarkdownStorage.get | 記事詳細取得 |
+| 1.2         | メタデータフィールドの定義                      | GetNoteDetailUseCase                   | NoteDetailResponse 型                                 | 記事詳細取得 |
+| 1.3         | HTTP 200 レスポンス                             | notesApp Handler                       | --                                                    | 記事詳細取得 |
+| 1.4         | Content-Type: application/json                  | notesApp Handler                       | --                                                    | 記事詳細取得 |
+| 2.1         | frontmatter 除去 + mdast 変換                   | markdownToMdast                        | unified + remark-parse + remark-frontmatter           | 記事詳細取得 |
+| 2.2         | content フィールドに mdast を含める             | GetNoteDetailUseCase                   | NoteDetailResponse 型                                 | 記事詳細取得 |
+| 2.3         | unist/mdast 準拠パーサー使用                    | markdownToMdast                        | unified, remark-parse                                 | 記事詳細取得 |
+| 3.1         | 相対画像パスをアセット配信 URL に解決           | resolveImageUrls                       | --                                                    | 記事詳細取得 |
+| 3.2         | 絶対 URL はそのまま保持                         | resolveImageUrls                       | --                                                    | 記事詳細取得 |
+| 3.3         | 全 image ノードを走査                           | resolveImageUrls                       | unist-util-visit                                      | 記事詳細取得 |
+| 4.1         | アセットバイナリデータ返却                      | notesApp Handler                       | IAssetStorage.get                                     | アセット配信 |
+| 4.2         | Content-Type にメディアタイプ設定               | notesApp Handler                       | AssetContent.contentType                              | アセット配信 |
+| 4.3         | HTTP 200 レスポンス                             | notesApp Handler                       | --                                                    | アセット配信 |
+| 4.4         | ETag ヘッダー付与                               | notesApp Handler                       | AssetContent.etag                                     | アセット配信 |
+| 5.1         | DB に記事が存在しない場合 404                   | GetNoteDetailUseCase, notesApp Handler | NoteNotFoundError                                     | 記事詳細取得 |
+| 5.2         | Markdown ファイルが存在しない場合 404           | GetNoteDetailUseCase, notesApp Handler | MarkdownNotFoundError                                 | 記事詳細取得 |
+| 5.3         | 不正な slug 形式の場合 400                      | notesApp Handler                       | InvalidNoteSlugError                                  | 記事詳細取得 |
+| 6.1         | アセットが存在しない場合 404                    | notesApp Handler                       | --                                                    | アセット配信 |
+| 6.2         | 不正な slug 形式の場合 400                      | notesApp Handler                       | InvalidNoteSlugError                                  | アセット配信 |
+| 7.1         | 内部エラー時 500                                | notesApp Handler                       | ProblemDetails                                        | 両フロー     |
+| 7.2         | 内部エラーのログ出力                            | notesApp Handler                       | console.error                                         | 両フロー     |
+| 7.3         | エラーの Content-Type: application/problem+json | notesApp Handler                       | --                                                    | 両フロー     |
+| 7.4         | アセット配信の内部エラー時 500                  | notesApp Handler                       | ProblemDetails                                        | アセット配信 |
+| 7.5         | アセット配信エラーの Content-Type               | notesApp Handler                       | --                                                    | アセット配信 |
+| 8.1         | レスポンス構造定義                              | GetNoteDetailUseCase                   | NoteDetailResponse 型                                 | 記事詳細取得 |
+| 8.2         | content に mdast Root ノード                    | markdownToMdast                        | Root (mdast)                                          | 記事詳細取得 |
+| 8.3         | 日付フィールド ISO 8601 形式                    | GetNoteDetailUseCase                   | --                                                    | 記事詳細取得 |
+| 9.1         | notesApp に GET /:noteSlug 追加                 | notesApp Handler                       | --                                                    | 記事詳細取得 |
+| 9.2         | notesApp に GET /:noteSlug/assets/\* 追加       | notesApp Handler                       | --                                                    | アセット配信 |
+| 9.3         | 既存エンドポイントへの非影響                    | notesApp Handler                       | --                                                    | --           |
+| 9.4         | 既存インターフェースの活用                      | GetNoteDetailUseCase, notesApp Handler | INoteQueryRepository, IMarkdownStorage, IAssetStorage | 両フロー     |
 
 ## Components and Interfaces
 
-| Component | Domain/Layer | Intent | Req Coverage | Key Dependencies (P0/P1) | Contracts |
-| --- | --- | --- | --- | --- | --- |
-| GetNoteDetailUseCase | Domain / UseCase | slug からメタデータ + mdast を取得 | 1.1, 1.2, 2.1, 2.2, 5.1, 5.2, 8.1, 8.3, 9.4 | INoteQueryRepository (P0), IMarkdownStorage (P0), markdownToMdast (P0) | Service |
-| markdownToMdast | Domain / Parser | Markdown を mdast に変換し画像パスを解決 | 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 8.2 | unified (P0), remark-parse (P0), unist-util-visit (P0) | Service |
-| resolveImageUrls | Domain / Parser | mdast 内の相対画像パスをアセット API URL に変換 | 3.1, 3.2, 3.3 | unist-util-visit (P0) | Service |
-| notesApp Handler (detail) | Handler | 記事詳細 API エンドポイント | 1.1, 1.3, 1.4, 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 9.1, 9.3 | GetNoteDetailUseCase (P0) | API |
-| notesApp Handler (asset) | Handler | アセット配信 API エンドポイント | 4.1, 4.2, 4.3, 4.4, 6.1, 6.2, 7.4, 7.5, 9.2, 9.3 | IAssetStorage (P0) | API |
-| NoteDetailResponse | Shared / Types | 記事詳細 API レスポンス型定義 | 1.2, 8.1, 8.2, 8.3 | @types/mdast (P1) | -- |
+| Component                 | Domain/Layer     | Intent                                          | Req Coverage                                          | Key Dependencies (P0/P1)                                               | Contracts |
+| ------------------------- | ---------------- | ----------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- | --------- |
+| GetNoteDetailUseCase      | Domain / UseCase | slug からメタデータ + mdast を取得              | 1.1, 1.2, 2.1, 2.2, 5.1, 5.2, 8.1, 8.3, 9.4           | INoteQueryRepository (P0), IMarkdownStorage (P0), markdownToMdast (P0) | Service   |
+| markdownToMdast           | Domain / Parser  | Markdown を mdast に変換し画像パスを解決        | 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 8.2                     | unified (P0), remark-parse (P0), unist-util-visit (P0)                 | Service   |
+| resolveImageUrls          | Domain / Parser  | mdast 内の相対画像パスをアセット API URL に変換 | 3.1, 3.2, 3.3                                         | unist-util-visit (P0)                                                  | Service   |
+| notesApp Handler (detail) | Handler          | 記事詳細 API エンドポイント                     | 1.1, 1.3, 1.4, 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 9.1, 9.3 | GetNoteDetailUseCase (P0)                                              | API       |
+| notesApp Handler (asset)  | Handler          | アセット配信 API エンドポイント                 | 4.1, 4.2, 4.3, 4.4, 6.1, 6.2, 7.4, 7.5, 9.2, 9.3      | IAssetStorage (P0)                                                     | API       |
+| NoteDetailResponse        | Shared / Types   | 記事詳細 API レスポンス型定義                   | 1.2, 8.1, 8.2, 8.3                                    | @types/mdast (P1)                                                      | --        |
 
 ### Domain / UseCase
 
 #### GetNoteDetailUseCase
 
-| Field | Detail |
-| --- | --- |
-| Intent | slug を指定して記事のメタデータと mdast 形式の本文を取得する |
-| Requirements | 1.1, 1.2, 2.1, 2.2, 5.1, 5.2, 8.1, 8.3, 9.4 |
+| Field        | Detail                                                       |
+| ------------ | ------------------------------------------------------------ |
+| Intent       | slug を指定して記事のメタデータと mdast 形式の本文を取得する |
+| Requirements | 1.1, 1.2, 2.1, 2.2, 5.1, 5.2, 8.1, 8.3, 9.4                  |
 
 **Responsibilities & Constraints**
 
@@ -269,10 +269,10 @@ class GetNoteDetailUseCase {
 
 #### markdownToMdast
 
-| Field | Detail |
-| --- | --- |
-| Intent | Markdown 文字列を frontmatter 除去済みの mdast Root ノードに変換する |
-| Requirements | 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 8.2 |
+| Field        | Detail                                                               |
+| ------------ | -------------------------------------------------------------------- |
+| Intent       | Markdown 文字列を frontmatter 除去済みの mdast Root ノードに変換する |
+| Requirements | 2.1, 2.2, 2.3, 3.1, 3.2, 3.3, 8.2                                    |
 
 **Responsibilities & Constraints**
 
@@ -302,10 +302,10 @@ function markdownToMdast(content: string, slug: NoteSlug): Root;
 
 #### resolveImageUrls
 
-| Field | Detail |
-| --- | --- |
-| Intent | mdast ツリー内の相対画像パスをアセット配信 API の URL に変換する |
-| Requirements | 3.1, 3.2, 3.3 |
+| Field        | Detail                                                           |
+| ------------ | ---------------------------------------------------------------- |
+| Intent       | mdast ツリー内の相対画像パスをアセット配信 API の URL に変換する |
+| Requirements | 3.1, 3.2, 3.3                                                    |
 
 **Responsibilities & Constraints**
 
@@ -335,10 +335,10 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 #### notesApp Handler (detail)
 
-| Field | Detail |
-| --- | --- |
-| Intent | GET /api/v1/notes/:noteSlug エンドポイントのリクエスト処理 |
-| Requirements | 1.1, 1.3, 1.4, 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 9.1, 9.3 |
+| Field        | Detail                                                     |
+| ------------ | ---------------------------------------------------------- |
+| Intent       | GET /api/v1/notes/:noteSlug エンドポイントのリクエスト処理 |
+| Requirements | 1.1, 1.3, 1.4, 5.1, 5.2, 5.3, 7.1, 7.2, 7.3, 9.1, 9.3      |
 
 **Responsibilities & Constraints**
 
@@ -358,9 +358,9 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-| --- | --- | --- | --- | --- |
-| GET | /api/v1/notes/:noteSlug | Path: noteSlug (string) | NoteDetailResponse (200) | 400, 404, 500 |
+| Method | Endpoint                | Request                 | Response                 | Errors        |
+| ------ | ----------------------- | ----------------------- | ------------------------ | ------------- |
+| GET    | /api/v1/notes/:noteSlug | Path: noteSlug (string) | NoteDetailResponse (200) | 400, 404, 500 |
 
 **Implementation Notes**
 
@@ -370,10 +370,10 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 #### notesApp Handler (asset)
 
-| Field | Detail |
-| --- | --- |
-| Intent | GET /api/v1/notes/:noteSlug/assets/* エンドポイントのリクエスト処理 |
-| Requirements | 4.1, 4.2, 4.3, 4.4, 6.1, 6.2, 7.4, 7.5, 9.2, 9.3 |
+| Field        | Detail                                                               |
+| ------------ | -------------------------------------------------------------------- |
+| Intent       | GET /api/v1/notes/:noteSlug/assets/\* エンドポイントのリクエスト処理 |
+| Requirements | 4.1, 4.2, 4.3, 4.4, 6.1, 6.2, 7.4, 7.5, 9.2, 9.3                     |
 
 **Responsibilities & Constraints**
 
@@ -392,9 +392,9 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 ##### API Contract
 
-| Method | Endpoint | Request | Response | Errors |
-| --- | --- | --- | --- | --- |
-| GET | /api/v1/notes/:noteSlug/assets/* | Path: noteSlug (string), assetPath (string) | Binary stream (200) | 400, 404, 500 |
+| Method | Endpoint                          | Request                                     | Response            | Errors        |
+| ------ | --------------------------------- | ------------------------------------------- | ------------------- | ------------- |
+| GET    | /api/v1/notes/:noteSlug/assets/\* | Path: noteSlug (string), assetPath (string) | Binary stream (200) | 400, 404, 500 |
 
 **Implementation Notes**
 
@@ -406,10 +406,10 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 #### NoteDetailResponse
 
-| Field | Detail |
-| --- | --- |
-| Intent | 記事詳細 API のレスポンス型を定義する |
-| Requirements | 1.2, 8.1, 8.2, 8.3 |
+| Field        | Detail                                |
+| ------------ | ------------------------------------- |
+| Intent       | 記事詳細 API のレスポンス型を定義する |
+| Requirements | 1.2, 8.1, 8.2, 8.3                    |
 
 **Implementation Notes**
 
@@ -420,10 +420,10 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 #### MarkdownNotFoundError (新規)
 
-| Field | Detail |
-| --- | --- |
-| Intent | 指定された slug の Markdown ファイルがストレージに存在しない場合のエラー |
-| Requirements | 5.2 |
+| Field        | Detail                                                                   |
+| ------------ | ------------------------------------------------------------------------ |
+| Intent       | 指定された slug の Markdown ファイルがストレージに存在しない場合のエラー |
+| Requirements | 5.2                                                                      |
 
 **Implementation Notes**
 
@@ -432,10 +432,10 @@ function resolveImageUrls(tree: Root, slug: NoteSlug): Root;
 
 #### NoteNotFoundError (新規)
 
-| Field | Detail |
-| --- | --- |
-| Intent | 指定された slug の記事が DB に存在しない場合のエラー |
-| Requirements | 5.1 |
+| Field        | Detail                                               |
+| ------------ | ---------------------------------------------------- |
+| Intent       | 指定された slug の記事が DB に存在しない場合のエラー |
+| Requirements | 5.1                                                  |
 
 **Implementation Notes**
 
@@ -520,13 +520,13 @@ type NoteDetailResponse = {
 
 ### Error Categories and Responses
 
-| Error | HTTP Status | ProblemDetails title | Trigger |
-| --- | --- | --- | --- |
-| `InvalidNoteSlugError` | 400 | Bad Request | slug 形式が不正 |
-| `NoteNotFoundError` | 404 | Not Found | DB に記事が存在しない |
-| `MarkdownNotFoundError` | 404 | Not Found | R2 に Markdown が存在しない |
-| Asset not found | 404 | Not Found | R2 にアセットが存在しない |
-| その他の Error | 500 | Internal Server Error | DB/R2 アクセスエラー等 |
+| Error                   | HTTP Status | ProblemDetails title  | Trigger                     |
+| ----------------------- | ----------- | --------------------- | --------------------------- |
+| `InvalidNoteSlugError`  | 400         | Bad Request           | slug 形式が不正             |
+| `NoteNotFoundError`     | 404         | Not Found             | DB に記事が存在しない       |
+| `MarkdownNotFoundError` | 404         | Not Found             | R2 に Markdown が存在しない |
+| Asset not found         | 404         | Not Found             | R2 にアセットが存在しない   |
+| その他の Error          | 500         | Internal Server Error | DB/R2 アクセスエラー等      |
 
 ### Monitoring
 
