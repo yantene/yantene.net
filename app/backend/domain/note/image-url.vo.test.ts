@@ -47,6 +47,12 @@ describe("ImageUrl Value Object", () => {
         InvalidImageUrlError,
       );
     });
+
+    it("should throw an error for a protocol-relative URL", () => {
+      expect(() => ImageUrl.create("//example.com/image.png")).toThrow(
+        InvalidImageUrlError,
+      );
+    });
   });
 
   describe("equals()", () => {

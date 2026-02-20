@@ -3,7 +3,17 @@ import { markdownToMdast } from "../markdown-to-mdast";
 import type { IMarkdownStorage } from "../markdown-storage.interface";
 import type { NoteSlug } from "../note-slug.vo";
 import type { INoteQueryRepository } from "../note.query-repository.interface";
-import type { NoteDetailResponse } from "~/lib/types/notes";
+import type { Root } from "mdast";
+
+export type NoteDetailDto = {
+  readonly id: string;
+  readonly title: string;
+  readonly slug: string;
+  readonly imageUrl: string;
+  readonly publishedOn: string;
+  readonly lastModifiedOn: string;
+  readonly content: Root;
+};
 
 export class GetNoteDetailUseCase {
   constructor(
@@ -11,7 +21,7 @@ export class GetNoteDetailUseCase {
     private readonly markdownStorage: IMarkdownStorage,
   ) {}
 
-  async execute(slug: NoteSlug): Promise<NoteDetailResponse> {
+  async execute(slug: NoteSlug): Promise<NoteDetailDto> {
     const note = await this.queryRepository.findBySlug(slug);
     if (!note) {
       throw new NoteNotFoundError(slug.value);

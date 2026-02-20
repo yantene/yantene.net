@@ -23,7 +23,7 @@ export class ImageUrl implements IValueObject<ImageUrl> {
     if (value.length === 0) {
       return false;
     }
-    if (value.startsWith("/")) {
+    if (value.startsWith("/") && !value.startsWith("//")) {
       return true;
     }
     try {

@@ -199,6 +199,33 @@ describe("resolveImageUrls", () => {
     expect(image.url).toBe("/api/v1/notes/my-article/assets/hero.png");
   });
 
+  it("'/' 始まりの絶対パスはそのまま保持する", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "image",
+              url: "/images/foo.png",
+              alt: "Absolute path",
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = resolveImageUrls(tree, slug);
+
+    const paragraph = result.children[0];
+    if (paragraph.type !== "paragraph") throw new Error("unexpected");
+    const image = paragraph.children[0];
+    if (image.type !== "image") throw new Error("unexpected");
+
+    expect(image.url).toBe("/images/foo.png");
+  });
+
   it("複数の image ノードを含むツリーですべて変換する", () => {
     const tree: Root = {
       type: "root",
