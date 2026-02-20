@@ -1,0 +1,31 @@
+name: リファクタリング
+description: コードの改善やリファクタリング
+labels: ["refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## リファクタリング
+  - type: textarea
+    id: description
+    attributes:
+      label: 概要
+      description: リファクタリングの目的と対象を記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: タスク
+      description: 実施する変更をチェックリスト形式で記述してください
+      value: |
+        - [ ]
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: 備考
+      description: 影響範囲や注意点があれば記述してください
+    validations:
+      required: false
