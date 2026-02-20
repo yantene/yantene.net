@@ -1,4 +1,4 @@
-import type { IValueObject } from "../value-object.interface";
+import type { IValueObject } from "../shared/value-object.interface";
 
 export class NoteSlug implements IValueObject<NoteSlug> {
   private constructor(readonly value: string) {}

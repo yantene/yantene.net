@@ -7,8 +7,8 @@ import { NoteSlug } from "./note-slug.vo";
 import { NoteTitle } from "./note-title.vo";
 import { Note } from "./note.entity";
 import type { INoteQueryRepository } from "./note.query-repository.interface";
-import type { IPersisted } from "../persisted.interface";
 import type { PaginatedResult } from "../shared/pagination/paginated-result";
+import type { IPersisted } from "../shared/persisted.interface";
 
 const createPersistedNote = (): Note<IPersisted> =>
   Note.reconstruct({

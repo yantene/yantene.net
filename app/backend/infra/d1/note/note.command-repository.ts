@@ -5,8 +5,8 @@ import type { NoteSlug } from "../../../domain/note/note-slug.vo";
 import type { INoteCommandRepository } from "../../../domain/note/note.command-repository.interface";
 import type { Note } from "../../../domain/note/note.entity";
 import type { INoteQueryRepository } from "../../../domain/note/note.query-repository.interface";
-import type { IPersisted } from "../../../domain/persisted.interface";
-import type { IUnpersisted } from "../../../domain/unpersisted.interface";
+import type { IPersisted } from "../../../domain/shared/persisted.interface";
+import type { IUnpersisted } from "../../../domain/shared/unpersisted.interface";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
 export class NoteCommandRepository implements INoteCommandRepository {

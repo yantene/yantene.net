@@ -1,4 +1,4 @@
-import type { IValueObject } from "../value-object.interface";
+import type { IValueObject } from "./value-object.interface";
 
 export class ETag implements IValueObject<ETag> {
   private constructor(readonly value: string) {}

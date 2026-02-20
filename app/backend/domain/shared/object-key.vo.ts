@@ -1,4 +1,4 @@
-import type { IValueObject } from "../value-object.interface";
+import type { IValueObject } from "./value-object.interface";
 
 export class ObjectKey implements IValueObject<ObjectKey> {
   private constructor(readonly value: string) {}

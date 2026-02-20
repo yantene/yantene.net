@@ -10,7 +10,7 @@ import { NoteQueryRepository } from "../../../../infra/d1/note/note.query-reposi
 import { MarkdownStorage } from "../../../../infra/r2/note/markdown.storage";
 import { NotesRefreshService } from "../../../../services/notes-refresh.service";
 import type { Note } from "../../../../domain/note/note.entity";
-import type { IPersisted } from "../../../../domain/persisted.interface";
+import type { IPersisted } from "../../../../domain/shared/persisted.interface";
 import type { NotesRefreshResponse } from "~/lib/types/notes";
 import type { ProblemDetails } from "~/lib/types/problem-details";
 

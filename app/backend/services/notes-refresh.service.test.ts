@@ -13,7 +13,7 @@ import type {
 } from "../domain/note/markdown-storage.interface";
 import type { INoteCommandRepository } from "../domain/note/note.command-repository.interface";
 import type { INoteQueryRepository } from "../domain/note/note.query-repository.interface";
-import type { IPersisted } from "../domain/persisted.interface";
+import type { IPersisted } from "../domain/shared/persisted.interface";
 
 const testInstant = Temporal.Instant.from("2026-01-01T00:00:00Z");
 

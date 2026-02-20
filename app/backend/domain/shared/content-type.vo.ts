@@ -1,5 +1,5 @@
 import type { ObjectKey } from "./object-key.vo";
-import type { IValueObject } from "../value-object.interface";
+import type { IValueObject } from "./value-object.interface";
 
 const extensionToMimeType: Record<string, string> = {
   png: "image/png",

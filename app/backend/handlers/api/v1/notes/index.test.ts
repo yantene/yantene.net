@@ -7,7 +7,7 @@ import { NoteTitle } from "../../../../domain/note/note-title.vo";
 import { Note } from "../../../../domain/note/note.entity";
 import { ETag } from "../../../../domain/shared/etag.vo";
 import { notesApp } from ".";
-import type { IPersisted } from "../../../../domain/persisted.interface";
+import type { IPersisted } from "../../../../domain/shared/persisted.interface";
 
 const createPersistedNote = (
   id: string,

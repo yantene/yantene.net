@@ -6,8 +6,8 @@ import { NoteSlug } from "./note-slug.vo";
 import { NoteTitle } from "./note-title.vo";
 import { Note } from "./note.entity";
 import type { INoteCommandRepository } from "./note.command-repository.interface";
-import type { IPersisted } from "../persisted.interface";
-import type { IUnpersisted } from "../unpersisted.interface";
+import type { IPersisted } from "../shared/persisted.interface";
+import type { IUnpersisted } from "../shared/unpersisted.interface";
 
 // Type-level test: verify the interface requires upsert and deleteBySlug
 const _typeCheck: INoteCommandRepository = {
