@@ -11,6 +11,8 @@
 # Cloudflare
 .mf
 .wrangler
+/storage/*
+!/storage/.gitkeep
 .dev.vars*
 worker-configuration.d.ts
 
