@@ -1,3 +1,5 @@
+import { extractSummary } from "../domain/note/extract-summary";
+import { markdownToMdast } from "../domain/note/markdown-to-mdast";
 import { parseNoteContent } from "../domain/note/note-content.parser";
 import { Note } from "../domain/note/note.entity";
 import type { RefreshResult } from "./refresh-result";
@@ -61,12 +63,15 @@ export class NotesRefreshService {
 
     const text = await new Response(content.body).text();
     const metadata = parseNoteContent(text, item.slug);
+    const mdast = markdownToMdast(text, item.slug);
+    const summary = extractSummary(mdast);
 
     const note = Note.create({
       title: metadata.title,
       slug: item.slug,
       etag: content.etag,
       imageUrl: metadata.imageUrl,
+      summary,
       publishedOn: metadata.publishedOn,
       lastModifiedOn: metadata.lastModifiedOn,
     });

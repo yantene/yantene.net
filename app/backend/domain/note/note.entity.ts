@@ -16,6 +16,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
     readonly slug: NoteSlug,
     readonly etag: ETag,
     readonly imageUrl: ImageUrl,
+    readonly summary: string,
     readonly publishedOn: Temporal.PlainDate,
     readonly lastModifiedOn: Temporal.PlainDate,
     readonly createdAt: P["createdAt"],
@@ -27,6 +28,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
     slug: NoteSlug;
     etag: ETag;
     imageUrl: ImageUrl;
+    summary: string;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
   }): Note<IUnpersisted> {
@@ -36,6 +38,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
       params.slug,
       params.etag,
       params.imageUrl,
+      params.summary,
       params.publishedOn,
       params.lastModifiedOn,
       undefined,
@@ -49,6 +52,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
     slug: NoteSlug;
     etag: ETag;
     imageUrl: ImageUrl;
+    summary: string;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
     createdAt: Temporal.Instant;
@@ -60,6 +64,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
       params.slug,
       params.etag,
       params.imageUrl,
+      params.summary,
       params.publishedOn,
       params.lastModifiedOn,
       params.createdAt,
@@ -80,6 +85,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
     slug: string;
     etag: string;
     imageUrl: string;
+    summary: string;
     publishedOn: string;
     lastModifiedOn: string;
     createdAt: string | undefined;
@@ -91,6 +97,7 @@ export class Note<P extends IPersisted | IUnpersisted> implements IEntity<
       slug: this.slug.toJSON(),
       etag: this.etag.toJSON(),
       imageUrl: this.imageUrl.toJSON(),
+      summary: this.summary,
       publishedOn: this.publishedOn.toString(),
       lastModifiedOn: this.lastModifiedOn.toString(),
       createdAt: this.createdAt?.toString(),

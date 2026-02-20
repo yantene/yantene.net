@@ -49,6 +49,7 @@ function createPersistedNote(): Note<IPersisted> {
     slug: NoteSlug.create("test-slug"),
     etag: ETag.create("test-etag"),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    summary: "Test summary",
     publishedOn: testPublishedOn,
     lastModifiedOn: testLastModifiedOn,
     createdAt: testInstant,
@@ -92,6 +93,7 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        summary: "Test summary",
         publishedOn: testPublishedOn,
         lastModifiedOn: testLastModifiedOn,
       });
@@ -115,6 +117,7 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        summary: "Test summary",
         publishedOn: testPublishedOn,
         lastModifiedOn: testLastModifiedOn,
       });
@@ -137,6 +140,7 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        summary: "Test summary",
         publishedOn: testPublishedOn,
         lastModifiedOn: testLastModifiedOn,
       });
@@ -154,6 +158,7 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        summary: "Test summary",
         publishedOn: testPublishedOn,
         lastModifiedOn: testLastModifiedOn,
       });
@@ -175,6 +180,7 @@ describe("NoteCommandRepository", () => {
         slug: NoteSlug.create("test-slug"),
         etag: ETag.create("test-etag"),
         imageUrl: ImageUrl.create("https://example.com/image.png"),
+        summary: "Test summary",
         publishedOn: testPublishedOn,
         lastModifiedOn: testLastModifiedOn,
       });

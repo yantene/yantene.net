@@ -18,6 +18,7 @@ type NoteRow = {
   slug: string;
   etag: string;
   imageUrl: string;
+  summary: string;
   publishedOn: Temporal.PlainDate;
   lastModifiedOn: Temporal.PlainDate;
   createdAt: Temporal.Instant;
@@ -86,6 +87,7 @@ export class NoteQueryRepository implements INoteQueryRepository {
       slug: NoteSlug.create(row.slug),
       etag: ETag.create(row.etag),
       imageUrl: ImageUrl.create(row.imageUrl),
+      summary: row.summary,
       publishedOn: row.publishedOn,
       lastModifiedOn: row.lastModifiedOn,
       createdAt: row.createdAt,

@@ -90,6 +90,7 @@ const createDbRow = (
   slug: string;
   etag: string;
   imageUrl: string;
+  summary: string;
   publishedOn: Temporal.PlainDate;
   lastModifiedOn: Temporal.PlainDate;
   createdAt: Temporal.Instant;
@@ -100,6 +101,7 @@ const createDbRow = (
   slug: overrides.slug ?? "test-slug",
   etag: "test-etag",
   imageUrl: "https://example.com/image.png",
+  summary: "Test summary",
   publishedOn: overrides.publishedOn ?? testPublishedOn,
   lastModifiedOn: testLastModifiedOn,
   createdAt: testInstant,

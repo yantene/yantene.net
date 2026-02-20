@@ -32,6 +32,7 @@ type NoteListItem = {
   readonly title: string;
   readonly slug: string;
   readonly imageUrl: string;
+  readonly summary: string;
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
 };
@@ -41,6 +42,7 @@ const toNoteListItem = (note: Note<IPersisted>): NoteListItem => ({
   title: note.title.toJSON(),
   slug: note.slug.toJSON(),
   imageUrl: note.imageUrl.toJSON(),
+  summary: note.summary,
   publishedOn: note.publishedOn.toString(),
   lastModifiedOn: note.lastModifiedOn.toString(),
 });

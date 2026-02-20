@@ -29,6 +29,7 @@ const createPersistedNote = (
     slug: NoteSlug.create(slug),
     etag: ETag.create("etag-1"),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    summary: "Test summary",
     publishedOn: Temporal.PlainDate.from(publishedOn),
     lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
     createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),
@@ -299,6 +300,7 @@ describe("Notes API Handler", () => {
             title: "Title for test-slug",
             slug: "test-slug",
             imageUrl: "https://example.com/image.png",
+            summary: "Test summary",
             publishedOn: "2026-02-17",
             lastModifiedOn: "2026-02-18",
           },
@@ -371,6 +373,7 @@ describe("Notes API Handler", () => {
       expect(noteItem).toHaveProperty("title");
       expect(noteItem).toHaveProperty("slug");
       expect(noteItem).toHaveProperty("imageUrl");
+      expect(noteItem).toHaveProperty("summary");
       expect(noteItem).toHaveProperty("publishedOn");
       expect(noteItem).toHaveProperty("lastModifiedOn");
       expect(noteItem).not.toHaveProperty("etag");
