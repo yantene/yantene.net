@@ -28,6 +28,9 @@ const config = [
   // .gitignore の内容を使用して ignore する
   includeIgnoreFile(gitignorePath),
 
+  // Storybook 設定ファイルを ESLint の対象外にする
+  { ignores: [".storybook/*.ts"] },
+
   // JavaScript の推奨設定
   js.configs.recommended,
 
@@ -276,6 +279,21 @@ const config = [
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/unbound-method": "off", // モック関数の分離代入を許可
       "unicorn/consistent-function-scoping": "off", // テストケース内でのモック定義を許可
+    },
+  },
+
+  // Storybook ストーリーファイルの設定
+  {
+    files: ["**/*.stories.ts", "**/*.stories.tsx"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-magic-numbers": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-confusing-void-expression": "off",
+      "unicorn/consistent-function-scoping": "off",
+      "react-refresh/only-export-components": "off",
     },
   },
 
