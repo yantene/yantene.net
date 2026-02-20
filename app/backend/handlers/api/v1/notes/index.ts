@@ -1,10 +1,10 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
+import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
 import {
   PaginationParams,
   PaginationValidationError,
-} from "../../../../domain/note/pagination-params.vo";
-import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
+} from "../../../../domain/shared/pagination/pagination-params.vo";
 import { NoteCommandRepository } from "../../../../infra/d1/note/note.command-repository";
 import { NoteQueryRepository } from "../../../../infra/d1/note/note.query-repository";
 import { StoredObjectStorage } from "../../../../infra/r2/stored-object.storage";

@@ -6,9 +6,9 @@ import { Note } from "../../../domain/note/note.entity";
 import { ETag } from "../../../domain/shared/etag.vo";
 import { notes } from "../schema/notes.table";
 import type { INoteQueryRepository } from "../../../domain/note/note.query-repository.interface";
-import type { PaginatedResult } from "../../../domain/note/paginated-result";
-import type { PaginationParams } from "../../../domain/note/pagination-params.vo";
 import type { IPersisted } from "../../../domain/persisted.interface";
+import type { PaginatedResult } from "../../../domain/shared/pagination/paginated-result";
+import type { PaginationParams } from "../../../domain/shared/pagination/pagination-params.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
