@@ -28,7 +28,11 @@
     "db:dev:reset": "pnpm run db:dev:drop && pnpm run db:dev:migrate",
     "db:prod:migrate": "wrangler d1 migrations apply yantene-production --env production --remote",
     "db:prod:drop": "./scripts/d1/drop-all-tables.sh yantene-production --remote",
-    "db:prod:reset": "pnpm run db:prod:drop && pnpm run db:prod:migrate"
+    "db:prod:reset": "pnpm run db:prod:drop && pnpm run db:prod:migrate",
+    "str:dev:upload": "./scripts/r2/upload.sh yantene-development --local",
+    "str:dev:empty": "./scripts/r2/empty-bucket.sh yantene-development",
+    "str:prod:upload": "./scripts/r2/upload.sh yantene-production --remote",
+    "str:prod:empty": "./scripts/r2/empty-bucket.sh yantene-production --remote"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
