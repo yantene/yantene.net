@@ -30,6 +30,22 @@ export class InvalidImageUrlError extends Error {
   }
 }
 
+export class NoteNotFoundError extends Error {
+  readonly name = "NoteNotFoundError" as const;
+
+  constructor(readonly slug: string) {
+    super(`Note not found: ${slug}`);
+  }
+}
+
+export class MarkdownNotFoundError extends Error {
+  readonly name = "MarkdownNotFoundError" as const;
+
+  constructor(readonly slug: string) {
+    super(`Markdown not found: ${slug}`);
+  }
+}
+
 export class NoteMetadataValidationError extends Error {
   readonly name = "NoteMetadataValidationError" as const;
 

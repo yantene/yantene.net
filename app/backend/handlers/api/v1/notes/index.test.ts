@@ -2,16 +2,21 @@ import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import {
+  InvalidNoteSlugError,
+  MarkdownNotFoundError,
   NoteMetadataValidationError,
+  NoteNotFoundError,
   NoteParseError,
 } from "../../../../domain/note/errors";
 import { ImageUrl } from "../../../../domain/note/image-url.vo";
 import { NoteSlug } from "../../../../domain/note/note-slug.vo";
 import { NoteTitle } from "../../../../domain/note/note-title.vo";
 import { Note } from "../../../../domain/note/note.entity";
+import { ContentType } from "../../../../domain/shared/content-type.vo";
 import { ETag } from "../../../../domain/shared/etag.vo";
 import { notesApp } from ".";
 import type { IPersisted } from "../../../../domain/shared/persisted.interface";
+import type { Root } from "mdast";
 
 const createPersistedNote = (
   id: string,
@@ -31,6 +36,8 @@ const createPersistedNote = (
   });
 
 const mockFindPaginated = vi.fn();
+const mockUseCaseExecute = vi.fn();
+const mockAssetStorageGet = vi.fn();
 
 // Mock drizzle
 vi.mock("drizzle-orm/d1", () => ({
@@ -78,6 +85,25 @@ vi.mock("../../../../infra/r2/note/markdown.storage", () => ({
   MarkdownStorage: vi.fn(function (this: unknown) {
     return {
       get: vi.fn(),
+      list: vi.fn(),
+    };
+  }),
+}));
+
+// Mock GetNoteDetailUseCase
+vi.mock("../../../../domain/note/usecases/get-note-detail.usecase", () => ({
+  GetNoteDetailUseCase: vi.fn(function (this: unknown) {
+    return {
+      execute: mockUseCaseExecute,
+    };
+  }),
+}));
+
+// Mock AssetStorage
+vi.mock("../../../../infra/r2/note/asset.storage", () => ({
+  AssetStorage: vi.fn(function (this: unknown) {
+    return {
+      get: mockAssetStorageGet,
       list: vi.fn(),
     };
   }),
@@ -177,6 +203,39 @@ describe("Notes API Handler", () => {
         status: 422,
       });
       expect(json.detail).toContain("broken-article");
+    });
+
+    it("InvalidNoteSlugError 時に 422 Unprocessable Entity を返す", async () => {
+      const { NotesRefreshService: service } =
+        await import("../../../../services/notes-refresh.service");
+
+      vi.mocked(service).mockImplementationOnce(function (this: unknown) {
+        return {
+          execute: vi
+            .fn()
+            .mockRejectedValue(new InvalidNoteSlugError("bad/slug")),
+        };
+      });
+
+      const app = createApp();
+
+      const res = await app.request(
+        "/api/v1/notes/refresh",
+        { method: "POST" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(422);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Unprocessable Entity",
+        status: 422,
+      });
+      expect(json.detail).toContain("bad/slug");
     });
 
     it("NoteMetadataValidationError 時に 422 Unprocessable Entity を返す", async () => {
@@ -473,6 +532,281 @@ describe("Notes API Handler", () => {
 
         consoleErrorSpy.mockRestore();
       });
+    });
+  });
+
+  describe("GET /api/v1/notes/:noteSlug (記事詳細)", () => {
+    const mockMdastRoot: Root = {
+      type: "root",
+      children: [
+        {
+          type: "heading",
+          depth: 1,
+          children: [{ type: "text", value: "Hello" }],
+        },
+      ],
+    };
+
+    it("正常レスポンスを 200 JSON で返す", async () => {
+      mockUseCaseExecute.mockResolvedValue({
+        id: "note-123",
+        title: "My Article",
+        slug: "my-article",
+        imageUrl: "https://example.com/cover.png",
+        publishedOn: "2026-02-15",
+        lastModifiedOn: "2026-02-18",
+        content: mockMdastRoot,
+      });
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toContain("application/json");
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        id: "note-123",
+        title: "My Article",
+        slug: "my-article",
+        imageUrl: "https://example.com/cover.png",
+        publishedOn: "2026-02-15",
+        lastModifiedOn: "2026-02-18",
+        content: { type: "root" },
+      });
+    });
+
+    it("不正な slug 形式の場合 400 ProblemDetails を返す", async () => {
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/INVALID SLUG!",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(400);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Bad Request",
+        status: 400,
+      });
+    });
+
+    it("記事が DB に存在しない場合 404 ProblemDetails を返す", async () => {
+      mockUseCaseExecute.mockRejectedValue(
+        new NoteNotFoundError("nonexistent"),
+      );
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/nonexistent",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Not Found",
+        status: 404,
+      });
+    });
+
+    it("Markdown がストレージに存在しない場合 404 ProblemDetails を返す", async () => {
+      mockUseCaseExecute.mockRejectedValue(
+        new MarkdownNotFoundError("my-article"),
+      );
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Not Found",
+        status: 404,
+      });
+    });
+
+    it("内部エラー時に 500 ProblemDetails を返す", async () => {
+      mockUseCaseExecute.mockRejectedValue(new Error("DB connection failed"));
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(vi.fn());
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(500);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Internal Server Error",
+        status: 500,
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("内部エラー時に console.error でログ出力する", async () => {
+      mockUseCaseExecute.mockRejectedValue(new Error("Unexpected error"));
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(vi.fn());
+
+      const app = createApp();
+      await app.request("/api/v1/notes/my-article", { method: "GET" }, testEnv);
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe("GET /api/v1/notes/:noteSlug/assets/* (アセット配信)", () => {
+    it("アセットをバイナリストリームで返す", async () => {
+      const binaryData = new Uint8Array([137, 80, 78, 71]);
+      const stream = new ReadableStream({
+        start(controller): void {
+          controller.enqueue(binaryData);
+          controller.close();
+        },
+      });
+
+      mockAssetStorageGet.mockResolvedValue({
+        body: stream,
+        contentType: ContentType.create("image/png"),
+        size: 4,
+        etag: ETag.create("etag-asset-1"),
+      });
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article/assets/images/diagram.png",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Type")).toBe("image/png");
+      expect(res.headers.get("ETag")).toBe("etag-asset-1");
+
+      const buffer = await res.arrayBuffer();
+      expect(new Uint8Array(buffer)).toEqual(binaryData);
+    });
+
+    it("不正な slug 形式の場合 400 ProblemDetails を返す", async () => {
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/INVALID SLUG!/assets/image.png",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(400);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Bad Request",
+        status: 400,
+      });
+    });
+
+    it("アセットが見つからない場合 404 ProblemDetails を返す", async () => {
+      // eslint-disable-next-line unicorn/no-useless-undefined
+      mockAssetStorageGet.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article/assets/nonexistent.png",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Not Found",
+        status: 404,
+      });
+    });
+
+    it("内部エラー時に 500 ProblemDetails を返す", async () => {
+      mockAssetStorageGet.mockRejectedValue(new Error("R2 access failed"));
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(vi.fn());
+
+      const app = createApp();
+      const res = await app.request(
+        "/api/v1/notes/my-article/assets/image.png",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(500);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Internal Server Error",
+        status: 500,
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("内部エラー時に console.error でログ出力する", async () => {
+      mockAssetStorageGet.mockRejectedValue(new Error("R2 error"));
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(vi.fn());
+
+      const app = createApp();
+      await app.request(
+        "/api/v1/notes/my-article/assets/image.png",
+        { method: "GET" },
+        testEnv,
+      );
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 });

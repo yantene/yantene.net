@@ -26,6 +26,14 @@ describe("ImageUrl Value Object", () => {
       );
     });
 
+    it("should create an ImageUrl with an absolute path", () => {
+      const imageUrl = ImageUrl.create(
+        "/api/v1/notes/my-article/assets/cover.png",
+      );
+
+      expect(imageUrl.value).toBe("/api/v1/notes/my-article/assets/cover.png");
+    });
+
     it("should throw an error for an empty string", () => {
       expect(() => ImageUrl.create("")).toThrow(InvalidImageUrlError);
     });

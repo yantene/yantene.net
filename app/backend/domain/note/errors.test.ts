@@ -3,7 +3,9 @@ import {
   InvalidImageUrlError,
   InvalidNoteSlugError,
   InvalidNoteTitleError,
+  MarkdownNotFoundError,
   NoteMetadataValidationError,
+  NoteNotFoundError,
   NoteParseError,
 } from "./errors";
 
@@ -64,5 +66,27 @@ describe("InvalidImageUrlError", () => {
     expect(error.name).toBe("InvalidImageUrlError");
     expect(error.message).toContain("not-a-url");
     expect(error.value).toBe("not-a-url");
+  });
+});
+
+describe("NoteNotFoundError", () => {
+  it("slug を含むエラーメッセージを生成する", () => {
+    const error = new NoteNotFoundError("my-article");
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe("NoteNotFoundError");
+    expect(error.message).toContain("my-article");
+    expect(error.slug).toBe("my-article");
+  });
+});
+
+describe("MarkdownNotFoundError", () => {
+  it("slug を含むエラーメッセージを生成する", () => {
+    const error = new MarkdownNotFoundError("my-article");
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe("MarkdownNotFoundError");
+    expect(error.message).toContain("my-article");
+    expect(error.slug).toBe("my-article");
   });
 });

@@ -2,17 +2,24 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import {
   InvalidImageUrlError,
+  InvalidNoteSlugError,
   InvalidNoteTitleError,
+  MarkdownNotFoundError,
   NoteMetadataValidationError,
+  NoteNotFoundError,
   NoteParseError,
 } from "../../../../domain/note/errors";
+import { NoteSlug } from "../../../../domain/note/note-slug.vo";
+import { GetNoteDetailUseCase } from "../../../../domain/note/usecases/get-note-detail.usecase";
 import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
+import { ObjectKey } from "../../../../domain/shared/object-key.vo";
 import {
   PaginationParams,
   PaginationValidationError,
 } from "../../../../domain/shared/pagination/pagination-params.vo";
 import { NoteCommandRepository } from "../../../../infra/d1/note/note.command-repository";
 import { NoteQueryRepository } from "../../../../infra/d1/note/note.query-repository";
+import { AssetStorage } from "../../../../infra/r2/note/asset.storage";
 import { MarkdownStorage } from "../../../../infra/r2/note/markdown.storage";
 import { NotesRefreshService } from "../../../../services/notes-refresh.service";
 import type { Note } from "../../../../domain/note/note.entity";
@@ -122,7 +129,8 @@ export const notesApp = new Hono<{ Bindings: Env }>()
         error instanceof NoteParseError ||
         error instanceof NoteMetadataValidationError ||
         error instanceof InvalidNoteTitleError ||
-        error instanceof InvalidImageUrlError
+        error instanceof InvalidImageUrlError ||
+        error instanceof InvalidNoteSlugError
       ) {
         const problemDetails: ProblemDetails = {
           type: "about:blank",
@@ -141,6 +149,149 @@ export const notesApp = new Hono<{ Bindings: Env }>()
 
       const detail =
         error instanceof Error ? error.message : "Failed to refresh notes";
+
+      const problemDetails: ProblemDetails = {
+        type: "about:blank",
+        title: "Internal Server Error",
+        status: 500,
+        detail,
+      };
+
+      return Response.json(problemDetails, {
+        status: 500,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+  })
+  .get("/:noteSlug/assets/*", async (c): Promise<Response> => {
+    try {
+      const noteSlugParam = c.req.param("noteSlug");
+
+      let slug: NoteSlug;
+      try {
+        slug = NoteSlug.create(noteSlugParam);
+      } catch (error) {
+        if (error instanceof InvalidNoteSlugError) {
+          const problemDetails: ProblemDetails = {
+            type: "about:blank",
+            title: "Bad Request",
+            status: 400,
+            detail: error.message,
+          };
+
+          return Response.json(problemDetails, {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          });
+        }
+        throw error;
+      }
+
+      const assetPath = c.req.path.replace(
+        `/api/v1/notes/${noteSlugParam}/assets/`,
+        "",
+      );
+      const objectKey = ObjectKey.create(`${slug.value}/${assetPath}`);
+      const assetStorage = new AssetStorage(c.env.R2);
+      const asset = await assetStorage.get(objectKey);
+
+      if (!asset) {
+        const problemDetails: ProblemDetails = {
+          type: "about:blank",
+          title: "Not Found",
+          status: 404,
+          detail: `Asset not found: ${assetPath}`,
+        };
+
+        return Response.json(problemDetails, {
+          status: 404,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      return new Response(asset.body, {
+        status: 200,
+        headers: {
+          "Content-Type": asset.contentType.value,
+          ETag: asset.etag.value,
+        },
+      });
+    } catch (error) {
+      console.error("Asset delivery error:", error);
+
+      const detail =
+        error instanceof Error ? error.message : "Failed to deliver asset";
+
+      const problemDetails: ProblemDetails = {
+        type: "about:blank",
+        title: "Internal Server Error",
+        status: 500,
+        detail,
+      };
+
+      return Response.json(problemDetails, {
+        status: 500,
+        headers: { "Content-Type": "application/problem+json" },
+      });
+    }
+  })
+  .get("/:noteSlug", async (c): Promise<Response> => {
+    try {
+      const noteSlugParam = c.req.param("noteSlug");
+
+      let slug: NoteSlug;
+      try {
+        slug = NoteSlug.create(noteSlugParam);
+      } catch (error) {
+        if (error instanceof InvalidNoteSlugError) {
+          const problemDetails: ProblemDetails = {
+            type: "about:blank",
+            title: "Bad Request",
+            status: 400,
+            detail: error.message,
+          };
+
+          return Response.json(problemDetails, {
+            status: 400,
+            headers: { "Content-Type": "application/problem+json" },
+          });
+        }
+        throw error;
+      }
+
+      const db = drizzle(c.env.D1);
+      const queryRepository = new NoteQueryRepository(db);
+      const markdownStorage = new MarkdownStorage(c.env.R2);
+      const useCase = new GetNoteDetailUseCase(
+        queryRepository,
+        markdownStorage,
+      );
+
+      const result = await useCase.execute(slug);
+
+      return c.json(result);
+    } catch (error) {
+      if (
+        error instanceof NoteNotFoundError ||
+        error instanceof MarkdownNotFoundError
+      ) {
+        const problemDetails: ProblemDetails = {
+          type: "about:blank",
+          title: "Not Found",
+          status: 404,
+          detail: error.message,
+        };
+
+        return Response.json(problemDetails, {
+          status: 404,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
+      console.error("Note detail error:", error);
+
+      const detail =
+        error instanceof Error ? error.message : "Failed to get note detail";
 
       const problemDetails: ProblemDetails = {
         type: "about:blank",
