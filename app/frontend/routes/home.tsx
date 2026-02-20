@@ -1,19 +1,17 @@
-import { Welcome } from "../welcome/welcome";
+import { HeroSection } from "../components/hero/hero-section";
 import type { Route } from "./+types/home";
 
 export function meta(_args: Route.MetaArgs): ReturnType<Route.MetaFunction> {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "yantene.net" },
+    { name: "description", content: "自己表現・技術実験・発信の場" },
   ];
 }
 
-export function loader({ context }: Route.LoaderArgs): { message: string } {
-  return { message: context.cloudflare.env.VALUE_FROM_CLOUDFLARE };
-}
-
-export default function Home({
-  loaderData,
-}: Route.ComponentProps): React.JSX.Element {
-  return <Welcome message={loaderData.message} />;
+export default function Home(): React.JSX.Element {
+  return (
+    <div>
+      <HeroSection />
+    </div>
+  );
 }
