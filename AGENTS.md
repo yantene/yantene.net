@@ -517,6 +517,13 @@ This project uses **squash merge** for Pull Requests. Individual commit messages
 
 **Note**: Since all commits are squashed on merge, focus on clear, descriptive commit messages during development without worrying about strict conventional commit format. The PR title is what matters for the final commit history on the main branch.
 
+### GitHub Templates
+
+PR と Issue を `gh` コマンドで作成する際は、テンプレートの構造に従うこと:
+
+- **PR**: `.github/pull_request_template.md` を読み、そのセクション構造に沿って `--body` を構成する
+- **Issue**: `.github/ISSUE_TEMPLATE/` 内のテンプレート (`feature.yml`, `bug.yml`, `refactor.yml`) を読み、各フィールドに沿って `--body` を構成する。対応する `--label` も付与する
+
 ## Language
 
 **Japanese for Reviews**: According to `.github/copilot-instructions.md`, code reviews and feedback should be provided in Japanese.
