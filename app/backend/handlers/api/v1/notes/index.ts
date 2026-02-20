@@ -163,7 +163,7 @@ export const notesApp = new Hono<{ Bindings: Env }>()
       });
     }
   })
-  .get("/:noteSlug/assets/*", async (c): Promise<Response> => {
+  .get("/:noteSlug/assets/:assetPath{.+}", async (c): Promise<Response> => {
     try {
       const noteSlugParam = c.req.param("noteSlug");
 
@@ -187,10 +187,7 @@ export const notesApp = new Hono<{ Bindings: Env }>()
         throw error;
       }
 
-      const assetPath = c.req.path.replace(
-        `/api/v1/notes/${noteSlugParam}/assets/`,
-        "",
-      );
+      const assetPath = c.req.param("assetPath");
       const objectKey = ObjectKey.create(`${slug.value}/${assetPath}`);
       const assetStorage = new AssetStorage(c.env.R2);
       const asset = await assetStorage.get(objectKey);

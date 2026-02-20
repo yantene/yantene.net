@@ -3,7 +3,9 @@ import type { NoteSlug } from "./note-slug.vo";
 import type { Image, Root } from "mdast";
 
 const isAbsoluteUrl = (url: string): boolean =>
-  url.startsWith("http://") || url.startsWith("https://");
+  url.startsWith("/") ||
+  url.startsWith("http://") ||
+  url.startsWith("https://");
 
 const normalizePath = (path: string): string =>
   path.startsWith("./") ? path.slice(2) : path;

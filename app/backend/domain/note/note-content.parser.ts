@@ -7,7 +7,9 @@ import { NoteTitle } from "./note-title.vo";
 import type { NoteSlug } from "./note-slug.vo";
 
 const isAbsoluteUrl = (url: string): boolean =>
-  url.startsWith("http://") || url.startsWith("https://");
+  url.startsWith("/") ||
+  url.startsWith("http://") ||
+  url.startsWith("https://");
 
 const resolveImageUrl = (url: string, slug: NoteSlug): string => {
   if (isAbsoluteUrl(url)) return url;

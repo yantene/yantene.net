@@ -76,6 +76,24 @@ lastModifiedOn: "2025-02-01"
     ).toBe(true);
   });
 
+  it("'/' 始まりの絶対パスの imageUrl はそのまま保持する", () => {
+    const content = `---
+title: "テスト記事"
+imageUrl: "/images/cover.png"
+publishedOn: "2025-01-15"
+lastModifiedOn: "2025-02-01"
+---
+
+# 本文
+`;
+
+    const metadata = parseNoteContent(content, slug);
+
+    expect(metadata.imageUrl.equals(ImageUrl.create("/images/cover.png"))).toBe(
+      true,
+    );
+  });
+
   it("絶対 URL の imageUrl はそのまま保持する", () => {
     const content = `---
 title: "テスト記事"
