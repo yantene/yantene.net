@@ -6,7 +6,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "yantene",
 	"compatibility_date": "2026-01-27",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"main": "./workers/app.ts",
 	"vars": {
 		"VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare"
@@ -18,7 +20,7 @@
 		{
 			"binding": "D1",
 			"database_name": "yantene-development",
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "32bddf3b-622f-4fb7-ad09-bafdb8f2dda7",
 			"migrations_dir": "./migrations"
 		}
 	],
@@ -34,7 +36,7 @@
 				{
 					"binding": "D1",
 					"database_name": "yantene-production",
-					"database_id": "a69aece1-4506-4256-b7f8-1709c2e4a889",
+					"database_id": "32bddf3b-622f-4fb7-ad09-bafdb8f2dda7",
 					"migrations_dir": "./migrations"
 				}
 			],
