@@ -6,6 +6,15 @@ import { ImageUrl } from "./image-url.vo";
 import { NoteTitle } from "./note-title.vo";
 import type { NoteSlug } from "./note-slug.vo";
 
+const isAbsoluteUrl = (url: string): boolean =>
+  url.startsWith("http://") || url.startsWith("https://");
+
+const resolveImageUrl = (url: string, slug: NoteSlug): string => {
+  if (isAbsoluteUrl(url)) return url;
+  const normalized = url.startsWith("./") ? url.slice(2) : url;
+  return `/api/v1/notes/${slug.value}/assets/${normalized}`;
+};
+
 export type NoteMetadata = {
   readonly title: NoteTitle;
   readonly imageUrl: ImageUrl;
@@ -52,7 +61,7 @@ export function parseNoteContent(
 
   return {
     title: NoteTitle.create(String(title)),
-    imageUrl: ImageUrl.create(String(imageUrl)),
+    imageUrl: ImageUrl.create(resolveImageUrl(String(imageUrl), slug)),
     publishedOn: Temporal.PlainDate.from(String(publishedOn)),
     lastModifiedOn: Temporal.PlainDate.from(String(lastModifiedOn)),
   };

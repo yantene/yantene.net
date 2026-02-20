@@ -23,6 +23,9 @@ export class ImageUrl implements IValueObject<ImageUrl> {
     if (value.length === 0) {
       return false;
     }
+    if (value.startsWith("/")) {
+      return true;
+    }
     try {
       new URL(value);
       return true;
