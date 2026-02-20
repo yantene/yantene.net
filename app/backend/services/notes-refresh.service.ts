@@ -1,6 +1,6 @@
 import { parseNoteContent } from "../domain/note/note-content.parser";
 import { Note } from "../domain/note/note.entity";
-import type { SyncResult } from "./sync-result";
+import type { RefreshResult } from "./refresh-result";
 import type {
   IMarkdownStorage,
   MarkdownListItem,
@@ -15,7 +15,7 @@ export class NotesRefreshService {
     private readonly commandRepository: INoteCommandRepository,
   ) {}
 
-  async execute(): Promise<SyncResult> {
+  async execute(): Promise<RefreshResult> {
     const [markdownFiles, dbNotes] = await Promise.all([
       this.storage.list(),
       this.queryRepository.findAll(),
