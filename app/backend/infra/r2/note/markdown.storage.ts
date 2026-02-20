@@ -31,6 +31,10 @@ export class MarkdownStorage implements IMarkdownStorage {
 
     return r2Objects.objects
       .filter((obj) => obj.key.endsWith(MD_EXTENSION))
+      .filter(
+        (obj) =>
+          !obj.key.slice(NOTES_PREFIX.length, -MD_EXTENSION.length).includes("/"),
+      )
       .map((obj) => ({
         slug: NoteSlug.create(
           obj.key.slice(NOTES_PREFIX.length, -MD_EXTENSION.length),

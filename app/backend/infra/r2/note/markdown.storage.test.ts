@@ -89,6 +89,26 @@ describe("MarkdownStorage", () => {
       expect(result[0].slug).toEqual(NoteSlug.create("article"));
     });
 
+    it("should skip markdown files in subdirectories (slug containing slash)", async () => {
+      const mockR2Objects: R2Objects = {
+        objects: [
+          createMockR2Object("notes/valid-article.md", "etag1"),
+          createMockR2Object("notes/subdir/nested.md", "etag2"),
+          createMockR2Object("notes/deep/path/file.md", "etag3"),
+        ],
+        truncated: false,
+        delimitedPrefixes: [],
+      };
+
+      vi.mocked(mockR2Bucket.list).mockResolvedValue(mockR2Objects);
+
+      const storage = new MarkdownStorage(mockR2Bucket);
+      const result = await storage.list();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].slug).toEqual(NoteSlug.create("valid-article"));
+    });
+
     it("should return empty array when no markdown files exist", async () => {
       const mockR2Objects: R2Objects = {
         objects: [],

@@ -129,7 +129,8 @@ export const notesApp = new Hono<{ Bindings: Env }>()
         error instanceof NoteParseError ||
         error instanceof NoteMetadataValidationError ||
         error instanceof InvalidNoteTitleError ||
-        error instanceof InvalidImageUrlError
+        error instanceof InvalidImageUrlError ||
+        error instanceof InvalidNoteSlugError
       ) {
         const problemDetails: ProblemDetails = {
           type: "about:blank",

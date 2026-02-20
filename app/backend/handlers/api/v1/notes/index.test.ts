@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import {
+  InvalidNoteSlugError,
   MarkdownNotFoundError,
   NoteMetadataValidationError,
   NoteNotFoundError,
@@ -202,6 +203,39 @@ describe("Notes API Handler", () => {
         status: 422,
       });
       expect(json.detail).toContain("broken-article");
+    });
+
+    it("InvalidNoteSlugError 時に 422 Unprocessable Entity を返す", async () => {
+      const { NotesRefreshService: service } =
+        await import("../../../../services/notes-refresh.service");
+
+      vi.mocked(service).mockImplementationOnce(function (this: unknown) {
+        return {
+          execute: vi
+            .fn()
+            .mockRejectedValue(new InvalidNoteSlugError("bad/slug")),
+        };
+      });
+
+      const app = createApp();
+
+      const res = await app.request(
+        "/api/v1/notes/refresh",
+        { method: "POST" },
+        testEnv,
+      );
+
+      expect(res.status).toBe(422);
+      expect(res.headers.get("Content-Type")).toContain(
+        "application/problem+json",
+      );
+      const json = await parseJson(res);
+      expect(json).toMatchObject({
+        type: "about:blank",
+        title: "Unprocessable Entity",
+        status: 422,
+      });
+      expect(json.detail).toContain("bad/slug");
     });
 
     it("NoteMetadataValidationError 時に 422 Unprocessable Entity を返す", async () => {
