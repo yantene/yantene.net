@@ -16,6 +16,9 @@
 .dev.vars*
 worker-configuration.d.ts
 
+# Storybook
+storybook-static
+
 # Claude Code
 .claude/settings.local.json
 
