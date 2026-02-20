@@ -1,8 +1,8 @@
 import { ContentType } from "../domain/shared/content-type.vo";
-import { StoredObjectMetadata } from "../domain/stored-object/stored-object-metadata.entity";
+import { StoredObjectMetadata } from "../infra/stored-object/stored-object-metadata";
 import type { IStoredObjectStorage } from "../domain/shared/object-storage.interface";
-import type { IStoredObjectMetadataCommandRepository } from "../domain/stored-object/stored-object-metadata-command-repository.interface";
-import type { IStoredObjectMetadataQueryRepository } from "../domain/stored-object/stored-object-metadata-query-repository.interface";
+import type { IStoredObjectMetadataCommandRepository } from "../infra/stored-object/stored-object-metadata.command-repository.interface";
+import type { IStoredObjectMetadataQueryRepository } from "../infra/stored-object/stored-object-metadata.query-repository.interface";
 
 export type SyncResult = {
   added: number;

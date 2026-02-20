@@ -2,12 +2,10 @@ import { Temporal } from "@js-temporal/polyfill";
 import { eq, sql } from "drizzle-orm";
 import { fileDownloadCounts } from "../schema/file-download-counts.table";
 import { objectStorageFileMetadata } from "../schema/object-storage-file-metadata.table";
-import type { IPersisted } from "../../../domain/persisted.interface";
 import type { ObjectKey } from "../../../domain/shared/object-key.vo";
-import type { IStoredObjectMetadataCommandRepository } from "../../../domain/stored-object/stored-object-metadata-command-repository.interface";
-import type { IStoredObjectMetadataQueryRepository } from "../../../domain/stored-object/stored-object-metadata-query-repository.interface";
-import type { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";
-import type { IUnpersisted } from "../../../domain/unpersisted.interface";
+import type { StoredObjectMetadata } from "../../stored-object/stored-object-metadata";
+import type { IStoredObjectMetadataCommandRepository } from "../../stored-object/stored-object-metadata.command-repository.interface";
+import type { IStoredObjectMetadataQueryRepository } from "../../stored-object/stored-object-metadata.query-repository.interface";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
 export class StoredObjectMetadataCommandRepository implements IStoredObjectMetadataCommandRepository {
@@ -17,9 +15,9 @@ export class StoredObjectMetadataCommandRepository implements IStoredObjectMetad
   ) {}
 
   async upsert(
-    metadata: StoredObjectMetadata<IUnpersisted>,
+    metadata: StoredObjectMetadata,
     options: { preserveDownloadCount?: boolean } = {},
-  ): Promise<StoredObjectMetadata<IPersisted>> {
+  ): Promise<StoredObjectMetadata> {
     const shouldPreserveDownloadCount = options.preserveDownloadCount ?? false;
     const id = crypto.randomUUID();
     const now = Temporal.Now.instant();

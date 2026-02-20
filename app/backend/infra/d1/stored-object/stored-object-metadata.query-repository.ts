@@ -2,11 +2,10 @@ import { eq } from "drizzle-orm";
 import { ContentType } from "../../../domain/shared/content-type.vo";
 import { ETag } from "../../../domain/shared/etag.vo";
 import { ObjectKey } from "../../../domain/shared/object-key.vo";
-import { StoredObjectMetadata } from "../../../domain/stored-object/stored-object-metadata.entity";
+import { StoredObjectMetadata } from "../../stored-object/stored-object-metadata";
 import { fileDownloadCounts } from "../schema/file-download-counts.table";
 import { objectStorageFileMetadata } from "../schema/object-storage-file-metadata.table";
-import type { IPersisted } from "../../../domain/persisted.interface";
-import type { IStoredObjectMetadataQueryRepository } from "../../../domain/stored-object/stored-object-metadata-query-repository.interface";
+import type { IStoredObjectMetadataQueryRepository } from "../../stored-object/stored-object-metadata.query-repository.interface";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
@@ -24,7 +23,7 @@ type StoredObjectWithCount = {
 export class StoredObjectMetadataQueryRepository implements IStoredObjectMetadataQueryRepository {
   constructor(private readonly db: DrizzleD1Database) {}
 
-  async findAll(): Promise<readonly StoredObjectMetadata<IPersisted>[]> {
+  async findAll(): Promise<readonly StoredObjectMetadata[]> {
     const rows = await this.db
       .select({
         id: objectStorageFileMetadata.id,
@@ -48,7 +47,7 @@ export class StoredObjectMetadataQueryRepository implements IStoredObjectMetadat
 
   async findByObjectKey(
     objectKey: ObjectKey,
-  ): Promise<StoredObjectMetadata<IPersisted> | undefined> {
+  ): Promise<StoredObjectMetadata | undefined> {
     const row = await this.db
       .select({
         id: objectStorageFileMetadata.id,
@@ -75,9 +74,7 @@ export class StoredObjectMetadataQueryRepository implements IStoredObjectMetadat
     return this.toEntity(row as StoredObjectWithCount);
   }
 
-  private toEntity(
-    row: StoredObjectWithCount,
-  ): StoredObjectMetadata<IPersisted> {
+  private toEntity(row: StoredObjectWithCount): StoredObjectMetadata {
     return StoredObjectMetadata.reconstruct({
       id: row.id,
       objectKey: ObjectKey.create(row.objectKey),

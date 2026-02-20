@@ -1,23 +1,18 @@
-import type { IEntity } from "../entity.interface";
-import type { IPersisted } from "../persisted.interface";
-import type { ContentType } from "../shared/content-type.vo";
-import type { ETag } from "../shared/etag.vo";
-import type { ObjectKey } from "../shared/object-key.vo";
-import type { IUnpersisted } from "../unpersisted.interface";
+import type { ContentType } from "../../domain/shared/content-type.vo";
+import type { ETag } from "../../domain/shared/etag.vo";
+import type { ObjectKey } from "../../domain/shared/object-key.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 
-export class StoredObjectMetadata<
-  P extends IPersisted | IUnpersisted,
-> implements IEntity<StoredObjectMetadata<P>> {
+export class StoredObjectMetadata {
   private constructor(
-    readonly id: P["id"],
+    readonly id: string | undefined,
     readonly objectKey: ObjectKey,
     readonly size: number,
     readonly contentType: ContentType,
     readonly etag: ETag,
     readonly downloadCount: number,
-    readonly createdAt: P["createdAt"],
-    readonly updatedAt: P["updatedAt"],
+    readonly createdAt: Temporal.Instant | undefined,
+    readonly updatedAt: Temporal.Instant | undefined,
   ) {}
 
   static create(params: {
@@ -25,7 +20,7 @@ export class StoredObjectMetadata<
     size: number;
     contentType: ContentType;
     etag: ETag;
-  }): StoredObjectMetadata<IUnpersisted> {
+  }): StoredObjectMetadata {
     StoredObjectMetadata.validateSize(params.size);
     return new StoredObjectMetadata(
       undefined,
@@ -48,7 +43,7 @@ export class StoredObjectMetadata<
     downloadCount: number;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
-  }): StoredObjectMetadata<IPersisted> {
+  }): StoredObjectMetadata {
     StoredObjectMetadata.validateSize(params.size);
     StoredObjectMetadata.validateDownloadCount(params.downloadCount);
     return new StoredObjectMetadata(
@@ -61,35 +56,6 @@ export class StoredObjectMetadata<
       params.createdAt,
       params.updatedAt,
     );
-  }
-
-  equals(other: StoredObjectMetadata<P>): boolean {
-    if (this.id == null || other.id == null) {
-      return this === other;
-    }
-    return this.id === other.id;
-  }
-
-  toJSON(): {
-    id: P["id"];
-    objectKey: string;
-    size: number;
-    contentType: string;
-    etag: string;
-    downloadCount: number;
-    createdAt: string | undefined;
-    updatedAt: string | undefined;
-  } {
-    return {
-      id: this.id,
-      objectKey: this.objectKey.toJSON(),
-      size: this.size,
-      contentType: this.contentType.toJSON(),
-      etag: this.etag.toJSON(),
-      downloadCount: this.downloadCount,
-      createdAt: this.createdAt?.toString(),
-      updatedAt: this.updatedAt?.toString(),
-    };
   }
 
   private static validateSize(size: number): void {
