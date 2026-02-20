@@ -29,7 +29,7 @@ const config = [
   includeIgnoreFile(gitignorePath),
 
   // Storybook 設定ファイルを ESLint の対象外にする
-  { ignores: [".storybook/main.ts", ".storybook/preview.ts", ".storybook/vite.config.ts"] },
+  { ignores: [".storybook/*.ts"] },
 
   // JavaScript の推奨設定
   js.configs.recommended,

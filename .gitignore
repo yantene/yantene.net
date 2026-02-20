@@ -18,6 +18,7 @@ worker-configuration.d.ts
 
 # Storybook
 storybook-static
+debug-storybook.log
 
 # Claude Code
 .claude/settings.local.json
