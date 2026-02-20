@@ -1,11 +1,12 @@
-import type { IValueObject } from "../value-object.interface";
+import { InvalidNoteSlugError } from "./errors";
+import type { IValueObject } from "../shared/value-object.interface";
 
 export class NoteSlug implements IValueObject<NoteSlug> {
   private constructor(readonly value: string) {}
 
   static create(value: string): NoteSlug {
     if (!NoteSlug.isValid(value)) {
-      throw new Error(`Invalid note slug: ${value}`);
+      throw new InvalidNoteSlugError(value);
     }
     return new NoteSlug(value);
   }

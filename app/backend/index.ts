@@ -1,6 +1,4 @@
 import { Hono } from "hono";
-import { adminFilesApp } from "./handlers/api/admin/files";
-import { filesApp } from "./handlers/api/files";
 import { notesApp } from "./handlers/api/v1/notes";
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -13,8 +11,6 @@ export const getApp = (
 ) => {
   const app = new Hono<{ Bindings: Env }>()
     .get("/hello", (c) => c.text("Hello, World!"))
-    .route("/api/files", filesApp)
-    .route("/api/admin/files", adminFilesApp)
     .route("/api/v1/notes", notesApp)
     .all("*", async (context) => {
       return handler(

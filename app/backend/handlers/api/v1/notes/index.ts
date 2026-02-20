@@ -1,16 +1,22 @@
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import {
+  InvalidImageUrlError,
+  InvalidNoteTitleError,
+  NoteMetadataValidationError,
+  NoteParseError,
+} from "../../../../domain/note/errors";
+import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
+import {
   PaginationParams,
   PaginationValidationError,
-} from "../../../../domain/note/pagination-params.vo";
-import { ListNotesUseCase } from "../../../../domain/note/usecases/list-notes.usecase";
+} from "../../../../domain/shared/pagination/pagination-params.vo";
 import { NoteCommandRepository } from "../../../../infra/d1/note/note.command-repository";
 import { NoteQueryRepository } from "../../../../infra/d1/note/note.query-repository";
-import { StoredObjectStorage } from "../../../../infra/r2/stored-object.storage";
+import { MarkdownStorage } from "../../../../infra/r2/note/markdown.storage";
 import { NotesRefreshService } from "../../../../services/notes-refresh.service";
 import type { Note } from "../../../../domain/note/note.entity";
-import type { IPersisted } from "../../../../domain/persisted.interface";
+import type { IPersisted } from "../../../../domain/shared/persisted.interface";
 import type { NotesRefreshResponse } from "~/lib/types/notes";
 import type { ProblemDetails } from "~/lib/types/problem-details";
 
@@ -95,7 +101,7 @@ export const notesApp = new Hono<{ Bindings: Env }>()
       const db = drizzle(c.env.D1);
       const queryRepository = new NoteQueryRepository(db);
       const commandRepository = new NoteCommandRepository(db, queryRepository);
-      const storage = new StoredObjectStorage(c.env.R2);
+      const storage = new MarkdownStorage(c.env.R2);
       const service = new NotesRefreshService(
         storage,
         queryRepository,
@@ -112,6 +118,25 @@ export const notesApp = new Hono<{ Bindings: Env }>()
 
       return c.json(response);
     } catch (error) {
+      if (
+        error instanceof NoteParseError ||
+        error instanceof NoteMetadataValidationError ||
+        error instanceof InvalidNoteTitleError ||
+        error instanceof InvalidImageUrlError
+      ) {
+        const problemDetails: ProblemDetails = {
+          type: "about:blank",
+          title: "Unprocessable Entity",
+          status: 422,
+          detail: error.message,
+        };
+
+        return Response.json(problemDetails, {
+          status: 422,
+          headers: { "Content-Type": "application/problem+json" },
+        });
+      }
+
       console.error("Notes refresh error:", error);
 
       const detail =

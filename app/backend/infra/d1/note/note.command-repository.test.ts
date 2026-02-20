@@ -7,7 +7,7 @@ import { Note } from "../../../domain/note/note.entity";
 import { ETag } from "../../../domain/shared/etag.vo";
 import { NoteCommandRepository } from "./note.command-repository";
 import type { INoteQueryRepository } from "../../../domain/note/note.query-repository.interface";
-import type { IPersisted } from "../../../domain/persisted.interface";
+import type { IPersisted } from "../../../domain/shared/persisted.interface";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
 const testInstant = Temporal.Instant.from("2026-01-01T00:00:00Z");

@@ -4,18 +4,16 @@ import { ImageUrl } from "../domain/note/image-url.vo";
 import { NoteSlug } from "../domain/note/note-slug.vo";
 import { NoteTitle } from "../domain/note/note-title.vo";
 import { Note } from "../domain/note/note.entity";
-import { ContentType } from "../domain/shared/content-type.vo";
 import { ETag } from "../domain/shared/etag.vo";
-import { ObjectKey } from "../domain/shared/object-key.vo";
 import { NotesRefreshService } from "./notes-refresh.service";
+import type {
+  IMarkdownStorage,
+  MarkdownContent,
+  MarkdownListItem,
+} from "../domain/note/markdown-storage.interface";
 import type { INoteCommandRepository } from "../domain/note/note.command-repository.interface";
 import type { INoteQueryRepository } from "../domain/note/note.query-repository.interface";
-import type { IPersisted } from "../domain/persisted.interface";
-import type {
-  IStoredObjectStorage,
-  StoredObjectContent,
-  StoredObjectListItem,
-} from "../domain/shared/object-storage.interface";
+import type { IPersisted } from "../domain/shared/persisted.interface";
 
 const testInstant = Temporal.Instant.from("2026-01-01T00:00:00Z");
 
@@ -38,11 +36,9 @@ function createReadableStream(text: string): ReadableStream {
   });
 }
 
-function createStoredObjectContent(etag: string): StoredObjectContent {
+function createMarkdownContent(etag: string): MarkdownContent {
   return {
     body: createReadableStream(FRONTMATTER_CONTENT),
-    contentType: ContentType.create("text/markdown"),
-    size: FRONTMATTER_CONTENT.length,
     etag: ETag.create(etag),
   };
 }
@@ -65,9 +61,9 @@ function createPersistedNote(params: {
 }
 
 function createMockStorage(
-  listItems: StoredObjectListItem[],
-  getResult?: StoredObjectContent,
-): IStoredObjectStorage {
+  listItems: MarkdownListItem[],
+  getResult?: MarkdownContent,
+): IMarkdownStorage {
   return {
     list: vi.fn().mockResolvedValue(listItems),
     get: vi.fn().mockResolvedValue(getResult),
@@ -103,12 +99,11 @@ describe("NotesRefreshService", () => {
       const storage = createMockStorage(
         [
           {
-            objectKey: ObjectKey.create("new-article.md"),
-            size: 1024,
+            slug: NoteSlug.create("new-article"),
             etag: ETag.create("etag-new"),
           },
         ],
-        createStoredObjectContent("etag-new"),
+        createMarkdownContent("etag-new"),
       );
       const queryRepository = createMockQueryRepository([]);
       const commandRepository = createMockCommandRepository();
@@ -123,9 +118,7 @@ describe("NotesRefreshService", () => {
       expect(result.added).toBe(1);
       expect(result.updated).toBe(0);
       expect(result.deleted).toBe(0);
-      expect(storage.get).toHaveBeenCalledWith(
-        ObjectKey.create("new-article.md"),
-      );
+      expect(storage.get).toHaveBeenCalledWith(NoteSlug.create("new-article"));
       expect(commandRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           slug: expect.objectContaining({ value: "new-article" }),
@@ -142,12 +135,11 @@ describe("NotesRefreshService", () => {
       const storage = createMockStorage(
         [
           {
-            objectKey: ObjectKey.create("existing-article.md"),
-            size: 2048,
+            slug: NoteSlug.create("existing-article"),
             etag: ETag.create("etag-new"),
           },
         ],
-        createStoredObjectContent("etag-new"),
+        createMarkdownContent("etag-new"),
       );
       const queryRepository = createMockQueryRepository([
         createPersistedNote({ slug: "existing-article", etag: "etag-old" }),
@@ -165,7 +157,7 @@ describe("NotesRefreshService", () => {
       expect(result.updated).toBe(1);
       expect(result.deleted).toBe(0);
       expect(storage.get).toHaveBeenCalledWith(
-        ObjectKey.create("existing-article.md"),
+        NoteSlug.create("existing-article"),
       );
       expect(commandRepository.upsert).toHaveBeenCalledTimes(1);
     });
@@ -195,8 +187,7 @@ describe("NotesRefreshService", () => {
     it("etag が同じ記事はスキップする", async () => {
       const storage = createMockStorage([
         {
-          objectKey: ObjectKey.create("unchanged-article.md"),
-          size: 3072,
+          slug: NoteSlug.create("unchanged-article"),
           etag: ETag.create("etag-same"),
         },
       ]);
@@ -222,29 +213,24 @@ describe("NotesRefreshService", () => {
 
     it("追加・更新・削除の混在を正しく処理する", async () => {
       const getMock = vi.fn();
-      getMock.mockResolvedValueOnce(createStoredObjectContent("etag-new"));
-      getMock.mockResolvedValueOnce(
-        createStoredObjectContent("etag-updated-new"),
-      );
+      getMock.mockResolvedValueOnce(createMarkdownContent("etag-new"));
+      getMock.mockResolvedValueOnce(createMarkdownContent("etag-updated-new"));
 
-      const storage: IStoredObjectStorage = {
+      const storage: IMarkdownStorage = {
         list: vi.fn().mockResolvedValue([
           {
-            objectKey: ObjectKey.create("new-article.md"),
-            size: 1024,
+            slug: NoteSlug.create("new-article"),
             etag: ETag.create("etag-new"),
           },
           {
-            objectKey: ObjectKey.create("updated-article.md"),
-            size: 2048,
+            slug: NoteSlug.create("updated-article"),
             etag: ETag.create("etag-updated-new"),
           },
           {
-            objectKey: ObjectKey.create("unchanged-article.md"),
-            size: 3072,
+            slug: NoteSlug.create("unchanged-article"),
             etag: ETag.create("etag-same"),
           },
-        ] satisfies StoredObjectListItem[]),
+        ] satisfies MarkdownListItem[]),
         get: getMock,
       };
 
@@ -291,12 +277,11 @@ describe("NotesRefreshService", () => {
       const storage = createMockStorage(
         [
           {
-            objectKey: ObjectKey.create("my-article.md"),
-            size: 1024,
+            slug: NoteSlug.create("my-article"),
             etag: ETag.create("etag-1"),
           },
         ],
-        createStoredObjectContent("etag-1"),
+        createMarkdownContent("etag-1"),
       );
       const queryRepository = createMockQueryRepository([]);
       const commandRepository = createMockCommandRepository();

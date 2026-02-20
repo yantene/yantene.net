@@ -58,7 +58,15 @@ app/
 │   ├── root.tsx       # Root layout
 │   └── entry.server.tsx  # Server entry point for SSR
 ├── backend/           # Hono backend application
-│   └── index.ts       # Backend exports getApp() function
+│   ├── index.ts       # Backend exports getApp() function
+│   ├── domain/        # Domain layer (infrastructure-agnostic)
+│   │   ├── note/      # Note aggregate (entity, VOs, interfaces, usecases)
+│   │   └── shared/    # Shared base interfaces and VOs
+│   ├── infra/         # Infrastructure layer
+│   │   ├── d1/        # D1 (SQLite) implementations
+│   │   └── r2/        # R2 (object storage) implementations
+│   ├── handlers/      # HTTP handler layer (Hono routes)
+│   └── services/      # Application services
 └── lib/               # Shared utilities across frontend and backend
 
 workers/
@@ -89,8 +97,8 @@ This project follows **Dependency Inversion Principle (DIP)** with a clean separ
 - Must be **infrastructure-agnostic**
 - Class names, interface names, and type names must NOT contain infrastructure technology names (R2, D1, S3, Cloudflare, AWS, etc.)
 - Examples:
-  - ✅ `StoredObjectMetadata`, `IStoredObjectStorage`, `ObjectKey`, `ISyncService`
-  - ❌ `R2FileMetadata`, `IR2FileStorage`, `S3ObjectKey`, `CloudflareSyncService`
+  - ✅ `Note`, `IMarkdownStorage`, `ObjectKey`, `NoteSlug`
+  - ❌ `R2MarkdownStorage`, `D1NoteRepository`, `S3ObjectKey`, `CloudflareSyncService`
 - Domain defines interfaces; infrastructure implements them
 - This allows swapping infrastructure (e.g., R2 → S3) without changing domain code
 
@@ -121,16 +129,21 @@ Repositories MUST be split into Command (write) and Query (read) following the p
 **Example**:
 
 ```typescript
-// domain/error-log/error-log.command-repository.interface.ts
-export interface IErrorLogCommandRepository {
-  save(errorLog: ErrorLog<IUnpersisted>): Promise<ErrorLog<IPersisted>>;
+// domain/note/note.command-repository.interface.ts
+export interface INoteCommandRepository {
+  save(note: Note<IUnpersisted>): Promise<Note<IPersisted>>;
+  upsert(note: Note<IUnpersisted>): Promise<Note<IPersisted>>;
   delete(id: string): Promise<void>;
+  deleteBySlug(slug: NoteSlug): Promise<void>;
 }
 
-// domain/error-log/error-log.query-repository.interface.ts
-export interface IErrorLogQueryRepository {
-  findById(id: string): Promise<ErrorLog<IPersisted> | undefined>;
-  findAll(): Promise<ErrorLog<IPersisted>[]>;
+// domain/note/note.query-repository.interface.ts
+export interface INoteQueryRepository {
+  findAll(): Promise<readonly Note<IPersisted>[]>;
+  findBySlug(slug: NoteSlug): Promise<Note<IPersisted> | undefined>;
+  findPaginated(
+    params: PaginationParams,
+  ): Promise<PaginatedResult<Note<IPersisted>>>;
 }
 ```
 
@@ -169,10 +182,10 @@ Use `IPersisted` / `IUnpersisted` generics to distinguish database state at comp
 
 ```typescript
 // New entity (not saved yet)
-static create(params: { ... }): ErrorLog<IUnpersisted>
+static create(params: { ... }): Note<IUnpersisted>
 
 // Reconstructed from DB
-static reconstruct(params: { id: string; createdAt: Temporal.Instant; ... }): ErrorLog<IPersisted>
+static reconstruct(params: { id: string; createdAt: Temporal.Instant; ... }): Note<IPersisted>
 ```
 
 This makes it a compile-time error to pass an unsaved entity where a persisted one is required.
@@ -181,30 +194,45 @@ This makes it a compile-time error to pass an unsaved entity where a persisted o
 
 ```
 domain/
-├── aggregate-name/
-│   ├── aggregate-name.entity.ts
-│   ├── aggregate-name.entity.test.ts
-│   ├── aggregate-name.command-repository.interface.ts
-│   ├── aggregate-name.query-repository.interface.ts
-│   ├── some-concept.vo.ts
-│   ├── some-concept.vo.test.ts
-│   └── usecases/
-│       └── do-something.usecase.ts
-├── entity.interface.ts
-├── value-object.interface.ts
-├── persisted.interface.ts
-└── unpersisted.interface.ts
+├── shared/                        # Shared base interfaces and VOs
+│   ├── entity.interface.ts
+│   ├── value-object.interface.ts
+│   ├── persisted.interface.ts
+│   ├── unpersisted.interface.ts
+│   ├── etag.vo.ts
+│   ├── object-key.vo.ts
+│   ├── content-type.vo.ts
+│   └── pagination/
+│       ├── pagination-params.vo.ts
+│       └── paginated-result.ts
+└── note/                          # Note aggregate
+    ├── note.entity.ts
+    ├── note.command-repository.interface.ts
+    ├── note.query-repository.interface.ts
+    ├── markdown-storage.interface.ts   # IMarkdownStorage (slug-based)
+    ├── asset-storage.interface.ts      # IAssetStorage (object-key-based)
+    ├── note-slug.vo.ts
+    ├── note-title.vo.ts
+    ├── image-url.vo.ts
+    ├── note-content.parser.ts
+    ├── errors.ts
+    └── usecases/
+        └── list-notes.usecase.ts
 
 infra/
 ├── d1/
 │   ├── schema/
 │   │   ├── index.ts
-│   │   └── *.table.ts
-│   └── aggregate-name/
-│       ├── aggregate-name.command-repository.ts
-│       └── aggregate-name.query-repository.ts
+│   │   ├── notes.table.ts
+│   │   └── custom-types/
+│   │       └── temporal.custom-type.ts
+│   └── note/
+│       ├── note.command-repository.ts
+│       └── note.query-repository.ts
 └── r2/
-    └── aggregate-name.storage.ts
+    └── note/
+        ├── markdown.storage.ts    # R2 impl of IMarkdownStorage (notes/*.md)
+        └── asset.storage.ts       # R2 impl of IAssetStorage (notes/* excl. .md)
 ```
 
 ### SSR Configuration
@@ -369,11 +397,11 @@ Never use `readonly` as a workaround for a design problem — if a property genu
 **Domain errors** are modeled as typed classes, not plain `Error`. Define custom error classes in the domain layer:
 
 ```typescript
-// domain/stored-object/errors.ts
-export class ObjectNotFoundError extends Error {
-  constructor(objectKey: string) {
-    super(`Object not found: ${objectKey}`);
-    this.name = "ObjectNotFoundError";
+// domain/note/errors.ts
+export class NoteNotFoundError extends Error {
+  constructor(slug: string) {
+    super(`Note not found: ${slug}`);
+    this.name = "NoteNotFoundError";
   }
 }
 ```
@@ -385,10 +413,10 @@ export class ObjectNotFoundError extends Error {
 ```typescript
 // handler
 try {
-  const result = await useCase.execute(key);
+  const result = await useCase.execute(slug);
   return c.json(result);
 } catch (err) {
-  if (err instanceof ObjectNotFoundError)
+  if (err instanceof NoteNotFoundError)
     return c.json(
       {
         type: "about:blank",
@@ -488,6 +516,13 @@ This project uses **squash merge** for Pull Requests. Individual commit messages
 3. Squash merge to main - the PR title becomes the commit message on main branch
 
 **Note**: Since all commits are squashed on merge, focus on clear, descriptive commit messages during development without worrying about strict conventional commit format. The PR title is what matters for the final commit history on the main branch.
+
+### GitHub Templates
+
+PR と Issue を `gh` コマンドで作成する際は、テンプレートの構造に従うこと:
+
+- **PR**: `.github/pull_request_template.md` を読み、そのセクション構造に沿って `--body` を構成する
+- **Issue**: `.github/ISSUE_TEMPLATE/` 内のテンプレート (`feature.yml`, `bug.yml`, `refactor.yml`) を読み、各フィールドに沿って `--body` を構成する。対応する `--label` も付与する
 
 ## Language
 

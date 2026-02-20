@@ -1,14 +1,14 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { ETag } from "../shared/etag.vo";
+import { PaginationParams } from "../shared/pagination/pagination-params.vo";
 import { ImageUrl } from "./image-url.vo";
 import { NoteSlug } from "./note-slug.vo";
 import { NoteTitle } from "./note-title.vo";
 import { Note } from "./note.entity";
-import { PaginationParams } from "./pagination-params.vo";
 import type { INoteQueryRepository } from "./note.query-repository.interface";
-import type { PaginatedResult } from "./paginated-result";
-import type { IPersisted } from "../persisted.interface";
+import type { PaginatedResult } from "../shared/pagination/paginated-result";
+import type { IPersisted } from "../shared/persisted.interface";
 
 const createPersistedNote = (): Note<IPersisted> =>
   Note.reconstruct({

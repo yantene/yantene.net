@@ -1,10 +1,10 @@
-import type { IEntity } from "../entity.interface";
-import type { IPersisted } from "../persisted.interface";
-import type { ETag } from "../shared/etag.vo";
-import type { IUnpersisted } from "../unpersisted.interface";
 import type { ImageUrl } from "./image-url.vo";
 import type { NoteSlug } from "./note-slug.vo";
 import type { NoteTitle } from "./note-title.vo";
+import type { IEntity } from "../shared/entity.interface";
+import type { ETag } from "../shared/etag.vo";
+import type { IPersisted } from "../shared/persisted.interface";
+import type { IUnpersisted } from "../shared/unpersisted.interface";
 import type { Temporal } from "@js-temporal/polyfill";
 
 export class Note<P extends IPersisted | IUnpersisted> implements IEntity<

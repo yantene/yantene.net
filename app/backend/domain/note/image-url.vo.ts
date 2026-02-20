@@ -1,11 +1,12 @@
-import type { IValueObject } from "../value-object.interface";
+import { InvalidImageUrlError } from "./errors";
+import type { IValueObject } from "../shared/value-object.interface";
 
 export class ImageUrl implements IValueObject<ImageUrl> {
   private constructor(readonly value: string) {}
 
   static create(value: string): ImageUrl {
     if (!ImageUrl.isValid(value)) {
-      throw new Error(`Invalid image url: ${value}`);
+      throw new InvalidImageUrlError(value);
     }
     return new ImageUrl(value);
   }

@@ -1,0 +1,47 @@
+name: バグ報告
+description: バグや不具合の報告
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## バグ報告
+  - type: textarea
+    id: description
+    attributes:
+      label: 概要
+      description: 発生している問題を簡潔に記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: バグを再現するための手順を記述してください
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+      description: 本来どう動作すべきかを記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 実際にどう動作しているかを記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 備考
+      description: スクリーンショットやログなど、追加情報があれば記述してください
+    validations:
+      required: false

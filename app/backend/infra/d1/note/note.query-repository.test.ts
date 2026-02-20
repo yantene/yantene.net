@@ -1,10 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteSlug } from "../../../domain/note/note-slug.vo";
-import { PaginationParams } from "../../../domain/note/pagination-params.vo";
+import { PaginationParams } from "../../../domain/shared/pagination/pagination-params.vo";
 import { NoteQueryRepository } from "./note.query-repository";
 import type { Note } from "../../../domain/note/note.entity";
-import type { IPersisted } from "../../../domain/persisted.interface";
+import type { IPersisted } from "../../../domain/shared/persisted.interface";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 
 type MockDb = DrizzleD1Database & {
