@@ -28,11 +28,6 @@ const config = [
   // .gitignore の内容を使用して ignore する
   includeIgnoreFile(gitignorePath),
 
-  // スタンドアロンの CLI スクリプトは lint 対象外
-  {
-    ignores: ["scripts/**/*.mjs"],
-  },
-
   // JavaScript の推奨設定
   js.configs.recommended,
 

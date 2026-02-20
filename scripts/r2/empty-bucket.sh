@@ -19,6 +19,12 @@ if [ "$#" -eq 2 ]; then
 fi
 
 if [ "$IS_REMOTE" = true ]; then
+  if ! command -v aws &> /dev/null; then
+    echo "Error: aws CLI is required but not installed."
+    echo "Install it: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"
+    exit 1
+  fi
+
   ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-}"
   if [ -z "$ACCOUNT_ID" ]; then
     ACCOUNT_ID=$(node -e "
@@ -42,8 +48,13 @@ if [ "$IS_REMOTE" = true ]; then
     exit 1
   fi
 
+  ENDPOINT="https://${ACCOUNT_ID}.r2.cloudflarestorage.com"
+
   echo "Emptying remote bucket '${BUCKET_NAME}'..."
-  node "$(dirname "$0")/s3-empty.mjs" "$ACCOUNT_ID" "$BUCKET_NAME"
+  AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID" \
+  AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY" \
+    aws s3 rm "s3://${BUCKET_NAME}" --recursive --endpoint-url "$ENDPOINT"
+  echo "Done: remote bucket '${BUCKET_NAME}' emptied."
 else
   R2_STATE_DIR=".wrangler/state/v3/r2"
 
