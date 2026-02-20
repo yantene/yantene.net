@@ -6,6 +6,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { Footer } from "./components/layout/footer";
+import { Header } from "./components/layout/header";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { httpStatus } from "~/lib/constants/http-status";
@@ -46,7 +48,15 @@ export function Layout({
 }
 
 export default function App(): React.JSX.Element {
-  return <Outlet />;
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export function ErrorBoundary({
