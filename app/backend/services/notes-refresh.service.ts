@@ -1,55 +1,51 @@
 import { parseNoteContent } from "../domain/note/note-content.parser";
-import { NoteSlug } from "../domain/note/note-slug.vo";
 import { Note } from "../domain/note/note.entity";
 import type { SyncResult } from "./sync-result";
+import type {
+  IMarkdownStorage,
+  MarkdownListItem,
+} from "../domain/note/markdown-storage.interface";
 import type { INoteCommandRepository } from "../domain/note/note.command-repository.interface";
 import type { INoteQueryRepository } from "../domain/note/note.query-repository.interface";
-import type {
-  IStoredObjectStorage,
-  StoredObjectListItem,
-} from "../domain/shared/object-storage.interface";
 
 export class NotesRefreshService {
   constructor(
-    private readonly storage: IStoredObjectStorage,
+    private readonly storage: IMarkdownStorage,
     private readonly queryRepository: INoteQueryRepository,
     private readonly commandRepository: INoteCommandRepository,
   ) {}
 
   async execute(): Promise<SyncResult> {
-    const [storageObjects, dbNotes] = await Promise.all([
+    const [markdownFiles, dbNotes] = await Promise.all([
       this.storage.list(),
       this.queryRepository.findAll(),
     ]);
 
     const storageMap = new Map(
-      storageObjects.map((obj) => [
-        NotesRefreshService.extractSlug(obj.objectKey.value),
-        obj,
-      ]),
+      markdownFiles.map((item) => [item.slug.value, item]),
     );
     const dbMap = new Map(dbNotes.map((note) => [note.slug.value, note]));
 
     const storageEntries = [...storageMap.entries()];
     const toAdd = storageEntries.filter(([slug]) => !dbMap.has(slug));
-    const toUpdate = storageEntries.filter(([slug, obj]) => {
+    const toUpdate = storageEntries.filter(([slug, item]) => {
       const dbNote = dbMap.get(slug);
-      return dbNote !== undefined && !obj.etag.equals(dbNote.etag);
+      return dbNote !== undefined && !item.etag.equals(dbNote.etag);
     });
     const toDelete = [...dbMap.entries()].filter(
       ([slug]) => !storageMap.has(slug),
     );
 
-    for (const [slug, storageObj] of toAdd) {
-      await this.processUpsert(slug, storageObj);
+    for (const [, item] of toAdd) {
+      await this.processUpsert(item);
     }
 
-    for (const [slug, storageObj] of toUpdate) {
-      await this.processUpsert(slug, storageObj);
+    for (const [, item] of toUpdate) {
+      await this.processUpsert(item);
     }
 
-    for (const [slug] of toDelete) {
-      await this.commandRepository.deleteBySlug(NoteSlug.create(slug));
+    for (const [, dbNote] of toDelete) {
+      await this.commandRepository.deleteBySlug(dbNote.slug);
     }
 
     return {
@@ -59,20 +55,16 @@ export class NotesRefreshService {
     };
   }
 
-  private async processUpsert(
-    slug: string,
-    storageObj: StoredObjectListItem,
-  ): Promise<void> {
-    const content = await this.storage.get(storageObj.objectKey);
+  private async processUpsert(item: MarkdownListItem): Promise<void> {
+    const content = await this.storage.get(item.slug);
     if (!content) return;
 
     const text = await new Response(content.body).text();
-    const noteSlug = NoteSlug.create(slug);
-    const metadata = parseNoteContent(text, noteSlug);
+    const metadata = parseNoteContent(text, item.slug);
 
     const note = Note.create({
       title: metadata.title,
-      slug: noteSlug,
+      slug: item.slug,
       etag: content.etag,
       imageUrl: metadata.imageUrl,
       publishedOn: metadata.publishedOn,
@@ -80,9 +72,5 @@ export class NotesRefreshService {
     });
 
     await this.commandRepository.upsert(note);
-  }
-
-  private static extractSlug(objectKeyValue: string): string {
-    return objectKeyValue.replace(/\.md$/, "");
   }
 }

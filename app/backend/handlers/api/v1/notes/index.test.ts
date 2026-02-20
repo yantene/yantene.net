@@ -70,8 +70,8 @@ vi.mock("../../../../infra/d1/note/note.command-repository", () => ({
 }));
 
 // Mock storage
-vi.mock("../../../../infra/r2/stored-object.storage", () => ({
-  StoredObjectStorage: vi.fn(function (this: unknown) {
+vi.mock("../../../../infra/r2/note/markdown.storage", () => ({
+  MarkdownStorage: vi.fn(function (this: unknown) {
     return {
       get: vi.fn(),
       list: vi.fn(),

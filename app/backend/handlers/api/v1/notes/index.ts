@@ -7,7 +7,7 @@ import {
 } from "../../../../domain/shared/pagination/pagination-params.vo";
 import { NoteCommandRepository } from "../../../../infra/d1/note/note.command-repository";
 import { NoteQueryRepository } from "../../../../infra/d1/note/note.query-repository";
-import { StoredObjectStorage } from "../../../../infra/r2/stored-object.storage";
+import { MarkdownStorage } from "../../../../infra/r2/note/markdown.storage";
 import { NotesRefreshService } from "../../../../services/notes-refresh.service";
 import type { Note } from "../../../../domain/note/note.entity";
 import type { IPersisted } from "../../../../domain/persisted.interface";
@@ -95,7 +95,7 @@ export const notesApp = new Hono<{ Bindings: Env }>()
       const db = drizzle(c.env.D1);
       const queryRepository = new NoteQueryRepository(db);
       const commandRepository = new NoteCommandRepository(db, queryRepository);
-      const storage = new StoredObjectStorage(c.env.R2);
+      const storage = new MarkdownStorage(c.env.R2);
       const service = new NotesRefreshService(
         storage,
         queryRepository,
