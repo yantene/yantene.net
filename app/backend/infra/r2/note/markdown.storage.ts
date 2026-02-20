@@ -33,7 +33,9 @@ export class MarkdownStorage implements IMarkdownStorage {
       .filter((obj) => obj.key.endsWith(MD_EXTENSION))
       .filter(
         (obj) =>
-          !obj.key.slice(NOTES_PREFIX.length, -MD_EXTENSION.length).includes("/"),
+          !obj.key
+            .slice(NOTES_PREFIX.length, -MD_EXTENSION.length)
+            .includes("/"),
       )
       .map((obj) => ({
         slug: NoteSlug.create(
