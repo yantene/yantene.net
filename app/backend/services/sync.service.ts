@@ -1,14 +1,9 @@
 import { ContentType } from "../domain/shared/content-type.vo";
 import { StoredObjectMetadata } from "../infra/stored-object/stored-object-metadata";
+import type { SyncResult } from "./sync-result";
 import type { IStoredObjectStorage } from "../domain/shared/object-storage.interface";
 import type { IStoredObjectMetadataCommandRepository } from "../infra/stored-object/stored-object-metadata.command-repository.interface";
 import type { IStoredObjectMetadataQueryRepository } from "../infra/stored-object/stored-object-metadata.query-repository.interface";
-
-export type SyncResult = {
-  added: number;
-  deleted: number;
-  updated: number;
-};
 
 export class SyncService {
   constructor(

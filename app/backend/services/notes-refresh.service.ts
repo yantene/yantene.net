@@ -1,18 +1,13 @@
 import { parseNoteContent } from "../domain/note/note-content.parser";
 import { NoteSlug } from "../domain/note/note-slug.vo";
 import { Note } from "../domain/note/note.entity";
+import type { SyncResult } from "./sync-result";
 import type { INoteCommandRepository } from "../domain/note/note.command-repository.interface";
 import type { INoteQueryRepository } from "../domain/note/note.query-repository.interface";
 import type {
   IStoredObjectStorage,
   StoredObjectListItem,
 } from "../domain/shared/object-storage.interface";
-
-export type RefreshResult = {
-  readonly added: number;
-  readonly updated: number;
-  readonly deleted: number;
-};
 
 export class NotesRefreshService {
   constructor(
@@ -21,7 +16,7 @@ export class NotesRefreshService {
     private readonly commandRepository: INoteCommandRepository,
   ) {}
 
-  async execute(): Promise<RefreshResult> {
+  async execute(): Promise<SyncResult> {
     const [storageObjects, dbNotes] = await Promise.all([
       this.storage.list(),
       this.queryRepository.findAll(),
