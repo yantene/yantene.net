@@ -1,0 +1,202 @@
+/*
+ * Celestim - Pure CSS celestial animation
+ * Original: https://github.com/yantene/celestim
+ * Adapted for use as a React component background
+ *
+ * All class names prefixed with `celestim-` to avoid conflicts.
+ */
+
+.celestim-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  animation: celestim-sky-color var(--celestim-one-day) linear infinite;
+}
+
+/* Sky color cycle: noon → sunset → midnight → sunrise → noon */
+@keyframes celestim-sky-color {
+  0% {
+    background-color: rgb(201 242 255);
+  }
+  25% {
+    background-color: rgb(255 173 49);
+  }
+  50% {
+    background-color: rgb(0 0 29);
+  }
+  75% {
+    background-color: rgb(219 106 0);
+  }
+  100% {
+    background-color: rgb(201 242 255);
+  }
+}
+
+/* Turntable: a square circle container that rotates celestial bodies */
+.celestim-turntable {
+  width: var(--celestim-orbit-diameter);
+  height: var(--celestim-orbit-diameter);
+
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--celestim-orbit-diameter) / -2);
+  transform: translateX(-50%);
+}
+
+@keyframes celestim-revolution {
+  0% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+.celestim-solar-turntable {
+  animation: celestim-revolution var(--celestim-one-day) linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.celestim-lunar-turntable {
+  animation: celestim-revolution
+    calc(var(--celestim-one-day) / (1 - (1 / var(--celestim-sidereal-month))))
+    linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* Celestial bodies: positioned at top-center of the turntable */
+.celestim-celestial-body {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Sun */
+.celestim-sun {
+  width: var(--celestim-body-size);
+  height: var(--celestim-body-size);
+  background-color: rgb(255 255 255);
+  border-radius: 50%;
+}
+
+/* Moon */
+.celestim-moon {
+  width: var(--celestim-body-size);
+  height: var(--celestim-body-size);
+  border-radius: 100%;
+}
+
+.celestim-moon-light {
+  background-color: rgb(255 210 11);
+}
+
+/* Moon phase animations (waxing/waning via rotateY clips) */
+.celestim-moon-light-right {
+  clip-path: xywh(50% 0 50% 100%);
+  animation: celestim-moon-light-right-phases
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    linear infinite;
+}
+
+@keyframes celestim-moon-light-right-phases {
+  0% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  25% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  50% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  75% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+}
+
+.celestim-moon-light-left {
+  clip-path: xywh(0 0 50% 100%);
+  animation: celestim-moon-light-left-phases
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    linear infinite;
+}
+
+@keyframes celestim-moon-light-left-phases {
+  0% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  25% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  50% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  75% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+}
+
+.celestim-moon-shade-right {
+  clip-path: xywh(50% 0 50% 100%);
+  animation:
+    celestim-moon-shade-right-phases
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1)
+      linear infinite,
+    celestim-sky-color var(--celestim-one-day) linear infinite;
+}
+
+@keyframes celestim-moon-shade-right-phases {
+  0% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  25% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  50% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  75% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  100% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+}
+
+.celestim-moon-shade-left {
+  clip-path: xywh(0 0 50% 100%);
+  animation:
+    celestim-moon-shade-left-phases
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+      linear infinite,
+    celestim-sky-color var(--celestim-one-day) linear infinite;
+}
+
+@keyframes celestim-moon-shade-left-phases {
+  0% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  25% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  50% {
+    transform: translateX(-50%) rotateY(90deg);
+  }
+  75% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotateY(0deg);
+  }
+}
