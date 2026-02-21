@@ -39,7 +39,9 @@ export function NoteCard({ note }: NoteCardProps): React.JSX.Element {
             {note.title}
           </CardTitle>
           <CardDescription>
-            <time dateTime={note.publishedOn}>{formatDate(note.publishedOn)}</time>
+            <time dateTime={note.publishedOn}>
+              {formatDate(note.publishedOn)}
+            </time>
           </CardDescription>
         </CardHeader>
         {note.summary.length > 0 && (

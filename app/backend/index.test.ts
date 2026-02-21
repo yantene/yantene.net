@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getApp } from "./index";
 import { httpStatus } from "~/lib/constants/http-status";
+import { getApp } from "./index";
 
 describe("getApp", () => {
   const mockEnv = {} as Env;

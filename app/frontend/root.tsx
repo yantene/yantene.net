@@ -6,11 +6,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { httpStatus } from "~/lib/constants/http-status";
 import { Footer } from "./components/layout/footer";
 import { Header } from "./components/layout/header";
 import type { Route } from "./+types/root";
 import "./app.css";
-import { httpStatus } from "~/lib/constants/http-status";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -21,6 +21,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
+    // eslint-disable-next-line no-secrets/no-secrets -- Google Fonts URL
     href: "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap",
   },
 ];

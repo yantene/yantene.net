@@ -1,8 +1,8 @@
 import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
 import { ServerRouter } from "react-router";
-import type { AppLoadContext, EntryContext } from "react-router";
 import { httpStatus } from "~/lib/constants/http-status";
+import type { AppLoadContext, EntryContext } from "react-router";
 
 export default async function handleRequest(
   request: Request,

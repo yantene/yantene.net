@@ -5,6 +5,7 @@
     "app/frontend/**/*",
     "app/frontend/**/.server/**/*",
     "app/frontend/**/.client/**/*",
+    "app/components/**/*",
     "app/backend/**/*",
     "app/lib/**/*",
     "workers/**/*",

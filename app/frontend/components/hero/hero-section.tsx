@@ -1,4 +1,4 @@
-const SKILLS = [
+const skills = [
   "TypeScript",
   "React",
   "Cloudflare Workers",
@@ -6,7 +6,7 @@ const SKILLS = [
   "Rust",
 ] as const;
 
-const SOCIAL_LINKS = [
+const socialLinks = [
   { label: "GitHub", href: "https://github.com/yantene" },
   { label: "X", href: "https://x.com/yantene" },
 ] as const;
@@ -35,7 +35,7 @@ export function HeroSection(): React.JSX.Element {
           </div>
 
           <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-            {SKILLS.map((skill) => (
+            {skills.map((skill) => (
               <span
                 key={skill}
                 className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
@@ -46,7 +46,7 @@ export function HeroSection(): React.JSX.Element {
           </div>
 
           <div className="flex items-center gap-4">
-            {SOCIAL_LINKS.map((link) => (
+            {socialLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}

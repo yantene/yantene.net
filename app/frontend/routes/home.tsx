@@ -1,6 +1,6 @@
+import { notesApp } from "~/backend/handlers/api/v1/notes";
 import { HeroSection } from "../components/hero/hero-section";
 import { NotesSection } from "../components/notes/notes-section";
-import { notesApp } from "~/backend/handlers/api/v1/notes";
 import type { Route } from "./+types/home";
 import type { NotesListResponse } from "~/lib/types/notes";
 
@@ -13,9 +13,7 @@ export function meta(_args: Route.MetaArgs): ReturnType<Route.MetaFunction> {
   ];
 }
 
-export async function loader({
-  context,
-}: Route.LoaderArgs): Promise<{
+export async function loader({ context }: Route.LoaderArgs): Promise<{
   notes: NotesListResponse["notes"];
   totalPages: number;
 }> {
