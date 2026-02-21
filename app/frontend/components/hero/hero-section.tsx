@@ -1,3 +1,4 @@
+import yanteneIcon from "~/frontend/assets/yantene-icon.svg";
 import { Celestim } from "./celestim";
 
 const skills = [
@@ -15,55 +16,65 @@ const socialLinks = [
 
 export function HeroSection(): React.JSX.Element {
   return (
-    <section className="relative overflow-hidden border-b border-border/50 py-16 sm:py-24">
+    <section className="relative overflow-hidden border-b border-border/50">
       {/* Celestim background layer */}
       <div className="absolute inset-0">
         <Celestim />
       </div>
 
-      {/* Frosted glass content panel */}
-      <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 rounded-2xl border border-white/30 bg-white/40 px-8 py-8 shadow-lg backdrop-blur-md sm:flex-row sm:items-start sm:gap-12">
-        <div className="relative shrink-0">
-          <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-primary/30 bg-muted neon-glow-cyan sm:h-40 sm:w-40">
-            <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground sm:text-5xl">
-              Y
+      {/* Frosted glass overlay */}
+      <div className="relative flex items-center justify-center bg-white/40 px-6 py-16 backdrop-blur-md sm:py-24">
+        <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
+          {/* Icon */}
+          <div className="relative shrink-0">
+            <img
+              src={yanteneIcon}
+              alt="やんてね"
+              className="h-32 w-32 rounded-full border-2 border-primary/30 neon-glow-cyan sm:h-40 sm:w-40"
+            />
+          </div>
+
+          {/* Profile */}
+          <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                やんてね
+              </h1>
+              <p className="mt-1 text-sm font-medium text-primary">
+                ソフトウェアエンジニア
+              </p>
             </div>
-          </div>
-        </div>
 
-        <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              yantene
-            </h1>
-            <p className="mt-2 text-lg text-muted-foreground">
-              自己表現・技術実験・発信の場
+            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+              自己表現・技術実験・発信の場。TypeScript と Rust
+              が好きで、Web
+              技術を中心にものづくりをしています。
             </p>
-          </div>
 
-          <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
-            {skills.map((skill) => (
-              <span
-                key={skill}
-                className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
+            <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
 
-          <div className="flex items-center gap-4">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                {link.label}
-              </a>
-            ))}
+            <div className="flex items-center gap-4">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
