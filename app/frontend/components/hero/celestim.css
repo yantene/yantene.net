@@ -23,7 +23,7 @@
     background-color: rgb(255 173 49);
   }
   50% {
-    background-color: rgb(0 0 29);
+    background-color: rgb(40 50 80);
   }
   75% {
     background-color: rgb(219 106 0);
@@ -40,7 +40,9 @@
 
   position: absolute;
   left: 50%;
-  bottom: calc(var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px));
+  bottom: calc(
+    var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px)
+  );
   transform: translateX(-50%);
 }
 

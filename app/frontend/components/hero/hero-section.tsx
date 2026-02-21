@@ -1,3 +1,4 @@
+import { SiBluesky, SiDiscord, SiGithub, SiX } from "react-icons/si";
 import yanteneIcon from "~/frontend/assets/yantene-icon.svg";
 import { Celestim } from "./celestim";
 
@@ -10,8 +11,18 @@ const skills = [
 ] as const;
 
 const socialLinks = [
-  { label: "GitHub", href: "https://github.com/yantene" },
-  { label: "X", href: "https://x.com/yantene" },
+  { label: "GitHub", href: "https://github.com/yantene", icon: SiGithub },
+  { label: "X", href: "https://x.com/yantene", icon: SiX },
+  {
+    label: "Bluesky",
+    href: "https://bsky.app/profile/yantene.net",
+    icon: SiBluesky,
+  },
+  {
+    label: "Discord",
+    href: "https://discord.com/users/yantene",
+    icon: SiDiscord,
+  },
 ] as const;
 
 export function HeroSection(): React.JSX.Element {
@@ -23,7 +34,7 @@ export function HeroSection(): React.JSX.Element {
       </div>
 
       {/* Frosted glass overlay */}
-      <div className="relative flex items-center justify-center bg-white/40 px-6 py-16 backdrop-blur-md sm:py-24">
+      <div className="relative flex items-center justify-center bg-white/40 px-6 py-16 backdrop-blur-[2px] sm:py-24">
         <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
           {/* Icon */}
           <div className="relative shrink-0">
@@ -35,7 +46,7 @@ export function HeroSection(): React.JSX.Element {
           </div>
 
           {/* Profile */}
-          <div className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
+          <div className="flex flex-col items-center gap-4 text-halo text-center sm:items-start sm:text-left">
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 やんてね
@@ -69,9 +80,10 @@ export function HeroSection(): React.JSX.Element {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  className="text-lg text-muted-foreground transition-colors hover:text-primary"
+                  title={link.label}
                 >
-                  {link.label}
+                  <link.icon />
                 </a>
               ))}
             </div>

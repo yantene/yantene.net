@@ -166,4 +166,9 @@
   .neon-border-magenta {
     border-color: oklch(0.65 0.28 330 / 50%);
   }
+  .text-halo {
+    text-shadow:
+      0 0 10px rgb(255 255 255 / 90%),
+      0 0 24px rgb(255 255 255 / 60%);
+  }
 }
