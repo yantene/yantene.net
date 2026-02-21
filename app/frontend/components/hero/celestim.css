@@ -40,7 +40,7 @@
 
   position: absolute;
   left: 50%;
-  bottom: calc(var(--celestim-orbit-diameter) / -2);
+  bottom: calc(var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px));
   transform: translateX(-50%);
 }
 

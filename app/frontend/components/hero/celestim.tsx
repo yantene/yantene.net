@@ -1,7 +1,7 @@
 import "./celestim.css";
 
 type CelestimProps = {
-  /** Duration of one day cycle in seconds (default: 4.8) */
+  /** Duration of one day cycle in seconds (default: 24) */
   readonly dayDuration?: number;
   /** Sidereal month length in days (default: 28) */
   readonly siderealMonth?: number;
@@ -9,19 +9,23 @@ type CelestimProps = {
   readonly orbitDiameter?: string;
   /** Celestial body size as CSS value (default: "clamp(24px, 5vw, 60px)") */
   readonly bodySize?: string;
+  /** How far below the container bottom to push the orbit center (default: "100%") */
+  readonly horizonDrop?: string;
 };
 
 export function Celestim({
-  dayDuration = 4.8,
+  dayDuration = 24,
   siderealMonth = 28,
   orbitDiameter = "min(100vw, 1200px)",
   bodySize = "clamp(24px, 5vw, 60px)",
+  horizonDrop = "100%",
 }: CelestimProps = {}): React.JSX.Element {
   const cssVars = {
     "--celestim-one-day": `${String(dayDuration)}s`,
     "--celestim-sidereal-month": String(siderealMonth),
     "--celestim-orbit-diameter": orbitDiameter,
     "--celestim-body-size": bodySize,
+    "--celestim-horizon-drop": horizonDrop,
   } as React.CSSProperties;
 
   return (

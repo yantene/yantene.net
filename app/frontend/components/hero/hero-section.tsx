@@ -17,15 +17,15 @@ export function HeroSection(): React.JSX.Element {
   return (
     <section className="relative overflow-hidden border-b border-border/50 py-16 sm:py-24">
       {/* Celestim background layer */}
-      <div className="absolute inset-0 opacity-40">
+      <div className="absolute inset-0">
         <Celestim />
       </div>
 
-      {/* Semi-transparent overlay for text readability */}
-      <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px]" />
+      {/* Light overlay for text readability */}
+      <div className="absolute inset-0 bg-background/30" />
 
       {/* Content layer */}
-      <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 px-6 sm:flex-row sm:items-start sm:gap-12">
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 rounded-xl bg-background/40 px-6 py-6 backdrop-blur-sm sm:flex-row sm:items-start sm:gap-12">
         <div className="relative shrink-0">
           <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-primary/30 bg-muted neon-glow-cyan sm:h-40 sm:w-40">
             <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground sm:text-5xl">
