@@ -18,7 +18,7 @@ export function Celestim({
   siderealMonth = 28,
   orbitDiameter = "min(100vw, 1200px)",
   bodySize = "clamp(24px, 5vw, 60px)",
-  horizonDrop = "100%",
+  horizonDrop = "60%",
 }: CelestimProps = {}): React.JSX.Element {
   const cssVars = {
     "--celestim-one-day": `${String(dayDuration)}s`,

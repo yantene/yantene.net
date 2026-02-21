@@ -21,11 +21,8 @@ export function HeroSection(): React.JSX.Element {
         <Celestim />
       </div>
 
-      {/* Light overlay for text readability */}
-      <div className="absolute inset-0 bg-background/30" />
-
-      {/* Content layer */}
-      <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 rounded-xl bg-background/40 px-6 py-6 backdrop-blur-sm sm:flex-row sm:items-start sm:gap-12">
+      {/* Frosted glass content panel */}
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-8 rounded-2xl border border-white/30 bg-white/40 px-8 py-8 shadow-lg backdrop-blur-md sm:flex-row sm:items-start sm:gap-12">
         <div className="relative shrink-0">
           <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-primary/30 bg-muted neon-glow-cyan sm:h-40 sm:w-40">
             <div className="flex h-full w-full items-center justify-center text-4xl text-muted-foreground sm:text-5xl">
@@ -48,7 +45,7 @@ export function HeroSection(): React.JSX.Element {
             {skills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary backdrop-blur-sm"
+                className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
               >
                 {skill}
               </span>
