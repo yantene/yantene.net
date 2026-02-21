@@ -46,7 +46,7 @@ export function HeroSection(): React.JSX.Element {
             <img
               src={yanteneIcon}
               alt="やんてね"
-              className="h-32 w-32 rounded-full border-2 border-primary/30 neon-glow-cyan sm:h-40 sm:w-40"
+              className="h-32 w-32 rounded-full border-2 border-primary/30 sky-glow sm:h-40 sm:w-40"
             />
           </div>
 

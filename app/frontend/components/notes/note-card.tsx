@@ -20,7 +20,7 @@ const formatDate = (dateString: string): string => {
 export function NoteCard({ note }: NoteCardProps): React.JSX.Element {
   return (
     <Link to={`/notes/${note.slug}`} className="group block">
-      <Card className="h-full overflow-hidden border-border/50 transition-all duration-300 group-hover:neon-glow-cyan group-hover:border-primary/30">
+      <Card className="h-full overflow-hidden border-border/50 transition-all duration-300 group-hover:sky-glow group-hover:border-primary/30">
         <div className="aspect-video w-full overflow-hidden bg-muted">
           {note.imageUrl.length > 0 ? (
             <img
