@@ -3,11 +3,16 @@ import yanteneIcon from "~/frontend/assets/yantene-icon.svg";
 import { Celestim } from "./celestim";
 
 const skills = [
+  "Web",
+  "GNU/Linux",
+  "Ruby",
+  "Rails",
   "TypeScript",
-  "React",
-  "Cloudflare Workers",
   "Hono",
-  "Rust",
+  "React",
+  "React Router v7",
+  "AWS",
+  "Cloudflare",
 ] as const;
 
 const socialLinks = [
@@ -34,7 +39,7 @@ export function HeroSection(): React.JSX.Element {
       </div>
 
       {/* Frosted glass overlay */}
-      <div className="relative flex items-center justify-center bg-white/40 px-6 py-16 backdrop-blur-[2px] sm:py-24">
+      <div className="relative flex items-center justify-center bg-white/40 px-6 pb-16 pt-24 backdrop-blur-[2px] sm:pb-24 sm:pt-32">
         <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
           {/* Icon */}
           <div className="relative shrink-0">
@@ -52,14 +57,18 @@ export function HeroSection(): React.JSX.Element {
                 やんてね
               </h1>
               <p className="mt-1 text-sm font-medium text-primary">
-                ソフトウェアエンジニア
+                Web Developer
               </p>
             </div>
 
             <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-              自己表現・技術実験・発信の場。TypeScript と Rust
-              が好きで、Web
-              技術を中心にものづくりをしています。
+              現実に屈した自由ソフトウェア主義者^H^H^H愛好家です。
+              <br />
+              Web が好きで、Web Developer をやっています。
+              <br />
+              好きな言語は Ruby と TypeScript、そして日本語。
+              <br />
+              くだらないことがたまらなく好きです。
             </p>
 
             <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
@@ -73,7 +82,7 @@ export function HeroSection(): React.JSX.Element {
               ))}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 icon-halo">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}

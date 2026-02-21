@@ -168,7 +168,12 @@
   }
   .text-halo {
     text-shadow:
-      0 0 10px rgb(255 255 255 / 90%),
-      0 0 24px rgb(255 255 255 / 60%);
+      0 0 16px rgb(255 255 255 / 90%),
+      0 0 40px rgb(255 255 255 / 60%);
+  }
+  .icon-halo {
+    filter:
+      drop-shadow(0 0 16px rgb(255 255 255 / 90%))
+      drop-shadow(0 0 40px rgb(255 255 255 / 60%));
   }
 }

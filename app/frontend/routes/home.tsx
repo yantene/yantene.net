@@ -1,5 +1,6 @@
 import { notesApp } from "~/backend/handlers/api/v1/notes";
 import { HeroSection } from "../components/hero/hero-section";
+import { Header } from "../components/layout/header";
 import { NotesSection } from "../components/notes/notes-section";
 import type { Route } from "./+types/home";
 import type { NotesListResponse } from "~/lib/types/notes";
@@ -8,7 +9,7 @@ const INITIAL_PER_PAGE = 12;
 
 export function meta(_args: Route.MetaArgs): ReturnType<Route.MetaFunction> {
   return [
-    { title: "yantene.net" },
+    { title: "やんてね！" },
     { name: "description", content: "自己表現・技術実験・発信の場" },
   ];
 }
@@ -35,7 +36,10 @@ export default function Home({
 }: Route.ComponentProps): React.JSX.Element {
   return (
     <div>
-      <HeroSection />
+      <div className="relative">
+        <Header variant="transparent" />
+        <HeroSection />
+      </div>
       <NotesSection
         initialNotes={loaderData.notes}
         initialTotalPages={loaderData.totalPages}
