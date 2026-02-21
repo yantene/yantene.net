@@ -1,7 +1,7 @@
 import "./celestim.css";
 
 type CelestimProps = {
-  /** Duration of one day cycle in seconds (default: 24) */
+  /** Duration of one day cycle in seconds (default: 288) */
   readonly dayDuration?: number;
   /** Sidereal month length in days (default: 28) */
   readonly siderealMonth?: number;
@@ -14,7 +14,7 @@ type CelestimProps = {
 };
 
 export function Celestim({
-  dayDuration = 24,
+  dayDuration = 288,
   siderealMonth = 28,
   orbitDiameter = "min(100vw, 1200px)",
   bodySize = "clamp(24px, 5vw, 60px)",
