@@ -11,26 +11,7 @@
   inset: 0;
   overflow: hidden;
 
-  animation: celestim-sky-color var(--celestim-one-day) linear infinite;
-}
-
-/* Sky color cycle: noon → sunset → midnight → sunrise → noon */
-@keyframes celestim-sky-color {
-  0% {
-    background-color: rgb(201 242 255);
-  }
-  25% {
-    background-color: rgb(255 173 49);
-  }
-  50% {
-    background-color: rgb(40 50 80);
-  }
-  75% {
-    background-color: rgb(219 106 0);
-  }
-  100% {
-    background-color: rgb(201 242 255);
-  }
+  animation: sky-color-cycle var(--celestim-one-day) linear infinite;
 }
 
 /* Turntable: a square circle container that rotates celestial bodies */
@@ -154,7 +135,7 @@
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1)
       linear infinite,
-    celestim-sky-color var(--celestim-one-day) linear infinite;
+    sky-color-cycle var(--celestim-one-day) linear infinite;
 }
 
 @keyframes celestim-moon-shade-right-phases {
@@ -182,7 +163,7 @@
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
       linear infinite,
-    celestim-sky-color var(--celestim-one-day) linear infinite;
+    sky-color-cycle var(--celestim-one-day) linear infinite;
 }
 
 @keyframes celestim-moon-shade-left-phases {

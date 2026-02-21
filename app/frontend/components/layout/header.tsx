@@ -4,9 +4,7 @@ type HeaderProps = {
   readonly variant?: "solid" | "transparent";
 };
 
-export function Header({
-  variant = "solid",
-}: HeaderProps): React.JSX.Element {
+export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
   const isTransparent = variant === "transparent";
 
   return (
@@ -21,9 +19,7 @@ export function Header({
         <Link
           to="/"
           className={`text-xl font-bold tracking-tight transition-colors hover:text-primary ${
-            isTransparent
-              ? "text-foreground text-halo"
-              : "text-foreground"
+            isTransparent ? "text-foreground text-halo" : "text-foreground"
           }`}
         >
           やんてね！

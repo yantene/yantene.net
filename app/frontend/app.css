@@ -54,8 +54,28 @@
   --color-sky-twilight: var(--sky-twilight);
 }
 
+/* Sky color cycle: noon → sunset → midnight → sunrise → noon */
+@keyframes sky-color-cycle {
+  0% {
+    background-color: rgb(201 242 255);
+  }
+  25% {
+    background-color: rgb(255 173 49);
+  }
+  50% {
+    background-color: rgb(40 50 80);
+  }
+  75% {
+    background-color: rgb(219 106 0);
+  }
+  100% {
+    background-color: rgb(201 242 255);
+  }
+}
+
 :root {
   --radius: 0.5rem;
+  --sky-cycle-duration: 288s;
 
   /* Sky light theme */
   --background: oklch(0.98 0.005 235);
@@ -166,8 +186,10 @@
       0 0 40px rgb(255 255 255 / 60%);
   }
   .icon-halo {
-    filter:
-      drop-shadow(0 0 16px rgb(255 255 255 / 90%))
+    filter: drop-shadow(0 0 16px rgb(255 255 255 / 90%))
       drop-shadow(0 0 40px rgb(255 255 255 / 60%));
+  }
+  .sky-cycle-bg {
+    animation: sky-color-cycle var(--sky-cycle-duration) linear infinite;
   }
 }
