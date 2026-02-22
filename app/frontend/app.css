@@ -6,7 +6,7 @@
 
 @theme {
   --font-sans:
-    "Noto Sans JP", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "M PLUS 1", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -160,6 +160,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-weight: 300;
   }
 }
 

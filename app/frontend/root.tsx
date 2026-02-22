@@ -21,7 +21,7 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "stylesheet",
     // eslint-disable-next-line no-secrets/no-secrets -- Google Fonts URL
-    href: "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@100..900&display=swap",
   },
 ];
 
