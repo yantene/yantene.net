@@ -39,7 +39,7 @@ export function HeroSection(): React.JSX.Element {
       </div>
 
       {/* Frosted glass overlay */}
-      <div className="relative flex items-center justify-center bg-white/40 px-6 pb-16 pt-24 backdrop-blur-[2px] sm:pb-24 sm:pt-32">
+      <div className="relative flex items-center justify-center bg-white/60 px-6 pb-16 pt-24 backdrop-blur-sm sm:pb-24 sm:pt-32">
         <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
           {/* Icon */}
           <div className="relative shrink-0">
@@ -71,7 +71,7 @@ export function HeroSection(): React.JSX.Element {
               {skills.map((skill) => (
                 <span
                   key={skill}
-                  className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+                  className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary [text-shadow:none]"
                 >
                   {skill}
                 </span>
