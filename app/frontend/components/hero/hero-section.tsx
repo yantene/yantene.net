@@ -62,13 +62,9 @@ export function HeroSection(): React.JSX.Element {
             </div>
 
             <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-              現実に屈した自由ソフトウェア主義者^H^H^H愛好家です。
+              現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
               <br />
-              Web が好きで、Web Developer をやっています。
-              <br />
-              好きな言語は Ruby と TypeScript、そして日本語。
-              <br />
-              くだらないことがたまらなく好きです。
+              ブラウザの向こう側で暮らしています。
             </p>
 
             <div className="flex flex-wrap justify-center gap-2 sm:justify-start">

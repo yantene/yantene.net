@@ -12,10 +12,7 @@ type NoteCardProps = {
   readonly note: NoteListItem;
 };
 
-const formatDate = (dateString: string): string => {
-  const [year, month, day] = dateString.split("-");
-  return `${year}/${month}/${day}`;
-};
+const formatDate = (dateString: string): string => dateString;
 
 export function NoteCard({ note }: NoteCardProps): React.JSX.Element {
   return (

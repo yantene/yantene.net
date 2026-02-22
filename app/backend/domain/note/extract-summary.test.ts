@@ -50,6 +50,51 @@ describe("extractSummary", () => {
     expect(extractSummary(tree)).toBe("");
   });
 
+  it("ignores heading nodes", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "heading",
+          depth: 1,
+          children: [{ type: "text", value: "Article Title" }],
+        },
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: "Body text here." }],
+        },
+      ],
+    };
+    expect(extractSummary(tree)).toBe("Body text here.");
+  });
+
+  it("ignores all heading depths", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "heading",
+          depth: 1,
+          children: [{ type: "text", value: "H1 Title" }],
+        },
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: "Intro." }],
+        },
+        {
+          type: "heading",
+          depth: 2,
+          children: [{ type: "text", value: "H2 Section" }],
+        },
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: "Section content." }],
+        },
+      ],
+    };
+    expect(extractSummary(tree)).toBe("Intro. Section content.");
+  });
+
   it("ignores non-text nodes like images and code blocks", () => {
     const tree: Root = {
       type: "root",

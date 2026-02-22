@@ -1,4 +1,4 @@
-import { visit } from "unist-util-visit";
+import { SKIP, visit } from "unist-util-visit";
 import type { Root, Text } from "mdast";
 
 const DEFAULT_MAX_LENGTH = 160;
@@ -9,8 +9,11 @@ export function extractSummary(
 ): string {
   const textParts: string[] = [];
 
-  visit(tree, "text", (node: Text) => {
-    textParts.push(node.value);
+  visit(tree, (node) => {
+    if (node.type === "heading") return SKIP;
+    if (node.type === "text") {
+      textParts.push((node as Text).value);
+    }
   });
 
   const fullText = textParts.join(" ").replaceAll(/\s+/g, " ").trim();
