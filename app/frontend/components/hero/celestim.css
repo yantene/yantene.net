@@ -6,6 +6,25 @@
  * All class names prefixed with `celestim-` to avoid conflicts.
  */
 
+/* Sky color cycle: noon → sunset → midnight → sunrise → noon */
+@keyframes sky-color-cycle {
+  0% {
+    background-color: rgb(201 242 255);
+  }
+  25% {
+    background-color: rgb(255 173 49);
+  }
+  50% {
+    background-color: rgb(40 50 80);
+  }
+  75% {
+    background-color: rgb(219 106 0);
+  }
+  100% {
+    background-color: rgb(201 242 255);
+  }
+}
+
 .celestim-sky {
   position: absolute;
   inset: 0;
