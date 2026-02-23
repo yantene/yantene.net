@@ -83,9 +83,14 @@ export function TypewriterTitle({
   }, [animate]);
 
   return (
-    <span className={`cursor-default select-none ${className}`} onMouseEnter={handleMouseEnter}>
+    <span
+      className={`cursor-default select-none ${className ?? ""}`}
+      onMouseEnter={handleMouseEnter}
+    >
       {displayText}
-      <span className="cursor-blink ml-0.5 font-normal">_</span>
+      <span className="ml-0.5 font-normal [animation:blink_1s_step-end_infinite]">
+        _
+      </span>
     </span>
   );
 }

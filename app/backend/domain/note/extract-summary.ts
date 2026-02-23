@@ -1,5 +1,5 @@
 import { SKIP, visit } from "unist-util-visit";
-import type { Root, Text } from "mdast";
+import type { Root } from "mdast";
 
 const DEFAULT_MAX_LENGTH = 160;
 
@@ -12,7 +12,7 @@ export function extractSummary(
   visit(tree, (node) => {
     if (node.type === "heading") return SKIP;
     if (node.type === "text") {
-      textParts.push((node as Text).value);
+      textParts.push(node.value);
     }
   });
 

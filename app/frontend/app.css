@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@source "../components";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -160,41 +162,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-weight: 300;
   }
 }
 
-/* Sky utility classes */
 @layer utilities {
-  .sky-glow {
-    box-shadow:
-      0 0 8px oklch(0.65 0.14 235 / 25%),
-      0 0 24px oklch(0.65 0.14 235 / 12%);
-  }
-  .sky-glow-dawn {
-    box-shadow:
-      0 0 8px oklch(0.72 0.14 55 / 25%),
-      0 0 24px oklch(0.72 0.14 55 / 12%);
-  }
-  .sky-glow-twilight {
-    box-shadow:
-      0 0 8px oklch(0.5 0.13 285 / 25%),
-      0 0 24px oklch(0.5 0.13 285 / 12%);
-  }
   .text-halo {
     text-shadow:
       0 0 16px rgb(255 255 255 / 90%),
       0 0 40px rgb(255 255 255 / 60%);
-  }
-  .icon-halo {
-    filter: drop-shadow(0 0 16px rgb(255 255 255 / 90%))
-      drop-shadow(0 0 40px rgb(255 255 255 / 60%));
-  }
-  .sky-cycle-bg {
-    animation: sky-color-cycle var(--sky-cycle-duration) linear infinite;
-  }
-  .cursor-blink {
-    animation: blink 1s step-end infinite;
   }
 }
 

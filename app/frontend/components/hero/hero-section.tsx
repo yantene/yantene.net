@@ -46,7 +46,7 @@ export function HeroSection(): React.JSX.Element {
             <img
               src={yanteneIcon}
               alt="やんてね"
-              className="h-32 w-32 rounded-full border-2 border-primary/30 sky-glow sm:h-40 sm:w-40"
+              className="h-32 w-32 rounded-full border-2 border-primary/30 [box-shadow:0_0_8px_oklch(0.65_0.14_235/25%),0_0_24px_oklch(0.65_0.14_235/12%)] sm:h-40 sm:w-40"
             />
           </div>
 
@@ -78,7 +78,7 @@ export function HeroSection(): React.JSX.Element {
               ))}
             </div>
 
-            <div className="flex items-center gap-4 icon-halo">
+            <div className="flex items-center gap-4 [filter:drop-shadow(0_0_16px_rgb(255_255_255/90%))_drop-shadow(0_0_40px_rgb(255_255_255/60%))]">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}

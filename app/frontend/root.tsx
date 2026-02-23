@@ -38,7 +38,7 @@ export function Layout({
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="font-light">
         {children}
         <ScrollRestoration />
         <Scripts />
