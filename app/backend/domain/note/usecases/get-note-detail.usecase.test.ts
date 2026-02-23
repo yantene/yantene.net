@@ -20,6 +20,7 @@ const createPersistedNote = (): Note<IPersisted> =>
     slug,
     etag: ETag.create("etag-abc"),
     imageUrl: ImageUrl.create("https://example.com/cover.png"),
+    summary: "Test summary",
     publishedOn: Temporal.PlainDate.from("2026-02-15"),
     lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
     createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),

@@ -1,0 +1,100 @@
+import { SiBluesky, SiDiscord, SiGithub, SiX } from "react-icons/si";
+import yanteneIcon from "~/frontend/assets/yantene-icon.svg";
+import { Celestim } from "./celestim";
+
+const skills = [
+  "Web",
+  "GNU/Linux",
+  "Ruby",
+  "Rails",
+  "TypeScript",
+  "Hono",
+  "React",
+  "React Router v7",
+  "AWS",
+  "Cloudflare",
+] as const;
+
+const socialLinks = [
+  { label: "GitHub", href: "https://github.com/yantene", icon: SiGithub },
+  { label: "X", href: "https://x.com/yantene", icon: SiX },
+  {
+    label: "Bluesky",
+    href: "https://bsky.app/profile/yantene.net",
+    icon: SiBluesky,
+  },
+  {
+    label: "Discord",
+    href: "https://discord.com/users/yantene",
+    icon: SiDiscord,
+  },
+] as const;
+
+export function HeroSection(): React.JSX.Element {
+  return (
+    <section className="relative overflow-hidden border-b border-border/50">
+      {/* Celestim background layer */}
+      <div className="absolute inset-0">
+        <Celestim />
+      </div>
+
+      {/* Frosted glass overlay */}
+      <div className="relative flex items-center justify-center bg-white/60 px-6 pb-16 pt-24 backdrop-blur-sm sm:pb-24 sm:pt-32">
+        <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
+          {/* Icon */}
+          <div className="relative shrink-0">
+            <img
+              src={yanteneIcon}
+              alt="やんてね"
+              className="h-32 w-32 rounded-full border-2 border-primary/30 [box-shadow:0_0_8px_oklch(0.65_0.14_235/25%),0_0_24px_oklch(0.65_0.14_235/12%)] sm:h-40 sm:w-40"
+            />
+          </div>
+
+          {/* Profile */}
+          <div className="flex flex-col items-center gap-4 text-halo text-center sm:items-start sm:text-left">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                やんてね
+              </h1>
+              <p className="mt-1 text-sm font-medium text-primary">
+                Web Developer
+              </p>
+            </div>
+
+            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+              現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
+              <br />
+              ブラウザの向こう側で暮らしています。
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary [text-shadow:none]"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-4 [filter:drop-shadow(0_0_16px_rgb(255_255_255/90%))_drop-shadow(0_0_40px_rgb(255_255_255/60%))]">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lg text-muted-foreground transition-colors hover:text-primary"
+                  title={link.label}
+                >
+                  <link.icon />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

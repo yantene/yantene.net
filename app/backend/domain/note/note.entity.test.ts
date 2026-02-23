@@ -15,6 +15,7 @@ describe("Note Entity", () => {
     slug: NoteSlug.create("my-first-post"),
     etag: ETag.create('"abc123"'),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    summary: "Test summary",
     publishedOn: validPublishedOn,
     lastModifiedOn: validLastModifiedOn,
   };
@@ -77,6 +78,7 @@ describe("Note Entity", () => {
         slug: NoteSlug.create("different-slug"),
         etag: ETag.create('"def456"'),
         imageUrl: ImageUrl.create("https://example.com/other.png"),
+        summary: "Different summary",
         publishedOn: Temporal.PlainDate.from("2025-01-01"),
         lastModifiedOn: Temporal.PlainDate.from("2025-06-15"),
         createdAt: instant,

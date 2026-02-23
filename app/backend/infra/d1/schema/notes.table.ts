@@ -8,6 +8,7 @@ export const notes = sqliteTable("notes", {
   slug: text("slug").notNull().unique(),
   etag: text("etag").notNull(),
   imageUrl: text("image_url").notNull(),
+  summary: text("summary").notNull().default(""),
   publishedOn: plainDate("published_on").notNull(),
   lastModifiedOn: plainDate("last_modified_on").notNull(),
   createdAt: instant("created_at")

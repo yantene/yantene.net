@@ -6,9 +6,10 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { httpStatus } from "~/lib/constants/http-status";
+import { Footer } from "./components/layout/footer";
 import type { Route } from "./+types/root";
 import "./app.css";
-import { httpStatus } from "~/lib/constants/http-status";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -19,7 +20,8 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    // eslint-disable-next-line no-secrets/no-secrets -- Google Fonts URL
+    href: "https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@100..900&display=swap",
   },
 ];
 
@@ -29,14 +31,14 @@ export function Layout({
   children: React.ReactNode;
 }>): React.JSX.Element {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="font-light">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -46,7 +48,14 @@ export function Layout({
 }
 
 export default function App(): React.JSX.Element {
-  return <Outlet />;
+  return (
+    <div className="flex min-h-screen flex-col">
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export function ErrorBoundary({

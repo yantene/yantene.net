@@ -17,6 +17,7 @@ const createPersistedNote = (): Note<IPersisted> =>
     slug: NoteSlug.create("test-slug"),
     etag: ETag.create("test-etag"),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    summary: "Test summary",
     publishedOn: Temporal.PlainDate.from("2026-02-17"),
     lastModifiedOn: Temporal.PlainDate.from("2026-02-18"),
     createdAt: Temporal.Instant.from("2026-01-01T00:00:00Z"),

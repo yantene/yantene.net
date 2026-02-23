@@ -1,0 +1,178 @@
+/*
+ * Celestim - Pure CSS celestial animation
+ * Original: https://github.com/yantene/celestim
+ * Adapted for use as a React component background
+ *
+ * All class names prefixed with `celestim-` to avoid conflicts.
+ */
+
+/* Sky color cycle: noon → sunset → midnight → sunrise → noon */
+@keyframes sky-color-cycle {
+  0% {
+    background-color: rgb(201 242 255);
+  }
+  25% {
+    background-color: rgb(255 173 49);
+  }
+  50% {
+    background-color: rgb(40 50 80);
+  }
+  75% {
+    background-color: rgb(219 106 0);
+  }
+  100% {
+    background-color: rgb(201 242 255);
+  }
+}
+
+.celestim-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  animation: sky-color-cycle var(--celestim-one-day) linear infinite;
+}
+
+/* Turntable: a square container that rotates celestial bodies */
+.celestim-turntable {
+  width: var(--celestim-orbit-diameter);
+  height: var(--celestim-orbit-diameter);
+
+  position: absolute;
+  left: 50%;
+  bottom: calc(
+    var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px)
+  );
+  translate: -50% 0;
+}
+
+@keyframes celestim-revolution {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
+  }
+}
+
+.celestim-solar-turntable {
+  animation: celestim-revolution var(--celestim-one-day) linear infinite;
+}
+
+.celestim-lunar-turntable {
+  animation: celestim-revolution
+    calc(var(--celestim-one-day) / (1 - (1 / var(--celestim-sidereal-month))))
+    linear infinite;
+}
+
+/* Celestial bodies: positioned at top-center of the turntable */
+.celestim-celestial-body {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+}
+
+/* Sun */
+.celestim-sun {
+  width: var(--celestim-body-size);
+  height: var(--celestim-body-size);
+  background-color: rgb(255 255 255);
+  border-radius: 50%;
+}
+
+/* Moon */
+.celestim-moon {
+  width: var(--celestim-body-size);
+  height: var(--celestim-body-size);
+  border-radius: 50%;
+}
+
+.celestim-moon-light {
+  background-color: rgb(255 210 11);
+}
+
+/* Moon phase animations (waxing/waning via rotateY clips) */
+.celestim-moon-light-right {
+  clip-path: xywh(50% 0 50% 100%);
+  animation: celestim-moon-light-right-phases
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    linear infinite;
+}
+
+@keyframes celestim-moon-light-right-phases {
+  0%,
+  25%,
+  75%,
+  100% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+}
+
+.celestim-moon-light-left {
+  clip-path: xywh(0 0 50% 100%);
+  animation: celestim-moon-light-left-phases
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    linear infinite;
+}
+
+@keyframes celestim-moon-light-left-phases {
+  0%,
+  100% {
+    transform: rotateY(90deg);
+  }
+  25%,
+  50%,
+  75% {
+    transform: rotateY(0deg);
+  }
+}
+
+.celestim-moon-shade-right {
+  clip-path: xywh(50% 0 50% 100%);
+  animation:
+    celestim-moon-shade-right-phases
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1)
+      linear infinite,
+    sky-color-cycle var(--celestim-one-day) linear infinite;
+}
+
+@keyframes celestim-moon-shade-right-phases {
+  0%,
+  25% {
+    transform: rotateY(0deg);
+  }
+  50%,
+  75%,
+  100% {
+    transform: rotateY(90deg);
+  }
+}
+
+.celestim-moon-shade-left {
+  clip-path: xywh(0 0 50% 100%);
+  animation:
+    celestim-moon-shade-left-phases
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+      linear infinite,
+    sky-color-cycle var(--celestim-one-day) linear infinite;
+}
+
+@keyframes celestim-moon-shade-left-phases {
+  0%,
+  25%,
+  50% {
+    transform: rotateY(90deg);
+  }
+  75%,
+  100% {
+    transform: rotateY(0deg);
+  }
+}

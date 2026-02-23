@@ -53,6 +53,7 @@ function createPersistedNote(params: {
     slug: NoteSlug.create(params.slug),
     etag: ETag.create(params.etag),
     imageUrl: ImageUrl.create("https://example.com/image.png"),
+    summary: "",
     publishedOn: Temporal.PlainDate.from("2026-01-15"),
     lastModifiedOn: Temporal.PlainDate.from("2026-02-10"),
     createdAt: testInstant,
