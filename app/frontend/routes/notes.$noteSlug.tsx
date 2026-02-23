@@ -37,10 +37,7 @@ export async function loader({
   return json;
 }
 
-const formatDate = (dateString: string): string => {
-  const [year, month, day] = dateString.split("-");
-  return `${year}年${String(Number(month))}月${String(Number(day))}日`;
-};
+const formatDate = (dateString: string): string => dateString;
 
 export default function NoteDetail({
   loaderData,
