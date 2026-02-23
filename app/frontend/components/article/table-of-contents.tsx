@@ -71,6 +71,9 @@ export function TableOfContents({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
+                {entry.number !== "" && (
+                  <span className="text-muted-foreground">{entry.number} </span>
+                )}
                 {entry.text}
               </a>
             </li>

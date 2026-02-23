@@ -1,0 +1,81 @@
+import { createHighlighterCoreSync, type HighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import langBash from "shiki/langs/bash.mjs";
+import langCss from "shiki/langs/css.mjs";
+import langGo from "shiki/langs/go.mjs";
+import langHtml from "shiki/langs/html.mjs";
+import langJavascript from "shiki/langs/javascript.mjs";
+import langJson from "shiki/langs/json.mjs";
+import langMarkdown from "shiki/langs/markdown.mjs";
+import langRuby from "shiki/langs/ruby.mjs";
+import langRust from "shiki/langs/rust.mjs";
+import langToml from "shiki/langs/toml.mjs";
+import langTypescript from "shiki/langs/typescript.mjs";
+import langYaml from "shiki/langs/yaml.mjs";
+import themeGithubLight from "shiki/themes/github-light.mjs";
+import type { Code, Root, RootContent } from "mdast";
+
+let highlighter: HighlighterCore | undefined;
+
+function getHighlighter(): HighlighterCore {
+  if (!highlighter) {
+    highlighter = createHighlighterCoreSync({
+      themes: [themeGithubLight],
+      langs: [
+        langBash,
+        langCss,
+        langGo,
+        langHtml,
+        langJavascript,
+        langJson,
+        langMarkdown,
+        langRuby,
+        langRust,
+        langToml,
+        langTypescript,
+        langYaml,
+      ],
+      engine: createJavaScriptRegexEngine(),
+    });
+  }
+  return highlighter;
+}
+
+function isCodeWithLang(node: RootContent): node is Code & { lang: string } {
+  return (
+    node.type === "code" &&
+    node.lang !== null &&
+    node.lang !== undefined &&
+    node.lang !== ""
+  );
+}
+
+function highlightNode(node: Code & { lang: string }): Code {
+  const hl = getHighlighter();
+  const loadedLangs = hl.getLoadedLanguages();
+  if (!loadedLangs.includes(node.lang)) {
+    return node;
+  }
+
+  const hast = hl.codeToHast(node.value, {
+    lang: node.lang,
+    theme: "github-light",
+  });
+
+  return {
+    ...node,
+    data: { ...node.data, hast } as Code["data"],
+  };
+}
+
+export function highlightCodeBlocks(tree: Root): Root {
+  return {
+    ...tree,
+    children: tree.children.map((node) => {
+      if (isCodeWithLang(node)) {
+        return highlightNode(node);
+      }
+      return node;
+    }),
+  };
+}

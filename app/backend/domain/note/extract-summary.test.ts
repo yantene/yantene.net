@@ -95,6 +95,29 @@ describe("extractSummary", () => {
     expect(extractSummary(tree)).toBe("Intro. Section content.");
   });
 
+  it("脚注定義ノードを無視する", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: "Main text." }],
+        },
+        {
+          type: "footnoteDefinition",
+          identifier: "1",
+          children: [
+            {
+              type: "paragraph",
+              children: [{ type: "text", value: "Footnote content." }],
+            },
+          ],
+        },
+      ],
+    };
+    expect(extractSummary(tree)).toBe("Main text.");
+  });
+
   it("ignores non-text nodes like images and code blocks", () => {
     const tree: Root = {
       type: "root",

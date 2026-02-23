@@ -11,6 +11,7 @@ export function extractSummary(
 
   visit(tree, (node) => {
     if (node.type === "heading") return SKIP;
+    if (node.type === "footnoteDefinition") return SKIP;
     if (node.type === "text") {
       textParts.push(node.value);
     }

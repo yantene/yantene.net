@@ -112,7 +112,7 @@ title: "My Article Title"
     const result = await useCase.execute(slug);
 
     const hasYaml = result.content.children.some(
-      (child) => child.type === "yaml",
+      (child: { type: string }) => child.type === "yaml",
     );
     expect(hasYaml).toBe(false);
   });

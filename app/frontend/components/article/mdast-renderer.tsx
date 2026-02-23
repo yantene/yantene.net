@@ -1,10 +1,20 @@
 import { createElement } from "react";
-import { getHeadingId } from "./heading-utils";
-import type { PhrasingContent, Root, RootContent } from "mdast";
+import { HastRenderer } from "./hast-renderer";
+import { buildHeadingNumberMap, getHeadingId } from "./heading-utils";
+import type { Root as HastRoot } from "hast";
+import type {
+  FootnoteDefinition,
+  PhrasingContent,
+  Root,
+  RootContent,
+} from "mdast";
 
 type MdastRendererProps = {
   readonly content: Root;
 };
+
+type FootnoteMap = ReadonlyMap<string, number>;
+type HeadingNumberMap = ReadonlyMap<string, string>;
 
 const headingTag = (depth: number): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
   `h${String(Math.min(Math.max(depth, 1), 6))}` as
@@ -18,6 +28,7 @@ const headingTag = (depth: number): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
 function renderPhrasingContent(
   node: PhrasingContent,
   index: number,
+  footnoteMap: FootnoteMap,
 ): React.JSX.Element {
   switch (node.type) {
     case "text": {
@@ -26,14 +37,18 @@ function renderPhrasingContent(
     case "emphasis": {
       return (
         <em key={index}>
-          {node.children.map((child, i) => renderPhrasingContent(child, i))}
+          {node.children.map((child, i) =>
+            renderPhrasingContent(child, i, footnoteMap),
+          )}
         </em>
       );
     }
     case "strong": {
       return (
         <strong key={index}>
-          {node.children.map((child, i) => renderPhrasingContent(child, i))}
+          {node.children.map((child, i) =>
+            renderPhrasingContent(child, i, footnoteMap),
+          )}
         </strong>
       );
     }
@@ -49,7 +64,9 @@ function renderPhrasingContent(
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
         >
-          {node.children.map((child, i) => renderPhrasingContent(child, i))}
+          {node.children.map((child, i) =>
+            renderPhrasingContent(child, i, footnoteMap),
+          )}
         </a>
       );
     }
@@ -58,6 +75,30 @@ function renderPhrasingContent(
     }
     case "break": {
       return <br key={index} />;
+    }
+    case "delete": {
+      return (
+        <del key={index}>
+          {node.children.map((child, i) =>
+            renderPhrasingContent(child, i, footnoteMap),
+          )}
+        </del>
+      );
+    }
+    case "footnoteReference": {
+      const footnoteNumber = footnoteMap.get(node.identifier) ?? 0;
+      return (
+        <sup key={index}>
+          <a
+            href={`#fn-${node.identifier}`}
+            id={`fnref-${node.identifier}`}
+            className="article-footnote-ref"
+            role="doc-noteref"
+          >
+            [{footnoteNumber}]
+          </a>
+        </sup>
+      );
     }
     default: {
       return <span key={index} />;
@@ -68,17 +109,23 @@ function renderPhrasingContent(
 function renderBlockContent(
   node: RootContent,
   index: number,
+  footnoteMap: FootnoteMap,
+  headingNumberMap: HeadingNumberMap,
 ): React.JSX.Element {
   switch (node.type) {
     case "heading": {
       const id = getHeadingId(node);
+      const number = headingNumberMap.get(id);
       const children = node.children.map((child, i) =>
-        renderPhrasingContent(child, i),
+        renderPhrasingContent(child, i, footnoteMap),
       );
       return createElement(
         headingTag(node.depth),
         { key: index, id },
         <a href={`#${id}`} className="article-heading-anchor">
+          {number !== undefined && (
+            <span className="article-heading-number">{number} </span>
+          )}
           {children}
         </a>,
       );
@@ -86,21 +133,27 @@ function renderBlockContent(
     case "paragraph": {
       return (
         <p key={index}>
-          {node.children.map((child, i) => renderPhrasingContent(child, i))}
+          {node.children.map((child, i) =>
+            renderPhrasingContent(child, i, footnoteMap),
+          )}
         </p>
       );
     }
     case "blockquote": {
       return (
         <blockquote key={index}>
-          {node.children.map((child, i) => renderBlockContent(child, i))}
+          {node.children.map((child, i) =>
+            renderBlockContent(child, i, footnoteMap, headingNumberMap),
+          )}
         </blockquote>
       );
     }
     case "list": {
       const items = node.children.map((item, i) => (
         <li key={i}>
-          {item.children.map((child, j) => renderBlockContent(child, j))}
+          {item.children.map((child, j) =>
+            renderBlockContent(child, j, footnoteMap, headingNumberMap),
+          )}
         </li>
       ));
       return node.ordered === true ? (
@@ -110,6 +163,15 @@ function renderBlockContent(
       );
     }
     case "code": {
+      const hastData = (node.data as Record<string, unknown> | undefined)
+        ?.hast as HastRoot | undefined;
+      if (hastData) {
+        return (
+          <div key={index} className="article-code-block">
+            <HastRenderer hast={hastData} />
+          </div>
+        );
+      }
       return (
         <pre key={index}>
           <code
@@ -124,6 +186,51 @@ function renderBlockContent(
         </pre>
       );
     }
+    case "table": {
+      const [headerRow, ...bodyRows] = node.children;
+      const alignments = node.align ?? [];
+
+      const alignStyle = (
+        colIndex: number,
+      ): React.CSSProperties | undefined => {
+        const align = alignments[colIndex];
+        if (!align) return undefined;
+        return { textAlign: align };
+      };
+
+      return (
+        <div key={index} className="article-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                {headerRow.children.map((cell, ci) => (
+                  <th key={ci} style={alignStyle(ci)}>
+                    {cell.children.map((child, pi) =>
+                      renderPhrasingContent(child, pi, footnoteMap),
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {bodyRows.length > 0 && (
+              <tbody>
+                {bodyRows.map((row, ri) => (
+                  <tr key={ri}>
+                    {row.children.map((cell, ci) => (
+                      <td key={ci} style={alignStyle(ci)}>
+                        {cell.children.map((child, pi) =>
+                          renderPhrasingContent(child, pi, footnoteMap),
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            )}
+          </table>
+        </div>
+      );
+    }
     case "thematicBreak": {
       return <hr key={index} />;
     }
@@ -136,14 +243,77 @@ function renderBlockContent(
 const isH1 = (node: RootContent): boolean =>
   node.type === "heading" && node.depth === 1;
 
+const isFootnoteDefinition = (node: RootContent): node is FootnoteDefinition =>
+  node.type === "footnoteDefinition";
+
+const isMainContent = (node: RootContent): boolean =>
+  !isH1(node) && !isFootnoteDefinition(node);
+
+function buildFootnoteMap(
+  definitions: readonly FootnoteDefinition[],
+): FootnoteMap {
+  return new Map(definitions.map((def, i) => [def.identifier, i + 1]));
+}
+
+type FootnoteSectionProps = {
+  readonly definitions: readonly FootnoteDefinition[];
+  readonly footnoteMap: FootnoteMap;
+  readonly headingNumberMap: HeadingNumberMap;
+};
+
+function FootnoteSection({
+  definitions,
+  footnoteMap,
+  headingNumberMap,
+}: FootnoteSectionProps): React.JSX.Element {
+  return (
+    <section role="doc-endnotes" className="article-footnotes">
+      <hr />
+      <ol>
+        {definitions.map((def) => {
+          const number = footnoteMap.get(def.identifier) ?? 0;
+          return (
+            <li key={def.identifier} id={`fn-${def.identifier}`} value={number}>
+              {def.children.map((child, j) =>
+                renderBlockContent(child, j, footnoteMap, headingNumberMap),
+              )}
+              <a
+                href={`#fnref-${def.identifier}`}
+                className="article-footnote-backref"
+                role="doc-backlink"
+              >
+                ↩
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 export function MdastRenderer({
   content,
 }: MdastRendererProps): React.JSX.Element {
+  const definitions = content.children.filter((node) =>
+    isFootnoteDefinition(node),
+  );
+  const footnoteMap = buildFootnoteMap(definitions);
+  const headingNumberMap = buildHeadingNumberMap(content);
+  const mainNodes = content.children.filter((node) => isMainContent(node));
+
   return (
     <div className="article-content">
-      {content.children
-        .filter((node) => !isH1(node))
-        .map((node, i) => renderBlockContent(node, i))}
+      {mainNodes.map((node, i) =>
+        renderBlockContent(node, i, footnoteMap, headingNumberMap),
+      )}
+      {definitions.length > 0 && (
+        <FootnoteSection
+          definitions={definitions}
+          footnoteMap={footnoteMap}
+          headingNumberMap={headingNumberMap}
+        />
+      )}
     </div>
   );
 }

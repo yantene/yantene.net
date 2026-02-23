@@ -1,42 +1,7 @@
 /*
- * Article typography and heading auto-numbering via CSS counters.
- * Numbering covers h2 (1.), h3 (1.1.), h4 (1.1.1.) using nested counters.
+ * Article typography and heading numbering.
+ * h2-h4 are numbered via JS (e.g. "1.", "1.1.", "1.1.1.") inside anchor links.
  */
-
-/* ── Counter reset on the article root ── */
-
-.article-content {
-  counter-reset: h2-counter;
-}
-
-.article-content h2 {
-  counter-increment: h2-counter;
-  counter-reset: h3-counter;
-}
-
-.article-content h3 {
-  counter-increment: h3-counter;
-  counter-reset: h4-counter;
-}
-
-.article-content h4 {
-  counter-increment: h4-counter;
-}
-
-/* ── Numbering via ::before ── */
-
-.article-content h2::before {
-  content: counter(h2-counter) ". ";
-}
-
-.article-content h3::before {
-  content: counter(h2-counter) "." counter(h3-counter) ". ";
-}
-
-.article-content h4::before {
-  content: counter(h2-counter) "." counter(h3-counter) "." counter(h4-counter)
-    ". ";
-}
 
 /* ── Heading styles ── */
 
@@ -77,6 +42,10 @@
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-color: var(--muted-foreground);
+}
+
+.article-heading-number {
+  color: var(--muted-foreground);
 }
 
 /* ── Body text ── */
@@ -123,6 +92,20 @@
 }
 
 .article-content pre code {
+  font-size: 0.875rem;
+}
+
+/* ── Syntax-highlighted code blocks (shiki) ── */
+
+.article-code-block {
+  margin-bottom: 1.5rem;
+}
+
+.article-code-block pre {
+  margin-bottom: 0;
+}
+
+.article-code-block code {
   font-size: 0.875rem;
 }
 
@@ -180,4 +163,65 @@
   margin: 2.5rem 0;
   border: none;
   border-top: 1px solid var(--border);
+}
+
+/* ── Tables ── */
+
+.article-table-wrapper {
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.article-content th,
+.article-content td {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border);
+}
+
+.article-content th {
+  background-color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+
+/* ── Strikethrough ── */
+
+.article-content del {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+
+/* ── Footnotes ── */
+
+.article-footnote-ref {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.75em;
+}
+
+.article-footnotes {
+  margin-top: 3rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.article-footnotes ol {
+  padding-left: 1.5rem;
+}
+
+.article-footnotes li {
+  margin-bottom: 0.5rem;
+}
+
+.article-footnote-backref {
+  margin-left: 0.25rem;
+  text-decoration: none;
+  color: var(--primary);
 }
