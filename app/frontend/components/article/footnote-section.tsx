@@ -1,4 +1,4 @@
-import type { RenderContext, FootnoteMap } from "./render-context";
+import type { RenderContext } from "./render-context";
 import type { FootnoteDefinition, RootContent } from "mdast";
 
 type BlockRenderer = (
@@ -12,12 +12,6 @@ type FootnoteSectionProps = {
   readonly ctx: RenderContext;
   readonly renderBlock: BlockRenderer;
 };
-
-export function buildFootnoteMap(
-  definitions: readonly FootnoteDefinition[],
-): FootnoteMap {
-  return new Map(definitions.map((def, i) => [def.identifier, i + 1]));
-}
 
 export function FootnoteSection({
   definitions,

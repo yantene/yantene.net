@@ -1,8 +1,8 @@
 import { Fragment, createElement } from "react";
-import { FootnoteSection, buildFootnoteMap } from "./footnote-section";
+import { FootnoteSection } from "./footnote-section";
 import { HastRenderer } from "./hast-renderer";
 import { buildHeadingNumberMap, getHeadingId } from "./heading-utils";
-import type { RenderContext } from "./render-context";
+import { buildFootnoteMap, type RenderContext } from "./render-context";
 import type { Root as HastRoot } from "hast";
 import type {
   FootnoteDefinition,
@@ -106,7 +106,7 @@ function renderPhrasingContent(
   }
 }
 
-export function renderBlockContent(
+function renderBlockContent(
   node: RootContent,
   index: number,
   ctx: RenderContext,
@@ -191,6 +191,7 @@ export function renderBlockContent(
       const alignStyle = (
         colIndex: number,
       ): React.CSSProperties | undefined => {
+        // eslint-disable-next-line security/detect-object-injection
         const align = alignments[colIndex];
         if (!align) return undefined;
         return { textAlign: align };

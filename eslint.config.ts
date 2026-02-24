@@ -193,7 +193,7 @@ const config = [
 
       // React Refresh のルール
       "react-refresh/only-export-components": [
-        "warn",
+        "error",
         { allowConstantExport: true },
       ],
 
@@ -257,6 +257,9 @@ const config = [
     rules: {
       // Security の推奨ルール
       ...security.configs.recommended.rules,
+
+      // 推奨設定が warn のルールを error に昇格
+      "security/detect-object-injection": "error",
 
       // シークレット検出
       "no-secrets/no-secrets": "error",
