@@ -251,8 +251,8 @@ const isMainContent = (node: RootContent): boolean =>
 export function MdastRenderer({
   content,
 }: MdastRendererProps): React.JSX.Element {
-  const definitions = content.children.filter((node) =>
-    isFootnoteDefinition(node),
+  const definitions = content.children.filter(
+    (node): node is FootnoteDefinition => isFootnoteDefinition(node),
   );
   const footnoteMap = buildFootnoteMap(definitions);
   const headingNumberMap = buildHeadingNumberMap(content);

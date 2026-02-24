@@ -68,6 +68,9 @@ function highlightNode(node: Code & { lang: string }): Code {
 }
 
 export function highlightCodeBlocks(tree: Root): Root {
+  // structuredClone で入力ツリーを保護したうえで、クローン内のノードを
+  // visit 経由で変異させる。unist-util-visit の設計上 visitor は参照渡し
+  // であるため、この変異はクローンに閉じており入力には影響しない。
   const cloned = structuredClone(tree);
   visit(cloned, "code", (node: Code) => {
     if (isCodeWithLang(node)) {

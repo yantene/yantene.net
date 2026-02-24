@@ -12,7 +12,7 @@ export function extractSummary(
   visit(tree, (node) => {
     if (node.type === "heading") return SKIP;
     if (node.type === "footnoteDefinition") return SKIP;
-    if (node.type === "text") {
+    if (node.type === "text" || node.type === "inlineCode") {
       textParts.push(node.value);
     }
   });

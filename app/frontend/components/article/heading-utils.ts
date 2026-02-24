@@ -62,12 +62,10 @@ export function buildHeadingNodeIdMap(tree: Root): HeadingNodeIdMap {
   return result;
 }
 
-/**
- * Build a map from heading ID to its section number (e.g. "1.", "1.1.", "1.1.1.").
- * Only h2-h4 are numbered. h1 is skipped (used as article title).
- */
-export function buildHeadingNumberMap(tree: Root): HeadingNumberMap {
-  const nodeIdMap = buildHeadingNodeIdMap(tree);
+function buildHeadingNumberMapWithIdMap(
+  tree: Root,
+  nodeIdMap: HeadingNodeIdMap,
+): HeadingNumberMap {
   let h2 = 0;
   let h3 = 0;
   let h4 = 0;
@@ -105,12 +103,20 @@ export function buildHeadingNumberMap(tree: Root): HeadingNumberMap {
 }
 
 /**
+ * Build a map from heading ID to its section number (e.g. "1.", "1.1.", "1.1.1.").
+ * Only h2-h4 are numbered. h1 is skipped (used as article title).
+ */
+export function buildHeadingNumberMap(tree: Root): HeadingNumberMap {
+  return buildHeadingNumberMapWithIdMap(tree, buildHeadingNodeIdMap(tree));
+}
+
+/**
  * Extract table-of-contents entries from an MDAST tree.
  * Only includes h2-h4 (h1 is the article title).
  */
 export function extractTocEntries(tree: Root): readonly TocEntry[] {
-  const numberMap = buildHeadingNumberMap(tree);
   const nodeIdMap = buildHeadingNodeIdMap(tree);
+  const numberMap = buildHeadingNumberMapWithIdMap(tree, nodeIdMap);
 
   return tree.children
     .filter((node: RootContent): node is Heading => node.type === "heading")
