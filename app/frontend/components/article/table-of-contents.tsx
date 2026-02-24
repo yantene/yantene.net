@@ -19,12 +19,13 @@ function useActiveHeading(ids: readonly string[]): string | null {
       const visible = observerEntries.filter((entry) => entry.isIntersecting);
       if (visible.length === 0) return;
 
-      let topEntry = visible[0];
-      for (const entry of visible) {
-        if (entry.boundingClientRect.top < topEntry.boundingClientRect.top) {
-          topEntry = entry;
-        }
-      }
+      const topEntry = visible.reduce(
+        (top, entry) =>
+          entry.boundingClientRect.top < top.boundingClientRect.top
+            ? entry
+            : top,
+        visible[0],
+      );
       setActiveId(topEntry.target.id);
     },
     [],

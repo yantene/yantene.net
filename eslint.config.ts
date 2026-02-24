@@ -228,6 +228,8 @@ const config = [
       ...unicorn.configs.recommended.rules,
       "unicorn/prevent-abbreviations": "off", // 略語を許可
       "unicorn/no-null": "off", // null の使用を許可
+      "unicorn/no-array-reduce": "off", // reduce は正当な関数型スタイル
+      "unicorn/no-array-for-each": "off", // forEach は正当な関数型スタイル
       "unicorn/filename-case": [
         "error",
         {
