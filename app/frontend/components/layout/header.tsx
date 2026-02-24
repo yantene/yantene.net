@@ -21,7 +21,9 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
           <TypewriterTitle
             className={`text-xl font-bold tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
           />
-          <nav className={`flex items-center gap-6${isTransparent ? " text-halo" : ""}`}>
+          <nav
+            className={`flex items-center gap-6${isTransparent ? " text-halo" : ""}`}
+          >
             <Link
               to="/"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
