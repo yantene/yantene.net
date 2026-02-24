@@ -13,6 +13,7 @@ import langToml from "shiki/langs/toml.mjs";
 import langTypescript from "shiki/langs/typescript.mjs";
 import langYaml from "shiki/langs/yaml.mjs";
 import themeGithubLight from "shiki/themes/github-light.mjs";
+import { visit } from "unist-util-visit";
 import type { Code, Root, RootContent } from "mdast";
 
 let highlighter: HighlighterCore | undefined;
@@ -67,13 +68,11 @@ function highlightNode(node: Code & { lang: string }): Code {
 }
 
 export function highlightCodeBlocks(tree: Root): Root {
-  return {
-    ...tree,
-    children: tree.children.map((node) => {
-      if (isCodeWithLang(node)) {
-        return highlightNode(node);
-      }
-      return node;
-    }),
-  };
+  const cloned = structuredClone(tree);
+  visit(cloned, "code", (node: Code) => {
+    if (isCodeWithLang(node)) {
+      node.data = highlightNode(node).data;
+    }
+  });
+  return cloned;
 }

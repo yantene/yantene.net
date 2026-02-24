@@ -51,7 +51,8 @@ export function buildHeadingNodeIdMap(tree: Root): HeadingNodeIdMap {
 
   for (const node of tree.children) {
     if (node.type !== "heading") continue;
-    const baseId = textToSlug(extractText(node.children));
+    const rawBaseId = textToSlug(extractText(node.children));
+    const baseId = rawBaseId || `heading-${String(result.size + 1)}`;
     const count = seenIds.get(baseId) ?? 0;
     seenIds.set(baseId, count + 1);
     const uniqueId = count === 0 ? baseId : `${baseId}-${String(count + 1)}`;

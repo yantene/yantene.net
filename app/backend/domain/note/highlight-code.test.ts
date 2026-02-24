@@ -80,6 +80,61 @@ describe("highlightCodeBlocks", () => {
     expect(result).not.toBe(tree);
   });
 
+  it("blockquote 内のコードブロックをハイライトする", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "blockquote",
+          children: [
+            {
+              type: "code",
+              lang: "typescript",
+              value: "const x = 1;",
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = highlightCodeBlocks(tree);
+
+    const blockquote = result.children[0];
+    expect(blockquote.type).toBe("blockquote");
+    const code = (blockquote as { children: Code[] }).children[0];
+    expect(getHastData(code)).toBeDefined();
+  });
+
+  it("list item 内のコードブロックをハイライトする", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "list",
+          ordered: false,
+          children: [
+            {
+              type: "listItem",
+              children: [
+                {
+                  type: "code",
+                  lang: "typescript",
+                  value: "const x = 1;",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = highlightCodeBlocks(tree);
+
+    const list = result.children[0] as { children: { children: Code[] }[] };
+    const code = list.children[0].children[0];
+    expect(getHastData(code)).toBeDefined();
+  });
+
   it("コードブロック以外のノードはそのまま保持する", () => {
     const tree: Root = {
       type: "root",
