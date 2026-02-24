@@ -39,7 +39,7 @@ const textToSlug = (text: string): string =>
     .replaceAll(/-{2,}/g, "-")
     .replaceAll(/(?:^-|-$)/g, "");
 
-type HeadingNumberMap = ReadonlyMap<string, string>;
+export type HeadingNumberMap = ReadonlyMap<string, string>;
 
 /**
  * Build a map from each Heading node to its unique HTML id.
