@@ -93,7 +93,7 @@ function renderPhrasingContent(
       return (
         <sup key={index}>
           <a
-            href={`#fn-${node.identifier}`}
+            href={`#fn-${encodeURIComponent(node.identifier)}`}
             id={`fnref-${node.identifier}`}
             className="text-primary no-underline text-[0.75em]"
             role="doc-noteref"

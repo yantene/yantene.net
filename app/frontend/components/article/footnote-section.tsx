@@ -37,7 +37,7 @@ export function FootnoteSection({
             >
               {def.children.map((child, j) => renderBlock(child, j, ctx))}
               <a
-                href={`#fnref-${def.identifier}`}
+                href={`#fnref-${encodeURIComponent(def.identifier)}`}
                 className="ml-1 no-underline text-primary"
                 role="doc-backlink"
               >

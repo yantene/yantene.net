@@ -55,6 +55,14 @@ function renderHastElement(element: Element, index: number): React.JSX.Element {
   }
 }
 
+const allowedStyleProps = new Set([
+  "color",
+  "background-color",
+  "font-weight",
+  "font-style",
+  "text-decoration",
+]);
+
 function parseInlineStyle(style: string): React.CSSProperties {
   const result: Record<string, string> = {};
   for (const declaration of style.split(";")) {
@@ -62,7 +70,7 @@ function parseInlineStyle(style: string): React.CSSProperties {
     if (colonIndex === -1) continue;
     const prop = declaration.slice(0, colonIndex).trim();
     const value = declaration.slice(colonIndex + 1).trim();
-    if (prop && value) {
+    if (prop && value && allowedStyleProps.has(prop)) {
       result[camelCase(prop)] = value;
     }
   }
