@@ -12,6 +12,9 @@ services:
       - ./fish/functions/git.fish:/home/vscode/.config/fish/functions/git.fish
       # Chrome sandbox needs access to /dev/shm
       - /dev/shm:/dev/shm
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     command: sleep infinity
     user: vscode
     # Chrome sandbox security settings
