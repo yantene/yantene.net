@@ -80,9 +80,9 @@ export function HastRenderer({
 }): React.JSX.Element {
   return (
     <>
-      {hast.children.map((child, i) =>
-        renderHastNode(child as ElementContent, i),
-      )}
+      {hast.children
+        .filter((child): child is ElementContent => child.type !== "doctype")
+        .map((child, i) => renderHastNode(child, i))}
     </>
   );
 }

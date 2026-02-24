@@ -1,7 +1,10 @@
 import { Fragment, createElement } from "react";
 import { FootnoteSection } from "./footnote-section";
 import { HastRenderer } from "./hast-renderer";
-import { buildHeadingNumberMap, getHeadingId } from "./heading-utils";
+import {
+  buildHeadingNodeIdMap,
+  buildHeadingNumberMap,
+} from "./heading-utils";
 import { buildFootnoteMap, type RenderContext } from "./render-context";
 import type { Root as HastRoot } from "hast";
 import type {
@@ -113,7 +116,8 @@ function renderBlockContent(
 ): React.JSX.Element {
   switch (node.type) {
     case "heading": {
-      const id = getHeadingId(node, `heading-${String(index)}`);
+      const id =
+        ctx.headingNodeIdMap.get(node) ?? `heading-${String(index)}`;
       const number = ctx.headingNumberMap.get(id);
       const children = node.children.map((child, i) =>
         renderPhrasingContent(child, i, ctx),
@@ -256,7 +260,8 @@ export function MdastRenderer({
   );
   const footnoteMap = buildFootnoteMap(definitions);
   const headingNumberMap = buildHeadingNumberMap(content);
-  const ctx: RenderContext = { footnoteMap, headingNumberMap };
+  const headingNodeIdMap = buildHeadingNodeIdMap(content);
+  const ctx: RenderContext = { footnoteMap, headingNumberMap, headingNodeIdMap };
   const mainNodes = content.children.filter((node) => isMainContent(node));
 
   return (
