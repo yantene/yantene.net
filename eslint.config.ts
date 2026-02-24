@@ -31,6 +31,23 @@ const config = [
   // Storybook 設定ファイルを ESLint の対象外にする
   { ignores: [".storybook/*.ts"] },
 
+  // Service Worker ファイルの設定（Service Worker グローバルスコープ）
+  {
+    files: ["public/sw.js"],
+    languageOptions: {
+      globals: {
+        self: "readonly",
+        caches: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+        Response: "readonly",
+        Request: "readonly",
+        Promise: "readonly",
+        clients: "readonly",
+      },
+    },
+  },
+
   // JavaScript の推奨設定
   js.configs.recommended,
 

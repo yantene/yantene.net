@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -8,6 +9,7 @@ import {
 } from "react-router";
 import { httpStatus } from "~/lib/constants/http-status";
 import { Footer } from "./components/layout/footer";
+import { registerServiceWorker } from "./lib/pwa/register-sw";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -23,6 +25,9 @@ export const links: Route.LinksFunction = () => [
     // eslint-disable-next-line no-secrets/no-secrets -- Google Fonts URL
     href: "https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@100..900&display=swap",
   },
+  { rel: "manifest", href: "/manifest.webmanifest" },
+  { rel: "icon", type: "image/svg+xml", href: "/icons/icon.svg" },
+  { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
 ];
 
 export function Layout({
@@ -35,6 +40,7 @@ export function Layout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#3b6fd4" />
         <Meta />
         <Links />
       </head>
@@ -48,6 +54,10 @@ export function Layout({
 }
 
 export default function App(): React.JSX.Element {
+  useEffect(() => {
+    void registerServiceWorker();
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
