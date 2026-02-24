@@ -1,9 +1,9 @@
 /*
- * Article typography and heading numbering.
- * h2-h4 are numbered via JS (e.g. "1.", "1.1.", "1.1.1.") inside anchor links.
+ * Article typography styles for Markdown-generated content.
+ * Only descendant selectors — element styles are applied via Tailwind in JSX.
  */
 
-/* ── Heading styles ── */
+/* ── Headings ── */
 
 .article-content h2 {
   margin-top: 3rem;
@@ -31,23 +31,6 @@
   line-height: 1.4;
 }
 
-/* ── Heading anchor links ── */
-
-.article-heading-anchor {
-  color: inherit;
-  text-decoration: none;
-}
-
-.article-heading-anchor:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-color: var(--muted-foreground);
-}
-
-.article-heading-number {
-  color: var(--muted-foreground);
-}
-
 /* ── Body text ── */
 
 .article-content p {
@@ -59,7 +42,7 @@
 
 /* ── Links ── */
 
-.article-content a:not(.article-heading-anchor) {
+.article-content a:not([class]) {
   color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -67,7 +50,7 @@
   transition: text-decoration-color 0.15s;
 }
 
-.article-content a:not(.article-heading-anchor):hover {
+.article-content a:not([class]):hover {
   text-decoration-color: var(--primary);
 }
 
@@ -96,10 +79,6 @@
 }
 
 /* ── Syntax-highlighted code blocks (shiki) ── */
-
-.article-code-block {
-  margin-bottom: 1.5rem;
-}
 
 .article-code-block pre {
   margin-bottom: 0;
@@ -167,11 +146,6 @@
 
 /* ── Tables ── */
 
-.article-table-wrapper {
-  margin-bottom: 1.5rem;
-  overflow-x: auto;
-}
-
 .article-content table {
   width: 100%;
   border-collapse: collapse;
@@ -196,32 +170,4 @@
 .article-content del {
   text-decoration: line-through;
   color: var(--muted-foreground);
-}
-
-/* ── Footnotes ── */
-
-.article-footnote-ref {
-  color: var(--primary);
-  text-decoration: none;
-  font-size: 0.75em;
-}
-
-.article-footnotes {
-  margin-top: 3rem;
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
-}
-
-.article-footnotes ol {
-  padding-left: 1.5rem;
-}
-
-.article-footnotes li {
-  margin-bottom: 0.5rem;
-}
-
-.article-footnote-backref {
-  margin-left: 0.25rem;
-  text-decoration: none;
-  color: var(--primary);
 }

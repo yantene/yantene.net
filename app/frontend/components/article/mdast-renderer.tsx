@@ -1,6 +1,8 @@
 import { createElement } from "react";
+import { FootnoteSection, buildFootnoteMap } from "./footnote-section";
 import { HastRenderer } from "./hast-renderer";
 import { buildHeadingNumberMap, getHeadingId } from "./heading-utils";
+import type { RenderContext } from "./render-context";
 import type { Root as HastRoot } from "hast";
 import type {
   FootnoteDefinition,
@@ -12,9 +14,6 @@ import type {
 type MdastRendererProps = {
   readonly content: Root;
 };
-
-type FootnoteMap = ReadonlyMap<string, number>;
-type HeadingNumberMap = ReadonlyMap<string, string>;
 
 const headingTag = (depth: number): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
   `h${String(Math.min(Math.max(depth, 1), 6))}` as
@@ -28,7 +27,7 @@ const headingTag = (depth: number): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
 function renderPhrasingContent(
   node: PhrasingContent,
   index: number,
-  footnoteMap: FootnoteMap,
+  ctx: RenderContext,
 ): React.JSX.Element {
   switch (node.type) {
     case "text": {
@@ -38,7 +37,7 @@ function renderPhrasingContent(
       return (
         <em key={index}>
           {node.children.map((child, i) =>
-            renderPhrasingContent(child, i, footnoteMap),
+            renderPhrasingContent(child, i, ctx),
           )}
         </em>
       );
@@ -47,7 +46,7 @@ function renderPhrasingContent(
       return (
         <strong key={index}>
           {node.children.map((child, i) =>
-            renderPhrasingContent(child, i, footnoteMap),
+            renderPhrasingContent(child, i, ctx),
           )}
         </strong>
       );
@@ -65,7 +64,7 @@ function renderPhrasingContent(
           rel={isExternal ? "noopener noreferrer" : undefined}
         >
           {node.children.map((child, i) =>
-            renderPhrasingContent(child, i, footnoteMap),
+            renderPhrasingContent(child, i, ctx),
           )}
         </a>
       );
@@ -80,19 +79,19 @@ function renderPhrasingContent(
       return (
         <del key={index}>
           {node.children.map((child, i) =>
-            renderPhrasingContent(child, i, footnoteMap),
+            renderPhrasingContent(child, i, ctx),
           )}
         </del>
       );
     }
     case "footnoteReference": {
-      const footnoteNumber = footnoteMap.get(node.identifier) ?? 0;
+      const footnoteNumber = ctx.footnoteMap.get(node.identifier) ?? 0;
       return (
         <sup key={index}>
           <a
             href={`#fn-${node.identifier}`}
             id={`fnref-${node.identifier}`}
-            className="article-footnote-ref"
+            className="text-primary no-underline text-[0.75em]"
             role="doc-noteref"
           >
             [{footnoteNumber}]
@@ -106,25 +105,27 @@ function renderPhrasingContent(
   }
 }
 
-function renderBlockContent(
+export function renderBlockContent(
   node: RootContent,
   index: number,
-  footnoteMap: FootnoteMap,
-  headingNumberMap: HeadingNumberMap,
+  ctx: RenderContext,
 ): React.JSX.Element {
   switch (node.type) {
     case "heading": {
       const id = getHeadingId(node);
-      const number = headingNumberMap.get(id);
+      const number = ctx.headingNumberMap.get(id);
       const children = node.children.map((child, i) =>
-        renderPhrasingContent(child, i, footnoteMap),
+        renderPhrasingContent(child, i, ctx),
       );
       return createElement(
         headingTag(node.depth),
         { key: index, id },
-        <a href={`#${id}`} className="article-heading-anchor">
+        <a
+          href={`#${id}`}
+          className="text-inherit no-underline hover:underline hover:underline-offset-4 hover:decoration-muted-foreground"
+        >
           {number !== undefined && (
-            <span className="article-heading-number">{number} </span>
+            <span className="text-muted-foreground">{number} </span>
           )}
           {children}
         </a>,
@@ -134,7 +135,7 @@ function renderBlockContent(
       return (
         <p key={index}>
           {node.children.map((child, i) =>
-            renderPhrasingContent(child, i, footnoteMap),
+            renderPhrasingContent(child, i, ctx),
           )}
         </p>
       );
@@ -142,18 +143,14 @@ function renderBlockContent(
     case "blockquote": {
       return (
         <blockquote key={index}>
-          {node.children.map((child, i) =>
-            renderBlockContent(child, i, footnoteMap, headingNumberMap),
-          )}
+          {node.children.map((child, i) => renderBlockContent(child, i, ctx))}
         </blockquote>
       );
     }
     case "list": {
       const items = node.children.map((item, i) => (
         <li key={i}>
-          {item.children.map((child, j) =>
-            renderBlockContent(child, j, footnoteMap, headingNumberMap),
-          )}
+          {item.children.map((child, j) => renderBlockContent(child, j, ctx))}
         </li>
       ));
       return node.ordered === true ? (
@@ -167,7 +164,7 @@ function renderBlockContent(
         ?.hast as HastRoot | undefined;
       if (hastData) {
         return (
-          <div key={index} className="article-code-block">
+          <div key={index} className="article-code-block mb-6">
             <HastRenderer hast={hastData} />
           </div>
         );
@@ -199,14 +196,14 @@ function renderBlockContent(
       };
 
       return (
-        <div key={index} className="article-table-wrapper">
+        <div key={index} className="mb-6 overflow-x-auto">
           <table>
             <thead>
               <tr>
                 {headerRow.children.map((cell, ci) => (
                   <th key={ci} style={alignStyle(ci)}>
                     {cell.children.map((child, pi) =>
-                      renderPhrasingContent(child, pi, footnoteMap),
+                      renderPhrasingContent(child, pi, ctx),
                     )}
                   </th>
                 ))}
@@ -219,7 +216,7 @@ function renderBlockContent(
                     {row.children.map((cell, ci) => (
                       <td key={ci} style={alignStyle(ci)}>
                         {cell.children.map((child, pi) =>
-                          renderPhrasingContent(child, pi, footnoteMap),
+                          renderPhrasingContent(child, pi, ctx),
                         )}
                       </td>
                     ))}
@@ -249,49 +246,6 @@ const isFootnoteDefinition = (node: RootContent): node is FootnoteDefinition =>
 const isMainContent = (node: RootContent): boolean =>
   !isH1(node) && !isFootnoteDefinition(node);
 
-function buildFootnoteMap(
-  definitions: readonly FootnoteDefinition[],
-): FootnoteMap {
-  return new Map(definitions.map((def, i) => [def.identifier, i + 1]));
-}
-
-type FootnoteSectionProps = {
-  readonly definitions: readonly FootnoteDefinition[];
-  readonly footnoteMap: FootnoteMap;
-  readonly headingNumberMap: HeadingNumberMap;
-};
-
-function FootnoteSection({
-  definitions,
-  footnoteMap,
-  headingNumberMap,
-}: FootnoteSectionProps): React.JSX.Element {
-  return (
-    <section role="doc-endnotes" className="article-footnotes">
-      <hr />
-      <ol>
-        {definitions.map((def) => {
-          const number = footnoteMap.get(def.identifier) ?? 0;
-          return (
-            <li key={def.identifier} id={`fn-${def.identifier}`} value={number}>
-              {def.children.map((child, j) =>
-                renderBlockContent(child, j, footnoteMap, headingNumberMap),
-              )}
-              <a
-                href={`#fnref-${def.identifier}`}
-                className="article-footnote-backref"
-                role="doc-backlink"
-              >
-                ↩
-              </a>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
-  );
-}
-
 export function MdastRenderer({
   content,
 }: MdastRendererProps): React.JSX.Element {
@@ -300,18 +254,17 @@ export function MdastRenderer({
   );
   const footnoteMap = buildFootnoteMap(definitions);
   const headingNumberMap = buildHeadingNumberMap(content);
+  const ctx: RenderContext = { footnoteMap, headingNumberMap };
   const mainNodes = content.children.filter((node) => isMainContent(node));
 
   return (
     <div className="article-content">
-      {mainNodes.map((node, i) =>
-        renderBlockContent(node, i, footnoteMap, headingNumberMap),
-      )}
+      {mainNodes.map((node, i) => renderBlockContent(node, i, ctx))}
       {definitions.length > 0 && (
         <FootnoteSection
           definitions={definitions}
-          footnoteMap={footnoteMap}
-          headingNumberMap={headingNumberMap}
+          ctx={ctx}
+          renderBlock={renderBlockContent}
         />
       )}
     </div>
