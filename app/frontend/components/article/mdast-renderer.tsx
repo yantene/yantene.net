@@ -15,6 +15,11 @@ type MdastRendererProps = {
   readonly content: Root;
 };
 
+// http/https, mailto, 相対パス、フラグメントのみ許可。javascript: 等の危険スキームをブロック。
+const safeUrlPattern = /^(https?:\/\/|mailto:|\/|#|\.\.?\/)/;
+const sanitizeUrl = (url: string): string =>
+  safeUrlPattern.test(url) ? url : "";
+
 const headingTag = (depth: number): "h1" | "h2" | "h3" | "h4" | "h5" | "h6" =>
   `h${String(Math.min(Math.max(depth, 1), 6))}` as
     | "h1"
@@ -55,11 +60,12 @@ function renderPhrasingContent(
       return <code key={index}>{node.value}</code>;
     }
     case "link": {
-      const isExternal = node.url.startsWith("http");
+      const safeUrl = sanitizeUrl(node.url);
+      const isExternal = safeUrl.startsWith("http");
       return (
         <a
           key={index}
-          href={node.url}
+          href={safeUrl || undefined}
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noopener noreferrer" : undefined}
         >
@@ -70,7 +76,9 @@ function renderPhrasingContent(
       );
     }
     case "image": {
-      return <img key={index} src={node.url} alt={node.alt ?? ""} />;
+      return (
+        <img key={index} src={sanitizeUrl(node.url)} alt={node.alt ?? ""} />
+      );
     }
     case "break": {
       return <br key={index} />;
@@ -91,7 +99,7 @@ function renderPhrasingContent(
         <sup key={index}>
           <a
             href={`#fn-${encodeURIComponent(node.identifier)}`}
-            id={`fnref-${node.identifier}`}
+            id={`fnref-${encodeURIComponent(node.identifier)}`}
             className="text-primary no-underline text-[0.75em]"
             role="doc-noteref"
           >
@@ -185,6 +193,7 @@ function renderBlockContent(
       );
     }
     case "table": {
+      if (node.children.length === 0) return <div key={index} />;
       const [headerRow, ...bodyRows] = node.children;
       const alignments = node.align ?? [];
 

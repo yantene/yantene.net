@@ -55,30 +55,39 @@ function renderHastElement(element: Element, index: number): React.JSX.Element {
   }
 }
 
-const allowedStyleProps = new Set([
-  "color",
-  "background-color",
-  "font-weight",
-  "font-style",
-  "text-decoration",
-]);
-
 function parseInlineStyle(style: string): React.CSSProperties {
-  const result: Record<string, string> = {};
+  const result: React.CSSProperties = {};
   for (const declaration of style.split(";")) {
     const colonIndex = declaration.indexOf(":");
     if (colonIndex === -1) continue;
     const prop = declaration.slice(0, colonIndex).trim();
     const value = declaration.slice(colonIndex + 1).trim();
-    if (prop && value && allowedStyleProps.has(prop)) {
-      result[camelCase(prop)] = value;
+    if (!prop || !value) continue;
+    // 許可リスト内のプロパティのみ明示的に代入（動的キーアクセスを回避）
+    switch (prop) {
+      case "color": {
+        result.color = value;
+        break;
+      }
+      case "background-color": {
+        result.backgroundColor = value;
+        break;
+      }
+      case "font-weight": {
+        result.fontWeight = value;
+        break;
+      }
+      case "font-style": {
+        result.fontStyle = value;
+        break;
+      }
+      case "text-decoration": {
+        result.textDecoration = value;
+        break;
+      }
     }
   }
   return result;
-}
-
-function camelCase(str: string): string {
-  return str.replaceAll(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 }
 
 export function HastRenderer({

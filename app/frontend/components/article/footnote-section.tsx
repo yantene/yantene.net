@@ -31,7 +31,7 @@ export function FootnoteSection({
           return (
             <li
               key={def.identifier}
-              id={`fn-${def.identifier}`}
+              id={`fn-${encodeURIComponent(def.identifier)}`}
               value={number}
               className="mb-2"
             >
