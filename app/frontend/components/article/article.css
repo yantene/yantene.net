@@ -46,7 +46,7 @@
   color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: var(--primary) / 40%;
+  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
   transition: text-decoration-color 0.15s;
 }
 

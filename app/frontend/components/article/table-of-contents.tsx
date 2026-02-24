@@ -37,6 +37,7 @@ function useActiveHeading(ids: readonly string[]): string | null {
     });
 
     for (const id of ids) {
+      if (!id) continue;
       const el = document.querySelector(`#${CSS.escape(id)}`);
       if (el !== null) observer.observe(el);
     }

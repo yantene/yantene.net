@@ -37,8 +37,6 @@ export async function loader({
   return json;
 }
 
-const formatDate = (dateString: string): string => dateString;
-
 export default function NoteDetail({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
@@ -54,7 +52,7 @@ export default function NoteDetail({
         <div className="relative h-64 w-full overflow-hidden bg-muted sm:h-80 md:h-96">
           <img
             src={note.imageUrl}
-            alt=""
+            alt={note.title}
             className="h-full w-full object-cover"
           />
         </div>
@@ -67,11 +65,9 @@ export default function NoteDetail({
             {note.title}
           </h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <time dateTime={note.publishedOn}>
-              {formatDate(note.publishedOn)}
-            </time>
+            <time dateTime={note.publishedOn}>{note.publishedOn}</time>
             {note.publishedOn !== note.lastModifiedOn && (
-              <span>（更新: {formatDate(note.lastModifiedOn)}）</span>
+              <span>（更新: {note.lastModifiedOn}）</span>
             )}
           </div>
         </header>

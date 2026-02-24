@@ -13,7 +13,7 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
       className={
         isTransparent
           ? "absolute inset-x-0 top-0 z-50"
-          : "sticky top-0 z-50 border-b border-border/50 [animation:sky-color-cycle_288s_linear_infinite]"
+          : "sticky top-0 z-50 border-b border-border/50"
       }
     >
       <div className={isTransparent ? "" : "bg-white/60 backdrop-blur-sm"}>

@@ -51,13 +51,11 @@ function isCodeWithLang(node: RootContent): node is Code & { lang: string } {
 }
 
 function highlightNode(node: Code & { lang: string }): Code {
-  const hl = getHighlighter();
-  const loadedLangs = hl.getLoadedLanguages();
-  if (!loadedLangs.includes(node.lang)) {
+  if (!getHighlighter().getLoadedLanguages().includes(node.lang)) {
     return node;
   }
 
-  const hast = hl.codeToHast(node.value, {
+  const hast = getHighlighter().codeToHast(node.value, {
     lang: node.lang,
     theme: "github-light",
   });

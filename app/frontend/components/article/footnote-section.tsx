@@ -32,7 +32,8 @@ export function FootnoteSection({
       <hr />
       <ol className="pl-6">
         {definitions.map((def) => {
-          const number = ctx.footnoteMap.get(def.identifier) ?? 0;
+          const number = ctx.footnoteMap.get(def.identifier);
+          if (number == null) return null;
           return (
             <li
               key={def.identifier}

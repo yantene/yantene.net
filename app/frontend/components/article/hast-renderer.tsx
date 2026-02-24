@@ -1,3 +1,4 @@
+import { Fragment, createElement } from "react";
 import type { Element, ElementContent, Root } from "hast";
 
 function renderHastNode(
@@ -6,7 +7,7 @@ function renderHastNode(
 ): React.JSX.Element {
   switch (node.type) {
     case "text": {
-      return <>{node.value}</>;
+      return createElement(Fragment, { key: index }, node.value);
     }
     case "element": {
       return renderHastElement(node, index);

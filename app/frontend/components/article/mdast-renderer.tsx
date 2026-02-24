@@ -1,4 +1,4 @@
-import { createElement } from "react";
+import { Fragment, createElement } from "react";
 import { FootnoteSection, buildFootnoteMap } from "./footnote-section";
 import { HastRenderer } from "./hast-renderer";
 import { buildHeadingNumberMap, getHeadingId } from "./heading-utils";
@@ -31,7 +31,7 @@ function renderPhrasingContent(
 ): React.JSX.Element {
   switch (node.type) {
     case "text": {
-      return <>{node.value}</>;
+      return createElement(Fragment, { key: index }, node.value);
     }
     case "emphasis": {
       return (
@@ -85,7 +85,8 @@ function renderPhrasingContent(
       );
     }
     case "footnoteReference": {
-      const footnoteNumber = ctx.footnoteMap.get(node.identifier) ?? 0;
+      const footnoteNumber = ctx.footnoteMap.get(node.identifier);
+      if (footnoteNumber == null) return <sup key={index}>[?]</sup>;
       return (
         <sup key={index}>
           <a
@@ -112,7 +113,7 @@ export function renderBlockContent(
 ): React.JSX.Element {
   switch (node.type) {
     case "heading": {
-      const id = getHeadingId(node);
+      const id = getHeadingId(node, `heading-${String(index)}`);
       const number = ctx.headingNumberMap.get(id);
       const children = node.children.map((child, i) =>
         renderPhrasingContent(child, i, ctx),

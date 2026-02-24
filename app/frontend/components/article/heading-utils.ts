@@ -99,7 +99,8 @@ export function extractTocEntries(tree: Root): readonly TocEntry[] {
 
 /**
  * Get the heading ID for a given heading node.
+ * Falls back to the provided fallback string if the slug is empty.
  */
-export function getHeadingId(node: Heading): string {
-  return textToSlug(extractText(node.children));
+export function getHeadingId(node: Heading, fallback: string = ""): string {
+  return textToSlug(extractText(node.children)) || fallback;
 }
