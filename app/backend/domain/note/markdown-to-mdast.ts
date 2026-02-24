@@ -1,11 +1,16 @@
 import remarkFrontmatter from "remark-frontmatter";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
+import { highlightCodeBlocks } from "./highlight-code";
 import { resolveImageUrls } from "./resolve-image-urls";
 import type { NoteSlug } from "./note-slug.vo";
 import type { Root, RootContent } from "mdast";
 
-const parser = unified().use(remarkParse).use(remarkFrontmatter, ["yaml"]);
+const parser = unified()
+  .use(remarkParse)
+  .use(remarkFrontmatter, ["yaml"])
+  .use(remarkGfm);
 
 const isNotYamlNode = (node: RootContent): boolean => node.type !== "yaml";
 
@@ -17,5 +22,6 @@ export function markdownToMdast(content: string, slug: NoteSlug): Root {
     children: tree.children.filter((node) => isNotYamlNode(node)),
   };
 
-  return resolveImageUrls(filteredTree, slug);
+  const withResolvedImages = resolveImageUrls(filteredTree, slug);
+  return highlightCodeBlocks(withResolvedImages);
 }

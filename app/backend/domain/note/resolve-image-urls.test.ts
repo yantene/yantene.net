@@ -266,6 +266,7 @@ describe("resolveImageUrls", () => {
     const result = resolveImageUrls(tree, slug);
 
     const getImageUrl = (index: number): string => {
+      // eslint-disable-next-line security/detect-object-injection
       const paragraph = result.children[index];
       if (paragraph.type !== "paragraph") throw new Error("unexpected");
       const image = paragraph.children[0];

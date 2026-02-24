@@ -1,0 +1,173 @@
+/*
+ * Article typography styles for Markdown-generated content.
+ * Only descendant selectors — element styles are applied via Tailwind in JSX.
+ */
+
+/* ── Headings ── */
+
+.article-content h2 {
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-content h3 {
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-content h4 {
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ── Body text ── */
+
+.article-content p {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+/* ── Links ── */
+
+.article-content a:not([class]) {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  transition: text-decoration-color 0.15s;
+}
+
+.article-content a:not([class]):hover {
+  text-decoration-color: var(--primary);
+}
+
+/* ── Inline code ── */
+
+.article-content :not(pre) > code {
+  padding: 0.15em 0.4em;
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* ── Code blocks ── */
+
+.article-content pre {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background-color: var(--muted);
+  line-height: 1.6;
+}
+
+.article-content pre code {
+  font-size: 0.875rem;
+}
+
+/* ── Syntax-highlighted code blocks (shiki) ── */
+
+.article-code-block pre {
+  margin-bottom: 0;
+}
+
+.article-code-block code {
+  font-size: 0.875rem;
+}
+
+/* ── Blockquotes ── */
+
+.article-content blockquote {
+  margin-bottom: 1.5rem;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.article-content blockquote p {
+  margin-bottom: 0.75rem;
+}
+
+/* ── Lists ── */
+
+.article-content ul,
+.article-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.75rem;
+}
+
+.article-content ul {
+  list-style-type: disc;
+}
+
+.article-content ol {
+  list-style-type: decimal;
+}
+
+.article-content li {
+  margin-bottom: 0.375rem;
+  line-height: 1.8;
+}
+
+.article-content li > p {
+  margin-bottom: 0.5rem;
+}
+
+/* ── Images ── */
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 0.5rem;
+  display: block;
+}
+
+/* ── Horizontal rules ── */
+
+.article-content hr {
+  margin: 2.5rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Tables ── */
+
+.article-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.article-content th,
+.article-content td {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border);
+}
+
+.article-content th {
+  background-color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+
+/* ── Strikethrough ── */
+
+.article-content del {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}

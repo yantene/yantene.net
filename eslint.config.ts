@@ -193,7 +193,7 @@ const config = [
 
       // React Refresh のルール
       "react-refresh/only-export-components": [
-        "warn",
+        "error",
         { allowConstantExport: true },
       ],
 
@@ -228,6 +228,8 @@ const config = [
       ...unicorn.configs.recommended.rules,
       "unicorn/prevent-abbreviations": "off", // 略語を許可
       "unicorn/no-null": "off", // null の使用を許可
+      "unicorn/no-array-reduce": "off", // reduce は正当な関数型スタイル
+      "unicorn/no-array-for-each": "off", // forEach は正当な関数型スタイル
       "unicorn/filename-case": [
         "error",
         {
@@ -257,6 +259,9 @@ const config = [
     rules: {
       // Security の推奨ルール
       ...security.configs.recommended.rules,
+
+      // 推奨設定が warn のルールを error に昇格
+      "security/detect-object-injection": "error",
 
       // シークレット検出
       "no-secrets/no-secrets": "error",

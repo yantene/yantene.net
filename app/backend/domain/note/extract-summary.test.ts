@@ -95,6 +95,45 @@ describe("extractSummary", () => {
     expect(extractSummary(tree)).toBe("Intro. Section content.");
   });
 
+  it("脚注定義ノードを無視する", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [{ type: "text", value: "Main text." }],
+        },
+        {
+          type: "footnoteDefinition",
+          identifier: "1",
+          children: [
+            {
+              type: "paragraph",
+              children: [{ type: "text", value: "Footnote content." }],
+            },
+          ],
+        },
+      ],
+    };
+    expect(extractSummary(tree)).toBe("Main text.");
+  });
+
+  it("includes inline code text in summary", () => {
+    const tree: Root = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            { type: "inlineCode", value: "React" },
+            { type: "text", value: " を使ったアーキテクチャ。" },
+          ],
+        },
+      ],
+    };
+    expect(extractSummary(tree)).toBe("React を使ったアーキテクチャ。");
+  });
+
   it("ignores non-text nodes like images and code blocks", () => {
     const tree: Root = {
       type: "root",

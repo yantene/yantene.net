@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { markdownToMdast } from "./markdown-to-mdast";
 import { NoteSlug } from "./note-slug.vo";
-import type { Image, Paragraph, Root } from "mdast";
+import type {
+  Delete,
+  FootnoteDefinition,
+  FootnoteReference,
+  Image,
+  Paragraph,
+  Root,
+  Table,
+} from "mdast";
 
 const slug = NoteSlug.create("my-article");
 
@@ -115,5 +123,71 @@ Some text with **bold** and *italic*.
     expect(types).toContain("heading");
     expect(types).toContain("paragraph");
     expect(types).toContain("list");
+  });
+
+  it("GFM テーブルを table/tableRow/tableCell ノードにパースする", () => {
+    const content = `| Header 1 | Header 2 |
+| --- | --- |
+| Cell 1 | Cell 2 |
+`;
+
+    const result = markdownToMdast(content, slug);
+
+    const table = result.children[0] as Table;
+    expect(table.type).toBe("table");
+    expect(table.children).toHaveLength(2);
+
+    const headerRow = table.children[0];
+    expect(headerRow.type).toBe("tableRow");
+
+    const headerCell = headerRow.children[0];
+    expect(headerCell.type).toBe("tableCell");
+  });
+
+  it("GFM テーブルのアラインメント情報を保持する", () => {
+    const content = `| Left | Center | Right |
+| :--- | :---: | ---: |
+| a | b | c |
+`;
+
+    const result = markdownToMdast(content, slug);
+
+    const table = result.children[0] as Table;
+    expect(table.align).toEqual(["left", "center", "right"]);
+  });
+
+  it("GFM 取り消し線を delete ノードにパースする", () => {
+    const content = `This is ~~deleted~~ text.`;
+
+    const result = markdownToMdast(content, slug);
+
+    const paragraph = result.children[0] as Paragraph;
+    const deleteNode = paragraph.children.find(
+      (child) => child.type === "delete",
+    ) as Delete;
+    expect(deleteNode).toBeDefined();
+    expect(deleteNode.type).toBe("delete");
+  });
+
+  it("GFM 脚注を footnoteReference と footnoteDefinition にパースする", () => {
+    const content = `Text with a footnote[^1].
+
+[^1]: This is the footnote content.
+`;
+
+    const result = markdownToMdast(content, slug);
+
+    const paragraph = result.children[0] as Paragraph;
+    const ref = paragraph.children.find(
+      (child) => child.type === "footnoteReference",
+    ) as FootnoteReference;
+    expect(ref).toBeDefined();
+    expect(ref.identifier).toBe("1");
+
+    const def = result.children.find(
+      (child) => child.type === "footnoteDefinition",
+    ) as FootnoteDefinition;
+    expect(def).toBeDefined();
+    expect(def.identifier).toBe("1");
   });
 });
