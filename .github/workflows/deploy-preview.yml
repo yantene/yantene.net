@@ -43,7 +43,7 @@ jobs:
           command: versions upload --env staging --preview-alias pr-${{ github.event.pull_request.number }}
 
       - name: Comment on PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           WRANGLER_OUTPUT: ${{ steps.preview.outputs.command-output }}
         with:
