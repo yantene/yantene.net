@@ -1,0 +1,92 @@
+name: Lint
+
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: format
+            command: pnpm run format
+          - name: eslint
+            command: pnpm run lint
+          - name: typecheck
+            command: pnpm run typecheck
+    name: ${{ matrix.name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Run ${{ matrix.name }}
+        run: ${{ matrix.command }}
+
+  wrangler-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Validate wrangler.jsonc
+        run: pnpm run wrangler:check
+
+  migration-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Check migrations are up to date with schema
+        run: pnpm run db:generate && git diff --exit-code migrations/
+
+      - name: Validate migrations apply cleanly
+        run: node scripts/validate-migrations.mjs
+
+  check-adr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+
+      - name: Check ADR numbering
+        run: node scripts/check-adr.mjs
+
+  storybook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Check all components have stories
+        run: node scripts/check-stories.mjs
+
+      - name: Build Storybook
+        run: pnpm run storybook:build

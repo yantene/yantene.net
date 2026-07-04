@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run lint:fix)",
+      "Bash(pnpm run format)",
+      "Bash(pnpm run format:fix)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm run check)",
+      "Bash(pnpm run fix)",
+      "Bash(pnpm run test:run)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm run wrangler:check)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; [ -n \"$f\" ] && pnpm exec prettier --ignore-path .gitignore --ignore-path .prettierignore --ignore-unknown --write \"$f\"; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "symlinkDirectories": ["node_modules"]
+  }
+}

@@ -1,0 +1,92 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check Pull Request Title follows Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Conventional Commits pattern (without breaking change support)
+          # Format: type(scope): subject
+          # - type: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+          # - scope: optional, must be one of the allowed scopes
+          #   - frontend : app/frontend/
+          #   - domain   : app/backend/domain/
+          #   - infra    : app/backend/infra/
+          #   - handlers : app/backend/handlers/
+          #   - services : app/backend/services/
+          #   - db       : migrations/
+          #   - deps     : production dependency updates
+          #   - deps-dev : development dependency updates
+          # - subject: free text
+
+          PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\((frontend|domain|infra|handlers|services|db|deps|deps-dev)\))?: .+"
+
+          if [[ "$PR_TITLE" =~ $PATTERN ]]; then
+            echo "Pull Request title follows Conventional Commits format"
+            echo "Pull Request Title: $PR_TITLE"
+          else
+            echo "Pull Request title does not follow Conventional Commits format"
+            echo "Pull Request Title: $PR_TITLE"
+            echo ""
+            echo "Expected format: <type>[(<scope>)]: <subject>  (scope is optional)"
+            echo ""
+            echo "Rules:"
+            echo "  - type: one of feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            echo "  - scope: optional, must be one of: frontend, domain, infra, handlers, services, db, deps, deps-dev"
+            echo "  - subject: brief description of the change"
+            echo ""
+            echo "Valid examples:"
+            echo "  - feat: add new feature"
+            echo "  - fix(handlers): resolve bug in feed endpoint"
+            echo "  - docs: update README"
+            echo "  - refactor(infra): simplify D1 schema"
+            echo "  - refactor(services): simplify use case orchestration"
+            exit 1
+          fi
+
+  check-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check branch name follows naming convention
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          # Branch name patterns:
+          # 1. issue-{number}/{description}        (local development)
+          # 2. claude/issue-{number}-{description} (Claude Code on the Web)
+          # 3. dependabot/{ecosystem}/{...}         (Dependabot)
+          PATTERN="^(issue-[0-9]+/|claude/issue-[0-9]+-|dependabot/)"
+
+          if [[ "$BRANCH_NAME" =~ $PATTERN ]]; then
+            echo "Branch name follows the required format"
+            echo "Branch name: $BRANCH_NAME"
+          else
+            echo "Branch name does not follow the required format"
+            echo "Branch name: $BRANCH_NAME"
+            echo ""
+            echo "Expected formats:"
+            echo "  issue-{number}/{description}          (local development)"
+            echo "  claude/issue-{number}-{description}   (Claude Code on the Web)"
+            echo "  dependabot/{ecosystem}/{...}           (Dependabot)"
+            echo ""
+            echo "Valid examples:"
+            echo "  - issue-1/add-feature"
+            echo "  - issue-123/fix-bug"
+            echo "  - claude/issue-42-restore-staging-auth-AbCdE"
+            echo "  - dependabot/npm_and_yarn/production-dependencies-abc123"
+            echo ""
+            echo "Invalid examples:"
+            echo "  - feature/add-feature (missing issue- prefix)"
+            echo "  - issue-abc/add-feature (number must be numeric)"
+            echo "  - claude/fix-bug (missing issue-{number} after claude/)"
+            exit 1
+          fi

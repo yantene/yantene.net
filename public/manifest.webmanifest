@@ -1,0 +1,16 @@
+{
+  "name": "hono-inertia-react-app",
+  "short_name": "app",
+  "description": "Hono + Inertia.js + React web application on Cloudflare Workers.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

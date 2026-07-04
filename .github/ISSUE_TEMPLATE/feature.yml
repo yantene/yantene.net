@@ -1,0 +1,31 @@
+name: 機能追加
+description: 新機能やページの追加
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 機能追加リクエスト
+  - type: textarea
+    id: description
+    attributes:
+      label: 概要
+      description: 追加したい機能の概要を記述してください
+    validations:
+      required: true
+  - type: textarea
+    id: tasks
+    attributes:
+      label: タスク
+      description: 実装に必要なタスクをチェックリスト形式で記述してください
+      value: |
+        - [ ]
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: 備考
+      description: 参考情報や制約事項があれば記述してください
+    validations:
+      required: false

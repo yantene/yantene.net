@@ -1,0 +1,29 @@
+name: "yantene"
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ../..:/workspaces
+      - ../fish/config.fish:/home/node/.config/fish/config.fish
+      - ../fish/conf.d/abbrs.fish:/home/node/.config/fish/conf.d/abbrs.fish
+      - ../fish/functions/git.fish:/home/node/.config/fish/functions/git.fish
+      # Persist Claude Code auth and auto-memory across container rebuilds
+      - claude-global:/home/node/.claude
+      # Chrome sandbox needs access to /dev/shm
+      - /dev/shm:/dev/shm
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    command: sleep infinity
+    user: node
+    # Chrome sandbox security settings
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+
+volumes:
+  claude-global:

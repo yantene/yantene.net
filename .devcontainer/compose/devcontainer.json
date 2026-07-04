@@ -1,0 +1,23 @@
+{
+  "name": "yantene (Compose)",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspaces",
+
+  "forwardPorts": [5173],
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "fish"
+      },
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "Anthropic.claude-code",
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "./.devcontainer/post_create.sh"
+}

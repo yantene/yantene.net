@@ -1,0 +1,31 @@
+{
+  "name": "yantene (K8s)",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "../.."
+  },
+
+  "remoteEnv": {
+    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${containerEnv:PATH}"
+  },
+
+  "forwardPorts": [5173],
+
+  "capAdd": ["SYS_ADMIN"],
+  "securityOpt": ["seccomp=unconfined"],
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "fish"
+      },
+      "extensions": [
+        "EditorConfig.EditorConfig",
+        "Anthropic.claude-code",
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "postCreateCommand": "./.devcontainer/post_create.sh"
+}
