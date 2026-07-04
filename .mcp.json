@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": [
+        "dlx",
+        "chrome-devtools-mcp@0.13.0",
+        "--headless",
+        "--executablePath",
+        "/usr/bin/chromium",
+        "--isolated"
+      ]
+    }
+  }
+}

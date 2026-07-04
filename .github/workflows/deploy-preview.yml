@@ -1,0 +1,105 @@
+name: Deploy Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Build
+        run: CLOUDFLARE_ENV=staging pnpm run build
+
+      - name: Migrate D1 (Staging)
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply yantene-staging --env staging --remote
+
+      - name: Upload preview version
+        id: preview
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload --env staging --preview-alias pr-${{ github.event.pull_request.number }}
+
+      - name: Comment on PR
+        uses: actions/github-script@v8
+        env:
+          WRANGLER_OUTPUT: ${{ steps.preview.outputs.command-output }}
+        with:
+          script: |
+            const output = process.env.WRANGLER_OUTPUT ?? '';
+            const versionIdMatch = output.match(/Version ID:\s+([a-fA-F0-9-]+)/);
+            const versionId = versionIdMatch ? versionIdMatch[1] : 'unknown';
+            const aliasUrlMatch = output.match(/Version Preview Alias URL:\s+(https:\/\/\S+)/);
+            const versionUrlMatch = output.match(/Version Preview URL:\s+(https:\/\/\S+)/);
+            const previewUrl = aliasUrlMatch?.[1] ?? versionUrlMatch?.[1] ?? null;
+
+            const extractionFailed = versionId === 'unknown' || !previewUrl;
+
+            const body = [
+              '## Cloudflare Workers Preview',
+              '',
+              extractionFailed ? '> [!WARNING]\n> Failed to extract deployment details. The deployment may have failed or the output format has changed.' : null,
+              previewUrl ? `**Preview URL:** ${previewUrl}` : null,
+              `**Version ID:** \`${versionId}\``,
+              '',
+              '<details><summary>Wrangler Output</summary>',
+              '',
+              '```',
+              output,
+              '```',
+              '',
+              '</details>',
+            ].filter(line => line !== null).join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(
+              (c) =>
+                c.user &&
+                c.user.type === 'Bot' &&
+                c.user.login === 'github-actions[bot]' &&
+                c.body &&
+                c.body.includes('## Cloudflare Workers Preview')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

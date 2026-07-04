@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "title": "yantene",
+    "description": "Hono + Inertia.js + React + Cloudflare Workers で構成される Web アプリケーション"
+  },
+  "home": {
+    "heading": "yantene",
+    "welcome": "ようこそ、{{name}} さん",
+    "logout": "ログアウト"
+  },
+  "login": {
+    "heading": "ログイン",
+    "description": "メールアドレスを入力すると、サインイン用のマジックリンクを送信します。",
+    "email": "メールアドレス",
+    "submit": "マジックリンクを送信",
+    "errors": {
+      "generic": "ログインに失敗した。もう一度お試しを。",
+      "missing_token": "リンクにトークンが含まれていない。",
+      "invalid_token": "このリンクは期限切れか、既に使用済み。"
+    }
+  },
+  "loginSent": {
+    "heading": "メールを送信した",
+    "description": "サインイン用のリンクを送信した。15 分以内にクリックを。",
+    "backToLogin": "ログイン画面に戻る"
+  }
+}

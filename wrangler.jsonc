@@ -1,0 +1,102 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yantene",
+  "compatibility_date": "2026-01-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./app/backend/index.ts",
+  "observability": {
+    "enabled": true,
+  },
+  "vars": {
+    "APP_ENV": "development",
+  },
+  "d1_databases": [
+    {
+      "binding": "D1",
+      "database_name": "yantene-development",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "./migrations",
+    },
+  ],
+  // R2 bindings are available but currently unused.
+  // Uncomment when R2 storage is needed.
+  // "r2_buckets": [
+  // 	{
+  // 		"binding": "R2",
+  // 		"bucket_name": "yantene-development"
+  // 	}
+  // ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "00000000000000000000000000000000",
+    },
+  ],
+  // Cloudflare Email Routing (Send Email) バインディング。
+  // staging / production で実送信に使う (development は ConsoleMailer)。
+  // 送信元は MAIL_FROM_ADDRESS で与える。
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
+  "env": {
+    "staging": {
+      "workers_dev": true,
+      "vars": {
+        "APP_ENV": "staging",
+      },
+      "d1_databases": [
+        {
+          "binding": "D1",
+          "database_name": "yantene-staging",
+          "migrations_dir": "./migrations",
+        },
+      ],
+      // "r2_buckets": [
+      // 	{
+      // 		"binding": "R2",
+      // 		"bucket_name": "yantene-staging"
+      // 	}
+      // ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+        },
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+        },
+      ],
+    },
+    "production": {
+      "vars": {
+        "APP_ENV": "production",
+      },
+      "d1_databases": [
+        {
+          "binding": "D1",
+          "database_name": "yantene-production",
+          "migrations_dir": "./migrations",
+        },
+      ],
+      // "r2_buckets": [
+      // 	{
+      // 		"binding": "R2",
+      // 		"bucket_name": "yantene-production"
+      // 	}
+      // ],
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+        },
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+        },
+      ],
+    },
+  },
+}
