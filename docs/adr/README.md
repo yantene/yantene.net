@@ -9,11 +9,11 @@
 
 ## 一覧
 
-| #                                                      | タイトル                                               | Status   |
-| ------------------------------------------------------ | ------------------------------------------------------ | -------- |
-| [0001](0001-record-architecture-decisions.md)          | アーキテクチャ決定を ADR として記録する                | Accepted |
-| [0002](0002-value-objects-at-repository-boundaries.md) | リポジトリ境界では Value Object / ブランド型で受け渡す | Accepted |
-| [0003](0003-clean-architecture-and-cqrs.md)            | Clean Architecture (DIP) と CQRS を採用する           | Accepted |
-| [0004](0004-inertia-server-driven-spa.md)              | Inertia.js によるサーバー駆動 SPA を採用する          | Accepted |
+| #                                                      | タイトル                                                   | Status   |
+| ------------------------------------------------------ | ---------------------------------------------------------- | -------- |
+| [0001](0001-record-architecture-decisions.md)          | アーキテクチャ決定を ADR として記録する                    | Accepted |
+| [0002](0002-value-objects-at-repository-boundaries.md) | リポジトリ境界では Value Object / ブランド型で受け渡す     | Accepted |
+| [0003](0003-clean-architecture-and-cqrs.md)            | Clean Architecture (DIP) と CQRS を採用する                | Accepted |
+| [0004](0004-inertia-server-driven-spa.md)              | Inertia.js によるサーバー駆動 SPA を採用する               | Accepted |
 | [0005](0005-artifacts-as-content-source-of-truth.md)   | Cloudflare Artifacts をコンテンツの source of truth にする | Accepted |
-| [0006](0006-mdast-over-html-rendering.md)              | Markdown を HTML ではなく MDAST でフロントエンドに渡す | Accepted |
+| [0006](0006-mdast-over-html-rendering.md)              | Markdown を HTML ではなく MDAST でフロントエンドに渡す     | Accepted |
