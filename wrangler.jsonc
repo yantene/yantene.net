@@ -50,7 +50,7 @@
         "APP_ENV": "staging",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
-        "GITHUB_BRANCH": "main",
+        "GITHUB_BRANCH": "staging",
       },
       "d1_databases": [
         {
