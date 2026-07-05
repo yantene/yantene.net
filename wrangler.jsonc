@@ -9,6 +9,11 @@
   },
   "vars": {
     "APP_ENV": "development",
+    // Artifacts (コンテンツ正本) の参照設定。REST 呼び出しに使う。
+    // ARTIFACTS_ACCOUNT_ID は secret として与える (`wrangler secret put`)。
+    "ARTIFACTS_NAMESPACE": "yantene",
+    "ARTIFACTS_REPO": "notes",
+    "ARTIFACTS_BRANCH": "main",
   },
   "d1_databases": [
     {
@@ -18,14 +23,22 @@
       "migrations_dir": "./migrations",
     },
   ],
-  // R2 bindings are available but currently unused.
-  // Uncomment when R2 storage is needed.
-  // "r2_buckets": [
-  // 	{
-  // 		"binding": "R2",
-  // 		"bucket_name": "yantene-development"
-  // 	}
-  // ],
+  // R2: パース済み MDAST と画像アセットのキャッシュ (ADR 0005)。
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "yantene-development",
+    },
+  ],
+  // Artifacts: コンテンツ正本 (Markdown + 画像)。binding は repo 管理と read トークン
+  // 発行に使い、ファイル内容の読み取りは REST API で行う (ADR 0007)。
+  "artifacts": [
+    {
+      "binding": "ARTIFACTS",
+      "namespace": "yantene",
+      "remote": true,
+    },
+  ],
   "kv_namespaces": [
     {
       "binding": "KV",
@@ -45,6 +58,9 @@
       "workers_dev": true,
       "vars": {
         "APP_ENV": "staging",
+        "ARTIFACTS_NAMESPACE": "yantene",
+        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_BRANCH": "main",
       },
       "d1_databases": [
         {
@@ -53,12 +69,19 @@
           "migrations_dir": "./migrations",
         },
       ],
-      // "r2_buckets": [
-      // 	{
-      // 		"binding": "R2",
-      // 		"bucket_name": "yantene-staging"
-      // 	}
-      // ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "yantene-staging",
+        },
+      ],
+      "artifacts": [
+        {
+          "binding": "ARTIFACTS",
+          "namespace": "yantene",
+          "remote": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "KV",
@@ -73,6 +96,9 @@
     "production": {
       "vars": {
         "APP_ENV": "production",
+        "ARTIFACTS_NAMESPACE": "yantene",
+        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_BRANCH": "main",
       },
       "d1_databases": [
         {
@@ -81,12 +107,19 @@
           "migrations_dir": "./migrations",
         },
       ],
-      // "r2_buckets": [
-      // 	{
-      // 		"binding": "R2",
-      // 		"bucket_name": "yantene-production"
-      // 	}
-      // ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "yantene-production",
+        },
+      ],
+      "artifacts": [
+        {
+          "binding": "ARTIFACTS",
+          "namespace": "yantene",
+          "remote": true,
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "KV",
