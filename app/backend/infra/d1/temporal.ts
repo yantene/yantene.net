@@ -20,7 +20,10 @@ export function unixToInstant(unix: number): Temporal.Instant {
  * so they can be ordered directly in SQL.
  */
 export function plainDateToIso(date: Temporal.PlainDate): string {
-  return date.toString();
+  // calendarName: "never" で "[u-ca=...]" 注釈を落とし、常に "YYYY-MM-DD" にする。
+  // これを付けないと非 ISO カレンダーの PlainDate が注釈付き文字列になり、
+  // 往復とソートが壊れる。
+  return date.toString({ calendarName: "never" });
 }
 
 /**

@@ -88,4 +88,31 @@ describe("D1NoteQueryRepository", () => {
     expect(total).toBe(3);
     expect(notes.map((n) => n.slug.toString())).toEqual(["c"]);
   });
+
+  it("keeps a stable order across pages when dates tie (slug tiebreaker)", async () => {
+    const d1 = createTestD1();
+    const cmd = new D1NoteCommandRepository(d1);
+    // 全て同じ publishedOn。タイブレーカが無いと offset ページングで重複・欠落しうる。
+    await cmd.upsert(seed({ slug: "c", publishedOn: "2026-01-15" }));
+    await cmd.upsert(seed({ slug: "a", publishedOn: "2026-01-15" }));
+    await cmd.upsert(seed({ slug: "b", publishedOn: "2026-01-15" }));
+    const query = new D1NoteQueryRepository(d1);
+
+    const page1 = await query.list({
+      limit: 2,
+      offset: 0,
+      sortBy: "publishedOn",
+      direction: "desc",
+    });
+    const page2 = await query.list({
+      limit: 2,
+      offset: 2,
+      sortBy: "publishedOn",
+      direction: "desc",
+    });
+
+    // slug 昇順で安定 → ページをまたいで a, b, c が重複なく並ぶ。
+    expect(page1.notes.map((n) => n.slug.toString())).toEqual(["a", "b"]);
+    expect(page2.notes.map((n) => n.slug.toString())).toEqual(["c"]);
+  });
 });

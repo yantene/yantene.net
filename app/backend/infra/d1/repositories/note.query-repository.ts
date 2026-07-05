@@ -35,18 +35,21 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
 
   async list(query: NoteListQuery): Promise<NoteListResult> {
     const column = sortColumns[query.sortBy];
-    const orderBy = query.direction === "asc" ? asc(column) : desc(column);
+    const primary = query.direction === "asc" ? asc(column) : desc(column);
+    // 同じ日付のノート同士でも順序を安定させる決定的なタイブレーカ。slug は UNIQUE
+    // なので offset ページネーションで行の重複・欠落が起きない。
+    const tiebreaker = asc(notes.slug);
 
-    const rows = await this.db
-      .select()
-      .from(notes)
-      .orderBy(orderBy)
-      .limit(query.limit)
-      .offset(query.offset);
-
-    const [{ value: total }] = await this.db
-      .select({ value: count() })
-      .from(notes);
+    // 行取得と総件数取得は独立なので並行実行する (公開一覧のホットパスの往復を半減)。
+    const [rows, [{ value: total }]] = await Promise.all([
+      this.db
+        .select()
+        .from(notes)
+        .orderBy(primary, tiebreaker)
+        .limit(query.limit)
+        .offset(query.offset),
+      this.db.select({ value: count() }).from(notes),
+    ]);
 
     return { notes: rows.map((row) => rowToNote(row)), total };
   }
