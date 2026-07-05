@@ -6,7 +6,24 @@
   "home": {
     "heading": "yantene",
     "welcome": "ようこそ、{{name}} さん",
+    "viewNotes": "ノートを見る",
     "logout": "ログアウト"
+  },
+  "notes": {
+    "title": "ノート",
+    "heading": "ノート",
+    "empty": "まだ公開されたノートがない。",
+    "pagination": {
+      "label": "ページ送り",
+      "previous": "前のページ",
+      "next": "次のページ"
+    },
+    "notFound": {
+      "title": "ノートが見つからない",
+      "heading": "ノートが見つからない",
+      "description": "お探しのノートは存在しないか、公開されていない。",
+      "backToList": "ノート一覧へ戻る"
+    }
   },
   "login": {
     "heading": "ログイン",

@@ -6,7 +6,12 @@ import {
   type SecureHeadersVariables,
 } from "hono/secure-headers";
 import { createApiRouter } from "./handlers/api";
+import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
+import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
+import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
+import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createPagesRouter } from "./handlers/pages";
+import { NoteNotFoundError } from "~/backend/domain/note";
 import { UserNotFoundError } from "~/backend/domain/user";
 import { requireSession } from "~/backend/middleware/auth";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
@@ -47,9 +52,18 @@ app.use("*", conditionalBasicAuth);
 // public health endpoint (auth 不要)
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+// ノートの公開 JSON API (一覧 / 詳細 / アセット, 認証不要・クローラー対応)。
+// requireSession より前にマウントし、ハンドラが応答して短絡することで /api/* の
+// 認証ガードを通さない。
+app.route("/api/v1/notes", createNotesApiRouter());
+app.route("/api/v1/notes", createNoteDetailApiRouter());
+app.route("/api/v1/notes", createNoteAssetsRouter());
+
 // 認証必須 JSON API
 app.use("/api/*", requireSession);
 app.route("/api", createApiRouter());
+// ノート同期 (Artifacts → D1 + R2)。認証必須。
+app.route("/api", createRefreshRouter());
 
 // Inertia.js ページルート (locale + inertia ミドルウェアは router 内で適用)
 app.route("/", createPagesRouter());
@@ -59,7 +73,10 @@ app.onError((error, _context) => {
     return createProblemResponse(error.status, error.message);
   }
   // ドメインエラー → HTTP マッピング (Composition Root の責務)。
-  if (error instanceof UserNotFoundError) {
+  if (
+    error instanceof UserNotFoundError ||
+    error instanceof NoteNotFoundError
+  ) {
     return notFoundResponse(error.message);
   }
   console.error(error);

@@ -6,7 +6,24 @@
   "home": {
     "heading": "yantene",
     "welcome": "Welcome, {{name}}",
+    "viewNotes": "View notes",
     "logout": "Log out"
+  },
+  "notes": {
+    "title": "Notes",
+    "heading": "Notes",
+    "empty": "No notes have been published yet.",
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
+    "notFound": {
+      "title": "Note not found",
+      "heading": "Note not found",
+      "description": "The note you are looking for does not exist or is no longer available.",
+      "backToList": "Back to notes"
+    }
   },
   "login": {
     "heading": "Sign in",

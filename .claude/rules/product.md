@@ -51,7 +51,7 @@ NoteTitle / ImageUrl 等の VO に変換する。
 ```yaml
 ---
 title: 記事タイトル
-imageUrl: ./cover.png       # 相対パス → アセット API URL に解決される
+imageUrl: ./cover.png # 相対パス → アセット API URL に解決される
 publishedOn: 2026-01-15
 lastModifiedOn: 2026-01-20
 ---

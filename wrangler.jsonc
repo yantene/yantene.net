@@ -9,6 +9,10 @@
   },
   "vars": {
     "APP_ENV": "development",
+    // コンテンツ正本 (GitHub リポジトリ) の参照。GITHUB_TOKEN は secret で与える。
+    "GITHUB_OWNER": "yantene",
+    "GITHUB_REPO": "notes",
+    "GITHUB_BRANCH": "main",
   },
   "d1_databases": [
     {
@@ -18,14 +22,13 @@
       "migrations_dir": "./migrations",
     },
   ],
-  // R2 bindings are available but currently unused.
-  // Uncomment when R2 storage is needed.
-  // "r2_buckets": [
-  // 	{
-  // 		"binding": "R2",
-  // 		"bucket_name": "yantene-development"
-  // 	}
-  // ],
+  // R2: パース済み MDAST と画像アセットのキャッシュ (ADR 0005)。
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "yantene-development",
+    },
+  ],
   "kv_namespaces": [
     {
       "binding": "KV",
@@ -45,23 +48,28 @@
       "workers_dev": true,
       "vars": {
         "APP_ENV": "staging",
+        "GITHUB_OWNER": "yantene",
+        "GITHUB_REPO": "notes",
+        "GITHUB_BRANCH": "staging",
       },
       "d1_databases": [
         {
           "binding": "D1",
           "database_name": "yantene-staging",
+          "database_id": "a49de19e-eb9c-48f6-bbb4-67e7839e1b49",
           "migrations_dir": "./migrations",
         },
       ],
-      // "r2_buckets": [
-      // 	{
-      // 		"binding": "R2",
-      // 		"bucket_name": "yantene-staging"
-      // 	}
-      // ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "yantene-staging",
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "KV",
+          "id": "55b40c6c6b68468db7d25a7efdad2893",
         },
       ],
       "send_email": [
@@ -73,23 +81,28 @@
     "production": {
       "vars": {
         "APP_ENV": "production",
+        "GITHUB_OWNER": "yantene",
+        "GITHUB_REPO": "notes",
+        "GITHUB_BRANCH": "main",
       },
       "d1_databases": [
         {
           "binding": "D1",
           "database_name": "yantene-production",
+          "database_id": "32bddf3b-622f-4fb7-ad09-bafdb8f2dda7",
           "migrations_dir": "./migrations",
         },
       ],
-      // "r2_buckets": [
-      // 	{
-      // 		"binding": "R2",
-      // 		"bucket_name": "yantene-production"
-      // 	}
-      // ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "yantene-production",
+        },
+      ],
       "kv_namespaces": [
         {
           "binding": "KV",
+          "id": "8975d1afe8ae4391861209c8512c3637",
         },
       ],
       "send_email": [

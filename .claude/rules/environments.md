@@ -1,7 +1,7 @@
 # 環境構成
 
-| 環境        | トリガー          | DB                                         |
-| ----------- | ----------------- | ------------------------------------------ |
+| 環境        | トリガー          | DB                          |
+| ----------- | ----------------- | --------------------------- |
 | development | ローカル          | yantene-development (local) |
 | staging     | PR / push to main | yantene-staging             |
 | production  | GitHub Release    | yantene-production          |
