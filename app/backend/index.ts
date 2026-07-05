@@ -59,11 +59,14 @@ app.route("/api/v1/notes", createNotesApiRouter());
 app.route("/api/v1/notes", createNoteDetailApiRouter());
 app.route("/api/v1/notes", createNoteAssetsRouter());
 
+// ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
+// session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession
+// より前にマウントして認証ガードを通さない。
+app.route("/api/v1", createRefreshRouter());
+
 // 認証必須 JSON API
 app.use("/api/*", requireSession);
 app.route("/api", createApiRouter());
-// ノート同期 (Artifacts → D1 + R2)。認証必須。
-app.route("/api", createRefreshRouter());
 
 // Inertia.js ページルート (locale + inertia ミドルウェアは router 内で適用)
 app.route("/", createPagesRouter());
