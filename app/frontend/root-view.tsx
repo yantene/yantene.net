@@ -10,8 +10,6 @@ import { renderPage } from "~/frontend/entry.server";
 import { isSupportedLocale, type SupportedLocale } from "~/lib/i18n/locale";
 import resources from "~/lib/i18n/locales";
 
-const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","light")}})();`;
-
 interface HeadProps {
   readonly title: string;
   readonly description: string;
@@ -41,7 +39,7 @@ function resolveLocale(page: {
   return typeof value === "string" && isSupportedLocale(value) ? value : "en";
 }
 
-export const rootView: RootView = async (page, c) => {
+export const rootView: RootView = async (page) => {
   const locale = resolveLocale(page);
   // eslint-disable-next-line security/detect-object-injection -- locale is narrowed to SupportedLocale literal
   const translations = resources[locale].translation;
@@ -52,20 +50,13 @@ export const rootView: RootView = async (page, c) => {
     renderToString(<Head title={meta.title} description={meta.description} />) +
     head.join("");
 
-  const nonceValue = c.get("secureHeadersNonce");
-  const nonce = typeof nonceValue === "string" ? nonceValue : "";
-  const themeScript =
-    nonce.length > 0
-      ? `<script nonce="${nonce}">${themeInitScript}</script>`
-      : `<script>${themeInitScript}</script>`;
-
   // body には Inertia の SSR 出力 (<script data-page="app"> + <div id="app">) が
   // すでに含まれている。ここで <div id="app"> を重ねて巻くと id が重複し、
   // hydration 対象がずれる・data-page 属性が壊れるため、body をそのまま配置する。
+  // テーマは light 固定 (ダークモード不採用)。
   return `<!DOCTYPE html>
-<html lang="${locale}" suppressHydrationWarning>
+<html lang="${locale}" data-theme="light">
   <head>
-    ${themeScript}
     ${headHtml}
   </head>
   <body>
