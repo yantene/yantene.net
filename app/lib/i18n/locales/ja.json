@@ -17,6 +17,12 @@
       "label": "ページ送り",
       "previous": "前のページ",
       "next": "次のページ"
+    },
+    "notFound": {
+      "title": "ノートが見つからない",
+      "heading": "ノートが見つからない",
+      "description": "お探しのノートは存在しないか、公開されていない。",
+      "backToList": "ノート一覧へ戻る"
     }
   },
   "login": {
