@@ -8,6 +8,14 @@
     "welcome": "Welcome, {{name}}",
     "logout": "Log out"
   },
+  "notes": {
+    "notFound": {
+      "title": "Note not found",
+      "heading": "Note not found",
+      "description": "The note you are looking for does not exist or is no longer available.",
+      "backToList": "Back to notes"
+    }
+  },
   "login": {
     "heading": "Sign in",
     "description": "Enter your email address. We'll send you a magic link to sign in.",
