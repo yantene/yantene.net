@@ -14,6 +14,7 @@ function note(slug: string, publishedOn: string): Note<IUnpersisted> {
     summary: `summary of ${slug}`,
     publishedOn: Temporal.PlainDate.from(publishedOn),
     lastModifiedOn: Temporal.PlainDate.from(publishedOn),
+    sourceHash: `hash-${slug}`,
   });
 }
 
