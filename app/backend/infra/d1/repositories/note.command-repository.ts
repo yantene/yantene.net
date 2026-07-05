@@ -33,6 +33,7 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
       imageUrl: note.imageUrl?.toString() ?? null,
       publishedOn: plainDateToIso(note.publishedOn),
       lastModifiedOn: plainDateToIso(note.lastModifiedOn),
+      sourceHash: note.sourceHash,
       updatedAt: nowUnix,
     };
 

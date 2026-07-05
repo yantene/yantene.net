@@ -17,6 +17,10 @@ export const notes = sqliteTable("notes", {
   imageUrl: text("image_url"),
   publishedOn: text("published_on").notNull(),
   lastModifiedOn: text("last_modified_on").notNull(),
+  // コンテンツ正本のリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
+  // refresh の変更検出に使う。既存行への ADD COLUMN を安全にするため DEFAULT '' を持つ
+  // (空ハッシュは次回 refresh で必ず不一致になり再処理される)。
+  sourceHash: text("source_hash").notNull().default(""),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

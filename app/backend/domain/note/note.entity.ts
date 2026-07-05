@@ -22,6 +22,11 @@ interface NoteFields<T extends IPersisted | IUnpersisted> {
   readonly publishedOn: Temporal.PlainDate;
   /** フロントマター由来の最終更新日 (日付のみ)。 */
   readonly lastModifiedOn: Temporal.PlainDate;
+  /**
+   * コンテンツ正本 (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
+   * (Artifacts のツリーが返すファイルハッシュ)。
+   */
+  readonly sourceHash: string;
   /** D1 行の作成・更新時刻 (永続化メタデータ。コンテンツ日付とは別)。 */
   readonly createdAt: T["createdAt"];
   readonly updatedAt: T["updatedAt"];
@@ -42,6 +47,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl?: ImageUrl;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    sourceHash: string;
   }): Note<IUnpersisted> {
     return new Note({
       id: undefined,
@@ -51,6 +57,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
       imageUrl: params.imageUrl,
       publishedOn: params.publishedOn,
       lastModifiedOn: params.lastModifiedOn,
+      sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
     });
@@ -64,6 +71,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl: ImageUrl | undefined;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
   }): Note {
@@ -96,6 +104,10 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get lastModifiedOn(): Temporal.PlainDate {
     return this.fields.lastModifiedOn;
+  }
+
+  get sourceHash(): string {
+    return this.fields.sourceHash;
   }
 
   get createdAt(): NoteFields<T>["createdAt"] {

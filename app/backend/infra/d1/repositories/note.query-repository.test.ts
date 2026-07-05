@@ -19,6 +19,7 @@ function seed(params: {
     lastModifiedOn: Temporal.PlainDate.from(
       params.lastModifiedOn ?? params.publishedOn,
     ),
+    sourceHash: `hash-${params.slug}`,
   });
 }
 
@@ -87,6 +88,16 @@ describe("D1NoteQueryRepository", () => {
 
     expect(total).toBe(3);
     expect(notes.map((n) => n.slug.toString())).toEqual(["c"]);
+  });
+
+  it("returns slug -> sourceHash map for change detection", async () => {
+    const d1 = createTestD1();
+    await seedNotes(new D1NoteCommandRepository(d1));
+
+    const hashes = await new D1NoteQueryRepository(d1).listSourceHashes();
+    expect(hashes.get("a")).toBe("hash-a");
+    expect(hashes.get("b")).toBe("hash-b");
+    expect(hashes.size).toBe(3);
   });
 
   it("keeps a stable order across pages when dates tie (slug tiebreaker)", async () => {
