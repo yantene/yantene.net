@@ -19,9 +19,11 @@ describe("Note.create", () => {
       summary: "A short summary.",
       publishedOn,
       lastModifiedOn,
+      sourceHash: "abc123",
     });
 
     expect(note.id).toBeUndefined();
+    expect(note.sourceHash).toBe("abc123");
     expect(note.createdAt).toBeUndefined();
     expect(note.updatedAt).toBeUndefined();
     expect(note.slug.toString()).toBe("my-note");
@@ -40,6 +42,7 @@ describe("Note.create", () => {
       imageUrl: ImageUrl.create("/api/v1/notes/my-note/assets/cover.png"),
       publishedOn,
       lastModifiedOn,
+      sourceHash: "h",
     });
 
     expect(note.imageUrl?.toString()).toBe(
@@ -60,6 +63,7 @@ describe("Note.reconstruct", () => {
       imageUrl: undefined,
       publishedOn,
       lastModifiedOn,
+      sourceHash: "h",
       createdAt,
       updatedAt,
     });

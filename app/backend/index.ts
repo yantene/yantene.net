@@ -6,6 +6,7 @@ import {
   type SecureHeadersVariables,
 } from "hono/secure-headers";
 import { createApiRouter } from "./handlers/api";
+import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createPagesRouter } from "./handlers/pages";
 import { UserNotFoundError } from "~/backend/domain/user";
 import { requireSession } from "~/backend/middleware/auth";
@@ -50,6 +51,8 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // 認証必須 JSON API
 app.use("/api/*", requireSession);
 app.route("/api", createApiRouter());
+// ノート同期 (Artifacts → D1 + R2)。認証必須。
+app.route("/api", createRefreshRouter());
 
 // Inertia.js ページルート (locale + inertia ミドルウェアは router 内で適用)
 app.route("/", createPagesRouter());

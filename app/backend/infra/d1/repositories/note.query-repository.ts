@@ -53,4 +53,11 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
 
     return { notes: rows.map((row) => rowToNote(row)), total };
   }
+
+  async listSourceHashes(): Promise<ReadonlyMap<string, string>> {
+    const rows = await this.db
+      .select({ slug: notes.slug, sourceHash: notes.sourceHash })
+      .from(notes);
+    return new Map(rows.map((row) => [row.slug, row.sourceHash]));
+  }
 }

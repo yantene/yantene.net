@@ -17,6 +17,8 @@ export const notes = sqliteTable("notes", {
   imageUrl: text("image_url"),
   publishedOn: text("published_on").notNull(),
   lastModifiedOn: text("last_modified_on").notNull(),
+  // コンテンツ正本 (Markdown) のリビジョン識別子。refresh の変更検出に使う。
+  sourceHash: text("source_hash").notNull(),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

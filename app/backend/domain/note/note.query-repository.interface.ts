@@ -26,4 +26,9 @@ export interface NoteListResult {
 export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;
+  /**
+   * 全ノートの slug → sourceHash の対応を返す。refresh の変更検出に使う
+   * (Artifacts のツリーが返すハッシュと突き合わせる)。
+   */
+  listSourceHashes(): Promise<ReadonlyMap<string, string>>;
 }

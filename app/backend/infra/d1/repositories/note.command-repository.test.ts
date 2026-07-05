@@ -13,6 +13,7 @@ function unpersistedNote(params: {
   imageUrl?: string;
   publishedOn?: string;
   lastModifiedOn?: string;
+  sourceHash?: string;
 }): Note<IUnpersisted> {
   return Note.create({
     slug: NoteSlug.create(params.slug),
@@ -26,6 +27,7 @@ function unpersistedNote(params: {
     lastModifiedOn: Temporal.PlainDate.from(
       params.lastModifiedOn ?? "2026-01-20",
     ),
+    sourceHash: params.sourceHash ?? "hash-0",
   });
 }
 

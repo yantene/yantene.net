@@ -17,6 +17,7 @@ export function rowToNote(row: typeof notes.$inferSelect): Note {
     imageUrl: row.imageUrl === null ? undefined : ImageUrl.create(row.imageUrl),
     publishedOn: isoToPlainDate(row.publishedOn),
     lastModifiedOn: isoToPlainDate(row.lastModifiedOn),
+    sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
   });
