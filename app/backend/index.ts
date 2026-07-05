@@ -70,7 +70,14 @@ app.route("/", createPagesRouter());
 
 app.onError((error, _context) => {
   if (error instanceof HTTPException) {
-    return createProblemResponse(error.status, error.message);
+    const response = createProblemResponse(error.status, error.message);
+    // 認証チャレンジ (WWW-Authenticate, RFC 7235) を Problem Details に引き継ぐ。
+    // これが無いと BASIC 認証の 401 でブラウザが認証ダイアログを出さない。
+    const challenge = error.res?.headers.get("WWW-Authenticate");
+    if (challenge !== undefined && challenge !== null) {
+      response.headers.set("WWW-Authenticate", challenge);
+    }
+    return response;
   }
   // ドメインエラー → HTTP マッピング (Composition Root の責務)。
   if (
