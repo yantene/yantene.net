@@ -5,6 +5,7 @@
   },
   "home": {
     "heading": "yantene",
+    "tagline": "yantene の発信を集約するハブ",
     "welcome": "ようこそ、{{name}} さん",
     "viewNotes": "ノートを見る",
     "logout": "ログアウト"

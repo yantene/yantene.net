@@ -1,13 +1,9 @@
 import { inertia } from "@hono/inertia";
 import { Hono } from "hono";
-import { toPublicUser } from "./user-view";
-import { entityId } from "~/backend/domain/shared";
 import { createLogoutRouter } from "~/backend/handlers/auth/logout.handler";
 import { createMagicLinkRouter } from "~/backend/handlers/auth/magic-link.handler";
 import { createNoteDetailPagesRouter } from "~/backend/handlers/notes/detail.handler";
 import { createNotesPagesRouter } from "~/backend/handlers/notes/pages.handler";
-import { D1UserQueryRepository } from "~/backend/infra/d1/repositories";
-import { requireSessionOrRedirect } from "~/backend/middleware/auth";
 import {
   type LocaleVariables,
   localeMiddleware,
@@ -16,7 +12,7 @@ import { rootView } from "~/frontend/root-view";
 
 type PagesBindings = {
   Bindings: Env;
-  Variables: LocaleVariables & { userId: string };
+  Variables: LocaleVariables;
 };
 
 export function createPagesRouter(): Hono<PagesBindings> {
@@ -25,7 +21,10 @@ export function createPagesRouter(): Hono<PagesBindings> {
   router.use("*", localeMiddleware);
   router.use(inertia({ rootView }));
 
-  // 認証不要 (login UI + magic link strategy + logout)
+  // ホーム (公開・認証不要)。発信のハブとしてノート一覧への導線を持つ。
+  router.get("/", (c) => c.render("home", { locale: c.get("locale") }));
+
+  // ログイン UI + magic link + logout。現状ログインは休眠 (将来の有料記事用に温存)。
   router.get("/login", (c) =>
     c.render("login", {
       locale: c.get("locale"),
@@ -35,28 +34,14 @@ export function createPagesRouter(): Hono<PagesBindings> {
   router.get("/login/sent", (c) =>
     c.render("login-sent", { locale: c.get("locale") }),
   );
-
   router.route("/", createMagicLinkRouter());
   router.route("/", createLogoutRouter());
 
-  // ノートの公開ページ (一覧 / 詳細, 認証不要・クローラー対応)。auth ガードより前に
-  // マウントする。
+  // ノートの公開ページ (一覧 / 詳細, 認証不要・クローラー対応)。
   router.route("/", createNotesPagesRouter());
   router.route("/", createNoteDetailPagesRouter());
 
-  // 以降は認証必須
-  router.use("*", requireSessionOrRedirect);
-
-  router.get("/", async (c) => {
-    const query = new D1UserQueryRepository(c.env.D1);
-    const user = await query.findById(entityId<"User">(c.get("userId")));
-    // session が指す User が消えている (stale session) ときは /login へ戻す。
-    if (user === undefined) return c.redirect("/login", 303);
-    return c.render("home", {
-      locale: c.get("locale"),
-      user: toPublicUser(user),
-    });
-  });
-
+  // 認証必須ページは現状なし。将来 (有料記事等) を追加する際は、ここで
+  // requireSessionOrRedirect を挟んでからマウントする。
   return router;
 }

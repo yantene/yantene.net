@@ -5,6 +5,7 @@
   },
   "home": {
     "heading": "yantene",
+    "tagline": "A hub for everything yantene publishes",
     "welcome": "Welcome, {{name}}",
     "viewNotes": "View notes",
     "logout": "Log out"
