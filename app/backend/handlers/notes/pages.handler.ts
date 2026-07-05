@@ -36,6 +36,11 @@ export function createNotesPagesRouter(): Hono<NotesPagesBindings> {
     return c.render("notes/index", {
       locale: c.get("locale"),
       ...toPublicNoteList(result, page, perPage),
+      // ページ送りリンクで現在の並び順を保持するため、生のクエリ値を渡す。
+      sort: {
+        sortBy: c.req.query("sort-by") ?? null,
+        order: c.req.query("order") ?? null,
+      },
     });
   });
 

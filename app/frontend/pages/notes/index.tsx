@@ -22,17 +22,40 @@ interface NotesIndexProps extends PageProps {
     readonly total: number;
     readonly totalPages: number;
   };
+  readonly sort: {
+    readonly sortBy: string | null;
+    readonly order: string | null;
+  };
 }
 
-function hrefForPage(page: number): string {
-  return page <= 1 ? "/notes" : `/notes?page=${String(page)}`;
+const DEFAULT_PER_PAGE = 20;
+
+/**
+ * ページ送りリンクの URL を組み立てる。現在の per-page / sort-by / order を保持し、
+ * 既定値は省略して URL をきれいに保つ。
+ */
+function buildHrefForPage(
+  page: number,
+  perPage: number,
+  sort: NotesIndexProps["sort"],
+): string {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (perPage !== DEFAULT_PER_PAGE) params.set("per-page", String(perPage));
+  if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
+  if (sort.order !== null) params.set("order", sort.order);
+  const query = params.toString();
+  return query.length > 0 ? `/notes?${query}` : "/notes";
 }
 
 export default function NotesIndex({
   notes,
   pagination,
+  sort,
 }: NotesIndexProps): React.JSX.Element {
   const { t } = useTranslation();
+  const hrefForPage = (page: number): string =>
+    buildHrefForPage(page, pagination.perPage, sort);
 
   return (
     <AppLayout>

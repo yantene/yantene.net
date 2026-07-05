@@ -49,13 +49,15 @@ export function toPublicNoteList(
   page: number,
   perPage: number,
 ): PublicNoteList {
+  const totalPages = Math.max(1, Math.ceil(result.total / perPage));
   return {
     notes: result.notes.map((note) => toPublicNote(note)),
     pagination: {
-      page,
+      // 範囲外のページ番号は totalPages に丸めて pager と整合させる。
+      page: Math.min(page, totalPages),
       perPage,
       total: result.total,
-      totalPages: Math.max(1, Math.ceil(result.total / perPage)),
+      totalPages,
     },
   };
 }
@@ -82,7 +84,10 @@ function clampInt(
   min: number,
   max: number,
 ): number {
-  const parsed = raw === undefined ? NaN : Number(raw);
+  // 未指定・空文字は「未指定」として既定値に落とす (Number("") === 0 の罠を避ける)。
+  const trimmed = raw?.trim();
+  if (trimmed === undefined || trimmed.length === 0) return fallback;
+  const parsed = Number(trimmed);
   if (!Number.isSafeInteger(parsed)) return fallback;
   return Math.min(Math.max(parsed, min), max);
 }

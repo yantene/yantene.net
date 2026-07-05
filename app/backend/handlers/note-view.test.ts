@@ -31,6 +31,11 @@ describe("parsePagination", () => {
     expect(parsePagination("abc", "x")).toMatchObject({ page: 1, perPage: 20 });
     expect(parsePagination("-5", undefined).page).toBe(1);
   });
+
+  it("treats empty / whitespace params as missing (uses defaults)", () => {
+    expect(parsePagination("", "")).toMatchObject({ page: 1, perPage: 20 });
+    expect(parsePagination("  ", " ")).toMatchObject({ page: 1, perPage: 20 });
+  });
 });
 
 describe("parseNoteSort", () => {

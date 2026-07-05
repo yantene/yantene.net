@@ -73,6 +73,16 @@ describe("createNotesApiRouter GET /", () => {
     expect(body.notes.map((n) => n.slug)).toEqual(["a"]);
   });
 
+  it("clamps an out-of-range page to totalPages", async () => {
+    const d1 = createTestD1();
+    await seed(d1);
+
+    const body = await fetchList(d1, "?page=9999&per-page=2");
+    // 3 件 / per-page 2 → 2 ページ。9999 は 2 に丸められる。
+    expect(body.pagination.totalPages).toBe(2);
+    expect(body.pagination.page).toBe(2);
+  });
+
   it("sorts ascending when order=asc", async () => {
     const d1 = createTestD1();
     await seed(d1);
