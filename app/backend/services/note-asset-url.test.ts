@@ -14,6 +14,16 @@ describe("resolveAssetUrl", () => {
     );
   });
 
+  it("collapses ./ and ../ segments instead of producing a malformed URL", () => {
+    expect(resolveAssetUrl("my-note", "./img/./a.png")).toBe(
+      "/api/v1/notes/my-note/assets/img/a.png",
+    );
+    // ../ は畳まれる (assets/../ のような壊れたパスにはならない)。
+    expect(resolveAssetUrl("my-note", "../x.png")).toBe(
+      "/api/v1/notes/my-note/x.png",
+    );
+  });
+
   it("leaves absolute URLs and root-relative paths untouched", () => {
     expect(resolveAssetUrl("n", "https://example.com/a.png")).toBe(
       "https://example.com/a.png",

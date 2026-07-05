@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e841341e-7c55-4ad1-b16d-12e0e9fcd081",
+  "id": "fd6694ca-26e9-496c-8ed9-96e8acf0cee4",
   "prevId": "515262b0-5233-4003-a022-dfa0039ad1e7",
   "tables": {
     "notes": {
@@ -61,7 +61,8 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
         "created_at": {
           "name": "created_at",

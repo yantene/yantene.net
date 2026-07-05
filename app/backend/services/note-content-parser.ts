@@ -54,11 +54,14 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
  */
 export function extractSummary(root: Root): string {
   const parts: string[] = [];
+  let length = 0;
   for (const node of root.children) {
     if (!isSummaryNode(node)) continue;
     const text = mdastToString(node).trim();
-    if (text.length > 0) parts.push(text);
-    if (parts.join(" ").length >= SUMMARY_MAX_CHARS) break;
+    if (text.length === 0) continue;
+    parts.push(text);
+    length += text.length + 1; // 連結時の区切りスペース分
+    if (length >= SUMMARY_MAX_CHARS) break;
   }
   return parts
     .join(" ")

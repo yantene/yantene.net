@@ -1,1 +1,1 @@
-ALTER TABLE `notes` ADD `source_hash` text NOT NULL;
+ALTER TABLE `notes` ADD `source_hash` text DEFAULT '' NOT NULL;

@@ -104,7 +104,8 @@ describe("NotesRefreshService", () => {
     expect(note?.imageUrl?.toString()).toBe(
       "/api/v1/notes/hello/assets/cover.png",
     );
-    expect(note?.sourceHash).toBe("h1");
+    // sourceHash は md + アセットの合成ハッシュ (生の blob ハッシュではない)。
+    expect(note?.sourceHash).toMatch(/^[0-9a-f]{8}$/);
     expect(note?.summary).toContain("Body with an inline image");
 
     // アセットが R2 キャッシュに入る。
@@ -168,5 +169,50 @@ describe("NotesRefreshService", () => {
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0].path).toBe("notes/bad.md");
     expect(await query.findBySlug(NoteSlug.create("bad"))).toBeUndefined();
+  });
+
+  it("reprocesses when only an asset changes (image-only edit)", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("v1") }],
+    ]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    // .md は据え置きで画像だけ差し替える。
+    files.set("notes/hello/cover.png", { hash: "a2", bytes: bytes("v2") });
+    const second = await service.refresh();
+    expect(second.processed).toEqual(["hello"]);
+  });
+
+  it("prunes assets that were removed or renamed", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/old.png", { hash: "a1", bytes: bytes("old") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+    expect(cache.assets.has("hello::old.png")).toBe(true);
+
+    // old.png を new.png にリネーム (+ .md も更新して再処理させる)。
+    files.delete("notes/hello/old.png");
+    files.set("notes/hello/new.png", { hash: "a2", bytes: bytes("new") });
+    files.set("notes/hello.md", { hash: "h2", bytes: bytes(helloMd) });
+    await service.refresh();
+
+    expect(cache.assets.has("hello::old.png")).toBe(false);
+    expect(cache.assets.has("hello::new.png")).toBe(true);
+  });
+
+  it("propagates infra errors (fail-loud) instead of skipping them", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, cache } = setup(files);
+    // R2 書き込みが落ちる状況を再現する。
+    cache.putMdast = () => Promise.reject(new Error("R2 down"));
+
+    await expect(service.refresh()).rejects.toThrow("R2 down");
   });
 });
