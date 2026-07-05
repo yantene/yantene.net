@@ -47,6 +47,8 @@ export class ArtifactsContentStore implements IContentStore {
   private readonly branch: string;
   private readonly baseUrl: string;
   private readonly fetchFn: typeof fetch;
+  /** トークンはストア (= 1 回の refresh) 内で使い回す。操作ごとの再発行を避ける。 */
+  private tokenPromise?: Promise<string>;
 
   constructor(private readonly config: ArtifactsContentStoreConfig) {
     this.branch = config.branch ?? "main";
@@ -60,7 +62,8 @@ export class ArtifactsContentStore implements IContentStore {
   }
 
   private async authHeaders(): Promise<HeadersInit> {
-    const token = await this.config.getAuthToken();
+    this.tokenPromise ??= this.config.getAuthToken();
+    const token = await this.tokenPromise;
     return { Authorization: `Bearer ${token}` };
   }
 
@@ -117,6 +120,18 @@ async function safeText(response: Response): Promise<string> {
  * ⚠️ 実際の beta レスポンス形状は要検証。差異があればこの関数だけを直す。
  */
 export function parseTreeResponse(json: unknown): ContentEntry[] {
+  // Cloudflare のエラーエンベロープ (HTTP 200 + success:false) は fail-loud で拒否する。
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    (json as { success?: unknown }).success === false
+  ) {
+    throw new ArtifactsRequestError(
+      200,
+      "tree response reported success:false",
+    );
+  }
+
   const tree = extractTreeArray(json);
   const entries: ContentEntry[] = [];
   for (const raw of tree) {
@@ -132,14 +147,22 @@ export function parseTreeResponse(json: unknown): ContentEntry[] {
   return entries;
 }
 
+/**
+ * レスポンスからツリー配列を取り出す。空リポジトリ (認識できる形で tree が空) は [] を
+ * 返すが、**認識できない形は空にフォールバックせず throw する**。silent に [] を返すと
+ * refresh が「全ノート削除」と誤認してコンテンツを消しかねないため (fail-loud)。
+ */
 function extractTreeArray(json: unknown): unknown[] {
-  if (typeof json !== "object" || json === null) return [];
+  if (typeof json !== "object" || json === null) {
+    throw new ArtifactsRequestError(200, "unrecognized tree response");
+  }
   const result = (json as { result?: unknown }).result;
+  // json は非 null オブジェクトと確定済み。result が空なら json 自体を見る。
   const container = result ?? json;
   if (Array.isArray(container)) return container;
   if (typeof container === "object") {
     const tree = (container as { tree?: unknown }).tree;
     if (Array.isArray(tree)) return tree;
   }
-  return [];
+  throw new ArtifactsRequestError(200, "unrecognized tree response shape");
 }

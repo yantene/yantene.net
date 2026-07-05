@@ -46,12 +46,25 @@ describe("parseTreeResponse", () => {
     ]);
   });
 
-  it("ignores malformed entries and non-objects", () => {
-    // null / 数値 / hash 欠落エントリはすべて落ちる。
+  it("ignores malformed entries within a recognized tree", () => {
+    // null / 数値 / hash 欠落エントリはすべて落ちる (形自体は認識できる)。
     expect(
       parseTreeResponse({ result: { tree: [null, 1, { path: "z" }] } }),
     ).toEqual([]);
-    expect(parseTreeResponse("nope")).toEqual([]);
+  });
+
+  it("returns [] for a legitimately empty tree", () => {
+    expect(parseTreeResponse({ result: { tree: [] } })).toEqual([]);
+    expect(parseTreeResponse([])).toEqual([]);
+  });
+
+  it("throws (fail-loud) on unrecognized shapes and error envelopes", () => {
+    // 認識できない形で [] にフォールバックすると全ノート削除と誤認されるため throw。
+    expect(() => parseTreeResponse("nope")).toThrow(ArtifactsRequestError);
+    expect(() => parseTreeResponse({ foo: 1 })).toThrow(ArtifactsRequestError);
+    expect(() =>
+      parseTreeResponse({ success: false, errors: [{ code: 1 }] }),
+    ).toThrow(ArtifactsRequestError);
   });
 });
 
@@ -106,5 +119,27 @@ describe("ArtifactsContentStore", () => {
     await expect(store(fetchFn).listTree()).rejects.toBeInstanceOf(
       ArtifactsRequestError,
     );
+  });
+
+  it("mints the auth token once and reuses it across operations", async () => {
+    const getAuthToken = vi.fn(() => Promise.resolve("tok-123"));
+    const fetchFn = vi.fn(() =>
+      Promise.resolve(Response.json({ result: { tree: [] } })),
+    ) as unknown as typeof fetch;
+    const contentStore = new ArtifactsContentStore({
+      accountId: "acct-1",
+      namespace: "yantene",
+      repo: "notes",
+      branch: "main",
+      baseUrl: "https://api.test/client/v4",
+      getAuthToken,
+      fetchFn,
+    });
+
+    await contentStore.listTree();
+    await contentStore.readFile("a.md");
+    await contentStore.listTree();
+
+    expect(getAuthToken).toHaveBeenCalledTimes(1);
   });
 });
