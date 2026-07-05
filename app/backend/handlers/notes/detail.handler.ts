@@ -12,16 +12,27 @@ import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 
 /**
  * slug からノート詳細 (メタデータ + キャッシュ済み MDAST) を読む。
- * D1 にメタデータが無い、または R2 に MDAST が無ければ undefined。
+ *
+ * - D1 にメタデータが無い = そもそも存在しないノート → undefined (呼び出し側で 404)。
+ * - D1 に在るのに R2 の MDAST が無い = キャッシュ不整合。静かに 404 で隠さず throw する
+ *   (fail-loud)。公開済みの記事が消えて見えるより、不整合を表面化させる。
+ *
+ * D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
  */
 async function loadNoteDetail(
   env: Env,
   slug: NoteSlug,
 ): Promise<NoteDetail | undefined> {
-  const note = await new D1NoteQueryRepository(env.D1).findBySlug(slug);
+  const [note, mdast] = await Promise.all([
+    new D1NoteQueryRepository(env.D1).findBySlug(slug),
+    new R2NoteContentCache(env.R2).getMdast(slug),
+  ]);
   if (note === undefined) return undefined;
-  const mdast = await new R2NoteContentCache(env.R2).getMdast(slug);
-  if (mdast === undefined) return undefined;
+  if (mdast === undefined) {
+    throw new Error(
+      `MDAST cache is missing for an indexed note: ${slug.toString()}`,
+    );
+  }
   return toNoteDetail(note, mdast);
 }
 
@@ -34,6 +45,15 @@ function parseSlug(raw: string): NoteSlug | undefined {
   }
 }
 
+/** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */
+async function resolveDetail(
+  env: Env,
+  slugParam: string,
+): Promise<NoteDetail | undefined> {
+  const slug = parseSlug(slugParam);
+  return slug === undefined ? undefined : loadNoteDetail(env, slug);
+}
+
 /**
  * ノート詳細の公開 JSON API ルータ。認証不要。
  * GET /:slug → メタデータ + MDAST。存在しなければ NoteNotFoundError (→ 404)。
@@ -43,9 +63,7 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/:slug", async (c) => {
     const slugParam = c.req.param("slug");
-    const slug = parseSlug(slugParam);
-    const detail =
-      slug === undefined ? undefined : await loadNoteDetail(c.env, slug);
+    const detail = await resolveDetail(c.env, slugParam);
     if (detail === undefined) throw new NoteNotFoundError(slugParam);
     return c.json(detail);
   });
@@ -65,9 +83,7 @@ export function createNoteDetailPagesRouter(): Hono<{
   const router = new Hono<{ Bindings: Env; Variables: LocaleVariables }>();
 
   router.get("/notes/:slug", async (c) => {
-    const slug = parseSlug(c.req.param("slug"));
-    const detail =
-      slug === undefined ? undefined : await loadNoteDetail(c.env, slug);
+    const detail = await resolveDetail(c.env, c.req.param("slug"));
 
     if (detail === undefined) {
       c.status(404);

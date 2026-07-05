@@ -86,7 +86,7 @@ describe("createNoteDetailApiRouter GET /:slug", () => {
     expect(status).toBe(404);
   });
 
-  it("returns 404 when metadata exists but the MDAST cache is absent", async () => {
+  it("fails loud (500, not silent 404) when an indexed note has no cached MDAST", async () => {
     const d1 = createTestD1();
     const bucket = makeBucket();
     await new D1NoteCommandRepository(d1).upsert(
@@ -99,8 +99,9 @@ describe("createNoteDetailApiRouter GET /:slug", () => {
         sourceHash: "h2",
       }),
     );
+    // D1 に在るのに R2 に MDAST が無い = キャッシュ不整合。404 で隠さず 500 で表面化させる。
     const { status } = await fetchDetail(d1, bucket, "no-body");
-    expect(status).toBe(404);
+    expect(status).toBe(500);
   });
 
   it("returns 404 for an invalid slug", async () => {
