@@ -47,7 +47,14 @@ export class GitHubContentStore implements IContentStore {
   constructor(private readonly config: GitHubContentStoreConfig) {
     this.branch = config.branch ?? "main";
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
-    this.fetchFn = config.fetchFn ?? fetch;
+    // global fetch は正しい this (globalThis) で呼ぶ必要がある。プロパティ経由の
+    // メソッド呼び出しだと this が instance になり Workers が Illegal invocation を投げる。
+    this.fetchFn =
+      config.fetchFn ??
+      ((
+        input: Parameters<typeof fetch>[0],
+        init?: Parameters<typeof fetch>[1],
+      ) => fetch(input, init));
   }
 
   private repoPath(): string {
