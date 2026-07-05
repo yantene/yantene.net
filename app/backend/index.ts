@@ -6,6 +6,7 @@ import {
   type SecureHeadersVariables,
 } from "hono/secure-headers";
 import { createApiRouter } from "./handlers/api";
+import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
 import { createPagesRouter } from "./handlers/pages";
 import { UserNotFoundError } from "~/backend/domain/user";
 import { requireSession } from "~/backend/middleware/auth";
@@ -46,6 +47,10 @@ app.use("*", conditionalBasicAuth);
 
 // public health endpoint (auth 不要)
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// ノートの公開 JSON API (認証不要・クローラー対応)。requireSession より前に
+// マウントし、ハンドラが応答して短絡することで /api/* の認証ガードを通さない。
+app.route("/api/v1/notes", createNotesApiRouter());
 
 // 認証必須 JSON API
 app.use("/api/*", requireSession);

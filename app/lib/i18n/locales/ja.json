@@ -6,7 +6,18 @@
   "home": {
     "heading": "yantene",
     "welcome": "ようこそ、{{name}} さん",
+    "viewNotes": "ノートを見る",
     "logout": "ログアウト"
+  },
+  "notes": {
+    "title": "ノート",
+    "heading": "ノート",
+    "empty": "まだ公開されたノートがない。",
+    "pagination": {
+      "label": "ページ送り",
+      "previous": "前のページ",
+      "next": "次のページ"
+    }
   },
   "login": {
     "heading": "ログイン",

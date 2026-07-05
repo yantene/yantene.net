@@ -4,6 +4,7 @@ import { toPublicUser } from "./user-view";
 import { entityId } from "~/backend/domain/shared";
 import { createLogoutRouter } from "~/backend/handlers/auth/logout.handler";
 import { createMagicLinkRouter } from "~/backend/handlers/auth/magic-link.handler";
+import { createNotesPagesRouter } from "~/backend/handlers/notes/pages.handler";
 import { D1UserQueryRepository } from "~/backend/infra/d1/repositories";
 import { requireSessionOrRedirect } from "~/backend/middleware/auth";
 import {
@@ -36,6 +37,9 @@ export function createPagesRouter(): Hono<PagesBindings> {
 
   router.route("/", createMagicLinkRouter());
   router.route("/", createLogoutRouter());
+
+  // ノートの公開ページ (認証不要・クローラー対応)。auth ガードより前にマウントする。
+  router.route("/", createNotesPagesRouter());
 
   // 以降は認証必須
   router.use("*", requireSessionOrRedirect);

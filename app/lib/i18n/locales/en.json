@@ -6,7 +6,18 @@
   "home": {
     "heading": "yantene",
     "welcome": "Welcome, {{name}}",
+    "viewNotes": "View notes",
     "logout": "Log out"
+  },
+  "notes": {
+    "title": "Notes",
+    "heading": "Notes",
+    "empty": "No notes have been published yet.",
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "next": "Next page"
+    }
   },
   "login": {
     "heading": "Sign in",

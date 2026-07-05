@@ -1,4 +1,4 @@
-import { Head, router } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import type { PageProps } from "~/frontend/page-props";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -23,15 +23,20 @@ export default function Home({ user }: HomeProps): React.JSX.Element {
             {t("home.welcome", { name: user.displayName })}
           </h1>
           <p className="mt-4 text-base-content/60">{user.email}</p>
-          <button
-            type="button"
-            className="btn btn-primary mt-8"
-            onClick={() => {
-              router.post("/auth/logout");
-            }}
-          >
-            {t("home.logout")}
-          </button>
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <Link href="/notes" className="btn btn-primary">
+              {t("home.viewNotes")}
+            </Link>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                router.post("/auth/logout");
+              }}
+            >
+              {t("home.logout")}
+            </button>
+          </div>
         </div>
       </main>
     </AppLayout>
