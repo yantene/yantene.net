@@ -3,9 +3,20 @@ import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
 
-// 画像アセットのキャッシュ有効期間。refresh で内容が更新され得るため immutable には
-// せず、そこそこの期間だけキャッシュさせる。
-const CACHE_CONTROL = "public, max-age=3600";
+const MAX_AGE_SECONDS = 3600;
+
+/**
+ * Cache-Control を決める。BASIC 認証が有効な環境 (staging) では共有キャッシュに
+ * 載せると認証バリアを迂回して未認証クライアントへ配信され得るため `private` にし、
+ * それ以外 (production 等) では CDN 等でキャッシュできるよう `public` にする。
+ * refresh で内容が更新され得るため immutable にはしない。
+ */
+function cacheControlFor(env: Env): string {
+  const isBasicAuthEnabled =
+    env.BASIC_AUTH_USER !== undefined && env.BASIC_AUTH_PASS !== undefined;
+  const scope = isBasicAuthEnabled ? "private" : "public";
+  return `${scope}, max-age=${String(MAX_AGE_SECONDS)}`;
+}
 
 /**
  * ノートに紐付く画像アセットを R2 キャッシュから配信する公開ルータ。
@@ -35,11 +46,12 @@ export function createNoteAssetsRouter(): Hono<{ Bindings: Env }> {
       return notFoundResponse("asset not found");
     }
 
-    // ArrayBuffer 裏付けの新しいビューにして BodyInit の型制約を満たす。
-    return new Response(new Uint8Array(asset.bytes), {
+    // Uint8Array はランタイムでは有効な body。型上の ArrayBufferLike の齟齬だけを
+    // キャストで解消し、画像全体の再コピーを避ける。
+    return new Response(asset.bytes as BodyInit, {
       headers: {
         "Content-Type": asset.contentType,
-        "Cache-Control": CACHE_CONTROL,
+        "Cache-Control": cacheControlFor(c.env),
       },
     });
   });
