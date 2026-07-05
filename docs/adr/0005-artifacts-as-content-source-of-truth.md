@@ -1,6 +1,6 @@
 # 0005. Cloudflare Artifacts をコンテンツの source of truth にする
 
-- Status: Accepted
+- Status: Accepted (実装は当面 [0008](0008-github-as-interim-content-backend.md) により保留。Artifacts 有効化後に復帰予定)
 - Date: 2026-07-05
 - Deciders: @yantene
 

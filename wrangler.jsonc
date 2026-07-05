@@ -9,11 +9,10 @@
   },
   "vars": {
     "APP_ENV": "development",
-    // Artifacts (コンテンツ正本) の参照設定。REST 呼び出しに使う。
-    // ARTIFACTS_ACCOUNT_ID は secret として与える (`wrangler secret put`)。
-    "ARTIFACTS_NAMESPACE": "yantene",
-    "ARTIFACTS_REPO": "notes",
-    "ARTIFACTS_BRANCH": "main",
+    // コンテンツ正本 (GitHub リポジトリ) の参照。GITHUB_TOKEN は secret で与える。
+    "GITHUB_OWNER": "yantene",
+    "GITHUB_REPO": "yantene.net",
+    "GITHUB_BRANCH": "main",
   },
   "d1_databases": [
     {
@@ -28,15 +27,6 @@
     {
       "binding": "R2",
       "bucket_name": "yantene-development",
-    },
-  ],
-  // Artifacts: コンテンツ正本 (Markdown + 画像)。binding は repo 管理と read トークン
-  // 発行に使い、ファイル内容の読み取りは REST API で行う (ADR 0007)。
-  "artifacts": [
-    {
-      "binding": "ARTIFACTS",
-      "namespace": "yantene",
-      "remote": true,
     },
   ],
   "kv_namespaces": [
@@ -58,9 +48,9 @@
       "workers_dev": true,
       "vars": {
         "APP_ENV": "staging",
-        "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "notes",
-        "ARTIFACTS_BRANCH": "main",
+        "GITHUB_OWNER": "yantene",
+        "GITHUB_REPO": "yantene.net",
+        "GITHUB_BRANCH": "main",
       },
       "d1_databases": [
         {
@@ -74,13 +64,6 @@
         {
           "binding": "R2",
           "bucket_name": "yantene-staging",
-        },
-      ],
-      "artifacts": [
-        {
-          "binding": "ARTIFACTS",
-          "namespace": "yantene",
-          "remote": true,
         },
       ],
       "kv_namespaces": [
@@ -98,9 +81,9 @@
     "production": {
       "vars": {
         "APP_ENV": "production",
-        "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "notes",
-        "ARTIFACTS_BRANCH": "main",
+        "GITHUB_OWNER": "yantene",
+        "GITHUB_REPO": "yantene.net",
+        "GITHUB_BRANCH": "main",
       },
       "d1_databases": [
         {
@@ -114,13 +97,6 @@
         {
           "binding": "R2",
           "bucket_name": "yantene-production",
-        },
-      ],
-      "artifacts": [
-        {
-          "binding": "ARTIFACTS",
-          "namespace": "yantene",
-          "remote": true,
         },
       ],
       "kv_namespaces": [

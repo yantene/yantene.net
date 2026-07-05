@@ -18,3 +18,4 @@
 | [0005](0005-artifacts-as-content-source-of-truth.md)      | Cloudflare Artifacts をコンテンツの source of truth にする            | Accepted |
 | [0006](0006-mdast-over-html-rendering.md)                 | Markdown を HTML ではなく MDAST でフロントエンドに渡す                | Accepted |
 | [0007](0007-artifacts-read-via-binding-token-and-rest.md) | Artifacts のファイル読み取りは binding 発行トークン + REST API で行う | Accepted |
+| [0008](0008-github-as-interim-content-backend.md)         | Artifacts 有効化までは GitHub を暫定コンテンツバックエンドにする      | Accepted |
