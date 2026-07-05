@@ -65,6 +65,24 @@ describe("MdastRenderer", () => {
     expect(a?.getAttribute("target")).toBeNull();
   });
 
+  it("strips dangerous URL schemes (javascript:) from links", () => {
+    const { container } = render(
+      <MdastRenderer node={md("[x](javascript:alert(1))")} />,
+    );
+    const a = container.querySelector("a");
+    // rehype-sanitize が危険な href を除去する (クリックしても JS が走らない)。
+    expect(a?.getAttribute("href")).toBeNull();
+  });
+
+  it("treats protocol-relative links as external (new tab + rel)", () => {
+    const { container } = render(
+      <MdastRenderer node={md("[x](//example.com/page)")} />,
+    );
+    const a = container.querySelector("a");
+    expect(a?.getAttribute("target")).toBe("_blank");
+    expect(a?.getAttribute("rel")).toContain("noopener");
+  });
+
   it("resolves image URLs through transformImageUrl and sets lazy loading", () => {
     const { container } = render(
       <MdastRenderer

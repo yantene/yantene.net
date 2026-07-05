@@ -3,6 +3,7 @@ import { toHast } from "mdast-util-to-hast";
 import { useMemo } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import "./mdast-renderer.css";
@@ -10,13 +11,22 @@ import type { Element, Root as HastRoot, RootContent } from "hast";
 import type { Root as MdastRoot } from "mdast";
 
 // hast (HTML AST) 段でのプラグイン。runSync で同期実行できるため SSR でもそのまま使える。
+// - rehypeSanitize: 危険な URL スキーム (javascript:/data: 等) や属性を除去する。
+//   最初に通し、後続の slug/highlight が付ける id・className は温存する
+//   (単著コンテンツだが XSS の多層防御として入れる)
 // - rehypeSlug: 見出しに id を付与し目次リンクを可能にする
 // - rehypeHighlight: フェンス付きコードにトークンクラスを付与する
 //   (未知の言語指定はハイライトせず素通しするだけで throw しない)
-const hastProcessor = unified().use(rehypeSlug).use(rehypeHighlight);
+const hastProcessor = unified()
+  .use(rehypeSanitize)
+  .use(rehypeSlug)
+  .use(rehypeHighlight);
 
+// 別タブ + rel を付ける対象。http(s) 絶対 URL とプロトコル相対 (//host) を外部扱いにする。
 const isExternalHref = (href: string): boolean =>
-  href.startsWith("http://") || href.startsWith("https://");
+  href.startsWith("//") ||
+  href.startsWith("http://") ||
+  href.startsWith("https://");
 
 /** img 要素: 相対 URL を解決し、遅延読み込み・非同期デコードを既定にする。 */
 function transformImage(
@@ -83,8 +93,7 @@ export function MdastRenderer({
 }: MdastRendererProps): React.JSX.Element {
   const content = useMemo(() => {
     const hast = toHast(node, { allowDangerousHtml: false }) as HastRoot;
-    // unified() を無型で始めているため runSync の戻りは Node 扱い。実体は hast Root。
-    const transformed = hastProcessor.runSync(hast) as HastRoot;
+    const transformed = hastProcessor.runSync(hast);
     applyElementTransforms(transformed, transformImageUrl);
 
     return toJsxRuntime(transformed, {
