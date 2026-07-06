@@ -1,6 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import type { PageProps } from "~/frontend/page-props";
+import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 
@@ -20,7 +21,7 @@ export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
     <AppLayout>
       <Head title={t("tags.title")} />
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <h1 className="text-3xl font-bold">{t("tags.heading")}</h1>
 
         {tags.length === 0 ? (
@@ -41,6 +42,7 @@ export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
           </ul>
         )}
       </main>
+      <Footer />
     </AppLayout>
   );
 }

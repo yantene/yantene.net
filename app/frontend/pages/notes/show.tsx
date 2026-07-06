@@ -2,6 +2,7 @@ import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import type { Root as MdastRoot } from "mdast";
 import type { PageProps } from "~/frontend/page-props";
+import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -32,7 +33,7 @@ export default function NoteShow({
       <AppLayout>
         <Head title={t("notes.notFound.title")} />
         <Header />
-        <main className="mx-auto max-w-3xl px-6 py-16 text-center">
+        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">{t("notes.notFound.heading")}</h1>
           <p className="mt-4 text-base-content/60">
             {t("notes.notFound.description")}
@@ -41,6 +42,7 @@ export default function NoteShow({
             {t("notes.notFound.backToList")}
           </Link>
         </main>
+        <Footer />
       </AppLayout>
     );
   }
@@ -51,7 +53,7 @@ export default function NoteShow({
         <meta name="description" content={note.summary} />
       </Head>
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <header className="mb-8">
           <h1 className="text-4xl font-bold">{note.title}</h1>
           <time
@@ -85,6 +87,7 @@ export default function NoteShow({
         </header>
         <MdastRenderer node={mdast} />
       </main>
+      <Footer />
     </AppLayout>
   );
 }

@@ -1,6 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import type { PageProps } from "~/frontend/page-props";
+import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -67,7 +68,7 @@ export default function NotesIndex({
     <AppLayout>
       <Head title={t("notes.title")} />
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-3xl font-bold">{t("notes.heading")}</h1>
           {tag !== null && (
@@ -88,7 +89,7 @@ export default function NotesIndex({
               <li key={note.slug}>
                 <Link
                   href={`/notes/${note.slug}`}
-                  className="card card-side bg-base-200 shadow-sm transition-shadow hover:shadow-md"
+                  className="card card-side border border-base-300 bg-base-100 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
                 >
                   <figure className="w-32 shrink-0">
                     {note.imageUrl === null ? (
@@ -142,6 +143,7 @@ export default function NotesIndex({
           />
         </div>
       </main>
+      <Footer />
     </AppLayout>
   );
 }
