@@ -37,5 +37,7 @@
       YuGothic, Meiryo, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* スクロールバー領域を常に確保し、ページ間で中央寄せが左右にズレないようにする。 */
+    scrollbar-gutter: stable;
   }
 }
