@@ -9,6 +9,26 @@
   color-scheme: light;
 }
 
+/* セマンティックな色トークン。daisyUI の実行時テーマ変数に別名を張り、
+ * header/footer/hero が使う text-foreground / text-muted-foreground /
+ * border-border を有効化する (未定義だと色が効かなかった)。 */
+@theme {
+  --color-foreground: var(--color-base-content);
+  --color-muted-foreground: color-mix(
+    in oklch,
+    var(--color-base-content) 62%,
+    transparent
+  );
+  --color-border: var(--color-base-300);
+}
+
+/* 画像・アニメ背景に重ねた文字の可読性を上げる淡いハロー (透過ヘッダ/ヒーロー用)。 */
+@utility text-halo {
+  text-shadow:
+    0 1px 3px rgb(255 255 255 / 0.7),
+    0 1px 8px rgb(255 255 255 / 0.5);
+}
+
 /* サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。 */
 @layer base {
   html {

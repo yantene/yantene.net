@@ -22,7 +22,7 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
             className={`text-xl font-bold tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
           />
           <nav
-            className={`flex items-center gap-6${isTransparent ? " text-halo" : ""}`}
+            className={`flex items-center gap-7 sm:gap-9${isTransparent ? " text-halo" : ""}`}
           >
             <Link
               href="/"
