@@ -7,10 +7,7 @@
     "heading": "yantene",
     "tagline": "yantene の発信を集約するハブ",
     "recentNotes": "新着ノート",
-    "viewAll": "すべて見る",
-    "welcome": "ようこそ、{{name}} さん",
-    "viewNotes": "ノートを見る",
-    "logout": "ログアウト"
+    "viewAll": "すべて見る"
   },
   "tags": {
     "title": "タグ",

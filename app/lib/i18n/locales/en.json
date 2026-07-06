@@ -7,10 +7,7 @@
     "heading": "yantene",
     "tagline": "A hub for everything yantene publishes",
     "recentNotes": "Recent notes",
-    "viewAll": "View all",
-    "welcome": "Welcome, {{name}}",
-    "viewNotes": "View notes",
-    "logout": "Log out"
+    "viewAll": "View all"
   },
   "tags": {
     "title": "Tags",
