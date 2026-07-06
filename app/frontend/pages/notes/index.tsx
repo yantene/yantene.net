@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { PageProps } from "~/frontend/page-props";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
+import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 
@@ -68,7 +69,7 @@ export default function NotesIndex({
     <AppLayout>
       <Head title={t("notes.title")} />
       <Header />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-3xl font-bold">{t("notes.heading")}</h1>
           {tag !== null && (
@@ -84,55 +85,11 @@ export default function NotesIndex({
         {notes.length === 0 ? (
           <p className="mt-8 text-base-content/60">{t("notes.empty")}</p>
         ) : (
-          <ul className="mt-8 flex flex-col gap-4">
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {notes.map((note) => (
-              <li key={note.slug}>
-                <Link
-                  href={`/notes/${note.slug}`}
-                  className="card card-side border border-base-300 bg-base-100 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
-                >
-                  <figure className="w-32 shrink-0">
-                    {note.imageUrl === null ? (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-secondary/15">
-                        <span className="text-3xl font-bold text-primary/40">
-                          {note.title.charAt(0) || "?"}
-                        </span>
-                      </div>
-                    ) : (
-                      <img
-                        src={note.imageUrl}
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </figure>
-                  <div className="card-body">
-                    <h2 className="card-title">{note.title}</h2>
-                    <time
-                      dateTime={note.publishedOn}
-                      className="text-sm text-base-content/60"
-                    >
-                      {note.publishedOn}
-                    </time>
-                    <p className="line-clamp-2 text-base-content/80">
-                      {note.summary}
-                    </p>
-                    {note.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {note.tags.map((tg) => (
-                          <span key={tg} className="badge badge-sm badge-ghost">
-                            {tg}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              </li>
+              <NoteCard key={note.slug} {...note} />
             ))}
-          </ul>
+          </div>
         )}
 
         <div className="mt-10 flex justify-center">

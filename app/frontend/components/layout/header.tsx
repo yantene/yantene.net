@@ -17,9 +17,7 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
       }
     >
       <div className={isTransparent ? "" : "bg-white/60 backdrop-blur-sm"}>
-        <div
-          className={`mx-auto flex ${isTransparent ? "max-w-5xl" : "max-w-3xl"} items-center justify-between px-6 py-4`}
-        >
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <TypewriterTitle
             className={`text-xl font-bold tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
           />
