@@ -9,7 +9,9 @@
         "--headless",
         "--executablePath",
         "/usr/bin/chromium",
-        "--isolated"
+        "--isolated",
+        "--chromeArg=--no-sandbox",
+        "--chromeArg=--disable-setuid-sandbox"
       ]
     }
   }
