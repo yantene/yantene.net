@@ -10,10 +10,17 @@
     "viewNotes": "ノートを見る",
     "logout": "ログアウト"
   },
+  "tags": {
+    "title": "タグ",
+    "heading": "タグ",
+    "empty": "タグがまだない。"
+  },
   "notes": {
     "title": "ノート",
     "heading": "ノート",
     "empty": "まだ公開されたノートがない。",
+    "filteredByTag": "タグ「{{tag}}」",
+    "clearFilter": "すべて表示",
     "pagination": {
       "label": "ページ送り",
       "previous": "前のページ",

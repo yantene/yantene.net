@@ -10,6 +10,7 @@ import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
 import { createRefreshRouter } from "./handlers/notes/refresh.handler";
+import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createPagesRouter } from "./handlers/pages";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { UserNotFoundError } from "~/backend/domain/user";
@@ -58,6 +59,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 app.route("/api/v1/notes", createNotesApiRouter());
 app.route("/api/v1/notes", createNoteDetailApiRouter());
 app.route("/api/v1/notes", createNoteAssetsRouter());
+app.route("/api/v1/tags", createTagsApiRouter());
 
 // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
 // session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession

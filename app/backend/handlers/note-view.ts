@@ -15,6 +15,7 @@ export interface PublicNote {
   readonly title: string;
   readonly summary: string;
   readonly imageUrl: string | null;
+  readonly tags: readonly string[];
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
 }
@@ -38,9 +39,16 @@ export function toPublicNote(note: Note): PublicNote {
     title: note.title.toJSON(),
     summary: note.summary,
     imageUrl: note.imageUrl?.toJSON() ?? null,
+    tags: note.tags.map((tag) => tag.toJSON()),
     publishedOn: note.publishedOn.toString({ calendarName: "never" }),
     lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
   };
+}
+
+/** クエリ文字列 (tag) を検証済みの絞り込みタグに解決する。空・空白は未指定扱い。 */
+export function parseTag(tagParam: string | undefined): string | undefined {
+  const trimmed = tagParam?.trim();
+  return trimmed !== undefined && trimmed.length > 0 ? trimmed : undefined;
 }
 
 /** ページネーション付きの一覧結果を公開 DTO へ変換する。 */

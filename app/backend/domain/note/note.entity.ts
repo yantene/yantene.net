@@ -1,5 +1,6 @@
 import type { ImageUrl } from "./image-url.vo";
 import type { NoteSlug } from "./note-slug.vo";
+import type { NoteTag } from "./note-tag.vo";
 import type { NoteTitle } from "./note-title.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type {
@@ -18,6 +19,8 @@ interface NoteFields<T extends IPersisted | IUnpersisted> {
   readonly summary: string;
   /** カバー画像 URL。フロントマターに imageUrl が無ければ undefined。 */
   readonly imageUrl: ImageUrl | undefined;
+  /** フロントマター由来のタグ。順序は定義順を保つ。無ければ空配列。 */
+  readonly tags: readonly NoteTag[];
   /** フロントマター由来の公開日 (日付のみ)。 */
   readonly publishedOn: Temporal.PlainDate;
   /** フロントマター由来の最終更新日 (日付のみ)。 */
@@ -45,6 +48,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     title: NoteTitle;
     summary: string;
     imageUrl?: ImageUrl;
+    tags?: readonly NoteTag[];
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
     sourceHash: string;
@@ -55,6 +59,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
       title: params.title,
       summary: params.summary,
       imageUrl: params.imageUrl,
+      tags: params.tags ?? [],
       publishedOn: params.publishedOn,
       lastModifiedOn: params.lastModifiedOn,
       sourceHash: params.sourceHash,
@@ -69,6 +74,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     title: NoteTitle;
     summary: string;
     imageUrl: ImageUrl | undefined;
+    tags: readonly NoteTag[];
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
     sourceHash: string;
@@ -96,6 +102,10 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get imageUrl(): ImageUrl | undefined {
     return this.fields.imageUrl;
+  }
+
+  get tags(): readonly NoteTag[] {
+    return this.fields.tags;
   }
 
   get publishedOn(): Temporal.PlainDate {

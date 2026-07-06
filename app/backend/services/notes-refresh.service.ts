@@ -9,7 +9,13 @@ import type {
   INoteQueryRepository,
 } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { ImageUrl, Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import {
+  ImageUrl,
+  Note,
+  NoteSlug,
+  NoteTag,
+  NoteTitle,
+} from "~/backend/domain/note";
 
 const noteSourcePattern = /^notes\/[^/]+\.md$/;
 
@@ -235,6 +241,7 @@ function buildNoteContent(
       title: NoteTitle.create(parsed.frontmatter.title ?? group.base),
       summary: parsed.summary,
       imageUrl,
+      tags: parsed.frontmatter.tags.map((tag) => NoteTag.create(tag)),
       publishedOn,
       lastModifiedOn,
       sourceHash: group.contentHash,
