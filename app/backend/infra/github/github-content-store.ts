@@ -74,7 +74,12 @@ export class GitHubContentStore implements IContentStore {
 
   async listTree(): Promise<readonly ContentEntry[]> {
     const url = `${this.repoPath()}/git/trees/${encodeURIComponent(this.branch)}?recursive=1`;
-    const response = await this.fetchFn(url, { headers: await this.headers() });
+    // cache: "no-store" で Workers の fetch キャッシュを回避する。これが無いと
+    // push 後も古いツリー/内容が返り、refresh の変更検出が取りこぼす。
+    const response = await this.fetchFn(url, {
+      headers: await this.headers(),
+      cache: "no-store",
+    });
     if (!response.ok) {
       throw new GitHubRequestError(response.status, await safeText(response));
     }
@@ -95,6 +100,7 @@ export class GitHubContentStore implements IContentStore {
         // raw メディアタイプで生バイトを直接受け取る (base64 復号不要)。
         Accept: "application/vnd.github.raw+json",
       },
+      cache: "no-store",
     });
     if (response.status === HTTP_NOT_FOUND) return undefined;
     if (!response.ok) {
