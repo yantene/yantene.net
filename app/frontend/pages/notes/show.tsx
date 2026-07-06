@@ -11,6 +11,7 @@ interface NoteMeta {
   readonly title: string;
   readonly summary: string;
   readonly imageUrl: string | null;
+  readonly tags: readonly string[];
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
 }
@@ -59,6 +60,19 @@ export default function NoteShow({
           >
             {note.publishedOn}
           </time>
+          {note.tags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {note.tags.map((tg) => (
+                <Link
+                  key={tg}
+                  href={`/notes?tag=${encodeURIComponent(tg)}`}
+                  className="badge badge-outline gap-1 hover:badge-primary"
+                >
+                  {tg}
+                </Link>
+              ))}
+            </div>
+          )}
           {note.imageUrl !== null && (
             <img
               src={note.imageUrl}

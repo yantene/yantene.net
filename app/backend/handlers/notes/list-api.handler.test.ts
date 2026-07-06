@@ -105,6 +105,7 @@ describe("createNotesApiRouter GET /", () => {
       "publishedOn",
       "slug",
       "summary",
+      "tags",
       "title",
     ]);
     expect(first.imageUrl).toBeNull();

@@ -30,6 +30,18 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
             >
               Home
             </Link>
+            <Link
+              href="/notes"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Notes
+            </Link>
+            <Link
+              href="/tags"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Tags
+            </Link>
           </nav>
         </div>
       </div>
