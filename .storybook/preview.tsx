@@ -23,7 +23,6 @@ const preview: Preview = {
     withThemeByDataAttribute<Renderer>({
       themes: {
         light: "light",
-        dark: "dark",
       },
       defaultTheme: "light",
       attributeName: "data-theme",
