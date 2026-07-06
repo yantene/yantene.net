@@ -4,7 +4,17 @@
  * これらを参照しておけばテーマ追従が自動で効く (tailwind の dark: バリアント不要)。
  */
 .note-prose {
-  --tw-prose-body: var(--color-base-content);
+  /* note 参考の可読タイポグラフィ: やや大きめ・行間広め・字間ゆとり。 */
+  font-size: 1.0625rem;
+  line-height: 2;
+  letter-spacing: 0.02em;
+  word-break: break-word;
+  /* 本文は真っ黒を避け、柔らかいダークグレーに (長文でも目が疲れにくい)。 */
+  --tw-prose-body: color-mix(
+    in oklch,
+    var(--color-base-content) 85%,
+    transparent
+  );
   --tw-prose-headings: var(--color-base-content);
   --tw-prose-lead: color-mix(
     in oklch,
@@ -40,6 +50,30 @@
   --tw-prose-pre-bg: var(--color-base-200);
   --tw-prose-th-borders: var(--color-base-300);
   --tw-prose-td-borders: var(--color-base-300);
+}
+
+/* note 風の段落・見出しリズム (日本語の可読性重視)。 */
+.note-prose :where(p) {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+.note-prose :where(h2) {
+  margin-top: 2.75em;
+  margin-bottom: 1em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--color-base-300);
+  font-weight: 700;
+}
+.note-prose :where(h3) {
+  margin-top: 2em;
+  font-weight: 700;
+}
+.note-prose :where(img) {
+  margin-inline: auto;
+  border-radius: 0.5rem;
+}
+.note-prose :where(a) {
+  text-underline-offset: 0.2em;
 }
 
 /* インラインコードの背景 (prose 既定は透明なので軽く敷く)。 */

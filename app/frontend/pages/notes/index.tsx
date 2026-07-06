@@ -90,8 +90,14 @@ export default function NotesIndex({
                   href={`/notes/${note.slug}`}
                   className="card card-side bg-base-200 shadow-sm transition-shadow hover:shadow-md"
                 >
-                  {note.imageUrl !== null && (
-                    <figure className="w-32 shrink-0">
+                  <figure className="w-32 shrink-0">
+                    {note.imageUrl === null ? (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-secondary/15">
+                        <span className="text-3xl font-bold text-primary/40">
+                          {note.title.charAt(0) || "?"}
+                        </span>
+                      </div>
+                    ) : (
                       <img
                         src={note.imageUrl}
                         alt=""
@@ -99,8 +105,8 @@ export default function NotesIndex({
                         decoding="async"
                         className="h-full w-full object-cover"
                       />
-                    </figure>
-                  )}
+                    )}
+                  </figure>
                   <div className="card-body">
                     <h2 className="card-title">{note.title}</h2>
                     <time

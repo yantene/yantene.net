@@ -2,14 +2,20 @@
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
+/* ダークモードは採用しない (読書体験としてダークは不採用・light 固定)。 */
 @plugin "daisyui/theme" {
   name: "light";
   default: true;
   color-scheme: light;
 }
 
-@plugin "daisyui/theme" {
-  name: "dark";
-  prefersdark: true;
-  color-scheme: dark;
+/* サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。 */
+@layer base {
+  html {
+    font-family:
+      "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic",
+      YuGothic, Meiryo, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 }
