@@ -10,10 +10,17 @@
     "viewNotes": "View notes",
     "logout": "Log out"
   },
+  "tags": {
+    "title": "Tags",
+    "heading": "Tags",
+    "empty": "No tags yet."
+  },
   "notes": {
     "title": "Notes",
     "heading": "Notes",
     "empty": "No notes have been published yet.",
+    "filteredByTag": "Tagged “{{tag}}”",
+    "clearFilter": "Show all",
     "pagination": {
       "label": "Pagination",
       "previous": "Previous page",

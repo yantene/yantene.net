@@ -4,6 +4,7 @@ import { extractSummary, parseNoteContent } from "./note-content-parser";
 const withFrontmatter = `---
 title: My Note
 imageUrl: ./cover.png
+tags: [日記, プログラミング]
 publishedOn: 2026-01-15
 lastModifiedOn: 2026-01-20
 ---
@@ -21,6 +22,7 @@ describe("parseNoteContent", () => {
     expect(frontmatter).toEqual({
       title: "My Note",
       imageUrl: "./cover.png",
+      tags: ["日記", "プログラミング"],
       publishedOn: "2026-01-15",
       lastModifiedOn: "2026-01-20",
     });

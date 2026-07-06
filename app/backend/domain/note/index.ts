@@ -1,6 +1,7 @@
 export { NoteNotFoundError } from "./errors";
 export { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
 export { InvalidNoteSlugError, NoteSlug } from "./note-slug.vo";
+export { InvalidNoteTagError, NoteTag } from "./note-tag.vo";
 export { InvalidNoteTitleError, NoteTitle } from "./note-title.vo";
 export { Note } from "./note.entity";
 export type { NoteId } from "./note.entity";
@@ -14,5 +15,6 @@ export type {
   NoteListQuery,
   NoteListResult,
   NoteSortField,
+  NoteTagCount,
   SortDirection,
 } from "./note.query-repository.interface";

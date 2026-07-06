@@ -3,6 +3,7 @@ import type { LocaleVariables } from "~/backend/middleware/locale";
 import {
   parseNoteSort,
   parsePagination,
+  parseTag,
   toPublicNoteList,
 } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
@@ -30,13 +31,16 @@ export function createNotesPagesRouter(): Hono<NotesPagesBindings> {
       c.req.query("order"),
     );
 
+    const tag = parseTag(c.req.query("tag"));
+
     const query = new D1NoteQueryRepository(c.env.D1);
-    const result = await query.list({ limit, offset, sortBy, direction });
+    const result = await query.list({ limit, offset, sortBy, direction, tag });
 
     return c.render("notes/index", {
       locale: c.get("locale"),
       ...toPublicNoteList(result, page, perPage),
-      // ページ送りリンクで現在の並び順を保持するため、生のクエリ値を渡す。
+      // ページ送りリンク・見出しで使うため、現在の絞り込みタグと並び順を渡す。
+      tag: tag ?? null,
       sort: {
         sortBy: c.req.query("sort-by") ?? null,
         order: c.req.query("order") ?? null,

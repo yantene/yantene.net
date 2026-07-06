@@ -15,17 +15,27 @@ export interface NoteListQuery {
   readonly offset: number;
   readonly sortBy: NoteSortField;
   readonly direction: SortDirection;
+  /** 指定時、そのタグを持つノートだけに絞り込む。 */
+  readonly tag?: string;
 }
 
-/** 一覧の取得結果。total は絞り込み前の全件数 (ページネーション用)。 */
+/** 一覧の取得結果。total は (絞り込み後の) 全件数 (ページネーション用)。 */
 export interface NoteListResult {
   readonly notes: readonly Note[];
   readonly total: number;
 }
 
+/** タグと、そのタグを持つノート数。 */
+export interface NoteTagCount {
+  readonly tag: string;
+  readonly count: number;
+}
+
 export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;
+  /** 全タグと各記事数を返す (タグ索引ページ用)。件数降順・タグ昇順。 */
+  listTags(): Promise<readonly NoteTagCount[]>;
   /**
    * 全ノートの slug → sourceHash の対応を返す。refresh の変更検出に使う
    * (Artifacts のツリーが返すハッシュと突き合わせる)。

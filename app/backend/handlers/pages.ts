@@ -4,6 +4,7 @@ import { createLogoutRouter } from "~/backend/handlers/auth/logout.handler";
 import { createMagicLinkRouter } from "~/backend/handlers/auth/magic-link.handler";
 import { createNoteDetailPagesRouter } from "~/backend/handlers/notes/detail.handler";
 import { createNotesPagesRouter } from "~/backend/handlers/notes/pages.handler";
+import { createTagsPagesRouter } from "~/backend/handlers/notes/tags.handler";
 import {
   type LocaleVariables,
   localeMiddleware,
@@ -37,9 +38,10 @@ export function createPagesRouter(): Hono<PagesBindings> {
   router.route("/", createMagicLinkRouter());
   router.route("/", createLogoutRouter());
 
-  // ノートの公開ページ (一覧 / 詳細, 認証不要・クローラー対応)。
+  // ノートの公開ページ (一覧 / 詳細 / タグ索引, 認証不要・クローラー対応)。
   router.route("/", createNotesPagesRouter());
   router.route("/", createNoteDetailPagesRouter());
+  router.route("/", createTagsPagesRouter());
 
   // 認証必須ページは現状なし。将来 (有料記事等) を追加する際は、ここで
   // requireSessionOrRedirect を挟んでからマウントする。
