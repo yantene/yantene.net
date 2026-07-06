@@ -38,9 +38,8 @@ export function HeroSection(): React.JSX.Element {
         <Celestim />
       </div>
 
-      {/* Frosted overlay。上部は薄く (天体が透けて見える)、下部ほど白く (文字の下地)。
-          文字は text-halo で可読性を確保する。 */}
-      <div className="relative flex items-center justify-center bg-gradient-to-b from-white/20 via-white/40 to-white/65 px-6 pb-16 pt-24 backdrop-blur-[2px] sm:pb-24 sm:pt-32">
+      {/* Frosted glass overlay */}
+      <div className="relative flex items-center justify-center bg-white/60 px-6 pb-16 pt-24 backdrop-blur-sm sm:pb-24 sm:pt-32">
         <div className="flex max-w-5xl flex-col items-center gap-8 sm:flex-row sm:items-start sm:gap-12">
           {/* Icon */}
           <div className="relative shrink-0">
