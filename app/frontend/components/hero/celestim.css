@@ -77,8 +77,12 @@
 .celestim-sun {
   width: var(--celestim-body-size);
   height: var(--celestim-body-size);
-  background-color: rgb(255 255 255);
+  background-color: rgb(255 246 224);
   border-radius: 50%;
+  /* ベール越しでも見えるよう暖色のグローを付ける。 */
+  box-shadow:
+    0 0 24px 10px rgb(255 236 170 / 0.9),
+    0 0 72px 28px rgb(255 214 120 / 0.55);
 }
 
 /* Moon */
