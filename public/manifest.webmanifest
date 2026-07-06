@@ -1,7 +1,7 @@
 {
-  "name": "hono-inertia-react-app",
-  "short_name": "app",
-  "description": "Hono + Inertia.js + React web application on Cloudflare Workers.",
+  "name": "yantene",
+  "short_name": "yantene",
+  "description": "yantene の発信を集約するハブ。",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#ffffff",
