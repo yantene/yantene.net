@@ -34,6 +34,12 @@
       "backToList": "Back to notes"
     }
   },
+  "search": {
+    "title": "Search",
+    "placeholder": "Type keywords",
+    "empty": "No matching notes.",
+    "resultCount": "{{count}} results"
+  },
   "login": {
     "heading": "Sign in",
     "description": "Enter your email address. We'll send you a magic link to sign in.",

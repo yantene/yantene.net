@@ -7,6 +7,7 @@ import {
 } from "vite-ssr-components/react";
 import type { RootView } from "@hono/inertia";
 import { renderPage } from "~/frontend/entry.server";
+import { renderJsonLd } from "~/frontend/json-ld";
 import { isSupportedLocale, type SupportedLocale } from "~/lib/i18n/locale";
 import resources from "~/lib/i18n/locales";
 
@@ -92,16 +93,7 @@ export const rootView: RootView = async (page, c) => {
     type: pageOg.type ?? "website",
   };
 
-  // schema.org 構造化データ (ページが jsonLd prop を渡したときのみ)。
-  // </script> 打ち切りを防ぐため "<" をエスケープしてから埋め込む。
-  const jsonLd = page.props.jsonLd;
-  // "<" を JSON の < エスケープに置換して </script> 打ち切りを防ぐ。
-  const jsonLdBody = JSON.stringify(jsonLd).replaceAll("<", String.raw`\u003c`);
-  const jsonLdScript =
-    jsonLd === undefined
-      ? ""
-      : // eslint-disable-next-line no-secrets/no-secrets -- MIME タイプ文字列の誤検知
-        `<script type="application/ld+json">${jsonLdBody}</script>`;
+  const jsonLdScript = renderJsonLd(page.props.jsonLd);
 
   const { head, body } = await renderPage(page);
   const headHtml =

@@ -11,6 +11,10 @@ export type {
 } from "./note-content-cache.interface";
 export type { INoteCommandRepository } from "./note.command-repository.interface";
 export type {
+  INoteSearchIndex,
+  NoteSearchDocument,
+} from "./note-search-index.interface";
+export type {
   INoteQueryRepository,
   NoteListQuery,
   NoteListResult,

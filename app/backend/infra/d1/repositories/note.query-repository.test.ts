@@ -1,5 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
+import { D1NoteSearchIndex } from "./note-search-index";
 import { D1NoteCommandRepository } from "./note.command-repository";
 import { D1NoteQueryRepository } from "./note.query-repository";
 import type { IUnpersisted } from "~/backend/domain/shared";
@@ -234,5 +235,47 @@ describe("D1NoteQueryRepository", () => {
       6,
     );
     expect(related).toEqual([]);
+  });
+
+  it("full-text searches title/body (FTS5 trigram, Japanese substring)", async () => {
+    const d1 = createTestD1();
+    const cmd = new D1NoteCommandRepository(d1);
+    const idx = new D1NoteSearchIndex(d1);
+    await cmd.upsert(seedTagged("arduino", "2026-01-01", ["電子工作"]));
+    await idx.index({
+      slug: NoteSlug.create("arduino"),
+      title: "Arduino を購入",
+      body: "マイコンで遊ぶ話",
+    });
+    await cmd.upsert(seedTagged("other", "2026-01-02", []));
+    await idx.index({
+      slug: NoteSlug.create("other"),
+      title: "別の記事",
+      body: "関係ない内容",
+    });
+
+    const results = await new D1NoteQueryRepository(d1).search("マイコン", 10);
+    expect(results.map((note) => note.slug.toString())).toEqual(["arduino"]);
+  });
+
+  it("matches short (2-char) queries via LIKE fallback (trigram can't)", async () => {
+    const d1 = createTestD1();
+    const cmd = new D1NoteCommandRepository(d1);
+    const idx = new D1NoteSearchIndex(d1);
+    await cmd.upsert(seedTagged("exam", "2026-01-01", []));
+    await idx.index({
+      slug: NoteSlug.create("exam"),
+      title: "試験に合格した話",
+      body: "勉強の記録",
+    });
+
+    const results = await new D1NoteQueryRepository(d1).search("試験", 10);
+    expect(results.map((note) => note.slug.toString())).toEqual(["exam"]);
+  });
+
+  it("returns empty search results when the index is not built", async () => {
+    const d1 = createTestD1();
+    const results = await new D1NoteQueryRepository(d1).search("なんでも", 10);
+    expect(results).toEqual([]);
   });
 });

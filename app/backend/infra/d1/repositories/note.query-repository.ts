@@ -7,6 +7,7 @@ import {
   getTableColumns,
   inArray,
   ne,
+  sql,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
@@ -106,6 +107,54 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
 
     const tagsByNote = await this.loadTags(rows.map((row) => row.id));
     return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
+  }
+
+  async search(query: string, limit: number): Promise<readonly Note[]> {
+    const trimmed = query.trim();
+    if (trimmed.length === 0) return [];
+
+    // 索引 (notes_fts) は infra が実行時生成する仮想テーブル。未構築なら空を返す。
+    let ranked: { slug: string }[];
+    try {
+      if (trimmed.length < 3) {
+        // trigram は 3-gram なので 2 文字以下は MATCH で拾えない。LIKE 部分一致で
+        // 補う (小規模コーパスなので全走査で十分)。エスケープ文字は ~ を使う。
+        const escaped = trimmed.replaceAll(
+          /[~%_]/g,
+          (character) => `~${character}`,
+        );
+        const like = `%${escaped}%`;
+        ranked = await this.db.all<{ slug: string }>(
+          sql`SELECT slug FROM notes_fts WHERE title LIKE ${like} ESCAPE '~' OR body LIKE ${like} ESCAPE '~' LIMIT ${limit}`,
+        );
+      } else {
+        // クエリ全体を 1 個の FTS5 文字列トークンとして扱う (二重引用符はエスケープ)。
+        const match = `"${trimmed.replaceAll('"', '""')}"`;
+        ranked = await this.db.all<{ slug: string }>(
+          sql`SELECT slug FROM notes_fts WHERE notes_fts MATCH ${match} ORDER BY bm25(notes_fts) LIMIT ${limit}`,
+        );
+      }
+    } catch {
+      return [];
+    }
+    const slugs = ranked.map((row) => row.slug);
+    if (slugs.length === 0) return [];
+
+    const rows = await this.db
+      .select()
+      .from(notes)
+      .where(inArray(notes.slug, slugs));
+    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
+    const bySlug = new Map(
+      rows.map((row) => [
+        row.slug,
+        rowToNote(row, tagsByNote.get(row.id) ?? []),
+      ]),
+    );
+    // bm25 の並び順を保って返す。
+    return slugs
+      .map((slug) => bySlug.get(slug))
+      .filter((note): note is Note => note !== undefined);
   }
 
   async listTags(): Promise<readonly NoteTagCount[]> {

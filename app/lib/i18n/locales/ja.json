@@ -34,6 +34,12 @@
       "backToList": "ノート一覧へ戻る"
     }
   },
+  "search": {
+    "title": "検索",
+    "placeholder": "キーワードを入力",
+    "empty": "一致するノートがない。",
+    "resultCount": "{{count}} 件"
+  },
   "login": {
     "heading": "ログイン",
     "description": "メールアドレスを入力すると、サインイン用のマジックリンクを送信します。",
