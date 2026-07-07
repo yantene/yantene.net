@@ -6,6 +6,7 @@ import {
   type SecureHeadersVariables,
 } from "hono/secure-headers";
 import { createApiRouter } from "./handlers/api";
+import { createFeedRouter } from "./handlers/feed.handler";
 import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
@@ -62,6 +63,7 @@ app.route("/api/v1/notes", createNoteDetailApiRouter());
 app.route("/api/v1/notes", createNoteAssetsRouter());
 app.route("/api/v1/tags", createTagsApiRouter());
 app.route("/og", createOgRouter());
+app.route("/", createFeedRouter());
 
 // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
 // session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession
