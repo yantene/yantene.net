@@ -1,7 +1,8 @@
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { toHast } from "mdast-util-to-hast";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { createPortal } from "react-dom";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
@@ -70,6 +71,86 @@ function applyElementTransforms(
   }
 }
 
+/** コードブロック (pre) 差し替え: 右上にコピーボタンを添える。 */
+function CodeBlock(
+  props: Readonly<React.ComponentPropsWithoutRef<"pre">>,
+): React.JSX.Element {
+  const ref = useRef<HTMLPreElement>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  async function copy(): Promise<void> {
+    const text = ref.current?.textContent ?? "";
+    try {
+      await globalThis.navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      globalThis.setTimeout(() => setIsCopied(false), 1500);
+    } catch {
+      // クリップボード API が使えない環境 (非セキュアコンテキスト等) では何もしない。
+    }
+  }
+
+  return (
+    <div className="code-block">
+      <button
+        type="button"
+        className="code-copy"
+        onClick={() => void copy()}
+        aria-label="コードをコピー"
+      >
+        {isCopied ? "コピーしました" : "コピー"}
+      </button>
+      <pre ref={ref} {...props} />
+    </div>
+  );
+}
+
+/** 画像 (img) 差し替え: クリックで lightbox 拡大 (Esc / 背景クリックで閉じる)。 */
+function LightboxImage(
+  props: Readonly<React.ComponentPropsWithoutRef<"img">>,
+): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKey(event: KeyboardEvent): void {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="lightbox-trigger"
+        onClick={() => setIsOpen(true)}
+        aria-label="画像を拡大"
+      >
+        <img {...props} alt={props.alt ?? ""} />
+      </button>
+      {isOpen &&
+        createPortal(
+          // オーバーレイ自体を button にして、背景クリック・Enter/Space・Esc
+          // (グローバル keydown) のいずれでも閉じられるようにする。
+          <button
+            type="button"
+            className="lightbox-overlay"
+            aria-label="拡大画像を閉じる"
+            onClick={() => setIsOpen(false)}
+          >
+            <img
+              className="lightbox-full"
+              src={props.src}
+              alt={props.alt ?? ""}
+            />
+          </button>,
+          document.body,
+        )}
+    </>
+  );
+}
+
 export interface MdastRendererProps {
   /** レンダリング対象の MDAST (Markdown AST) ルート。 */
   readonly node: MdastRoot;
@@ -100,6 +181,7 @@ export function MdastRenderer({
       Fragment,
       jsx,
       jsxs,
+      components: { pre: CodeBlock, img: LightboxImage },
     }) as React.JSX.Element;
   }, [node, transformImageUrl]);
 

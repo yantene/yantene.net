@@ -142,3 +142,62 @@
 .note-prose .hljs-strong {
   font-weight: 700;
 }
+
+/* コードブロックのコピーボタン (ホバー/フォーカスで出現)。 */
+.note-prose .code-block {
+  position: relative;
+  margin: 1.25rem 0;
+}
+.note-prose .code-block > pre {
+  margin: 0;
+}
+.note-prose .code-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: 0.375rem;
+  color: var(--color-base-content);
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-300);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.note-prose .code-block:hover .code-copy,
+.note-prose .code-copy:focus-visible {
+  opacity: 1;
+}
+
+/* 本文画像のクリック拡大 (lightbox)。 */
+.note-prose .lightbox-trigger {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgb(0 0 0 / 0.85);
+  cursor: zoom-out;
+}
+.lightbox-full {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.25rem;
+}
+.lightbox-overlay {
+  border: 0;
+  appearance: none;
+  width: 100%;
+}
