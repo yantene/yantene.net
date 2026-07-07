@@ -2,11 +2,37 @@
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
-/* ダークモードは採用しない (読書体験としてダークは不採用・light 固定)。 */
+/* ダークモードは採用しない (読書体験としてダークは不採用・light 固定)。
+ * 配色はやんてねアイコン由来 (肌色 #f8e5d6 は除外)。cornflower blue を深めた紺を
+ * 主役 (primary)、tan/gold を差し色 (accent)、青を補助 (secondary)、rose をエラー系に。
+ * 白シンプル・可読性重視 (装飾色は白地で低コントラストなので働く色は紺で担う)。 */
 @plugin "daisyui/theme" {
   name: "light";
   default: true;
   color-scheme: light;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f4f6fa;
+  --color-base-300: #e1e6ef;
+  --color-base-content: #1a2740;
+
+  --color-primary: #2b4a76;
+  --color-primary-content: #ffffff;
+  --color-secondary: #78a2d2;
+  --color-secondary-content: #16233b;
+  --color-accent: #c9ab80;
+  --color-accent-content: #241a06;
+  --color-neutral: #58627a;
+  --color-neutral-content: #ffffff;
+
+  --color-info: #78a2d2;
+  --color-info-content: #16233b;
+  --color-success: #3f7d5a;
+  --color-success-content: #ffffff;
+  --color-warning: #b0842e;
+  --color-warning-content: #ffffff;
+  --color-error: #a84d54;
+  --color-error-content: #ffffff;
 }
 
 /* セマンティックな色トークン。daisyUI の実行時テーマ変数に別名を張り、
