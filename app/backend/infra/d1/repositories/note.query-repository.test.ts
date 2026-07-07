@@ -201,4 +201,38 @@ describe("D1NoteQueryRepository", () => {
     );
     expect(found?.tags.map((tag) => tag.toString())).toEqual(["新しい"]);
   });
+
+  it("finds related notes ranked by tag overlap, excluding self", async () => {
+    const d1 = createTestD1();
+    const cmd = new D1NoteCommandRepository(d1);
+    await cmd.upsert(seedTagged("target", "2026-01-01", ["x", "y"]));
+    await cmd.upsert(seedTagged("both", "2026-01-02", ["x", "y"])); // 重複 2
+    await cmd.upsert(seedTagged("one", "2026-03-01", ["x"])); // 重複 1
+    await cmd.upsert(seedTagged("none", "2026-05-01", ["z"])); // 重複 0
+
+    const related = await new D1NoteQueryRepository(d1).findRelated(
+      NoteSlug.create("target"),
+      [NoteTag.create("x"), NoteTag.create("y")],
+      6,
+    );
+
+    // 重複数の降順: both(2) → one(1)。none(0) と自分自身は除外。
+    expect(related.map((note) => note.slug.toString())).toEqual([
+      "both",
+      "one",
+    ]);
+  });
+
+  it("returns no related notes when the note has no tags", async () => {
+    const d1 = createTestD1();
+    await new D1NoteCommandRepository(d1).upsert(
+      seedTagged("solo", "2026-01-01", ["x"]),
+    );
+    const related = await new D1NoteQueryRepository(d1).findRelated(
+      NoteSlug.create("solo"),
+      [],
+      6,
+    );
+    expect(related).toEqual([]);
+  });
 });

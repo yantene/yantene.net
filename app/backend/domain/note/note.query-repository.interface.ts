@@ -1,4 +1,5 @@
 import type { NoteSlug } from "./note-slug.vo";
+import type { NoteTag } from "./note-tag.vo";
 import type { Note } from "./note.entity";
 
 /** 一覧の並び替え基準。 */
@@ -34,6 +35,16 @@ export interface NoteTagCount {
 export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;
+  /**
+   * タグの重複数でスコアリングした関連ノートを返す。自分自身は除外し、
+   * 重複数の降順 → 公開日の降順 → slug 昇順で並べ、上限 limit 件を返す。
+   * tags が空なら空配列。
+   */
+  findRelated(
+    slug: NoteSlug,
+    tags: readonly NoteTag[],
+    limit: number,
+  ): Promise<readonly Note[]>;
   /** 全タグと各記事数を返す (タグ索引ページ用)。件数降順・タグ昇順。 */
   listTags(): Promise<readonly NoteTagCount[]>;
   /**

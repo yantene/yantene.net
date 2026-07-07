@@ -1,4 +1,14 @@
-import { asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  inArray,
+  ne,
+  type SQL,
+} from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToNote } from "./note-row";
 import type {
@@ -73,6 +83,29 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       notes: rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? [])),
       total,
     };
+  }
+
+  async findRelated(
+    slug: NoteSlug,
+    tags: readonly NoteTag[],
+    limit: number,
+  ): Promise<readonly Note[]> {
+    if (tags.length === 0) return [];
+    const tagValues = tags.map((tag) => tag.toString());
+    const slugValue = slug.toString();
+    const overlap = count(noteTags.tag);
+    const rows = await this.db
+      .select({ ...getTableColumns(notes), overlap })
+      .from(notes)
+      .innerJoin(noteTags, eq(noteTags.noteId, notes.id))
+      .where(and(inArray(noteTags.tag, tagValues), ne(notes.slug, slugValue)))
+      .groupBy(notes.id)
+      // 重複数の降順 → 公開日の降順 → slug 昇順 (決定的なタイブレーカ)。
+      .orderBy(desc(overlap), desc(notes.publishedOn), asc(notes.slug))
+      .limit(limit);
+
+    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
+    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
   }
 
   async listTags(): Promise<readonly NoteTagCount[]> {

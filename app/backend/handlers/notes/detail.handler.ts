@@ -6,9 +6,14 @@ import {
   InvalidNoteSlugError,
   NoteNotFoundError,
   NoteSlug,
+  NoteTag,
 } from "~/backend/domain/note";
+import { toPublicNote } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+
+/** 記事末に出す関連記事の最大件数。 */
+const RELATED_LIMIT = 6;
 
 /**
  * slug からノート詳細 (メタデータ + キャッシュ済み MDAST) を読む。
@@ -95,10 +100,18 @@ export function createNoteDetailPagesRouter(): Hono<{
     }
 
     const origin = new URL(c.req.url).origin;
+    const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
+    const query = new D1NoteQueryRepository(c.env.D1);
+    const related = await query.findRelated(
+      NoteSlug.create(detail.note.slug),
+      relatedTags,
+      RELATED_LIMIT,
+    );
     return c.render("notes/show", {
       locale: c.get("locale"),
       note: detail.note,
       mdast: detail.mdast,
+      related: related.map((note) => toPublicNote(note)),
       og: {
         title: detail.note.title,
         description: detail.note.summary,
