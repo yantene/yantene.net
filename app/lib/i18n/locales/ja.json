@@ -19,6 +19,7 @@
     "heading": "ノート",
     "empty": "まだ公開されたノートがない。",
     "related": "関連記事",
+    "toc": "目次",
     "filteredByTag": "タグ「{{tag}}」",
     "clearFilter": "すべて表示",
     "pagination": {
