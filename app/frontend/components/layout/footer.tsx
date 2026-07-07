@@ -6,7 +6,7 @@ export function Footer(): React.JSX.Element {
       <div className="relative bg-white/60 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-center px-6 py-8 text-halo">
           <p className="text-xs text-muted-foreground">
-            &copy; {currentYear} yantene
+            &copy; {currentYear} yantene.net
           </p>
         </div>
       </div>

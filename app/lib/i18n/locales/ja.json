@@ -1,10 +1,10 @@
 {
   "meta": {
-    "title": "yantene",
+    "title": "yantene.net",
     "description": "Hono + Inertia.js + React + Cloudflare Workers で構成される Web アプリケーション"
   },
   "home": {
-    "heading": "yantene",
+    "heading": "yantene.net",
     "tagline": "yantene の発信を集約するハブ",
     "recentNotes": "新着ノート",
     "viewAll": "すべて見る"

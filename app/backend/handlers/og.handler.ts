@@ -7,7 +7,7 @@ import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 const FONT_KEY = "og/fonts/noto-sans-jp-700-full.ttf";
 const TITLE_MAX = 56;
 /** カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。 */
-const OG_TEMPLATE_VERSION = "v6";
+const OG_TEMPLATE_VERSION = "v7";
 
 /** yantene アイコン (data URI で OG カードに埋め込む)。 */
 const YANTENE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 67.733 67.733"><g transform="translate(-121.17 -27.445)"><path d="M73.685 39.527h135.467v67.733H73.685z" style="fill:#f8e5d6;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><path d="M73.685-28.206h135.467v67.733H73.685z" style="fill:#c9ab80;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><circle cx="88.27" cy="-72.048" r="39.677" style="fill:#c9ab80;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><circle cx="167.625" cy="-72.048" r="39.677" style="fill:#f8e5d6;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><path d="M159.46 46.99a14.817 14.74 0 0 1 12.379-6.118 14.817 14.74 0 0 1 12.066 6.708M125.887 41.94a14.817 14.74 0 0 1 13.395-3.669 14.817 14.74 0 0 1 10.561 8.981" style="fill:none;fill-opacity:1;stroke:#78a2d2;stroke-width:4.23333;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;stop-color:#000"/><path d="m128.378 51.872 16.39 5.9-16.08 7.858M180.139 53.64l-16.668 5.057 15.658 8.666" style="fill:none;stroke:#78a2d2;stroke-width:4.23334;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/><path d="M143.31 78.073c-3.662 3.393-2.03 25.136 6.81 26.34 8.842 1.204 15.08-18.378 12.73-22.413s-15.876-7.32-19.54-3.927" style="fill:#d47d7d;fill-opacity:1;stroke:none;stroke-width:.529166px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"/></g></svg>`;
@@ -69,7 +69,7 @@ function cardHtml(params: {
           </div>
           <div style="display:flex;align-items:center;">
             <img src="${ICON_DATA_URI}" width="56" height="56" style="border-radius:12px;margin-right:16px;" />
-            <div style="display:flex;font-size:34px;font-weight:700;color:#c9ab80;">yantene</div>
+            <div style="display:flex;font-size:34px;font-weight:700;color:#c9ab80;">yantene.net</div>
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@ function defaultCardHtml(): string {
       <div style="display:flex;height:14px;width:100%;background:linear-gradient(90deg,#c9f2ff,#ffad31,#28324f,#db6a00,#c9f2ff);"></div>
       <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;">
         <img src="${ICON_DATA_URI}" width="132" height="132" style="border-radius:26px;" />
-        <div style="display:flex;font-size:84px;font-weight:700;color:#1a1a1a;margin-top:28px;">yantene</div>
+        <div style="display:flex;font-size:76px;font-weight:700;color:#1a1a1a;margin-top:28px;">yantene.net</div>
         <div style="display:flex;font-size:30px;color:#999999;margin-top:14px;">yantene の発信を集約するハブ</div>
       </div>
     </div>`;

@@ -1,6 +1,6 @@
 {
-  "name": "yantene",
-  "short_name": "yantene",
+  "name": "yantene.net",
+  "short_name": "yantene.net",
   "description": "yantene の発信を集約するハブ。",
   "start_url": "/",
   "display": "standalone",
