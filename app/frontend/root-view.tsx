@@ -48,6 +48,7 @@ function Head({ title, description, og }: HeadProps): React.JSX.Element {
         title="yantene.net"
         href="/feed.xml"
       />
+      <link rel="canonical" href={og.url} />
       <meta property="og:site_name" content="yantene.net" />
       <meta property="og:locale" content="ja_JP" />
       <meta property="og:title" content={og.title} />
@@ -91,11 +92,24 @@ export const rootView: RootView = async (page, c) => {
     type: pageOg.type ?? "website",
   };
 
+  // schema.org 構造化データ (ページが jsonLd prop を渡したときのみ)。
+  // </script> 打ち切りを防ぐため "<" をエスケープしてから埋め込む。
+  const jsonLd = page.props.jsonLd;
+  // "<" を JSON の < エスケープに置換して </script> 打ち切りを防ぐ。
+  const jsonLdBody = JSON.stringify(jsonLd).replaceAll("<", String.raw`\u003c`);
+  const jsonLdScript =
+    jsonLd === undefined
+      ? ""
+      : // eslint-disable-next-line no-secrets/no-secrets -- MIME タイプ文字列の誤検知
+        `<script type="application/ld+json">${jsonLdBody}</script>`;
+
   const { head, body } = await renderPage(page);
   const headHtml =
     renderToString(
       <Head title={meta.title} description={meta.description} og={og} />,
-    ) + head.join("");
+    ) +
+    head.join("") +
+    jsonLdScript;
 
   // body には Inertia の SSR 出力 (<script data-page="app"> + <div id="app">) が
   // すでに含まれている。ここで <div id="app"> を重ねて巻くと id が重複し、

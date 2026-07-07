@@ -94,6 +94,7 @@ export function createNoteDetailPagesRouter(): Hono<{
       });
     }
 
+    const origin = new URL(c.req.url).origin;
     return c.render("notes/show", {
       locale: c.get("locale"),
       note: detail.note,
@@ -103,6 +104,20 @@ export function createNoteDetailPagesRouter(): Hono<{
         description: detail.note.summary,
         image: `/og/notes/${detail.note.slug}`,
         type: "article",
+      },
+      // schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: detail.note.title,
+        description: detail.note.summary,
+        image: `${origin}/og/notes/${detail.note.slug}`,
+        datePublished: detail.note.publishedOn,
+        dateModified: detail.note.lastModifiedOn,
+        author: { "@type": "Person", name: "yantene", url: `${origin}/` },
+        publisher: { "@type": "Person", name: "yantene" },
+        mainEntityOfPage: `${origin}/notes/${detail.note.slug}`,
+        keywords: detail.note.tags,
       },
     });
   });

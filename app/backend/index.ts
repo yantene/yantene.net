@@ -14,6 +14,7 @@ import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createPagesRouter } from "./handlers/pages";
+import { createSeoRouter } from "./handlers/seo.handler";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { UserNotFoundError } from "~/backend/domain/user";
 import { requireSession } from "~/backend/middleware/auth";
@@ -64,6 +65,7 @@ app.route("/api/v1/notes", createNoteAssetsRouter());
 app.route("/api/v1/tags", createTagsApiRouter());
 app.route("/og", createOgRouter());
 app.route("/", createFeedRouter());
+app.route("/", createSeoRouter());
 
 // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
 // session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession
