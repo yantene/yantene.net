@@ -5,6 +5,7 @@ import type { PageProps } from "~/frontend/page-props";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
+import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 
 interface NoteMeta {
@@ -20,11 +21,13 @@ interface NoteMeta {
 interface NoteShowProps extends PageProps {
   readonly note: NoteMeta | null;
   readonly mdast: MdastRoot | null;
+  readonly related?: readonly NoteMeta[];
 }
 
 export default function NoteShow({
   note,
   mdast,
+  related = [],
 }: NoteShowProps): React.JSX.Element {
   const { t } = useTranslation();
 
@@ -86,6 +89,16 @@ export default function NoteShow({
           )}
         </header>
         <MdastRenderer node={mdast} />
+        {related.length > 0 && (
+          <section className="mt-16 border-t border-base-300 pt-10">
+            <h2 className="mb-6 text-xl font-bold">{t("notes.related")}</h2>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {related.map((item) => (
+                <NoteCard key={item.slug} {...item} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </AppLayout>
