@@ -42,6 +42,13 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
             >
               Tags
             </Link>
+            <Link
+              href="/search"
+              aria-label="Search"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              Search
+            </Link>
           </nav>
         </div>
       </div>

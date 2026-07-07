@@ -6,6 +6,7 @@ import { NoteSlug } from "~/backend/domain/note";
 import {
   D1NoteCommandRepository,
   D1NoteQueryRepository,
+  D1NoteSearchIndex,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
@@ -77,11 +78,13 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   const command = new D1NoteCommandRepository(d1);
   const query = new D1NoteQueryRepository(d1);
   const cache = new InMemoryCache();
+  const searchIndex = new D1NoteSearchIndex(d1);
   const service = new NotesRefreshService(
     new MockContentStore(files),
     command,
     query,
     cache,
+    searchIndex,
   );
   return { service, command, query, cache };
 }

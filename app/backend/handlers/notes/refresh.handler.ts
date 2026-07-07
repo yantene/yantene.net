@@ -4,6 +4,7 @@ import { resolveContentStore } from "./resolve-content-store";
 import {
   D1NoteCommandRepository,
   D1NoteQueryRepository,
+  D1NoteSearchIndex,
 } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { NotesRefreshService } from "~/backend/services/notes-refresh.service";
@@ -51,6 +52,7 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
       new D1NoteCommandRepository(c.env.D1),
       new D1NoteQueryRepository(c.env.D1),
       new R2NoteContentCache(c.env.R2),
+      new D1NoteSearchIndex(c.env.D1),
     );
     const result = await service.refresh();
     return c.json(result);

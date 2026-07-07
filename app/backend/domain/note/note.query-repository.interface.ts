@@ -36,6 +36,11 @@ export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;
   /**
+   * 全文検索。title / body を対象に関連度 (bm25) 順で最大 limit 件返す。
+   * 索引が未構築 (まだ refresh していない) 場合や、実質的なクエリでない場合は空配列。
+   */
+  search(query: string, limit: number): Promise<readonly Note[]>;
+  /**
    * タグの重複数でスコアリングした関連ノートを返す。自分自身は除外し、
    * 重複数の降順 → 公開日の降順 → slug 昇順で並べ、上限 limit 件を返す。
    * tags が空なら空配列。

@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
 import { resolveAssetUrl } from "./note-asset-url";
 import { parseNoteContent } from "./note-content-parser";
@@ -7,6 +8,7 @@ import type {
   INoteCommandRepository,
   INoteContentCache,
   INoteQueryRepository,
+  INoteSearchIndex,
 } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import {
@@ -60,6 +62,7 @@ export class NotesRefreshService {
     private readonly command: INoteCommandRepository,
     private readonly query: INoteQueryRepository,
     private readonly cache: INoteContentCache,
+    private readonly searchIndex: INoteSearchIndex,
   ) {}
 
   async refresh(): Promise<RefreshResult> {
@@ -112,6 +115,11 @@ export class NotesRefreshService {
     await this.cache.putMdast(group.slug, mdast);
     await this.cacheAssets(group);
     await this.command.upsert(note);
+    await this.searchIndex.index({
+      slug: group.slug,
+      title: note.title.toString(),
+      body: mdastToString(mdast),
+    });
   }
 
   private async cacheAssets(group: NoteGroup): Promise<void> {
@@ -136,6 +144,7 @@ export class NotesRefreshService {
       const noteSlug = NoteSlug.create(slug);
       await this.command.deleteBySlug(noteSlug);
       await this.cache.deleteNote(noteSlug);
+      await this.searchIndex.remove(noteSlug);
       deleted.push(slug);
     }
     return deleted;

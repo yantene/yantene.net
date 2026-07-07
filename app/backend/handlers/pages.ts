@@ -5,6 +5,7 @@ import { createMagicLinkRouter } from "~/backend/handlers/auth/magic-link.handle
 import { toPublicNote } from "~/backend/handlers/note-view";
 import { createNoteDetailPagesRouter } from "~/backend/handlers/notes/detail.handler";
 import { createNotesPagesRouter } from "~/backend/handlers/notes/pages.handler";
+import { createSearchPagesRouter } from "~/backend/handlers/notes/search.handler";
 import { createTagsPagesRouter } from "~/backend/handlers/notes/tags.handler";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import {
@@ -57,6 +58,7 @@ export function createPagesRouter(): Hono<PagesBindings> {
   router.route("/", createNotesPagesRouter());
   router.route("/", createNoteDetailPagesRouter());
   router.route("/", createTagsPagesRouter());
+  router.route("/", createSearchPagesRouter());
 
   // 認証必須ページは現状なし。将来 (有料記事等) を追加する際は、ここで
   // requireSessionOrRedirect を挟んでからマウントする。
