@@ -76,13 +76,66 @@ function cardHtml(params: {
     </div>`;
 }
 
+/** サイト共通のデフォルト OG カード (記事以外のページ用)。 */
+function defaultCardHtml(): string {
+  return `
+    <div style="display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
+      <div style="display:flex;height:14px;width:100%;background:linear-gradient(90deg,#c9f2ff,#ffad31,#28324f,#db6a00,#c9f2ff);"></div>
+      <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;">
+        <img src="${ICON_DATA_URI}" width="132" height="132" style="border-radius:26px;" />
+        <div style="display:flex;font-size:84px;font-weight:700;color:#1a1a1a;margin-top:28px;">yantene</div>
+        <div style="display:flex;font-size:30px;color:#999999;margin-top:14px;">yantene の発信を集約するハブ</div>
+      </div>
+    </div>`;
+}
+
+const imageHeaders = {
+  "Content-Type": "image/png",
+  "Cache-Control": "public, max-age=31536000, immutable",
+};
+
+/** HTML を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。 */
+async function renderAndCache(
+  env: Env,
+  cacheKey: string,
+  html: string,
+): Promise<Response> {
+  const cached = await env.R2.get(cacheKey);
+  if (cached !== null) {
+    return new Response(cached.body, { headers: imageHeaders });
+  }
+  // workers-og は WASM を含むため動的 import する (トップレベル import だと
+  // index.ts を読むだけで WASM ロードが走り、テスト環境が壊れる)。
+  const { ImageResponse } = await import("workers-og");
+  const font = await loadFont(env);
+  const image = new ImageResponse(html, {
+    width: 1200,
+    height: 630,
+    fonts: [{ name: "Noto Sans JP", data: font, weight: 700, style: "normal" }],
+  });
+  const bytes = await image.arrayBuffer();
+  await env.R2.put(cacheKey, bytes, {
+    httpMetadata: { contentType: "image/png" },
+  });
+  return new Response(bytes, { headers: imageHeaders });
+}
+
 /**
- * OG 画像の生成ルータ (公開)。`GET /og/notes/:slug` が 1200x630 の PNG を返す。
- * imageUrl の有無に関わらず常にブランドカードを生成する。R2 にキャッシュし、
- * 記事内容が変わったら sourceHash 込みのキーで自動的に再生成される。
+ * OG 画像の生成ルータ (公開)。
+ * - GET /og/notes/:slug → 記事のブランドカード (imageUrl 有無に関わらず常に生成)
+ * - GET /og/default     → サイト共通のデフォルトカード
+ * R2 にキャッシュし、記事更新やテンプレ版変更で自動再生成する。
  */
 export function createOgRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
+
+  router.get("/default", (c) =>
+    renderAndCache(
+      c.env,
+      `og/default-${OG_TEMPLATE_VERSION}.png`,
+      defaultCardHtml(),
+    ),
+  );
 
   router.get("/notes/:slug", async (c) => {
     let slug: NoteSlug;
@@ -95,38 +148,16 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
     if (note === undefined) return c.notFound();
 
-    const cacheKey = `og/notes/${slug.toString()}-${note.sourceHash}-${OG_TEMPLATE_VERSION}.png`;
-    const cached = await c.env.R2.get(cacheKey);
-    const headers = {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=31536000, immutable",
-    };
-    if (cached !== null) {
-      return new Response(cached.body, { headers });
-    }
-
-    // workers-og は WASM を含むため動的 import する (トップレベル import だと
-    // index.ts を読むだけで WASM ロードが走り、テスト環境が壊れる)。
-    const { ImageResponse } = await import("workers-og");
-    const font = await loadFont(c.env);
     const html = cardHtml({
       title: note.title.toString(),
       date: note.publishedOn.toString({ calendarName: "never" }),
       tags: note.tags.map((tag) => tag.toString()),
     });
-    const image = new ImageResponse(html, {
-      width: 1200,
-      height: 630,
-      fonts: [
-        { name: "Noto Sans JP", data: font, weight: 700, style: "normal" },
-      ],
-    });
-
-    const bytes = await image.arrayBuffer();
-    await c.env.R2.put(cacheKey, bytes, {
-      httpMetadata: { contentType: "image/png" },
-    });
-    return new Response(bytes, { headers });
+    return renderAndCache(
+      c.env,
+      `og/notes/${slug.toString()}-${note.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
+      html,
+    );
   });
 
   return router;

@@ -45,6 +45,7 @@ export function createNotesPagesRouter(): Hono<NotesPagesBindings> {
         sortBy: c.req.query("sort-by") ?? null,
         order: c.req.query("order") ?? null,
       },
+      og: { image: "/og/default", type: "website" },
     });
   });
 

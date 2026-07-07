@@ -98,6 +98,12 @@ export function createNoteDetailPagesRouter(): Hono<{
       locale: c.get("locale"),
       note: detail.note,
       mdast: detail.mdast,
+      og: {
+        title: detail.note.title,
+        description: detail.note.summary,
+        image: `/og/notes/${detail.note.slug}`,
+        type: "article",
+      },
     });
   });
 

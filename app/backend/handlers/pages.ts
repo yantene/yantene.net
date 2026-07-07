@@ -36,6 +36,7 @@ export function createPagesRouter(): Hono<PagesBindings> {
     return c.render("home", {
       locale: c.get("locale"),
       notes: result.notes.map((note) => toPublicNote(note)),
+      og: { image: "/og/default", type: "website" },
     });
   });
 
