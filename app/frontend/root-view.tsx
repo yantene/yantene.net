@@ -42,7 +42,7 @@ function Head({ title, description, og }: HeadProps): React.JSX.Element {
       <meta name="description" content={description} />
       <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       <link rel="manifest" href="/manifest.webmanifest" />
-      <meta property="og:site_name" content="yantene" />
+      <meta property="og:site_name" content="yantene.net" />
       <meta property="og:locale" content="ja_JP" />
       <meta property="og:title" content={og.title} />
       <meta property="og:description" content={og.description} />
