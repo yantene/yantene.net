@@ -17,7 +17,11 @@ export function createTagsPagesRouter(): Hono<TagsPagesBindings> {
   router.get("/tags", async (c) => {
     const query = new D1NoteQueryRepository(c.env.D1);
     const tags = await query.listTags();
-    return c.render("tags/index", { locale: c.get("locale"), tags });
+    return c.render("tags/index", {
+      locale: c.get("locale"),
+      tags,
+      og: { image: "/og/default", type: "website" },
+    });
   });
 
   return router;

@@ -10,12 +10,30 @@ import { renderPage } from "~/frontend/entry.server";
 import { isSupportedLocale, type SupportedLocale } from "~/lib/i18n/locale";
 import resources from "~/lib/i18n/locales";
 
+/** ページが props で渡す OGP メタ (省略時はサイト既定にフォールバック)。 */
+interface PageOg {
+  readonly title?: string;
+  readonly description?: string;
+  /** OG 画像の相対パス (例: "/og/notes/foo")。root-view で絶対 URL 化する。 */
+  readonly image?: string;
+  readonly type?: string;
+}
+
+interface OgValues {
+  readonly title: string;
+  readonly description: string;
+  readonly image: string;
+  readonly url: string;
+  readonly type: string;
+}
+
 interface HeadProps {
   readonly title: string;
   readonly description: string;
+  readonly og: OgValues;
 }
 
-function Head({ title, description }: HeadProps): React.JSX.Element {
+function Head({ title, description, og }: HeadProps): React.JSX.Element {
   return (
     <>
       <meta charSet="utf-8" />
@@ -24,6 +42,17 @@ function Head({ title, description }: HeadProps): React.JSX.Element {
       <meta name="description" content={description} />
       <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
       <link rel="manifest" href="/manifest.webmanifest" />
+      <meta property="og:site_name" content="yantene" />
+      <meta property="og:locale" content="ja_JP" />
+      <meta property="og:title" content={og.title} />
+      <meta property="og:description" content={og.description} />
+      <meta property="og:image" content={og.image} />
+      <meta property="og:url" content={og.url} />
+      <meta property="og:type" content={og.type} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={og.title} />
+      <meta name="twitter:description" content={og.description} />
+      <meta name="twitter:image" content={og.image} />
       <ViteClient />
       <ReactRefresh />
       <Link href="/app/frontend/app.css" rel="stylesheet" />
@@ -39,16 +68,28 @@ function resolveLocale(page: {
   return typeof value === "string" && isSupportedLocale(value) ? value : "en";
 }
 
-export const rootView: RootView = async (page) => {
+export const rootView: RootView = async (page, c) => {
   const locale = resolveLocale(page);
   // eslint-disable-next-line security/detect-object-injection -- locale is narrowed to SupportedLocale literal
   const translations = resources[locale].translation;
   const { meta } = translations;
 
+  // OGP は絶対 URL が要る。リクエスト URL から origin/pathname を組む。
+  const requestUrl = new URL(c.req.url);
+  const pageOg = (page.props.og ?? {}) as PageOg;
+  const og: OgValues = {
+    title: pageOg.title ?? meta.title,
+    description: pageOg.description ?? meta.description,
+    image: `${requestUrl.origin}${pageOg.image ?? "/og/default"}`,
+    url: `${requestUrl.origin}${requestUrl.pathname}`,
+    type: pageOg.type ?? "website",
+  };
+
   const { head, body } = await renderPage(page);
   const headHtml =
-    renderToString(<Head title={meta.title} description={meta.description} />) +
-    head.join("");
+    renderToString(
+      <Head title={meta.title} description={meta.description} og={og} />,
+    ) + head.join("");
 
   // body には Inertia の SSR 出力 (<script data-page="app"> + <div id="app">) が
   // すでに含まれている。ここで <div id="app"> を重ねて巻くと id が重複し、
