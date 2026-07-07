@@ -45,6 +45,7 @@
     "@js-temporal/polyfill": "^0.5.1",
     "daisyui": "^5.6.13",
     "drizzle-orm": "^0.45.2",
+    "github-slugger": "^2.0.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "hono": "^4.12.27",
     "i18next": "^26.3.4",

@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { toNoteDetail } from "./note-detail-view";
+import { extractHeadings } from "./toc-headings";
 import type { NoteDetail } from "./note-detail-view";
+import type { Root } from "mdast";
 import type { LocaleVariables } from "~/backend/middleware/locale";
 import {
   InvalidNoteSlugError,
@@ -112,6 +114,7 @@ export function createNoteDetailPagesRouter(): Hono<{
       note: detail.note,
       mdast: detail.mdast,
       related: related.map((note) => toPublicNote(note)),
+      headings: extractHeadings(detail.mdast as Root),
       og: {
         title: detail.note.title,
         description: detail.note.summary,

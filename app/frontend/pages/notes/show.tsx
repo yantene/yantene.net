@@ -6,6 +6,10 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
+import {
+  TableOfContents,
+  type TocHeading,
+} from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 
 interface NoteMeta {
@@ -22,12 +26,14 @@ interface NoteShowProps extends PageProps {
   readonly note: NoteMeta | null;
   readonly mdast: MdastRoot | null;
   readonly related?: readonly NoteMeta[];
+  readonly headings?: readonly TocHeading[];
 }
 
 export default function NoteShow({
   note,
   mdast,
   related = [],
+  headings = [],
 }: NoteShowProps): React.JSX.Element {
   const { t } = useTranslation();
 
@@ -56,50 +62,57 @@ export default function NoteShow({
         <meta name="description" content={note.summary} />
       </Head>
       <Header />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold">{note.title}</h1>
-          <time
-            dateTime={note.publishedOn}
-            className="mt-2 block text-sm text-base-content/60"
-          >
-            {note.publishedOn}
-          </time>
-          {note.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {note.tags.map((tg) => (
-                <Link
-                  key={tg}
-                  href={`/notes?tag=${encodeURIComponent(tg)}`}
-                  className="badge badge-outline gap-1 hover:badge-primary"
-                >
-                  {tg}
-                </Link>
-              ))}
-            </div>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 gap-10 px-6 py-10">
+        <main className="min-w-0 max-w-3xl flex-1">
+          <header className="mb-8">
+            <h1 className="text-4xl font-bold">{note.title}</h1>
+            <time
+              dateTime={note.publishedOn}
+              className="mt-2 block text-sm text-base-content/60"
+            >
+              {note.publishedOn}
+            </time>
+            {note.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {note.tags.map((tg) => (
+                  <Link
+                    key={tg}
+                    href={`/notes?tag=${encodeURIComponent(tg)}`}
+                    className="badge badge-outline gap-1 hover:badge-primary"
+                  >
+                    {tg}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {note.imageUrl !== null && (
+              <img
+                src={note.imageUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="mt-6 w-full rounded-lg object-cover"
+              />
+            )}
+          </header>
+          <MdastRenderer node={mdast} />
+          {related.length > 0 && (
+            <section className="mt-16 border-t border-base-300 pt-10">
+              <h2 className="mb-6 text-xl font-bold">{t("notes.related")}</h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {related.map((item) => (
+                  <NoteCard key={item.slug} {...item} />
+                ))}
+              </div>
+            </section>
           )}
-          {note.imageUrl !== null && (
-            <img
-              src={note.imageUrl}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="mt-6 w-full rounded-lg object-cover"
-            />
-          )}
-        </header>
-        <MdastRenderer node={mdast} />
-        {related.length > 0 && (
-          <section className="mt-16 border-t border-base-300 pt-10">
-            <h2 className="mb-6 text-xl font-bold">{t("notes.related")}</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {related.map((item) => (
-                <NoteCard key={item.slug} {...item} />
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
+        </main>
+        <aside className="hidden w-60 shrink-0 lg:block">
+          <div className="sticky top-24">
+            <TableOfContents title={t("notes.toc")} headings={headings} />
+          </div>
+        </aside>
+      </div>
       <Footer />
     </AppLayout>
   );

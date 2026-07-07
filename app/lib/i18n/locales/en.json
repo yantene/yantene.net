@@ -19,6 +19,7 @@
     "heading": "Notes",
     "empty": "No notes have been published yet.",
     "related": "Related notes",
+    "toc": "Contents",
     "filteredByTag": "Tagged “{{tag}}”",
     "clearFilter": "Show all",
     "pagination": {
