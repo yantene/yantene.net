@@ -68,3 +68,19 @@ pnpm run check   # lint + format + typecheck をまとめて検証
 
 加えて、変更差分に対して `/code-review` を実行し、critical な指摘があれば修正してから
 commit / push する。
+
+## 全ページ共通の描画経路を触ったときのスモーク
+
+`app/frontend/root-view.tsx` / `layouts/` / `middleware/` / `entry.server.tsx` など
+**全ページが通る共有経路**を変更したら、その機能のページだけでなく**各ページ種別を必ず確認する**。
+過去、`root-view` の JSON-LD 実装が jsonLd を持たないページ (トップ/一覧/タグ/ログイン) を
+すべて 500 にした回帰があり、記事ページだけ確認していて見逃した。
+
+- **自動 (CI)**: `root-view.test.tsx` / `json-ld.test.ts` が jsonLd 有無の両パスを検証する。
+  共有描画経路を変えたら同種のテストを足す。
+- **手動 (デプロイ後)**: staging へ deploy したら主要 URL のスモークを走らせる。
+
+```bash
+SMOKE_BASE=https://yantene-staging.yantene.workers.dev \
+  SMOKE_USER=<basic-user> SMOKE_PASS=<basic-pass> pnpm run smoke
+```
