@@ -19,6 +19,7 @@
     "check": "pnpm run lint && pnpm run format && pnpm run typecheck",
     "test": "vitest",
     "test:run": "vitest run",
+    "smoke": "node scripts/smoke.mjs",
     "storybook:dev": "storybook dev -p 6006 --host 0.0.0.0",
     "storybook:build": "storybook build",
     "db:generate": "drizzle-kit generate",
