@@ -18,6 +18,12 @@ export interface PublicNote {
   readonly tags: readonly string[];
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
+  /** 連載 (シリーズ) 情報。単発記事は null。 */
+  readonly series: {
+    readonly name: string;
+    readonly slug: string;
+    readonly order: number;
+  } | null;
 }
 
 export interface Pagination {
@@ -42,6 +48,7 @@ export function toPublicNote(note: Note): PublicNote {
     tags: note.tags.map((tag) => tag.toJSON()),
     publishedOn: note.publishedOn.toString({ calendarName: "never" }),
     lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
+    series: note.series ?? null,
   };
 }
 

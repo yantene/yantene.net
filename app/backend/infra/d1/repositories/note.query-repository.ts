@@ -157,6 +157,16 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       .filter((note): note is Note => note !== undefined);
   }
 
+  async listBySeries(seriesSlug: string): Promise<readonly Note[]> {
+    const rows = await this.db
+      .select()
+      .from(notes)
+      .where(eq(notes.seriesSlug, seriesSlug))
+      .orderBy(asc(notes.seriesOrder), asc(notes.slug));
+    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
+    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
+  }
+
   async listTags(): Promise<readonly NoteTagCount[]> {
     const rows = await this.db
       .select({ tag: noteTags.tag, value: count() })

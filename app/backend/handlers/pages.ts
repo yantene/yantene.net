@@ -6,6 +6,7 @@ import { toPublicNote } from "~/backend/handlers/note-view";
 import { createNoteDetailPagesRouter } from "~/backend/handlers/notes/detail.handler";
 import { createNotesPagesRouter } from "~/backend/handlers/notes/pages.handler";
 import { createSearchPagesRouter } from "~/backend/handlers/notes/search.handler";
+import { createSeriesPagesRouter } from "~/backend/handlers/notes/series.handler";
 import { createTagsPagesRouter } from "~/backend/handlers/notes/tags.handler";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import {
@@ -59,6 +60,7 @@ export function createPagesRouter(): Hono<PagesBindings> {
   router.route("/", createNoteDetailPagesRouter());
   router.route("/", createTagsPagesRouter());
   router.route("/", createSearchPagesRouter());
+  router.route("/", createSeriesPagesRouter());
 
   // 認証必須ページは現状なし。将来 (有料記事等) を追加する際は、ここで
   // requireSessionOrRedirect を挟んでからマウントする。

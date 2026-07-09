@@ -11,6 +11,16 @@ import type {
 
 export type NoteId = EntityId<"Note">;
 
+/** 連載 (シリーズ) 情報。フロントマター由来。単発記事は持たない。 */
+export interface NoteSeries {
+  /** 表示名 (frontmatter series)。 */
+  readonly name: string;
+  /** URL 用の slug (表示名を slug 化したもの)。 */
+  readonly slug: string;
+  /** 連載内の並び順 (frontmatter seriesOrder)。 */
+  readonly order: number;
+}
+
 interface NoteFields<T extends IPersisted | IUnpersisted> {
   readonly id: T["id"] extends string ? NoteId : undefined;
   readonly slug: NoteSlug;
@@ -25,6 +35,8 @@ interface NoteFields<T extends IPersisted | IUnpersisted> {
   readonly publishedOn: Temporal.PlainDate;
   /** フロントマター由来の最終更新日 (日付のみ)。 */
   readonly lastModifiedOn: Temporal.PlainDate;
+  /** 連載 (シリーズ) 情報。単発記事は undefined。 */
+  readonly series: NoteSeries | undefined;
   /**
    * コンテンツ正本 (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
    * (Artifacts のツリーが返すファイルハッシュ)。
@@ -51,6 +63,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     tags?: readonly NoteTag[];
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    series?: NoteSeries;
     sourceHash: string;
   }): Note<IUnpersisted> {
     return new Note({
@@ -62,6 +75,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
       tags: params.tags ?? [],
       publishedOn: params.publishedOn,
       lastModifiedOn: params.lastModifiedOn,
+      series: params.series,
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -77,6 +91,7 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     tags: readonly NoteTag[];
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    series: NoteSeries | undefined;
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -114,6 +129,10 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get lastModifiedOn(): Temporal.PlainDate {
     return this.fields.lastModifiedOn;
+  }
+
+  get series(): NoteSeries | undefined {
+    return this.fields.series;
   }
 
   get sourceHash(): string {

@@ -52,6 +52,8 @@ export interface INoteQueryRepository {
   ): Promise<readonly Note[]>;
   /** 全タグと各記事数を返す (タグ索引ページ用)。件数降順・タグ昇順。 */
   listTags(): Promise<readonly NoteTagCount[]>;
+  /** 連載 (シリーズ) の記事を seriesOrder 昇順で返す。該当なしなら空配列。 */
+  listBySeries(seriesSlug: string): Promise<readonly Note[]>;
   /**
    * 全ノートの slug → sourceHash の対応を返す。refresh の変更検出に使う
    * (Artifacts のツリーが返すハッシュと突き合わせる)。

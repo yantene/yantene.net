@@ -22,11 +22,21 @@ interface NoteMeta {
   readonly lastModifiedOn: string;
 }
 
+interface SeriesNav {
+  readonly name: string;
+  readonly slug: string;
+  readonly total: number;
+  readonly position: number;
+  readonly prev: NoteMeta | null;
+  readonly next: NoteMeta | null;
+}
+
 interface NoteShowProps extends PageProps {
   readonly note: NoteMeta | null;
   readonly mdast: MdastRoot | null;
   readonly related?: readonly NoteMeta[];
   readonly headings?: readonly TocHeading[];
+  readonly series?: SeriesNav | null;
 }
 
 export default function NoteShow({
@@ -34,6 +44,7 @@ export default function NoteShow({
   mdast,
   related = [],
   headings = [],
+  series = null,
 }: NoteShowProps): React.JSX.Element {
   const { t } = useTranslation();
 
@@ -96,6 +107,42 @@ export default function NoteShow({
             )}
           </header>
           <MdastRenderer node={mdast} />
+          {series !== null && (
+            <nav className="mt-12 rounded-xl border border-base-300 bg-base-200 p-5">
+              <Link
+                href={`/series/${series.slug}`}
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                {t("series.label")}: {series.name}
+              </Link>
+              <p className="mt-1 text-xs text-base-content/60">
+                {t("series.position", {
+                  position: series.position,
+                  total: series.total,
+                })}
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-between">
+                {series.prev === null ? (
+                  <span />
+                ) : (
+                  <Link
+                    href={`/notes/${series.prev.slug}`}
+                    className="text-sm text-base-content/80 hover:text-primary"
+                  >
+                    ← {series.prev.title}
+                  </Link>
+                )}
+                {series.next !== null && (
+                  <Link
+                    href={`/notes/${series.next.slug}`}
+                    className="text-sm text-base-content/80 hover:text-primary sm:text-right"
+                  >
+                    {series.next.title} →
+                  </Link>
+                )}
+              </div>
+            </nav>
+          )}
           {related.length > 0 && (
             <section className="mt-16 border-t border-base-300 pt-10">
               <h2 className="mb-6 text-xl font-bold">{t("notes.related")}</h2>

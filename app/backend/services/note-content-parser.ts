@@ -17,6 +17,10 @@ export interface NoteFrontmatter {
   readonly tags: readonly string[];
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
+  /** 連載名 (表示名)。単発記事では undefined。 */
+  readonly series: string | undefined;
+  /** 連載内の並び順。series があるときのみ意味を持つ。 */
+  readonly seriesOrder: number | undefined;
 }
 
 export interface ParsedNoteContent {
@@ -45,6 +49,8 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
       tags: asStringArray(rawMatter.tags),
       publishedOn: asDateString(rawMatter.publishedOn),
       lastModifiedOn: asDateString(rawMatter.lastModifiedOn),
+      series: asOptionalString(rawMatter.series),
+      seriesOrder: asOptionalNumber(rawMatter.seriesOrder),
     },
     mdast,
     summary: extractSummary(mdast),
@@ -85,6 +91,16 @@ function isSummaryNode(node: RootContent): boolean {
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/** フロントマターの数値。number か数字文字列を受け、それ以外は undefined。 */
+function asOptionalNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
 }
 
 /**

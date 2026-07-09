@@ -15,6 +15,11 @@ export const notes = sqliteTable("notes", {
   title: text("title").notNull(),
   summary: text("summary").notNull(),
   imageUrl: text("image_url"),
+  // 連載 (シリーズ)。フロントマター由来。単発記事では null。
+  // series: 表示名 / series_slug: URL 用 (表示名を slug 化) / series_order: 連載内の順序。
+  series: text("series"),
+  seriesSlug: text("series_slug"),
+  seriesOrder: integer("series_order"),
   publishedOn: text("published_on").notNull(),
   lastModifiedOn: text("last_modified_on").notNull(),
   // コンテンツ正本のリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
