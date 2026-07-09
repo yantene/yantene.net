@@ -64,6 +64,7 @@ describe("Note.reconstruct", () => {
       tags: [],
       publishedOn,
       lastModifiedOn,
+      series: undefined,
       sourceHash: "h",
       createdAt,
       updatedAt,

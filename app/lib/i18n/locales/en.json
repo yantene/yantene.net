@@ -40,6 +40,15 @@
     "empty": "No matching notes.",
     "resultCount": "{{count}} results"
   },
+  "series": {
+    "label": "Series",
+    "count": "{{count}} articles",
+    "position": "{{position}} of {{total}}",
+    "notFound": {
+      "title": "Series not found",
+      "heading": "Series not found"
+    }
+  },
   "login": {
     "heading": "Sign in",
     "description": "Enter your email address. We'll send you a magic link to sign in.",

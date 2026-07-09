@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { toNoteDetail } from "./note-detail-view";
 import { extractHeadings } from "./toc-headings";
-import type { NoteDetail } from "./note-detail-view";
+import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
 import type { Root } from "mdast";
 import type { LocaleVariables } from "~/backend/middleware/locale";
 import {
@@ -10,12 +10,41 @@ import {
   NoteSlug,
   NoteTag,
 } from "~/backend/domain/note";
-import { toPublicNote } from "~/backend/handlers/note-view";
+import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 
 /** 記事末に出す関連記事の最大件数。 */
 const RELATED_LIMIT = 6;
+
+/** 連載記事のシリーズ内ナビ (前後 + 位置)。単発記事は null。 */
+async function buildSeriesNav(
+  query: D1NoteQueryRepository,
+  note: PublicNoteMeta,
+): Promise<{
+  name: string;
+  slug: string;
+  total: number;
+  position: number;
+  prev: PublicNote | null;
+  next: PublicNote | null;
+} | null> {
+  if (note.series === null) return null;
+  const found = await query.listBySeries(note.series.slug);
+  const seriesNotes = found.map((item) => toPublicNote(item));
+  const index = seriesNotes.findIndex((item) => item.slug === note.slug);
+  return {
+    name: note.series.name,
+    slug: note.series.slug,
+    total: seriesNotes.length,
+    position: index + 1,
+    prev: index > 0 ? seriesNotes[index - 1] : null,
+    next:
+      index !== -1 && index < seriesNotes.length - 1
+        ? seriesNotes[index + 1]
+        : null,
+  };
+}
 
 /**
  * slug からノート詳細 (メタデータ + キャッシュ済み MDAST) を読む。
@@ -109,12 +138,14 @@ export function createNoteDetailPagesRouter(): Hono<{
       relatedTags,
       RELATED_LIMIT,
     );
+    const series = await buildSeriesNav(query, detail.note);
     return c.render("notes/show", {
       locale: c.get("locale"),
       note: detail.note,
       mdast: detail.mdast,
       related: related.map((note) => toPublicNote(note)),
       headings: extractHeadings(detail.mdast as Root),
+      series,
       og: {
         title: detail.note.title,
         description: detail.note.summary,

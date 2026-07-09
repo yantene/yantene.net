@@ -9,6 +9,11 @@ export interface PublicNoteMeta {
   readonly tags: readonly string[];
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
+  readonly series: {
+    readonly name: string;
+    readonly slug: string;
+    readonly order: number;
+  } | null;
 }
 
 /** 詳細レスポンス / ページ props。メタデータ + パース済み MDAST。 */
@@ -27,6 +32,7 @@ export function toNoteDetail(note: Note, mdast: unknown): NoteDetail {
       tags: note.tags.map((tag) => tag.toJSON()),
       publishedOn: note.publishedOn.toString({ calendarName: "never" }),
       lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
+      series: note.series ?? null,
     },
     mdast,
   };

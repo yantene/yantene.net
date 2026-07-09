@@ -278,4 +278,28 @@ describe("D1NoteQueryRepository", () => {
     const results = await new D1NoteQueryRepository(d1).search("なんでも", 10);
     expect(results).toEqual([]);
   });
+
+  it("lists a series ordered by seriesOrder", async () => {
+    const d1 = createTestD1();
+    const cmd = new D1NoteCommandRepository(d1);
+    const part = (slug: string, order: number): Note<IUnpersisted> =>
+      Note.create({
+        slug: NoteSlug.create(slug),
+        title: NoteTitle.create(slug),
+        summary: "s",
+        publishedOn: Temporal.PlainDate.from("2026-01-01"),
+        lastModifiedOn: Temporal.PlainDate.from("2026-01-01"),
+        series: { name: "My Series", slug: "my-series", order },
+        sourceHash: `h-${slug}`,
+      });
+    await cmd.upsert(part("second", 2));
+    await cmd.upsert(part("first", 1));
+
+    const list = await new D1NoteQueryRepository(d1).listBySeries("my-series");
+    expect(list.map((note) => note.slug.toString())).toEqual([
+      "first",
+      "second",
+    ]);
+    expect(list[0].series?.name).toBe("My Series");
+  });
 });

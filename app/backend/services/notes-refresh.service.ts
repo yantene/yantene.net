@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import GithubSlugger from "github-slugger";
 import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
 import { resolveAssetUrl } from "./note-asset-url";
@@ -245,6 +246,15 @@ function buildNoteContent(
       parsed.frontmatter.imageUrl === undefined
         ? undefined
         : ImageUrl.create(resolveAssetUrl(slug, parsed.frontmatter.imageUrl));
+    const seriesName = parsed.frontmatter.series;
+    const series =
+      seriesName === undefined
+        ? undefined
+        : {
+            name: seriesName,
+            slug: new GithubSlugger().slug(seriesName),
+            order: parsed.frontmatter.seriesOrder ?? 0,
+          };
     const note = Note.create({
       slug: group.slug,
       title: NoteTitle.create(parsed.frontmatter.title ?? group.base),
@@ -253,6 +263,7 @@ function buildNoteContent(
       tags: parsed.frontmatter.tags.map((tag) => NoteTag.create(tag)),
       publishedOn,
       lastModifiedOn,
+      series,
       sourceHash: group.contentHash,
     });
 

@@ -24,6 +24,10 @@ export function rowToNote(
     tags,
     publishedOn: isoToPlainDate(row.publishedOn),
     lastModifiedOn: isoToPlainDate(row.lastModifiedOn),
+    series:
+      row.series === null || row.seriesSlug === null || row.seriesOrder === null
+        ? undefined
+        : { name: row.series, slug: row.seriesSlug, order: row.seriesOrder },
     sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
