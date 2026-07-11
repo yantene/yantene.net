@@ -201,3 +201,8 @@
   appearance: none;
   width: 100%;
 }
+
+/* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
+.note-prose :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 5rem;
+}

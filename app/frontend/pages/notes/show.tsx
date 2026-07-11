@@ -73,8 +73,8 @@ export default function NoteShow({
         <meta name="description" content={note.summary} />
       </Head>
       <Header />
-      <div className="mx-auto flex w-full max-w-6xl flex-1 gap-10 px-6 py-10">
-        <main className="min-w-0 max-w-3xl flex-1">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
+        <main className="w-full min-w-0 max-w-3xl">
           <header className="mb-8">
             <h1 className="text-4xl font-bold">{note.title}</h1>
             <time
@@ -154,11 +154,13 @@ export default function NoteShow({
             </section>
           )}
         </main>
-        <aside className="hidden w-60 shrink-0 lg:block">
-          <div className="sticky top-24">
-            <TableOfContents title={t("notes.toc")} headings={headings} />
-          </div>
-        </aside>
+        {headings.length >= 2 && (
+          <aside className="hidden w-60 shrink-0 lg:block">
+            <div className="sticky top-24">
+              <TableOfContents title={t("notes.toc")} headings={headings} />
+            </div>
+          </aside>
+        )}
       </div>
       <Footer />
     </AppLayout>
