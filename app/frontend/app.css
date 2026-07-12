@@ -7,7 +7,8 @@
  * 主役 (primary)、tan/gold を差し色 (accent)、青を補助 (secondary)、rose をエラー系に。
  * 白シンプル・可読性重視 (装飾色は白地で低コントラストなので働く色は紺で担う)。 */
 @plugin "daisyui/theme" {
-  name: "light";
+  /* 組込みテーマ "light" と名前が衝突すると組込み既定色が勝つため、一意名にする。 */
+  name: "yantene";
   default: true;
   color-scheme: light;
 
