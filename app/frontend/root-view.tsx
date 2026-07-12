@@ -108,7 +108,7 @@ export const rootView: RootView = async (page, c) => {
   // hydration 対象がずれる・data-page 属性が壊れるため、body をそのまま配置する。
   // テーマは light 固定 (ダークモード不採用)。
   return `<!DOCTYPE html>
-<html lang="${locale}" data-theme="light">
+<html lang="${locale}" data-theme="yantene">
   <head>
     ${headHtml}
   </head>

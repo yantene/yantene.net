@@ -12,7 +12,8 @@
   "tags": {
     "title": "タグ",
     "heading": "タグ",
-    "empty": "タグがまだない。"
+    "empty": "タグがまだない。",
+    "articleCount": "{{count}} 記事"
   },
   "notes": {
     "title": "ノート",

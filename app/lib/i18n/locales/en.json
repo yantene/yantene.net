@@ -12,7 +12,8 @@
   "tags": {
     "title": "Tags",
     "heading": "Tags",
-    "empty": "No tags yet."
+    "empty": "No tags yet.",
+    "articleCount": "{{count}} articles"
   },
   "notes": {
     "title": "Notes",
