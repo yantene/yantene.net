@@ -18,8 +18,8 @@ type CelestimProps = {
   /** How far below the container bottom to push the orbit center (default: "60%") */
   readonly horizonDrop?: string;
   /**
-   * Overlay a veil that keeps the composited sky bright enough for text drawn on top.
-   * 空だけを見せる用途では不要なので既定は無効。
+   * Brighten the sky so that text drawn on top stays readable at every hour.
+   * 空だけを見せる用途では素の色のほうが良いので既定は無効。
    */
   readonly veil?: boolean;
 };
@@ -47,18 +47,19 @@ export function Celestim({
 
   return (
     <div
-      className="celestim-sky"
+      className={`celestim-sky${veil ? " celestim-sky-veiled" : ""}`}
       style={Object.keys(cssVars).length > 0 ? cssVars : undefined}
     >
-      {/* 月の影は空と同じ色で描く (だから欠けて見える)。ヴェールより奥に置かないと影だけ浮く。 */}
       <div className="celestim-turntable celestim-lunar-turntable">
         <div className="celestim-moon celestim-moon-light celestim-moon-light-left celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-light celestim-moon-light-right celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-shade-left celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-shade-right celestim-celestial-body" />
       </div>
-      {veil && <div className="celestim-veil" />}
-      {/* 太陽はヴェールより手前。奥に置くと白に溶けて見えなくなる。 */}
+      {/*
+        太陽は月より手前。両者は周期的に重なるが、月の影は空と同色で塗る実装なので
+        月が手前だと重なった瞬間に太陽が消える。
+      */}
       <div className="celestim-turntable celestim-solar-turntable">
         <div className="celestim-sun celestim-celestial-body" />
       </div>

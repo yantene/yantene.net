@@ -121,40 +121,58 @@ function contrastRatio(a: Rgba, b: Rgba): number {
 }
 
 describe("Celestim", () => {
-  it("omits the readability veil unless it is asked for", () => {
+  it("keeps the raw sky unless the veil is asked for", () => {
     const { container } = render(<Celestim />);
 
-    expect(container.querySelector(".celestim-veil")).toBeNull();
+    expect(container.querySelector(".celestim-sky-veiled")).toBeNull();
   });
 
-  it("layers the veil between the moon and the sun", () => {
+  it("switches the sky to the veiled cycle when asked", () => {
     const { container } = render(<Celestim veil />);
-    const sky = container.querySelector(".celestim-sky");
-    const order = [...(sky?.children ?? [])].map(
-      (element) => element.className,
-    );
+
+    expect(container.querySelector(".celestim-sky-veiled")).not.toBeNull();
+  });
+
+  it("paints the sun in front of the moon", () => {
+    const { container } = render(<Celestim />);
+    const order = [
+      ...(container.querySelector(".celestim-sky")?.children ?? []),
+    ].map((element) => element.className);
     const indexOf = (needle: string): number =>
       order.findIndex((name) => name.includes(needle));
 
-    // 月の影は空と同色で描かれるのでヴェールより奥、
-    // 太陽は白いヴェールに溶けないよう手前でなければならない。
+    // 太陽と月は周期的に同じ位置に来る。月の影は空と同色で塗るので、月が手前だと
+    // 重なった瞬間に太陽が塗り潰されて消える。
     expect(indexOf("celestim-lunar-turntable")).toBeLessThan(
-      indexOf("celestim-veil"),
-    );
-    expect(indexOf("celestim-veil")).toBeLessThan(
       indexOf("celestim-solar-turntable"),
     );
   });
 
+  it("repaints the moon shade with whatever cycle the sky uses", () => {
+    // 影は「空と同じ色で塗って欠けを作る」実装なので、空を差し替えたら影も
+    // 同じ色に差し替わらないと影だけ暗く浮く。ヴェールを別レイヤーとして
+    // 重ねる実装に戻すとこの対応が崩れるため、CSS 側で固定しておく。
+    for (const side of ["left", "right"]) {
+      const selector = `.celestim-sky-veiled .celestim-moon-shade-${side} {`;
+      const start = css.indexOf(selector);
+
+      expect(
+        start,
+        `no veiled override for moon-shade-${side}`,
+      ).toBeGreaterThanOrEqual(0);
+      expect(css.slice(start, css.indexOf("}", start))).toContain(
+        "celestim-veiled-sky-cycle",
+      );
+    }
+  });
+
   it("keeps veiled-sky text above WCAG AA across the whole day cycle", () => {
-    const sky = parseStops("sky-color-cycle");
-    const veil = parseStops("celestim-veil-cycle");
+    const sky = parseStops("celestim-veiled-sky-cycle");
     // ヒーローが実際に使う副次テキスト色 (base-content #1a2740 を 80% で重ねる)。
     const bodyText: Rgba = { red: 26, green: 39, blue: 64, alpha: 0.8 };
 
     const ratios = Array.from({ length: 201 }, (_, step) => {
-      const offset = step / 200;
-      const surface = composite(sampleAt(veil, offset), sampleAt(sky, offset));
+      const surface = sampleAt(sky, step / 200);
       return contrastRatio(composite(bodyText, surface), surface);
     });
 

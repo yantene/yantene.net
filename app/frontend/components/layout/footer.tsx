@@ -6,17 +6,11 @@ const currentYear = new Date().getFullYear();
 
 export function Footer(): React.JSX.Element {
   return (
-    <footer className="relative border-t border-border/50 [animation:sky-color-cycle_288s_linear_infinite]">
-      {/*
-        白の重ねは時間帯で濃さを変える (夜は空が暗く、一定濃度だと文字が読めなくなる)。
-        濃さの根拠は celestim.css の celestim-veil-cycle を参照。
-      */}
-      <div className="relative backdrop-blur-sm [animation:celestim-veil-cycle_288s_linear_infinite]">
-        <div className="mx-auto flex max-w-5xl items-center justify-center px-6 py-8">
-          <p className="text-xs text-foreground/80">
-            &copy; {currentYear} yantene.net
-          </p>
-        </div>
+    <footer className="relative border-t border-border/50 [animation:celestim-veiled-sky-cycle_288s_linear_infinite]">
+      <div className="mx-auto flex max-w-5xl items-center justify-center px-6 py-8">
+        <p className="text-xs text-foreground/80">
+          &copy; {currentYear} yantene.net
+        </p>
       </div>
     </footer>
   );

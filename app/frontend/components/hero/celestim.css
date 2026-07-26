@@ -45,43 +45,58 @@
 }
 
 /*
- * Readability veil (opt-in via the `veil` prop).
+ * Veiled sky cycle: 文字を重ねる用途 (opt-in) の空。
  *
  * 空の明度は時間帯で大きく振れる (真昼 rgb(201 242 255) と真夜中 rgb(40 50 80) では
- * 相対輝度が 10 倍以上違う)。一定濃度の白を被せるだけだと夜側でコントラストが不足するため、
- * 夜ほど白を濃くして合成後の明度を一定域に保つ。色味は残るので昼夜の移ろいは見える。
+ * 相対輝度が 10 倍以上違う) ため、素の空に文字を載せると夜側で読めなくなる。
  *
- * 各段の値は「上に載る文字が WCAG AA (4.5:1) を全周期で満たす」ことを基準に決めている
- * (現状の下限は位相 0.5 付近で 5.4:1)。変更するときは合成後の相対輝度が 0.68 を
- * 下回らないか確認すること。
+ * ここで白を被せた「合成後の色」を直接持つ。半透明のヴェールを別レイヤーとして
+ * 重ねる方法は採らない — それだと天体もヴェールの下で薄まってしまい、
+ * 特に夜の月がほぼ消える。空の色として持てば天体は素の発色のまま上に乗る。
+ *
+ * 各段は sky-color-cycle に白 50〜74% を被せた値で、「上に載る文字が WCAG AA
+ * (4.5:1) を全周期で満たす」ことを基準に決めている (現状の下限は位相 0.5 で 5.46:1)。
+ * 変更したら celestim.test.tsx のコントラスト検証で確認すること。
  */
-@keyframes celestim-veil-cycle {
+@keyframes celestim-veiled-sky-cycle {
   0% {
-    background-color: rgb(255 255 255 / 50%);
+    background-color: rgb(228 249 255);
   }
   25% {
-    background-color: rgb(255 255 255 / 62%);
+    background-color: rgb(255 224 177);
   }
-  /* 薄暮から夜明け前までは一定。夜側を必要以上に白くすると月が埋もれる。 */
+  /* 薄暮から夜明け前までは白 74% 相当で一定。これ以上白くすると月が埋もれる。 */
   37.5% {
-    background-color: rgb(255 255 255 / 74%);
+    background-color: rgb(227 218 205);
+  }
+  50% {
+    background-color: rgb(199 202 210);
   }
   62.5% {
-    background-color: rgb(255 255 255 / 74%);
+    background-color: rgb(222 209 199);
   }
   75% {
-    background-color: rgb(255 255 255 / 68%);
+    background-color: rgb(243 207 173);
   }
   100% {
-    background-color: rgb(255 255 255 / 50%);
+    background-color: rgb(228 249 255);
   }
 }
 
-.celestim-veil {
-  position: absolute;
-  inset: 0;
+.celestim-sky-veiled {
+  animation-name: celestim-veiled-sky-cycle;
+}
 
-  animation: celestim-veil-cycle var(--celestim-one-day) linear infinite;
+/*
+ * 月の影は「空と同じ色で塗って欠けを作る」実装なので、空を差し替えたら影も
+ * 同じ色に差し替えないと影だけが暗く浮く。
+ */
+.celestim-sky-veiled .celestim-moon-shade-left {
+  animation-name: celestim-moon-shade-left-phases, celestim-veiled-sky-cycle;
+}
+
+.celestim-sky-veiled .celestim-moon-shade-right {
+  animation-name: celestim-moon-shade-right-phases, celestim-veiled-sky-cycle;
 }
 
 /* Turntable: a square container that rotates celestial bodies */
