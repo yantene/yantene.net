@@ -26,11 +26,62 @@
 }
 
 .celestim-sky {
+  /*
+   * 既定値はここに置く。CSP (style-src 'self') 下ではブラウザが style 属性を
+   * 丸ごと無視するため、既定の描画を inline style の custom property に
+   * 依存させると空も天体も出なくなる。Celestim の props はこれを上書きする。
+   */
+  --celestim-one-day: 288s;
+  --celestim-sidereal-month: 28;
+  --celestim-orbit-diameter: min(100vw, 1200px);
+  --celestim-body-size: clamp(28px, 5.5vw, 72px);
+  --celestim-horizon-drop: 60%;
+
   position: absolute;
   inset: 0;
   overflow: hidden;
 
   animation: sky-color-cycle var(--celestim-one-day) linear infinite;
+}
+
+/*
+ * Readability veil (opt-in via the `veil` prop).
+ *
+ * 空の明度は時間帯で大きく振れる (真昼 rgb(201 242 255) と真夜中 rgb(40 50 80) では
+ * 相対輝度が 10 倍以上違う)。一定濃度の白を被せるだけだと夜側でコントラストが不足するため、
+ * 夜ほど白を濃くして合成後の明度を一定域に保つ。色味は残るので昼夜の移ろいは見える。
+ *
+ * 各段の値は「上に載る文字が WCAG AA (4.5:1) を全周期で満たす」ことを基準に決めている
+ * (現状の下限は位相 0.5 付近で 5.4:1)。変更するときは合成後の相対輝度が 0.68 を
+ * 下回らないか確認すること。
+ */
+@keyframes celestim-veil-cycle {
+  0% {
+    background-color: rgb(255 255 255 / 50%);
+  }
+  25% {
+    background-color: rgb(255 255 255 / 62%);
+  }
+  /* 薄暮から夜明け前までは一定。夜側を必要以上に白くすると月が埋もれる。 */
+  37.5% {
+    background-color: rgb(255 255 255 / 74%);
+  }
+  62.5% {
+    background-color: rgb(255 255 255 / 74%);
+  }
+  75% {
+    background-color: rgb(255 255 255 / 68%);
+  }
+  100% {
+    background-color: rgb(255 255 255 / 50%);
+  }
+}
+
+.celestim-veil {
+  position: absolute;
+  inset: 0;
+
+  animation: celestim-veil-cycle var(--celestim-one-day) linear infinite;
 }
 
 /* Turntable: a square container that rotates celestial bodies */
@@ -73,12 +124,26 @@
   translate: -50% 0;
 }
 
-/* Sun */
+/*
+ * Sun
+ *
+ * 白一色だと淡い空 (真昼 rgb(201 242 255)) にも白いヴェールにも埋もれて見えないため、
+ * 暖色のグラデーションで芯を作り、コロナ (box-shadow) で輪郭の外にも光を伸ばす。
+ */
 .celestim-sun {
   width: var(--celestim-body-size);
   height: var(--celestim-body-size);
-  background-color: rgb(255 255 255);
   border-radius: 50%;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgb(255 252 226) 0%,
+    rgb(255 238 150) 40%,
+    rgb(255 206 82) 70%,
+    rgb(255 172 46) 100%
+  );
+  box-shadow:
+    0 0 calc(var(--celestim-body-size) * 0.4) rgb(255 210 110 / 90%),
+    0 0 calc(var(--celestim-body-size) * 1.2) rgb(255 180 70 / 55%);
 }
 
 /* Moon */
