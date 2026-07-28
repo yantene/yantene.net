@@ -31,18 +31,19 @@ export function Celestim({
 
   return (
     <div className={className}>
+      <div className="celestim-turntable celestim-solar-turntable">
+        <div className="celestim-sun celestim-celestial-body" />
+      </div>
+      {/*
+        月は太陽より手前。新月は太陽と同じ位置に来るので、空と同色で塗られた月の影が
+        太陽を覆って日食になる。太陽を手前にすると新月でも太陽が見えたままになり、
+        この振る舞いが失われる。
+      */}
       <div className="celestim-turntable celestim-lunar-turntable">
         <div className="celestim-moon celestim-moon-light celestim-moon-light-left celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-light celestim-moon-light-right celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-shade-left celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-shade-right celestim-celestial-body" />
-      </div>
-      {/*
-        太陽は月より手前。両者は周期的に重なるが、月の影は空と同色で塗る実装なので
-        月が手前だと重なった瞬間に太陽が消える。
-      */}
-      <div className="celestim-turntable celestim-solar-turntable">
-        <div className="celestim-sun celestim-celestial-body" />
       </div>
     </div>
   );

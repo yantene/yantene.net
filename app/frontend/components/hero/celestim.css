@@ -37,6 +37,27 @@
   --celestim-body-size: clamp(28px, 5.5vw, 72px);
   --celestim-horizon-drop: 60%;
 
+  /*
+   * 読み込み直後の月齢 (日)。満月 (14) から始める。
+   *
+   * 素の 0 は新月、つまり月が太陽に重なった日食の瞬間から始まってしまう。
+   * 日食はこのアニメで一番の見どころなので、開始直後に消費させたくない。
+   * 満月は新月の対極なので、ここから始めると次の日食まで最も長くかかる
+   * (朔望周期の半分 = 既定の速度で約 67 分)。長く眺めていた人だけが出会える。
+   *
+   * これは「時計を 14 日進める」という 1 つの操作であって、位相と位置に別々の
+   * 細工をしているのではない。この実装では月相 = 太陽との離角で (位相アニメの
+   * 周期 8064s は離角の周期と一致する)、両者は同じ量の別表現だからである。
+   * 位相だけ進めると太陽に重なった満月という不可能な状態になる。
+   *
+   * 空と太陽は周期がちょうど 1 日なので、日単位のずらしでは不変。よって
+   * 月の 2 つのアニメ (公転・位相) にだけ書けば全体を進めたことになる。
+   */
+  --celestim-moon-age: 14;
+  --celestim-moon-age-delay: calc(
+    var(--celestim-one-day) * var(--celestim-moon-age) * -1
+  );
+
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -133,7 +154,7 @@
 .celestim-lunar-turntable {
   animation: celestim-revolution
     calc(var(--celestim-one-day) / (1 - (1 / var(--celestim-sidereal-month))))
-    linear infinite;
+    var(--celestim-moon-age-delay) linear infinite;
 }
 
 /* Celestial bodies: positioned at top-center of the turntable */
@@ -175,7 +196,10 @@
   clip-path: xywh(50% 0 50% 100%);
   animation: celestim-moon-light-right-phases
     calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
-    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    calc(
+      var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3 +
+        var(--celestim-moon-age-delay)
+    )
     linear infinite;
 }
 
@@ -195,7 +219,10 @@
   clip-path: xywh(0 0 50% 100%);
   animation: celestim-moon-light-left-phases
     calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
-    calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+    calc(
+      var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3 +
+        var(--celestim-moon-age-delay)
+    )
     linear infinite;
 }
 
@@ -216,7 +243,10 @@
   animation:
     celestim-moon-shade-right-phases
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
-      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1)
+      calc(
+        var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1 +
+          var(--celestim-moon-age-delay)
+      )
       linear infinite,
     sky-color-cycle var(--celestim-one-day) linear infinite;
 }
@@ -238,7 +268,10 @@
   animation:
     celestim-moon-shade-left-phases
       calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
-      calc(var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3)
+      calc(
+        var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3 +
+          var(--celestim-moon-age-delay)
+      )
       linear infinite,
     sky-color-cycle var(--celestim-one-day) linear infinite;
 }
