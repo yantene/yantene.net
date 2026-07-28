@@ -43,6 +43,7 @@ const paths = [
 ];
 
 let failed = 0;
+let blockedByAuth = 0;
 for (const path of paths) {
   let status = 0;
   try {
@@ -56,13 +57,29 @@ for (const path of paths) {
     failed += 1;
     continue;
   }
-  const isOk = status < 500;
+  // 401/403 はアプリのハンドラまで到達していないということ。500 未満だからと
+  // 成功に数えると、BASIC 認証の壁で止まったまま「全部 ok」になってしまう。
+  const isBlocked = status === 401 || status === 403;
+  const isOk = status < 500 && !isBlocked;
   if (!isOk) failed += 1;
+  if (isBlocked) blockedByAuth += 1;
   console.log(`${isOk ? "ok" : "x "} ${status} ${path}`);
 }
 
+if (blockedByAuth > 0) {
+  console.error(
+    `\nx ${blockedByAuth} path(s) were blocked before reaching the app (401/403).`,
+  );
+  console.error(
+    authHeader.Authorization === undefined
+      ? "  BASIC 認証のある環境には SMOKE_USER / SMOKE_PASS を渡すこと。"
+      : "  SMOKE_USER / SMOKE_PASS が誤っている可能性がある。",
+  );
+}
 if (failed > 0) {
-  console.error(`\nx ${failed} path(s) returned a server error (>= 500)`);
+  console.error(`\nx ${failed} path(s) failed`);
   process.exit(1);
 }
-console.log(`\nok all ${paths.length} paths responded < 500`);
+console.log(
+  `\nok all ${paths.length} paths reached the app and responded < 500`,
+);
