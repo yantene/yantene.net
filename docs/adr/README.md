@@ -19,3 +19,4 @@
 | [0006](0006-mdast-over-html-rendering.md)                 | Markdown を HTML ではなく MDAST でフロントエンドに渡す                | Accepted |
 | [0007](0007-artifacts-read-via-binding-token-and-rest.md) | Artifacts のファイル読み取りは binding 発行トークン + REST API で行う | Accepted |
 | [0008](0008-github-as-interim-content-backend.md)         | Artifacts 有効化までは GitHub を暫定コンテンツバックエンドにする      | Accepted |
+| [0009](0009-strict-csp-without-unsafe-inline.md)          | CSP を厳格に保ち、見た目は inline ではなく静的な CSS で表現する       | Accepted |

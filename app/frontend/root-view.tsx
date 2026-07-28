@@ -1,10 +1,5 @@
 import { renderToString } from "react-dom/server";
-import {
-  Link,
-  ReactRefresh,
-  Script,
-  ViteClient,
-} from "vite-ssr-components/react";
+import { Link, Script, ViteClient } from "vite-ssr-components/react";
 import type { RootView } from "@hono/inertia";
 import { renderPage } from "~/frontend/entry.server";
 import { renderJsonLd } from "~/frontend/json-ld";
@@ -28,13 +23,47 @@ interface OgValues {
   readonly type: string;
 }
 
+/*
+ * vite-ssr-components の <ReactRefresh /> は nonce を受け取れず、react-refresh の
+ * プリアンブルを nonce 無しの inline <script> で出す。CSP (script-src 'nonce-…' 'self')
+ * がそれをブロックするため __vite_plugin_react_preamble_installed__ が立たず、
+ * client entry が "can't detect preamble" で死んで dev の hydration が起きない。
+ * CSP を緩める代わりに、nonce 付きで自前で出す。
+ */
+// eslint-disable-next-line no-secrets/no-secrets -- vite の内部 URL とスニペットの誤検知。
+const REACT_REFRESH_PREAMBLE = `import RefreshRuntime from '/@react-refresh';
+RefreshRuntime.injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;
+window.__vite_plugin_react_preamble_installed__ = true;`;
+
+function ReactRefresh({
+  nonce,
+}: {
+  readonly nonce: string | undefined;
+}): React.JSX.Element | null {
+  if (import.meta.env.PROD) return null;
+
+  return (
+    <>
+      <script type="module" src="/@react-refresh" />
+      <script
+        type="module"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: REACT_REFRESH_PREAMBLE }}
+      />
+    </>
+  );
+}
+
 interface HeadProps {
   readonly title: string;
   readonly description: string;
   readonly og: OgValues;
+  readonly nonce: string | undefined;
 }
 
-function Head({ title, description, og }: HeadProps): React.JSX.Element {
+function Head({ title, description, og, nonce }: HeadProps): React.JSX.Element {
   return (
     <>
       <meta charSet="utf-8" />
@@ -62,7 +91,7 @@ function Head({ title, description, og }: HeadProps): React.JSX.Element {
       <meta name="twitter:description" content={og.description} />
       <meta name="twitter:image" content={og.image} />
       <ViteClient />
-      <ReactRefresh />
+      <ReactRefresh nonce={nonce} />
       <Link href="/app/frontend/app.css" rel="stylesheet" />
       <Script src="/app/frontend/entry.client.tsx" />
     </>
@@ -95,10 +124,18 @@ export const rootView: RootView = async (page, c) => {
 
   const jsonLdScript = renderJsonLd(page.props.jsonLd);
 
+  // secureHeaders が NONCE を要求したときだけ値が入る (本番も dev も入る)。
+  const nonce = c.get("secureHeadersNonce");
+
   const { head, body } = await renderPage(page);
   const headHtml =
     renderToString(
-      <Head title={meta.title} description={meta.description} og={og} />,
+      <Head
+        title={meta.title}
+        description={meta.description}
+        og={og}
+        nonce={nonce}
+      />,
     ) +
     head.join("") +
     jsonLdScript;

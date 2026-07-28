@@ -199,6 +199,21 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
   または関数を分離する
 - TDD: Red → Green → Refactor
 
+## inline style を使わない (CSP)
+
+CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザは inline `style`
+属性を丸ごと無視する**。nonce は要素にしか付けられず属性には効かないため、`style={...}`
+で渡した値は本番で必ず消える。しかも例外も警告も出ず、見た目だけが静かに壊れる。
+
+- 見た目の可変軸は**静的な CSS のクラスの段階**として持つ (連続値は使えない)
+- コンポーネント CSS は `app.css` に `@import` で束ねる。dev の Vite は
+  `import "./x.css"` を JS からの `<style>` 注入で届けるが、それも CSP に落とされる
+- 自前で出す inline `<script>` には `c.get("secureHeadersNonce")` の nonce を付ける
+- `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
+- 見た目の確認は `pnpm dev` か `vite preview` で行う (Storybook には CSP が無い)
+
+判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) を参照。
+
 ## URL 命名規則
 
 URL パスセグメントとクエリパラメータは kebab-case で統一する。

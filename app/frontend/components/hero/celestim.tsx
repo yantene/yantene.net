@@ -1,22 +1,21 @@
-import "./celestim.css";
-
 /*
- * 各既定値は celestim.css の `.celestim-sky` が持つ。ここで既定を埋めて style 属性に
- * 書き出すことはしない — CSP (style-src 'self') 下ではブラウザが style 属性ごと
- * 無視するため、既定の描画が inline style に依存していると何も表示されなくなる。
- * props は「CSP の無い環境 (Storybook 等) での上書き」として扱う。
+ * 設定値はすべて celestim.css の `.celestim-sky` が CSS 変数として持つ。
+ * inline style で渡す手は使えない — CSP (style-src 'self') 下ではブラウザが
+ * style 属性ごと無視するため、本番でだけ設定が消えて空も天体も出なくなる。
+ * 可変にしたい軸はクラスの段階として CSS 側に用意する。
  */
+/** 全周期を短時間で見たいとき (主に Storybook) 用の速度違い。 */
+type CelestimSpeed = "normal" | "fast" | "slow";
+
+function speedClass(speed: CelestimSpeed): string {
+  if (speed === "fast") return " celestim-sky-fast";
+  if (speed === "slow") return " celestim-sky-slow";
+  return "";
+}
+
 type CelestimProps = {
-  /** Duration of one day cycle in seconds (default: 288) */
-  readonly dayDuration?: number;
-  /** Sidereal month length in days (default: 28) */
-  readonly siderealMonth?: number;
-  /** Orbit diameter as CSS value (default: "min(100vw, 1200px)") */
-  readonly orbitDiameter?: string;
-  /** Celestial body size as CSS value (default: "clamp(28px, 5.5vw, 72px)") */
-  readonly bodySize?: string;
-  /** How far below the container bottom to push the orbit center (default: "60%") */
-  readonly horizonDrop?: string;
+  /** Length of one day cycle (default: "normal" = 288s) */
+  readonly speed?: CelestimSpeed;
   /**
    * Brighten the sky so that text drawn on top stays readable at every hour.
    * 空だけを見せる用途では素の色のほうが良いので既定は無効。
@@ -25,31 +24,13 @@ type CelestimProps = {
 };
 
 export function Celestim({
-  dayDuration,
-  siderealMonth,
-  orbitDiameter,
-  bodySize,
-  horizonDrop,
+  speed = "normal",
   veil = false,
 }: CelestimProps = {}): React.JSX.Element {
-  const overrides = {
-    "--celestim-one-day":
-      dayDuration === undefined ? undefined : `${String(dayDuration)}s`,
-    "--celestim-sidereal-month":
-      siderealMonth === undefined ? undefined : String(siderealMonth),
-    "--celestim-orbit-diameter": orbitDiameter,
-    "--celestim-body-size": bodySize,
-    "--celestim-horizon-drop": horizonDrop,
-  };
-  const cssVars = Object.fromEntries(
-    Object.entries(overrides).filter(([, value]) => value !== undefined),
-  ) as React.CSSProperties;
+  const className = `celestim-sky${veil ? " celestim-sky-veiled" : ""}${speedClass(speed)}`;
 
   return (
-    <div
-      className={`celestim-sky${veil ? " celestim-sky-veiled" : ""}`}
-      style={Object.keys(cssVars).length > 0 ? cssVars : undefined}
-    >
+    <div className={className}>
       <div className="celestim-turntable celestim-lunar-turntable">
         <div className="celestim-moon celestim-moon-light celestim-moon-light-left celestim-celestial-body" />
         <div className="celestim-moon celestim-moon-light celestim-moon-light-right celestim-celestial-body" />

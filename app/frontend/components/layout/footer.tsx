@@ -1,7 +1,4 @@
-// フッター帯も Celestim と同じ空のサイクルで塗る。keyframes の定義元なので、
-// ヒーローの無いページでもアニメが効くよう明示的に読み込む。
-import "~/frontend/components/hero/celestim.css";
-
+// フッター帯も Celestim と同じ空のサイクルで塗る (keyframes は app.css 経由で届く)。
 const currentYear = new Date().getFullYear();
 
 export function Footer(): React.JSX.Element {

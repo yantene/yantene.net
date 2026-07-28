@@ -27,9 +27,9 @@
 
 .celestim-sky {
   /*
-   * 既定値はここに置く。CSP (style-src 'self') 下ではブラウザが style 属性を
-   * 丸ごと無視するため、既定の描画を inline style の custom property に
-   * 依存させると空も天体も出なくなる。Celestim の props はこれを上書きする。
+   * 設定値はここに置く。CSP (style-src 'self') 下ではブラウザが style 属性を
+   * 丸ごと無視するため、inline style の custom property で渡すと本番でだけ
+   * 設定が消えて空も天体も出なくなる。可変にしたい軸はクラスで用意する。
    */
   --celestim-one-day: 288s;
   --celestim-sidereal-month: 28;
@@ -85,6 +85,15 @@
 
 .celestim-sky-veiled {
   animation-name: celestim-veiled-sky-cycle;
+}
+
+/* 全周期を短時間で見るための速度違い (主に Storybook 用)。 */
+.celestim-sky-fast {
+  --celestim-one-day: 24s;
+}
+
+.celestim-sky-slow {
+  --celestim-one-day: 600s;
 }
 
 /*
