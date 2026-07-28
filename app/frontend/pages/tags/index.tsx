@@ -14,17 +14,26 @@ interface TagsIndexProps extends PageProps {
   readonly tags: readonly TagCount[];
 }
 
-/** 記事数 → フォントサイズ(rem)・太さ。頻度をサイズで表すタグクラウド用。 */
-function scaleByCount(
-  count: number,
-  min: number,
-  max: number,
-): { fontSize: string; fontWeight: number } {
+/*
+ * 頻度を表す大小は静的なクラスの段階で持つ。inline style で連続値を渡すと
+ * CSP (style-src 'self') に style 属性ごと落とされ、全部同じ大きさになる。
+ * 文字列リテラルで書くことで Tailwind のスキャンにも乗る。
+ */
+const tagScales = [
+  "text-base font-normal",
+  "text-lg font-normal",
+  "text-xl font-medium",
+  "text-2xl font-semibold",
+  "text-3xl font-semibold",
+  "text-4xl font-bold",
+] as const;
+
+/** 記事数 → タグクラウドの大小クラス。 */
+function scaleByCount(count: number, min: number, max: number): string {
   const ratio = max === min ? 0.5 : (count - min) / (max - min);
-  return {
-    fontSize: `${(1 + ratio * 1.7).toFixed(3)}rem`,
-    fontWeight: 400 + Math.round(ratio * 3) * 100,
-  };
+  const step = Math.round(ratio * (tagScales.length - 1));
+
+  return tagScales.at(step) ?? tagScales[0];
 }
 
 export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
@@ -50,8 +59,7 @@ export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
               <li key={tag}>
                 <Link
                   href={`/notes?tag=${encodeURIComponent(tag)}`}
-                  style={scaleByCount(count, min, max)}
-                  className="leading-none text-primary underline-offset-4 transition-colors hover:decoration-accent hover:underline"
+                  className={`${scaleByCount(count, min, max)} leading-none text-primary underline-offset-4 transition-colors hover:decoration-accent hover:underline`}
                   title={t("tags.articleCount", { count })}
                 >
                   {tag}

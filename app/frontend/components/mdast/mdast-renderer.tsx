@@ -7,7 +7,6 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
-import "./mdast-renderer.css";
 import type { Element, Root as HastRoot, RootContent } from "hast";
 import type { Root as MdastRoot } from "mdast";
 

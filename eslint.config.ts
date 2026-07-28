@@ -332,6 +332,28 @@ const config = [
     },
   },
 
+  // CSP (style-src 'self') はブラウザに inline style 属性を丸ごと無視させる。
+  // style で渡した値は本番で必ず消えるので、見た目は静的な CSS / クラスで表現する。
+  // 過去に Celestim の CSS 変数とタグクラウドの文字サイズがこれで消えている (#78, #80)。
+  {
+    files: ["app/frontend/**/*.tsx"],
+    ignores: ["app/frontend/**/*.stories.tsx"],
+    rules: {
+      "react/forbid-dom-props": [
+        "error",
+        {
+          forbid: [
+            {
+              propName: "style",
+              message:
+                "CSP (style-src 'self') が inline style 属性を落とすため本番で効かない。CSS / クラスで表現すること。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   prettierConfig,
 ] as Linter.Config[];
 

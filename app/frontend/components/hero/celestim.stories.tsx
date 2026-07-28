@@ -24,20 +24,20 @@ export const Default: Story = {};
 
 export const FastCycle: Story = {
   args: {
-    dayDuration: 24,
+    speed: "fast",
   },
 };
 
 /** 文字を重ねる用途 (ヒーロー) の見え方。夜側ほど白が濃くなる。 */
 export const Veiled: Story = {
   args: {
-    dayDuration: 24,
+    speed: "fast",
     veil: true,
   },
 };
 
 export const SlowCycle: Story = {
   args: {
-    dayDuration: 600,
+    speed: "slow",
   },
 };

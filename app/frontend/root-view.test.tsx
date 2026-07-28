@@ -14,8 +14,13 @@ const { rootView } = await import("./root-view");
 
 function context(
   url = "http://localhost/notes",
+  nonce: string | undefined = "test-nonce",
 ): Parameters<typeof rootView>[1] {
-  return { req: { url } } as unknown as Parameters<typeof rootView>[1];
+  return {
+    req: { url },
+    // secureHeaders が仕込む nonce。dev の react-refresh プリアンブルに載る。
+    get: (key: string) => (key === "secureHeadersNonce" ? nonce : undefined),
+  } as unknown as Parameters<typeof rootView>[1];
 }
 
 describe("rootView", () => {

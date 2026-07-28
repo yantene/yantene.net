@@ -1,4 +1,11 @@
 @import "tailwindcss" source(".");
+
+/* コンポーネント CSS はここに束ねる。dev の Vite は component の `import "./x.css"` を
+ * JS からの <style> 注入で届けるが、CSP (style-src 'self') がそれをブロックするため
+ * dev でだけスタイルが丸ごと消える。app.css は <link> で届くのでその影響を受けない。 */
+@import "./components/hero/celestim.css";
+@import "./components/mdast/mdast-renderer.css";
+
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
