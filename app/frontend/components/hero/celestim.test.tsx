@@ -133,7 +133,7 @@ describe("Celestim", () => {
     expect(container.querySelector(".celestim-sky-veiled")).not.toBeNull();
   });
 
-  it("paints the sun in front of the moon", () => {
+  it("paints the moon in front of the sun so that new moons eclipse it", () => {
     const { container } = render(<Celestim />);
     const order = [
       ...(container.querySelector(".celestim-sky")?.children ?? []),
@@ -141,10 +141,10 @@ describe("Celestim", () => {
     const indexOf = (needle: string): number =>
       order.findIndex((name) => name.includes(needle));
 
-    // 太陽と月は周期的に同じ位置に来る。月の影は空と同色で塗るので、月が手前だと
-    // 重なった瞬間に太陽が塗り潰されて消える。
-    expect(indexOf("celestim-lunar-turntable")).toBeLessThan(
-      indexOf("celestim-solar-turntable"),
+    // 新月は太陽と同じ位置に来る。空と同色で塗られた月の影が太陽を覆うことで
+    // 日食になる。太陽を手前にすると新月でも太陽が見えたままになり日食が消える。
+    expect(indexOf("celestim-solar-turntable")).toBeLessThan(
+      indexOf("celestim-lunar-turntable"),
     );
   });
 
