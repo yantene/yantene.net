@@ -8,6 +8,12 @@ type HeaderProps = {
 export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
   const isTransparent = variant === "transparent";
 
+  // 透過時は動く空の上に載る。白地前提の text-muted-foreground (62% 透過) では
+  // 夜側でコントラストが 4.5:1 を割るため、濃いめの色に切り替える。
+  const linkClassName = `text-sm font-medium transition-colors hover:text-primary ${
+    isTransparent ? "text-foreground/80" : "text-muted-foreground"
+  }`;
+
   return (
     <header
       className={
@@ -24,29 +30,16 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
           <nav
             className={`flex items-center gap-7 sm:gap-9${isTransparent ? " text-halo" : ""}`}
           >
-            <Link
-              href="/"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+            <Link href="/" className={linkClassName}>
               Home
             </Link>
-            <Link
-              href="/notes"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+            <Link href="/notes" className={linkClassName}>
               Notes
             </Link>
-            <Link
-              href="/tags"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+            <Link href="/tags" className={linkClassName}>
               Tags
             </Link>
-            <Link
-              href="/search"
-              aria-label="Search"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+            <Link href="/search" aria-label="Search" className={linkClassName}>
               Search
             </Link>
           </nav>

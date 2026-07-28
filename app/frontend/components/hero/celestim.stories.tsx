@@ -28,6 +28,14 @@ export const FastCycle: Story = {
   },
 };
 
+/** 文字を重ねる用途 (ヒーロー) の見え方。夜側ほど白が濃くなる。 */
+export const Veiled: Story = {
+  args: {
+    dayDuration: 24,
+    veil: true,
+  },
+};
+
 export const SlowCycle: Story = {
   args: {
     dayDuration: 600,

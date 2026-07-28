@@ -26,11 +26,77 @@
 }
 
 .celestim-sky {
+  /*
+   * 既定値はここに置く。CSP (style-src 'self') 下ではブラウザが style 属性を
+   * 丸ごと無視するため、既定の描画を inline style の custom property に
+   * 依存させると空も天体も出なくなる。Celestim の props はこれを上書きする。
+   */
+  --celestim-one-day: 288s;
+  --celestim-sidereal-month: 28;
+  --celestim-orbit-diameter: min(100vw, 1200px);
+  --celestim-body-size: clamp(28px, 5.5vw, 72px);
+  --celestim-horizon-drop: 60%;
+
   position: absolute;
   inset: 0;
   overflow: hidden;
 
   animation: sky-color-cycle var(--celestim-one-day) linear infinite;
+}
+
+/*
+ * Veiled sky cycle: 文字を重ねる用途 (opt-in) の空。
+ *
+ * 空の明度は時間帯で大きく振れる (真昼 rgb(201 242 255) と真夜中 rgb(40 50 80) では
+ * 相対輝度が 10 倍以上違う) ため、素の空に文字を載せると夜側で読めなくなる。
+ *
+ * ここで白を被せた「合成後の色」を直接持つ。半透明のヴェールを別レイヤーとして
+ * 重ねる方法は採らない — それだと天体もヴェールの下で薄まってしまい、
+ * 特に夜の月がほぼ消える。空の色として持てば天体は素の発色のまま上に乗る。
+ *
+ * 各段は sky-color-cycle に白 50〜74% を被せた値で、「上に載る文字が WCAG AA
+ * (4.5:1) を全周期で満たす」ことを基準に決めている (現状の下限は位相 0.5 で 5.46:1)。
+ * 変更したら celestim.test.tsx のコントラスト検証で確認すること。
+ */
+@keyframes celestim-veiled-sky-cycle {
+  0% {
+    background-color: rgb(228 249 255);
+  }
+  25% {
+    background-color: rgb(255 224 177);
+  }
+  /* 薄暮から夜明け前までは白 74% 相当で一定。これ以上白くすると月が埋もれる。 */
+  37.5% {
+    background-color: rgb(227 218 205);
+  }
+  50% {
+    background-color: rgb(199 202 210);
+  }
+  62.5% {
+    background-color: rgb(222 209 199);
+  }
+  75% {
+    background-color: rgb(243 207 173);
+  }
+  100% {
+    background-color: rgb(228 249 255);
+  }
+}
+
+.celestim-sky-veiled {
+  animation-name: celestim-veiled-sky-cycle;
+}
+
+/*
+ * 月の影は「空と同じ色で塗って欠けを作る」実装なので、空を差し替えたら影も
+ * 同じ色に差し替えないと影だけが暗く浮く。
+ */
+.celestim-sky-veiled .celestim-moon-shade-left {
+  animation-name: celestim-moon-shade-left-phases, celestim-veiled-sky-cycle;
+}
+
+.celestim-sky-veiled .celestim-moon-shade-right {
+  animation-name: celestim-moon-shade-right-phases, celestim-veiled-sky-cycle;
 }
 
 /* Turntable: a square container that rotates celestial bodies */
@@ -73,12 +139,26 @@
   translate: -50% 0;
 }
 
-/* Sun */
+/*
+ * Sun
+ *
+ * 白一色だと淡い空 (真昼 rgb(201 242 255)) にも白いヴェールにも埋もれて見えないため、
+ * 暖色のグラデーションで芯を作り、コロナ (box-shadow) で輪郭の外にも光を伸ばす。
+ */
 .celestim-sun {
   width: var(--celestim-body-size);
   height: var(--celestim-body-size);
-  background-color: rgb(255 255 255);
   border-radius: 50%;
+  background-image: radial-gradient(
+    circle at 50% 50%,
+    rgb(255 252 226) 0%,
+    rgb(255 238 150) 40%,
+    rgb(255 206 82) 70%,
+    rgb(255 172 46) 100%
+  );
+  box-shadow:
+    0 0 calc(var(--celestim-body-size) * 0.4) rgb(255 210 110 / 90%),
+    0 0 calc(var(--celestim-body-size) * 1.2) rgb(255 180 70 / 55%);
 }
 
 /* Moon */
