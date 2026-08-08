@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import {
   NONCE,
@@ -17,6 +18,7 @@ import { createSearchApiRouter } from "./handlers/notes/search.handler";
 import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
+import type { MiddlewareHandler } from "hono";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { UserNotFoundError } from "~/backend/domain/user";
 import { requireSession } from "~/backend/middleware/auth";
@@ -27,6 +29,57 @@ type RootBindings = {
   Bindings: Env;
   Variables: SecureHeadersVariables;
 };
+
+// hono は SecureHeadersOptions を export していないため、関数のシグネチャから取る。
+type SecureHeadersOptions = NonNullable<Parameters<typeof secureHeaders>[0]>;
+
+/** CSP 以外のセキュリティヘッダー。全環境で共通に付ける。 */
+const baseSecureHeaderOptions: SecureHeadersOptions = {
+  strictTransportSecurity: "max-age=31536000; includeSubDomains; preload",
+  xFrameOptions: "DENY",
+  referrerPolicy: "strict-origin-when-cross-origin",
+  permissionsPolicy: {
+    camera: [],
+    microphone: [],
+    geolocation: [],
+  },
+};
+
+/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0009)。 */
+const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
+  ...baseSecureHeaderOptions,
+  contentSecurityPolicy: {
+    defaultSrc: ["'self'"],
+    scriptSrc: [NONCE, "'self'"],
+    styleSrc: ["'self'"],
+    imgSrc: ["'self'", "data:"],
+    connectSrc: ["'self'"],
+    fontSrc: ["'self'"],
+    frameAncestors: ["'none'"],
+  },
+});
+
+/** development 用。CSP のみ外す。 */
+const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> = secureHeaders(
+  baseSecureHeaderOptions,
+);
+
+/**
+ * CSP は development でのみ外す (ADR 0011)。
+ *
+ * Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
+ * `style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。
+ * development 以外 (想定外の APP_ENV を含む) では必ず CSP を付ける (secure by default)。
+ */
+const environmentAwareSecureHeaders = createMiddleware<RootBindings>(
+  async (c, next) => {
+    const middleware =
+      c.env.APP_ENV === "development"
+        ? secureHeadersWithoutCsp
+        : secureHeadersWithCsp;
+    await middleware(c, next);
+  },
+);
 
 /**
  * Hono アプリを組み立てる。ページ描画は React Router に委譲する。
@@ -50,28 +103,7 @@ export const getApp = (
 ) => {
   const app = new Hono<RootBindings>();
 
-  app.use(
-    "*",
-    secureHeaders({
-      strictTransportSecurity: "max-age=31536000; includeSubDomains; preload",
-      xFrameOptions: "DENY",
-      contentSecurityPolicy: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [NONCE, "'self'"],
-        styleSrc: ["'self'"],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
-        frameAncestors: ["'none'"],
-      },
-      referrerPolicy: "strict-origin-when-cross-origin",
-      permissionsPolicy: {
-        camera: [],
-        microphone: [],
-        geolocation: [],
-      },
-    }),
-  );
+  app.use("*", environmentAwareSecureHeaders);
 
   app.use("*", conditionalBasicAuth);
 

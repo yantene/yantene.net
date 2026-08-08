@@ -223,26 +223,32 @@ CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザ
 で渡した値は本番で必ず消える。しかも例外も警告も出ず、見た目だけが静かに壊れる。
 
 - 見た目の可変軸は**静的な CSS のクラスの段階**として持つ (連続値は使えない)
-- コンポーネント CSS は `app.css` に `@import` で束ねる。dev の Vite は
-  `import "./x.css"` を JS からの `<style>` 注入で届けるが、それも CSP に落とされる
+- コンポーネント CSS は `app.css` に `@import` で束ねる
 - 自前で出す inline `<script>` には `c.get("secureHeadersNonce")` の nonce を付ける
 - `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
-- 見た目の確認は `pnpm dev` か `vite preview` で行う (Storybook には CSP が無い)
 
-### dev だけで出る 2 つのコンソールエラー (どちらも本番では出ない)
+### CSP は development では付かない (ADR 0011)
 
-`pnpm dev` では次の 2 つが出るが、いずれも Vite / React Router の dev 専用機構が原因で、
-本番ビルドでは発生しない。**本番ビルド (`pnpm run preview`) で再現しなければ追わなくてよい。**
+Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
+`style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。そのため
+**`APP_ENV === "development"` のときだけ CSP を付けない**。staging / production
+(および想定外の `APP_ENV`) では必ず付く。`app/backend/csp.test.ts` がこれを固定している。
 
-- `Applying inline style violates ... 'style-src 'self''` — dev の HMR が CSS を
-  `<style>` 注入で届けるため。本番は `<link rel="stylesheet">` で配信されるので出ない。
-  ただし**この状態では CSS が丸ごと落ちる**ので、dev で見た目が崩れていたら
-  まずここを疑う (スタイル崩れを実装のバグと誤認しないこと)
-- `A tree hydrated but some attributes ... didn't match` (`data-react-router-critical-css`
-  の `nonce`) — React Router の dev 専用 critical CSS が `nonce=""` で出るため。
-  本番の HTML にこの `<link>` 自体が存在しない
+つまり **dev では CSP 違反に気づけない**。次を守ること。
 
-判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) を参照。
+- **inline style / inline script / 外部リソースの追加など CSP に関わる変更をしたら、
+  `pnpm run preview` で必ず確認する** (dev で動いても本番で落ちる)
+- Storybook にも CSP は無いので、CSP の確認には使えない
+
+### dev だけで出るコンソールエラー (本番では出ない)
+
+`A tree hydrated but some attributes ... didn't match` — React Router の dev 専用
+critical CSS (`data-react-router-critical-css`) が `nonce=""` の `<link>` を出す一方、
+クライアント側の context には nonce が入らないため。本番の HTML にはこの `<link>`
+自体が存在しないので発生しない。**本番ビルドで再現しなければ追わなくてよい。**
+
+判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) と
+[ADR 0011](../../docs/adr/0011-csp-enforced-outside-development.md) を参照。
 
 ## URL 命名規則
 

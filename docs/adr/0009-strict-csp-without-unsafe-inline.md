@@ -1,6 +1,6 @@
 # 0009. CSP を厳格に保ち、見た目は inline ではなく静的な CSS で表現する
 
-- Status: Accepted
+- Status: Superseded by [0011](0011-csp-enforced-outside-development.md)
 - Date: 2026-07-28
 - Deciders: @yantene
 
