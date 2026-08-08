@@ -37,8 +37,8 @@
     "release": "bash scripts/release.sh",
     "typegen": "wrangler types",
     "rr-typegen": "react-router typegen",
-    "wrangler:check": "wrangler deploy --dry-run --env='' && wrangler deploy --dry-run --env=staging && wrangler deploy --dry-run --env=production",
-    "postinstall": "pnpm run typegen"
+    "wrangler:check": "bash scripts/check-wrangler.sh",
+    "postinstall": "pnpm run typegen && pnpm run rr-typegen"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
