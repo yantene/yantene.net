@@ -30,7 +30,7 @@ export function HeroSection(): React.JSX.Element {
       {/* 空の手前に街。テキストは街の線画に重なってよい (線が薄いので読める)。 */}
       <Cityscape />
 
-      <div className="hero-content relative flex flex-col items-center gap-5 px-6 text-center">
+      <div className="hero-intro relative flex flex-col items-center gap-5 px-6 text-center">
         <span className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
           Web Developer
         </span>

@@ -27,8 +27,13 @@
 /*
  * 見出しからソーシャルまでの本文。下端は目盛りの帯を避けるが、街の線画とは重ねる
  * (線が薄いので読める。テキストを街の上に逃がすとヒーローが間延びする)。
+ *
+ * クラス名を hero-content にしてはいけない。daisyUI の hero コンポーネントが同じ名前を
+ * 持っており、max-width: 80rem が黙って効いて、広い画面でだけ本文が半分の幅に縮んで
+ * 左に寄る。daisyUI と同名になりうる語 (hero / card / footer / timeline など) を
+ * 単独で使わず、必ず別の語を足すこと。
  */
-.hero-content {
+.hero-intro {
   padding-top: 6rem;
   padding-bottom: calc(var(--timeline-height) + 3rem);
 }
@@ -44,6 +49,11 @@
   aspect-ratio: 1920 / 340;
   /* 画面が極端に広いとき、街だけが伸び上がってヒーローを埋めないようにする。 */
   max-height: 18rem;
+  /*
+   * 高さの上限に当たると、幅も比率に従って縮む。左右を 0 で留めているだけでは
+   * 収まりきらない指定になり、左端に寄ってしまうので、余った分を左右に等分する。
+   */
+  margin-inline: auto;
   overflow: hidden;
   pointer-events: none;
   color: var(--color-base-content);
