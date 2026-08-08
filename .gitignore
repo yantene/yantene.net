@@ -27,3 +27,9 @@ debug-storybook.log
 
 !.dev.vars.example
 !.env.example
+
+# React Router (generated types)
+/.react-router/
+
+# React Router build output
+/build/

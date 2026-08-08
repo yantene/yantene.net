@@ -179,15 +179,16 @@ const config = [
     },
   },
 
-  // Inertia.js のページは default export のみ。entry / root-view も同様に
-  // only-export-components 警告の対象外とする。
+  // React Router のルートモジュールは loader / meta / links / ErrorBoundary を
+  // コンポーネントと同じファイルから export する規約なので、
+  // only-export-components の警告対象から外す。
   {
     files: [
-      "app/frontend/pages/**/*.tsx",
+      "app/frontend/routes/**/*.tsx",
+      "app/frontend/root.tsx",
       "app/frontend/layouts/**/*.tsx",
       "app/frontend/entry.client.tsx",
       "app/frontend/entry.server.tsx",
-      "app/frontend/root-view.tsx",
     ],
     rules: {
       "react-refresh/only-export-components": "off",

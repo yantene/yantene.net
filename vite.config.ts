@@ -1,23 +1,16 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { inertiaPages } from "@hono/inertia/vite";
+import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import ssrPlugin from "vite-ssr-components/plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
   plugins: [
-    inertiaPages({
-      pagesDir: "app/frontend/pages",
-      outFile: "app/frontend/pages.gen.ts",
-      serverModule: "~/backend",
-    }),
     cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
-    react(),
-    ssrPlugin(),
+    reactRouter(),
+    // tsconfig の paths (~/* → app/*) を解決する。Vite 8 の resolve.tsconfigPaths は
+    // React Router v7 がまだ噛み合わないため、プラグイン側で解決する。
+    tsconfigPaths(),
   ],
 });

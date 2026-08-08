@@ -1,30 +1,17 @@
 import { Hono } from "hono";
-import type { LocaleVariables } from "~/backend/middleware/locale";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
-type TagsPagesBindings = {
-  Bindings: Env;
-  Variables: LocaleVariables;
-};
+export interface TagCount {
+  readonly tag: string;
+  readonly count: number;
+}
 
 /**
- * タグ索引の公開ページルータ (Inertia)。認証不要。
- * GET /tags → 全タグと各記事数の一覧。
+ * タグ索引ページのデータを読む (Composition Root)。認証不要。
+ * 全タグと各記事数を返す。
  */
-export function createTagsPagesRouter(): Hono<TagsPagesBindings> {
-  const router = new Hono<TagsPagesBindings>();
-
-  router.get("/tags", async (c) => {
-    const query = new D1NoteQueryRepository(c.env.D1);
-    const tags = await query.listTags();
-    return c.render("tags/index", {
-      locale: c.get("locale"),
-      tags,
-      og: { image: "/og/default", type: "website" },
-    });
-  });
-
-  return router;
+export async function loadTagsPage(env: Env): Promise<readonly TagCount[]> {
+  return new D1NoteQueryRepository(env.D1).listTags();
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link } from "react-router";
 
 export interface NoteCardProps {
   readonly slug: string;
@@ -23,7 +23,7 @@ export function NoteCard({
 }: NoteCardProps): React.JSX.Element {
   return (
     <Link
-      href={`/notes/${slug}`}
+      to={`/notes/${slug}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
     >
       <figure className="aspect-video overflow-hidden">

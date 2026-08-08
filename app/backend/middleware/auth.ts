@@ -56,7 +56,12 @@ export const requireSession = createSessionMiddleware({
   onUnauthorized: "401",
 });
 
-/** Inertia ページ用: 未認証時に /login へリダイレクト */
+/**
+ * ページ用: 未認証時に /login へリダイレクト。
+ *
+ * 現状ログインは休眠中で利用箇所が無い。認証必須ページ (将来の有料記事等) を
+ * 追加するときに、`getApp()` で React Router へ委譲する前段に挟んで使う。
+ */
 export const requireSessionOrRedirect = createSessionMiddleware({
   onUnauthorized: "redirect",
 });

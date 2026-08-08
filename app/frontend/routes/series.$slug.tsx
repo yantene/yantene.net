@@ -1,39 +1,58 @@
-import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
-import type { PageProps } from "~/frontend/page-props";
+import { data, Link } from "react-router";
+import type { Route } from "./+types/series.$slug";
+import type { SeriesPageData } from "~/backend/handlers/notes/series.handler";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadSeriesPage } from "~/backend/handlers/notes/series.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
-interface NoteMeta {
-  readonly slug: string;
-  readonly title: string;
-  readonly summary: string;
-  readonly imageUrl: string | null;
-  readonly tags: readonly string[];
-  readonly publishedOn: string;
+export async function loader({
+  request,
+  params,
+  context,
+}: Route.LoaderArgs): Promise<
+  ReturnType<typeof data<PageMetaBase & SeriesPageData>>
+> {
+  const url = new URL(request.url);
+  const series = await loadSeriesPage(context.cloudflare.env, params.slug);
+  const payload = {
+    ...series,
+    locale: resolveLocale(request),
+    origin: url.origin,
+  };
+
+  // 該当の連載が無ければ 404 ステータスで not-found 状態を描画する。
+  return series.name === null ? data(payload, { status: 404 }) : data(payload);
 }
 
-interface SeriesShowProps extends PageProps {
-  readonly name: string | null;
-  readonly notes: readonly NoteMeta[];
-}
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
+  const { locale, origin, name } = loaderData;
+  return buildPageMeta({
+    locale,
+    origin,
+    pathname: location.pathname,
+    title: name ?? translationsFor(locale).series.notFound.title,
+  });
+};
 
 export default function SeriesShow({
-  name,
-  notes,
-}: SeriesShowProps): React.JSX.Element {
+  loaderData,
+}: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { name, notes } = loaderData;
 
   if (name === null) {
     return (
       <AppLayout>
-        <Head title={t("series.notFound.title")} />
         <Header />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">{t("series.notFound.heading")}</h1>
-          <Link href="/notes" className="btn btn-primary mt-8">
+          <Link to="/notes" className="btn btn-primary mt-8">
             {t("notes.notFound.backToList")}
           </Link>
         </main>
@@ -44,7 +63,6 @@ export default function SeriesShow({
 
   return (
     <AppLayout>
-      <Head title={name} />
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         <p className="text-sm font-medium text-accent-content">

@@ -1,6 +1,12 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["app/**/*", "worker-configuration.d.ts"],
+  "include": [
+    // React Router が生成するルート型 (./+types/*)。typegen で更新される。
+    ".react-router/types/**/*",
+    "app/**/*",
+    "workers/**/*",
+    "worker-configuration.d.ts"
+  ],
   "compilerOptions": {
     // strict / paths は親 tsconfig.json から継承する
     "composite": true,
@@ -10,6 +16,8 @@
     "module": "ES2022",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    // 生成された型を実ファイルと同じ階層に解決させる (./+types/xxx の解決に必要)
+    "rootDirs": [".", "./.react-router/types"],
     "esModuleInterop": true,
     "resolveJsonModule": true
   }

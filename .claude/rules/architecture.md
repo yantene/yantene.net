@@ -63,28 +63,33 @@ app/
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── api.ts              # JSON API ルータ
-│   │   ├── pages.ts            # Inertia ページルータ
+│   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)
 │   │   └── auth/               # 認証ハンドラ (magic-link / logout / resolve-mailer)
-│   ├── middleware/             # 認証・BASIC 認証・ロケールミドルウェア
+│   ├── middleware/             # 認証・BASIC 認証ミドルウェア
 │   ├── services/               # アプリケーションサービス層
-│   └── index.ts                # バックエンドエントリポイント (Hono app, default export)
-├── frontend/                   # Inertia + React アプリケーション
-│   ├── pages/                  # Inertia ページコンポーネント (kebab-case)
+│   ├── test-app.ts             # テスト用の Hono アプリ生成 (ページ委譲はダミー)
+│   └── index.ts                # getApp(handler): Hono を組み立てて返す
+├── frontend/                   # React Router v7 アプリケーション (appDirectory)
+│   ├── routes/                 # ページルート (loader / meta / component を同居)
+│   ├── routes.ts               # ルート定義 (RouteConfig)
+│   ├── root.tsx                # HTML シェル + 既定 meta + ErrorBoundary
 │   ├── layouts/                # 共通レイアウト (kebab-case)
-│   ├── components/             # 再利用 UI コンポーネント (kebab-case・現状未作成・必要時に追加)
-│   ├── entry.client.tsx        # クライアントエントリ (createInertiaApp)
-│   ├── entry.server.tsx        # SSR エントリ (createInertiaApp + renderToString)
-│   ├── root-view.tsx           # HTML シェル (rootView)
-│   ├── pages.gen.ts            # ページ名の型定義（生成物）
+│   ├── components/             # 再利用 UI コンポーネント (kebab-case)
+│   ├── lib/                    # フロント専用ヘルパ (page-meta / nonce-context)
+│   ├── entry.client.tsx        # クライアントエントリ (HydratedRouter)
+│   ├── entry.server.tsx        # SSR エントリ (ServerRouter + renderToReadableStream)
 │   └── app.css                 # Tailwind + daisyUI エントリ
 └── lib/                        # フロントエンド・バックエンド共通ユーティリティ
-    ├── i18n/                   # ロケール定義・翻訳リソース・初期化ヘルパー
+    ├── i18n/                   # ロケール定義・翻訳リソース・初期化・resolve-locale
     │   └── locales/            # 言語別翻訳リソース
     └── constants/
+
+workers/
+└── app.ts                      # Worker エントリ (Hono → React Router へ委譲)
 ```
 
-Cloudflare Worker のエントリポイントは `app/backend/index.ts` の Hono インスタンス
-そのもの。`wrangler.jsonc` の `main` に直接指定する。
+Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` で組み立てた Hono の
+`fetch` を default export し、`wrangler.jsonc` の `main` に指定する。
 
 ### 配置ルール
 
@@ -97,7 +102,10 @@ Cloudflare Worker のエントリポイントは `app/backend/index.ts` の Hono
   リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `auth/`）。
 - **横断的な前処理** → `backend/middleware/`。
 - **複数ハンドラで共有するユースケース** → `backend/services/`（必要になった時点で作成）。
-- **画面** → `frontend/pages/`。ファイル名は kebab-case で `c.render('<name>')` と 1:1 対応。
+- **画面** → `frontend/routes/`。`routes.ts` に登録し、ファイル名は kebab-case
+  (動的セグメントは `notes.$slug.tsx` のようにドット区切り)。
+- **ページのデータ取得** → `backend/handlers/**` に `loadXxxPage(env, ...)` として置き、
+  ルートの loader から呼ぶ。infra の生成・注入はここ (Composition Root) が担う。
 - **再利用 UI** → `frontend/components/`（必要になった時点で作成）。コンポーネントには必ず
   同ディレクトリに `*.stories.tsx` を用意する（CI の `check-stories` ジョブが `scripts/check-stories.mjs`
   で強制する）。
@@ -106,19 +114,27 @@ Cloudflare Worker のエントリポイントは `app/backend/index.ts` の Hono
 - **設計判断の記録** → `docs/adr/`。命名・運用は adr.md に従う。
 - **プロジェクト規約** → `.claude/rules/`。追加したら CLAUDE.md に `@` で登録する。
 
-## Inertia.js のフロー
+## Hono と React Router の分担 (ADR 0010)
 
-1. ブラウザが GET `/` などのページリクエストを送る
-2. Hono のページルータが `c.render('home', props)` を呼び、`@hono/inertia` ミドルウェアが
-   `rootView` 経由で SSR 済み HTML を返す
-3. クライアント側で `createInertiaApp` が `#app` 要素の `data-page` を読み hydrate
-4. 後続の `<Link>` 遷移は XHR で同じエンドポイントを呼び、JSON のページオブジェクトを取得
-5. クライアント側で対応するページコンポーネントが切り替わる
+1. ブラウザのリクエストは `workers/app.ts` → `getApp()` の Hono に入る
+2. Hono が先に応答するのは横断的関心事とページ以外のエンドポイント:
+   secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
+   認証フロー (`/auth/**`)
+3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
+4. React Router がルートを解決し、loader が `context.cloudflare.env` から
+   `backend/handlers` のローダを呼んでデータを揃える
+5. `entry.server.tsx` が SSR し、クライアントで `HydratedRouter` が hydrate する
+6. 後続のページ遷移は `<Link>` により loader だけを叩く
 
-ページ名 (`c.render` の第 1 引数) は `app/frontend/pages/<name>.tsx` と 1:1 で対応する。
-ファイル名は **kebab-case で統一する**（case-insensitive ファイルシステムでの衝突防止 +
-Linux CI で壊れるパターンの防止）。サブディレクトリで名前空間を切る場合は
-`users/index.tsx` のように配置し、`c.render('users/index', ...)` で参照する。
+守ること。
+
+- ページ内アンカー (目次など) は `react-router` の `Link` を使う。素の `<a href="#...">`
+  だと `<ScrollRestoration>` がブラウザのハッシュジャンプを打ち消してスクロールしない。
+- CSP nonce は `secureHeadersNonce` → `AppLoadContext.nonce` → `NonceContext` の順で運ぶ。
+  `<Scripts>` / `<ScrollRestoration>` には必ず nonce を渡す (ADR 0009)。
+- OGP・JSON-LD は `frontend/lib/page-meta.ts` の `buildPageMeta` 経由で組み立てる。
+  React Router の meta は最も深いルートのものだけが採用され親とマージされないため、
+  各ページが一式を出す必要がある。
 
 ## レイヤー間の依存ルール (DIP / Clean Architecture)
 
@@ -139,8 +155,8 @@ Linux CI で壊れるパターンの防止）。サブディレクトリで名�
 | middleware/                  | domain/, infra/                          | services/, handlers/                      |
 
 Composition Root (handlers/, `app/backend/index.ts`) のみが infra の具象クラスを
-インスタンス化し、services に注入する。Inertia ページの props を生成するのも
-handlers/ の責務。
+インスタンス化し、services に注入する。ページ用のデータ (loader が返す DTO) を
+組み立てるのも handlers/ の責務で、ルートの loader はそれを呼ぶだけに留める。
 
 ## ドメイン層 (app/backend/domain/)
 
@@ -185,7 +201,8 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
 - HTTP ステータスへのマッピングは handler 層のみで行う
 - ドメイン・サービス層に HTTP の概念を持ち込まない
 - API エラーレスポンスは RFC 9457 Problem Details 形式に準拠する
-- Inertia ページではエラーは props として渡し、コンポーネント側で表示する
+- ページで「見つからない」を表す場合は throw せず、loader が `data(payload, { status: 404 })`
+  で状態を返し、コンポーネントが not-found 表示を描画する (root の ErrorBoundary に落とさない)
 
 ## コーディング原則
 
@@ -206,13 +223,32 @@ CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザ
 で渡した値は本番で必ず消える。しかも例外も警告も出ず、見た目だけが静かに壊れる。
 
 - 見た目の可変軸は**静的な CSS のクラスの段階**として持つ (連続値は使えない)
-- コンポーネント CSS は `app.css` に `@import` で束ねる。dev の Vite は
-  `import "./x.css"` を JS からの `<style>` 注入で届けるが、それも CSP に落とされる
+- コンポーネント CSS は `app.css` に `@import` で束ねる
 - 自前で出す inline `<script>` には `c.get("secureHeadersNonce")` の nonce を付ける
 - `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
-- 見た目の確認は `pnpm dev` か `vite preview` で行う (Storybook には CSP が無い)
 
-判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) を参照。
+### CSP は development では付かない (ADR 0011)
+
+Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
+`style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。そのため
+**`APP_ENV === "development"` のときだけ CSP を付けない**。staging / production
+(および想定外の `APP_ENV`) では必ず付く。`app/backend/csp.test.ts` がこれを固定している。
+
+つまり **dev では CSP 違反に気づけない**。次を守ること。
+
+- **inline style / inline script / 外部リソースの追加など CSP に関わる変更をしたら、
+  `pnpm run preview` で必ず確認する** (dev で動いても本番で落ちる)
+- Storybook にも CSP は無いので、CSP の確認には使えない
+
+### dev だけで出るコンソールエラー (本番では出ない)
+
+`A tree hydrated but some attributes ... didn't match` — React Router の dev 専用
+critical CSS (`data-react-router-critical-css`) が `nonce=""` の `<link>` を出す一方、
+クライアント側の context には nonce が入らないため。本番の HTML にはこの `<link>`
+自体が存在しないので発生しない。**本番ビルドで再現しなければ追わなくてよい。**
+
+判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) と
+[ADR 0011](../../docs/adr/0011-csp-enforced-outside-development.md) を参照。
 
 ## URL 命名規則
 

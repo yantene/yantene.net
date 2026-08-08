@@ -1,64 +1,80 @@
-import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
-import type { Root as MdastRoot } from "mdast";
-import type { PageProps } from "~/frontend/page-props";
+import { data, Link } from "react-router";
+import type { Route } from "./+types/notes.$slug";
+import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
-import {
-  TableOfContents,
-  type TocHeading,
-} from "~/frontend/components/toc/table-of-contents";
+import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
-interface NoteMeta {
-  readonly slug: string;
-  readonly title: string;
-  readonly summary: string;
-  readonly imageUrl: string | null;
-  readonly tags: readonly string[];
-  readonly publishedOn: string;
-  readonly lastModifiedOn: string;
+export async function loader({
+  request,
+  params,
+  context,
+}: Route.LoaderArgs): Promise<
+  ReturnType<typeof data<PageMetaBase & NoteDetailPageData>>
+> {
+  const url = new URL(request.url);
+  const detail = await loadNoteDetailPage(
+    context.cloudflare.env,
+    params.slug,
+    url.origin,
+  );
+  const base = { locale: resolveLocale(request), origin: url.origin };
+
+  // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
+  if (!detail.found) {
+    return data({ ...base, ...detail }, { status: 404 });
+  }
+  return data({ ...base, ...detail });
 }
 
-interface SeriesNav {
-  readonly name: string;
-  readonly slug: string;
-  readonly total: number;
-  readonly position: number;
-  readonly prev: NoteMeta | null;
-  readonly next: NoteMeta | null;
-}
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
+  const { locale, origin } = loaderData;
 
-interface NoteShowProps extends PageProps {
-  readonly note: NoteMeta | null;
-  readonly mdast: MdastRoot | null;
-  readonly related?: readonly NoteMeta[];
-  readonly headings?: readonly TocHeading[];
-  readonly series?: SeriesNav | null;
-}
+  if (!loaderData.found) {
+    return buildPageMeta({
+      locale,
+      origin,
+      pathname: location.pathname,
+      title: translationsFor(locale).notes.notFound.title,
+    });
+  }
+
+  const { note, jsonLd } = loaderData;
+  return buildPageMeta({
+    locale,
+    origin,
+    pathname: location.pathname,
+    title: note.title,
+    description: note.summary,
+    imagePath: `/og/notes/${note.slug}`,
+    type: "article",
+    jsonLd,
+  });
+};
 
 export default function NoteShow({
-  note,
-  mdast,
-  related = [],
-  headings = [],
-  series = null,
-}: NoteShowProps): React.JSX.Element {
+  loaderData,
+}: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
 
-  if (note === null || mdast === null) {
+  if (!loaderData.found) {
     return (
       <AppLayout>
-        <Head title={t("notes.notFound.title")} />
         <Header />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">{t("notes.notFound.heading")}</h1>
           <p className="mt-4 text-base-content/60">
             {t("notes.notFound.description")}
           </p>
-          <Link href="/notes" className="btn btn-primary mt-8">
+          <Link to="/notes" className="btn btn-primary mt-8">
             {t("notes.notFound.backToList")}
           </Link>
         </main>
@@ -67,11 +83,10 @@ export default function NoteShow({
     );
   }
 
+  const { note, mdast, related, headings, series } = loaderData;
+
   return (
     <AppLayout>
-      <Head title={note.title}>
-        <meta name="description" content={note.summary} />
-      </Head>
       <Header />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl">
@@ -88,7 +103,7 @@ export default function NoteShow({
                 {note.tags.map((tg) => (
                   <Link
                     key={tg}
-                    href={`/notes?tag=${encodeURIComponent(tg)}`}
+                    to={`/notes?tag=${encodeURIComponent(tg)}`}
                     className="badge badge-outline gap-1 hover:badge-primary"
                   >
                     {tg}
@@ -110,7 +125,7 @@ export default function NoteShow({
           {series !== null && (
             <nav className="mt-12 rounded-xl border border-base-300 bg-base-200 p-5">
               <Link
-                href={`/series/${series.slug}`}
+                to={`/series/${series.slug}`}
                 className="text-sm font-medium text-primary hover:underline"
               >
                 {t("series.label")}: {series.name}
@@ -126,7 +141,7 @@ export default function NoteShow({
                   <span />
                 ) : (
                   <Link
-                    href={`/notes/${series.prev.slug}`}
+                    to={`/notes/${series.prev.slug}`}
                     className="text-sm text-base-content/80 hover:text-primary"
                   >
                     ← {series.prev.title}
@@ -134,7 +149,7 @@ export default function NoteShow({
                 )}
                 {series.next !== null && (
                   <Link
-                    href={`/notes/${series.next.slug}`}
+                    to={`/notes/${series.next.slug}`}
                     className="text-sm text-base-content/80 hover:text-primary sm:text-right"
                   >
                     {series.next.title} →

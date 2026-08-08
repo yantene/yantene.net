@@ -1,48 +1,35 @@
-import { createInertiaApp, type ResolvedComponent } from "@inertiajs/react";
-import { StrictMode } from "react";
-import { createRoot, hydrateRoot } from "react-dom/client";
+import { startTransition, StrictMode } from "react";
+import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
+import { HydratedRouter } from "react-router/dom";
+import { NonceContext } from "~/frontend/lib/nonce-context";
 import { initI18nGlobal } from "~/lib/i18n/init";
 
-type PageLoader = () => Promise<ResolvedComponent>;
+const locale =
+  document.documentElement.lang.length > 0
+    ? document.documentElement.lang
+    : "en";
 
-const pages = import.meta.glob<ResolvedComponent>(
-  "./pages/**/*.tsx",
-) as Partial<Record<string, PageLoader>>;
+const nonce =
+  document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") ??
+  "";
 
-void createInertiaApp({
-  resolve: async (name): Promise<ResolvedComponent> => {
-    const importer = pages[`./pages/${name}.tsx`];
-    if (importer === undefined) {
-      throw new Error(`Inertia page not found: ${name}`);
-    }
-    return importer();
-  },
-  setup({ el, App, props }) {
-    const locale =
-      document.documentElement.lang.length > 0
-        ? document.documentElement.lang
-        : "en";
+const i18n = await initI18nGlobal(locale);
 
-    void (async () => {
-      const i18n = await initI18nGlobal(locale);
-      const tree = (
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <NonceContext.Provider value={nonce}>
+      <I18nextProvider i18n={i18n}>
         <StrictMode>
-          <I18nextProvider i18n={i18n}>
-            <App {...props} />
-          </I18nextProvider>
+          {/*
+            HydratedRouter は nonce を prop に取らない (SSR 側の <ServerRouter nonce> が
+            出力済みの nonce をブラウザが保持する)。nonce は NonceContext 経由で
+            root.tsx の <Scripts> / <ScrollRestoration> に渡す。
+          */}
+          <HydratedRouter />
         </StrictMode>
-      );
-
-      if (el.hasChildNodes()) {
-        hydrateRoot(el, tree);
-      } else {
-        createRoot(el).render(tree);
-      }
-    })();
-  },
-  // NProgress は inline <style> を動的注入するが、CSP の style-src は 'self' のみで
-  // nonce も unsafe-inline も許可していないためブロックされる。secure-by-default を
-  // 崩さないよう進捗バーは無効化する。
-  progress: false,
+      </I18nextProvider>
+    </NonceContext.Provider>,
+  );
 });

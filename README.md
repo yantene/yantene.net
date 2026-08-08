@@ -2,7 +2,7 @@
 
 yantene の個人ウェブサイト。技術ノート（記事）を Markdown で執筆・公開する。
 
-Cloudflare Workers + Hono + Inertia.js + React + Drizzle ORM で構築。
+Cloudflare Workers + Hono + React Router v7 + React + Drizzle ORM で構築。
 
 ## 特徴
 
@@ -10,10 +10,10 @@ Cloudflare Workers + Hono + Inertia.js + React + Drizzle ORM で構築。
   メタデータは D1 (SQLite) に保存。スラグベースの URL ルーティングとページネーション。
 - **エッジで完結** — Cloudflare Workers + D1 + R2 + KV + Email Routing のみ。外部 DB や
   メール SaaS を立てずに動く。
-- **サーバー駆動 SPA** — Inertia.js でルーティングとデータ取得をサーバーへ集約。別建ての
-  API を設計せずに、SSR・ハイドレーション・クライアント遷移が成立する。
-- **端から端まで型安全** — TypeScript strict、Drizzle、`c.render('<page>')` のページ名補完
-  (`@hono/inertia/vite` が `pages.gen.ts` を生成)、Value Object と typed error でドメイン制約を型に乗せる。
+- **サーバー駆動 SPA** — React Router v7 のフレームワークモード。loader でデータ取得を
+  サーバーへ集約し、SSR・ハイドレーション・クライアント遷移が別建ての API なしで成立する。
+- **端から端まで型安全** — TypeScript strict、Drizzle、ルートごとの型生成
+  (`react-router typegen` が `./+types/*` を生成)、Value Object と typed error でドメイン制約を型に乗せる。
 - **Clean Architecture** — domain / infra / services / handlers のレイヤーと依存方向、CQRS
   リポジトリ分割、Composition Root での依存注入を `.claude/rules/` に明文化。
 - **パスワードレス認証** — magic link 方式のログイン。
@@ -28,9 +28,9 @@ Cloudflare Workers + Hono + Inertia.js + React + Drizzle ORM で構築。
 | 技術                                    | 役割                                     |
 | --------------------------------------- | ---------------------------------------- |
 | Cloudflare Workers                      | エッジランタイム、D1 (SQLite)、KV、Email |
-| Hono                                    | バックエンド + Inertia.js ホスト         |
-| Inertia.js (`@hono/inertia`)            | サーバー駆動 SPA プロトコル              |
-| React 19 (`@inertiajs/react`)           | UI とハイドレーション                    |
+| Hono                                    | HTTP 層 (API・認証・secure headers)      |
+| React Router v7                         | ルーティング・loader・SSR                |
+| React 19                                | UI とハイドレーション                    |
 | Drizzle ORM                             | 型安全な DB アクセス (D1 / SQLite)       |
 | Tailwind CSS v4 + daisyUI v5            | スタイリング                             |
 | TypeScript / ESLint / Prettier / Vitest | 型・静的解析・整形・テスト               |
@@ -83,7 +83,7 @@ development ではメールは送信されず、**開発サーバーの標準出
 | アプリケーションサービス    | `services/auth.service.ts` (`signInWithVerifiedEmail` が全認証方式の合流点)                                           |
 | ハンドラ (Composition Root) | `handlers/auth/` (magic-link / logout / resolve-mailer)                                                               |
 | ミドルウェア                | `middleware/auth.ts` (セッション検証)、`middleware/basic-auth.ts`                                                     |
-| 画面                        | `frontend/pages/` (`login` / `login-sent` / `home`)                                                                   |
+| 画面                        | `frontend/routes/` (`login` / `login-sent` / `home`)                                                                  |
 
 ## ディレクトリ構造
 
@@ -96,39 +96,53 @@ app/
 │   ├── handlers/           # HTTP ハンドラ (Composition Root): api.ts / pages.ts / auth/
 │   ├── middleware/         # 認証 / BASIC 認証 / locale
 │   └── index.ts            # Hono アプリ (default export, wrangler の main)
-├── frontend/               # Inertia + React フロントエンド
-│   ├── pages/              # Inertia ページ (kebab-case, c.render('home') と対応)
+├── frontend/               # React Router v7 アプリケーション
+│   ├── routes/             # ページルート (loader / meta / component を同居)
+│   ├── routes.ts           # ルート定義
+│   ├── root.tsx            # HTML シェル + 既定 meta + ErrorBoundary
 │   ├── layouts/            # 共通レイアウト
-│   ├── entry.client.tsx    # createInertiaApp (クライアント)
-│   ├── entry.server.tsx    # createInertiaApp (SSR, renderToString)
-│   ├── root-view.tsx       # @hono/inertia の rootView (HTML シェル)
+│   ├── lib/                # page-meta / nonce-context
+│   ├── entry.client.tsx    # HydratedRouter (クライアント)
+│   ├── entry.server.tsx    # ServerRouter (SSR)
 │   └── app.css             # Tailwind + daisyUI エントリ
 └── lib/                    # フロント・バック共通 (i18n リソース / constants)
 
+workers/app.ts              # Worker エントリ (Hono → React Router へ委譲)
 migrations/                 # Drizzle 生成済みマイグレーション
 docs/adr/                   # Architecture Decision Records (設計判断の記録)
 .claude/rules/              # プロジェクト規約 (CLAUDE.md が読み込む)
 ```
 
-Cloudflare Worker のエントリポイントは `app/backend/index.ts` の Hono インスタンスそのもの
-(default export)。`wrangler.jsonc` の `main` に直接指定している。
+Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` が組み立てた Hono が
+API・認証・フィード等を先に処理し、残りを React Router のページルーティングへ委譲する
+(詳細は [ADR 0010](docs/adr/0010-react-router-v7-over-inertia.md))。
 
 ## 使い方レシピ
 
-### Inertia.js のページを追加する
+### ページを追加する
 
-1. `app/frontend/pages/<name>.tsx` (kebab-case) にコンポーネントを default export で追加
+1. `app/frontend/routes/<name>.tsx` (kebab-case) にルートモジュールを追加
    ```tsx
-   export default function About(props: { message: string }) {
-     return <main>{props.message}</main>;
+   import type { Route } from "./+types/about";
+
+   export async function loader({ context }: Route.LoaderArgs) {
+     return { message: "Hi" };
+   }
+
+   export default function About({ loaderData }: Route.ComponentProps) {
+     return <main>{loaderData.message}</main>;
    }
    ```
-2. ハンドラからレンダリング (ページ名はファイル名そのもの)
+2. `app/frontend/routes.ts` に登録
    ```ts
-   router.get("/about", (c) => c.render("about", { message: "Hi" }));
+   route("about", "routes/about.tsx"),
    ```
-3. `@hono/inertia/vite` が `app/frontend/pages.gen.ts` を再生成し、`c.render` の第 1 引数を
-   型レベルで補完する。サブディレクトリは `users/index.tsx` のように切り `c.render('users/index', …)`。
+3. `pnpm run rr-typegen` が `./+types/about` を生成し、loader の戻り値・params・meta が
+   型で結びつく。動的セグメントは `notes.$slug.tsx` のようにドット区切りで置く。
+
+データ取得は loader に直接書かず、`backend/handlers/**` の `loadXxxPage(env, ...)` を
+呼ぶ (Composition Root を handlers に保つ)。OGP・JSON-LD は `meta` で
+`buildPageMeta()` を使って出す。
 
 ### ドメイン機能を追加する (CQRS + VO)
 

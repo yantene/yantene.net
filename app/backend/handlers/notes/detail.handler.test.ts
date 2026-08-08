@@ -2,10 +2,10 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import type { NoteDetail } from "./note-detail-view";
 import { ImageUrl, Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import app from "~/backend/index";
 import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { createTestApp } from "~/backend/test-app";
 
 /** MDAST の put/get だけを賄う最小 R2 モック。 */
 function makeBucket(): R2Bucket {
@@ -58,7 +58,11 @@ async function fetchDetail(
   bucket: R2Bucket,
   slug: string,
 ): Promise<{ status: number; body: NoteDetail | undefined }> {
-  const res = await app.request(`/api/v1/notes/${slug}`, {}, env(d1, bucket));
+  const res = await createTestApp().request(
+    `/api/v1/notes/${slug}`,
+    {},
+    env(d1, bucket),
+  );
   const text = await res.text();
   return {
     status: res.status,

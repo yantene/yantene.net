@@ -1,38 +1,47 @@
-import { Head } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
-import type { PageProps } from "~/frontend/page-props";
+import type { Route } from "./+types/search";
+import type { SearchPageData } from "~/backend/handlers/notes/search.handler";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadSearchPage } from "~/backend/handlers/notes/search.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
-interface NoteMeta {
-  readonly slug: string;
-  readonly title: string;
-  readonly summary: string;
-  readonly imageUrl: string | null;
-  readonly tags: readonly string[];
-  readonly publishedOn: string;
-  readonly lastModifiedOn: string;
+export async function loader({
+  request,
+  context,
+}: Route.LoaderArgs): Promise<PageMetaBase & SearchPageData> {
+  const url = new URL(request.url);
+  const result = await loadSearchPage(
+    context.cloudflare.env,
+    url.searchParams.get("q") ?? undefined,
+  );
+  return { ...result, locale: resolveLocale(request), origin: url.origin };
 }
 
-interface SearchProps extends PageProps {
-  readonly query: string;
-  readonly notes: readonly NoteMeta[];
-}
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
+  const { locale, origin, query } = loaderData;
+  const searchTitle = translationsFor(locale).search.title;
+  return buildPageMeta({
+    locale,
+    origin,
+    pathname: location.pathname,
+    title: query.length > 0 ? `${searchTitle}: ${query}` : searchTitle,
+  });
+};
 
 export default function Search({
-  query,
-  notes,
-}: SearchProps): React.JSX.Element {
+  loaderData,
+}: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { query, notes } = loaderData;
   const hasQuery = query.length > 0;
 
   return (
     <AppLayout>
-      <Head
-        title={hasQuery ? `${t("search.title")}: ${query}` : t("search.title")}
-      />
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         <h1 className="text-2xl font-bold">{t("search.title")}</h1>

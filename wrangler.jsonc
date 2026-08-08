@@ -3,7 +3,7 @@
   "name": "yantene",
   "compatibility_date": "2026-01-27",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "./app/backend/index.ts",
+  "main": "./workers/app.ts",
   "observability": {
     "enabled": true,
   },

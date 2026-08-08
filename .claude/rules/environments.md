@@ -53,7 +53,10 @@ Release が公開されると `deploy-production.yml` が自動起動し product
 ## wrangler.jsonc の注意点
 
 - カスタムドメインは `routes` + `custom_domain: true` で指定する
-- CI で `pnpm run wrangler:check` (`wrangler deploy --dry-run` を全環境で実行) により検証される
+- CI で `pnpm run wrangler:check` (`scripts/check-wrangler.sh`) により全環境を検証する。
+  各環境でビルドし、生成された `build/server/wrangler.json` に対して
+  `wrangler deploy --dry-run` を実行する。`wrangler.jsonc` の main を直接 dry-run すると
+  React Router の `virtual:react-router/server-build` を解決できず失敗するため
 
 ## ルール・設定の遵守
 
