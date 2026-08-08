@@ -10,6 +10,7 @@ import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 const DEFAULT_PER_PAGE = 20;
@@ -19,7 +20,7 @@ export async function loader({
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & NotesListPageData> {
   const url = new URL(request.url);
-  const data = await loadNotesListPage(context.cloudflare.env, url);
+  const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
   return { ...data, locale: resolveLocale(request), origin: url.origin };
 }
 

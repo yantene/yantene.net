@@ -9,6 +9,7 @@ import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
@@ -19,7 +20,10 @@ export async function loader({
   ReturnType<typeof data<PageMetaBase & SeriesPageData>>
 > {
   const url = new URL(request.url);
-  const series = await loadSeriesPage(context.cloudflare.env, params.slug);
+  const series = await loadSeriesPage(
+    context.get(cloudflareContext).env,
+    params.slug,
+  );
   const payload = {
     ...series,
     locale: resolveLocale(request),

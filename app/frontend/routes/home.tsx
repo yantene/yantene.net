@@ -10,13 +10,14 @@ import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & { notes: readonly PublicNote[] }> {
-  const notes = await loadRecentNotes(context.cloudflare.env);
+  const notes = await loadRecentNotes(context.get(cloudflareContext).env);
   return {
     notes,
     locale: resolveLocale(request),

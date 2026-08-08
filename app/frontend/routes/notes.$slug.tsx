@@ -11,6 +11,7 @@ import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
@@ -22,7 +23,7 @@ export async function loader({
 > {
   const url = new URL(request.url);
   const detail = await loadNoteDetailPage(
-    context.cloudflare.env,
+    context.get(cloudflareContext).env,
     params.slug,
     url.origin,
   );
