@@ -10,6 +10,7 @@
     "dev": "react-router dev --host 0.0.0.0",
     "build": "react-router build",
     "preview": "pnpm run build && vite preview",
+    "preview:staging": "CLOUDFLARE_ENV=staging pnpm run build && vite preview",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint --fix . --max-warnings 0",
     "format": "prettier --ignore-path .gitignore --ignore-path .prettierignore --check \"**/*.{js,jsx,ts,tsx,json,jsonc,css,md,yml,yaml}\"",
