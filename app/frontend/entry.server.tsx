@@ -2,8 +2,9 @@ import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import { ServerRouter } from "react-router";
-import type { AppLoadContext, EntryContext } from "react-router";
+import type { EntryContext, RouterContextProvider } from "react-router";
 import { NonceContext } from "~/frontend/lib/nonce-context";
+import { nonceRouteContext } from "~/frontend/lib/route-context";
 import { createI18nInstance } from "~/lib/i18n/init";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
@@ -12,9 +13,9 @@ export default async function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   routerContext: EntryContext,
-  loadContext: AppLoadContext,
+  loadContext: RouterContextProvider,
 ): Promise<Response> {
-  const { nonce } = loadContext;
+  const nonce = loadContext.get(nonceRouteContext);
   const i18n = await createI18nInstance(resolveLocale(request));
 
   let isShellRendered = false;

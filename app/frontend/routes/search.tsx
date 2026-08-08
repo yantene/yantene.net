@@ -8,6 +8,7 @@ import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
@@ -16,7 +17,7 @@ export async function loader({
 }: Route.LoaderArgs): Promise<PageMetaBase & SearchPageData> {
   const url = new URL(request.url);
   const result = await loadSearchPage(
-    context.cloudflare.env,
+    context.get(cloudflareContext).env,
     url.searchParams.get("q") ?? undefined,
   );
   return { ...result, locale: resolveLocale(request), origin: url.origin };

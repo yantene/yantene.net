@@ -8,13 +8,14 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & { tags: readonly TagCount[] }> {
-  const tags = await loadTagsPage(context.cloudflare.env);
+  const tags = await loadTagsPage(context.get(cloudflareContext).env);
   return {
     tags,
     locale: resolveLocale(request),

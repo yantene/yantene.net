@@ -5,9 +5,8 @@ export default {
   // 三分割で、React Router のアプリディレクトリはそのうちの frontend のみ)。
   appDirectory: "app/frontend",
   ssr: true,
-  future: {
-    // Vite Environment API を使い、@cloudflare/vite-plugin が作る "ssr" 環境と
-    // ビルド出力を揃える。無効だと SSR ビルドがマニフェストを見つけられず落ちる。
-    v8_viteEnvironmentApi: true,
-  },
+  // v7 では future フラグだった項目のうち、v8 で既定の挙動になったものは指定しない
+  // (middleware / passThroughRequests / trailingSlashAwareDataRequests /
+  //  viteEnvironmentApi)。splitRouteModules だけがトップレベル設定に昇格した。
+  splitRouteModules: true,
 } satisfies Config;
