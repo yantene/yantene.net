@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link } from "react-router";
 import { TypewriterTitle } from "./typewriter-title";
 
 type HeaderProps = {
@@ -30,16 +30,16 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
           <nav
             className={`flex items-center gap-7 sm:gap-9${isTransparent ? " text-halo" : ""}`}
           >
-            <Link href="/" className={linkClassName}>
+            <Link to="/" className={linkClassName}>
               Home
             </Link>
-            <Link href="/notes" className={linkClassName}>
+            <Link to="/notes" className={linkClassName}>
               Notes
             </Link>
-            <Link href="/tags" className={linkClassName}>
+            <Link to="/tags" className={linkClassName}>
               Tags
             </Link>
-            <Link href="/search" aria-label="Search" className={linkClassName}>
+            <Link to="/search" aria-label="Search" className={linkClassName}>
               Search
             </Link>
           </nav>

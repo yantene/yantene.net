@@ -5,7 +5,8 @@
     "vitest.config.ts",
     "vitest.setup.ts",
     "eslint.config.ts",
-    "drizzle.config.ts"
+    "drizzle.config.ts",
+    "react-router.config.ts"
   ],
   "compilerOptions": {
     // strict / paths は親 tsconfig.json から継承する

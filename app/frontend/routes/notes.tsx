@@ -1,39 +1,36 @@
-import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
-import type { PageProps } from "~/frontend/page-props";
+import { Link } from "react-router";
+import type { Route } from "./+types/notes";
+import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { NoteCard } from "~/frontend/components/note-card/note-card";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
-
-interface PublicNote {
-  readonly slug: string;
-  readonly title: string;
-  readonly summary: string;
-  readonly imageUrl: string | null;
-  readonly tags: readonly string[];
-  readonly publishedOn: string;
-  readonly lastModifiedOn: string;
-}
-
-interface NotesIndexProps extends PageProps {
-  readonly notes: readonly PublicNote[];
-  readonly pagination: {
-    readonly page: number;
-    readonly perPage: number;
-    readonly total: number;
-    readonly totalPages: number;
-  };
-  /** 絞り込み中のタグ (未絞り込みなら null)。 */
-  readonly tag: string | null;
-  readonly sort: {
-    readonly sortBy: string | null;
-    readonly order: string | null;
-  };
-}
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 const DEFAULT_PER_PAGE = 20;
+
+export async function loader({
+  request,
+  context,
+}: Route.LoaderArgs): Promise<PageMetaBase & NotesListPageData> {
+  const url = new URL(request.url);
+  const data = await loadNotesListPage(context.cloudflare.env, url);
+  return { ...data, locale: resolveLocale(request), origin: url.origin };
+}
+
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+  const { locale, origin } = loaderData;
+  return buildPageMeta({
+    locale,
+    origin,
+    title: translationsFor(locale).notes.title,
+  });
+};
 
 /**
  * ページ送りリンクの URL を組み立てる。現在の per-page / sort-by / order を保持し、
@@ -42,7 +39,7 @@ const DEFAULT_PER_PAGE = 20;
 function buildHrefForPage(
   page: number,
   perPage: number,
-  sort: NotesIndexProps["sort"],
+  sort: { sortBy: string | null; order: string | null },
   tag: string | null,
 ): string {
   const params = new URLSearchParams();
@@ -56,18 +53,15 @@ function buildHrefForPage(
 }
 
 export default function NotesIndex({
-  notes,
-  pagination,
-  tag,
-  sort,
-}: NotesIndexProps): React.JSX.Element {
+  loaderData,
+}: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { notes, pagination, tag, sort } = loaderData;
   const hrefForPage = (page: number): string =>
     buildHrefForPage(page, pagination.perPage, sort, tag);
 
   return (
     <AppLayout>
-      <Head title={t("notes.title")} />
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -75,7 +69,7 @@ export default function NotesIndex({
           {tag !== null && (
             <span className="text-base-content/70">
               {t("notes.filteredByTag", { tag })}
-              <Link href="/notes" className="link link-primary ml-2 text-sm">
+              <Link to="/notes" className="link link-primary ml-2 text-sm">
                 {t("notes.clearFilter")}
               </Link>
             </span>

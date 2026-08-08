@@ -2,9 +2,9 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import app from "~/backend/index";
 import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import { createTestApp } from "~/backend/test-app";
 
 function unpersistedNote(params: {
   slug: string;
@@ -33,7 +33,7 @@ function env(d1: D1Database): Env {
 describe("GET /feed.xml", () => {
   it("returns an Atom feed with the correct content type", async () => {
     const d1 = createTestD1();
-    const res = await app.request("/feed.xml", {}, env(d1));
+    const res = await createTestApp().request("/feed.xml", {}, env(d1));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/atom+xml");
@@ -48,7 +48,11 @@ describe("GET /feed.xml", () => {
       unpersistedNote({ slug: "hello-world", title: "Hello & World" }),
     );
 
-    const res = await app.request("https://example.test/feed.xml", {}, env(d1));
+    const res = await createTestApp().request(
+      "https://example.test/feed.xml",
+      {},
+      env(d1),
+    );
     const body = await res.text();
 
     expect(body).toContain("<entry>");

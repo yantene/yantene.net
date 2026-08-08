@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { toNoteDetail } from "./note-detail-view";
 import { extractHeadings } from "./toc-headings";
 import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
+import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
-import type { LocaleVariables } from "~/backend/middleware/locale";
 import {
   InvalidNoteSlugError,
   NoteNotFoundError,
@@ -107,67 +107,65 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
   return router;
 }
 
+/** 連載内ナビ (前後 + 位置)。単発記事は null。 */
+export type SeriesNav = NonNullable<Awaited<ReturnType<typeof buildSeriesNav>>>;
+
+export type NoteDetailPageData =
+  | { readonly found: false }
+  | {
+      readonly found: true;
+      readonly note: PublicNoteMeta;
+      /** パース済み MDAST。loader を通して渡すため具体型で持つ (unknown だと型が落ちる)。 */
+      readonly mdast: Root;
+      readonly related: readonly PublicNote[];
+      readonly headings: readonly TocHeading[];
+      readonly series: SeriesNav | null;
+      /** schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。 */
+      readonly jsonLd: Record<string, unknown>;
+    };
+
 /**
- * ノート詳細の公開ページルータ (Inertia)。認証不要。createPagesRouter の
- * locale + inertia ミドルウェア配下・auth ガードより前にマウントする。
- * 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
+ * ノート詳細ページのデータを読む (Composition Root)。認証不要。
+ * 存在しない slug は throw せず `found: false` を返し、呼び出し側 (loader) が
+ * 404 ステータスで not-found 状態のページを描画する。
  */
-export function createNoteDetailPagesRouter(): Hono<{
-  Bindings: Env;
-  Variables: LocaleVariables;
-}> {
-  const router = new Hono<{ Bindings: Env; Variables: LocaleVariables }>();
+export async function loadNoteDetailPage(
+  env: Env,
+  slugParam: string,
+  origin: string,
+): Promise<NoteDetailPageData> {
+  const detail = await resolveDetail(env, slugParam);
+  if (detail === undefined) return { found: false };
 
-  router.get("/notes/:slug", async (c) => {
-    const detail = await resolveDetail(c.env, c.req.param("slug"));
+  const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
+  const query = new D1NoteQueryRepository(env.D1);
+  const related = await query.findRelated(
+    NoteSlug.create(detail.note.slug),
+    relatedTags,
+    RELATED_LIMIT,
+  );
+  const series = await buildSeriesNav(query, detail.note);
 
-    if (detail === undefined) {
-      c.status(404);
-      return c.render("notes/show", {
-        locale: c.get("locale"),
-        note: null,
-        mdast: null,
-      });
-    }
-
-    const origin = new URL(c.req.url).origin;
-    const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
-    const query = new D1NoteQueryRepository(c.env.D1);
-    const related = await query.findRelated(
-      NoteSlug.create(detail.note.slug),
-      relatedTags,
-      RELATED_LIMIT,
-    );
-    const series = await buildSeriesNav(query, detail.note);
-    return c.render("notes/show", {
-      locale: c.get("locale"),
-      note: detail.note,
-      mdast: detail.mdast,
-      related: related.map((note) => toPublicNote(note)),
-      headings: extractHeadings(detail.mdast as Root),
-      series,
-      og: {
-        title: detail.note.title,
-        description: detail.note.summary,
-        image: `/og/notes/${detail.note.slug}`,
-        type: "article",
-      },
-      // schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        headline: detail.note.title,
-        description: detail.note.summary,
-        image: `${origin}/og/notes/${detail.note.slug}`,
-        datePublished: detail.note.publishedOn,
-        dateModified: detail.note.lastModifiedOn,
-        author: { "@type": "Person", name: "yantene", url: `${origin}/` },
-        publisher: { "@type": "Person", name: "yantene" },
-        mainEntityOfPage: `${origin}/notes/${detail.note.slug}`,
-        keywords: detail.note.tags,
-      },
-    });
-  });
-
-  return router;
+  const mdast = detail.mdast as Root;
+  return {
+    found: true,
+    note: detail.note,
+    mdast,
+    related: related.map((note) => toPublicNote(note)),
+    headings: extractHeadings(mdast),
+    series,
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: detail.note.title,
+      description: detail.note.summary,
+      image: `${origin}/og/notes/${detail.note.slug}`,
+      datePublished: detail.note.publishedOn,
+      dateModified: detail.note.lastModifiedOn,
+      author: { "@type": "Person", name: "yantene", url: `${origin}/` },
+      publisher: { "@type": "Person", name: "yantene" },
+      mainEntityOfPage: `${origin}/notes/${detail.note.slug}`,
+      keywords: detail.note.tags,
+    },
+  };
 }

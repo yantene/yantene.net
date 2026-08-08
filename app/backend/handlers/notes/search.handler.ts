@@ -1,6 +1,5 @@
 import { Hono } from "hono";
-import type { LocaleVariables } from "~/backend/middleware/locale";
-import { toPublicNote } from "~/backend/handlers/note-view";
+import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** 検索結果の最大件数。 */
@@ -29,29 +28,23 @@ export function createSearchApiRouter(): Hono<{ Bindings: Env }> {
   return router;
 }
 
+export interface SearchPageData {
+  readonly query: string;
+  readonly notes: readonly PublicNote[];
+}
+
 /**
- * 全文検索の公開ページルータ (Inertia)。認証不要。createPagesRouter の
- * locale + inertia ミドルウェア配下・auth ガードより前にマウントする。
+ * 全文検索ページのデータを読む (Composition Root)。認証不要。
+ * 空クエリでは検索を実行せず空結果を返す。
  */
-export function createSearchPagesRouter(): Hono<{
-  Bindings: Env;
-  Variables: LocaleVariables;
-}> {
-  const router = new Hono<{ Bindings: Env; Variables: LocaleVariables }>();
-
-  router.get("/search", async (c) => {
-    const query = parseQuery(c.req.query("q"));
-    const results =
-      query.length === 0
-        ? []
-        : await new D1NoteQueryRepository(c.env.D1).search(query, SEARCH_LIMIT);
-    return c.render("search", {
-      locale: c.get("locale"),
-      query,
-      notes: results.map((note) => toPublicNote(note)),
-      og: { image: "/og/default", type: "website" },
-    });
-  });
-
-  return router;
+export async function loadSearchPage(
+  env: Env,
+  rawQuery: string | undefined,
+): Promise<SearchPageData> {
+  const query = parseQuery(rawQuery);
+  const results =
+    query.length === 0
+      ? []
+      : await new D1NoteQueryRepository(env.D1).search(query, SEARCH_LIMIT);
+  return { query, notes: results.map((note) => toPublicNote(note)) };
 }

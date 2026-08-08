@@ -1,5 +1,5 @@
-import { Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { buildPageItems } from "./build-page-items";
 
 export interface PaginationProps {
@@ -28,7 +28,7 @@ export function Pagination({
     <nav className="join" aria-label={t("notes.pagination.label")}>
       {hasPrev ? (
         <Link
-          href={hrefForPage(page - 1)}
+          to={hrefForPage(page - 1)}
           rel="prev"
           className="join-item btn"
           aria-label={t("notes.pagination.previous")}
@@ -53,7 +53,7 @@ export function Pagination({
         ) : (
           <Link
             key={item.page}
-            href={hrefForPage(item.page)}
+            to={hrefForPage(item.page)}
             className={`join-item btn${item.page === page ? " btn-active" : ""}`}
             aria-current={item.page === page ? "page" : undefined}
           >
@@ -64,7 +64,7 @@ export function Pagination({
 
       {hasNext ? (
         <Link
-          href={hrefForPage(page + 1)}
+          to={hrefForPage(page + 1)}
           rel="next"
           className="join-item btn"
           aria-label={t("notes.pagination.next")}

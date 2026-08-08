@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Cloudflare Workers + Hono + Inertia.js + React + Drizzle ORM で構成される Web アプリケーション。
+Cloudflare Workers + Hono + React Router v7 + React + Drizzle ORM で構成される Web アプリケーション。
 
 > ⚠️ ステージング環境の BASIC 認証は絶対に削除しないこと。
 > BASIC 認証はアプリケーション認証とは独立したレイヤーであり、常に有効にしておくこと。

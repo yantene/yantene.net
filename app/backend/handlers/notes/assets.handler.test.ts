@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createNoteAssetsRouter } from "./assets.handler";
 import { NoteSlug } from "~/backend/domain/note";
-import app from "~/backend/index";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
+import { createTestApp } from "~/backend/test-app";
 
 function envWith(bucket: R2Bucket): Env {
   return { R2: bucket } as unknown as Env;
@@ -116,7 +116,7 @@ describe("note asset public routing (full app)", () => {
       KV: {},
     } as unknown as Env;
 
-    const res = await app.request(
+    const res = await createTestApp().request(
       "/api/v1/notes/hello/assets/cover.png",
       {},
       env,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import app from "~/backend/index";
+import { createTestApp } from "~/backend/test-app";
 
 const basicAuthEnv = {
   BASIC_AUTH_USER: "u",
@@ -8,14 +8,14 @@ const basicAuthEnv = {
 
 describe("conditionalBasicAuth (full app)", () => {
   it("challenges with WWW-Authenticate so browsers show the auth dialog", async () => {
-    const res = await app.request("/health", {}, basicAuthEnv);
+    const res = await createTestApp().request("/health", {}, basicAuthEnv);
     expect(res.status).toBe(401);
     // RFC 7235: チャレンジヘッダが無いとブラウザは BASIC 認証ダイアログを出さない。
     expect(res.headers.get("WWW-Authenticate")).toMatch(/^Basic/);
   });
 
   it("allows the request with correct credentials", async () => {
-    const res = await app.request(
+    const res = await createTestApp().request(
       "/health",
       { headers: { Authorization: `Basic ${btoa("u:p")}` } },
       basicAuthEnv,
@@ -24,7 +24,7 @@ describe("conditionalBasicAuth (full app)", () => {
   });
 
   it("is disabled when credentials are not configured", async () => {
-    const res = await app.request("/health", {}, {});
+    const res = await createTestApp().request("/health", {}, {});
     expect(res.status).toBe(200);
   });
 });

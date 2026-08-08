@@ -1,18 +1,35 @@
-import { Head, Link } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
-import type { PageProps } from "~/frontend/page-props";
+import { Link } from "react-router";
+import type { Route } from "./+types/tags";
+import type { TagCount } from "~/backend/handlers/notes/tags.handler";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadTagsPage } from "~/backend/handlers/notes/tags.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
-interface TagCount {
-  readonly tag: string;
-  readonly count: number;
+export async function loader({
+  request,
+  context,
+}: Route.LoaderArgs): Promise<PageMetaBase & { tags: readonly TagCount[] }> {
+  const tags = await loadTagsPage(context.cloudflare.env);
+  return {
+    tags,
+    locale: resolveLocale(request),
+    origin: new URL(request.url).origin,
+  };
 }
 
-interface TagsIndexProps extends PageProps {
-  readonly tags: readonly TagCount[];
-}
+export const meta: Route.MetaFunction = ({ loaderData }) => {
+  const { locale, origin } = loaderData;
+  return buildPageMeta({
+    locale,
+    origin,
+    title: translationsFor(locale).tags.title,
+  });
+};
 
 /*
  * 頻度を表す大小は静的なクラスの段階で持つ。inline style で連続値を渡すと
@@ -36,8 +53,11 @@ function scaleByCount(count: number, min: number, max: number): string {
   return tagScales.at(step) ?? tagScales[0];
 }
 
-export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
+export default function TagsIndex({
+  loaderData,
+}: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { tags } = loaderData;
   const counts = tags.map((tag) => tag.count);
   const min = counts.length > 0 ? Math.min(...counts) : 0;
   const max = counts.length > 0 ? Math.max(...counts) : 0;
@@ -46,7 +66,6 @@ export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
 
   return (
     <AppLayout>
-      <Head title={t("tags.title")} />
       <Header />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-10">
         <h1 className="text-3xl font-bold">{t("tags.heading")}</h1>
@@ -58,7 +77,7 @@ export default function TagsIndex({ tags }: TagsIndexProps): React.JSX.Element {
             {sorted.map(({ tag, count }) => (
               <li key={tag}>
                 <Link
-                  href={`/notes?tag=${encodeURIComponent(tag)}`}
+                  to={`/notes?tag=${encodeURIComponent(tag)}`}
                   className={`${scaleByCount(count, min, max)} leading-none text-primary underline-offset-4 transition-colors hover:decoration-accent hover:underline`}
                   title={t("tags.articleCount", { count })}
                 >

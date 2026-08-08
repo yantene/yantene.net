@@ -1,6 +1,6 @@
 # 0004. Inertia.js によるサーバー駆動 SPA を採用する
 
-- Status: Accepted
+- Status: Superseded by [0010](0010-react-router-v7-over-inertia.md)
 - Date: 2026-07-05
 - Deciders: @yantene
 

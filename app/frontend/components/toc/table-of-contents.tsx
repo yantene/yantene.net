@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 
 export interface TocHeading {
   readonly id: string;
@@ -94,8 +95,13 @@ export function TableOfContents({
             section.children.some((child) => child.id === activeId);
           return (
             <li key={section.heading.id}>
-              <a
-                href={`#${section.heading.id}`}
+              {/*
+                素の <a href="#..."> だと ScrollRestoration がブラウザのハッシュ
+                ジャンプを打ち消してスクロールしない。Link で React Router に
+                ハッシュ遷移として扱わせる。
+              */}
+              <Link
+                to={`#${section.heading.id}`}
                 className={`-ml-px block border-l-2 py-1 pl-4 transition-colors ${
                   section.heading.id === activeId
                     ? "border-primary font-medium text-primary"
@@ -103,13 +109,13 @@ export function TableOfContents({
                 }`}
               >
                 {section.heading.text}
-              </a>
+              </Link>
               {isActiveSection && section.children.length > 0 && (
                 <ul>
                   {section.children.map((child) => (
                     <li key={child.id}>
-                      <a
-                        href={`#${child.id}`}
+                      <Link
+                        to={`#${child.id}`}
                         className={`-ml-px block border-l-2 py-0.5 pl-8 text-xs transition-colors ${
                           child.id === activeId
                             ? "border-primary font-medium text-primary"
@@ -117,7 +123,7 @@ export function TableOfContents({
                         }`}
                       >
                         {child.text}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>

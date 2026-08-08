@@ -1,53 +1,68 @@
-import { Hono } from "hono";
-import type { LocaleVariables } from "~/backend/middleware/locale";
 import {
   parseNoteSort,
   parsePagination,
   parseTag,
+  toPublicNote,
   toPublicNoteList,
+  type PublicNote,
+  type PublicNoteList,
 } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
-type NotesPagesBindings = {
-  Bindings: Env;
-  Variables: LocaleVariables;
-};
+/** ホームに出す新着ノートの件数。 */
+const RECENT_LIMIT = 6;
+
+export interface NotesListPageData extends PublicNoteList {
+  /** 絞り込み中のタグ (未絞り込みなら null)。 */
+  readonly tag: string | null;
+  /** ページ送りリンクの再構築に使う、リクエストされた並び順。 */
+  readonly sort: {
+    readonly sortBy: string | null;
+    readonly order: string | null;
+  };
+}
 
 /**
- * ノートの公開ページルータ (Inertia)。認証不要 (クローラー・ボット対応)。
- * createPagesRouter 内で locale + inertia ミドルウェア適用後・auth ガードより前に
- * マウントし、ミドルウェアを継承しつつ公開する。
+ * ノート一覧ページのデータを読む (Composition Root)。
+ * ページング・並び順・タグ絞り込みはクエリ文字列から解決する。
  */
-export function createNotesPagesRouter(): Hono<NotesPagesBindings> {
-  const router = new Hono<NotesPagesBindings>();
+export async function loadNotesListPage(
+  env: Env,
+  url: URL,
+): Promise<NotesListPageData> {
+  const { page, perPage, limit, offset } = parsePagination(
+    url.searchParams.get("page") ?? undefined,
+    url.searchParams.get("per-page") ?? undefined,
+  );
+  const { sortBy, direction } = parseNoteSort(
+    url.searchParams.get("sort-by") ?? undefined,
+    url.searchParams.get("order") ?? undefined,
+  );
+  const tag = parseTag(url.searchParams.get("tag") ?? undefined);
 
-  router.get("/notes", async (c) => {
-    const { page, perPage, limit, offset } = parsePagination(
-      c.req.query("page"),
-      c.req.query("per-page"),
-    );
-    const { sortBy, direction } = parseNoteSort(
-      c.req.query("sort-by"),
-      c.req.query("order"),
-    );
+  const query = new D1NoteQueryRepository(env.D1);
+  const result = await query.list({ limit, offset, sortBy, direction, tag });
 
-    const tag = parseTag(c.req.query("tag"));
+  return {
+    ...toPublicNoteList(result, page, perPage),
+    tag: tag ?? null,
+    sort: {
+      sortBy: url.searchParams.get("sort-by"),
+      order: url.searchParams.get("order"),
+    },
+  };
+}
 
-    const query = new D1NoteQueryRepository(c.env.D1);
-    const result = await query.list({ limit, offset, sortBy, direction, tag });
-
-    return c.render("notes/index", {
-      locale: c.get("locale"),
-      ...toPublicNoteList(result, page, perPage),
-      // ページ送りリンク・見出しで使うため、現在の絞り込みタグと並び順を渡す。
-      tag: tag ?? null,
-      sort: {
-        sortBy: c.req.query("sort-by") ?? null,
-        order: c.req.query("order") ?? null,
-      },
-      og: { image: "/og/default", type: "website" },
-    });
+/** ホームの新着ノート (公開日降順・最大 6 件) を読む。 */
+export async function loadRecentNotes(
+  env: Env,
+): Promise<readonly PublicNote[]> {
+  const query = new D1NoteQueryRepository(env.D1);
+  const result = await query.list({
+    limit: RECENT_LIMIT,
+    offset: 0,
+    sortBy: "publishedOn",
+    direction: "desc",
   });
-
-  return router;
+  return result.notes.map((note) => toPublicNote(note));
 }

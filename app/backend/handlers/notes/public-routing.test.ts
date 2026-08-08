@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import app from "~/backend/index";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import { createTestApp } from "~/backend/test-app";
 
 /**
  * 公開ノート API が認証ガードより前にマウントされ、応答して短絡することで
@@ -13,12 +13,12 @@ describe("notes public routing", () => {
   }
 
   it("serves GET /api/v1/notes without a session (public)", async () => {
-    const res = await app.request("/api/v1/notes", {}, env());
+    const res = await createTestApp().request("/api/v1/notes", {}, env());
     expect(res.status).toBe(200);
   });
 
   it("still protects GET /api/me behind the session guard", async () => {
-    const res = await app.request("/api/me", {}, env());
+    const res = await createTestApp().request("/api/me", {}, env());
     expect(res.status).toBe(401);
   });
 });
