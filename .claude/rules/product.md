@@ -33,6 +33,20 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 
 手元で Markdown を書き、Cloudflare Artifacts リポジトリに `git push` する。管理画面は設けない。
 
+### 実装変更を既存ノートに反映するとき (force refresh)
+
+`POST /api/v1/refresh` の変更検出は **md + アセットのハッシュ**で行う。そのため
+「MDAST の作り方を変えた」といった**実装側の変更は、通常の refresh では既存ノートに
+反映されない** (ハッシュが変わらないので全件スキップされる)。
+
+MDAST の生成内容を変えたら、デプロイ後に一度 force 付きで叩くこと。
+
+```bash
+curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
+```
+
+過去に該当した変更: 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))。
+
 ## データモデルとストレージ戦略
 
 コンテンツの正本は Cloudflare Artifacts (Git ベースのストレージ) に置く。
