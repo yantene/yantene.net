@@ -1,6 +1,9 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { getApp } from "~/backend";
-import { cloudflareContext, nonceContext } from "~/frontend/lib/route-context";
+import {
+  cloudflareContext,
+  nonceRouteContext,
+} from "~/frontend/lib/route-context";
 
 const requestHandler = createRequestHandler(
   async () => import("virtual:react-router/server-build"),
@@ -8,11 +11,11 @@ const requestHandler = createRequestHandler(
 );
 
 const app = getApp(async (request, env, ctx, nonce) => {
-  // future.v8_middleware 有効時、loader へ渡すのは RouterContextProvider。
+  // React Router v8 では loader へ渡すのは RouterContextProvider。
   // Worker のランタイム値はコンテキストキー経由で受け渡す (route-context.ts)。
   const context = new RouterContextProvider();
   context.set(cloudflareContext, { env, ctx });
-  context.set(nonceContext, nonce);
+  context.set(nonceRouteContext, nonce);
   return requestHandler(request, context);
 });
 

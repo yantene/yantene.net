@@ -33,7 +33,7 @@ v7 は移行パスを提示している状態だった。移行時に v7 を選�
 
 - `v8_middleware` により loader の `context` が `RouterContextProvider` になった。
   `context.cloudflare.env` という直接アクセスができなくなるため、コンテキストキー
-  (`app/frontend/lib/route-context.ts` の `cloudflareContext` / `nonceContext`) を定義し、
+  (`app/frontend/lib/route-context.ts` の `cloudflareContext` / `nonceRouteContext`) を定義し、
   `workers/app.ts` で詰めて `context.get(...)` で取り出す方式にした。
   これに伴い `AppLoadContext` の宣言マージは不要になった。
 - `v8_passThroughRequests` は `request.url` を正規化しなくなるが、loader は `origin` と

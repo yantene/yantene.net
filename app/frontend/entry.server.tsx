@@ -4,7 +4,7 @@ import { I18nextProvider } from "react-i18next";
 import { ServerRouter } from "react-router";
 import type { EntryContext, RouterContextProvider } from "react-router";
 import { NonceContext } from "~/frontend/lib/nonce-context";
-import { nonceContext } from "~/frontend/lib/route-context";
+import { nonceRouteContext } from "~/frontend/lib/route-context";
 import { createI18nInstance } from "~/lib/i18n/init";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
@@ -15,7 +15,7 @@ export default async function handleRequest(
   routerContext: EntryContext,
   loadContext: RouterContextProvider,
 ): Promise<Response> {
-  const nonce = loadContext.get(nonceContext);
+  const nonce = loadContext.get(nonceRouteContext);
   const i18n = await createI18nInstance(resolveLocale(request));
 
   let isShellRendered = false;
