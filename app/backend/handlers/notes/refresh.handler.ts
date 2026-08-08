@@ -54,7 +54,10 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
       new R2NoteContentCache(c.env.R2),
       new D1NoteSearchIndex(c.env.D1),
     );
-    const result = await service.refresh();
+    // ?force=true でコンテンツ未変更のノートも再処理する (実装変更の反映用)。
+    const result = await service.refresh({
+      force: c.req.query("force") === "true",
+    });
     return c.json(result);
   });
 

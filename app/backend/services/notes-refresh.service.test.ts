@@ -58,6 +58,18 @@ function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
 
+/** 寸法だけ読める最小の PNG (シグネチャ + IHDR)。 */
+function pngBytes(width: number, height: number): Uint8Array {
+  const png = new Uint8Array(24);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  const view = new DataView(png.buffer);
+  view.setUint32(8, 13);
+  png.set([0x49, 0x48, 0x44, 0x52], 12); // "IHDR"
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return png;
+}
+
 const helloMd = `---
 title: Hello
 imageUrl: ./cover.png
@@ -118,6 +130,80 @@ describe("NotesRefreshService", () => {
     // 本文 MDAST の画像 URL がアセット API URL に解決されている。
     const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
     expect(mdastJson).toContain("/api/v1/notes/hello/assets/inline.png");
+  });
+
+  /*
+   * 画像の width/height は refresh 時に MDAST へ埋める (レイアウトシフト対策)。
+   * 寸法を読めない画像には何も付けないことも併せて固定する。
+   */
+  it("embeds image dimensions into the cached MDAST", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: pngBytes(1200, 630) }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdast = cache.mdasts.get("hello") as {
+      children: { type: string; children?: unknown[] }[];
+    };
+    const images: { url?: string; data?: { hProperties?: unknown } }[] = [];
+    const walk = (node: unknown): void => {
+      if (typeof node !== "object" || node === null) return;
+      const record = node as {
+        type?: string;
+        url?: string;
+        data?: { hProperties?: unknown };
+        children?: unknown[];
+      };
+      if (record.type === "image") images.push(record);
+      const children = record.children ?? [];
+      for (const child of children) walk(child);
+    };
+    walk(mdast);
+
+    expect(images).toHaveLength(1);
+    expect(images[0].url).toBe("/api/v1/notes/hello/assets/inline.png");
+    expect(images[0].data?.hProperties).toEqual({ width: 800, height: 450 });
+  });
+
+  /*
+   * 変更検出は md + アセットのハッシュなので、実装変更 (MDAST の作り方を変えた等) は
+   * 通常の refresh では既存ノートに反映されない。force はそれを流すための逃げ道。
+   */
+  it("reprocesses unchanged notes when force is given", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: pngBytes(1200, 630) }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    // 2 回目: ハッシュが同じなのでスキップされる
+    const second = await service.refresh();
+    expect(second.processed).toEqual([]);
+    // force ならスキップせず再処理する
+    const forced = await service.refresh({ force: true });
+    expect(forced.processed).toEqual(["hello"]);
+  });
+
+  it("leaves images without readable dimensions untouched", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      // 寸法を判別できないダミーバイト列
+      ["notes/hello/inline.png", { hash: "a2", bytes: bytes("not an image") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
+    expect(mdastJson).toContain("/api/v1/notes/hello/assets/inline.png");
+    expect(mdastJson).not.toContain("hProperties");
   });
 
   it("skips unchanged notes on a second refresh (hash match)", async () => {

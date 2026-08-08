@@ -71,6 +71,13 @@
 .note-prose :where(img) {
   margin-inline: auto;
   border-radius: 0.5rem;
+  /*
+   * refresh 時に width/height 属性を埋めている (レイアウトシフト対策)。属性の値をそのまま
+   * 使うと横幅が本文からはみ出すので、幅は本文に合わせて縮め、高さは縦横比に追随させる。
+   * height: auto を落とすと属性の高さが固定され、画像が縦に潰れる。
+   */
+  max-width: 100%;
+  height: auto;
 }
 .note-prose :where(a) {
   text-underline-offset: 0.2em;

@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import GithubSlugger from "github-slugger";
 import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
+import { readImageDimensions, type ImageDimensions } from "./image-dimensions";
 import { resolveAssetUrl } from "./note-asset-url";
 import { parseNoteContent } from "./note-content-parser";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
@@ -30,6 +31,16 @@ export interface RefreshResult {
   readonly deleted: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
+}
+
+export interface RefreshOptions {
+  /**
+   * コンテンツハッシュが一致していても再処理する。
+   *
+   * 変更検出は md + アセットのハッシュで行うため、**実装側の変更 (MDAST の作り方を変えた等) は
+   * 通常の refresh では既存ノートに反映されない**。そうした移行を流すときに使う。
+   */
+  readonly force?: boolean;
 }
 
 interface NoteGroup {
@@ -66,7 +77,7 @@ export class NotesRefreshService {
     private readonly searchIndex: INoteSearchIndex,
   ) {}
 
-  async refresh(): Promise<RefreshResult> {
+  async refresh(options: RefreshOptions = {}): Promise<RefreshResult> {
     const tree = await this.content.listTree();
     const groups = groupNotes(tree);
     const stored = await this.query.listSourceHashes();
@@ -78,7 +89,9 @@ export class NotesRefreshService {
     for (const group of groups) {
       const slug = group.slug.toString();
       seen.add(slug);
-      if (stored.get(slug) === group.contentHash) continue; // 変更なし
+      // 変更なしは飛ばす。force のときは実装変更を既存ノートへ反映するため再処理する。
+      const isUnchanged = stored.get(slug) === group.contentHash;
+      if (options.force !== true && isUnchanged) continue;
       try {
         await this.syncNote(group);
         processed.push(slug);
@@ -113,8 +126,14 @@ export class NotesRefreshService {
 
     // 古いキャッシュ (リネーム・削除されたアセット含む) を消してから書き直す。
     await this.cache.deleteNote(group.slug);
+    // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
+    const dimensions = await this.cacheAssets(group);
+    applyImageDimensions(
+      mdast,
+      `/api/v1/notes/${group.slug.toString()}/assets/`,
+      dimensions,
+    );
     await this.cache.putMdast(group.slug, mdast);
-    await this.cacheAssets(group);
     await this.command.upsert(note);
     await this.searchIndex.index({
       slug: group.slug,
@@ -123,7 +142,14 @@ export class NotesRefreshService {
     });
   }
 
-  private async cacheAssets(group: NoteGroup): Promise<void> {
+  /**
+   * アセットを R2 に書き込みつつ、画像の寸法を集めて返す。
+   * 読めなかった・寸法を判別できなかったものは表に載せない。
+   */
+  private async cacheAssets(
+    group: NoteGroup,
+  ): Promise<ReadonlyMap<string, ImageDimensions>> {
+    const dimensions = new Map<string, ImageDimensions>();
     for (const asset of group.assets) {
       const bytes = await this.content.readFile(asset.path);
       if (bytes === undefined) continue;
@@ -132,7 +158,10 @@ export class NotesRefreshService {
         bytes,
         contentType: contentTypeForPath(relPath),
       });
+      const size = readImageDimensions(bytes);
+      if (size !== undefined) dimensions.set(relPath, size);
     }
+    return dimensions;
   }
 
   private async deleteRemoved(
@@ -284,6 +313,8 @@ interface MdastNodeLike {
   url?: string;
   identifier?: string;
   children?: MdastNodeLike[];
+  /** mdast-util-to-hast が要素の属性に展開する追加データ (hProperties)。 */
+  data?: { hProperties?: Record<string, unknown> };
 }
 
 /**
@@ -329,6 +360,47 @@ function rewriteImageUrls(
   if (Array.isArray(record.children)) {
     for (const child of record.children) {
       rewriteImageUrls(child, slug, imageRefIds);
+    }
+  }
+}
+
+/**
+ * MDAST の image ノードに width/height を埋める (レイアウトシフト対策)。
+ *
+ * `data.hProperties` は mdast-util-to-hast が要素の属性に展開する仕組みなので、
+ * フロント側の変更なしに `<img width height>` が出るようになる。
+ * 寸法が取れなかった画像には何も付けない (誤った値で見た目を壊さない)。
+ *
+ * URL は rewriteImageUrls 済み (`/api/v1/notes/<slug>/assets/<path>`) の前提で、
+ * そこから相対パスを逆算して寸法表を引く。
+ */
+function applyImageDimensions(
+  node: unknown,
+  assetPrefix: string,
+  dimensions: ReadonlyMap<string, ImageDimensions>,
+): void {
+  if (typeof node !== "object" || node === null) return;
+  const record = node as MdastNodeLike;
+  const isImageLike = record.type === "image" || record.type === "definition";
+  if (isImageLike && typeof record.url === "string") {
+    const relPath = record.url.startsWith(assetPrefix)
+      ? decodeURIComponent(record.url.slice(assetPrefix.length))
+      : undefined;
+    const size = relPath === undefined ? undefined : dimensions.get(relPath);
+    if (size !== undefined) {
+      record.data = {
+        ...record.data,
+        hProperties: {
+          ...record.data?.hProperties,
+          width: size.width,
+          height: size.height,
+        },
+      };
+    }
+  }
+  if (Array.isArray(record.children)) {
+    for (const child of record.children) {
+      applyImageDimensions(child, assetPrefix, dimensions);
     }
   }
 }
