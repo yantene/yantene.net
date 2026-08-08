@@ -7,7 +7,7 @@ import { loadRecentNotes } from "~/backend/handlers/notes/pages.handler";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { NoteCard } from "~/frontend/components/note-card/note-card";
+import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
@@ -57,10 +57,8 @@ export default function Home({
               {t("home.viewAll")}
             </Link>
           </div>
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {notes.map((note) => (
-              <NoteCard key={note.slug} {...note} />
-            ))}
+          <div className="mt-8">
+            <NoteTimeline notes={notes} />
           </div>
         </section>
       )}

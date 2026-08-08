@@ -1,0 +1,36 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 200 56"
+  role="img"
+  aria-label="やんてね！"
+>
+  <!--
+    ヘッダーのロゴ「やんてね！」(プレースホルダ)。手書きの本番素材で差し替える。
+
+    差し替え時に守る取り決め。
+
+    - viewBox の高さは 56 を維持する。ヘッダーは高さ基準で表示するので、ここが変わると
+      ロゴだけ大きさがずれる。幅は文字の詰まり具合に合わせて変えてよい。
+    - 文字は <g id="text">、マーカーの下線は <g id="marker"> に分ける。ホバー時に
+      マーカーだけを左から伸ばす演出を CSS が担うため、この 2 つは必ず別グループにする。
+    - <g id="marker"> は左端を基点に伸ばす (transform-origin: left center)。
+      マーカーの形は左端から右へ引いた筆致にしておくと、伸びる向きと筆致の向きが揃う。
+    - 文字色は fill="currentColor" で受ける (ヘッダーの文字色に追従させるため)。
+      マーカーだけは色を持たせたいので CSS の側でクラスから指定する。ここでも
+      currentColor にしておき、SVG 内に色を直書きしないこと。
+    - aria-label はここに残す。ロゴは Home へのリンクの中身になるので、
+      読み上げ時に名前が必要になる。
+  -->
+
+  <g id="text" fill="currentColor" fill-opacity="0.85">
+    <rect x="4" y="8" width="32" height="34" rx="4" />
+    <rect x="42" y="8" width="32" height="34" rx="4" />
+    <rect x="80" y="8" width="32" height="34" rx="4" />
+    <rect x="118" y="8" width="32" height="34" rx="4" />
+    <rect x="158" y="8" width="12" height="34" rx="4" />
+  </g>
+
+  <g id="marker" fill="currentColor" fill-opacity="0.45">
+    <rect x="152" y="45" width="26" height="7" rx="3.5" />
+  </g>
+</svg>

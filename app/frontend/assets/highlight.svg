@@ -1,0 +1,32 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 200 40"
+  preserveAspectRatio="none"
+  role="img"
+  aria-hidden="true"
+>
+  <!--
+    ヒーロー見出しの下に敷く手書きマーカー (プレースホルダ)。本番素材で差し替える。
+
+    差し替え時に守る取り決め。
+
+    - viewBox は "0 0 200 40" を維持する。
+    - preserveAspectRatio="none" で見出しの幅いっぱいまで横に引き伸ばす。つまり
+      縦横比は保たれない。端の跳ねや尖りが大きいと、伸ばしたときにそこだけ間延びして
+      不自然になるので、輪郭の起伏は控えめにすること。
+    - 塗りのみ。線 (stroke) は使わない。伸ばすと線幅だけが縦横で歪んで破綻する。
+    - 色は fill="currentColor" で受け、CSS 側で黄緑を当てる。SVG 内に色を直書きしない。
+    - 見出しの背後に敷くので、不透明にせず半透明のままにしておくこと (文字の輪郭が
+      マーカーに埋もれない)。
+  -->
+
+  <rect
+    x="0"
+    y="6"
+    width="200"
+    height="28"
+    rx="6"
+    fill="currentColor"
+    fill-opacity="0.5"
+  />
+</svg>

@@ -1,0 +1,46 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 60 100"
+  role="img"
+  aria-hidden="true"
+>
+  <!--
+    歩行者 (プレースホルダ)。中身は半透明の矩形だけで、形は本番素材で差し替える。
+
+    差し替え時に守る取り決め。
+
+    - viewBox は "0 0 60 100" を維持する。足元 (接地面) が y=100。ここがずれると
+      地平線の上に立たなくなる。
+    - 手足は CSS の rotate で振り子運動させる。各パーツは
+      transform-box: fill-box; transform-origin: top center; で回すので、
+      関節 (肩・股関節) が必ずパーツのバウンディングボックスの上端中央に来るように描くこと。
+      腕を斜めに寝かせた姿勢で描くと、この前提が崩れて回転が変な位置を軸にする。
+    - id は変えない。leg-front / leg-back / arm-front / arm-back / body / head を
+      CSS が名指しで動かしている。
+    - 前後の重なり順は「奥の腕 → 奥の脚 → 胴 → 頭 → 手前の脚 → 手前の腕」。
+      この並びを崩すと手前の腕が胴に隠れる。
+    - 色は fill="currentColor" で受ける。SVG 内に色を直書きしないこと。
+    - 進行方向は右向き。左向き (時間を巻き戻すとき) は CSS の scaleX(-1) で反転させる。
+  -->
+
+  <g fill="currentColor" fill-opacity="0.55">
+    <g id="arm-back">
+      <rect x="19" y="20" width="5" height="26" rx="2.5" />
+    </g>
+    <g id="leg-back">
+      <rect x="23" y="52" width="6" height="48" rx="3" />
+    </g>
+    <g id="body">
+      <rect x="23" y="18" width="14" height="36" rx="5" />
+    </g>
+    <g id="head">
+      <rect x="22" y="0" width="16" height="16" rx="8" />
+    </g>
+    <g id="leg-front">
+      <rect x="31" y="52" width="6" height="48" rx="3" />
+    </g>
+    <g id="arm-front">
+      <rect x="36" y="20" width="5" height="26" rx="2.5" />
+    </g>
+  </g>
+</svg>

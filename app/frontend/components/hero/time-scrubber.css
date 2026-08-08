@@ -1,0 +1,214 @@
+/*
+ * 時刻の目盛り軸と、その上を歩く人。
+ *
+ * 軸は「288 秒で 1 日ぶん左へ流れる」CSS アニメーションでしかない。ドラッグやキー操作は
+ * このアニメーションの currentTime を動かすだけで、位置を JS が直接書き込むことはない
+ * (CSP 下で inline style が使えないため。詳細は day-clock.ts)。JS が無い環境では
+ * 操作できないだけで、軸は変わらず流れ続ける。
+ */
+
+.time-axis {
+  /*
+   * 1 日ぶんの幅。目盛りの間隔と、ドラッグ量から時間への換算の両方がこれで決まる。
+   * 帯の幅より少し広く取ることで、一度に見えるのがおよそ 18 時間ぶんになる。
+   *
+   * vw ではなく cqw を使うのは、vw がスクロールバーの幅を含むため。歩行者の足元に
+   * 来る時刻が実際の帯の幅から算出されず、十数分ぶんずれてしまう。
+   */
+  container-type: inline-size;
+  --day-width: 130cqw;
+
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: var(--timeline-height);
+  overflow: hidden;
+  /* 縦のスクロールはページに渡し、横の動きだけを掴む。 */
+  touch-action: pan-y;
+  cursor: grab;
+  color: var(--color-base-content);
+}
+
+.time-axis:active {
+  cursor: grabbing;
+}
+
+.time-axis:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/*
+ * 目盛りの帯。左端を「歩行者の位置から半日ぶん手前」に置くことで、位相 0 のときに
+ * 歩行者の足元へちょうど 12:00 が来る (Celestim の位相 0 は南中なので、空と一致する)。
+ */
+.time-axis-track {
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--day-width) / 2);
+  display: flex;
+  animation: time-axis-scroll var(--day-cycle) linear infinite;
+}
+
+@keyframes time-axis-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(var(--day-width) * -1));
+  }
+}
+
+/*
+ * 1 日ぶんの目盛り。中身は毎日同じ並びなので、1 日流れたところで見た目が振り出しに戻る。
+ * 3 日ぶん並べてあるのは、流れ切ったときに画面の左右が空かないようにするため。
+ */
+.time-axis-day {
+  position: relative;
+  display: flex;
+  width: var(--day-width);
+}
+
+/*
+ * 時間帯の色。Celestim の空の色サイクルをそのまま横に倒したもので、
+ * 0:00 の夜から始まり、朝・昼・夕を通ってまた夜に戻る。
+ */
+.time-axis-day::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgb(40 50 80),
+    rgb(219 106 0) 25%,
+    rgb(140 200 230) 50%,
+    rgb(255 173 49) 75%,
+    rgb(40 50 80)
+  );
+}
+
+.time-axis-tick {
+  position: relative;
+  flex: 0 0 calc(var(--day-width) / 8);
+}
+
+/* 目盛りの刻み。ラベルと同じ位置に立てる。 */
+.time-axis-tick::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 0.5rem;
+  background-color: currentcolor;
+  opacity: 0.35;
+}
+
+.time-axis-tick-label {
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  translate: -50% 0;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklch, currentcolor 55%, transparent);
+  white-space: nowrap;
+}
+
+/*
+ * 歩行者。地平線 (目盛りの帯の上端) に足を着けて立つ。
+ * 軸の内側に置くと overflow で切れるので、帯の外に出してある。
+ */
+.daywalker {
+  position: absolute;
+  left: 50%;
+  bottom: var(--timeline-height);
+  translate: -50% 0;
+  /*
+   * 街も画面幅に比例して縮む (viewBox の比率をコンテナに写しているため) ので、
+   * 背丈もそれに合わせる。固定値にすると、狭い画面でビルより大きくなってしまう。
+   */
+  height: clamp(2.5rem, 5.5vw, 4rem);
+  pointer-events: none;
+  color: var(--color-base-content);
+}
+
+.daywalker-svg {
+  height: 100%;
+  width: auto;
+  /* 歩くたびにわずかに上下する。手足の周期の倍の速さで 1 往復する。 */
+  animation: daywalker-bob 0.45s ease-in-out infinite;
+}
+
+/*
+ * 手足の振り子。関節は各パーツのバウンディングボックスの上端中央にある前提
+ * (walker.svg のコメントを参照)。
+ */
+.daywalker-svg #leg-front,
+.daywalker-svg #leg-back,
+.daywalker-svg #arm-front,
+.daywalker-svg #arm-back {
+  transform-box: fill-box;
+  transform-origin: top center;
+}
+
+.daywalker-svg #leg-front,
+.daywalker-svg #arm-back {
+  animation: daywalker-swing-lead 0.9s ease-in-out infinite;
+}
+
+.daywalker-svg #leg-back,
+.daywalker-svg #arm-front {
+  animation: daywalker-swing-trail 0.9s ease-in-out infinite;
+}
+
+@keyframes daywalker-swing-lead {
+  0%,
+  100% {
+    rotate: 20deg;
+  }
+
+  50% {
+    rotate: -20deg;
+  }
+}
+
+@keyframes daywalker-swing-trail {
+  0%,
+  100% {
+    rotate: -20deg;
+  }
+
+  50% {
+    rotate: 20deg;
+  }
+}
+
+@keyframes daywalker-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -2px;
+  }
+}
+
+/*
+ * 動きを減らす設定では自動進行を止める。止めるのは再生だけで、ドラッグやキー操作による
+ * currentTime の書き換えは一時停止中でも効くため、仕掛け自体は残る。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .time-axis-track,
+  .daywalker-svg,
+  .daywalker-svg #leg-front,
+  .daywalker-svg #leg-back,
+  .daywalker-svg #arm-front,
+  .daywalker-svg #arm-back {
+    animation-play-state: paused;
+  }
+}

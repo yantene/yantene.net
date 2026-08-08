@@ -1,0 +1,175 @@
+/*
+ * 記事のタイムライン一覧 (トップページ)。
+ *
+ * レイアウトを Tailwind ではなくここに置いているのは、grid-template-areas で
+ * 画面幅ごとに要素の並びを組み替えているため。ユーティリティクラスの羅列より、
+ * エリア名で 2 通りの並びを並記したほうが対応関係が読める。
+ */
+
+.note-timeline {
+  /* ドット列の幅。縦線の位置もここから決まるので、変えると線がドットからずれる。 */
+  --note-dot-column: 1.25rem;
+  --note-dot-size: 0.5rem;
+  /*
+   * 項目の上端からドット中心までの距離。縦線を切り上げ・切り下げる位置でもある。
+   * 日付の 1 行目の中心 (上下の余白 + 行の半分) に合わせてある。
+   */
+  --note-dot-top: 1.875rem;
+  /*
+   * 項目の上下の余白。ドットの位置はこの余白の内側から数えるので、Tailwind の
+   * py-* ではなくここで持つ (両者がずれると、点だけが線から外れる)。
+   */
+  --note-item-padding-y: 1.25rem;
+}
+
+.note-timeline-item {
+  position: relative;
+}
+
+/*
+ * ドットの列を貫く縦線。両端の項目では半分だけ引き、リストの外へ線が突き抜けないようにする。
+ */
+.note-timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--note-dot-column) / 2);
+  width: 1px;
+  background-color: var(--color-base-300);
+}
+
+.note-timeline-item:first-child::before {
+  top: var(--note-dot-top);
+}
+
+.note-timeline-item:last-child::before {
+  top: 0;
+  bottom: auto;
+  height: var(--note-dot-top);
+}
+
+/* 記事が 1 件だけのときは、線を引く相手がいないので出さない。 */
+.note-timeline-item:first-child:last-child::before {
+  display: none;
+}
+
+.note-timeline-link {
+  display: grid;
+  grid-template-columns: var(--note-dot-column) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "dot date  thumb"
+    "dot body  thumb";
+  column-gap: 0.75rem;
+  align-items: start;
+  padding-block: var(--note-item-padding-y);
+}
+
+@media (width >= 40rem) {
+  .note-timeline-link {
+    grid-template-columns:
+      var(--note-dot-column) auto minmax(0, 1fr)
+      auto auto;
+    grid-template-areas: "dot date body thumb arrow";
+    column-gap: 1.5rem;
+  }
+}
+
+.note-timeline-dot {
+  grid-area: dot;
+  width: var(--note-dot-size);
+  height: var(--note-dot-size);
+  border-radius: 50%;
+  /*
+   * 縦線の分岐位置とドット中心を揃える。ドットは余白の内側から積まれるので、
+   * 項目上端からの距離 (--note-dot-top) から余白の分を引く。
+   */
+  margin-top: calc(
+    var(--note-dot-top) - var(--note-item-padding-y) - var(--note-dot-size) / 2
+  );
+  margin-left: calc((var(--note-dot-column) - var(--note-dot-size)) / 2);
+  /* 縦線の上に載せて、線を跨ぐ点に見せる。 */
+  position: relative;
+  z-index: 1;
+  /* 線が点の縁から直に伸びると窮屈なので、地の色で少し余白を作る。 */
+  box-shadow: 0 0 0 3px var(--color-base-100);
+}
+
+.note-timeline-date {
+  grid-area: date;
+}
+
+.note-timeline-body {
+  grid-area: body;
+}
+
+.note-timeline-thumb {
+  grid-area: thumb;
+}
+
+.note-timeline-arrow {
+  grid-area: arrow;
+  /* 狭い画面では矢印を出さない (リンク全体がタップ領域なので案内が要らない)。 */
+  display: none;
+}
+
+@media (width >= 40rem) {
+  .note-timeline-arrow {
+    display: block;
+  }
+}
+
+/*
+ * 公開月を 1 年の位相に見立てたドットの色 (割り当ては season-color.ts)。
+ *
+ * 色相を 12 等分して一周させ、明度と彩度は白地で読める値に固定している。
+ * 5 月の新緑、8 月の日差し、10 月の紅葉、1 月の夜の色、と季節の実感に寄せる向きに
+ * 回しているので、色相の並びを逆にすると季節と色が食い違う。
+ */
+.note-dot-m01 {
+  background-color: oklch(0.6 0.14 250);
+}
+
+.note-dot-m02 {
+  background-color: oklch(0.6 0.14 220);
+}
+
+.note-dot-m03 {
+  background-color: oklch(0.6 0.14 190);
+}
+
+.note-dot-m04 {
+  background-color: oklch(0.6 0.14 160);
+}
+
+.note-dot-m05 {
+  background-color: oklch(0.6 0.14 130);
+}
+
+.note-dot-m06 {
+  background-color: oklch(0.6 0.14 100);
+}
+
+.note-dot-m07 {
+  background-color: oklch(0.6 0.14 70);
+}
+
+.note-dot-m08 {
+  background-color: oklch(0.6 0.14 40);
+}
+
+.note-dot-m09 {
+  background-color: oklch(0.6 0.14 10);
+}
+
+.note-dot-m10 {
+  background-color: oklch(0.6 0.14 340);
+}
+
+.note-dot-m11 {
+  background-color: oklch(0.6 0.14 310);
+}
+
+.note-dot-m12 {
+  background-color: oklch(0.6 0.14 280);
+}

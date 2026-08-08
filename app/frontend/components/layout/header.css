@@ -1,0 +1,41 @@
+/*
+ * ヘッダーのロゴ。SVG をインライン展開しているので、中のパーツを CSS から掴める。
+ */
+
+/* マーカーの下線。ロゴ本体は currentColor に従うが、ここだけは色を持たせる。 */
+.site-logo #marker {
+  fill: oklch(0.78 0.17 130);
+}
+
+/*
+ * ホバーすると下線が左から引き直される。
+ *
+ * 既定の状態には何も指定しない (線は引かれたまま)。ホバーの間だけアニメーションを
+ * 走らせることで、離すたびに巻き戻り、次のホバーでまた引き直せる。
+ */
+.site-logo:hover #marker {
+  animation: site-logo-marker-draw 0.4s ease-out;
+}
+
+@keyframes site-logo-marker-draw {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.site-logo #marker {
+  /* 左端を筆の起点にする。fill-box にしないと viewBox 全体が基準になり、線が飛ぶ。 */
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+/* 動きを減らす設定では引き直しの演出をしない (線そのものは残る)。 */
+@media (prefers-reduced-motion: reduce) {
+  .site-logo:hover #marker {
+    animation: none;
+  }
+}

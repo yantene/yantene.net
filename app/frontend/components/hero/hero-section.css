@@ -1,0 +1,108 @@
+/*
+ * ヒーロー。空 (Celestim)・街並み・時刻の目盛りが、ひとつの時計として同じ周期で動く。
+ *
+ * その周期は --day-cycle が持つ。Celestim もこの値を読むので、ここを変えると
+ * 空・太陽・月・雲・目盛りがまとめて追随する。
+ */
+
+/*
+ * 1 日の長さ。ここを起点に継承させることで、内側のどこかに速度違いのクラスを
+ * 被せるだけで、空も雲も目盛りもまとめて追随する。ヒーロー自身に定義してしまうと
+ * 外側から被せた値を自分で上書きしてしまい、速度を差し替えられなくなる。
+ */
+:root {
+  --day-cycle: 288s;
+}
+
+.hero-clock {
+  /* 地平線より下、時刻の目盛りが占める帯の高さ。街はこの帯の上に載る。 */
+  --timeline-height: 4.5rem;
+}
+
+/* 全周期を短時間で確かめたいとき (主に Storybook) 用。 */
+.hero-clock-fast {
+  --day-cycle: 24s;
+}
+
+/*
+ * 見出しからソーシャルまでの本文。下端は目盛りの帯を避けるが、街の線画とは重ねる
+ * (線が薄いので読める。テキストを街の上に逃がすとヒーローが間延びする)。
+ */
+.hero-content {
+  padding-top: 6rem;
+  padding-bottom: calc(var(--timeline-height) + 3rem);
+}
+
+.cityscape {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--timeline-height);
+  /*
+   * 素材の viewBox と同じ比率をコンテナに写す。こうすると幅がいくつでも
+   * 街の全体が過不足なく収まり、下端がそのまま地平線になる。
+   */
+  aspect-ratio: 1920 / 340;
+  /* 画面が極端に広いとき、街だけが伸び上がってヒーローを埋めないようにする。 */
+  max-height: 18rem;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--color-base-content);
+}
+
+.cityscape-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * 雲だけが流れる。1 周を 4 日ぶんかけることで、足元の目盛りより遅く動き、
+ * 遠くにあるものとして見える。
+ *
+ * 1920 は素材の viewBox の幅。素材側に同じ雲の複製が 1920 ずらして置いてあるので、
+ * ちょうど 1 枚ぶん流れたところで複製が元の位置に来て、継ぎ目なく振り出しに戻る。
+ */
+@keyframes cityscape-cloud-drift {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-1920px);
+  }
+}
+
+.cityscape-svg #clouds {
+  animation: cityscape-cloud-drift calc(var(--day-cycle) * 4) linear infinite;
+}
+
+/*
+ * 見出しの下に敷く手書きのマーカー。
+ *
+ * 文字の背後に回すため、見出しのテキスト側を relative にして重ね順を作っている
+ * (負の z-index は親の背景より下に潜って消えることがある)。
+ */
+.hero-heading {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-heading-highlight {
+  position: absolute;
+  /*
+   * 文字の両端から少しはみ出させて、手で引いた線らしくする。
+   * SVG は置換要素なので、left / right を両側から留めても幅は素材の寸法のままになる。
+   * 見出しの幅に追随させるには width を明示するしかない。
+   */
+  left: -0.12em;
+  width: calc(100% + 0.24em);
+  bottom: 0.06em;
+  height: 0.4em;
+  color: oklch(0.88 0.17 130);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cityscape-svg #clouds {
+    animation-play-state: paused;
+  }
+}
