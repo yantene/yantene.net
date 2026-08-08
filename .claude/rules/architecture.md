@@ -237,8 +237,17 @@ Vite の dev サーバーは HMR で CSS を inline `<style>` として注入す
 つまり **dev では CSP 違反に気づけない**。次を守ること。
 
 - **inline style / inline script / 外部リソースの追加など CSP に関わる変更をしたら、
-  `pnpm run preview` で必ず確認する** (dev で動いても本番で落ちる)
+  `pnpm run preview:staging` で必ず確認する** (dev で動いても本番で落ちる)
+- **`pnpm run preview` では確認できない。** こちらは `CLOUDFLARE_ENV` を指定しない
+  ビルドなので `APP_ENV=development` になり、CSP が付かない
 - Storybook にも CSP は無いので、CSP の確認には使えない
+
+```bash
+pnpm run preview:staging   # CLOUDFLARE_ENV=staging でビルドして CSP 有効な状態を再現する
+```
+
+確認の目安。CSP ヘッダーの `nonce-...` と、HTML の `<script nonce="...">` が
+同一リクエスト内で一致していること。付けそこねた inline script / style はここで落ちる。
 
 ### dev だけで出るコンソールエラー (本番では出ない)
 
@@ -249,6 +258,11 @@ critical CSS (`data-react-router-critical-css`) が `nonce=""` の `<link>` を�
 
 判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) と
 [ADR 0011](../../docs/adr/0011-csp-enforced-outside-development.md) を参照。
+
+> ⚠️ ADR 0011 の本文は確認手順を `pnpm run preview` と書いているが、これは誤り
+> (preview は development ビルドなので CSP が付かない)。ADR は不変なので本文は
+> 直さず、**手順は本ファイルの `pnpm run preview:staging` が正**とする
+> (adr.md の「規範＝可変, ADR＝不変」に従う)。
 
 ## URL 命名規則
 
