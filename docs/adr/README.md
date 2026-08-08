@@ -22,3 +22,4 @@
 | [0009](0009-strict-csp-without-unsafe-inline.md)          | CSP を厳格に保ち、見た目は inline ではなく静的な CSS で表現する       | Superseded by [0011](0011-csp-enforced-outside-development.md) |
 | [0010](0010-react-router-v7-over-inertia.md)              | Inertia.js をやめて React Router v7 のフレームワークモードに移行する  | Accepted                                                       |
 | [0011](0011-csp-enforced-outside-development.md)          | CSP は development では付けず、staging / production でのみ強制する    | Accepted                                                       |
+| [0012](0012-react-router-v8-and-vite-8.md)                | React Router v8 へ上げ、Vite を 8 系に戻す                            | Accepted                                                       |
