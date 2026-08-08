@@ -30,6 +30,11 @@ export function translationsFor(
 export interface PageMetaInput {
   readonly locale: string;
   readonly origin: string;
+  /**
+   * 正規 URL のパス (`location.pathname`)。origin と結合して canonical / og:url にする。
+   * 旧実装に合わせクエリは含めない。
+   */
+  readonly pathname: string;
   /** ページ固有のタイトル。省略時はサイト既定のタイトルのみを使う。 */
   readonly title?: string;
   readonly description?: string;
@@ -49,6 +54,7 @@ export interface PageMetaInput {
 export function buildPageMeta({
   locale,
   origin,
+  pathname,
   title,
   description,
   imagePath = "/og/default",
@@ -65,15 +71,24 @@ export function buildPageMeta({
       ? site.description
       : description;
   const image = `${origin}${imagePath}`;
+  const url = `${origin}${pathname}`;
 
   const descriptors: MetaDescriptor[] = [
     { title: resolvedTitle },
     { name: "description", content: resolvedDescription },
+    { tagName: "link", rel: "canonical", href: url },
     { property: "og:site_name", content: "yantene.net" },
-    { property: "og:locale", content: locale === "ja" ? "ja_JP" : "en_US" },
+    /*
+     * コンテンツは日本語なので ja_JP で固定する (locale に連動させない)。
+     * UI 文言のロケールは Accept-Language 次第で en になるが、クローラーは
+     * Accept-Language を送らないことが多く、そこで en_US を返すと日本語記事を
+     * 英語ページとして扱わせてしまう。
+     */
+    { property: "og:locale", content: "ja_JP" },
     { property: "og:title", content: resolvedTitle },
     { property: "og:description", content: resolvedDescription },
     { property: "og:image", content: image },
+    { property: "og:url", content: url },
     { property: "og:type", content: type },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: resolvedTitle },

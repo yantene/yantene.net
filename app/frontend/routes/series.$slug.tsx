@@ -30,11 +30,12 @@ export async function loader({
   return series.name === null ? data(payload, { status: 404 }) : data(payload);
 }
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin, name } = loaderData;
   return buildPageMeta({
     locale,
     origin,
+    pathname: location.pathname,
     title: name ?? translationsFor(locale).series.notFound.title,
   });
 };

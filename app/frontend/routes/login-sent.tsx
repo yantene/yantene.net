@@ -13,11 +13,12 @@ export function loader({ request }: Route.LoaderArgs): PageMetaBase {
   };
 }
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
   return buildPageMeta({
     locale,
     origin,
+    pathname: location.pathname,
     title: translationsFor(locale).loginSent.heading,
   });
 };

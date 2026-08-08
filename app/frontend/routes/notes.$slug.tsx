@@ -35,13 +35,14 @@ export async function loader({
   return data({ ...base, ...detail });
 }
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
 
   if (!loaderData.found) {
     return buildPageMeta({
       locale,
       origin,
+      pathname: location.pathname,
       title: translationsFor(locale).notes.notFound.title,
     });
   }
@@ -50,6 +51,7 @@ export const meta: Route.MetaFunction = ({ loaderData }) => {
   return buildPageMeta({
     locale,
     origin,
+    pathname: location.pathname,
     title: note.title,
     description: note.summary,
     imagePath: `/og/notes/${note.slug}`,

@@ -24,12 +24,13 @@ export async function loader({
   };
 }
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
   const home = translationsFor(locale).home;
   return buildPageMeta({
     locale,
     origin,
+    pathname: location.pathname,
     title: home.heading,
     description: home.tagline,
   });

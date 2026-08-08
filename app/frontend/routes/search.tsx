@@ -22,12 +22,13 @@ export async function loader({
   return { ...result, locale: resolveLocale(request), origin: url.origin };
 }
 
-export const meta: Route.MetaFunction = ({ loaderData }) => {
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin, query } = loaderData;
   const searchTitle = translationsFor(locale).search.title;
   return buildPageMeta({
     locale,
     origin,
+    pathname: location.pathname,
     title: query.length > 0 ? `${searchTitle}: ${query}` : searchTitle,
   });
 };

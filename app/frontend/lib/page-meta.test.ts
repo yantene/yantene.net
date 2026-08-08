@@ -7,6 +7,7 @@ import { buildPageMeta, translationsFor } from "./page-meta";
  */
 describe("buildPageMeta", () => {
   const origin = "https://yantene.net";
+  const pathname = "/notes/foo";
 
   function find(
     descriptors: ReturnType<typeof buildPageMeta>,
@@ -23,7 +24,7 @@ describe("buildPageMeta", () => {
   }
 
   it("omits the ld+json descriptor when jsonLd is not given", () => {
-    const meta = buildPageMeta({ locale: "ja", origin });
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
     expect(
       meta.some((d) => "script:ld+json" in (d as Record<string, unknown>)),
@@ -32,7 +33,7 @@ describe("buildPageMeta", () => {
 
   it("emits the ld+json descriptor when jsonLd is given", () => {
     const jsonLd = { "@type": "BlogPosting", headline: "テスト記事" };
-    const meta = buildPageMeta({ locale: "ja", origin, jsonLd });
+    const meta = buildPageMeta({ locale: "ja", origin, pathname, jsonLd });
 
     const ld = meta.find(
       (d) => "script:ld+json" in (d as Record<string, unknown>),
@@ -41,7 +42,7 @@ describe("buildPageMeta", () => {
   });
 
   it("falls back to the site title when no page title is given", () => {
-    const meta = buildPageMeta({ locale: "ja", origin });
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
     const site = translationsFor("ja").meta;
 
     expect(meta[0]).toEqual({ title: site.title });
@@ -49,7 +50,12 @@ describe("buildPageMeta", () => {
   });
 
   it("prefixes the page title to the site title", () => {
-    const meta = buildPageMeta({ locale: "ja", origin, title: "記事タイトル" });
+    const meta = buildPageMeta({
+      locale: "ja",
+      origin,
+      pathname,
+      title: "記事タイトル",
+    });
     const site = translationsFor("ja").meta;
 
     expect(meta[0]).toEqual({ title: `記事タイトル | ${site.title}` });
@@ -62,6 +68,7 @@ describe("buildPageMeta", () => {
     const meta = buildPageMeta({
       locale: "ja",
       origin,
+      pathname,
       imagePath: "/og/notes/foo",
     });
 
@@ -74,32 +81,63 @@ describe("buildPageMeta", () => {
   });
 
   it("defaults the OG image to the site-wide one", () => {
-    const meta = buildPageMeta({ locale: "ja", origin });
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
     expect(find(meta, "property", "og:image")).toBe(
       "https://yantene.net/og/default",
     );
   });
 
-  it("maps the locale to an OG locale tag", () => {
-    expect(
-      find(buildPageMeta({ locale: "ja", origin }), "property", "og:locale"),
-    ).toBe("ja_JP");
-    expect(
-      find(buildPageMeta({ locale: "en", origin }), "property", "og:locale"),
-    ).toBe("en_US");
+  /*
+   * コンテンツは日本語なので og:locale は locale に連動させず ja_JP で固定する。
+   * クローラーは Accept-Language を送らないことが多く、そこで en_US を返すと
+   * 日本語記事を英語ページとして扱わせてしまう。
+   */
+  it("always reports ja_JP as the OG locale", () => {
+    for (const locale of ["ja", "en"]) {
+      expect(
+        find(
+          buildPageMeta({ locale, origin, pathname }),
+          "property",
+          "og:locale",
+        ),
+      ).toBe("ja_JP");
+    }
+  });
+
+  /* canonical と og:url は SEO / OGP の要。移行で一度落としたので回帰を張る。 */
+  it("emits a canonical link built from origin and pathname", () => {
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
+
+    expect(meta).toContainEqual({
+      tagName: "link",
+      rel: "canonical",
+      href: "https://yantene.net/notes/foo",
+    });
+  });
+
+  it("emits og:url built from origin and pathname", () => {
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
+
+    expect(find(meta, "property", "og:url")).toBe(
+      "https://yantene.net/notes/foo",
+    );
   });
 
   it("marks article pages with og:type article", () => {
     expect(
       find(
-        buildPageMeta({ locale: "ja", origin, type: "article" }),
+        buildPageMeta({ locale: "ja", origin, pathname, type: "article" }),
         "property",
         "og:type",
       ),
     ).toBe("article");
     expect(
-      find(buildPageMeta({ locale: "ja", origin }), "property", "og:type"),
+      find(
+        buildPageMeta({ locale: "ja", origin, pathname }),
+        "property",
+        "og:type",
+      ),
     ).toBe("website");
   });
 });

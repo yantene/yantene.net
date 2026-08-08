@@ -29,10 +29,11 @@ export function loader({ request }: Route.LoaderArgs): {
  * サイト既定の OGP / Twitter Card。個別ページは meta を上書きして
  * 記事タイトル・要約・OG 画像を差し替える。
  */
-export const meta: Route.MetaFunction = ({ loaderData }) =>
+export const meta: Route.MetaFunction = ({ loaderData, location }) =>
   buildPageMeta({
     locale: loaderData?.locale ?? "en",
     origin: loaderData?.origin ?? "",
+    pathname: location.pathname,
   });
 
 export const links: Route.LinksFunction = () => [
