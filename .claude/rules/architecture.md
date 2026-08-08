@@ -229,6 +229,19 @@ CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザ
 - `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
 - 見た目の確認は `pnpm dev` か `vite preview` で行う (Storybook には CSP が無い)
 
+### dev だけで出る 2 つのコンソールエラー (どちらも本番では出ない)
+
+`pnpm dev` では次の 2 つが出るが、いずれも Vite / React Router の dev 専用機構が原因で、
+本番ビルドでは発生しない。**本番ビルド (`pnpm run preview`) で再現しなければ追わなくてよい。**
+
+- `Applying inline style violates ... 'style-src 'self''` — dev の HMR が CSS を
+  `<style>` 注入で届けるため。本番は `<link rel="stylesheet">` で配信されるので出ない。
+  ただし**この状態では CSS が丸ごと落ちる**ので、dev で見た目が崩れていたら
+  まずここを疑う (スタイル崩れを実装のバグと誤認しないこと)
+- `A tree hydrated but some attributes ... didn't match` (`data-react-router-critical-css`
+  の `nonce`) — React Router の dev 専用 critical CSS が `nonce=""` で出るため。
+  本番の HTML にこの `<link>` 自体が存在しない
+
 判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) を参照。
 
 ## URL 命名規則

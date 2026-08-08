@@ -22,6 +22,11 @@ startTransition(() => {
     <NonceContext.Provider value={nonce}>
       <I18nextProvider i18n={i18n}>
         <StrictMode>
+          {/*
+            HydratedRouter は nonce を prop に取らない (SSR 側の <ServerRouter nonce> が
+            出力済みの nonce をブラウザが保持する)。nonce は NonceContext 経由で
+            root.tsx の <Scripts> / <ScrollRestoration> に渡す。
+          */}
           <HydratedRouter />
         </StrictMode>
       </I18nextProvider>
