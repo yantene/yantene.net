@@ -22,6 +22,11 @@
   inset-inline: 0;
   bottom: 0;
   height: var(--timeline-height);
+  /*
+   * 地平線から下は地面。空を塞いでおかないと、沈んだ太陽や月が目盛りの帯から覗く。
+   * 空 (Celestim) はヒーロー全面に敷かれていて、この帯の裏側にも回り込んでいる。
+   */
+  background-color: var(--color-base-100);
   overflow: hidden;
   /* 縦のスクロールはページに渡し、横の動きだけを掴む。 */
   touch-action: pan-y;
