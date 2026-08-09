@@ -1,16 +1,66 @@
 /*
- * フッターの帯は Celestim と同じ空の色サイクルで塗る。
+ * フッターは「ページの足元の地面」。
  *
- * 周期はヒーローと同じ --day-cycle を読む。keyframes の名前も揃えてあるので、
- * ヒーローの目盛りを掴んで時間を進めると、ページの末尾の色も一緒に動く
- * (day-clock.ts が名前でアニメーションを集めるため)。
+ * 以前は帯を丸ごと空の色で塗っていたが、ページの末尾が空だと向きが逆で足元が抜ける。
+ * 空はヒーローに任せ、ここは地面にする。時刻との連動は上端の細い帯にだけ残し、
+ * 地平線の向こうがいまの空の色になっているように見せる。
  */
-.footer-daylight {
+
+.site-footer {
+  position: relative;
+  /* 地面の絵と文字が重ならないだけの高さ。絵は下端に貼り付く。 */
+  padding-top: 5rem;
+  background-color: var(--color-base-200);
+}
+
+/*
+ * 地平線の向こうに覗く空。ヒーローと同じ周期で色が変わるので、目盛りを掴んで
+ * 時間を進めるとここも一緒に動く (day-clock.ts が名前でアニメーションを集める)。
+ */
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1.5rem;
   animation: celestim-veiled-sky-cycle var(--day-cycle, 288s) linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .footer-daylight {
+  .site-footer::before {
     animation-play-state: paused;
+  }
+}
+
+/*
+ * 地面の絵。横に敷き詰める。左右の端には何も描かれていないので、繰り返しても
+ * 物が重ならない。背景として置くのは、画面がどれだけ広くても同じ間隔で並べ続けるため
+ * (要素として並べると数を決め打ちすることになり、広い画面で途切れる)。
+ */
+.site-footer-ground {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5rem;
+  background-image: url("../../assets/ground.svg");
+  background-repeat: repeat-x;
+  background-position: bottom left;
+  background-size: 25rem 5rem;
+  opacity: 0.5;
+}
+
+.site-footer-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+@media (width >= 40rem) {
+  .site-footer-inner {
+    flex-direction: row;
   }
 }

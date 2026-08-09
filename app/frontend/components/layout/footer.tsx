@@ -1,12 +1,18 @@
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 
-// フッター帯も Celestim と同じ空のサイクルで塗る (見た目は footer.css が持つ)。
+// ページの足元に敷く地面。空の色は上端の細い帯にだけ残す (見た目は footer.css が持つ)。
 const currentYear = new Date().getFullYear();
 
 export function Footer(): React.JSX.Element {
   return (
-    <footer className="footer-daylight relative border-t border-border/50">
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-8 sm:flex-row">
+    <footer className="site-footer">
+      {/*
+        トップの街と地続きの地面。どのページも最後はここへ着地する。
+        絵は背景として横に敷き詰めるので、要素そのものは空にしておく。
+      */}
+      <div className="site-footer-ground" aria-hidden="true" />
+
+      <div className="site-footer-inner">
         <p className="text-xs text-foreground/80">
           &copy; {currentYear} yantene.net
         </p>

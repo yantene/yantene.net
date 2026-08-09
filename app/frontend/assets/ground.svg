@@ -1,0 +1,42 @@
+<!--
+  The ground the whole site stands on (footer).
+
+  A horizon line with a few roadside objects, drawn in the same 1px ink as the
+  cityscape. It tiles horizontally: the left and right edges hold nothing, so
+  repeated copies never collide.
+
+  The stroke colour is baked in (#9488d3, the same ink as the cityscape) because
+  this file is referenced from CSS as a background image, and a background image
+  cannot inherit currentColor from the page.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" preserveAspectRatio="xMidYMax meet" fill="none" stroke="#9488d3" stroke-width="1" vector-effect="non-scaling-stroke">
+  <g id="ground">
+    <!-- horizon -->
+    <path d="M0 70 H400" />
+
+    <!-- street lamp -->
+    <g id="street-lamp">
+      <path d="M60 70 V26" />
+      <path d="M60 26 q0 -8 10 -8 h8" />
+      <path d="M74 18 h8 l-2 6 h-4 z" />
+    </g>
+
+    <!-- utility pole with two crossarms -->
+    <g id="utility-pole">
+      <path d="M180 70 V14" />
+      <path d="M168 24 H192" />
+      <path d="M170 34 H190" />
+    </g>
+
+    <!-- road sign -->
+    <g id="road-sign">
+      <path d="M300 70 V40" />
+      <circle cx="300" cy="33" r="7" />
+    </g>
+
+    <!-- a low shrub, to keep the line from feeling empty -->
+    <g id="shrub">
+      <path d="M240 70 q4 -10 12 -10 q8 0 12 10 z" />
+    </g>
+  </g>
+</svg>
