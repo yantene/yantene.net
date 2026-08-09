@@ -56,9 +56,17 @@
 .hero-intro::before {
   content: "";
   position: absolute;
-  inset: -1.5rem -2rem;
+  /*
+   * 覆うのは文字のある範囲だけ。上下の余白は頭上の空きと歩行者を避けるためのもので、
+   * ここまで光らせるとヒーロー一面が白く霞む。余白ぶんを戻したうえで、文字の外へ
+   * わずかに滲ませる。
+   */
+  inset: calc(var(--intro-pad-top) - 1.5rem) -2rem
+    calc(var(--intro-pad-bottom) - 1.5rem);
+  /* 文字より奥へ。位置指定した要素は既定では通常フローの文字より手前に来てしまう。 */
+  z-index: -1;
   background: radial-gradient(
-    ellipse 62% 54% at 50% 46%,
+    ellipse 62% 54% at 50% 50%,
     rgb(255 255 255 / 62%),
     rgb(255 255 255 / 38%) 45%,
     transparent 72%
@@ -67,14 +75,20 @@
 }
 
 .hero-intro {
-  padding-top: 6rem;
   /*
-   * 街の線画とは重ねてよいが、目盛りの帯と歩行者は避ける。歩行者は線が濃く、
-   * 重なると文字が読みにくい。背丈ぶんを空けておく。
+   * 上は頭上の空き、下は目盛りの帯と歩行者を避けるための余白。街の線画とは重ねてよいが、
+   * 歩行者は線が濃く、重なると文字が読みにくいので背丈ぶんを空ける。
+   *
+   * 値を変数に置いているのは、背後の光がこの余白を打ち消して文字の範囲だけを覆うため。
    */
-  padding-bottom: calc(
+  --intro-pad-top: 6rem;
+  --intro-pad-bottom: calc(
     var(--timeline-height) + var(--scene-height) * 0.5 + 1.5rem
   );
+
+  isolation: isolate;
+  padding-top: var(--intro-pad-top);
+  padding-bottom: var(--intro-pad-bottom);
 }
 
 /*
