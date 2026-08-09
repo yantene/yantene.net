@@ -2,106 +2,75 @@
  * 読まれた回数から「いま人気のノート」の順位を出す。
  *
  * 単純な累計では、古くからある記事がいつまでも上位に居座り、順位が動かなくなる。
- * そこで 1 回のアクセスの重みを、時間が経つほど小さくして数える。半減期を過ぎた
- * アクセスは半分の重みになり、そのまた半減期で 4 分の 1 になる (指数減衰)。
+ * そこで 1 回のアクセスの重みを、新しいものほど大きくする。基準日からの経過が半減期
+ * 1 つぶん進むごとに、そのとき起きたアクセスの重みは 2 倍になる。古い重みを減らす
+ * のではなく新しい重みを増やすので、記録済みの値には二度と触らなくてよい。
  *
  * 結果として古い記事が上位に来ることはある。それは「昔の記事がいまも読まれている」
  * ということなので正しい。公開日の順に並べているわけではない。
  *
- * 減衰はスコアを読むときに当てる。記事ごとに「スコア」と「最後に触った日」を持たせて
- * おけば、経過ぶんを掛けるだけで現在の値が出る。日ごとの履歴を持たなくて済み、定期的に
- * 全記事を減衰させるバッチも要らない (バッチは走らせ損ねると減衰が飛び、二重に走らせると
- * 効きすぎる)。
- */
-
-/** 記事ごとに持っている、減衰前のスコア。 */
-export interface NoteScore {
-  readonly noteId: string;
-  /** 最後に触った時点での重み付き合計。 */
-  readonly score: number;
-  /**
-   * score を最後に触った日 (ISO 日付文字列 "YYYY-MM-DD", UTC)。
-   * まだ一度も読まれていなければ null。
-   */
-  readonly scoredOn: string | null;
-}
-
-export interface RankedNoteView {
-  readonly noteId: string;
-  /** 減衰後のスコア。順位を決めるためだけの値で、表示には使わない。 */
-  readonly score: number;
-}
-
-export interface ViewRankingOptions {
-  /**
-   * 重みが半分になるまでの日数。
-   *
-   * 短いほど直近の勢いを拾い、長いほど落ち着いた人気を映す。記事もアクセスも多くない
-   * うちは短くすると数件の差で順位が跳ねるため、やや長めに取る。
-   */
-  readonly halfLifeDays: number;
-  /** 基準日 (この日まで減衰させる)。 */
-  readonly today: string;
-}
-
-/**
- * 最後に触った日から今日までの経過ぶんを減衰させた、いまのスコア。
+ * ## なぜ対数で持つのか
  *
- * 基準日より後の日付は経過日数が負になるが、その場合の重みは 1 で頭打ちにする
- * (時刻のずれで未来の日付が入っても、重みが 1 を超えて暴れないようにするため)。
- */
-export function decayScore(
-  { score, scoredOn }: NoteScore,
-  { halfLifeDays, today }: ViewRankingOptions,
-): number {
-  assertPositiveHalfLife(halfLifeDays);
-  if (scoredOn === null || score === 0) return 0;
-
-  const age = daysBetween(scoredOn, today);
-  return score * 0.5 ** (Math.max(age, 0) / halfLifeDays);
-}
-
-/**
- * 1 回読まれたあとのスコア。
+ * 重みは経過に対して指数的に膨らむので、素の値で持つと倍精度でも 85 年ほどで溢れる
+ * (半減期 30 日の場合)。対数のまま持てば経過に対して線形にしか増えず、100 万年でも
+ * 8.4e6 にしかならない。
  *
- * 前回からの経過ぶんを減衰させてから 1 を足す。足してから減衰させるのではないのは、
- * いま足したぶんが同じ更新で目減りしてしまわないようにするため。
+ * 対数は単調なので、順序は素の値のときと変わらない。保存した列をそのまま
+ * `ORDER BY ... DESC` すれば人気順になり、読み出すときに計算を挟まなくて済む。
  */
-export function scoreAfterView(
-  current: NoteScore,
-  options: ViewRankingOptions,
-): number {
-  return decayScore(current, options) + 1;
+
+/**
+ * 重みの基準となる日 (ISO 日付文字列 "YYYY-MM-DD", UTC)。
+ *
+ * この日に起きたアクセスの重みを 1 とし、以降は半減期ごとに 2 倍になる。全記事で
+ * 同じ値を使う限り順序は変わらないので、値そのものに意味はない。
+ *
+ * ただし **一度動かすと、記録済みのスコアと意味が食い違う**。過去に書いた値は古い
+ * 基準で測られたままなので、動かすなら全記事のスコアを捨てること。
+ */
+export const VIEW_SCORE_EPOCH = "2026-01-01";
+
+/**
+ * 重みが 2 倍になるまでの日数 (＝古い側から見た半減期)。
+ *
+ * 短いほど直近の勢いを拾い、長いほど落ち着いた人気を映す。記事もアクセスも多くない
+ * うちは短くすると数件の差で順位が跳ねるため、やや長めに取る。
+ *
+ * 基準日と同じく、動かすと記録済みの値と意味が食い違う。
+ */
+export const VIEW_SCORE_HALF_LIFE_DAYS = 30;
+
+/**
+ * その日に起きた 1 アクセスの重み (対数)。
+ *
+ * 基準日より前なら負になるが、それで構わない。対数の世界では 0 が「重み 1」であって、
+ * 負は「1 より軽い」を意味するだけで、順序は保たれる。
+ */
+export function viewWeightLog(viewedOn: string): number {
+  return (
+    (daysBetween(VIEW_SCORE_EPOCH, viewedOn) / VIEW_SCORE_HALF_LIFE_DAYS) *
+    Math.LN2
+  );
 }
 
 /**
- * 記事ごとのスコアを、減衰後の高い順に並べる。読まれていない記事は現れない。
+ * 1 回読まれたあとのスコア (対数)。
+ *
+ * 対数のまま足すために log-sum-exp を使う。大きいほうを括り出してから足すので、
+ * `Math.exp` の引数が 0 以下に収まり、途中の計算でも溢れない。
+ *
+ * @param currentLogScore いまのスコア。まだ読まれていなければ null
  */
-export function rankNoteScores(
-  scores: readonly NoteScore[],
-  options: ViewRankingOptions,
-): readonly RankedNoteView[] {
-  assertPositiveHalfLife(options.halfLifeDays);
+export function logScoreAfterView(
+  currentLogScore: number | null,
+  viewedOn: string,
+): number {
+  const weight = viewWeightLog(viewedOn);
+  if (currentLogScore === null) return weight;
 
-  return scores
-    .map((entry) => ({
-      noteId: entry.noteId,
-      score: decayScore(entry, options),
-    }))
-    .filter((ranked) => ranked.score > 0)
-    .toSorted((a, b) => {
-      const byScore = b.score - a.score;
-      // 同点は noteId で決める。並びが実行ごとに揺れると、順位が理由もなく入れ替わる。
-      return byScore === 0 ? a.noteId.localeCompare(b.noteId) : byScore;
-    });
-}
-
-function assertPositiveHalfLife(halfLifeDays: number): void {
-  if (halfLifeDays <= 0) {
-    throw new RangeError(
-      `halfLifeDays must be positive: ${String(halfLifeDays)}`,
-    );
-  }
+  const larger = Math.max(currentLogScore, weight);
+  const smaller = Math.min(currentLogScore, weight);
+  return larger + Math.log1p(Math.exp(smaller - larger));
 }
 
 const MILLISECONDS_PER_DAY = 86_400_000;

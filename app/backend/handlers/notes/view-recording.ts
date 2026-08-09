@@ -1,8 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import {
-  scoreAfterView,
-  VIEW_SCORE_HALF_LIFE_DAYS,
-} from "~/backend/domain/note-view";
+import { logScoreAfterView } from "~/backend/domain/note-view";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1NoteViewCommandRepository } from "~/backend/infra/d1/repositories";
 
@@ -56,17 +53,17 @@ export function recordNoteView(
 ): void {
   if (isLikelyBot(recording.userAgent)) return;
 
-  // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、減衰の起点が土地によってずれる。
+  // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、重みが土地によってずれる。
   const viewedOn = Temporal.Now.plainDateISO("UTC").toString();
 
   recording.waitUntil(applyView(env, noteId, viewedOn));
 }
 
 /**
- * いまのスコアを読み、経過ぶんを減衰させてから 1 を足して書き戻す。
+ * いまの対数スコアを読み、その日の重みを足して書き戻す。
  *
- * 読んでから書く 2 手になるのは、減衰の計算が行の値 (最後に触った日) に依存するため。
- * D1 が冪乗・指数の関数を許していないので、SQL 1 発では畳めない。
+ * 読んでから書く 2 手になるのは、対数のまま足すのに log-sum-exp が要り、SQL では
+ * 書けないため。累計のほうは SQL 側で足すので取りこぼさない。
  */
 async function applyView(
   env: Env,
@@ -75,14 +72,11 @@ async function applyView(
 ): Promise<void> {
   try {
     const repository = new D1NoteViewCommandRepository(env.D1);
-    const current = await repository.findScore(noteId);
+    const current = await repository.findLogScore(noteId);
+    // 記事が無ければ何もしない (null は「まだ読まれていない」なので記録する)。
     if (current === undefined) return;
 
-    const score = scoreAfterView(current, {
-      halfLifeDays: VIEW_SCORE_HALF_LIFE_DAYS,
-      today: viewedOn,
-    });
-    await repository.applyView(noteId, score, viewedOn);
+    await repository.applyView(noteId, logScoreAfterView(current, viewedOn));
   } catch (error) {
     // 記録に失敗しても読む側には関係がないので、握って記録だけ残す。
     new ConsoleLogger().error("failed to record a note view", {

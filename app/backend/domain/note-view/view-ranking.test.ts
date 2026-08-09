@@ -1,127 +1,101 @@
 import { describe, expect, it } from "vitest";
-import { decayScore, rankNoteScores, scoreAfterView } from "./view-ranking";
-import type { NoteScore } from "./view-ranking";
+import {
+  logScoreAfterView,
+  VIEW_SCORE_EPOCH,
+  VIEW_SCORE_HALF_LIFE_DAYS,
+  viewWeightLog,
+} from "./view-ranking";
 
-const today = "2026-08-09";
-const options = { halfLifeDays: 30, today };
+/** 対数で持っている値を、比べやすいように素の重みへ戻す。 */
+const plain = (logScore: number): number => Math.exp(logScore);
 
-function scored(
-  noteId: string,
-  score: number,
-  scoredOn: string | null,
-): NoteScore {
-  return { noteId, score, scoredOn };
+/** 基準日から days 日後の ISO 日付。 */
+function dayAfterEpoch(days: number): string {
+  const ms = Date.parse(`${VIEW_SCORE_EPOCH}T00:00:00Z`) + days * 86_400_000;
+  return new Date(ms).toISOString().slice(0, 10);
 }
 
-describe("decayScore", () => {
-  it("触ったのが今日なら、そのままの値になる", () => {
-    expect(decayScore(scored("a", 10, today), options)).toBeCloseTo(10, 5);
+describe("viewWeightLog", () => {
+  it("基準日のアクセスの重みは 1", () => {
+    expect(plain(viewWeightLog(VIEW_SCORE_EPOCH))).toBeCloseTo(1, 9);
   });
 
-  it("半減期を過ぎると半分になる", () => {
-    expect(decayScore(scored("a", 10, "2026-07-10"), options)).toBeCloseTo(
-      5,
-      5,
-    );
+  it("半減期ぶん経つと重みが 2 倍になる", () => {
+    expect(
+      plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS))),
+    ).toBeCloseTo(2, 9);
+    expect(
+      plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2))),
+    ).toBeCloseTo(4, 9);
   });
 
-  it("半減期 2 つぶんで 4 分の 1 になる", () => {
-    expect(decayScore(scored("a", 10, "2026-06-10"), options)).toBeCloseTo(
-      2.5,
-      5,
-    );
-  });
-
-  it("まだ読まれていなければ 0", () => {
-    expect(decayScore(scored("a", 0, null), options)).toBe(0);
-  });
-
-  it("基準日より後の日付でも 1 を超えて増えない", () => {
-    expect(decayScore(scored("a", 10, "2026-08-20"), options)).toBeCloseTo(
-      10,
-      5,
-    );
+  it("基準日より前は 1 より軽くなる", () => {
+    expect(
+      plain(viewWeightLog(dayAfterEpoch(-VIEW_SCORE_HALF_LIFE_DAYS))),
+    ).toBeCloseTo(0.5, 9);
   });
 });
 
-describe("scoreAfterView", () => {
-  it("初めて読まれたら 1 になる", () => {
-    expect(scoreAfterView(scored("a", 0, null), options)).toBeCloseTo(1, 5);
+describe("logScoreAfterView", () => {
+  it("初めて読まれたら、その日の重みそのものになる", () => {
+    const day = dayAfterEpoch(90);
+    expect(logScoreAfterView(null, day)).toBeCloseTo(viewWeightLog(day), 9);
   });
 
-  it("同じ日に続けて読まれた分はそのまま積み上がる", () => {
-    const first = scoreAfterView(scored("a", 0, null), options);
-    const second = scoreAfterView(scored("a", first, today), options);
-    expect(second).toBeCloseTo(2, 5);
+  it("同じ日に 2 回読まれたら重みが 2 つ分になる", () => {
+    const day = dayAfterEpoch(90);
+    const once = logScoreAfterView(null, day);
+    const twice = logScoreAfterView(once, day);
+    expect(plain(twice)).toBeCloseTo(plain(once) * 2, 6);
   });
 
-  it("間が空くと、前の分だけが減ってから 1 が乗る", () => {
-    // 半減期ぶん空けば、前の 10 は 5 になり、そこに今回の 1 が乗る。
-    expect(scoreAfterView(scored("a", 10, "2026-07-10"), options)).toBeCloseTo(
-      6,
-      5,
+  it("後から読まれた 1 回は、半減期ぶん前の 1 回の 2 倍の重みを持つ", () => {
+    const older = logScoreAfterView(null, dayAfterEpoch(0));
+    const newer = logScoreAfterView(
+      null,
+      dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS),
     );
+    expect(plain(newer) / plain(older)).toBeCloseTo(2, 6);
   });
 
-  it("いま足した分は、その場では減衰しない", () => {
-    // 足してから減衰させる実装だと 5.5 になってしまう。
-    expect(
-      scoreAfterView(scored("a", 10, "2026-07-10"), options),
-    ).not.toBeCloseTo(5.5, 5);
-  });
-});
+  it("古い記事が読まれ続けても、新しい少数に抜かれることがある", () => {
+    // 基準日に 10 回読まれた記事 (重み 1 × 10) と、半減期 2 つ後に 3 回読まれた記事 (重み 4 × 3)。
+    let old = null as number | null;
+    for (let i = 0; i < 10; i++) old = logScoreAfterView(old, dayAfterEpoch(0));
 
-describe("rankNoteScores", () => {
-  it("減衰後のスコアが高い順に並べる", () => {
-    const ranked = rankNoteScores(
-      [scored("a", 3, today), scored("b", 10, today), scored("c", 7, today)],
-      options,
-    );
-    expect(ranked.map((r) => r.noteId)).toEqual(["b", "c", "a"]);
-  });
+    let fresh = null as number | null;
+    for (let i = 0; i < 3; i++) {
+      fresh = logScoreAfterView(
+        fresh,
+        dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2),
+      );
+    }
 
-  it("累計が多くても、古ければ新しい記事に抜かれる", () => {
-    // 30 日前の 10 は 5 まで落ちるので、今日の 6 に負ける。
-    const ranked = rankNoteScores(
-      [scored("old", 10, "2026-07-10"), scored("new", 6, today)],
-      options,
-    );
-    expect(ranked.map((r) => r.noteId)).toEqual(["new", "old"]);
+    // 対数のまま比べても順序は保たれる (10 < 12 なので新しい方が上)。
+    expect(fresh).toBeGreaterThan(old as number);
+    expect(plain(old as number)).toBeCloseTo(10, 6);
+    expect(plain(fresh as number)).toBeCloseTo(12, 6);
   });
 
-  it("古くても読まれ続けていれば上に来る", () => {
-    const ranked = rankNoteScores(
-      [scored("steady", 40, "2026-08-08"), scored("recent", 25, today)],
-      options,
-    );
-    expect(ranked[0]?.noteId).toBe("steady");
+  it("読まれ続ければ、間が空いた記事を追い越す", () => {
+    let steady = null as number | null;
+    for (let day = 0; day <= 120; day += 10) {
+      steady = logScoreAfterView(steady, dayAfterEpoch(day));
+    }
+    const stale = logScoreAfterView(null, dayAfterEpoch(0));
+    expect(steady).toBeGreaterThan(stale);
   });
 
-  it("読まれていないノートは現れない", () => {
-    expect(rankNoteScores([scored("a", 0, null)], options)).toEqual([]);
-    expect(rankNoteScores([], options)).toEqual([]);
-  });
-
-  it("同点は毎回同じ順で返す (順位が理由もなく入れ替わらない)", () => {
-    const scores = [scored("b", 5, today), scored("a", 5, today)];
-    expect(rankNoteScores(scores, options).map((r) => r.noteId)).toEqual([
-      "a",
-      "b",
-    ]);
-    expect(
-      rankNoteScores(scores.toReversed(), options).map((r) => r.noteId),
-    ).toEqual(["a", "b"]);
-  });
-
-  it("半減期が 0 以下なら受け付けない", () => {
-    expect(() =>
-      rankNoteScores([scored("a", 1, today)], { halfLifeDays: 0, today }),
-    ).toThrow(RangeError);
+  it("何年ぶんでも溢れない (対数のまま持つ意味)", () => {
+    // 100 年ぶん先の日付でも、対数の値は有限のまま。
+    const far = dayAfterEpoch(36_500);
+    const score = logScoreAfterView(null, far);
+    expect(Number.isFinite(score)).toBe(true);
+    // 素に戻すと倍精度では表せない大きさになる (だから対数で持っている)。
+    expect(plain(score)).toBe(Infinity);
   });
 
   it("読めない日付は受け付けない", () => {
-    expect(() =>
-      rankNoteScores([scored("a", 1, "not-a-date")], options),
-    ).toThrow(RangeError);
+    expect(() => logScoreAfterView(null, "not-a-date")).toThrow(RangeError);
   });
 });

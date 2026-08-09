@@ -1,9 +1,6 @@
-import { gt } from "drizzle-orm";
+import { desc, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type {
-  INoteViewQueryRepository,
-  NoteScore,
-} from "~/backend/domain/note-view";
+import type { INoteViewQueryRepository } from "~/backend/domain/note-view";
 import { notes } from "~/backend/infra/d1/schema";
 
 export class D1NoteViewQueryRepository implements INoteViewQueryRepository {
@@ -14,19 +11,17 @@ export class D1NoteViewQueryRepository implements INoteViewQueryRepository {
   }
 
   /**
-   * まだ読まれていない記事は落として返す。減衰させても 0 のままで順位に絡まないので、
-   * 持ち帰る意味がない。
+   * 索引に沿って上位だけを引く。対数は単調なので、この並びがそのまま人気順になる。
+   * 全件を持ち帰って畳み直す必要はないため、記事が増えても重くならない。
    */
-  async listScores(): Promise<readonly NoteScore[]> {
+  async listPopularNoteIds(limit: number): Promise<readonly string[]> {
     const rows = await this.db
-      .select({
-        noteId: notes.id,
-        score: notes.viewScore,
-        scoredOn: notes.viewScoredOn,
-      })
+      .select({ id: notes.id })
       .from(notes)
-      .where(gt(notes.viewScore, 0));
+      .where(isNotNull(notes.viewLogScore))
+      .orderBy(desc(notes.viewLogScore))
+      .limit(limit);
 
-    return rows;
+    return rows.map((row) => row.id);
   }
 }

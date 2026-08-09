@@ -1,9 +1,4 @@
-import { Temporal } from "@js-temporal/polyfill";
 import type { Note } from "~/backend/domain/note";
-import {
-  rankNoteScores,
-  VIEW_SCORE_HALF_LIFE_DAYS,
-} from "~/backend/domain/note-view";
 import {
   parseNoteSort,
   parsePagination,
@@ -104,28 +99,25 @@ export async function loadHomePage(env: Env): Promise<HomePageData> {
 }
 
 /**
- * よく読まれているノートを、時間減衰をかけた順に読む。
+ * よく読まれているノートを読む。
  *
- * 減衰を D1 に任せず持ち帰ってから当てているのは、D1 が冪乗・指数の関数を許していない
- * ため。読む行数は「一度でも読まれた記事の数」で頭打ちになる (日ごとの履歴は持たない)。
+ * 順位付けは D1 に任せる。スコアを対数で持っているおかげで、保存した列をそのまま
+ * 降順に並べれば人気順になり、読み出したあとに重みを計算し直す必要がない。
  */
 async function loadPopularNotes(
   env: Env,
   query: D1NoteQueryRepository,
 ): Promise<PublicNoteList["notes"]> {
-  const scores = await new D1NoteViewQueryRepository(env.D1).listScores();
+  const rankedIds = await new D1NoteViewQueryRepository(
+    env.D1,
+  ).listPopularNoteIds(POPULAR_COUNT);
+  if (rankedIds.length === 0) return [];
 
-  const ranked = rankNoteScores(scores, {
-    halfLifeDays: VIEW_SCORE_HALF_LIFE_DAYS,
-    today: Temporal.Now.plainDateISO("UTC").toString(),
-  }).slice(0, POPULAR_COUNT);
-  if (ranked.length === 0) return [];
-
-  // 順位は id の並びで決まっているので、引き直した行をその並びに戻す。
-  const notes = await query.findByIds(ranked.map((item) => item.noteId));
+  // 引き直した行を、順位の並びに戻す。
+  const notes = await query.findByIds(rankedIds);
   const byId = new Map<string, Note>(notes.map((note) => [note.id, note]));
-  return ranked
-    .map((item) => byId.get(item.noteId))
+  return rankedIds
+    .map((id) => byId.get(id))
     .filter((note) => note !== undefined)
     .map((note) => toPublicNote(note));
 }

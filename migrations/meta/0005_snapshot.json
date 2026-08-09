@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "5bed77fa-bfa4-4cc9-8c96-debaeee58dcf",
+  "id": "eda330b6-936d-4787-aead-24df2d09836b",
   "prevId": "eb5cc7f7-f706-43b5-90b5-96cc796e6ee9",
   "tables": {
     "note_tags": {
@@ -138,17 +138,9 @@
           "autoincrement": false,
           "default": 0
         },
-        "view_score": {
-          "name": "view_score",
+        "view_log_score": {
+          "name": "view_log_score",
           "type": "real",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "view_scored_on": {
-          "name": "view_scored_on",
-          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -173,6 +165,11 @@
           "name": "notes_slug_unique",
           "columns": ["slug"],
           "isUnique": true
+        },
+        "notes_view_log_score_idx": {
+          "name": "notes_view_log_score_idx",
+          "columns": ["view_log_score"],
+          "isUnique": false
         }
       },
       "foreignKeys": {},

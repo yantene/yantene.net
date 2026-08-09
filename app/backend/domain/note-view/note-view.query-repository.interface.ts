@@ -1,11 +1,9 @@
-import type { NoteScore } from "./view-ranking";
-
 export interface INoteViewQueryRepository {
   /**
-   * 一度でも読まれた記事のスコアをすべて返す。
+   * よく読まれている順に、ノートの id を返す。
    *
-   * 減衰は読み出したあとに当てるので (D1 が冪乗を許さない)、ここでは並べ替えない。
-   * 返る行数は記事数で頭打ちになる。
+   * 対数は単調なので、保存した列をそのまま降順に並べれば人気順になる。読み出したあとに
+   * 減衰をかけ直す必要はない。まだ読まれていない記事は含まない。
    */
-  listScores(): Promise<readonly NoteScore[]>;
+  listPopularNoteIds(limit: number): Promise<readonly string[]>;
 }
