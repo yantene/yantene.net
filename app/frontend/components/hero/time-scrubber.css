@@ -141,6 +141,23 @@
 .daywalker-svg {
   height: 100%;
   width: auto;
+  /*
+   * 全体をゆっくり傾ける。手足は動かさない (歩いている姿勢が描かれている) が、
+   * これだけで足元が止まって見えなくなる。軸は接地点に置き、足が地面から離れないようにする。
+   */
+  transform-origin: bottom center;
+  animation: daywalker-swing 3.2s ease-in-out infinite;
+}
+
+@keyframes daywalker-swing {
+  0%,
+  100% {
+    rotate: -2.5deg;
+  }
+
+  50% {
+    rotate: 2.5deg;
+  }
 }
 
 /*
@@ -159,7 +176,8 @@
  * currentTime の書き換えは一時停止中でも効くため、仕掛け自体は残る。
  */
 @media (prefers-reduced-motion: reduce) {
-  .time-axis-track {
+  .time-axis-track,
+  .daywalker-svg {
     animation-play-state: paused;
   }
 }
