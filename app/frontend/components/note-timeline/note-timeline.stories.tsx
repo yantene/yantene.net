@@ -61,6 +61,37 @@ export const SingleNote: Story = {
   args: { notes: notes.slice(0, 1) },
 };
 
+/** 年で束ねた並び。線は年をまたいでも途切れず、年ラベルだけが左に立つ。 */
+export const GroupedByYear: Story = {
+  args: { groupByYear: true },
+};
+
+/**
+ * 書いた量が年ごとに偏っている場合。年は等間隔に並ばず、束の大きさがそのまま
+ * 線の長さになる (実データもこの形で、ある年に大半が集中している)。
+ */
+export const UnevenYears: Story = {
+  args: {
+    groupByYear: true,
+    notes: [
+      ...Array.from({ length: 2 }, (_, index) => ({
+        slug: `recent-${String(index)}`,
+        title: `最近書いたノート ${String(index + 1)}`,
+        summary: "ぽつぽつ書いている時期。",
+        imageUrl: null,
+        publishedOn: `2026-0${String(index + 1)}-10`,
+      })),
+      ...Array.from({ length: 9 }, (_, index) => ({
+        slug: `burst-${String(index)}`,
+        title: `よく書いていた頃のノート ${String(index + 1)}`,
+        summary: "この年に集中して書いていた。",
+        imageUrl: null,
+        publishedOn: `2020-${String(index + 1).padStart(2, "0")}-05`,
+      })),
+    ],
+  },
+};
+
 /** 公開月ごとのドットの色を一覧する (12 か月で色相が一周する)。 */
 export const EveryMonth: Story = {
   args: {

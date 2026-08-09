@@ -7,7 +7,9 @@
     "heading": "yantene.net",
     "tagline": "yantene の発信を集約するハブ",
     "recentNotes": "新着ノート",
-    "viewAll": "すべて見る",
+    "viewAll": "すべて見る"
+  },
+  "timeline": {
     "loadingMore": "続きを読み込んでいる…",
     "loadMoreFailed": "続きを読み込めなかった。",
     "retry": "もう一度試す",
@@ -43,7 +45,7 @@
     "title": "検索",
     "placeholder": "キーワードを入力",
     "empty": "一致するノートがない。",
-    "resultCount": "{{count}} 件"
+    "resultsFor": "「{{query}}」の検索結果 — {{count}} 件"
   },
   "series": {
     "label": "連載",

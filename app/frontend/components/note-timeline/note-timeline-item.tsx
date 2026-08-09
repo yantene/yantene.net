@@ -10,6 +10,14 @@ export interface NoteTimelineItemProps {
   readonly publishedOn: string;
 }
 
+interface NoteTimelineItemOptions {
+  /**
+   * 日付から年を落とすか。年を別に立てている一覧で使う。
+   * 落とすのは見た目だけで、time 要素には完全な日付が残る。
+   */
+  readonly omitYear?: boolean;
+}
+
 /**
  * タイムライン 1 件分。項目全体がノート詳細へのリンクになる。
  *
@@ -22,7 +30,10 @@ export function NoteTimelineItem({
   summary,
   imageUrl,
   publishedOn,
-}: NoteTimelineItemProps): React.JSX.Element {
+  omitYear = false,
+}: NoteTimelineItemProps & NoteTimelineItemOptions): React.JSX.Element {
+  // "2016-09-26" から年を落として "09-26" にする。
+  const shownDate = omitYear ? publishedOn.slice(5) : publishedOn;
   return (
     <li className="note-timeline-item">
       <Link
@@ -38,7 +49,7 @@ export function NoteTimelineItem({
           dateTime={publishedOn}
           className="note-timeline-date pt-1 text-sm tabular-nums text-base-content/60 sm:pt-0"
         >
-          {publishedOn}
+          {shownDate}
         </time>
 
         <div className="note-timeline-body flex flex-col gap-1">

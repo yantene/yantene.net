@@ -5,7 +5,7 @@ import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadSearchPage } from "~/backend/handlers/notes/search.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { NoteCard } from "~/frontend/components/note-card/note-card";
+import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
@@ -45,10 +45,25 @@ export default function Search({
     <AppLayout>
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-        <h1 className="text-2xl font-bold">{t("search.title")}</h1>
+        {/*
+          見出しが結果そのものを述べる。検索欄はヘッダーに常にあるので、ここでは繰り返さない。
+        */}
+        <h1 className="text-2xl font-bold">
+          {hasQuery
+            ? t("search.resultsFor", { query, count: notes.length })
+            : t("search.title")}
+        </h1>
 
-        {/* JS 不要で動く素の GET フォーム。SSR で結果を描画する。 */}
-        <form method="get" action="/search" role="search" className="mt-6">
+        {/*
+          ヘッダーの検索欄はブラウザが動かなくても素の GET フォームとして働くが、幅の狭い
+          画面では畳まれている。そのときだけ、ここに同じフォームを出して行き止まりを防ぐ。
+        */}
+        <form
+          method="get"
+          action="/search"
+          role="search"
+          className="mt-6 sm:hidden"
+        >
           <input
             type="search"
             name="q"
@@ -60,17 +75,9 @@ export default function Search({
           />
         </form>
 
-        {hasQuery && (
-          <p className="mt-6 text-sm text-base-content/60">
-            {t("search.resultCount", { count: notes.length })}
-          </p>
-        )}
-
         {notes.length > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {notes.map((note) => (
-              <NoteCard key={note.slug} {...note} />
-            ))}
+          <div className="mt-8">
+            <NoteTimeline notes={notes} />
           </div>
         ) : (
           hasQuery && (

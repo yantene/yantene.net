@@ -21,6 +21,8 @@ interface InfiniteNoteTimelineProps {
    * 差し替え口を開けてあるのは、サーバーのない場所でも様子を確かめられるようにするため。
    */
   readonly loadPage?: LoadNotePage;
+  /** 年の区切りを差し込むか (NoteTimeline にそのまま渡す)。 */
+  readonly groupByYear?: boolean;
 }
 
 /** 既定の取り方。公開 API から 1 ページぶんを読む。 */
@@ -50,6 +52,7 @@ export function InfiniteNoteTimeline({
   totalPages,
   perPage,
   loadPage = fetchNotePage,
+  groupByYear = false,
 }: InfiniteNoteTimelineProps): React.JSX.Element {
   const { t } = useTranslation();
   const [notes, setNotes] = useState(initialNotes);
@@ -100,7 +103,7 @@ export function InfiniteNoteTimeline({
 
   return (
     <>
-      <NoteTimeline notes={notes} />
+      <NoteTimeline notes={notes} groupByYear={groupByYear} />
 
       {/* 下端の見張り。ここが視界に入ったら続きを取りに行く。 */}
       {hasMore && state !== "failed" && (
@@ -115,10 +118,10 @@ export function InfiniteNoteTimeline({
         aria-live="polite"
         className="py-6 text-center text-sm text-base-content/60"
       >
-        {state === "loading" && t("home.loadingMore")}
+        {state === "loading" && t("timeline.loadingMore")}
         {state === "failed" && (
           <>
-            {t("home.loadMoreFailed")}{" "}
+            {t("timeline.loadMoreFailed")}{" "}
             <button
               type="button"
               onClick={() => {
@@ -126,14 +129,14 @@ export function InfiniteNoteTimeline({
               }}
               className="link link-primary"
             >
-              {t("home.retry")}
+              {t("timeline.retry")}
             </button>
           </>
         )}
         {state === "idle" &&
           !hasMore &&
           notes.length > 0 &&
-          t("home.allLoaded")}
+          t("timeline.allLoaded")}
       </p>
     </>
   );
