@@ -4,56 +4,20 @@
  * 以前は帯を丸ごと空の色で塗っていたが、ページの末尾が空だと向きが逆で足元が抜ける。
  * 空はヒーローに任せ、ここは地面にする。
  *
- * 物を敷き詰めない。トップは世界そのものを見せる場で、フッターはページが終わる場所。
- * ここでも街を並べると「またこの街かよ」になるので、地平線を一本通し、その右の端に
- * 数えるほどの物を置くに留める。左右に置くと据わりが良くなりすぎて、飾りとして
- * 身構えて見えてしまう。
+ * 街灯や電柱の線画を置くことも試したが、やめた。ここに描く物はトップの街と同じ筆で
+ * なければ「別の絵」になってしまい、揃えられないなら無いほうが静かに収まる。地平線を
+ * 一本引くだけで、どのページも同じ地面に着地する。
  */
 
 .site-footer {
   position: relative;
-  /* 地面の物と文字が重ならないだけの高さ。物は地平線に立つ。 */
-  padding-top: 4.5rem;
   background-color: var(--color-base-200);
-}
-
-/*
- * 地平線。画面の端から端まで通す。
- *
- * 素材ではなく CSS で引くのは、どれだけ広い画面でも 1px のまま伸ばすため
- * (SVG を引き伸ばすと線が太ったり、立っている物が歪む)。
- */
-.site-footer-ground {
-  position: absolute;
-  /* フッターの上部に敷く。下端が地平線になり、その下に文字が来る。 */
-  inset: 0 0 auto;
-  height: 4.5rem;
-  border-bottom: 1px solid
+  /* 地平線。街の輪郭と同じ色にして、空と街の境目がここまで伸びてきた形にする。 */
+  border-top: 1px solid
     color-mix(in oklab, var(--footer-ink, #9488d3) 40%, transparent);
 }
 
-/*
- * 地平線に立つ物。右の端にだけ置く。
- *
- * 繰り返さないので、画面が広がるほど左側の余白が伸びて静かになる。地平線だけが
- * どこまでも続き、その先の隅に街の名残がある、という眺めにしたい。
- */
-.site-footer-ground::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 13.75rem;
-  height: 4rem;
-  background-image: url("../../assets/ground.svg");
-  background-repeat: no-repeat;
-  background-position: bottom right;
-  background-size: contain;
-  opacity: 0.55;
-}
-
 .site-footer-inner {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -61,7 +25,7 @@
   gap: 0.75rem;
   max-width: 64rem;
   margin-inline: auto;
-  padding: 1.25rem 1.5rem 1.5rem;
+  padding: 1.5rem;
 }
 
 @media (width >= 40rem) {
