@@ -30,7 +30,7 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
           {/* ロゴがホームへのリンクを兼ねる (ナビに Home を置かない)。 */}
           <Link
             to="/"
-            className={`site-logo shrink-0 text-foreground${isTransparent ? " text-halo" : ""}`}
+            className={`shrink-0 text-foreground${isTransparent ? " text-halo" : ""}`}
           >
             <Logo className="h-8 w-auto" />
           </Link>

@@ -46,7 +46,7 @@
    * 素材の viewBox と同じ比率をコンテナに写す。こうすると幅がいくつでも
    * 街の全体が過不足なく収まり、下端がそのまま地平線になる。
    */
-  aspect-ratio: 1920 / 340;
+  aspect-ratio: 1539 / 224;
   /* 画面が極端に広いとき、街だけが伸び上がってヒーローを埋めないようにする。 */
   max-height: 18rem;
   /*
@@ -56,7 +56,8 @@
   margin-inline: auto;
   overflow: hidden;
   pointer-events: none;
-  color: var(--color-base-content);
+  /* 街の輪郭の色。素材が currentColor で受けるので、濃さを変えるならここ。 */
+  color: #9488d3;
 }
 
 .cityscape-svg {
@@ -68,8 +69,9 @@
  * 雲だけが流れる。1 周を 4 日ぶんかけることで、足元の目盛りより遅く動き、
  * 遠くにあるものとして見える。
  *
- * 1920 は素材の viewBox の幅。素材側に同じ雲の複製が 1920 ずらして置いてあるので、
- * ちょうど 1 枚ぶん流れたところで複製が元の位置に来て、継ぎ目なく振り出しに戻る。
+ * 407.1932 は素材の viewBox の幅 (user unit)。素材側に同じ雲の複製が同じ幅だけ
+ * ずらして置いてあるので、ちょうど 1 枚ぶん流れたところで複製が元の位置に来て、
+ * 継ぎ目なく振り出しに戻る。素材を差し替えて viewBox が変わったら、ここも合わせること。
  */
 @keyframes cityscape-cloud-drift {
   from {
@@ -77,7 +79,7 @@
   }
 
   to {
-    transform: translateX(-1920px);
+    transform: translateX(-407.1932px);
   }
 }
 
