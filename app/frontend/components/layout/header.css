@@ -1,0 +1,36 @@
+/*
+ * ヘッダーの地平線。
+ *
+ * トップでは透過ヘッダーが動く空の上に載り、下層では白地のナビバーになる。同じ場所
+ * なのに見え方が繋がっていないので、下層側にも一本の線を引いて地平線に見立てる。
+ *
+ * 帯の下端いっぱいに引くのではなく、外側へ薄く滲ませる。ヒーローの地平線が空と街の
+ * 境目でぼやけているのに合わせて、硬い区切りにしないため。
+ */
+
+.site-header {
+  /* 街の輪郭と同じ色。空と街の境目がここまで伸びてきている、という見立て。 */
+  --horizon-ink: #9488d3;
+}
+
+.site-header::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 1px;
+  background-color: color-mix(in oklab, var(--horizon-ink) 45%, transparent);
+}
+
+/* 線のすぐ下に、地平線の向こう側のような淡い翳りを落とす。 */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto;
+  height: 0.75rem;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--horizon-ink) 12%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}

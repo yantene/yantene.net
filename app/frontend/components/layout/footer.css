@@ -1,16 +1,35 @@
 /*
- * フッターの帯は Celestim と同じ空の色サイクルで塗る。
+ * フッターは「ページの足元の地面」。
  *
- * 周期はヒーローと同じ --day-cycle を読む。keyframes の名前も揃えてあるので、
- * ヒーローの目盛りを掴んで時間を進めると、ページの末尾の色も一緒に動く
- * (day-clock.ts が名前でアニメーションを集めるため)。
+ * 以前は帯を丸ごと空の色で塗っていたが、ページの末尾が空だと向きが逆で足元が抜ける。
+ * 空はヒーローに任せ、ここは地面にする。
+ *
+ * 街灯や電柱の線画を置くことも試したが、やめた。ここに描く物はトップの街と同じ筆で
+ * なければ「別の絵」になってしまい、揃えられないなら無いほうが静かに収まる。地平線を
+ * 一本引くだけで、どのページも同じ地面に着地する。
  */
-.footer-daylight {
-  animation: celestim-veiled-sky-cycle var(--day-cycle, 288s) linear infinite;
+
+.site-footer {
+  position: relative;
+  background-color: var(--color-base-200);
+  /* 地平線。街の輪郭と同じ色にして、空と街の境目がここまで伸びてきた形にする。 */
+  border-top: 1px solid
+    color-mix(in oklab, var(--footer-ink, #9488d3) 40%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .footer-daylight {
-    animation-play-state: paused;
+.site-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+}
+
+@media (width >= 40rem) {
+  .site-footer-inner {
+    flex-direction: row;
   }
 }
