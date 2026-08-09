@@ -4,7 +4,7 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { VFile } from "vfile";
 import { matter } from "vfile-matter";
-import type { Root, RootContent } from "mdast";
+import type { Nodes, Root, RootContent } from "mdast";
 
 const SUMMARY_MAX_CHARS = 160;
 
@@ -58,14 +58,15 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
 }
 
 /**
- * 見出し・脚注定義・水平線を除いた本文ブロックのテキストを連結し、先頭 160 文字を返す。
+ * 見出し・脚注定義・水平線・生 HTML を除いた本文ブロックのテキストを連結し、
+ * 先頭 160 文字を返す。
  */
 export function extractSummary(root: Root): string {
   const parts: string[] = [];
   let length = 0;
   for (const node of root.children) {
     if (!isSummaryNode(node)) continue;
-    const text = mdastToString(node).trim();
+    const text = summaryTextOf(node).trim();
     if (text.length === 0) continue;
     parts.push(text);
     length += text.length + 1; // 連結時の区切りスペース分
@@ -78,15 +79,33 @@ export function extractSummary(root: Root): string {
     .slice(0, SUMMARY_MAX_CHARS);
 }
 
-const excludedFromSummary = new Set<RootContent["type"]>([
+/*
+ * 要約に含めないノード種別。html を含めるのは、生 HTML のタグ文字列 (`<s>` や
+ * `<div class='box'>`) がそのまま要約に露出するのを防ぐため。段落中に現れる
+ * インライン HTML も対象なので、判定は入れ子の内側まで再帰的に効かせる。
+ */
+const excludedFromSummary = new Set<Nodes["type"]>([
   "heading",
   "footnoteDefinition",
   "thematicBreak",
   "code",
+  "html",
 ]);
 
-function isSummaryNode(node: RootContent): boolean {
+function isSummaryNode(node: Nodes): boolean {
   return !excludedFromSummary.has(node.type);
+}
+
+/**
+ * ノード配下のテキストを、除外対象のノードを飛ばしながら連結する。
+ * 葉ノードの文字列化 (画像の alt を含む) は mdast-util-to-string に委ねる。
+ */
+function summaryTextOf(node: RootContent): string {
+  if (!("children" in node)) return mdastToString(node);
+  return node.children
+    .filter((child) => isSummaryNode(child))
+    .map((child) => summaryTextOf(child))
+    .join("");
 }
 
 function asOptionalString(value: unknown): string | undefined {
