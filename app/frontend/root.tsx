@@ -38,6 +38,10 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) =>
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/icons/icon.svg" },
+  // SVG を読めない相手のために、素の favicon も置いておく。
+  { rel: "icon", type: "image/x-icon", href: "/favicon.ico", sizes: "48x48" },
+  // iOS はホーム画面に置くときに manifest ではなくこれを見る。
+  { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
   { rel: "manifest", href: "/manifest.webmanifest" },
   {
     rel: "alternate",

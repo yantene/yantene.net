@@ -3,6 +3,7 @@ import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { NonceContext } from "~/frontend/lib/nonce-context";
+import { registerServiceWorker } from "~/frontend/lib/register-service-worker";
 import { initI18nGlobal } from "~/lib/i18n/init";
 
 const locale =
@@ -33,3 +34,7 @@ startTransition(() => {
     </NonceContext.Provider>,
   );
 });
+
+// 一度読んだページを電波の無い場所でも開けるようにする (#123)。描画には関わらないので
+// hydrate のあとに回す。
+registerServiceWorker();
