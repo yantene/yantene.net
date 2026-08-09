@@ -7,6 +7,7 @@ export interface NoteTimelineItemProps {
   readonly title: string;
   readonly summary: string;
   readonly imageUrl: string | null;
+  readonly tags: readonly string[];
   readonly publishedOn: string;
 }
 
@@ -16,34 +17,54 @@ interface NoteTimelineItemOptions {
    * 落とすのは見た目だけで、time 要素には完全な日付が残る。
    */
   readonly omitYear?: boolean;
+  /**
+   * 先頭に出す順位。人気順のように時系列でない並びで使う。
+   * 与えると、公開月を表すドットの代わりにこの数字が印になる。
+   */
+  readonly rank?: number;
 }
+
+/** 添えるタグの数。多いと日付と競って読みづらくなる。 */
+const SHOWN_TAG_COUNT = 3;
 
 /**
  * タイムライン 1 件分。項目全体がノート詳細へのリンクになる。
  *
- * 左端のドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため
- * 読み上げからは外している (日付は隣の time 要素が持つ)。
+ * 最近の記事も人気の記事もこれを使う。並びの意味が違っても項目の作りが変わると、
+ * 同じ一覧なのに情報の在り処が食い違って読みにくくなるため。違いは先頭の印だけで、
+ * 時系列なら公開月を表すドット、順位付きなら番号を出す。
  */
 export function NoteTimelineItem({
   slug,
   title,
   summary,
   imageUrl,
+  tags,
   publishedOn,
   omitYear = false,
+  rank,
 }: NoteTimelineItemProps & NoteTimelineItemOptions): React.JSX.Element {
   // "2016-09-26" から年を落として "09-26" にする。
   const shownDate = omitYear ? publishedOn.slice(5) : publishedOn;
+
   return (
     <li className="note-timeline-item">
       <Link
         to={`/notes/${slug}`}
         className="note-timeline-link group border-b border-border/60 transition-colors hover:bg-base-200/40"
       >
-        <span
-          className={`note-timeline-dot ${seasonDotClass(publishedOn)}`}
-          aria-hidden="true"
-        />
+        {rank === undefined ? (
+          // ドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため
+          // 読み上げからは外す (日付は隣の time 要素が持つ)。
+          <span
+            className={`note-timeline-dot ${seasonDotClass(publishedOn)}`}
+            aria-hidden="true"
+          />
+        ) : (
+          <span className="note-timeline-rank" aria-hidden="true">
+            {rank}
+          </span>
+        )}
 
         <time
           dateTime={publishedOn}
@@ -57,6 +78,15 @@ export function NoteTimelineItem({
             {title}
           </h3>
           <p className="line-clamp-2 text-sm text-base-content/70">{summary}</p>
+          {tags.length > 0 && (
+            <p className="note-timeline-tags">
+              {tags.slice(0, SHOWN_TAG_COUNT).map((tag) => (
+                <span key={tag} className="note-timeline-tag">
+                  {tag}
+                </span>
+              ))}
+            </p>
+          )}
         </div>
 
         {imageUrl !== null && (

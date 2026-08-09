@@ -12,6 +12,11 @@ interface NoteTimelineProps {
    * 同じ年が何度も現れて時間軸に見えなくなるため既定では付けない。
    */
   readonly groupByYear?: boolean;
+  /**
+   * 先頭に順位を出すか。人気順のように、並び自体が意味を持つ一覧で使う。
+   * 公開月のドットは順位に置き換わる (時系列ではないので月の色に意味がない)。
+   */
+  readonly ranked?: boolean;
 }
 
 interface YearGroup {
@@ -47,12 +52,17 @@ function groupByPublishedYear(
 export function NoteTimeline({
   notes,
   groupByYear = false,
+  ranked = false,
 }: NoteTimelineProps): React.JSX.Element {
   if (!groupByYear) {
     return (
       <ol className="note-timeline note-timeline-list note-timeline-flat">
-        {notes.map((note) => (
-          <NoteTimelineItem key={note.slug} {...note} />
+        {notes.map((note, index) => (
+          <NoteTimelineItem
+            key={note.slug}
+            {...note}
+            rank={ranked ? index + 1 : undefined}
+          />
         ))}
       </ol>
     );

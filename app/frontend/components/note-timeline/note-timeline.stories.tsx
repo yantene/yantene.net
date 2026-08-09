@@ -8,6 +8,7 @@ const notes = [
     summary:
       "なぜまたブログを自作しているのか。アーキテクチャと設計思想のメモ。",
     imageUrl: "https://picsum.photos/seed/note-a/640/400",
+    tags: ["Web", "プログラミング"],
     publishedOn: "2026-05-08",
   },
   {
@@ -15,6 +16,7 @@ const notes = [
     title: "Clean Architecture を Web アプリに適用してみた",
     summary: "境界を引くことで見えてくる、本当にテストしたいもの。",
     imageUrl: "https://picsum.photos/seed/note-b/640/400",
+    tags: ["プログラミング", "備忘録"],
     publishedOn: "2026-04-21",
   },
   {
@@ -22,6 +24,7 @@ const notes = [
     title: "型安全に向き合うと、開発体験はこう変わる",
     summary: "TypeScript、Hono、Drizzle の相性についての所感。",
     imageUrl: null,
+    tags: ["プログラミング"],
     publishedOn: "2026-01-02",
   },
   {
@@ -29,6 +32,7 @@ const notes = [
     title: "自分のサイトの ADR を ADR で管理するという話",
     summary: "迷った記録を残すことは、未来の自分へのインターフェースになる。",
     imageUrl: "https://picsum.photos/seed/note-d/640/400",
+    tags: ["備忘録", "日記"],
     publishedOn: "2025-10-15",
   },
 ];
@@ -61,6 +65,14 @@ export const SingleNote: Story = {
   args: { notes: notes.slice(0, 1) },
 };
 
+/**
+ * 順位付きの並び (人気のノートなど)。項目の作りは時系列のものと同じで、先頭の印だけが
+ * 公開月のドットから番号に変わる。時系列ではないので縦線は引かれない。
+ */
+export const Ranked: Story = {
+  args: { ranked: true },
+};
+
 /** 年で束ねた並び。線は年をまたいでも途切れず、年ラベルだけが左に立つ。 */
 export const GroupedByYear: Story = {
   args: { groupByYear: true },
@@ -79,6 +91,7 @@ export const UnevenYears: Story = {
         title: `最近書いたノート ${String(index + 1)}`,
         summary: "ぽつぽつ書いている時期。",
         imageUrl: null,
+        tags: ["日記"],
         publishedOn: `2026-0${String(index + 1)}-10`,
       })),
       ...Array.from({ length: 9 }, (_, index) => ({
@@ -86,6 +99,7 @@ export const UnevenYears: Story = {
         title: `よく書いていた頃のノート ${String(index + 1)}`,
         summary: "この年に集中して書いていた。",
         imageUrl: null,
+        tags: ["日記"],
         publishedOn: `2020-${String(index + 1).padStart(2, "0")}-05`,
       })),
     ],
@@ -102,6 +116,7 @@ export const EveryMonth: Story = {
         title: `${String(index + 1)} 月に公開したノート`,
         summary: "ドットの色は公開月を 1 年の位相に見立てて決まる。",
         imageUrl: null,
+        tags: ["日記"],
         publishedOn: `2026-${month}-15`,
       };
     }),

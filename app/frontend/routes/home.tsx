@@ -8,7 +8,6 @@ import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
-import { PopularNotes } from "~/frontend/components/note-timeline/popular-notes";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
@@ -63,8 +62,8 @@ export default function Home({
           {popular.length > 0 && (
             <div className="mb-16">
               <h2 className="text-2xl font-bold">{t("home.popularNotes")}</h2>
-              <div className="mt-6">
-                <PopularNotes notes={popular} />
+              <div className="mt-8">
+                <NoteTimeline notes={popular} ranked />
               </div>
             </div>
           )}
