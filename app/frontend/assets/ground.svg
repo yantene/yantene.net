@@ -1,42 +1,33 @@
 <!--
-  The ground the whole site stands on (footer).
+  Roadside objects for the footer.
 
-  A horizon line with a few roadside objects, drawn in the same 1px ink as the
-  cityscape. It tiles horizontally: the left and right edges hold nothing, so
-  repeated copies never collide.
+  Deliberately sparse: a lamp, a pole, a sign. The footer is where a page ends,
+  not another place to show the town, so this is placed once at each edge rather
+  than tiled. The horizon itself is drawn in CSS so it can span any width without
+  stretching these shapes.
 
   The stroke colour is baked in (#9488d3, the same ink as the cityscape) because
   this file is referenced from CSS as a background image, and a background image
   cannot inherit currentColor from the page.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" preserveAspectRatio="xMidYMax meet" fill="none" stroke="#9488d3" stroke-width="1" vector-effect="non-scaling-stroke">
-  <g id="ground">
-    <!-- horizon -->
-    <path d="M0 70 H400" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" fill="none" stroke="#9488d3" stroke-width="1" vector-effect="non-scaling-stroke">
+  <!-- street lamp -->
+  <g id="street-lamp">
+    <path d="M24 64 V22" />
+    <path d="M24 22 q0 -7 9 -7 h7" />
+    <path d="M36 15 h8 l-2 6 h-4 z" />
+  </g>
 
-    <!-- street lamp -->
-    <g id="street-lamp">
-      <path d="M60 70 V26" />
-      <path d="M60 26 q0 -8 10 -8 h8" />
-      <path d="M74 18 h8 l-2 6 h-4 z" />
-    </g>
+  <!-- utility pole with two crossarms -->
+  <g id="utility-pole">
+    <path d="M108 64 V10" />
+    <path d="M97 20 H119" />
+    <path d="M99 29 H117" />
+  </g>
 
-    <!-- utility pole with two crossarms -->
-    <g id="utility-pole">
-      <path d="M180 70 V14" />
-      <path d="M168 24 H192" />
-      <path d="M170 34 H190" />
-    </g>
-
-    <!-- road sign -->
-    <g id="road-sign">
-      <path d="M300 70 V40" />
-      <circle cx="300" cy="33" r="7" />
-    </g>
-
-    <!-- a low shrub, to keep the line from feeling empty -->
-    <g id="shrub">
-      <path d="M240 70 q4 -10 12 -10 q8 0 12 10 z" />
-    </g>
+  <!-- road sign -->
+  <g id="road-sign">
+    <path d="M196 64 V34" />
+    <circle cx="196" cy="27" r="6" />
   </g>
 </svg>

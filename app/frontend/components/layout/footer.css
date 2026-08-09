@@ -2,49 +2,68 @@
  * フッターは「ページの足元の地面」。
  *
  * 以前は帯を丸ごと空の色で塗っていたが、ページの末尾が空だと向きが逆で足元が抜ける。
- * 空はヒーローに任せ、ここは地面にする。時刻との連動は上端の細い帯にだけ残し、
- * 地平線の向こうがいまの空の色になっているように見せる。
+ * 空はヒーローに任せ、ここは地面にする。
+ *
+ * 物を敷き詰めない。トップは世界そのものを見せる場で、フッターはページが終わる場所。
+ * ここでも街を並べると「またこの街かよ」になるので、地平線を一本通し、その両端に
+ * 数えるほどの物を置くに留める。
  */
 
 .site-footer {
   position: relative;
-  /* 地面の絵と文字が重ならないだけの高さ。絵は下端に貼り付く。 */
-  padding-top: 5rem;
+  /* 地面の物と文字が重ならないだけの高さ。物は地平線に立つ。 */
+  padding-top: 4.5rem;
   background-color: var(--color-base-200);
 }
 
 /*
- * 地平線の向こうに覗く空。ヒーローと同じ周期で色が変わるので、目盛りを掴んで
- * 時間を進めるとここも一緒に動く (day-clock.ts が名前でアニメーションを集める)。
- */
-.site-footer::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 1.5rem;
-  animation: celestim-veiled-sky-cycle var(--day-cycle, 288s) linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-footer::before {
-    animation-play-state: paused;
-  }
-}
-
-/*
- * 地面の絵。横に敷き詰める。左右の端には何も描かれていないので、繰り返しても
- * 物が重ならない。背景として置くのは、画面がどれだけ広くても同じ間隔で並べ続けるため
- * (要素として並べると数を決め打ちすることになり、広い画面で途切れる)。
+ * 地平線。画面の端から端まで通す。
+ *
+ * 素材ではなく CSS で引くのは、どれだけ広い画面でも 1px のまま伸ばすため
+ * (SVG を引き伸ばすと線が太ったり、立っている物が歪む)。
  */
 .site-footer-ground {
   position: absolute;
+  /* フッターの上部に敷く。下端が地平線になり、その下に文字が来る。 */
   inset: 0 0 auto;
-  height: 5rem;
+  height: 4.5rem;
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--footer-ink, #9488d3) 40%, transparent);
+}
+
+/*
+ * 地平線に立つ物。左右の端に 1 組ずつ置き、中央は空けておく (そこに文字が入る)。
+ * 繰り返さないので、画面が広がるほど物の間隔が空いて静かになる。
+ */
+.site-footer-ground::before,
+.site-footer-ground::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 13.75rem;
+  height: 4rem;
   background-image: url("../../assets/ground.svg");
-  background-repeat: repeat-x;
-  background-position: bottom left;
-  background-size: 25rem 5rem;
-  opacity: 0.5;
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: contain;
+  opacity: 0.55;
+}
+
+.site-footer-ground::before {
+  left: 0;
+}
+
+/* 右端は左右を返して置く。同じ絵が並んで見えないようにする。 */
+.site-footer-ground::after {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+/* 狭い画面では物が文字に迫るので、片側だけ残す。 */
+@media (width < 48rem) {
+  .site-footer-ground::after {
+    display: none;
+  }
 }
 
 .site-footer-inner {
