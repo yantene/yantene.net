@@ -6,7 +6,8 @@
   "home": {
     "heading": "yantene.net",
     "tagline": "A hub for everything yantene publishes",
-    "recentNotes": "Recent notes",
+    "recentNotes": "Recent",
+    "popularNotes": "Most read",
     "viewAll": "View all"
   },
   "timeline": {

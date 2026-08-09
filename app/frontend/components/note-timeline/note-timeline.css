@@ -87,6 +87,18 @@
   height: var(--note-dot-top);
 }
 
+/*
+ * 項目の区切り線は項目の「間」を表すものなので、一覧の末尾には引かない。
+ * 引くと最後の記事が線で閉じられ、そこで話が終わったように見える。
+ */
+.note-timeline-flat > .note-timeline-item:last-child .note-timeline-link,
+.note-timeline-group:last-child
+  > .note-timeline-list
+  > .note-timeline-item:last-child
+  .note-timeline-link {
+  border-bottom-width: 0;
+}
+
 /* 記事が 1 件だけのときは、線を引く相手がいないので出さない。 */
 .note-timeline-flat > .note-timeline-item:first-child:last-child::before,
 .note-timeline-group:first-child:last-child
