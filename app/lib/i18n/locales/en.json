@@ -10,6 +10,10 @@
     "popularNotes": "Popular notes",
     "viewAll": "View all"
   },
+  "feed": {
+    "label": "Feed",
+    "tagLabel": "“{{tag}}” feed"
+  },
   "timeline": {
     "loadingMore": "Loading more…",
     "loadMoreFailed": "Could not load more notes.",

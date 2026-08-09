@@ -124,6 +124,35 @@ describe("buildPageMeta", () => {
     );
   });
 
+  /*
+   * ページ固有のフィード (タグ別など) だけを出す。サイト全体のフィードは root の
+   * links が全ページに出しているので、ここで二重に出すとリーダーの選択肢が濁る。
+   */
+  it("omits the alternate feed link when no page feed is given", () => {
+    const meta = buildPageMeta({ locale: "ja", origin, pathname });
+
+    expect(
+      meta.some((d) => (d as Record<string, unknown>).rel === "alternate"),
+    ).toBe(false);
+  });
+
+  it("emits an alternate feed link built from origin and feed path", () => {
+    const meta = buildPageMeta({
+      locale: "ja",
+      origin,
+      pathname,
+      feed: { path: "/feed.xml?tag=Web", title: "yantene.net — Web" },
+    });
+
+    expect(meta).toContainEqual({
+      tagName: "link",
+      rel: "alternate",
+      type: "application/atom+xml",
+      title: "yantene.net — Web",
+      href: "https://yantene.net/feed.xml?tag=Web",
+    });
+  });
+
   it("marks article pages with og:type article", () => {
     expect(
       find(

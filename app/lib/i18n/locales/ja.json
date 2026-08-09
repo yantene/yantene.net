@@ -10,6 +10,10 @@
     "popularNotes": "人気のノート",
     "viewAll": "すべて見る"
   },
+  "feed": {
+    "label": "フィード",
+    "tagLabel": "「{{tag}}」のフィード"
+  },
   "timeline": {
     "loadingMore": "続きを読み込んでいる…",
     "loadMoreFailed": "続きを読み込めなかった。",
