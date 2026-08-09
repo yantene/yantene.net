@@ -57,19 +57,20 @@
   content: "";
   position: absolute;
   /*
-   * 覆うのは文字のある範囲だけ。上下の余白は頭上の空きと歩行者を避けるためのもので、
-   * ここまで光らせるとヒーロー一面が白く霞む。余白ぶんを戻したうえで、文字の外へ
-   * わずかに滲ませる。
+   * 覆うのは文字のあたりから街の上部まで。余白いっぱいに広げるとヒーロー一面が白く
+   * 霞んでしまうので、余白ぶんを戻したうえで裾を街へ少しだけ届かせる。空と本文の境が
+   * 曖昧になり、光そのものは目に留まらなくなる。中心をやや上に寄せているのは、
+   * 下へ伸ばしたぶん文字が楕円の端に来ないようにするため。
    */
-  inset: calc(var(--intro-pad-top) - 3.5rem) -2rem
-    calc(var(--intro-pad-bottom) - 3.5rem);
+  inset: calc(var(--intro-pad-top) - 4rem) -2rem
+    calc(var(--intro-pad-bottom) - 7.5rem);
   /* 文字より奥へ。位置指定した要素は既定では通常フローの文字より手前に来てしまう。 */
   z-index: -1;
   background: radial-gradient(
-    ellipse 62% 58% at 50% 50%,
+    ellipse 64% 62% at 50% 42%,
     rgb(255 255 255 / 44%),
     rgb(255 255 255 / 26%) 48%,
-    transparent 78%
+    transparent 80%
   );
   pointer-events: none;
 }
