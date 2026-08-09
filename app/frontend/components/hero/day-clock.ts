@@ -43,11 +43,59 @@ const PHASE_REFERENCE_NAME = "time-axis-scroll";
 /** 時計をまとめて進める (負の値で巻き戻す)。 */
 export function advanceDayClock(deltaMs: number): void {
   if (deltaMs === 0) return;
-  for (const animation of clockAnimations()) {
+  const animations = clockAnimations();
+  const lift = liftToStayPositive(animations, deltaMs);
+
+  for (const animation of animations) {
     const current = currentTimeOf(animation);
     if (current === null) continue;
-    animation.currentTime = current + deltaMs;
+    animation.currentTime = current + deltaMs + lift;
   }
+}
+
+/**
+ * 巻き戻して 0 を割りそうなとき、何ミリ秒ぶん底上げすればよいかを返す。
+ *
+ * currentTime が負に入ると、アニメーションは「まだ始まっていない」ものとして扱われる。
+ * fill-mode は none なので、その区間ではキーフレームが一切適用されず、空の色は抜け、
+ * 天体も目盛りも止まる。つまり手当てをしないと、ページを開いた時刻より前には遡れない。
+ *
+ * 底上げする量は loopCycleMs() の倍数にする。そこだけずらしても絵は変わらない。
+ */
+function liftToStayPositive(
+  animations: readonly Animation[],
+  deltaMs: number,
+): number {
+  const cycle = loopCycleMs();
+  if (cycle <= 0) return 0;
+
+  let lowest = Infinity;
+  for (const animation of animations) {
+    const current = currentTimeOf(animation);
+    if (current !== null) lowest = Math.min(lowest, current + deltaMs);
+  }
+  if (!Number.isFinite(lowest) || lowest >= 0) return 0;
+  return Math.ceil(-lowest / cycle) * cycle;
+}
+
+/**
+ * 時計に属するアニメーションが揃って元の位相に戻る周期 (1 日 × 朔望月)。
+ *
+ * この長さだけ進めると、空と太陽と目盛りは朔望月ぶん、月の公転はそれより 1 回少なく、
+ * 月相はちょうど 1 回、雲は 4 日周期ぶん、いずれも整数回まわって同じ絵に戻る。
+ * だからこの倍数で底上げしても、月相を含めて見た目は変わらない。
+ */
+function loopCycleMs(): number {
+  const sky = document.querySelector(".celestim-sky");
+  if (sky === null) return 0;
+
+  const raw = getComputedStyle(sky).getPropertyValue(
+    "--celestim-sidereal-month",
+  );
+  const months = Number(raw.trim());
+  const day = readDayDurationMs();
+  if (!Number.isFinite(months) || months <= 0 || day <= 0) return 0;
+  return day * months;
 }
 
 /**
