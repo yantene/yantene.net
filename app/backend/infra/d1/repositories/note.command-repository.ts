@@ -9,6 +9,7 @@ import type {
   NoteSlug,
 } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
+import { viewWeightLog } from "~/backend/domain/note-view";
 import { noteTags, notes } from "~/backend/infra/d1/schema";
 import { instantToUnix, plainDateToIso } from "~/backend/infra/d1/temporal";
 
@@ -46,6 +47,9 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
         id: crypto.randomUUID(),
         slug: note.slug.toString(),
         createdAt: nowUnix,
+        // 人気の出発点は投稿日の重み。content には含めないので、既にある記事を
+        // 上書きするときに読まれた実績が巻き戻ることはない。
+        viewLogScore: viewWeightLog(plainDateToIso(note.publishedOn)),
         ...content,
       })
       .onConflictDoUpdate({ target: notes.slug, set: content })

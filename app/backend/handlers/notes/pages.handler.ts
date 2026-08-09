@@ -70,8 +70,8 @@ export interface HomePageData {
   /**
    * よく読まれている順。
    *
-   * 読まれた回数に時間減衰をかけて並べる (詳しくは domain/note-view/view-ranking)。
-   * まだ誰にも読まれていなければ空になる。空の枠や当てずっぽうの順位は出さない。
+   * 読まれた回数から並べる (詳しくは domain/note-view/view-ranking)。出発点は投稿日の
+   * 重みなので、まだ読まれていない記事も新しい順に候補へ入る。
    */
   readonly popular: PublicNoteList["notes"];
 }

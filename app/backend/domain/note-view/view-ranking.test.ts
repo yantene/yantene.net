@@ -9,7 +9,10 @@ import {
 /** 対数で持っている値を、比べやすいように素の重みへ戻す。 */
 const plain = (logScore: number): number => Math.exp(logScore);
 
-/** まだ読まれていない記事のスコア (下駄のぶんだけ乗っている)。 */
+/** まだ読まれていない記事のスコア。出発点は投稿日の重み。 */
+const unreadScore = (publishedOn: string): number => viewWeightLog(publishedOn);
+
+/** 出発点をそろえたいときに使う、基準日ちょうどに出した記事。 */
 const UNREAD = 0;
 
 /** 基準日から days 日後の ISO 日付。 */
@@ -47,9 +50,26 @@ describe("viewWeightLog", () => {
 });
 
 describe("logScoreAfterView", () => {
-  it("未読は 0 から始まり、下駄は 1 回ぶんに当たる", () => {
+  it("基準日に出した未読の記事は 0 から始まる", () => {
     // 対数の 0 は素の 1。まだ読まれていなくても -∞ にはならない。
     expect(plain(UNREAD)).toBeCloseTo(1, 9);
+    expect(unreadScore(VIEW_SCORE_EPOCH)).toBeCloseTo(0, 9);
+  });
+
+  it("まだ読まれていない記事同士は、新しく出した方が上に来る", () => {
+    const newer = unreadScore(dayAfterEpoch(365));
+    const older = unreadScore(dayAfterEpoch(30));
+    expect(newer).toBeGreaterThan(older);
+  });
+
+  it("出発点が順位を左右するのは、読まれた回数がごく少ないうちだけ", () => {
+    // 投稿日が離れた 2 記事を、同じ日に同じ回数だけ読ませる。
+    const day = dayAfterEpoch(9700);
+    const fromNewer = viewedTimes(unreadScore(dayAfterEpoch(6500)), 1, day);
+    const fromOlder = viewedTimes(unreadScore(dayAfterEpoch(3800)), 1, day);
+    // 1 回ぶんの重みが桁違いに大きいので、出発点の差は丸めで消える。
+    // 同点の決着は SQL 側の並び順 (published_on DESC, id ASC) に任せている。
+    expect(fromNewer).toBe(fromOlder);
   });
 
   it("初めて読まれたら、下駄にその日の重みが乗る", () => {
@@ -96,7 +116,7 @@ describe("logScoreAfterView", () => {
     expect(steady).toBeGreaterThan(stale);
   });
 
-  it("下駄は全記事に等しく乗るので、順位を歪めない", () => {
+  it("同じ日に出した記事なら、読まれた回数がそのまま順位になる", () => {
     const day = dayAfterEpoch(60);
     const many = viewedTimes(UNREAD, 5, day);
     const few = viewedTimes(UNREAD, 2, day);
