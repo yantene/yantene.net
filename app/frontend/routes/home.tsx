@@ -1,13 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
-import type { PublicNote } from "~/backend/handlers/note-view";
+import type { PublicNoteList } from "~/backend/handlers/note-view";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadRecentNotes } from "~/backend/handlers/notes/pages.handler";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
+import { InfiniteNoteTimeline } from "~/frontend/components/note-timeline/infinite-note-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
@@ -16,10 +16,10 @@ import { resolveLocale } from "~/lib/i18n/resolve-locale";
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & { notes: readonly PublicNote[] }> {
-  const notes = await loadRecentNotes(context.get(cloudflareContext).env);
+}: Route.LoaderArgs): Promise<PageMetaBase & PublicNoteList> {
+  const recent = await loadRecentNotes(context.get(cloudflareContext).env);
   return {
-    notes,
+    ...recent,
     locale: resolveLocale(request),
     origin: new URL(request.url).origin,
   };
@@ -41,7 +41,7 @@ export default function Home({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes } = loaderData;
+  const { notes, pagination } = loaderData;
 
   return (
     <AppLayout>
@@ -58,7 +58,11 @@ export default function Home({
             </Link>
           </div>
           <div className="mt-8">
-            <NoteTimeline notes={notes} />
+            <InfiniteNoteTimeline
+              initialNotes={notes}
+              totalPages={pagination.totalPages}
+              perPage={pagination.perPage}
+            />
           </div>
         </section>
       )}

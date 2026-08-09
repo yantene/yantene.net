@@ -2,15 +2,18 @@ import {
   parseNoteSort,
   parsePagination,
   parseTag,
-  toPublicNote,
   toPublicNoteList,
-  type PublicNote,
   type PublicNoteList,
 } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
-/** ホームに出す新着ノートの件数。 */
-const RECENT_LIMIT = 6;
+/**
+ * ホームの新着ノートを 1 度に読む件数。
+ *
+ * ホームは下端に着くたびに続きを足していくので、1 回ぶんが少なすぎると読み込みが
+ * 頻繁に走り、多すぎると最初の表示が重くなる。画面 2 つぶんくらいが埋まる量にしてある。
+ */
+const RECENT_PER_PAGE = 10;
 
 export interface NotesListPageData extends PublicNoteList {
   /** 絞り込み中のタグ (未絞り込みなら null)。 */
@@ -53,16 +56,19 @@ export async function loadNotesListPage(
   };
 }
 
-/** ホームの新着ノート (公開日降順・最大 6 件) を読む。 */
-export async function loadRecentNotes(
-  env: Env,
-): Promise<readonly PublicNote[]> {
+/**
+ * ホームの新着ノートの 1 ページ目 (公開日降順) を読む。
+ *
+ * 続きはブラウザが `/api/v1/notes` から取りに行くので、ここが返すページ総数が
+ * 「まだ先があるか」の判断材料になる。
+ */
+export async function loadRecentNotes(env: Env): Promise<PublicNoteList> {
   const query = new D1NoteQueryRepository(env.D1);
   const result = await query.list({
-    limit: RECENT_LIMIT,
+    limit: RECENT_PER_PAGE,
     offset: 0,
     sortBy: "publishedOn",
     direction: "desc",
   });
-  return result.notes.map((note) => toPublicNote(note));
+  return toPublicNoteList(result, 1, RECENT_PER_PAGE);
 }
