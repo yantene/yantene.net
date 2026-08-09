@@ -56,34 +56,33 @@ export default function Home({
             主 (時間軸) と従 (よく読まれている) を並べる。記事ページの「本文 + 右の目次」と
             同じ骨格にして、サイト内で構成を揃える。狭い画面では柱が下に落ちる。
           */}
-          {/* 見出しの高さは違うので、ベースラインで揃える。 */}
-          <div className="flex flex-col gap-12 lg:flex-row lg:items-baseline lg:gap-16">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-bold">{t("home.recentNotes")}</h2>
-              <div className="mt-8">
-                <NoteTimeline notes={recent} groupByYear />
+          {/*
+            よく読まれている記事を先に置く。初めて来た人が知りたいのは「何が面白いか」で、
+            時系列の羅列ではないため。最近の記事はその後ろで、一覧へ送り出す。
+          */}
+          {popular.length > 0 && (
+            <div className="mb-16">
+              <h2 className="text-2xl font-bold">{t("home.popularNotes")}</h2>
+              <div className="mt-6">
+                <PopularNotes notes={popular} />
               </div>
-              {/*
-                ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と
-                絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
-              */}
-              <p className="home-view-all">
-                <Link to="/notes" className="link link-primary text-sm">
-                  {t("home.viewAll")}
-                </Link>
-              </p>
             </div>
+          )}
 
-            {popular.length > 0 && (
-              <aside className="lg:w-60 lg:shrink-0">
-                <h2 className="text-sm font-bold tracking-wide text-base-content/70">
-                  {t("home.popularNotes")}
-                </h2>
-                <div className="mt-5">
-                  <PopularNotes notes={popular} />
-                </div>
-              </aside>
-            )}
+          <div>
+            <h2 className="text-2xl font-bold">{t("home.recentNotes")}</h2>
+            <div className="mt-8">
+              <NoteTimeline notes={recent} groupByYear />
+            </div>
+            {/*
+              ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と
+              絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
+            */}
+            <p className="home-view-all">
+              <Link to="/notes" className="link link-primary text-sm">
+                {t("home.viewAll")}
+              </Link>
+            </p>
           </div>
         </section>
       )}

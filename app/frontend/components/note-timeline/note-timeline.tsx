@@ -61,15 +61,17 @@ export function NoteTimeline({
   return (
     <div className="note-timeline">
       {groupByPublishedYear(notes).map((group) => (
-        <section key={group.year} className="note-timeline-group">
-          <h2 className="note-timeline-year">{group.year}</h2>
+        // 年は見出しにしない。置かれる場所によって適切な見出しレベルが変わるうえ、
+        // 日付は各項目の time 要素が持っているので、読み上げに年の見出しは要らない。
+        <div key={group.year} className="note-timeline-group">
+          <p className="note-timeline-year">{group.year}</p>
           <ol className="note-timeline-list">
             {group.notes.map((note) => (
               // 年は左に立っているので、日付からは落とす。
               <NoteTimelineItem key={note.slug} {...note} omitYear />
             ))}
           </ol>
-        </section>
+        </div>
       ))}
     </div>
   );
