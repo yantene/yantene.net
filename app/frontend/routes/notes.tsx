@@ -6,6 +6,7 @@ import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
+import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { InfiniteNoteTimeline } from "~/frontend/components/note-timeline/infinite-note-timeline";
@@ -15,6 +16,7 @@ import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
+import { feedIdentity } from "~/lib/feed";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 const DEFAULT_PER_PAGE = 20;
@@ -29,12 +31,18 @@ export async function loader({
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, tag } = loaderData;
+  const { title, path } = feedIdentity(tag);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
     title: translationsFor(locale).notes.title,
+    /*
+     * 絞り込んでいないときは何も足さない。root が出すサイト全体のフィードと
+     * 同じものになり、リーダーに同じ購読先を二重に見せてしまう。
+     */
+    feed: tag === null ? undefined : { path, title },
   });
 };
 
@@ -166,9 +174,21 @@ export default function NotesIndex({
           )}
         </search>
 
-        <h1 className="notes-heading">
-          {resultHeading(t, { query, tag, total: pagination.total })}
-        </h1>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+          <h1 className="notes-heading">
+            {resultHeading(t, { query, tag, total: pagination.total })}
+          </h1>
+          {/*
+            一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
+            受け取り続ける手を同じ高さに並べる。絞り込み中はそのタグのフィードを指す
+            (見えている一覧と受け取るものを一致させる)。そのときはフッターの全体
+            フィードと行き先が分かれるので、文言も分ける。
+          */}
+          <FeedLink
+            href={feedIdentity(tag).path}
+            label={tag === null ? undefined : t("feed.tagLabel", { tag })}
+          />
+        </div>
 
         {notes.length === 0 ? (
           <p className="mt-8 text-base-content/60">

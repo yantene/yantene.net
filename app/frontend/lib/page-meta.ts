@@ -43,6 +43,14 @@ export interface PageMetaInput {
   readonly type?: "website" | "article";
   /** schema.org 構造化データ。渡された場合のみ ld+json を出力する。 */
   readonly jsonLd?: Record<string, unknown>;
+  /**
+   * そのページに対応する Atom フィード。渡された場合のみ rel=alternate を足す。
+   *
+   * サイト全体のフィードは root の links が全ページに出しているので、ここで渡すのは
+   * 「このページを見ているならこちらの方が近い」フィード (タグで絞った一覧など) だけ。
+   * リーダーは title で区別するため、全体フィードと同じ名前にしないこと。
+   */
+  readonly feed?: { readonly path: string; readonly title: string };
 }
 
 /**
@@ -60,6 +68,7 @@ export function buildPageMeta({
   imagePath = "/og/default",
   type = "website",
   jsonLd,
+  feed,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   const resolvedTitle =
@@ -95,6 +104,16 @@ export function buildPageMeta({
     { name: "twitter:description", content: resolvedDescription },
     { name: "twitter:image", content: image },
   ];
+
+  if (feed !== undefined) {
+    descriptors.push({
+      tagName: "link",
+      rel: "alternate",
+      type: "application/atom+xml",
+      title: feed.title,
+      href: `${origin}${feed.path}`,
+    });
+  }
 
   if (jsonLd !== undefined) {
     descriptors.push({ "script:ld+json": jsonLd });
