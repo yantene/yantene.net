@@ -10,6 +10,7 @@ import { createApiRouter } from "./handlers/api";
 import { createLogoutRouter } from "./handlers/auth/logout.handler";
 import { createMagicLinkRouter } from "./handlers/auth/magic-link.handler";
 import { createFeedRouter } from "./handlers/feed.handler";
+import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
 import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
@@ -126,6 +127,10 @@ export const getApp = (
   app.route("/", createFeedRouter());
   app.route("/", createSeoRouter());
 
+  // 旧サイト (Jekyll + GitHub Pages) の URL を現行サイトへ恒久リダイレクトする。
+  // 表に無いパスは素通りするので、後続のルーティングには影響しない。
+  app.route("/", createLegacyRedirectRouter());
+
   // ノートの原文 Markdown (`/notes/<slug>.md`)。ページではなくファイルを返すので
   // React Router へ委譲せず Hono で完結させる。`.md` 以外の /notes/* は素通りする。
   app.route("/notes", createNoteMarkdownRouter());
@@ -143,23 +148,6 @@ export const getApp = (
   // リダイレクトのみを返すため、React Router ではなく Hono 側に置く。
   app.route("/", createMagicLinkRouter());
   app.route("/", createLogoutRouter());
-
-  /*
-   * かつてタグの一覧を出していた場所。いまはノート一覧が検索とタグの索引を兼ねるので、
-   * そちらへ恒久的に送る (外からのリンクや検索結果に残っているため、消さずに畳む)。
-   */
-  app.get("/tags", (c) => c.redirect("/notes", 301));
-
-  /*
-   * かつて検索だけを担っていた場所。ノート一覧が検索の入口と結果を兼ねるようになったので
-   * そちらへ送る。外から貼られた検索 URL がそのまま働くよう、検索語は引き継ぐ。
-   */
-  app.get("/search", (c) => {
-    const query = c.req.query("q") ?? "";
-    const to =
-      query.length > 0 ? `/notes?q=${encodeURIComponent(query)}` : "/notes";
-    return c.redirect(to, 301);
-  });
 
   // 上記以外はすべて React Router のページルーティングに委ねる。
   app.all("*", async (c) => {
