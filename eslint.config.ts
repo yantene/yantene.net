@@ -300,6 +300,31 @@ const config = [
     },
   },
 
+  /*
+   * Service Worker は普通のブラウザ環境ではない。self / caches / clients は
+   * Worker のスコープに生えているもので、globalThis へ寄せると読み手が
+   * 「どの世界の話か」を掴みづらくなるため、慣用に合わせて self のままにする。
+   */
+  {
+    files: ["public/sw.js"],
+    languageOptions: {
+      globals: {
+        caches: "readonly",
+        clients: "readonly",
+        fetch: "readonly",
+        registration: "readonly",
+        Response: "readonly",
+        self: "readonly",
+        URL: "readonly",
+      },
+    },
+    rules: {
+      "unicorn/prefer-global-this": "off",
+      // install の中では waitUntil に Promise をそのまま渡す必要がある。
+      "unicorn/prefer-await": "off",
+    },
+  },
+
   {
     files: ["scripts/**/*.mjs"],
     languageOptions: {

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>オフライン | yantene.net</title>
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <!--
+      Service Worker が電波の無いときに出すページ。ビルドを介さず配信され、蓄えから
+      直接返るので、外部のものは一切読まない (読めない)。見た目もここに直接書く。
+
+      本体の CSS は使えないため、サイトと同じ色を数値で置いている。増やすとここだけ
+      古びるので、最小限に留めること。
+    -->
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 2rem;
+        background-color: #f7f8fb;
+        color: #1f2430;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Hiragino Kaku Gothic ProN",
+          "Noto Sans JP",
+          sans-serif;
+        line-height: 1.8;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #5b6172;
+      }
+      /* 地平線。ヘッダーとフッターに引いてあるものと同じ色。 */
+      .horizon {
+        width: min(28rem, 100%);
+        height: 1px;
+        background-color: #9488d3;
+        opacity: 0.4;
+      }
+      a {
+        color: #5b51a5;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="horizon"></div>
+    <div>
+      <h1>いまは繋がっていない</h1>
+      <p>
+        一度読んだページは電波が無くても開ける。<br />
+        まだ読んでいないものは、繋がってからもう一度。
+      </p>
+    </div>
+    <a href="/">トップへ</a>
+  </body>
+</html>
