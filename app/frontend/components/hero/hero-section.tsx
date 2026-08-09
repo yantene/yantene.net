@@ -49,7 +49,7 @@ export function HeroSection(): React.JSX.Element {
           <br />
           ブラウザの向こう側で暮らしています。
           <br />
-          コードと文章と、Linux と音楽があればだいたい幸せです。
+          ラップトップとおいしいごはんと、大切な人たちがいればだいたい幸せです。
         </p>
 
         <div className="mt-1 flex items-center gap-5">
