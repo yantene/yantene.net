@@ -7,6 +7,11 @@ illustration.svg はワイヤーの下敷きを敷いた作業用の一枚絵で
 左上が原点に来るよう包み直し、viewBox をその大きさに合わせる。
 
   python3 scripts/extract-illustration.py
+
+入力の illustration.svg は下敷き画像を抱えていて重いためリポジトリには置いていない。
+コミットされる成果物は切り出した app/frontend/assets/ の SVG だけで、このスクリプトは
+そのときどんな座標系から何を抜いたかの記録として残してある。絵を直すときは手元で
+illustration.svg を復元し、リポジトリのルートに置いてから流し直すこと。
 """
 
 import pathlib

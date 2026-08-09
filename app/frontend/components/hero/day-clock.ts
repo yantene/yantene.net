@@ -75,15 +75,6 @@ export function readDayDurationMs(): number {
   return reference ? durationOf(reference) : 0;
 }
 
-/** 歩行者を進行方向に合わせて前進・後退させる。 */
-export function setWalkDirection(root: Element, isBackward: boolean): void {
-  const animations = root.getAnimations({ subtree: true });
-  for (const animation of animations) {
-    if (clockAnimationNames.has(animationNameOf(animation) ?? "")) continue;
-    animation.playbackRate = isBackward ? -1 : 1;
-  }
-}
-
 function clockAnimations(): readonly Animation[] {
   // getAnimations は SSR には無い。呼び出し側が effect 内でしか使わない前提だが、
   // 念のため存在を確かめてから触る。

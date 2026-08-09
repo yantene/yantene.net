@@ -3,7 +3,6 @@ import {
   advanceDayClock,
   readDayClockPhase,
   readDayDurationMs,
-  setWalkDirection,
 } from "./day-clock";
 import { Daywalker } from "./daywalker";
 import {
@@ -74,8 +73,7 @@ export function TimeScrubber(): React.JSX.Element {
    * (キーには「離して終わり」に当たる区切りがドラッグほど明確にない)。
    */
   const faceDirection = useCallback((isBackward: boolean): void => {
-    if (!walkerRef.current) return;
-    setWalkDirection(walkerRef.current, isBackward);
+    walkerRef.current?.classList.toggle("daywalker-backward", isBackward);
   }, []);
 
   const handlePointerDown = useCallback(
