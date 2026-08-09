@@ -148,8 +148,50 @@
   box-shadow: 0 0 0 3px var(--color-base-100);
 }
 
+/*
+ * 順位。時系列でない並びで、公開月のドットに代わる印になる。
+ *
+ * ドットと同じ列に置いて、項目の作りが両者で変わらないようにしている。縦線は
+ * 引かれないので (:has で線を消す)、番号だけが縦に並ぶ。
+ */
+.note-timeline-rank {
+  grid-area: dot;
+  margin-top: calc(var(--note-dot-top) - var(--note-item-padding-y) - 0.75rem);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-base-content);
+  opacity: 0.3;
+  transition: opacity 0.15s;
+}
+
+.note-timeline-link:hover .note-timeline-rank {
+  opacity: 0.5;
+}
+
+/* 順位を出す一覧は時系列ではないので、時間を表す縦線は引かない。 */
+.note-timeline-item:has(.note-timeline-rank)::before {
+  display: none;
+}
+
 .note-timeline-date {
   grid-area: date;
+}
+
+.note-timeline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+/* タグは中黒で区切る。囲みを付けると表題と主張が競る。 */
+.note-timeline-tag::before {
+  content: "・";
 }
 
 .note-timeline-body {
