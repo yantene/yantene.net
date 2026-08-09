@@ -1,0 +1,63 @@
+/*
+ * 記事ページ固有の見た目。
+ *
+ * 本文の描画は MdastRenderer が持つので、ここに置くのは記事を囲む部分だけ。
+ */
+
+/* 表題の上に置く、日付と種別の行。 */
+.note-header-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+.note-header-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/*
+ * 種別の前に引く細い線。日付と種別を繋ぎ、そのまま表題へ導く。
+ * 幅は固定で、文字量に関わらず同じ長さになるようにする。
+ */
+.note-header-kind::before {
+  content: "";
+  width: 2rem;
+  height: 1px;
+  background-color: var(--color-base-300);
+}
+
+.note-header-title {
+  margin-top: 0.625rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+@media (width < 40rem) {
+  .note-header-title {
+    font-size: 1.75rem;
+  }
+}
+
+/*
+ * 関連ノートへの分かれ道。
+ *
+ * 本文と地続きに見えないよう間を大きく取るが、区切り線は引かない。線は
+ * NoteBranches の幹が担うので、二重に引くと道が途切れて見える。
+ */
+.note-related {
+  margin-top: 4rem;
+}
+
+.note-related-heading {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}

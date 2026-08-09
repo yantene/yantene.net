@@ -1,0 +1,93 @@
+/*
+ * 関連ノートへの分かれ道。
+ *
+ * 本文から垂らした 1 本の幹が、記事の数だけ枝分かれする。線は擬似要素で引く
+ * (CSP により inline style が使えないので、位置は変数と静的な値で決める)。
+ */
+
+.note-branches {
+  /* 幹から表題までの距離。枝の横線の長さでもある。 */
+  --branch-arm: 1.25rem;
+  /* 枝が出る高さ。表題の 1 行目の中心に合わせてある。 */
+  --branch-y: 1.375rem;
+  /* 幹の位置 (項目の内容の左端から見て左へこれだけ)。 */
+  --branch-trunk: calc(-1 * (var(--branch-arm) + 0.75rem));
+
+  padding-left: calc(var(--branch-arm) + 0.75rem);
+}
+
+.note-branch {
+  position: relative;
+}
+
+/* 幹。上から下まで通し、最後の枝で止める。 */
+.note-branch::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--branch-trunk);
+  width: 1px;
+  background-color: var(--color-base-300);
+}
+
+/* 最後の枝から先へは伸ばさない。ここで道が尽きることを示す。 */
+.note-branch:last-child::before {
+  bottom: auto;
+  height: var(--branch-y);
+}
+
+/* 枝。幹から表題へ向かって横に伸びる。 */
+.note-branch::after {
+  content: "";
+  position: absolute;
+  top: var(--branch-y);
+  left: var(--branch-trunk);
+  width: var(--branch-arm);
+  height: 1px;
+  background-color: var(--color-base-300);
+}
+
+.note-branch-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding-block: 0.75rem;
+}
+
+.note-branch-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.note-branch-title {
+  font-weight: 700;
+  line-height: 1.5;
+  transition: color 0.15s;
+}
+
+.note-branch-link:hover .note-branch-title {
+  color: var(--color-primary);
+}
+
+.note-branch-summary {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+  /* 分かれ道の案内なので 1 行に留める。読ませるのは本文ではなく行き先。 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-branch-date {
+  flex: none;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+}
