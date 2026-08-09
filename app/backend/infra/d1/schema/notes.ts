@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * ノートのメタデータインデックス。コンテンツ正本は Cloudflare Artifacts、
@@ -26,6 +26,21 @@ export const notes = sqliteTable("notes", {
   // refresh の変更検出に使う。既存行への ADD COLUMN を安全にするため DEFAULT '' を持つ
   // (空ハッシュは次回 refresh で必ず不一致になり再処理される)。
   sourceHash: text("source_hash").notNull().default(""),
+  /*
+   * 読まれた回数と、そこから作る人気の目安。
+   *
+   * 読んだ人を特定できる値は持たない。ここにあるのは「何回読まれたか」だけで、
+   * 誰がいつ読んだかは残らない。
+   *
+   * - view_count: 累計。減らない
+   * - view_score: 時間とともに軽くなる重み付きの数。読み出すときに、最後に触った日
+   *   からの経過ぶんを減衰させてから比べる (domain/note-view/view-ranking)
+   * - view_scored_on: view_score を最後に触った日 (ISO 日付, UTC)。まだ読まれて
+   *   いなければ null。減衰の起点になるので、score と必ず対で更新する
+   */
+  viewCount: integer("view_count").notNull().default(0),
+  viewScore: real("view_score").notNull().default(0),
+  viewScoredOn: text("view_scored_on"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

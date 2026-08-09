@@ -1,4 +1,8 @@
 import { Temporal } from "@js-temporal/polyfill";
+import {
+  scoreAfterView,
+  VIEW_SCORE_HALF_LIFE_DAYS,
+} from "~/backend/domain/note-view";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1NoteViewCommandRepository } from "~/backend/infra/d1/repositories";
 
@@ -52,19 +56,33 @@ export function recordNoteView(
 ): void {
   if (isLikelyBot(recording.userAgent)) return;
 
-  // 集計日は UTC で切る。閲覧者の時間帯ごとに日付が変わると、日次の数が土地によってずれる。
+  // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、減衰の起点が土地によってずれる。
   const viewedOn = Temporal.Now.plainDateISO("UTC").toString();
 
-  recording.waitUntil(increment(env, noteId, viewedOn));
+  recording.waitUntil(applyView(env, noteId, viewedOn));
 }
 
-async function increment(
+/**
+ * いまのスコアを読み、経過ぶんを減衰させてから 1 を足して書き戻す。
+ *
+ * 読んでから書く 2 手になるのは、減衰の計算が行の値 (最後に触った日) に依存するため。
+ * D1 が冪乗・指数の関数を許していないので、SQL 1 発では畳めない。
+ */
+async function applyView(
   env: Env,
   noteId: string,
   viewedOn: string,
 ): Promise<void> {
   try {
-    await new D1NoteViewCommandRepository(env.D1).increment(noteId, viewedOn);
+    const repository = new D1NoteViewCommandRepository(env.D1);
+    const current = await repository.findScore(noteId);
+    if (current === undefined) return;
+
+    const score = scoreAfterView(current, {
+      halfLifeDays: VIEW_SCORE_HALF_LIFE_DAYS,
+      today: viewedOn,
+    });
+    await repository.applyView(noteId, score, viewedOn);
   } catch (error) {
     // 記録に失敗しても読む側には関係がないので、握って記録だけ残す。
     new ConsoleLogger().error("failed to record a note view", {

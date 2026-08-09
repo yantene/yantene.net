@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "13431409-4cc4-4b5b-9c81-43578e433f08",
+  "id": "5bed77fa-bfa4-4cc9-8c96-debaeee58dcf",
   "prevId": "eb5cc7f7-f706-43b5-90b5-96cc796e6ee9",
   "tables": {
     "note_tags": {
@@ -44,59 +44,6 @@
         "note_tags_note_id_tag_pk": {
           "columns": ["note_id", "tag"],
           "name": "note_tags_note_id_tag_pk"
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "note_views_daily": {
-      "name": "note_views_daily",
-      "columns": {
-        "note_id": {
-          "name": "note_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "viewed_on": {
-          "name": "viewed_on",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "view_count": {
-          "name": "view_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        }
-      },
-      "indexes": {
-        "note_views_daily_viewed_on_idx": {
-          "name": "note_views_daily_viewed_on_idx",
-          "columns": ["viewed_on"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "note_views_daily_note_id_notes_id_fk": {
-          "name": "note_views_daily_note_id_notes_id_fk",
-          "tableFrom": "note_views_daily",
-          "tableTo": "notes",
-          "columnsFrom": ["note_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "note_views_daily_note_id_viewed_on_pk": {
-          "columns": ["note_id", "viewed_on"],
-          "name": "note_views_daily_note_id_viewed_on_pk"
         }
       },
       "uniqueConstraints": {},
@@ -182,6 +129,29 @@
           "notNull": true,
           "autoincrement": false,
           "default": "''"
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "view_score": {
+          "name": "view_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "view_scored_on": {
+          "name": "view_scored_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",

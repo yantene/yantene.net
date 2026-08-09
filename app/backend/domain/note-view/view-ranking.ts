@@ -7,19 +7,28 @@
  *
  * 結果として古い記事が上位に来ることはある。それは「昔の記事がいまも読まれている」
  * ということなので正しい。公開日の順に並べているわけではない。
+ *
+ * 減衰はスコアを読むときに当てる。記事ごとに「スコア」と「最後に触った日」を持たせて
+ * おけば、経過ぶんを掛けるだけで現在の値が出る。日ごとの履歴を持たなくて済み、定期的に
+ * 全記事を減衰させるバッチも要らない (バッチは走らせ損ねると減衰が飛び、二重に走らせると
+ * 効きすぎる)。
  */
 
-/** 1 日ぶんの閲覧数。 */
-export interface DailyViewCount {
+/** 記事ごとに持っている、減衰前のスコア。 */
+export interface NoteScore {
   readonly noteId: string;
-  /** 集計日 (ISO 日付文字列 "YYYY-MM-DD", UTC)。 */
-  readonly viewedOn: string;
-  readonly viewCount: number;
+  /** 最後に触った時点での重み付き合計。 */
+  readonly score: number;
+  /**
+   * score を最後に触った日 (ISO 日付文字列 "YYYY-MM-DD", UTC)。
+   * まだ一度も読まれていなければ null。
+   */
+  readonly scoredOn: string | null;
 }
 
 export interface RankedNoteView {
   readonly noteId: string;
-  /** 減衰後の重み付き合計。順位を決めるためだけの値で、表示には使わない。 */
+  /** 減衰後のスコア。順位を決めるためだけの値で、表示には使わない。 */
   readonly score: number;
 }
 
@@ -31,44 +40,68 @@ export interface ViewRankingOptions {
    * うちは短くすると数件の差で順位が跳ねるため、やや長めに取る。
    */
   readonly halfLifeDays: number;
-  /** 集計の基準日 (この日を経過 0 日とする)。 */
+  /** 基準日 (この日まで減衰させる)。 */
   readonly today: string;
 }
 
 /**
- * 日次の閲覧数を、時間減衰をかけた順位に畳む。
+ * 最後に触った日から今日までの経過ぶんを減衰させた、いまのスコア。
  *
  * 基準日より後の日付は経過日数が負になるが、その場合の重みは 1 で頭打ちにする
- * (時刻のずれで未来の行が現れても、重みが 1 を超えて暴れないようにするため)。
+ * (時刻のずれで未来の日付が入っても、重みが 1 を超えて暴れないようにするため)。
  */
-export function rankNoteViews(
-  dailyCounts: readonly DailyViewCount[],
+export function decayScore(
+  { score, scoredOn }: NoteScore,
   { halfLifeDays, today }: ViewRankingOptions,
+): number {
+  assertPositiveHalfLife(halfLifeDays);
+  if (scoredOn === null || score === 0) return 0;
+
+  const age = daysBetween(scoredOn, today);
+  return score * 0.5 ** (Math.max(age, 0) / halfLifeDays);
+}
+
+/**
+ * 1 回読まれたあとのスコア。
+ *
+ * 前回からの経過ぶんを減衰させてから 1 を足す。足してから減衰させるのではないのは、
+ * いま足したぶんが同じ更新で目減りしてしまわないようにするため。
+ */
+export function scoreAfterView(
+  current: NoteScore,
+  options: ViewRankingOptions,
+): number {
+  return decayScore(current, options) + 1;
+}
+
+/**
+ * 記事ごとのスコアを、減衰後の高い順に並べる。読まれていない記事は現れない。
+ */
+export function rankNoteScores(
+  scores: readonly NoteScore[],
+  options: ViewRankingOptions,
 ): readonly RankedNoteView[] {
-  if (halfLifeDays <= 0) {
-    throw new RangeError(
-      `halfLifeDays must be positive: ${String(halfLifeDays)}`,
-    );
-  }
+  assertPositiveHalfLife(options.halfLifeDays);
 
-  const scores = new Map<string, number>();
-  for (const daily of dailyCounts) {
-    const age = daysBetween(daily.viewedOn, today);
-    const weight = 0.5 ** (Math.max(age, 0) / halfLifeDays);
-    scores.set(
-      daily.noteId,
-      (scores.get(daily.noteId) ?? 0) + daily.viewCount * weight,
-    );
-  }
-
-  return [...scores]
-    .map(([noteId, score]) => ({ noteId, score }))
+  return scores
+    .map((entry) => ({
+      noteId: entry.noteId,
+      score: decayScore(entry, options),
+    }))
     .filter((ranked) => ranked.score > 0)
     .toSorted((a, b) => {
       const byScore = b.score - a.score;
       // 同点は noteId で決める。並びが実行ごとに揺れると、順位が理由もなく入れ替わる。
       return byScore === 0 ? a.noteId.localeCompare(b.noteId) : byScore;
     });
+}
+
+function assertPositiveHalfLife(halfLifeDays: number): void {
+  if (halfLifeDays <= 0) {
+    throw new RangeError(
+      `halfLifeDays must be positive: ${String(halfLifeDays)}`,
+    );
+  }
 }
 
 const MILLISECONDS_PER_DAY = 86_400_000;

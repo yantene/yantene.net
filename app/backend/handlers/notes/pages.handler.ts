@@ -1,6 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { Note } from "~/backend/domain/note";
-import { rankNoteViews } from "~/backend/domain/note-view";
+import {
+  rankNoteScores,
+  VIEW_SCORE_HALF_LIFE_DAYS,
+} from "~/backend/domain/note-view";
 import {
   parseNoteSort,
   parsePagination,
@@ -66,22 +69,6 @@ export async function loadNotesListPage(
   };
 }
 
-/**
- * 読まれた重みが半分になるまでの日数。
- *
- * 短いほど直近の勢いを拾い、長いほど落ち着いた人気を映す。記事もアクセスも多くない
- * うちは短くすると数件の差で順位が跳ねるため、やや長めに取る。
- */
-const POPULAR_HALF_LIFE_DAYS = 30;
-
-/**
- * 集計に含める日数。
- *
- * 半減期の 6 倍まで遡る。それより前のアクセスは重みが 1.6% を切り、順位を動かさない
- * わりに読む行数だけが増える。
- */
-const POPULAR_WINDOW_DAYS = POPULAR_HALF_LIFE_DAYS * 6;
-
 export interface HomePageData {
   /** 公開日の新しい順。 */
   readonly recent: PublicNoteList["notes"];
@@ -119,23 +106,18 @@ export async function loadHomePage(env: Env): Promise<HomePageData> {
 /**
  * よく読まれているノートを、時間減衰をかけた順に読む。
  *
- * 減衰の重み付けを D1 に任せず持ち帰ってから畳んでいるのは、D1 が冪乗・指数の関数を
- * 許していないため。読む行数は集計対象の日数で頭打ちになる。
+ * 減衰を D1 に任せず持ち帰ってから当てているのは、D1 が冪乗・指数の関数を許していない
+ * ため。読む行数は「一度でも読まれた記事の数」で頭打ちになる (日ごとの履歴は持たない)。
  */
 async function loadPopularNotes(
   env: Env,
   query: D1NoteQueryRepository,
 ): Promise<PublicNoteList["notes"]> {
-  const today = Temporal.Now.plainDateISO("UTC");
-  const since = today.subtract({ days: POPULAR_WINDOW_DAYS }).toString();
+  const scores = await new D1NoteViewQueryRepository(env.D1).listScores();
 
-  const dailyCounts = await new D1NoteViewQueryRepository(
-    env.D1,
-  ).listDailyCountsSince(since);
-
-  const ranked = rankNoteViews(dailyCounts, {
-    halfLifeDays: POPULAR_HALF_LIFE_DAYS,
-    today: today.toString(),
+  const ranked = rankNoteScores(scores, {
+    halfLifeDays: VIEW_SCORE_HALF_LIFE_DAYS,
+    today: Temporal.Now.plainDateISO("UTC").toString(),
   }).slice(0, POPULAR_COUNT);
   if (ranked.length === 0) return [];
 

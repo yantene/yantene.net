@@ -1,103 +1,127 @@
 import { describe, expect, it } from "vitest";
-import { rankNoteViews } from "./view-ranking";
-import type { DailyViewCount } from "./view-ranking";
+import { decayScore, rankNoteScores, scoreAfterView } from "./view-ranking";
+import type { NoteScore } from "./view-ranking";
 
 const today = "2026-08-09";
 const options = { halfLifeDays: 30, today };
 
-function daily(
+function scored(
   noteId: string,
-  viewedOn: string,
-  viewCount: number,
-): DailyViewCount {
-  return { noteId, viewedOn, viewCount };
+  score: number,
+  scoredOn: string | null,
+): NoteScore {
+  return { noteId, score, scoredOn };
 }
 
-describe("rankNoteViews", () => {
-  it("読まれた回数が多い順に並べる", () => {
-    const ranked = rankNoteViews(
-      [daily("a", today, 3), daily("b", today, 10), daily("c", today, 7)],
+describe("decayScore", () => {
+  it("触ったのが今日なら、そのままの値になる", () => {
+    expect(decayScore(scored("a", 10, today), options)).toBeCloseTo(10, 5);
+  });
+
+  it("半減期を過ぎると半分になる", () => {
+    expect(decayScore(scored("a", 10, "2026-07-10"), options)).toBeCloseTo(
+      5,
+      5,
+    );
+  });
+
+  it("半減期 2 つぶんで 4 分の 1 になる", () => {
+    expect(decayScore(scored("a", 10, "2026-06-10"), options)).toBeCloseTo(
+      2.5,
+      5,
+    );
+  });
+
+  it("まだ読まれていなければ 0", () => {
+    expect(decayScore(scored("a", 0, null), options)).toBe(0);
+  });
+
+  it("基準日より後の日付でも 1 を超えて増えない", () => {
+    expect(decayScore(scored("a", 10, "2026-08-20"), options)).toBeCloseTo(
+      10,
+      5,
+    );
+  });
+});
+
+describe("scoreAfterView", () => {
+  it("初めて読まれたら 1 になる", () => {
+    expect(scoreAfterView(scored("a", 0, null), options)).toBeCloseTo(1, 5);
+  });
+
+  it("同じ日に続けて読まれた分はそのまま積み上がる", () => {
+    const first = scoreAfterView(scored("a", 0, null), options);
+    const second = scoreAfterView(scored("a", first, today), options);
+    expect(second).toBeCloseTo(2, 5);
+  });
+
+  it("間が空くと、前の分だけが減ってから 1 が乗る", () => {
+    // 半減期ぶん空けば、前の 10 は 5 になり、そこに今回の 1 が乗る。
+    expect(scoreAfterView(scored("a", 10, "2026-07-10"), options)).toBeCloseTo(
+      6,
+      5,
+    );
+  });
+
+  it("いま足した分は、その場では減衰しない", () => {
+    // 足してから減衰させる実装だと 5.5 になってしまう。
+    expect(
+      scoreAfterView(scored("a", 10, "2026-07-10"), options),
+    ).not.toBeCloseTo(5.5, 5);
+  });
+});
+
+describe("rankNoteScores", () => {
+  it("減衰後のスコアが高い順に並べる", () => {
+    const ranked = rankNoteScores(
+      [scored("a", 3, today), scored("b", 10, today), scored("c", 7, today)],
       options,
     );
     expect(ranked.map((r) => r.noteId)).toEqual(["b", "c", "a"]);
   });
 
-  it("同じ回数なら、新しく読まれた方を上に置く", () => {
-    const ranked = rankNoteViews(
-      [daily("old", "2026-06-09", 10), daily("new", today, 10)],
+  it("累計が多くても、古ければ新しい記事に抜かれる", () => {
+    // 30 日前の 10 は 5 まで落ちるので、今日の 6 に負ける。
+    const ranked = rankNoteScores(
+      [scored("old", 10, "2026-07-10"), scored("new", 6, today)],
       options,
     );
     expect(ranked.map((r) => r.noteId)).toEqual(["new", "old"]);
   });
 
-  it("半減期を過ぎたアクセスは重みが半分になる", () => {
-    // 30 日前の 10 回は、今日の 5 回と釣り合う。
-    const ranked = rankNoteViews(
-      [daily("decayed", "2026-07-10", 10), daily("fresh", today, 5)],
-      options,
-    );
-    const scores = new Map(ranked.map((r) => [r.noteId, r.score]));
-    expect(scores.get("decayed")).toBeCloseTo(5, 5);
-    expect(scores.get("fresh")).toBeCloseTo(5, 5);
-  });
-
-  it("古くても読まれ続けていれば、最近の少数より上に来る", () => {
-    // 累計を単に足すのでも、直近だけを見るのでもない。両方が効く。
-    const ranked = rankNoteViews(
-      [
-        daily("steady", "2026-08-08", 20),
-        daily("steady", "2026-07-01", 40),
-        daily("steady", "2026-05-01", 80),
-        daily("recent", today, 25),
-      ],
+  it("古くても読まれ続けていれば上に来る", () => {
+    const ranked = rankNoteScores(
+      [scored("steady", 40, "2026-08-08"), scored("recent", 25, today)],
       options,
     );
     expect(ranked[0]?.noteId).toBe("steady");
   });
 
-  it("同じノートの複数日を足し合わせる", () => {
-    const ranked = rankNoteViews(
-      [daily("a", today, 2), daily("a", today, 3), daily("b", today, 4)],
-      options,
-    );
-    expect(ranked.map((r) => r.noteId)).toEqual(["a", "b"]);
-  });
-
   it("読まれていないノートは現れない", () => {
-    expect(rankNoteViews([daily("a", today, 0)], options)).toEqual([]);
-    expect(rankNoteViews([], options)).toEqual([]);
+    expect(rankNoteScores([scored("a", 0, null)], options)).toEqual([]);
+    expect(rankNoteScores([], options)).toEqual([]);
   });
 
   it("同点は毎回同じ順で返す (順位が理由もなく入れ替わらない)", () => {
-    const counts = [daily("b", today, 5), daily("a", today, 5)];
-    expect(rankNoteViews(counts, options).map((r) => r.noteId)).toEqual([
+    const scores = [scored("b", 5, today), scored("a", 5, today)];
+    expect(rankNoteScores(scores, options).map((r) => r.noteId)).toEqual([
       "a",
       "b",
     ]);
     expect(
-      rankNoteViews(counts.toReversed(), options).map((r) => r.noteId),
+      rankNoteScores(scores.toReversed(), options).map((r) => r.noteId),
     ).toEqual(["a", "b"]);
-  });
-
-  it("基準日より後の日付でも重みは 1 を超えない", () => {
-    const ranked = rankNoteViews(
-      [daily("future", "2026-08-20", 10), daily("now", today, 10)],
-      options,
-    );
-    const scores = new Map(ranked.map((r) => [r.noteId, r.score]));
-    expect(scores.get("future")).toBeCloseTo(10, 5);
-    expect(scores.get("now")).toBeCloseTo(10, 5);
   });
 
   it("半減期が 0 以下なら受け付けない", () => {
     expect(() =>
-      rankNoteViews([daily("a", today, 1)], { halfLifeDays: 0, today }),
+      rankNoteScores([scored("a", 1, today)], { halfLifeDays: 0, today }),
     ).toThrow(RangeError);
   });
 
   it("読めない日付は受け付けない", () => {
-    expect(() => rankNoteViews([daily("a", "not-a-date", 1)], options)).toThrow(
-      RangeError,
-    );
+    expect(() =>
+      rankNoteScores([scored("a", 1, "not-a-date")], options),
+    ).toThrow(RangeError);
   });
 });

@@ -1,7 +1,10 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type { INoteViewCommandRepository } from "~/backend/domain/note-view";
-import { noteViewsDaily } from "~/backend/infra/d1/schema";
+import type {
+  INoteViewCommandRepository,
+  NoteScore,
+} from "~/backend/domain/note-view";
+import { notes } from "~/backend/infra/d1/schema";
 
 export class D1NoteViewCommandRepository implements INoteViewCommandRepository {
   private readonly db;
@@ -10,19 +13,38 @@ export class D1NoteViewCommandRepository implements INoteViewCommandRepository {
     this.db = drizzle(d1);
   }
 
+  async findScore(noteId: string): Promise<NoteScore | undefined> {
+    const rows = await this.db
+      .select({ score: notes.viewScore, scoredOn: notes.viewScoredOn })
+      .from(notes)
+      .where(eq(notes.id, noteId))
+      .limit(1);
+
+    // 分割代入だと型の上では必ず取れることになってしまうので、at で受けて確かめる。
+    const row = rows.at(0);
+    return row === undefined
+      ? undefined
+      : { noteId, score: row.score, scoredOn: row.scoredOn };
+  }
+
   /**
-   * その日の行が無ければ 1 で作り、あれば 1 足す。
+   * 累計は SQL 側で 1 足し、スコアは受け取った値で置き換える。
    *
-   * 読み出してから書き戻すのではなく upsert 1 回で済ませているのは、同じ記事が同時に
-   * 読まれたときに数を取りこぼさないようにするため。
+   * 累計を SQL で足しているのは、同じ記事が同時に読まれても取りこぼさないため。
+   * スコアは減衰を挟むので、その場の値では決められず、計算済みの値を書くしかない。
    */
-  async increment(noteId: string, viewedOn: string): Promise<void> {
+  async applyView(
+    noteId: string,
+    score: number,
+    scoredOn: string,
+  ): Promise<void> {
     await this.db
-      .insert(noteViewsDaily)
-      .values({ noteId, viewedOn, viewCount: 1 })
-      .onConflictDoUpdate({
-        target: [noteViewsDaily.noteId, noteViewsDaily.viewedOn],
-        set: { viewCount: sql`${noteViewsDaily.viewCount} + 1` },
-      });
+      .update(notes)
+      .set({
+        viewCount: sql`${notes.viewCount} + 1`,
+        viewScore: score,
+        viewScoredOn: scoredOn,
+      })
+      .where(eq(notes.id, noteId));
   }
 }
