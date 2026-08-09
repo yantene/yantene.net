@@ -7,7 +7,9 @@
     "heading": "yantene.net",
     "tagline": "A hub for everything yantene publishes",
     "recentNotes": "Recent notes",
-    "viewAll": "View all",
+    "viewAll": "View all"
+  },
+  "timeline": {
     "loadingMore": "Loading more…",
     "loadMoreFailed": "Could not load more notes.",
     "retry": "Try again",
@@ -43,7 +45,7 @@
     "title": "Search",
     "placeholder": "Type keywords",
     "empty": "No matching notes.",
-    "resultCount": "{{count}} results"
+    "resultsFor": "Results for \"{{query}}\" — {{count}}"
   },
   "series": {
     "label": "Series",
