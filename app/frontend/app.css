@@ -9,9 +9,11 @@
 @import "./components/layout/footer.css";
 @import "./components/mdast/mdast-renderer.css";
 @import "./components/note-timeline/note-timeline.css";
+@import "./components/note-branches/note-branches.css";
 @import "./components/tag-index/tag-index.css";
 @import "./routes/home.css";
 @import "./routes/notes.css";
+@import "./routes/notes.$slug.css";
 
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";

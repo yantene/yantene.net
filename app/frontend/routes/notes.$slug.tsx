@@ -8,7 +8,7 @@ import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
-import { NoteCard } from "~/frontend/components/note-card/note-card";
+import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
@@ -99,10 +99,19 @@ export default function NoteShow({
       <Header />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl">
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold">{note.title}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
-              <time dateTime={note.publishedOn}>{note.publishedOn}</time>
+          <header className="note-header mb-8">
+            {/*
+              読み始める前に「いつの、何を読むのか」が分かるようにする。日付と種別を
+              表題の上に置き、細い線で本文と隔てる。
+            */}
+            <p className="note-header-eyebrow">
+              <time dateTime={note.publishedOn}>
+                {note.publishedOn.replaceAll("-", ".")}
+              </time>
+              <span className="note-header-kind">NOTE</span>
+            </p>
+            <h1 className="note-header-title">{note.title}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
               {/*
                 原文 Markdown は React Router のルートではなく Hono が返すので、
                 Link ではなく素の <a> にする (クライアント遷移させない)。
@@ -176,13 +185,9 @@ export default function NoteShow({
             </nav>
           )}
           {related.length > 0 && (
-            <section className="mt-16 border-t border-base-300 pt-10">
-              <h2 className="mb-6 text-xl font-bold">{t("notes.related")}</h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {related.map((item) => (
-                  <NoteCard key={item.slug} {...item} />
-                ))}
-              </div>
+            <section className="note-related">
+              <h2 className="note-related-heading">{t("notes.related")}</h2>
+              <NoteBranches notes={related} />
             </section>
           )}
         </main>
