@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { SiMarkdown } from "react-icons/si";
 import { data, Link } from "react-router";
 import type { Route } from "./+types/notes.$slug";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
@@ -100,12 +101,20 @@ export default function NoteShow({
         <main className="w-full min-w-0 max-w-3xl">
           <header className="mb-8">
             <h1 className="text-4xl font-bold">{note.title}</h1>
-            <time
-              dateTime={note.publishedOn}
-              className="mt-2 block text-sm text-base-content/60"
-            >
-              {note.publishedOn}
-            </time>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
+              <time dateTime={note.publishedOn}>{note.publishedOn}</time>
+              {/*
+                原文 Markdown は React Router のルートではなく Hono が返すので、
+                Link ではなく素の <a> にする (クライアント遷移させない)。
+              */}
+              <a
+                href={`/notes/${note.slug}.md`}
+                className="inline-flex items-center gap-1 hover:text-primary hover:underline"
+              >
+                <SiMarkdown aria-hidden="true" />
+                {t("notes.viewMarkdown")}
+              </a>
+            </div>
             {note.tags.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {note.tags.map((tg) => (

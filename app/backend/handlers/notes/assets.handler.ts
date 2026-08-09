@@ -1,22 +1,8 @@
 import { Hono } from "hono";
+import { contentCacheControlFor } from "./content-cache-control";
 import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
-
-const MAX_AGE_SECONDS = 3600;
-
-/**
- * Cache-Control を決める。BASIC 認証が有効な環境 (staging) では共有キャッシュに
- * 載せると認証バリアを迂回して未認証クライアントへ配信され得るため `private` にし、
- * それ以外 (production 等) では CDN 等でキャッシュできるよう `public` にする。
- * refresh で内容が更新され得るため immutable にはしない。
- */
-function cacheControlFor(env: Env): string {
-  const isBasicAuthEnabled =
-    env.BASIC_AUTH_USER !== undefined && env.BASIC_AUTH_PASS !== undefined;
-  const scope = isBasicAuthEnabled ? "private" : "public";
-  return `${scope}, max-age=${String(MAX_AGE_SECONDS)}`;
-}
 
 /**
  * ノートに紐付く画像アセットを R2 キャッシュから配信する公開ルータ。
@@ -51,7 +37,7 @@ export function createNoteAssetsRouter(): Hono<{ Bindings: Env }> {
     return new Response(asset.bytes as BodyInit, {
       headers: {
         "Content-Type": asset.contentType,
-        "Cache-Control": cacheControlFor(c.env),
+        "Cache-Control": contentCacheControlFor(c.env),
       },
     });
   });

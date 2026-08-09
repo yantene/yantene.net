@@ -50,6 +50,8 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 - 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))
 - 要約から生 HTML を除外 ([#112](https://github.com/yantene/yantene.net/issues/112))
+- 原文 Markdown の R2 キャッシュ ([#106](https://github.com/yantene/yantene.net/issues/106))。
+  force refresh を流すまで `/notes/<slug>.md` は 500 になる (fail-loud)
 
 ## データモデルとストレージ戦略
 
@@ -59,7 +61,7 @@ D1 はメタデータのインデックス、R2 はパース済み MDAST と画�
 
 - Artifacts: Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
-- R2: パース済み MDAST キャッシュ + 画像キャッシュ
+- R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
 ### フロントマターでメタデータ管理
 
@@ -94,6 +96,13 @@ Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) の�
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
 `/api/v1/notes/<slug>/assets/<path>` に解決する。Artifacts の直接 URL を露出させない。
+
+### 原文は `/notes/<slug>.md` で取れる
+
+記事ページ (`/notes/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
+**そのまま** (フロントマター込み・画像の相対パスも書き換えない) 返す。R2 の原文キャッシュ
+から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
+[ADR 0014](../../docs/adr/0014-serve-note-source-markdown-verbatim.md) を参照。
 
 ## 補助ドメイン
 

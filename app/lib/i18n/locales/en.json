@@ -22,6 +22,7 @@
     "empty": "No notes have been published yet.",
     "related": "Related notes",
     "toc": "Contents",
+    "viewMarkdown": "View as Markdown",
     "filteredByTag": "Tagged “{{tag}}”",
     "clearFilter": "Show all",
     "pagination": {

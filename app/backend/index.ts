@@ -13,6 +13,7 @@ import { createFeedRouter } from "./handlers/feed.handler";
 import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
+import { createNoteMarkdownRouter } from "./handlers/notes/markdown.handler";
 import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createSearchApiRouter } from "./handlers/notes/search.handler";
 import { createTagsApiRouter } from "./handlers/notes/tags.handler";
@@ -124,6 +125,10 @@ export const getApp = (
   app.route("/og", createOgRouter());
   app.route("/", createFeedRouter());
   app.route("/", createSeoRouter());
+
+  // ノートの原文 Markdown (`/notes/<slug>.md`)。ページではなくファイルを返すので
+  // React Router へ委譲せず Hono で完結させる。`.md` 以外の /notes/* は素通りする。
+  app.route("/notes", createNoteMarkdownRouter());
 
   // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
   // session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession

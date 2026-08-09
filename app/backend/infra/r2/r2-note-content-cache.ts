@@ -5,6 +5,7 @@ import type {
 } from "~/backend/domain/note";
 
 const JSON_CONTENT_TYPE = "application/json";
+const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
 const DEFAULT_ASSET_CONTENT_TYPE = "application/octet-stream";
 
 /**
@@ -19,12 +20,28 @@ export class R2NoteContentCache implements INoteContentCache {
     return `notes/${slug.toString()}/`;
   }
 
+  private sourceKey(slug: NoteSlug): string {
+    return `${this.prefix(slug)}source.md`;
+  }
+
   private mdastKey(slug: NoteSlug): string {
     return `${this.prefix(slug)}mdast.json`;
   }
 
   private assetKey(slug: NoteSlug, path: string): string {
     return `${this.prefix(slug)}assets/${path}`;
+  }
+
+  async putSource(slug: NoteSlug, markdown: string): Promise<void> {
+    await this.bucket.put(this.sourceKey(slug), markdown, {
+      httpMetadata: { contentType: MARKDOWN_CONTENT_TYPE },
+    });
+  }
+
+  async getSource(slug: NoteSlug): Promise<string | undefined> {
+    const object = await this.bucket.get(this.sourceKey(slug));
+    if (object === null) return undefined;
+    return object.text();
   }
 
   async putMdast(slug: NoteSlug, mdast: unknown): Promise<void> {

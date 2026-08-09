@@ -22,6 +22,7 @@
     "empty": "まだ公開されたノートがない。",
     "related": "関連記事",
     "toc": "目次",
+    "viewMarkdown": "Markdown で見る",
     "filteredByTag": "タグ「{{tag}}」",
     "clearFilter": "すべて表示",
     "pagination": {
