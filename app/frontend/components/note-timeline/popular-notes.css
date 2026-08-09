@@ -1,0 +1,39 @@
+/*
+ * よく読まれている記事の列 (ホームの脇)。
+ *
+ * 隣に立つタイムラインと見た目が競らないよう、線もドットも持たせない。番号と表題だけを
+ * 並べ、区切りは項目の間の余白で表す。
+ */
+
+.popular-notes {
+  --popular-rank-column: 1.5rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.popular-notes-link {
+  display: grid;
+  grid-template-columns: var(--popular-rank-column) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: baseline;
+}
+
+.popular-notes-rank {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--color-base-content);
+  opacity: 0.4;
+}
+
+.popular-notes-title {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  transition: color 0.15s;
+}
+
+.popular-notes-link:hover .popular-notes-title {
+  color: var(--color-primary);
+}
