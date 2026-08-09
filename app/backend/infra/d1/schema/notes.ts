@@ -46,11 +46,16 @@ export const notes = sqliteTable(
      *   持てば経過に対して線形にしか増えず、事実上いつまでも壊れない。対数は単調なので
      *   この列で直接 ORDER BY すれば人気順になる (詳細は domain/note-view/view-ranking)
      *
-     * まだ一度も読まれていなければ null。0 ではなく null なのは、対数の世界で「無」は
-     * -∞ であり、0 は「重み 1 のアクセスが 1 回あった」を意味してしまうため。
+     * 初期値は 0 で、これは「基準日に 1 回読まれた」ぶんに当たる。実際には読まれて
+     * いないのに 1 回ぶんを置いておくのは、対数の世界に「無」(-∞) を持ち込まずに済ませる
+     * ため (ラプラススムージング)。おかげでこの列は NULL を取らず、足すときも読むときも
+     * 場合分けが要らない。
+     *
+     * この下駄は全記事に等しく乗るので順位は歪まない。実際に読まれたかどうかは
+     * view_count が持つ。
      */
     viewCount: integer("view_count").notNull().default(0),
-    viewLogScore: real("view_log_score"),
+    viewLogScore: real("view_log_score").notNull().default(0),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },

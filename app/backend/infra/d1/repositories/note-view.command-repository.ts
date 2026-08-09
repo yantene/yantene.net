@@ -10,7 +10,7 @@ export class D1NoteViewCommandRepository implements INoteViewCommandRepository {
     this.db = drizzle(d1);
   }
 
-  async findLogScore(noteId: string): Promise<number | null | undefined> {
+  async findLogScore(noteId: string): Promise<number | undefined> {
     const rows = await this.db
       .select({ logScore: notes.viewLogScore })
       .from(notes)

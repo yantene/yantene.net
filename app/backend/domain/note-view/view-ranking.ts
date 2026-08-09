@@ -59,15 +59,17 @@ export function viewWeightLog(viewedOn: string): number {
  * 対数のまま足すために log-sum-exp を使う。大きいほうを括り出してから足すので、
  * `Math.exp` の引数が 0 以下に収まり、途中の計算でも溢れない。
  *
- * @param currentLogScore いまのスコア。まだ読まれていなければ null
+ * どの記事も 0 から始まる。0 は「無」ではなく「基準日に 1 回読まれた」ぶんで、
+ * 全記事に等しく乗る下駄になる (ラプラススムージング)。この下駄があるおかげで
+ * 対数の世界に -∞ が現れず、初回かどうかで場合分けせずに済む。
+ *
+ * @param currentLogScore いまのスコア (まだ読まれていなければ 0)
  */
 export function logScoreAfterView(
-  currentLogScore: number | null,
+  currentLogScore: number,
   viewedOn: string,
 ): number {
   const weight = viewWeightLog(viewedOn);
-  if (currentLogScore === null) return weight;
-
   const larger = Math.max(currentLogScore, weight);
   const smaller = Math.min(currentLogScore, weight);
   return larger + Math.log1p(Math.exp(smaller - larger));

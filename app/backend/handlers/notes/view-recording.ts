@@ -73,7 +73,7 @@ async function applyView(
   try {
     const repository = new D1NoteViewCommandRepository(env.D1);
     const current = await repository.findLogScore(noteId);
-    // 記事が無ければ何もしない (null は「まだ読まれていない」なので記録する)。
+    // 記事が無ければ何もしない (0 は「まだ読まれていない」なので記録する)。
     if (current === undefined) return;
 
     await repository.applyView(noteId, logScoreAfterView(current, viewedOn));

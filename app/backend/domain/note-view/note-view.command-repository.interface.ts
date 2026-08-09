@@ -4,11 +4,8 @@
  * 記録するのは回数だけで、読んだ人を特定できる値は受け取らないし、保存もしない。
  */
 export interface INoteViewCommandRepository {
-  /**
-   * いまの対数スコアを読む。まだ読まれていなければ null、記事自体が無ければ undefined。
-   * 両者を分けているのは、初回のアクセスと存在しない記事を取り違えないため。
-   */
-  findLogScore(noteId: string): Promise<number | null | undefined>;
+  /** いまの対数スコアを読む。記事が無ければ undefined (まだ読まれていない記事は 0)。 */
+  findLogScore(noteId: string): Promise<number | undefined>;
   /**
    * 累計を 1 増やし、対数スコアを与えられた値に置き換える。
    *
