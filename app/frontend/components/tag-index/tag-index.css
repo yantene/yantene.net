@@ -1,0 +1,48 @@
+/*
+ * 検索欄に添えるタグの索引。
+ *
+ * 記事数で字の大きさを変えない。大小がばらつくと読む順が定まらず、探すための道具に
+ * ならないため。並びは記事数の多い順で、数は小さく添えるだけに留める。
+ */
+
+.tag-index {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem 0.5rem;
+  margin-top: 0.875rem;
+}
+
+.tag-index-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.tag-index-item:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* 効いている絞り込みは塗りで示す。もう一度押すと外れる。 */
+.tag-index-item[aria-current="true"] {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.tag-index-count {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}

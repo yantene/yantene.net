@@ -16,12 +16,6 @@
     "retry": "もう一度試す",
     "allLoaded": "ここまで"
   },
-  "tags": {
-    "title": "タグ",
-    "heading": "タグ",
-    "empty": "タグがまだない。",
-    "articleCount": "{{count}} 記事"
-  },
   "notes": {
     "title": "ノート",
     "heading": "ノート",
@@ -40,7 +34,9 @@
       "heading": "ノートが見つからない",
       "description": "お探しのノートは存在しないか、公開されていない。",
       "backToList": "ノート一覧へ戻る"
-    }
+    },
+    "resultsForTag": "「{{tag}}」のノート — {{count}} 件",
+    "resultsForQueryAndTag": "「{{query}}」×「{{tag}}」— {{count}} 件"
   },
   "search": {
     "title": "検索",
