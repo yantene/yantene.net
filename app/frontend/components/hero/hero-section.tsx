@@ -41,10 +41,10 @@ export function HeroSection(): React.JSX.Element {
         </h1>
 
         {/*
-          白地前提の text-muted-foreground (62% 透過) は、動く空の上では夜側で
-          4.5:1 を割る。ヒーロー内の副次テキストは全周期で AA を満たす濃さにする。
+          背後に光を敷いてあるので、文字を薄める必要がない。空に直に載せていた頃は
+          夜側で沈まないよう透過を控えていたが、いまは濃いほうが素直に読める。
         */}
-        <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/80">
+        <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground">
           現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
           <br />
           ブラウザの向こう側で暮らしています。
@@ -59,7 +59,7 @@ export function HeroSection(): React.JSX.Element {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-2xl text-foreground/80 transition-colors hover:text-primary"
+              className="text-2xl text-foreground transition-colors hover:text-primary"
               title={link.label}
             >
               <link.icon />

@@ -46,6 +46,26 @@
  * 左に寄る。daisyUI と同名になりうる語 (hero / card / footer / timeline など) を
  * 単独で使わず、必ず別の語を足すこと。
  */
+/*
+ * 本文の後ろに敷く淡い光。
+ *
+ * 街の線は薄いので重なっても読めるが、雲は塗りを持つうえ本文の高さを流れていくので、
+ * 通りかかるたびに文字が沈む。輪郭のない楕円で背後を持ち上げて、字の重なりだけを避ける。
+ * 箱で敷くと縁が見えるため、中心から周辺へ抜ける形にしてある。
+ */
+.hero-intro::before {
+  content: "";
+  position: absolute;
+  inset: -1.5rem -2rem;
+  background: radial-gradient(
+    ellipse 62% 54% at 50% 46%,
+    rgb(255 255 255 / 62%),
+    rgb(255 255 255 / 38%) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
 .hero-intro {
   padding-top: 6rem;
   /*
