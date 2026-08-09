@@ -1,0 +1,58 @@
+/*
+ * ノート一覧 (検索の入口と結果を兼ねるページ) 固有の見た目。
+ *
+ * 記事の並び自体は NoteTimeline が持つので、ここに置くのは探すための部分だけ。
+ */
+
+/* 探す道具をページの頭にまとめる。結果より先に目に入る位置に置く。 */
+.notes-search {
+  display: block;
+  max-width: 36rem;
+  margin-inline: auto;
+  margin-bottom: 2.5rem;
+}
+
+.notes-search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.125rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  background-color: var(--color-base-100);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.notes-search-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px
+    color-mix(in oklab, var(--color-primary) 18%, transparent);
+}
+
+.notes-search-icon {
+  flex: none;
+  font-size: 1.125rem;
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}
+
+.notes-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.notes-search-field input:focus {
+  outline: none;
+}
+
+/* 検索欄が主役なので、結果の見出しは控えめに置く。 */
+.notes-heading {
+  font-size: 1rem;
+  font-weight: 400;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}

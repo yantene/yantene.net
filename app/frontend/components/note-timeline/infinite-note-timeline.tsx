@@ -58,6 +58,21 @@ export function InfiniteNoteTimeline({
   const [notes, setNotes] = useState(initialNotes);
   const [page, setPage] = useState(1);
   const [state, setState] = useState<"idle" | "loading" | "failed">("idle");
+
+  /*
+   * 別の 1 ページ目が来たら、積んだものを捨てて出し直す。
+   *
+   * useState が見るのは初回の値だけなので、これが無いと絞り込みや検索語を変えても
+   * 表示が前のまま残る (見出しだけが変わって、並んでいる記事が変わらない)。
+   * 描画中に state を書き換えるのは、この場で作り直すための React の作法。
+   */
+  const [shownFirstPage, setShownFirstPage] = useState(initialNotes);
+  if (shownFirstPage !== initialNotes) {
+    setShownFirstPage(initialNotes);
+    setNotes(initialNotes);
+    setPage(1);
+    setState("idle");
+  }
   const sentinelRef = useRef<HTMLDivElement>(null);
   const busyRef = useRef(false);
   const hasMore = page < totalPages;

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/notes";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
@@ -11,6 +11,7 @@ import { Header } from "~/frontend/components/layout/header";
 import { InfiniteNoteTimeline } from "~/frontend/components/note-timeline/infinite-note-timeline";
 import { parseNoteListPayload } from "~/frontend/components/note-timeline/note-list-payload";
 import { Pagination } from "~/frontend/components/pagination/pagination";
+import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
@@ -89,11 +90,29 @@ function buildLoadPage(sort: SortState, tag: string | null): LoadNotePage {
   };
 }
 
+/**
+ * 結果の見出しを組み立てる。
+ *
+ * 何で絞った結果を見ているのかが一目で分かるようにする。検索語もタグも無いときは
+ * ページの名前をそのまま出す。
+ */
+function resultHeading(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  { query, tag, total }: { query: string; tag: string | null; total: number },
+): string {
+  if (query.length > 0 && tag !== null) {
+    return t("notes.resultsForQueryAndTag", { query, tag, count: total });
+  }
+  if (query.length > 0) return t("search.resultsFor", { query, count: total });
+  if (tag !== null) return t("notes.resultsForTag", { tag, count: total });
+  return t("notes.heading");
+}
+
 export default function NotesIndex({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, tag, sort } = loaderData;
+  const { notes, pagination, query, tag, tags, sort } = loaderData;
   const hrefForPage = (page: number): string =>
     buildHrefForPage(page, pagination.perPage, sort, tag);
   /*
@@ -108,27 +127,53 @@ export default function NotesIndex({
     () => buildLoadPage({ sortBy, order }, tag),
     [sortBy, order, tag],
   );
-  // 年で束ねられるのは公開日で並んでいるときだけ。更新日順では公開年が前後してしまう。
-  const isGroupByYear = sort.sortBy === null || sort.sortBy === "published";
+  /*
+   * 年で束ねられるのは公開日で並んでいるときだけ。
+   *
+   * 検索結果は関連度順なので公開年が前後し、束ねると同じ年が飛び飛びに現れて時間軸に
+   * 見えなくなる。更新日順も同じ理由で束ねない。
+   */
+  const isGroupByYear =
+    query.length === 0 && (sort.sortBy === null || sort.sortBy === "published");
 
   return (
     <AppLayout>
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-3xl font-bold">{t("notes.heading")}</h1>
-          {tag !== null && (
-            <span className="text-base-content/70">
-              {t("notes.filteredByTag", { tag })}
-              <Link to="/notes" className="link link-primary ml-2 text-sm">
-                {t("notes.clearFilter")}
-              </Link>
-            </span>
+        {/*
+          このページが検索の入口と結果を兼ねる。探す前と後で別のページへ飛ばさず、
+          フォームは常に同じ場所に置いたままにする。
+        */}
+        <search className="notes-search">
+          <form method="get" action="/notes" role="search">
+            {/* 絞り込みを保ったまま探せるよう、いま効いているタグを持ち回す。 */}
+            {tag !== null && <input type="hidden" name="tag" value={tag} />}
+            <label className="notes-search-field">
+              <HiMagnifyingGlass className="notes-search-icon" aria-hidden />
+              <input
+                type="search"
+                name="q"
+                defaultValue={query}
+                placeholder={t("search.placeholder")}
+                aria-label={t("search.title")}
+                autoComplete="off"
+              />
+            </label>
+          </form>
+
+          {tags.length > 0 && (
+            <TagIndex tags={tags} selected={tag} query={query} />
           )}
-        </div>
+        </search>
+
+        <h1 className="notes-heading">
+          {resultHeading(t, { query, tag, total: pagination.total })}
+        </h1>
 
         {notes.length === 0 ? (
-          <p className="mt-8 text-base-content/60">{t("notes.empty")}</p>
+          <p className="mt-8 text-base-content/60">
+            {t(query.length > 0 ? "search.empty" : "notes.empty")}
+          </p>
         ) : (
           <div className="mt-8">
             <InfiniteNoteTimeline

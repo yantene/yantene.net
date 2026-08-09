@@ -16,12 +16,6 @@
     "retry": "Try again",
     "allLoaded": "That's all"
   },
-  "tags": {
-    "title": "Tags",
-    "heading": "Tags",
-    "empty": "No tags yet.",
-    "articleCount": "{{count}} articles"
-  },
   "notes": {
     "title": "Notes",
     "heading": "Notes",
@@ -40,7 +34,9 @@
       "heading": "Note not found",
       "description": "The note you are looking for does not exist or is no longer available.",
       "backToList": "Back to notes"
-    }
+    },
+    "resultsForTag": "Notes tagged \"{{tag}}\" — {{count}}",
+    "resultsForQueryAndTag": "\"{{query}}\" × \"{{tag}}\" — {{count}}"
   },
   "search": {
     "title": "Search",

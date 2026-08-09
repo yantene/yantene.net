@@ -37,11 +37,7 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
       direction: "desc",
     });
 
-    const staticUrls = [
-      urlEntry(`${origin}/`),
-      urlEntry(`${origin}/notes`),
-      urlEntry(`${origin}/tags`),
-    ];
+    const staticUrls = [urlEntry(`${origin}/`), urlEntry(`${origin}/notes`)];
     const noteUrls = result.notes.map((note) =>
       urlEntry(
         `${origin}/notes/${note.slug.toJSON()}`,

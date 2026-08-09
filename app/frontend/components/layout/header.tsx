@@ -39,25 +39,23 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
             className={`flex items-center gap-5 sm:gap-7${isTransparent ? " text-halo" : ""}`}
           >
             <nav className="flex items-center gap-5 sm:gap-7">
+              {/* ノート一覧が検索とタグの索引を兼ねるので、入口はここ 1 つで足りる。 */}
               <Link to="/notes" className={linkClassName}>
                 Notes
               </Link>
-              <Link to="/tags" className={linkClassName}>
-                Tags
-              </Link>
-              {/* 検索フォームを畳む幅では、検索ページへのリンクで代替する。 */}
-              <Link to="/search" className={`${linkClassName} sm:hidden`}>
+              {/* 検索フォームを畳む幅では、探せる場所へのリンクで代替する。 */}
+              <Link to="/notes" className={`${linkClassName} sm:hidden`}>
                 Search
               </Link>
             </nav>
 
             {/*
-              JS 不要で動く素の GET フォーム。Enter でも虫眼鏡でも /search に飛ぶ。
+              JS 不要で動く素の GET フォーム。Enter でも虫眼鏡でも /notes に飛ぶ。
               狭い画面では場所を取りすぎるので、上の Search リンクに譲る。
             */}
             <form
               method="get"
-              action="/search"
+              action="/notes"
               role="search"
               className="hidden sm:block"
             >

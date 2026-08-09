@@ -9,8 +9,6 @@ export default [
 
   route("notes", "routes/notes.tsx"),
   route("notes/:slug", "routes/notes.$slug.tsx"),
-  route("tags", "routes/tags.tsx"),
-  route("search", "routes/search.tsx"),
   route("series/:slug", "routes/series.$slug.tsx"),
 
   // ログインは現状休眠 (将来の有料記事用に温存)。
