@@ -167,6 +167,20 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
     return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
   }
 
+  /**
+   * id をまとめて引く。並び順は呼び出し側が決めるので、ここでは整えない。
+   * (人気順のように、DB の並びとは別の順序で使われるため)
+   */
+  async findByIds(ids: readonly string[]): Promise<readonly Note[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.db
+      .select()
+      .from(notes)
+      .where(inArray(notes.id, [...ids]));
+    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
+    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
+  }
+
   async listTags(): Promise<readonly NoteTagCount[]> {
     const rows = await this.db
       .select({ tag: noteTags.tag, value: count() })

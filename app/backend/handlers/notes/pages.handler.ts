@@ -1,11 +1,16 @@
+import type { Note } from "~/backend/domain/note";
 import {
   parseNoteSort,
   parsePagination,
   parseTag,
+  toPublicNote,
   toPublicNoteList,
   type PublicNoteList,
 } from "~/backend/handlers/note-view";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import {
+  D1NoteQueryRepository,
+  D1NoteViewQueryRepository,
+} from "~/backend/infra/d1/repositories";
 
 /**
  * ホームに出す「最近」の件数。
@@ -60,14 +65,13 @@ export async function loadNotesListPage(
 }
 
 export interface HomePageData {
-  /** 公開日の新しい順。ホームの主となる列。 */
+  /** 公開日の新しい順。 */
   readonly recent: PublicNoteList["notes"];
   /**
-   * よく読まれている順のつもりの列。
+   * よく読まれている順。
    *
-   * ⚠️ いまは読まれた回数を数えていないため、**順位は本物ではない**。枠と見た目を先に
-   * 作るための仮置きで、公開日の古い順を借りているだけ。読者には人気順に見えてしまうので、
-   * 本番に出す前に #110 (アクセス集計) を入れて本物に差し替えること。
+   * 読まれた回数から並べる (詳しくは domain/note-view/view-ranking)。出発点は投稿日の
+   * 重みなので、まだ読まれていない記事も新しい順に候補へ入る。
    */
   readonly popular: PublicNoteList["notes"];
 }
@@ -88,16 +92,32 @@ export async function loadHomePage(env: Env): Promise<HomePageData> {
     direction: "desc",
   });
 
-  // 仮置き。読まれた回数を持っていないので、新しい順とは別の並びを借りて枠を埋める。
-  const popular = await query.list({
-    limit: POPULAR_COUNT,
-    offset: 0,
-    sortBy: "publishedOn",
-    direction: "asc",
-  });
-
   return {
     recent: toPublicNoteList(recent, 1, RECENT_COUNT).notes,
-    popular: toPublicNoteList(popular, 1, POPULAR_COUNT).notes,
+    popular: await loadPopularNotes(env, query),
   };
+}
+
+/**
+ * よく読まれているノートを読む。
+ *
+ * 順位付けは D1 に任せる。スコアを対数で持っているおかげで、保存した列をそのまま
+ * 降順に並べれば人気順になり、読み出したあとに重みを計算し直す必要がない。
+ */
+async function loadPopularNotes(
+  env: Env,
+  query: D1NoteQueryRepository,
+): Promise<PublicNoteList["notes"]> {
+  const rankedIds = await new D1NoteViewQueryRepository(
+    env.D1,
+  ).listPopularNoteIds(POPULAR_COUNT);
+  if (rankedIds.length === 0) return [];
+
+  // 引き直した行を、順位の並びに戻す。
+  const notes = await query.findByIds(rankedIds);
+  const byId = new Map<string, Note>(notes.map((note) => [note.id, note]));
+  return rankedIds
+    .map((id) => byId.get(id))
+    .filter((note) => note !== undefined)
+    .map((note) => toPublicNote(note));
 }

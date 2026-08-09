@@ -22,10 +22,17 @@ export async function loader({
   ReturnType<typeof data<PageMetaBase & NoteDetailPageData>>
 > {
   const url = new URL(request.url);
+  const cloudflare = context.get(cloudflareContext);
   const detail = await loadNoteDetailPage(
-    context.get(cloudflareContext).env,
+    cloudflare.env,
     params.slug,
     url.origin,
+    {
+      userAgent: request.headers.get("user-agent"),
+      waitUntil: (promise) => {
+        cloudflare.ctx.waitUntil(promise);
+      },
+    },
   );
   const base = { locale: resolveLocale(request), origin: url.origin };
 
