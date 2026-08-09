@@ -1,6 +1,7 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   advanceDayClock,
+  randomizeDayClock,
   readDayClockPhase,
   readDayDurationMs,
 } from "./day-clock";
@@ -56,6 +57,21 @@ export function TimeScrubber(): React.JSX.Element {
   const syncTime = useCallback((): void => {
     setMinutes(phaseToMinutes(readDayClockPhase()));
   }, []);
+
+  /*
+   * 開いた時刻を毎回散らす。手を入れないと必ず南中の満月から始まってしまう。
+   * SSR で決めると読み込みごとに描き分けが要るので、描画がついた後に一度だけ動かす。
+   *
+   * 読み上げ用の時刻を合わせるのは次のフレームに回す。ここで直に state を書くと、
+   * 描画のたびに描画を呼ぶ形になってしまう。
+   */
+  useEffect(() => {
+    randomizeDayClock();
+    const frame = requestAnimationFrame(syncTime);
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [syncTime]);
 
   const scrub = useCallback(
     (elapsedMs: number): void => {

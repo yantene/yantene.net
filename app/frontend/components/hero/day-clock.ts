@@ -54,6 +54,31 @@ export function advanceDayClock(deltaMs: number): void {
 }
 
 /**
+ * 時計を任意の時刻から始める。
+ *
+ * 手を入れないと毎回 currentTime 0、つまり必ず南中の満月から始まる。開くたびに同じ絵に
+ * なってしまうので、全アニメーションが揃って元の位相に戻る周期の中から 1 点を選ぶ。
+ * 時刻と月相の組み合わせが毎回変わり、運がよければ日食の日に行き当たる。
+ */
+export function randomizeDayClock(): void {
+  const cycle = loopCycleMs();
+  if (cycle <= 0) return;
+  advanceDayClock(randomRatio() * cycle);
+}
+
+/**
+ * 0 以上 1 未満の乱数。
+ *
+ * 見た目を散らすためだけのものだが、種を持たない API があるのでそれを使う
+ * (Math.random は用途によっては咎められるうえ、ここでは避ける理由もない)。
+ */
+function randomRatio(): number {
+  const buffer = new Uint32Array(1);
+  crypto.getRandomValues(buffer);
+  return buffer[0] / 2 ** 32;
+}
+
+/**
  * 巻き戻して 0 を割りそうなとき、何ミリ秒ぶん底上げすればよいかを返す。
  *
  * currentTime が負に入ると、アニメーションは「まだ始まっていない」ものとして扱われる。
