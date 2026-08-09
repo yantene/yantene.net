@@ -17,6 +17,19 @@
 .hero-clock {
   /* 地平線より下、時刻の目盛りが占める帯の高さ。街はこの帯の上に載る。 */
   --timeline-height: 4.5rem;
+
+  /*
+   * 地平線から上、街と歩行者が収まる帯の高さ。両者の大きさの比はここから決まるので、
+   * 片方だけを別の基準で決めない (画面幅ごとに背丈の釣り合いが変わってしまう)。
+   */
+  --scene-height: clamp(9rem, 15vw, 15rem);
+
+  /*
+   * 線の太さ。素材ごとに viewBox の拡大率が違うため、素材の側に太さを持たせると
+   * 同じ値でも画面上の太さが揃わない (街と歩行者で 2 倍以上ずれていた)。
+   * vector-effect: non-scaling-stroke と組みで使い、画面上の太さをここで一本化する。
+   */
+  --ink-width: 1px;
 }
 
 /* 全周期を短時間で確かめたいとき (主に Storybook) 用。 */
@@ -35,7 +48,13 @@
  */
 .hero-intro {
   padding-top: 6rem;
-  padding-bottom: calc(var(--timeline-height) + 3rem);
+  /*
+   * 街の線画とは重ねてよいが、目盛りの帯と歩行者は避ける。歩行者は線が濃く、
+   * 重なると文字が読みにくい。背丈ぶんを空けておく。
+   */
+  padding-bottom: calc(
+    var(--timeline-height) + var(--scene-height) * 0.5 + 1.5rem
+  );
 }
 
 .cityscape {
@@ -43,16 +62,12 @@
   inset-inline: 0;
   bottom: var(--timeline-height);
   /*
-   * 素材の viewBox と同じ比率をコンテナに写す。こうすると幅がいくつでも
-   * 街の全体が過不足なく収まり、下端がそのまま地平線になる。
+   * 高さを先に決め、幅は素材の viewBox の比率 (1539:224) から導く。歩行者と背丈を
+   * 揃えるには、街の大きさが幅ではなく高さで決まっている必要がある。
    */
-  aspect-ratio: 1539 / 224;
-  /* 画面が極端に広いとき、街だけが伸び上がってヒーローを埋めないようにする。 */
-  max-height: 18rem;
-  /*
-   * 高さの上限に当たると、幅も比率に従って縮む。左右を 0 で留めているだけでは
-   * 収まりきらない指定になり、左端に寄ってしまうので、余った分を左右に等分する。
-   */
+  height: var(--scene-height);
+  width: min(100%, calc(var(--scene-height) * 1539 / 224));
+  /* 幅が画面に足りないぶん (広い画面) は左右に等分して中央へ。 */
   margin-inline: auto;
   overflow: hidden;
   pointer-events: none;
@@ -63,6 +78,13 @@
 .cityscape-svg {
   width: 100%;
   height: 100%;
+}
+
+/* 線の太さは拡大率に引きずられず、画面上で一定にする。 */
+.cityscape-svg *,
+.daywalker-svg * {
+  vector-effect: non-scaling-stroke;
+  stroke-width: var(--ink-width);
 }
 
 /*

@@ -132,11 +132,8 @@
   left: 50%;
   bottom: var(--timeline-height);
   translate: -50% 0;
-  /*
-   * 街も画面幅に比例して縮む (viewBox の比率をコンテナに写しているため) ので、
-   * 背丈もそれに合わせる。固定値にすると、狭い画面でビルより大きくなってしまう。
-   */
-  height: clamp(2.5rem, 5.5vw, 4rem);
+  /* 背丈は街と同じ帯の高さから決める。別々の基準にすると釣り合いが画面幅で変わる。 */
+  height: calc(var(--scene-height) * 0.5);
   pointer-events: none;
   color: var(--color-base-content);
 }

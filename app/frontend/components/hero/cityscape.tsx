@@ -12,6 +12,11 @@ import CityscapeSvg from "~/frontend/assets/cityscape.svg?react";
 export function Cityscape(): React.JSX.Element {
   return (
     <div className="cityscape" aria-hidden="true">
+      {/*
+        下端 (地平線) を器の下端に合わせ、器を埋めるまで拡げる。狭い画面では横が
+        切れて街の中ほどだけが見えるが、全体を収めようとすると街だけが縮んで、
+        歩行者より低くなってしまう。
+      */}
       <CityscapeSvg
         className="cityscape-svg"
         preserveAspectRatio="xMidYMax slice"
