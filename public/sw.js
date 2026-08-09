@@ -14,9 +14,23 @@ const IS_KILL_SWITCH = false;
 self.addEventListener("install", (event) => {
   if (IS_KILL_SWITCH) return;
   // オフライン時の案内は先に蓄えないと出せない。
-  event.waitUntil(caches.open(PAGE_CACHE).then((c) => c.add(OFFLINE_URL)));
+  event.waitUntil(storeOfflinePage());
   self.skipWaiting();
 });
+
+// cache.add を使わない。配信側が /offline.html を /offline へ転送することがあり、
+// 転送を経た応答はそのままでは蓄えられない (put が拒む)。中身を写して入れ直す。
+async function storeOfflinePage() {
+  const response = await fetch(OFFLINE_URL);
+  if (!response.ok) return;
+
+  const cache = await caches.open(PAGE_CACHE);
+  const body = await response.blob();
+  await cache.put(
+    OFFLINE_URL,
+    new Response(body, { headers: response.headers }),
+  );
+}
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -66,6 +80,14 @@ function isCacheable(url) {
   return !path.endsWith(".md");
 }
 
+// 蓄えられる応答か。
+//
+// 転送を経たものは put が拒むので外す (/tags -> /notes のような恒久転送がある)。
+// 弾かないと put の例外で「通信できなかった」の扱いになり、オフラインの案内が出てしまう。
+function isStorable(response) {
+  return response.ok && !response.redirected;
+}
+
 // ファイル名にハッシュが入り、中身が変わらないもの。
 function isImmutableAsset(url) {
   if (url.pathname.startsWith("/assets/")) return true;
@@ -78,7 +100,7 @@ async function cacheFirst(request) {
   if (cached) return cached;
 
   const response = await fetch(request);
-  if (response.ok) await cache.put(request, response.clone());
+  if (isStorable(response)) await cache.put(request, response.clone());
   return response;
 }
 
@@ -88,7 +110,7 @@ async function networkFirst(request, isPage) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) await cache.put(request, response.clone());
+    if (isStorable(response)) await cache.put(request, response.clone());
     return response;
   } catch {
     const cached = await cache.match(request);
