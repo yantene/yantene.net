@@ -102,10 +102,13 @@ NOTES = {
   描き直すときは illustration.svg を Inkscape で開いて直し、切り出しをやり直すこと。
 
   - viewBox の下端がそのまま地平線。歩行者はこの線の上に立ち、時刻の目盛りは下に来る。
-    使う側はこの比率を CSS の aspect-ratio に写しているので、変えたらそちらも直す。
-  - 輪郭は currentColor で受ける。雲の青と木の緑は絵の一部なので色を持ったまま。
+    使う側はこの比率から幅を導いているので、変えたら CSS 側の係数も直す。
+  - 輪郭は currentColor で受け、線の太さは持たない (CSS が画面上の太さを決める)。
+    雲の青と木の緑は絵の一部なので色を持ったまま。
   - 雲は #clouds-set に描き、その複製を viewBox 幅ぶん右にずらして置いてある。
     CSS が #clouds を 1 枚ぶん流すと、複製が元の位置に来て継ぎ目なく折り返す。
+  - 複製は use 要素ではなく実体で置く。use の中身は CSS セレクタから見えず、
+    継承しない vector-effect が届かないため、複製だけ線が太くなる。
 """,
     "highlight": """
   見出しの下に敷く手書きのマーカー。illustration.svg から切り出したもので、直接は編集しない。
@@ -165,7 +168,14 @@ def main() -> None:
     cloud_set.extend(clouds)
     cloud_group = ET.Element("g", {"id": "clouds"})
     cloud_group.append(cloud_set)
-    cloud_group.append(ET.Element("use", {"href": "#clouds-set", "x": f"{span:.4f}"}))
+    # 複製は <use> ではなく実体で置く。<use> の中身は CSS セレクタから見えず、
+    # 継承しない vector-effect が届かないため、複製だけ線が太くなる。
+    copy = ET.Element("g", {"transform": f"translate({span:.4f},0)"})
+    for cloud in clouds:
+        clone = ET.fromstring(ET.tostring(cloud))
+        clone.attrib.pop("id", None)  # id は 1 文書に 1 つ
+        copy.append(clone)
+    cloud_group.append(copy)
     sky_group = ET.Element("g", {"id": "skyline"})
     sky_group.extend(skyline)
 
