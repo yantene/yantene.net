@@ -39,13 +39,17 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 「MDAST の作り方を変えた」といった**実装側の変更は、通常の refresh では既存ノートに
 反映されない** (ハッシュが変わらないので全件スキップされる)。
 
-MDAST の生成内容を変えたら、デプロイ後に一度 force 付きで叩くこと。
+MDAST の生成内容や、MDAST から導くメタデータ (要約など) の作り方を変えたら、
+デプロイ後に一度 force 付きで叩くこと。
 
 ```bash
 curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 ```
 
-過去に該当した変更: 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))。
+過去に該当した変更:
+
+- 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))
+- 要約から生 HTML を除外 ([#112](https://github.com/yantene/yantene.net/issues/112))
 
 ## データモデルとストレージ戦略
 
@@ -74,7 +78,11 @@ lastModifiedOn: 2026-01-20
 ### summary は MDAST から自動抽出
 
 一覧表示用の要約は手書きしない。Markdown を MDAST (AST) に変換した後、
-見出し・脚注を除いたテキストノードから先頭 160 文字を切り出す。
+見出し・脚注・コードブロック・生 HTML を除いたテキストノードから先頭 160 文字を切り出す。
+
+生 HTML (`html` ノード) を除くのは、`<s>` や `<div class='box'>` といったタグ文字列が
+そのまま要約に出てしまうため。段落中のインライン HTML も対象で、タグに囲まれた本文自体は
+別のテキストノードなので要約に残る。
 
 ## コンテンツレンダリング
 

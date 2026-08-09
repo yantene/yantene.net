@@ -60,4 +60,31 @@ describe("extractSummary", () => {
     );
     expect(extractSummary(mdast)).toBe("Prose text here.");
   });
+
+  /*
+   * 古い記事には打ち消し線や囲みを生 HTML で書いたものが残っている。タグ文字列が
+   * 要約に露出しないことを固定する (issue #112)。
+   */
+  it("drops inline raw HTML tags but keeps the text they wrap", () => {
+    const { mdast } = parseNoteContent(
+      "ダウンロードは<s>こちら</s> (2017年09月21日追記: データを失くしました)\n",
+    );
+    expect(extractSummary(mdast)).toBe(
+      "ダウンロードはこちら (2017年09月21日追記: データを失くしました)",
+    );
+  });
+
+  it("drops block-level raw HTML", () => {
+    const { mdast } = parseNoteContent(
+      "<div class='box'>\n<div>囲みの見出し</div>\n\n問題の本文。\n",
+    );
+    expect(extractSummary(mdast)).toBe("問題の本文。");
+  });
+
+  it("drops HTML comments", () => {
+    const { mdast } = parseNoteContent(
+      "<!-- 下書きメモ -->\n\n公開する本文。\n",
+    );
+    expect(extractSummary(mdast)).toBe("公開する本文。");
+  });
 });
