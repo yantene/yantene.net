@@ -6,7 +6,7 @@ illustration.svg はワイヤーの下敷きを敷いた作業用の一枚絵で
 レイヤーに translate が掛かっている。切り出す側はそれを知らずに済むよう、各素材の
 左上が原点に来るよう包み直し、viewBox をその大きさに合わせる。
 
-  python3 extract.py
+  python3 scripts/extract-illustration.py
 """
 
 import pathlib
@@ -21,12 +21,16 @@ XLINK = "http://www.w3.org/1999/xlink"
 INK = "http://www.inkscape.org/namespaces/inkscape"
 SODI = "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
 
-HERE = pathlib.Path(__file__).parent
-SRC = HERE / "illustration.svg"
-DEST = pathlib.Path("/home/yantene/dev/github.com/yantene/yantene.net/app/frontend/assets")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SRC = ROOT / "illustration.svg"
+DEST = ROOT / "app" / "frontend" / "assets"
 
-# 下敷きの外 (y=-77) に取り残されていた 3x17 の小片。複製し忘れと判断して外す。
-STRAY = {"rect5-3-4-7", "rect5-3-3-7-1"}
+"""
+要素の位置を確かめるときは getBBox() を使わないこと。あれは transform を適用しない
+ローカル座標を返すので、rotate が掛かった要素 (3 本目の電柱の腕木がそうだった) が
+画面の外にあるように見え、ゴミと取り違える。画面座標を getScreenCTM().inverse() で
+引き戻して測ること。
+"""
 
 # 画素から測った各素材の枠 (下敷き画像のピクセル)。
 BOXES = {
@@ -89,7 +93,7 @@ def wrap(
 
 NOTES = {
     "cityscape": """
-  街並み。illustration.svg から scratchpad/extract.py で切り出したもので、直接は編集しない。
+  街並み。illustration.svg から scripts/extract-illustration.py で切り出したもので、直接は編集しない。
   描き直すときは illustration.svg を Inkscape で開いて直し、切り出しをやり直すこと。
 
   - viewBox の下端がそのまま地平線。歩行者はこの線の上に立ち、時刻の目盛りは下に来る。
@@ -134,8 +138,6 @@ def main() -> None:
         if tag == "image":
             continue
         ident = el.get("id", "")
-        if ident in STRAY:
-            continue
         if ident == "g112":
             clouds.extend(list(el))
         elif ident == "path112":
