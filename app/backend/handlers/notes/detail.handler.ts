@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { toNoteDetail } from "./note-detail-view";
 import { extractHeadings } from "./toc-headings";
+import { recordNoteView, type NoteViewRecording } from "./view-recording";
 import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
@@ -55,10 +56,16 @@ async function buildSeriesNav(
  *
  * D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
  */
+/** 内部用。API に出す NoteDetail に加えて、閲覧の記録に要る id を併せて返す。 */
+interface ResolvedNote {
+  readonly detail: NoteDetail;
+  readonly noteId: string;
+}
+
 async function loadNoteDetail(
   env: Env,
   slug: NoteSlug,
-): Promise<NoteDetail | undefined> {
+): Promise<ResolvedNote | undefined> {
   const [note, mdast] = await Promise.all([
     new D1NoteQueryRepository(env.D1).findBySlug(slug),
     new R2NoteContentCache(env.R2).getMdast(slug),
@@ -69,7 +76,7 @@ async function loadNoteDetail(
       `MDAST cache is missing for an indexed note: ${slug.toString()}`,
     );
   }
-  return toNoteDetail(note, mdast);
+  return { detail: toNoteDetail(note, mdast), noteId: note.id };
 }
 
 function parseSlug(raw: string): NoteSlug | undefined {
@@ -85,7 +92,7 @@ function parseSlug(raw: string): NoteSlug | undefined {
 async function resolveDetail(
   env: Env,
   slugParam: string,
-): Promise<NoteDetail | undefined> {
+): Promise<ResolvedNote | undefined> {
   const slug = parseSlug(slugParam);
   return slug === undefined ? undefined : loadNoteDetail(env, slug);
 }
@@ -99,9 +106,9 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/:slug", async (c) => {
     const slugParam = c.req.param("slug");
-    const detail = await resolveDetail(c.env, slugParam);
-    if (detail === undefined) throw new NoteNotFoundError(slugParam);
-    return c.json(detail);
+    const resolved = await resolveDetail(c.env, slugParam);
+    if (resolved === undefined) throw new NoteNotFoundError(slugParam);
+    return c.json(resolved.detail);
   });
 
   return router;
@@ -133,9 +140,14 @@ export async function loadNoteDetailPage(
   env: Env,
   slugParam: string,
   origin: string,
+  recording: NoteViewRecording | null,
 ): Promise<NoteDetailPageData> {
-  const detail = await resolveDetail(env, slugParam);
-  if (detail === undefined) return { found: false };
+  const resolved = await resolveDetail(env, slugParam);
+  if (resolved === undefined) return { found: false };
+
+  const detail = resolved.detail;
+  // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
+  if (recording !== null) recordNoteView(env, resolved.noteId, recording);
 
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);

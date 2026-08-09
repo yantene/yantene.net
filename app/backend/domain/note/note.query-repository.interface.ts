@@ -36,6 +36,11 @@ export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;
   /**
+   * id をまとめて引く。並び順は保証しない (呼び出し側が意図した順に並べ直す)。
+   * 見つからない id は結果に現れない。
+   */
+  findByIds(ids: readonly string[]): Promise<readonly Note[]>;
+  /**
    * 全文検索。title / body を対象に関連度 (bm25) 順で最大 limit 件返す。
    * 索引が未構築 (まだ refresh していない) 場合や、実質的なクエリでない場合は空配列。
    */
