@@ -24,3 +24,4 @@
 | [0011](0011-csp-enforced-outside-development.md)             | CSP は development では付けず、staging / production でのみ強制する    | Accepted                                                       |
 | [0012](0012-react-router-v8-and-vite-8.md)                   | React Router v8 へ上げ、Vite を 8 系に戻す                            | Accepted                                                       |
 | [0013](0013-interactive-day-clock-via-web-animations-api.md) | 時間の表現を Web Animations API で操作可能にする                      | Accepted                                                       |
+| [0014](0014-serve-note-source-markdown-verbatim.md)          | ノートの原文 Markdown を R2 から verbatim で配信する                  | Accepted                                                       |

@@ -111,8 +111,9 @@ export class NotesRefreshService {
 
   /**
    * 1 ノートを同期する。まず読み取り・検証を済ませ (この間の失敗は content or infra
-   * エラーとして送出)、成功したら古いキャッシュを消してから MDAST・アセット・メタデータを
-   * 書き込む。D1 upsert を最後に置くことで、途中失敗時も次回 refresh で再処理される。
+   * エラーとして送出)、成功したら古いキャッシュを消してから原文・MDAST・アセット・
+   * メタデータを書き込む。D1 upsert を最後に置くことで、途中失敗時も次回 refresh で
+   * 再処理される。
    */
   private async syncNote(group: NoteGroup): Promise<void> {
     const bytes = await this.content.readFile(group.sourcePath);
@@ -121,11 +122,14 @@ export class NotesRefreshService {
       throw new Error(`source file could not be read: ${group.sourcePath}`);
     }
 
+    const markdown = new TextDecoder().decode(bytes);
     // 検証込みでエンティティと MDAST を組み立てる (不正なら NoteContentError)。
-    const { note, mdast } = buildNoteContent(group, bytes);
+    const { note, mdast } = buildNoteContent(group, markdown);
 
     // 古いキャッシュ (リネーム・削除されたアセット含む) を消してから書き直す。
     await this.cache.deleteNote(group.slug);
+    // 原文はそのまま (フロントマター込み) 置く。`/notes/<slug>.md` の配信元になる。
+    await this.cache.putSource(group.slug, markdown);
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
     applyImageDimensions(
@@ -251,14 +255,14 @@ function fnv1a(input: string): string {
 }
 
 /**
- * バイト列から Note エンティティと MDAST を組み立てる純関数。
+ * 原文 Markdown から Note エンティティと MDAST を組み立てる純関数。
  * 不正なフロントマター・VO 検証失敗は {@link NoteContentError} として送出する。
  */
 function buildNoteContent(
   group: NoteGroup,
-  bytes: Uint8Array,
+  markdown: string,
 ): { note: Note<IUnpersisted>; mdast: unknown } {
-  const parsed = parseNoteContent(new TextDecoder().decode(bytes));
+  const parsed = parseNoteContent(markdown);
   const slug = group.slug.toString();
 
   const publishedRaw = parsed.frontmatter.publishedOn;

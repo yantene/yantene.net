@@ -7,11 +7,16 @@ export interface CachedAsset {
 }
 
 /**
- * ノート本文 (パース済み MDAST) と画像アセットのキャッシュ。
+ * ノート本文 (原文 Markdown・パース済み MDAST) と画像アセットのキャッシュ。
  * 通常リクエストはこのキャッシュから配信し、Artifacts には触らない (ADR 0005)。
  * ドメインはストレージ技術 (R2) を知らない。infra が実装する。
  */
 export interface INoteContentCache {
+  /** 原文の Markdown (フロントマターを含む正本そのもの) を保存する。 */
+  putSource(slug: NoteSlug, markdown: string): Promise<void>;
+  /** 原文の Markdown を取得する。無ければ undefined。 */
+  getSource(slug: NoteSlug): Promise<string | undefined>;
+
   /** パース済み MDAST (JSON 化可能なオブジェクト) を保存する。 */
   putMdast(slug: NoteSlug, mdast: unknown): Promise<void>;
   /** パース済み MDAST を取得する。無ければ undefined (unknown に含まれる)。 */

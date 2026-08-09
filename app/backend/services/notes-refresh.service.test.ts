@@ -27,9 +27,17 @@ class MockContentStore implements IContentStore {
 }
 
 class InMemoryCache implements INoteContentCache {
+  readonly sources = new Map<string, string>();
   readonly mdasts = new Map<string, unknown>();
   readonly assets = new Map<string, CachedAsset>();
 
+  putSource(slug: NoteSlug, markdown: string): Promise<void> {
+    this.sources.set(slug.toString(), markdown);
+    return Promise.resolve();
+  }
+  getSource(slug: NoteSlug): Promise<string | undefined> {
+    return Promise.resolve(this.sources.get(slug.toString()));
+  }
   putMdast(slug: NoteSlug, mdast: unknown): Promise<void> {
     this.mdasts.set(slug.toString(), mdast);
     return Promise.resolve();
@@ -45,6 +53,7 @@ class InMemoryCache implements INoteContentCache {
     return Promise.resolve(this.assets.get(`${slug.toString()}::${path}`));
   }
   deleteNote(slug: NoteSlug): Promise<void> {
+    this.sources.delete(slug.toString());
     this.mdasts.delete(slug.toString());
     const prefix = `${slug.toString()}::`;
     for (const key of this.assets.keys()) {
@@ -130,6 +139,38 @@ describe("NotesRefreshService", () => {
     // 本文 MDAST の画像 URL がアセット API URL に解決されている。
     const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
     expect(mdastJson).toContain("/api/v1/notes/hello/assets/inline.png");
+  });
+
+  /*
+   * `/notes/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
+   * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
+   */
+  it("caches the source markdown verbatim", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    expect(cache.sources.get("hello")).toBe(helloMd);
+  });
+
+  it("drops the cached source when the note disappears from the content store", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, cache } = setup(files);
+    await service.refresh();
+    expect(cache.sources.has("hello")).toBe(true);
+
+    files.delete("notes/hello.md");
+    const result = await service.refresh();
+
+    expect(result.deleted).toEqual(["hello"]);
+    expect(cache.sources.has("hello")).toBe(false);
   });
 
   /*

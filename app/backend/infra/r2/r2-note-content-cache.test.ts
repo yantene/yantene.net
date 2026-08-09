@@ -6,6 +6,24 @@ import { NoteSlug } from "~/backend/domain/note";
 const slug = NoteSlug.create("my-note");
 
 describe("R2NoteContentCache", () => {
+  it("round-trips the source markdown with a markdown content type", async () => {
+    const { bucket, store } = createTestR2();
+    const cache = new R2NoteContentCache(bucket);
+    const markdown = "---\ntitle: Hi\n---\n\nBody ![a](./x.png).\n";
+
+    await cache.putSource(slug, markdown);
+
+    expect(await cache.getSource(slug)).toBe(markdown);
+    expect(store.get("notes/my-note/source.md")?.contentType).toBe(
+      "text/markdown; charset=utf-8",
+    );
+  });
+
+  it("returns undefined for a missing source", async () => {
+    const cache = new R2NoteContentCache(createTestR2().bucket);
+    expect(await cache.getSource(slug)).toBeUndefined();
+  });
+
   it("round-trips MDAST as JSON", async () => {
     const { bucket } = createTestR2();
     const cache = new R2NoteContentCache(bucket);
@@ -37,12 +55,13 @@ describe("R2NoteContentCache", () => {
     const { bucket, store } = createTestR2();
     const cache = new R2NoteContentCache(bucket);
 
+    await cache.putSource(slug, "# Hi\n");
     await cache.putMdast(slug, { type: "root" });
     await cache.putAsset(slug, "cover.png", {
       bytes: new Uint8Array([1]),
       contentType: "image/png",
     });
-    expect(store.size).toBe(2);
+    expect(store.size).toBe(3);
 
     await cache.deleteNote(slug);
     expect(store.size).toBe(0);
