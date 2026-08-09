@@ -5,8 +5,9 @@
  * 空はヒーローに任せ、ここは地面にする。
  *
  * 物を敷き詰めない。トップは世界そのものを見せる場で、フッターはページが終わる場所。
- * ここでも街を並べると「またこの街かよ」になるので、地平線を一本通し、その両端に
- * 数えるほどの物を置くに留める。
+ * ここでも街を並べると「またこの街かよ」になるので、地平線を一本通し、その右の端に
+ * 数えるほどの物を置くに留める。左右に置くと据わりが良くなりすぎて、飾りとして
+ * 身構えて見えてしまう。
  */
 
 .site-footer {
@@ -32,38 +33,23 @@
 }
 
 /*
- * 地平線に立つ物。左右の端に 1 組ずつ置き、中央は空けておく (そこに文字が入る)。
- * 繰り返さないので、画面が広がるほど物の間隔が空いて静かになる。
+ * 地平線に立つ物。右の端にだけ置く。
+ *
+ * 繰り返さないので、画面が広がるほど左側の余白が伸びて静かになる。地平線だけが
+ * どこまでも続き、その先の隅に街の名残がある、という眺めにしたい。
  */
-.site-footer-ground::before,
 .site-footer-ground::after {
   content: "";
   position: absolute;
+  right: 0;
   bottom: 0;
   width: 13.75rem;
   height: 4rem;
   background-image: url("../../assets/ground.svg");
   background-repeat: no-repeat;
-  background-position: bottom;
+  background-position: bottom right;
   background-size: contain;
   opacity: 0.55;
-}
-
-.site-footer-ground::before {
-  left: 0;
-}
-
-/* 右端は左右を返して置く。同じ絵が並んで見えないようにする。 */
-.site-footer-ground::after {
-  right: 0;
-  transform: scaleX(-1);
-}
-
-/* 狭い画面では物が文字に迫るので、片側だけ残す。 */
-@media (width < 48rem) {
-  .site-footer-ground::after {
-    display: none;
-  }
 }
 
 .site-footer-inner {
