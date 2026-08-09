@@ -144,30 +144,17 @@
 .daywalker-svg {
   height: 100%;
   width: auto;
-  /*
-   * 素材はひと続きのパスで、手足を個別に振ることはできない。歩いている姿勢が
-   * 最初から描かれているので、一歩ごとの上下の揺れだけで歩みを感じさせる。
-   */
-  animation: daywalker-bob 0.5s ease-in-out infinite;
 }
 
 /*
- * 時間を巻き戻しているあいだは来た道を戻る。素材は右向きなので、左右を反転させる。
- * 反転はクラスの付け外しで切り替える (style 属性は CSP 下で無視されるため)。
+ * 歩行者は歩いている姿勢のまま静止させる。動くのは足元を流れる目盛りのほうで、
+ * それだけで歩いて見える。
+ *
+ * ただし時間を巻き戻しているあいだは来た道を戻るので、左右だけ反転させる。
+ * 切り替えはクラスの付け外しで行う (style 属性は CSP 下で無視されるため)。
  */
 .daywalker-backward .daywalker-svg {
   transform: scaleX(-1);
-}
-
-@keyframes daywalker-bob {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-
-  50% {
-    translate: 0 -4%;
-  }
 }
 
 /*
@@ -175,8 +162,7 @@
  * currentTime の書き換えは一時停止中でも効くため、仕掛け自体は残る。
  */
 @media (prefers-reduced-motion: reduce) {
-  .time-axis-track,
-  .daywalker-svg {
+  .time-axis-track {
     animation-play-state: paused;
   }
 }
