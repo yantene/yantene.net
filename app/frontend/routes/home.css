@@ -1,0 +1,37 @@
+/*
+ * ホーム固有の見た目。
+ *
+ * 記事の並び自体は NoteTimeline / PopularNotes が持つので、ここに置くのは
+ * それらを繋ぐ部分だけ。
+ */
+
+/*
+ * 一覧への導線。
+ *
+ * 時間軸がここで終わって別ページへ続くことを示したいので、線と同じ位置から短い線を
+ * 垂らし、その先に置く。線の x 位置は note-timeline.css の年の柱とドット列から決まる
+ * (あちらの値を変えたらここも合わせる。変数は .note-timeline の中で閉じているため
+ * 継承できず、同じ値を持たざるを得ない)。
+ */
+.home-view-all {
+  --home-timeline-x: calc(3.25rem + 1.25rem / 2);
+
+  position: relative;
+  padding-top: 2.5rem;
+  padding-left: calc(var(--home-timeline-x) + 1.25rem);
+}
+
+/*
+ * 時間軸の続き。
+ *
+ * 実線で繋ぐと最後の記事と地続きに見えてしまうので、破線にして「ここから先は別の
+ * ページ」を表す。1px の実線を短く垂らすだけでは淡すぎて見えなかった。
+ */
+.home-view-all::before {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  left: var(--home-timeline-x);
+  height: 1.75rem;
+  border-left: 1px dashed var(--color-base-300);
+}

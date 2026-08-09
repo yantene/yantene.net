@@ -8,12 +8,15 @@ import {
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
 /**
- * ホームの新着ノートを 1 度に読む件数。
+ * ホームに出す「最近」の件数。
  *
- * ホームは下端に着くたびに続きを足していくので、1 回ぶんが少なすぎると読み込みが
- * 頻繁に走り、多すぎると最初の表示が重くなる。画面 2 つぶんくらいが埋まる量にしてある。
+ * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切って `/notes` へ送る。
+ * 年の区切りが 2〜3 個現れる程度に留め、ヒーローの直後が記事で埋まらないようにする。
  */
-const RECENT_PER_PAGE = 10;
+const RECENT_COUNT = 5;
+
+/** ホームに出す「よく読まれている」の件数。脇に添える柱なので短く。 */
+const POPULAR_COUNT = 4;
 
 export interface NotesListPageData extends PublicNoteList {
   /** 絞り込み中のタグ (未絞り込みなら null)。 */
@@ -56,19 +59,45 @@ export async function loadNotesListPage(
   };
 }
 
+export interface HomePageData {
+  /** 公開日の新しい順。ホームの主となる列。 */
+  readonly recent: PublicNoteList["notes"];
+  /**
+   * よく読まれている順のつもりの列。
+   *
+   * ⚠️ いまは読まれた回数を数えていないため、**順位は本物ではない**。枠と見た目を先に
+   * 作るための仮置きで、公開日の古い順を借りているだけ。読者には人気順に見えてしまうので、
+   * 本番に出す前に #110 (アクセス集計) を入れて本物に差し替えること。
+   */
+  readonly popular: PublicNoteList["notes"];
+}
+
 /**
- * ホームの新着ノートの 1 ページ目 (公開日降順) を読む。
+ * ホームのデータを読む (Composition Root)。
  *
- * 続きはブラウザが `/api/v1/notes` から取りに行くので、ここが返すページ総数が
- * 「まだ先があるか」の判断材料になる。
+ * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切る。全件を辿る導線は
+ * `/notes` が持つ。
  */
-export async function loadRecentNotes(env: Env): Promise<PublicNoteList> {
+export async function loadHomePage(env: Env): Promise<HomePageData> {
   const query = new D1NoteQueryRepository(env.D1);
-  const result = await query.list({
-    limit: RECENT_PER_PAGE,
+
+  const recent = await query.list({
+    limit: RECENT_COUNT,
     offset: 0,
     sortBy: "publishedOn",
     direction: "desc",
   });
-  return toPublicNoteList(result, 1, RECENT_PER_PAGE);
+
+  // 仮置き。読まれた回数を持っていないので、新しい順とは別の並びを借りて枠を埋める。
+  const popular = await query.list({
+    limit: POPULAR_COUNT,
+    offset: 0,
+    sortBy: "publishedOn",
+    direction: "asc",
+  });
+
+  return {
+    recent: toPublicNoteList(recent, 1, RECENT_COUNT).notes,
+    popular: toPublicNoteList(popular, 1, POPULAR_COUNT).notes,
+  };
 }

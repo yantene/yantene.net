@@ -6,7 +6,8 @@
   "home": {
     "heading": "yantene.net",
     "tagline": "yantene の発信を集約するハブ",
-    "recentNotes": "新着ノート",
+    "recentNotes": "最近のノート",
+    "popularNotes": "人気のノート",
     "viewAll": "すべて見る"
   },
   "timeline": {

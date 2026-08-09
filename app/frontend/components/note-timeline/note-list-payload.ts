@@ -36,15 +36,25 @@ export function parseNoteListPayload(value: unknown): NoteListPayload | null {
 function parseNote(value: unknown): NoteTimelineItemProps | null {
   if (!isRecord(value)) return null;
 
-  const { slug, title, summary, imageUrl, publishedOn } = value;
+  const { slug, title, summary, imageUrl, publishedOn, tags } = value;
   if (typeof slug !== "string") return null;
   if (typeof title !== "string") return null;
   if (typeof summary !== "string") return null;
   if (typeof publishedOn !== "string") return null;
   // 画像はないこともある。文字列か null 以外は形が違うとみなす。
   if (imageUrl !== null && typeof imageUrl !== "string") return null;
+  // タグは 0 個のこともあるが、配列でないなら形が違う。
+  if (!Array.isArray(tags)) return null;
+  if (tags.some((tag) => typeof tag !== "string")) return null;
 
-  return { slug, title, summary, imageUrl, publishedOn };
+  return {
+    slug,
+    title,
+    summary,
+    imageUrl,
+    publishedOn,
+    tags: tags as readonly string[],
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
