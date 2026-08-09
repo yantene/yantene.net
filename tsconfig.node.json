@@ -11,6 +11,9 @@
   "compilerOptions": {
     // strict / paths は親 tsconfig.json から継承する
     "composite": true,
+    // 設定ファイル同士の import は Vite の native config loader が実ファイルを
+    // 解決するため、拡張子まで書く必要がある (拡張子なしだと将来のデフォルトで壊れる)。
+    "allowImportingTsExtensions": true,
     "types": ["node"],
     "lib": ["ES2022"],
     "target": "ES2022",

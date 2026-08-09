@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
@@ -8,6 +9,15 @@ import type { Root as MdastRoot } from "mdast";
 
 function md(markdown: string): MdastRoot {
   return unified().use(remarkParse).use(remarkGfm).parse(markdown);
+}
+
+/*
+ * 埋め込み (iframe) の検証だけは、DOM に載せず SSR した HTML の文字列を読む。
+ * happy-dom は src を持つ iframe を document に繋いだ時点で読み込みにいくため、
+ * DOM を経由するとテストが外部の生死に左右され、ログもスタックで埋まる。
+ */
+function ssr(markdown: string): string {
+  return renderToStaticMarkup(<MdastRenderer node={md(markdown)} />);
 }
 
 describe("MdastRenderer", () => {
@@ -104,5 +114,39 @@ describe("MdastRenderer", () => {
     );
     expect(container.querySelectorAll("th")).toHaveLength(2);
     expect(container.querySelectorAll(":scope tbody td")).toHaveLength(2);
+  });
+
+  it("renders a raw YouTube iframe as a cookie-less embed", () => {
+    const source = "//www.youtube.com/embed/abc123?start=9";
+    const embedded = "https://www.youtube-nocookie.com/embed/abc123?start=9";
+    const html = ssr(`<iframe src='${source}'></iframe>`);
+    expect(html).toContain(`src="${embedded}"`);
+    expect(html).toContain('loading="lazy"');
+    // 枠が付かないと高さを持てず、既定の 150px に潰れる。
+    expect(html).toContain('<div class="note-embed">');
+  });
+
+  it("drops iframes aimed at hosts outside the allow list", () => {
+    const html = ssr("<iframe src='https://evil.example/embed/x'></iframe>");
+    expect(html).not.toContain("iframe");
+    expect(html).not.toContain("evil.example");
+  });
+
+  it("rebuilds embed attributes instead of trusting the ones in the source", () => {
+    // React は属性名をそのままの綴りで出す (HTML 側が大小を区別しないため)。
+    // 綴りではなく中身を見たいので、比較は小文字に倒してから行う。
+    const html = ssr(
+      "<iframe src='https://www.youtube.com/embed/abc123' sandbox='allow-same-origin' referrerpolicy='unsafe-url'></iframe>",
+    ).toLowerCase();
+    expect(html).not.toContain("sandbox");
+    expect(html).toContain('referrerpolicy="strict-origin-when-cross-origin"');
+  });
+
+  it("still discards raw HTML that is not an embed", () => {
+    const html = ssr(
+      "<blockquote class='twitter-tweet'><p>tweet</p></blockquote>",
+    );
+    expect(html).not.toContain("blockquote");
+    expect(html).not.toContain("tweet");
   });
 });

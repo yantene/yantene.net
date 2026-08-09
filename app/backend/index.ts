@@ -55,6 +55,9 @@ const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
     imgSrc: ["'self'", "data:"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'"],
+    // 本文に埋め込む動画の読み込み先。ここに無いホストの iframe はブラウザが止める。
+    // 描画側 (mdast-renderer) が src をこのホストへ正規化しているので、両者は対で動く。
+    frameSrc: ["https://www.youtube-nocookie.com"],
     frameAncestors: ["'none'"],
   },
 });

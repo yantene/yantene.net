@@ -4,7 +4,11 @@
  * JS からの <style> 注入で届けるが、CSP (style-src 'self') がそれをブロックするため
  * dev でだけスタイルが丸ごと消える。app.css は <link> で届くのでその影響を受けない。 */
 @import "./components/hero/celestim.css";
+@import "./components/hero/hero-section.css";
+@import "./components/hero/time-scrubber.css";
+@import "./components/layout/footer.css";
 @import "./components/mdast/mdast-renderer.css";
+@import "./components/note-timeline/note-timeline.css";
 
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";

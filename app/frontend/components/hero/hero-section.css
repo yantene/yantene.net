@@ -1,0 +1,194 @@
+/*
+ * ヒーロー。空 (Celestim)・街並み・時刻の目盛りが、ひとつの時計として同じ周期で動く。
+ *
+ * その周期は --day-cycle が持つ。Celestim もこの値を読むので、ここを変えると
+ * 空・太陽・月・雲・目盛りがまとめて追随する。
+ */
+
+/*
+ * 1 日の長さ。ここを起点に継承させることで、内側のどこかに速度違いのクラスを
+ * 被せるだけで、空も雲も目盛りもまとめて追随する。ヒーロー自身に定義してしまうと
+ * 外側から被せた値を自分で上書きしてしまい、速度を差し替えられなくなる。
+ */
+:root {
+  --day-cycle: 288s;
+}
+
+.hero-clock {
+  /* 地平線より下、時刻の目盛りが占める帯の高さ。街はこの帯の上に載る。 */
+  --timeline-height: 4.5rem;
+
+  /*
+   * 地平線から上、街と歩行者が収まる帯の高さ。両者の大きさの比はここから決まるので、
+   * 片方だけを別の基準で決めない (画面幅ごとに背丈の釣り合いが変わってしまう)。
+   */
+  --scene-height: clamp(9rem, 15vw, 15rem);
+
+  /*
+   * 線の太さ。素材ごとに viewBox の拡大率が違うため、素材の側に太さを持たせると
+   * 同じ値でも画面上の太さが揃わない (街と歩行者で 2 倍以上ずれていた)。
+   * vector-effect: non-scaling-stroke と組みで使い、画面上の太さをここで一本化する。
+   */
+  --ink-width: 1px;
+}
+
+/* 全周期を短時間で確かめたいとき (主に Storybook) 用。 */
+.hero-clock-fast {
+  --day-cycle: 24s;
+}
+
+/*
+ * 見出しからソーシャルまでの本文。下端は目盛りの帯を避けるが、街の線画とは重ねる
+ * (線が薄いので読める。テキストを街の上に逃がすとヒーローが間延びする)。
+ *
+ * クラス名を hero-content にしてはいけない。daisyUI の hero コンポーネントが同じ名前を
+ * 持っており、max-width: 80rem が黙って効いて、広い画面でだけ本文が半分の幅に縮んで
+ * 左に寄る。daisyUI と同名になりうる語 (hero / card / footer / timeline など) を
+ * 単独で使わず、必ず別の語を足すこと。
+ */
+/*
+ * 本文の後ろに敷く淡い光。
+ *
+ * 街の線は薄いので重なっても読めるが、雲は塗りを持つうえ本文の高さを流れていくので、
+ * 通りかかるたびに文字が沈む。輪郭のない楕円で背後を持ち上げて、字の重なりだけを避ける。
+ * 箱で敷くと縁が見えるため、中心から周辺へ抜ける形にしてある。
+ */
+.hero-intro::before {
+  content: "";
+  position: absolute;
+  /*
+   * 覆うのは文字のあたりから街の上部まで。余白いっぱいに広げるとヒーロー一面が白く
+   * 霞んでしまうので、余白ぶんを戻したうえで裾を街へ少しだけ届かせる。空と本文の境が
+   * 曖昧になり、光そのものは目に留まらなくなる。中心をやや上に寄せているのは、
+   * 下へ伸ばしたぶん文字が楕円の端に来ないようにするため。
+   */
+  inset: calc(var(--intro-pad-top) - 4rem) -2rem
+    calc(var(--intro-pad-bottom) - 7.5rem);
+  /* 文字より奥へ。位置指定した要素は既定では通常フローの文字より手前に来てしまう。 */
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 64% 62% at 50% 42%,
+    rgb(255 255 255 / 44%),
+    rgb(255 255 255 / 26%) 48%,
+    transparent 80%
+  );
+  pointer-events: none;
+}
+
+.hero-intro {
+  /*
+   * 上は頭上の空き、下は目盛りの帯と歩行者を避けるための余白。街の線画とは重ねてよいが、
+   * 歩行者は線が濃く、重なると文字が読みにくいので背丈ぶんを空ける。
+   *
+   * 値を変数に置いているのは、背後の光がこの余白を打ち消して文字の範囲だけを覆うため。
+   */
+  --intro-pad-top: 6rem;
+  --intro-pad-bottom: calc(
+    var(--timeline-height) + var(--scene-height) * 0.5 + 1.5rem
+  );
+
+  isolation: isolate;
+  padding-top: var(--intro-pad-top);
+  padding-bottom: var(--intro-pad-bottom);
+}
+
+/*
+ * 太陽と月の通り道。
+ *
+ * Celestim の既定は空だけを見せる前提で、軌道を画面幅に合わせ (min(100vw, 1200px))、
+ * その中心を高さの 60% ぶん沈めている。街を手前に置いたこの画ではこれが二重に効いて、
+ * 広い画面でも南中が地平線から 17 度ほどにしかならず、狭い画面に至っては軌道が小さすぎて
+ * 南中しても地平線の下にとどまり、一日じゅう太陽が現れなかった。
+ *
+ * 軌道の大きさを画面幅から切り離し、中心を空の下端に置く。南中の高さは画面幅によらず
+ * 一定になり、狭い画面でも日は昇る。代わりに狭い画面では日の出と日の入りが画面の外に
+ * 出るが、街の向こうから現れる見え方になるだけで破綻はしない。
+ */
+.hero-clock .celestim-sky {
+  --celestim-orbit-diameter: 46rem;
+  --celestim-horizon-drop: 0px;
+}
+
+.cityscape {
+  position: absolute;
+  inset-inline: 0;
+  bottom: var(--timeline-height);
+  /*
+   * 高さを先に決め、幅は素材の viewBox の比率 (1539:224) から導く。歩行者と背丈を
+   * 揃えるには、街の大きさが幅ではなく高さで決まっている必要がある。
+   */
+  height: var(--scene-height);
+  width: min(100%, calc(var(--scene-height) * 1539 / 224));
+  /* 幅が画面に足りないぶん (広い画面) は左右に等分して中央へ。 */
+  margin-inline: auto;
+  overflow: hidden;
+  pointer-events: none;
+  /* 街の輪郭の色。素材が currentColor で受けるので、濃さを変えるならここ。 */
+  color: #9488d3;
+}
+
+.cityscape-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 線の太さは拡大率に引きずられず、画面上で一定にする。 */
+.cityscape-svg *,
+.daywalker-svg * {
+  vector-effect: non-scaling-stroke;
+  stroke-width: var(--ink-width);
+}
+
+/*
+ * 雲だけが流れる。1 周を 4 日ぶんかけることで、足元の目盛りより遅く動き、
+ * 遠くにあるものとして見える。
+ *
+ * 407.1932 は素材の viewBox の幅 (user unit)。素材側に同じ雲の複製が同じ幅だけ
+ * ずらして置いてあるので、ちょうど 1 枚ぶん流れたところで複製が元の位置に来て、
+ * 継ぎ目なく振り出しに戻る。素材を差し替えて viewBox が変わったら、ここも合わせること。
+ */
+@keyframes cityscape-cloud-drift {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-407.1932px);
+  }
+}
+
+.cityscape-svg #clouds {
+  animation: cityscape-cloud-drift calc(var(--day-cycle) * 4) linear infinite;
+}
+
+/*
+ * 見出しの下に敷く手書きのマーカー。
+ *
+ * 文字の背後に回すため、見出しのテキスト側を relative にして重ね順を作っている
+ * (負の z-index は親の背景より下に潜って消えることがある)。
+ */
+.hero-heading {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-heading-highlight {
+  position: absolute;
+  /*
+   * 文字の両端から少しはみ出させて、手で引いた線らしくする。
+   * SVG は置換要素なので、left / right を両側から留めても幅は素材の寸法のままになる。
+   * 見出しの幅に追随させるには width を明示するしかない。
+   */
+  left: -0.12em;
+  width: calc(100% + 0.24em);
+  bottom: 0.06em;
+  height: 0.4em;
+  color: oklch(0.88 0.17 130);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cityscape-svg #clouds {
+    animation-play-state: paused;
+  }
+}

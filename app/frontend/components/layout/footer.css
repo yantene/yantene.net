@@ -1,0 +1,16 @@
+/*
+ * フッターの帯は Celestim と同じ空の色サイクルで塗る。
+ *
+ * 周期はヒーローと同じ --day-cycle を読む。keyframes の名前も揃えてあるので、
+ * ヒーローの目盛りを掴んで時間を進めると、ページの末尾の色も一緒に動く
+ * (day-clock.ts が名前でアニメーションを集めるため)。
+ */
+.footer-daylight {
+  animation: celestim-veiled-sky-cycle var(--day-cycle, 288s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-daylight {
+    animation-play-state: paused;
+  }
+}

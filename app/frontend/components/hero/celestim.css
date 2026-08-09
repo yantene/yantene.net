@@ -6,6 +6,18 @@
  * All class names prefixed with `celestim-` to avoid conflicts.
  */
 
+/*
+ * 動きを減らす設定では空も天体も止める。止めるのは自動の再生だけで、時刻の目盛りを
+ * ドラッグしたときの currentTime の書き換えは一時停止中でも効く (day-clock.ts)。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .celestim-sky,
+  .celestim-turntable,
+  .celestim-celestial-body {
+    animation-play-state: paused;
+  }
+}
+
 /* Sky color cycle: noon → sunset → midnight → sunrise → noon */
 @keyframes sky-color-cycle {
   0% {
@@ -31,7 +43,12 @@
    * 丸ごと無視するため、inline style の custom property で渡すと本番でだけ
    * 設定が消えて空も天体も出なくなる。可変にしたい軸はクラスで用意する。
    */
-  --celestim-one-day: 288s;
+  /*
+   * 1 日の長さ。街の雲や時刻の目盛りも同じ時計で動くため、値はヒーロー側が
+   * --day-cycle として与える。Celestim だけを単体で置いたとき (Storybook など) は
+   * 従来どおり 288 秒で回る。
+   */
+  --celestim-one-day: var(--day-cycle, 288s);
   --celestim-sidereal-month: 28;
   --celestim-orbit-diameter: min(100vw, 1200px);
   --celestim-body-size: clamp(28px, 5.5vw, 72px);
