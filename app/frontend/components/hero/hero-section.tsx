@@ -41,10 +41,10 @@ export function HeroSection(): React.JSX.Element {
         </h1>
 
         {/*
-          背後に光を敷いてあるので、文字を薄める必要がない。空に直に載せていた頃は
-          夜側で沈まないよう透過を控えていたが、いまは濃いほうが素直に読める。
+          背後の光は控えめなので、文字も少しだけ透かして景色に馴染ませる。
+          薄めすぎると夜側で沈むため、全周期で AA を満たす範囲に留めている。
         */}
-        <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground">
+        <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
           現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
           <br />
           ブラウザの向こう側で暮らしています。
@@ -59,7 +59,7 @@ export function HeroSection(): React.JSX.Element {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-2xl text-foreground transition-colors hover:text-primary"
+              className="text-2xl text-foreground/85 transition-colors hover:text-primary"
               title={link.label}
             >
               <link.icon />

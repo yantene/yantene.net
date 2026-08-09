@@ -61,15 +61,15 @@
    * ここまで光らせるとヒーロー一面が白く霞む。余白ぶんを戻したうえで、文字の外へ
    * わずかに滲ませる。
    */
-  inset: calc(var(--intro-pad-top) - 1.5rem) -2rem
-    calc(var(--intro-pad-bottom) - 1.5rem);
+  inset: calc(var(--intro-pad-top) - 3.5rem) -2rem
+    calc(var(--intro-pad-bottom) - 3.5rem);
   /* 文字より奥へ。位置指定した要素は既定では通常フローの文字より手前に来てしまう。 */
   z-index: -1;
   background: radial-gradient(
-    ellipse 62% 54% at 50% 50%,
-    rgb(255 255 255 / 62%),
-    rgb(255 255 255 / 38%) 45%,
-    transparent 72%
+    ellipse 62% 58% at 50% 50%,
+    rgb(255 255 255 / 44%),
+    rgb(255 255 255 / 26%) 48%,
+    transparent 78%
   );
   pointer-events: none;
 }
