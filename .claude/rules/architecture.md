@@ -6,12 +6,12 @@
 規約に迷ったとき・新しい判断をするときは、まずこの原則に立ち返る。
 
 - **依存性逆転を最優先する (Clean Architecture)** — domain を中心に据え、依存は常に内側
-  (domain) へ向ける。ビジネスロジックはインフラ技術 (D1 / KV / Cloudflare 等) を知らない。
+  (domain) へ向ける。ビジネスロジックはインフラ技術 (D1 / R2 / Cloudflare 等) を知らない。
   ドメインがインターフェースを定義し、infra/ が実装する。
 - **拡張は注入で開く (DI / OCP)** — 具象クラスを生成するのは Composition Root
   (handlers/, `index.ts`) だけ。利用側はインターフェースを注入で受け取る。振る舞いの
   差し替え・追加は「既存コードの修正」ではなく「注入点での差し替え」で行う
-  (例: `createSessionMiddleware({ getSessionStore })`, `createMagicLinkRouter({ resolveMailer })`)。
+  (例: `resolveContentStore(env)` が返す `IContentStore` を GitHub → Artifacts へ差し替える)。
 - **不正な状態を型で表現不能にする** — 制約は実行時チェックだけに頼らず型で表す。VO は
   factory でのみ生成 (バリデーション込み) し immutable、ドメインエラーは typed class、
   エンティティの永続化状態は `IPersisted` / `IUnpersisted` でコンパイル時に区別する。
@@ -49,23 +49,26 @@ wrangler.jsonc # Cloudflare Workers 設定 (main は app/backend/index.ts を直
 app/
 ├── backend/                    # Hono バックエンド
 │   ├── domain/                 # ドメイン層（インフラ非依存）
-│   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ISessionStore 等)
-│   │   ├── user/               # User 集約 (entity, Email VO, CQRS repo interface, errors)
-│   │   └── auth/               # 認証ドメイン (IMailer, magic-link トークンストア interface)
+│   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ILogger 等)
+│   │   ├── note/               # Note 集約 (entity, VO, CQRS repo interface, errors)
+│   │   ├── note-view/          # 閲覧数と人気ランキング
+│   │   └── content/            # コンテンツ正本のポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）
 │   │   ├── d1/                 # D1 (SQLite) 実装
 │   │   │   ├── schema/         # Drizzle テーブル定義
 │   │   │   ├── repositories/   # CQRS リポジトリ実装 + テスト
 │   │   │   ├── temporal.ts     # Temporal.Instant ↔ D1 integer 変換
 │   │   │   └── test-helper.ts  # テスト用 D1 ヘルパー
-│   │   ├── kv/                 # KV 実装（セッション・magic-link トークン）
-│   │   ├── mailer/             # IMailer 実装 (ConsoleMailer 等)
+│   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
+│   │   ├── artifacts/          # Cloudflare Artifacts のコンテンツストア実装
+│   │   ├── github/             # GitHub リポジトリのコンテンツストア実装
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
-│   │   ├── api.ts              # JSON API ルータ
 │   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)
-│   │   └── auth/               # 認証ハンドラ (magic-link / logout / resolve-mailer)
-│   ├── middleware/             # 認証・BASIC 認証ミドルウェア
+│   │   ├── feed.handler.ts     # Atom フィード
+│   │   ├── og.handler.ts       # OG 画像
+│   │   └── seo.handler.ts      # sitemap.xml / robots.txt
+│   ├── middleware/             # BASIC 認証ミドルウェア
 │   ├── services/               # アプリケーションサービス層
 │   ├── test-app.ts             # テスト用の Hono アプリ生成 (ページ委譲はダミー)
 │   └── index.ts                # getApp(handler): Hono を組み立てて返す
@@ -96,10 +99,10 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 新しいファイルは「どのレイヤーの責務か」で置き場所を決める（依存方向は後述の依存ルールに従う）。
 
 - **ドメインのインターフェース・エンティティ・VO** → `backend/domain/<集約名>/`。
-  技術名 (D1 / KV / Cloudflare) を持ち込まない。
+  技術名 (D1 / R2 / Cloudflare) を持ち込まない。
 - **インフラ実装** → `backend/infra/<技術>/`。domain のインターフェースを実装する。
 - **HTTP ハンドラ (Composition Root)** → `backend/handlers/`。具象の生成・注入はここだけ。
-  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `auth/`）。
+  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `notes/`）。
 - **横断的な前処理** → `backend/middleware/`。
 - **複数ハンドラで共有するユースケース** → `backend/services/`（必要になった時点で作成）。
 - **画面** → `frontend/routes/`。`routes.ts` に登録し、ファイル名は kebab-case
@@ -119,7 +122,7 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 1. ブラウザのリクエストは `workers/app.ts` → `getApp()` の Hono に入る
 2. Hono が先に応答するのは横断的関心事とページ以外のエンドポイント:
    secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
-   認証フロー (`/auth/**`)
+   ノートの原文 Markdown (`/notes/<slug>.md`)
 3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
 4. React Router がルートを解決し、loader が `context.cloudflare.env` から
    `backend/handlers` のローダを呼んでデータを揃える
@@ -162,7 +165,7 @@ Composition Root (handlers/, `app/backend/index.ts`) のみが infra の具象�
 
 ドメイン層はインフラ技術に依存してはならない。
 
-- クラス名・インターフェース名に D1, R2, KV, Cloudflare 等の技術名を使用禁止
+- クラス名・インターフェース名に D1, R2, Cloudflare 等の技術名を使用禁止
 - ドメインがインターフェースを定義し、infra/ が実装する (依存性逆転の原則)
 
 ## CQRS リポジトリパターン

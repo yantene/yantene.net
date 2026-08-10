@@ -23,23 +23,6 @@ CLOUDFLARE_ENV=production pnpm run build
 - `app/backend/index.ts` で全ルートに適用
 - 認証方式を変更・追加する際にも、この BASIC 認証ミドルウェアを削除してはならない
 
-## 本番のメール送信
-
-magic link 等のメール送信は環境ごとに実装を切り替える。解決は
-`handlers/auth/resolve-mailer.ts` の `resolveMailer(env)` が担う。
-
-- development: `ConsoleMailer` (stdout へ書き出すだけ)
-- staging / production: `CloudflareEmailMailer` (Cloudflare Email Routing の Send Email バインディング)
-
-staging / production で必要な設定:
-
-- `wrangler.jsonc` の `send_email` バインディング (`name: EMAIL`)
-- 送信元ドメインを Cloudflare Email Routing で検証する
-- 送信元アドレスを `MAIL_FROM_ADDRESS` (Cloudflare の var / secret) で与える
-
-設定不備 (バインディング未配線・`MAIL_FROM_ADDRESS` 未設定) のときは、ConsoleMailer へ
-静かにフォールバックせず **fail-loud で throw** する。staging / production で console 送信は許容しない。
-
 ## リリースフロー
 
 `pnpm run release` で `scripts/release.sh` が以下を実行する。

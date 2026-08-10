@@ -8,32 +8,30 @@ Cloudflare Workers + Hono + React Router v7 + React + Drizzle ORM で構築。
 
 - **ノート (記事)** — Markdown で技術ノートを執筆・公開する。コンテンツは R2 (オブジェクトストレージ)、
   メタデータは D1 (SQLite) に保存。スラグベースの URL ルーティングとページネーション。
-- **エッジで完結** — Cloudflare Workers + D1 + R2 + KV + Email Routing のみ。外部 DB や
-  メール SaaS を立てずに動く。
+- **エッジで完結** — Cloudflare Workers + D1 + R2 のみ。外部 DB もオリジンサーバーも立てずに動く。
 - **サーバー駆動 SPA** — React Router v7 のフレームワークモード。loader でデータ取得を
   サーバーへ集約し、SSR・ハイドレーション・クライアント遷移が別建ての API なしで成立する。
 - **端から端まで型安全** — TypeScript strict、Drizzle、ルートごとの型生成
   (`react-router typegen` が `./+types/*` を生成)、Value Object と typed error でドメイン制約を型に乗せる。
 - **Clean Architecture** — domain / infra / services / handlers のレイヤーと依存方向、CQRS
   リポジトリ分割、Composition Root での依存注入を `.claude/rules/` に明文化。
-- **パスワードレス認証** — magic link 方式のログイン。
-- **環境別の挙動を fail-loud に** — メール送信は development=Console / staging・production=実送信を
-  自動で解決。設定不備は静かに劣化させず、明示的に失敗させる。
+- **静かに劣化させない (fail-loud)** — 設定不備やキャッシュ不整合は、それらしく動き続けずに
+  明示的に失敗させる。
 - **設計判断を記録** — Architecture Decision Records (`docs/adr/`) で設計の「なぜ」を永続化。
 - **開発体験** — DevContainer、ESLint (Flat Config) + Prettier、Vitest、Storybook、i18next
   (en / ja)、GitHub Actions による CI/CD。
 
 ## 技術スタック
 
-| 技術                                    | 役割                                     |
-| --------------------------------------- | ---------------------------------------- |
-| Cloudflare Workers                      | エッジランタイム、D1 (SQLite)、KV、Email |
-| Hono                                    | HTTP 層 (API・認証・secure headers)      |
-| React Router v7                         | ルーティング・loader・SSR                |
-| React 19                                | UI とハイドレーション                    |
-| Drizzle ORM                             | 型安全な DB アクセス (D1 / SQLite)       |
-| Tailwind CSS v4 + daisyUI v5            | スタイリング                             |
-| TypeScript / ESLint / Prettier / Vitest | 型・静的解析・整形・テスト               |
+| 技術                                    | 役割                               |
+| --------------------------------------- | ---------------------------------- |
+| Cloudflare Workers                      | エッジランタイム、D1 (SQLite)、R2  |
+| Hono                                    | HTTP 層 (API・secure headers)      |
+| React Router v7                         | ルーティング・loader・SSR          |
+| React 19                                | UI とハイドレーション              |
+| Drizzle ORM                             | 型安全な DB アクセス (D1 / SQLite) |
+| Tailwind CSS v4 + daisyUI v5            | スタイリング                       |
+| TypeScript / ESLint / Prettier / Vitest | 型・静的解析・整形・テスト         |
 
 ## クイックスタート
 
@@ -45,45 +43,8 @@ pnpm run db:dev:migrate # ローカル D1 にマイグレーション適用 (初
 pnpm dev                # 開発サーバー (http://localhost:5173)
 ```
 
-> ⚠️ `db:dev:migrate` を忘れると、ログイン時に `no such table: users` で落ちる。
+> ⚠️ `db:dev:migrate` を忘れると、ノート一覧が `no such table: notes` で落ちる。
 > 開発 DB を作り直したいときは `pnpm run db:dev:reset`。
-
-## 同梱デモ: パスワードレス認証 (magic link)
-
-メールアドレスだけでログインできる magic link 認証が組み込まれている。パスワードを持たず、
-メールの所有のみで本人確認する。
-
-### フロー
-
-```
-/login (メアド入力)
-  → POST /auth/magic-link        … トークン発行 + メール送信 → /login/sent
-  → メール内のリンクを開く
-  → GET /auth/magic-link/callback?token=…
-       … トークン検証 (use-once) → ユーザー upsert → セッション発行 (Cookie)
-  → / (ログイン後ホーム。表示名・メアド + ログアウト)
-```
-
-### ローカルで試す
-
-development ではメールは送信されず、**開発サーバーの標準出力にメール内容が JSON で出力される**
-(`ConsoleMailer`)。
-
-1. `http://localhost:5173/login` を開き、メアドを入力して送信
-2. dev サーバーのログに出る `{"kind":"mail", … "body":"…http://localhost:5173/auth/magic-link/callback?token=…"}`
-   のリンクをブラウザで開く
-3. ログイン完了し `/` にリダイレクトされる
-
-### 関連ファイル (レイヤーをまたぐ実装例として読むとよい)
-
-| レイヤー                    | ファイル                                                                                                              |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| ドメイン (ポート定義)       | `domain/auth/` (`IMailer`, magic-link トークンストア interface)、`domain/user/` (User, Email VO, CQRS repo interface) |
-| インフラ (実装)             | `infra/kv/` (トークン・セッション)、`infra/mailer/` (Console / Cloudflare Email)、`infra/d1/repositories/`            |
-| アプリケーションサービス    | `services/auth.service.ts` (`signInWithVerifiedEmail` が全認証方式の合流点)                                           |
-| ハンドラ (Composition Root) | `handlers/auth/` (magic-link / logout / resolve-mailer)                                                               |
-| ミドルウェア                | `middleware/auth.ts` (セッション検証)、`middleware/basic-auth.ts`                                                     |
-| 画面                        | `frontend/routes/` (`login` / `login-sent` / `home`)                                                                  |
 
 ## ディレクトリ構造
 
@@ -91,10 +52,10 @@ development ではメールは送信されず、**開発サーバーの標準出
 app/
 ├── backend/                # Hono バックエンド (Clean Architecture)
 │   ├── domain/             # ドメイン層 (インフラ非依存): entity / VO / repo・port interface
-│   ├── infra/              # インフラ層: d1 / kv / mailer / console (domain の interface を実装)
+│   ├── infra/              # インフラ層: d1 / r2 / artifacts / console (domain の interface を実装)
 │   ├── services/           # アプリケーションサービス (ユースケース)
-│   ├── handlers/           # HTTP ハンドラ (Composition Root): api.ts / pages.ts / auth/
-│   ├── middleware/         # 認証 / BASIC 認証 / locale
+│   ├── handlers/           # HTTP ハンドラ (Composition Root): notes/ / feed / og / seo
+│   ├── middleware/         # BASIC 認証
 │   └── index.ts            # Hono アプリ (default export, wrangler の main)
 ├── frontend/               # React Router v7 アプリケーション
 │   ├── routes/             # ページルート (loader / meta / component を同居)
@@ -114,7 +75,7 @@ docs/adr/                   # Architecture Decision Records (設計判断の記�
 ```
 
 Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` が組み立てた Hono が
-API・認証・フィード等を先に処理し、残りを React Router のページルーティングへ委譲する
+API・フィード等を先に処理し、残りを React Router のページルーティングへ委譲する
 (詳細は [ADR 0010](docs/adr/0010-react-router-v7-over-inertia.md))。
 
 ## 使い方レシピ
@@ -147,18 +108,11 @@ API・認証・フィード等を先に処理し、残りを React Router のペ
 ### ドメイン機能を追加する (CQRS + VO)
 
 1. `domain/<集約>/` に entity・Value Object (`*.vo.ts`)・リポジトリ interface を定義
-   (Command / Query を分割)。技術名 (D1 / KV 等) は持ち込まない。
+   (Command / Query を分割)。技術名 (D1 / R2 等) は持ち込まない。
 2. `infra/<技術>/` で interface を実装する。
 3. `services/` にユースケースを書き、ハンドラ (Composition Root) で infra を生成して注入する。
 4. HTTP ステータスへのマッピングはハンドラ層のみ。詳細は
    [.claude/rules/architecture.md](.claude/rules/architecture.md)。
-
-### メール送信 (環境別 Mailer)
-
-`handlers/auth/resolve-mailer.ts` の `resolveMailer(env)` が `APP_ENV` で実装を切り替える。
-development は `ConsoleMailer`、staging / production は Cloudflare Email Routing の
-`CloudflareEmailMailer`。本番系では送信元 (`MAIL_FROM_ADDRESS`) 未設定なら fail-loud で落ちる
-(Console に静かにフォールバックしない)。
 
 ## コマンド
 
@@ -190,15 +144,13 @@ pnpm run release              # GitHub Release を切る (production デプロ�
 
 ## 環境とデプロイ
 
-| 環境        | トリガー          | 用途                      | メール送信       |
-| ----------- | ----------------- | ------------------------- | ---------------- |
-| development | `pnpm dev`        | ローカル開発              | ConsoleMailer    |
-| staging     | PR / push to main | 検証環境 (BASIC 認証付き) | Cloudflare Email |
-| production  | GitHub Release    | 本番環境                  | Cloudflare Email |
+| 環境        | トリガー          | 用途                      |
+| ----------- | ----------------- | ------------------------- |
+| development | `pnpm dev`        | ローカル開発              |
+| staging     | PR / push to main | 検証環境 (BASIC 認証付き) |
+| production  | GitHub Release    | 本番環境                  |
 
 - ビルド時に `CLOUDFLARE_ENV=staging|production pnpm run build` で環境を切り替える。
-- staging / production でメール送信を使うには、Cloudflare Email Routing で送信元ドメインを
-  検証し、`MAIL_FROM_ADDRESS` (var / secret) を設定する。
 - production は `pnpm run release` → GitHub Release 公開 → `deploy-production.yml` で自動デプロイ。
 
 > ⚠️ ステージング環境の BASIC 認証 (`middleware/basic-auth.ts`) は削除しないこと。
@@ -210,7 +162,7 @@ pnpm run release              # GitHub Release を切る (production デプロ�
 
 - [CLAUDE.md](CLAUDE.md) — 規約の入口 (`.claude/rules/*` を読み込む)
 - [.claude/rules/architecture.md](.claude/rules/architecture.md) — 設計思想・レイヤー・命名・配置ルール
-- [.claude/rules/environments.md](.claude/rules/environments.md) — 環境構成・メール・BASIC 認証
+- [.claude/rules/environments.md](.claude/rules/environments.md) — 環境構成・BASIC 認証
 - [docs/adr/](docs/adr/) — アーキテクチャ決定の記録 (ADR)
 
 ## License
