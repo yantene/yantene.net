@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "yantene.net",
-    "description": "Hono + React Router + React + Cloudflare Workers で構成される Web アプリケーション"
+    "description": "yantene の発信を集約するハブ。エッセイ、技術記事、つくったもの。"
   },
   "home": {
     "heading": "yantene.net",
