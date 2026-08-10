@@ -92,7 +92,7 @@ export default function NoteShow({
     );
   }
 
-  const { note, mdast, related, headings, series } = loaderData;
+  const { note, mdast, related, headings } = loaderData;
 
   return (
     <AppLayout>
@@ -148,42 +148,6 @@ export default function NoteShow({
             )}
           </header>
           <MdastRenderer node={mdast} />
-          {series !== null && (
-            <nav className="mt-12 rounded-xl border border-base-300 bg-base-200 p-5">
-              <Link
-                to={`/series/${series.slug}`}
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                {t("series.label")}: {series.name}
-              </Link>
-              <p className="mt-1 text-xs text-base-content/60">
-                {t("series.position", {
-                  position: series.position,
-                  total: series.total,
-                })}
-              </p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-between">
-                {series.prev === null ? (
-                  <span />
-                ) : (
-                  <Link
-                    to={`/notes/${series.prev.slug}`}
-                    className="text-sm text-base-content/80 hover:text-primary"
-                  >
-                    ← {series.prev.title}
-                  </Link>
-                )}
-                {series.next !== null && (
-                  <Link
-                    to={`/notes/${series.next.slug}`}
-                    className="text-sm text-base-content/80 hover:text-primary sm:text-right"
-                  >
-                    {series.next.title} →
-                  </Link>
-                )}
-              </div>
-            </nav>
-          )}
           {related.length > 0 && (
             <section className="note-related">
               <h2 className="note-related-heading">{t("notes.related")}</h2>

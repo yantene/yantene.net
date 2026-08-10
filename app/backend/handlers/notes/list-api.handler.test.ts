@@ -103,7 +103,6 @@ describe("createNotesApiRouter GET /", () => {
       "imageUrl",
       "lastModifiedOn",
       "publishedOn",
-      "series",
       "slug",
       "summary",
       "tags",

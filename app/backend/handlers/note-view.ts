@@ -6,7 +6,7 @@ import type {
 } from "~/backend/domain/note";
 
 /**
- * 外部 (JSON API / Inertia props) に公開してよい Note の表現。
+ * 外部 (JSON API / ページ props) に公開してよい Note の表現。
  * ドメインエンティティをそのまま晒さず、公開可能なフィールドだけに絞る。
  * 識別子は slug (URL 用) のみ公開し、内部 id は出さない。
  */
@@ -18,12 +18,6 @@ export interface PublicNote {
   readonly tags: readonly string[];
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
-  /** 連載 (シリーズ) 情報。単発記事は null。 */
-  readonly series: {
-    readonly name: string;
-    readonly slug: string;
-    readonly order: number;
-  } | null;
 }
 
 export interface Pagination {
@@ -48,7 +42,6 @@ export function toPublicNote(note: Note): PublicNote {
     tags: note.tags.map((tag) => tag.toJSON()),
     publishedOn: note.publishedOn.toString({ calendarName: "never" }),
     lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
-    series: note.series ?? null,
   };
 }
 

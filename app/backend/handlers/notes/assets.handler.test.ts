@@ -107,13 +107,12 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
 });
 
 describe("note asset public routing (full app)", () => {
-  it("serves assets without a session (mounted before the auth guard)", async () => {
+  it("serves assets through the composed app", async () => {
     const { bucket } = createTestR2();
     await seedAsset(bucket);
     const env = {
       R2: bucket,
       D1: createTestD1(),
-      KV: {},
     } as unknown as Env;
 
     const res = await createTestApp().request(
@@ -121,7 +120,7 @@ describe("note asset public routing (full app)", () => {
       {},
       env,
     );
-    // 未認証でも 200 (401 でない = auth ガードより前で短絡している)。
+    // React Router へ落ちず Hono 側が応答している (ダミー委譲は 404 を返す)。
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");
   });

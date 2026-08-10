@@ -15,7 +15,7 @@ export const cloudflareContext = createContext<{
 }>();
 
 /**
- * secureHeaders が発行した CSP nonce (ADR 0009 / 0011)。
+ * secureHeaders が発行した CSP nonce (ADR 0007)。
  *
  * development では CSP を付けないため nonce も空になる。空文字を既定値にして
  * その場合も throw させない。

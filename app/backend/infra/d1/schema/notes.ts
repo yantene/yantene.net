@@ -7,9 +7,9 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 /**
- * ノートのメタデータインデックス。コンテンツ正本は Cloudflare Artifacts、
+ * ノートのメタデータインデックス。コンテンツ正本は GitHub リポジトリ、
  * 本文 (MDAST) と画像は R2 にあり、この D1 テーブルは一覧・ルーティング用の
- * メタデータだけを保持する (ADR 0005)。
+ * メタデータだけを保持する (ADR 0004)。
  *
  * - published_on / last_modified_on: フロントマター由来の日付。ISO 日付文字列
  *   ("YYYY-MM-DD") で保存し、辞書順ソート = 日付順ソートを利用する。
@@ -23,16 +23,11 @@ export const notes = sqliteTable(
     title: text("title").notNull(),
     summary: text("summary").notNull(),
     imageUrl: text("image_url"),
-    // 連載 (シリーズ)。フロントマター由来。単発記事では null。
-    // series: 表示名 / series_slug: URL 用 (表示名を slug 化) / series_order: 連載内の順序。
-    series: text("series"),
-    seriesSlug: text("series_slug"),
-    seriesOrder: integer("series_order"),
     publishedOn: text("published_on").notNull(),
     lastModifiedOn: text("last_modified_on").notNull(),
     // コンテンツ正本のリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
-    // refresh の変更検出に使う。既存行への ADD COLUMN を安全にするため DEFAULT '' を持つ
-    // (空ハッシュは次回 refresh で必ず不一致になり再処理される)。
+    // refresh の変更検出に使う。既定は空ハッシュで、これは次回 refresh で必ず不一致に
+    // なり再処理される (書き損じた行が「同じ内容」として素通りしない)。
     sourceHash: text("source_hash").notNull().default(""),
     /*
      * 読まれた回数と、そこから作る人気の目安。

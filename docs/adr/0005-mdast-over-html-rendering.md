@@ -1,4 +1,4 @@
-# 0006. Markdown を HTML ではなく MDAST でフロントエンドに渡す
+# 0005. Markdown を HTML ではなく MDAST でフロントエンドに渡す
 
 - Status: Accepted
 - Date: 2026-07-05
@@ -29,20 +29,25 @@
 
 案 B を採用する。
 
-- サーバー側では Markdown を MDAST にパースし、JSON API で返す
-- フロントエンド側の MDAST/HAST レンダラーが React コンポーネントに変換する
+- サーバー側では Markdown を MDAST にパースし、R2 にキャッシュしたうえで JSON API で返す
+- フロントエンド側の MDAST/HAST レンダラー (`app/frontend/components/mdast/`) が
+  React コンポーネントに変換する
 - 画像の相対パス (`./image.png`) はアセット API URL (`/api/v1/notes/<slug>/assets/<path>`)
-  に解決してからフロントエンドに渡す。Artifacts の直接 URL は露出させない
+  に解決してからキャッシュする。正本 (GitHub) の直接 URL は露出させない
+- 一覧用の要約も同じ MDAST から自動抽出する。見出し・脚注・コードブロック・生 HTML を
+  除いたテキストノードの先頭 160 文字を切り出すので、要約を手書きする必要がない
 
 ## 帰結 / Consequences
 
 - 良い面: フロントエンドでの表示カスタマイズの自由度が高い。
   サーバーとフロントエンドの責務が明確に分離される。
 - 悪い面: MDAST レンダラーの実装・保守コスト。AST のペイロードサイズ。
-- 検証方法: MDAST が正しく React コンポーネントに変換されることを
-  Storybook + テストで確認する。
+  MDAST の作り方を変えても既存ノートのハッシュは変わらないので、反映には
+  force refresh が要る ([0004](0004-github-as-content-source-of-truth.md))。
+- 検証方法: `mdast-renderer.test.tsx` と Storybook が MDAST → React の変換を固定する。
+  要約の抽出規則は `note-content-parser.test.ts` が固定する。
 
 ## 参考 / More Information
 
 - [unified](https://unifiedjs.com/) / [remark](https://github.com/remarkjs/remark)
-- [0005](0005-artifacts-as-content-source-of-truth.md)
+- [0004](0004-github-as-content-source-of-truth.md)

@@ -18,8 +18,7 @@ Body with an inline image ![alt](./inline.png).
 `;
 
 function env(d1: D1Database, bucket: R2Bucket): Env {
-  // 公開エンドポイントは auth ガードより前で短絡するが、型のため KV を置く。
-  return { D1: d1, R2: bucket, KV: {} } as unknown as Env;
+  return { D1: d1, R2: bucket } as unknown as Env;
 }
 
 /** D1 のメタデータだけを入れる (R2 の原文は入れない)。 */

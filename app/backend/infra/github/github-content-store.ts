@@ -32,11 +32,11 @@ export class GitHubRequestError extends Error {
  * GitHub リポジトリをコンテンツ正本として使う {@link IContentStore} 実装。
  *
  * - listTree: git tree API (`?recursive=1`) で全 blob を取得し、`sha` (git blob ハッシュ)
- *   を {@link ContentEntry.hash} にする。変更検出はこのハッシュで行う (Artifacts と同じ)。
+ *   を {@link ContentEntry.hash} にする。変更検出はこのハッシュで行う。
  * - readFile: contents API でパス指定取得し、base64 を復号して生バイト列を返す。
  *
- * Artifacts binding が使えない (beta 未有効) 場合の代替。ドメイン・refresh・D1/R2 は
- * 一切変えずに差し替えられる (IContentStore の抽象の利点)。
+ * ドメイン・refresh・D1/R2 は正本の種類を知らないので、別のストレージへ移すときも
+ * この実装を差し替えるだけで済む (IContentStore の抽象の利点。ADR 0004)。
  */
 export class GitHubContentStore implements IContentStore {
   private readonly branch: string;

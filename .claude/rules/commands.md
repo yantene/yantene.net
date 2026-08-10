@@ -2,7 +2,7 @@
 
 ```bash
 # 開発
-pnpm dev              # 開発サーバー起動 (CSP は付かない: ADR 0011)
+pnpm dev              # 開発サーバー起動 (CSP は付かない: ADR 0007)
 pnpm run preview      # 本番ビルドをローカルで確認 (development 相当・CSP なし)
 pnpm run preview:staging  # staging ビルドで確認。CSP を検証したいときはこちら
 pnpm test             # テスト watch mode
@@ -18,7 +18,7 @@ pnpm run fix          # lint:fix + format:fix (自動修正まとめ)
 pnpm run check        # lint + format + typecheck (読取検証まとめ)
 
 # DB マイグレーション
-pnpm run db:generate --name create_users_table  # migration ファイル生成 (--name 必須)
+pnpm run db:generate --name add_notes_view_count  # migration ファイル生成 (--name 必須)
 pnpm run db:dev:migrate      # development (local) に適用
 pnpm run db:dev:reset        # development の全テーブル削除 → 再適用
 pnpm run db:staging:migrate  # staging (remote) に適用
@@ -34,8 +34,8 @@ drizzle-kit が自動生成する `0000_wealthy_vulture` のようなランダ�
 `db:generate` には必ず `--name` を付け、変更意図が伝わる名前にすること。
 
 ```bash
-pnpm run db:generate --name create_users_table      # ✅ 意図が明確
-pnpm run db:generate --name add_users_avatar_url
+pnpm run db:generate --name create_notes_table      # ✅ 意図が明確
+pnpm run db:generate --name add_notes_view_count
 pnpm run db:generate                                # ❌ ランダム名になる
 ```
 

@@ -18,35 +18,6 @@ import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 /** 記事末に出す関連記事の最大件数。 */
 const RELATED_LIMIT = 6;
 
-/** 連載記事のシリーズ内ナビ (前後 + 位置)。単発記事は null。 */
-async function buildSeriesNav(
-  query: D1NoteQueryRepository,
-  note: PublicNoteMeta,
-): Promise<{
-  name: string;
-  slug: string;
-  total: number;
-  position: number;
-  prev: PublicNote | null;
-  next: PublicNote | null;
-} | null> {
-  if (note.series === null) return null;
-  const found = await query.listBySeries(note.series.slug);
-  const seriesNotes = found.map((item) => toPublicNote(item));
-  const index = seriesNotes.findIndex((item) => item.slug === note.slug);
-  return {
-    name: note.series.name,
-    slug: note.series.slug,
-    total: seriesNotes.length,
-    position: index + 1,
-    prev: index > 0 ? seriesNotes[index - 1] : null,
-    next:
-      index !== -1 && index < seriesNotes.length - 1
-        ? seriesNotes[index + 1]
-        : null,
-  };
-}
-
 /**
  * slug からノート詳細 (メタデータ + キャッシュ済み MDAST) を読む。
  *
@@ -114,9 +85,6 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
   return router;
 }
 
-/** 連載内ナビ (前後 + 位置)。単発記事は null。 */
-export type SeriesNav = NonNullable<Awaited<ReturnType<typeof buildSeriesNav>>>;
-
 export type NoteDetailPageData =
   | { readonly found: false }
   | {
@@ -126,7 +94,6 @@ export type NoteDetailPageData =
       readonly mdast: Root;
       readonly related: readonly PublicNote[];
       readonly headings: readonly TocHeading[];
-      readonly series: SeriesNav | null;
       /** schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。 */
       readonly jsonLd: Record<string, unknown>;
     };
@@ -156,7 +123,6 @@ export async function loadNoteDetailPage(
     relatedTags,
     RELATED_LIMIT,
   );
-  const series = await buildSeriesNav(query, detail.note);
 
   const mdast = detail.mdast as Root;
   return {
@@ -165,7 +131,6 @@ export async function loadNoteDetailPage(
     mdast,
     related: related.map((note) => toPublicNote(note)),
     headings: extractHeadings(mdast),
-    series,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "BlogPosting",

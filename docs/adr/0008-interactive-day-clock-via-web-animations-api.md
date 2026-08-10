@@ -1,4 +1,4 @@
-# 0013. 時間の表現を Web Animations API で操作可能にする
+# 0008. 時間の表現を Web Animations API で操作可能にする
 
 - Status: Accepted
 - Date: 2026-08-09
@@ -6,16 +6,14 @@
 
 ## Context / 背景
 
-トップページの Celestim (CSS だけで書かれた天体アニメーション) は、これまで眺めるだけの
-背景だった。今回の UI 改修で、ヒーロー下部に時刻の目盛りを置き、それを掴んで左右に引くと
-空・太陽・月・雲がまとめて進退する仕掛けを入れることにした。何日ぶんでも進められるので、
-月の満ち欠けが変わり、やがて日食にも行き当たる。
+トップページの Celestim (CSS だけで書かれた天体アニメーション) は、ヒーロー下部に時刻の
+目盛りを置き、それを掴んで左右に引くと空・太陽・月・雲がまとめて進退する。何日ぶんでも
+進められるので、月の満ち欠けが変わり、やがて日食にも行き当たる。
 
 ここで CSP と正面からぶつかる。このサイトは `style-src 'self'` を維持しており、
-inline style は本番で丸ごと無視される ([ADR 0009](0009-strict-csp-without-unsafe-inline.md),
-[ADR 0011](0011-csp-enforced-outside-development.md))。規約も「見た目の可変軸は静的な CSS の
-クラスの段階として持つ」と定めている。ところがドラッグは本質的に連続値であり、
-「段階」では表現できない。
+inline style は本番で丸ごと無視される ([0007](0007-strict-csp-outside-development.md))。
+規約も「見た目の可変軸は静的な CSS のクラスの段階として持つ」と定めている。ところが
+ドラッグは本質的に連続値であり、「段階」では表現できない。
 
 さらに、Celestim には守るべき不変条件がある。太陽と月の離角、月相、空の色は互いに
 独立ではなく、同じ時刻から導かれる別表現になっている。月相だけを進めると「太陽に重なった
@@ -59,7 +57,7 @@ inline style は本番で丸ごと無視される ([ADR 0009](0009-strict-csp-wi
 
 あわせて、より一般的な原則をここに記しておく。**CSP の下で連続的な見た目を与える手段は、
 Web Animations API か SVG の presentation attribute であって、style 属性ではない。**
-規約が「静的な CSS のクラスの段階で持て」と言っているのは、SSR で style 属性が消えることへの
+規約が「静的な CSS のクラスの段階で持て」と言っているのは、style 属性が消えることへの
 対処であり、連続値そのものを禁じているわけではない。段階で表せない軸に出会ったら、
 まずこの 2 つを検討する。
 
@@ -77,10 +75,10 @@ Web Animations API か SVG の presentation attribute であって、style 属�
 - 検証方法 / 今後の宣言: 時刻と位置の相互変換は `time-axis.ts` に純粋関数として切り出し、
   `time-axis.test.ts` が固定している。WAAPI の挙動そのものはブラウザ上でしか確かめられないため、
   実装時は `pnpm run preview:staging` で CSP を有効にした状態で、目盛りを掴んで空が動くことを
-  確認する。dev では CSP が付かないので、この確認にはならない (ADR 0011)。
+  確認する。dev では CSP が付かないので、この確認にはならない
+  ([0007](0007-strict-csp-outside-development.md))。
 
 ## 参考 / More Information
 
-- [ADR 0009](0009-strict-csp-without-unsafe-inline.md) — CSP を厳格に保つ決定
-- [ADR 0011](0011-csp-enforced-outside-development.md) — CSP を development では付けない決定
+- [0007](0007-strict-csp-outside-development.md) — CSP の方針と適用範囲
 - Issue [#101](https://github.com/yantene/yantene.net/issues/101) — トップページとヘッダーの UI 刷新

@@ -15,8 +15,8 @@ export async function loadTagsPage(env: Env): Promise<readonly TagCount[]> {
 }
 
 /**
- * タグ索引の公開 JSON API ルータ。認証不要 (クローラー対応)。
- * index.ts で auth ガードより前に `/api/v1/tags` にマウントする。
+ * タグ索引の公開 JSON API ルータ (クローラー対応)。
+ * `/api/v1/tags` にマウントする。
  * GET / → 全タグと各記事数。
  */
 export function createTagsApiRouter(): Hono<{ Bindings: Env }> {

@@ -21,7 +21,7 @@ function urlEntry(loc: string, lastmod?: string): string {
 }
 
 /**
- * SEO 関連の公開ルータ。認証不要なので index.ts で auth ガードより前にマウントする。
+ * SEO 関連の公開ルータ。
  * - GET /sitemap.xml : ホーム / 一覧 / タグ索引 / 全記事を列挙 (記事は lastmod つき)
  * - GET /robots.txt  : production は sitemap を案内、staging (BASIC 認証あり) は全 Disallow
  */

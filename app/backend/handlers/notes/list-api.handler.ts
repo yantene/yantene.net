@@ -8,8 +8,7 @@ import {
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
 /**
- * ノートの公開 JSON API ルータ。認証不要 (クローラー・ボット対応のため)。
- * index.ts で auth ガードより前にマウントし、`/api/v1/notes` 配下を公開する。
+ * ノートの公開 JSON API ルータ。`/api/v1/notes` 配下を公開する。
  *
  * GET /  → 一覧 (ページネーション + ソート)
  *   query: page, per-page, sort-by (published|modified), order (asc|desc)

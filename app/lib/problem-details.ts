@@ -24,14 +24,6 @@ export function createProblemResponse(
   });
 }
 
-export function badRequestResponse(detail?: string): Response {
-  return createProblemResponse(httpStatus.BAD_REQUEST, "Bad Request", detail);
-}
-
-export function unauthorizedResponse(detail?: string): Response {
-  return createProblemResponse(httpStatus.UNAUTHORIZED, "Unauthorized", detail);
-}
-
 export function notFoundResponse(detail?: string): Response {
   return createProblemResponse(httpStatus.NOT_FOUND, "Not Found", detail);
 }

@@ -1,4 +1,4 @@
-// yantene.net の Service Worker。設計の背景は docs/adr/0015 を参照。
+// yantene.net の Service Worker。設計の背景は docs/adr/0010 を参照。
 // このファイルはビルドを介さずそのまま配られるので、注記は動作を追うのに要る分だけ。
 
 // 蓄えの意味が変わったら上げる (古い蓄えは有効化時に捨てる)。
@@ -74,8 +74,8 @@ self.addEventListener("fetch", (event) => {
 // 鮮度が要るものは触らない。
 function isCacheable(url) {
   const path = url.pathname;
-  if (path.startsWith("/api/") || path.startsWith("/auth/")) return false;
-  if (["/logout", "/feed.xml", "/sitemap.xml"].includes(path)) return false;
+  if (path.startsWith("/api/")) return false;
+  if (["/feed.xml", "/sitemap.xml"].includes(path)) return false;
   // 原文 Markdown は保存目的で開かれるので素通しにする。
   return !path.endsWith(".md");
 }

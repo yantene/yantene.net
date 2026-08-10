@@ -215,7 +215,7 @@ const config = [
       // バリデータが空オプションで弾く。既定挙動 ("always") を明示してスキーマを満たす。
       "unicorn/logical-assignment-operators": ["error", "always"],
 
-      // Hono / Inertia の app は module トップで合成する (Composition Root)。
+      // Hono の app は module トップで合成する (Composition Root)。
       // app.use(...) / app.route(...) のトップレベル副作用は本構成では意図的。
       "unicorn/no-top-level-side-effects": "off",
       // drizzle のクエリビルダ `.values(...)` を Array.prototype.values と
@@ -241,17 +241,6 @@ const config = [
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       ...promisePlugin.configs.recommended.rules,
-    },
-  },
-
-  // entry の Inertia ページ解決は import.meta.glob のレコードを
-  // `pages[`./pages/${name}.tsx`]` で引く。キーは接頭辞・接尾辞が固定で
-  // prototype 汚染が起こり得ないため、no-unsafe-property-key を無効化する。
-  // (unicorn recommended を上書きするため、本ブロックは unicorn ブロックより後ろに置く)
-  {
-    files: ["app/frontend/entry.client.tsx", "app/frontend/entry.server.tsx"],
-    rules: {
-      "unicorn/no-unsafe-property-key": "off",
     },
   },
 
@@ -339,10 +328,10 @@ const config = [
 
   // フロントエンド配下のファイルは kebab-case のみ許可
   // (case-insensitive ファイルシステムでの衝突防止 + Linux CI で壊れるパターン防止)
-  // Inertia のページ名 (c.render('home') 等) はファイル名と一致させる。
+  // ルートモジュール (app/frontend/routes/) は動的セグメントをドットで区切る
+  // (notes.$slug.tsx) ため対象外にしてある。
   {
     files: [
-      "app/frontend/pages/**/*.{ts,tsx}",
       "app/frontend/components/**/*.{ts,tsx}",
       "app/frontend/layouts/**/*.{ts,tsx}",
     ],

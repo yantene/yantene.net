@@ -6,9 +6,6 @@ import {
   secureHeaders,
   type SecureHeadersVariables,
 } from "hono/secure-headers";
-import { createApiRouter } from "./handlers/api";
-import { createLogoutRouter } from "./handlers/auth/logout.handler";
-import { createMagicLinkRouter } from "./handlers/auth/magic-link.handler";
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
 import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
@@ -22,8 +19,6 @@ import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
 import type { MiddlewareHandler } from "hono";
 import { NoteNotFoundError } from "~/backend/domain/note";
-import { UserNotFoundError } from "~/backend/domain/user";
-import { requireSession } from "~/backend/middleware/auth";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
 import { createProblemResponse, notFoundResponse } from "~/lib/problem-details";
 
@@ -47,7 +42,7 @@ const baseSecureHeaderOptions: SecureHeadersOptions = {
   },
 };
 
-/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0009)。 */
+/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0007)。 */
 const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
   ...baseSecureHeaderOptions,
   contentSecurityPolicy: {
@@ -70,7 +65,7 @@ const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> = secureHeaders(
 );
 
 /**
- * CSP は development でのみ外す (ADR 0011)。
+ * CSP は development でのみ外す (ADR 0007)。
  *
  * Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
  * `style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。
@@ -90,7 +85,7 @@ const environmentAwareSecureHeaders = createMiddleware<RootBindings>(
  * Hono アプリを組み立てる。ページ描画は React Router に委譲する。
  *
  * Hono が受け持つのは「HTTP レイヤーの横断的関心事」と「ページ以外のエンドポイント」:
- * secure headers / BASIC 認証 / JSON API / フィード・OG 画像・sitemap / 認証フロー。
+ * secure headers / BASIC 認証 / JSON API / フィード・OG 画像・sitemap。
  * それ以外のリクエストは末尾の `app.all("*")` で React Router のリクエストハンドラへ
  * 引き渡す (Composition Root は各ハンドラと loader 側に置く)。
  *
@@ -112,12 +107,9 @@ export const getApp = (
 
   app.use("*", conditionalBasicAuth);
 
-  // public health endpoint (auth 不要)
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  // ノートの公開 JSON API (一覧 / 詳細 / アセット, 認証不要・クローラー対応)。
-  // requireSession より前にマウントし、ハンドラが応答して短絡することで /api/* の
-  // 認証ガードを通さない。
+  // ノートの公開 JSON API (一覧 / 詳細 / アセット, クローラー対応)。
   app.route("/api/v1/notes", createNotesApiRouter());
   app.route("/api/v1/notes", createNoteDetailApiRouter());
   app.route("/api/v1/notes", createNoteAssetsRouter());
@@ -136,18 +128,8 @@ export const getApp = (
   app.route("/notes", createNoteMarkdownRouter());
 
   // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
-  // session ではなく REFRESH_SECRET で保護する運用エンドポイントなので、requireSession
-  // より前にマウントして認証ガードを通さない。
+  // REFRESH_SECRET で保護する運用エンドポイント。
   app.route("/api/v1", createRefreshRouter());
-
-  // 認証必須 JSON API
-  app.use("/api/*", requireSession);
-  app.route("/api", createApiRouter());
-
-  // 認証フロー (フォーム POST / メールのコールバック)。ページ描画を伴わず
-  // リダイレクトのみを返すため、React Router ではなく Hono 側に置く。
-  app.route("/", createMagicLinkRouter());
-  app.route("/", createLogoutRouter());
 
   // 上記以外はすべて React Router のページルーティングに委ねる。
   app.all("*", async (c) => {
@@ -167,10 +149,7 @@ export const getApp = (
       return response;
     }
     // ドメインエラー → HTTP マッピング (Composition Root の責務)。
-    if (
-      error instanceof UserNotFoundError ||
-      error instanceof NoteNotFoundError
-    ) {
+    if (error instanceof NoteNotFoundError) {
       return notFoundResponse(error.message);
     }
     console.error(error);
@@ -179,5 +158,3 @@ export const getApp = (
 
   return app;
 };
-
-export { type HonoApp } from "~/backend/middleware/auth";

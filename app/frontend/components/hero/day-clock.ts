@@ -2,7 +2,7 @@
  * ヒーローの時計 (空・太陽・月・雲・目盛り) を進退させる。
  *
  * 動かす手段に Web Animations API を選んでいる理由は CSP にある。このサイトは
- * `style-src 'self'` で inline style が効かない (ADR 0011) ため、連続値を style 属性や
+ * `style-src 'self'` で inline style が効かない (ADR 0007) ため、連続値を style 属性や
  * CSS 変数で渡す手が使えない。`Animation.currentTime` は style を一切経由しないので、
  * CSP と関係なく動かせる。
  *

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createTestApp } from "~/backend/test-app";
 
 /**
- * CSP は development でのみ外す (ADR 0011)。
+ * CSP は development でのみ外す (ADR 0007)。
  *
  * ここが黙って壊れると本番の防御が消えるため、環境ごとの挙動をテストで固定する。
  * 「development 以外なら必ず付く」ことを staging / production の両方で確認する。
