@@ -81,6 +81,6 @@ commit / push する。
 - **手動 (デプロイ後)**: staging へ deploy したら主要 URL のスモークを走らせる。
 
 ```bash
-SMOKE_BASE=https://yantene-staging.yantene.workers.dev \
+SMOKE_BASE=https://staging.yantene.net \
   SMOKE_USER=<basic-user> SMOKE_PASS=<basic-pass> pnpm run smoke
 ```

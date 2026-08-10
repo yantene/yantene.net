@@ -1,10 +1,13 @@
 # 環境構成
 
-| 環境        | トリガー          | DB                          |
-| ----------- | ----------------- | --------------------------- |
-| development | ローカル          | yantene-development (local) |
-| staging     | PR / push to main | yantene-staging             |
-| production  | GitHub Release    | yantene-production          |
+| 環境        | トリガー          | URL                         | DB                          |
+| ----------- | ----------------- | --------------------------- | --------------------------- |
+| development | ローカル          | localhost                   | yantene-development (local) |
+| staging     | PR / push to main | https://staging.yantene.net | yantene-staging             |
+| production  | GitHub Release    | https://yantene.net         | yantene-production          |
+
+staging は workers.dev (`yantene-staging.yantene.workers.dev`) からも引ける。PR ごとの
+preview デプロイがプレビュー URL を workers.dev 上に作るため、両方を有効にしている。
 
 ビルド時に環境を切り替える。
 
