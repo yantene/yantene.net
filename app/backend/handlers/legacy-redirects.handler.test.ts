@@ -23,19 +23,19 @@ function executionCtx(): ExecutionContext {
  */
 /* eslint-disable no-secrets/no-secrets -- 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。 */
 const noteRedirects: readonly (readonly [string, string])[] = [
-  ["/i_bought_arduino.html", "/notes/playing-with-arduino"],
+  ["/i_bought_arduino.html", "/notes/arduino-one-minute-timer"],
   ["/sugoroku_by_c.html", "/notes/sugoroku-in-c"],
   ["/one_month_before_the_fe_exam.html", "/notes/one-month-until-fe-exam"],
   ["/aichi_breaker.html", "/notes/aichi-breaker"],
   ["/passed_fe_exam.html", "/notes/passed-fe-exam"],
-  ["/first_challenge_of_topcoder.html", "/notes/first-topcoder-contest"],
-  ["/practice_of_topcoder.html", "/notes/practicing-topcoder"],
+  ["/first_challenge_of_topcoder.html", "/notes/first-topcoder-practice"],
+  ["/practice_of_topcoder.html", "/notes/topcoder-practice-after-exams"],
   ["/first_challenge_of_srm.html", "/notes/first-topcoder-srm"],
-  ["/practice_practice.html", "/notes/practice-practice"],
-  ["/combsort.html", "/notes/comb-sort"],
-  ["/opencobol_in_ubuntu.html", "/notes/opencobol-on-ubuntu"],
+  ["/practice_practice.html", "/notes/topcoder-srm153-div2-250"],
+  ["/combsort.html", "/notes/comb-sort-in-java"],
+  ["/opencobol_in_ubuntu.html", "/notes/install-opencobol-on-ubuntu"],
   ["/clang_for_joi.html", "/notes/back-to-c-for-joi"],
-  ["/amidakuji.html", "/notes/amidakuji"],
+  ["/amidakuji.html", "/notes/amidakuji-in-c"],
   ["/joi2009_yosen_q4.html", "/notes/joi-2009-qual-q4"],
   ["/joi2009_yosen_q5_failed.html", "/notes/joi-2009-qual-q5-failed"],
   ["/amidakuji_by_cobol.html", "/notes/amidakuji-in-cobol"],
@@ -48,13 +48,13 @@ const noteRedirects: readonly (readonly [string, string])[] = [
   ["/code_thanks_festival_2014.html", "/notes/code-thanks-festival-2014"],
   [
     "/install_arch_linux_on_uefi_machine.html",
-    "/notes/install-arch-linux-on-uefi-machine",
+    "/notes/install-arch-linux-on-vaio-pro",
   ],
   ["/tut_tani_checker.html", "/notes/tut-credit-checker"],
   ["/tut_photographs.html", "/notes/tut-in-photos"],
   ["/install_arch_on_kvi-70b.html", "/notes/install-arch-linux-on-kvi-70b"],
   ["/hacku_2016.html", "/notes/hacku-2016"],
-  ["/use_tutvpn_wisely.html", "/notes/use-tut-vpn-wisely"],
+  ["/use_tutvpn_wisely.html", "/notes/tut-vpn-with-ocproxy"],
   ["/invitation_to_flared.html", "/notes/invitation-to-flared"],
 ];
 /* eslint-enable no-secrets/no-secrets */
@@ -94,7 +94,7 @@ describe("legacy note URLs", () => {
     );
 
     expect(res.status).toBe(308);
-    expect(res.headers.get("location")).toBe("/notes/comb-sort");
+    expect(res.headers.get("location")).toBe("/notes/comb-sort-in-java");
   });
 
   it("caches the redirect under the same rule as note content", async () => {
