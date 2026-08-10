@@ -3,11 +3,7 @@ import { GitHubContentStore } from "~/backend/infra/github/github-content-store"
 
 /**
  * Composition Root: env からコンテンツ正本 (GitHub リポジトリ) の設定を解決して
- * {@link IContentStore} を生成する。
- *
- * Cloudflare Artifacts (beta) がアカウントで未有効なため、当面は GitHub をコンテンツ
- * 正本として使う。Artifacts が有効化されたら {@link GitHubContentStore} を
- * `ArtifactsContentStore` に差し替えるだけでよい (IContentStore の抽象の利点)。
+ * {@link IContentStore} を生成する (ADR 0004)。
  *
  * - owner / repo / branch は wrangler.jsonc の vars (GITHUB_OWNER / GITHUB_REPO /
  *   GITHUB_BRANCH)。

@@ -6,7 +6,7 @@ import type {
 } from "~/backend/domain/note";
 
 /**
- * 外部 (JSON API / Inertia props) に公開してよい Note の表現。
+ * 外部 (JSON API / ページ props) に公開してよい Note の表現。
  * ドメインエンティティをそのまま晒さず、公開可能なフィールドだけに絞る。
  * 識別子は slug (URL 用) のみ公開し、内部 id は出さない。
  */

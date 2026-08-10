@@ -37,6 +37,6 @@ export const LongText: Story = {
     title:
       "Cloudflare Workers と Hono と React Router v7 で個人サイトを組み直したときに考えていたこと",
     summary:
-      "サーバー駆動 SPA から素の React Router へ戻す判断、MDAST をそのまま返す API、Artifacts をコンテンツの正本に据える構成まで、一年ぶんの設計の変遷をまとめて振り返る。",
+      "ページ描画を React Router に任せる分担、MDAST をそのまま返す API、コンテンツの正本を git リポジトリに置く構成まで、一年ぶんの設計判断をまとめて振り返る。",
   },
 };
