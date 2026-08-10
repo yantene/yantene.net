@@ -31,7 +31,16 @@
   ],
   "env": {
     "staging": {
+      // workers.dev も残す。PR ごとの preview (versions upload --preview-alias) が
+      // プレビュー URL を workers.dev 上に作るため。
       "workers_dev": true,
+      // BASIC 認証があるので公開ドメインに出しても中身は見えない。
+      "routes": [
+        {
+          "pattern": "staging.yantene.net",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "APP_ENV": "staging",
         "GITHUB_OWNER": "yantene",
@@ -54,6 +63,12 @@
       ],
     },
     "production": {
+      "routes": [
+        {
+          "pattern": "yantene.net",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "APP_ENV": "production",
         "GITHUB_OWNER": "yantene",

@@ -5,7 +5,7 @@
  * 起因の実行時回帰を、単体テストが見られない実環境で検知するための最終確認。
  *
  * 使い方:
- *   SMOKE_BASE=https://yantene-staging.yantene.workers.dev \
+ *   SMOKE_BASE=https://staging.yantene.net \
  *   SMOKE_USER=<user> SMOKE_PASS=<pass> pnpm run smoke
  *
  * BASIC 認証が無い環境 (production) では SMOKE_USER / SMOKE_PASS を省略する。
