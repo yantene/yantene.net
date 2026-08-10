@@ -57,21 +57,5 @@
       "title": "Series not found",
       "heading": "Series not found"
     }
-  },
-  "login": {
-    "heading": "Sign in",
-    "description": "Enter your email address. We'll send you a magic link to sign in.",
-    "email": "Email",
-    "submit": "Send magic link",
-    "errors": {
-      "generic": "Could not sign you in. Please try again.",
-      "missing_token": "The link is missing a token.",
-      "invalid_token": "This link has expired or already been used."
-    }
-  },
-  "loginSent": {
-    "heading": "Check your inbox",
-    "description": "We've sent you a sign-in link. It is valid for 15 minutes.",
-    "backToLogin": "Back to sign in"
   }
 }

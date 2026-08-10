@@ -49,8 +49,7 @@ async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
 }
 
 function env(d1: D1Database, bucket: R2Bucket): Env {
-  // 公開詳細 API は auth ガードより前で短絡するため KV は使わないが、型のため置く。
-  return { D1: d1, R2: bucket, KV: {} } as unknown as Env;
+  return { D1: d1, R2: bucket } as unknown as Env;
 }
 
 async function fetchDetail(

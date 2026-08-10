@@ -29,7 +29,7 @@ function unpersistedNote(params: {
 }
 
 function env(d1: D1Database): Env {
-  return { D1: d1, KV: {} } as unknown as Env;
+  return { D1: d1 } as unknown as Env;
 }
 
 describe("GET /feed.xml", () => {

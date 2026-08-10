@@ -31,7 +31,6 @@ if (user !== undefined && pass !== undefined) {
 const paths = [
   "/",
   "/notes",
-  "/login",
   "/notes/does-not-exist",
   "/feed.xml",
   "/sitemap.xml",

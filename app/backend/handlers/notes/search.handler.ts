@@ -10,7 +10,7 @@ function parseQuery(raw: string | undefined): string {
 }
 
 /**
- * 全文検索の公開 JSON API。認証不要 (index.ts で auth ガードより前にマウント)。
+ * 全文検索の公開 JSON API。
  * GET /?q= → { query, notes }。
  */
 export function createSearchApiRouter(): Hono<{ Bindings: Env }> {

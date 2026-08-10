@@ -29,20 +29,6 @@
       "bucket_name": "yantene-development",
     },
   ],
-  "kv_namespaces": [
-    {
-      "binding": "KV",
-      "id": "00000000000000000000000000000000",
-    },
-  ],
-  // Cloudflare Email Routing (Send Email) バインディング。
-  // staging / production で実送信に使う (development は ConsoleMailer)。
-  // 送信元は MAIL_FROM_ADDRESS で与える。
-  "send_email": [
-    {
-      "name": "EMAIL",
-    },
-  ],
   "env": {
     "staging": {
       "workers_dev": true,
@@ -66,17 +52,6 @@
           "bucket_name": "yantene-staging",
         },
       ],
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "55b40c6c6b68468db7d25a7efdad2893",
-        },
-      ],
-      "send_email": [
-        {
-          "name": "EMAIL",
-        },
-      ],
     },
     "production": {
       "vars": {
@@ -97,17 +72,6 @@
         {
           "binding": "R2",
           "bucket_name": "yantene-production",
-        },
-      ],
-      "kv_namespaces": [
-        {
-          "binding": "KV",
-          "id": "8975d1afe8ae4391861209c8512c3637",
-        },
-      ],
-      "send_email": [
-        {
-          "name": "EMAIL",
         },
       ],
     },

@@ -6,7 +6,6 @@ import { notFoundResponse } from "~/lib/problem-details";
 
 /**
  * ノートに紐付く画像アセットを R2 キャッシュから配信する公開ルータ。
- * 認証不要 (index.ts で auth ガードより前にマウントする)。
  *
  * GET /:slug/assets/:path  → R2 の画像を Content-Type 付きで返す。無ければ 404。
  * :path はスラッシュを含むため正規表現パラメータ ({.+}) で丸ごと受ける。
