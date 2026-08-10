@@ -11,7 +11,8 @@
 - **拡張は注入で開く (DI / OCP)** — 具象クラスを生成するのは Composition Root
   (handlers/, `index.ts`) だけ。利用側はインターフェースを注入で受け取る。振る舞いの
   差し替え・追加は「既存コードの修正」ではなく「注入点での差し替え」で行う
-  (例: `resolveContentStore(env)` が返す `IContentStore` を GitHub → Artifacts へ差し替える)。
+  (例: コンテンツ正本を移すときは `resolveContentStore(env)` が返す `IContentStore` の
+  実装を差し替えるだけで、domain / services / handlers は変えない)。
 - **不正な状態を型で表現不能にする** — 制約は実行時チェックだけに頼らず型で表す。VO は
   factory でのみ生成 (バリデーション込み) し immutable、ドメインエラーは typed class、
   エンティティの永続化状態は `IPersisted` / `IUnpersisted` でコンパイル時に区別する。
@@ -22,7 +23,7 @@
   secure headers・RFC 9457 Problem Details といった既定の防御を、利便性のために緩めたり
   外したりしない。
 - **意図を名前と記録に残す** — マイグレーション・ADR・ページファイル名は意図を表す名前にする。
-  恒常的な規範は rules/ に、決定の理由は ADR に残す (規範＝可変, ADR＝不変)。
+  恒常的な規範は rules/ に、いまの設計とその理由は ADR に残す。
 - **小さく・純粋に・宣言的に** — 単一責任、副作用のない純粋関数、非破壊操作、ガード節、TDD を
   コードレベルの既定とする。
 
@@ -60,8 +61,7 @@ app/
 │   │   │   ├── temporal.ts     # Temporal.Instant ↔ D1 integer 変換
 │   │   │   └── test-helper.ts  # テスト用 D1 ヘルパー
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
-│   │   ├── artifacts/          # Cloudflare Artifacts のコンテンツストア実装
-│   │   ├── github/             # GitHub リポジトリのコンテンツストア実装
+│   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)
@@ -117,14 +117,14 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 - **設計判断の記録** → `docs/adr/`。命名・運用は adr.md に従う。
 - **プロジェクト規約** → `.claude/rules/`。追加したら CLAUDE.md に `@` で登録する。
 
-## Hono と React Router の分担 (ADR 0010)
+## Hono と React Router の分担 (ADR 0006)
 
 1. ブラウザのリクエストは `workers/app.ts` → `getApp()` の Hono に入る
 2. Hono が先に応答するのは横断的関心事とページ以外のエンドポイント:
    secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
    ノートの原文 Markdown (`/notes/<slug>.md`)
 3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
-4. React Router がルートを解決し、loader が `context.cloudflare.env` から
+4. React Router がルートを解決し、loader が `context.get(cloudflareContext).env` から
    `backend/handlers` のローダを呼んでデータを揃える
 5. `entry.server.tsx` が SSR し、クライアントで `HydratedRouter` が hydrate する
 6. 後続のページ遷移は `<Link>` により loader だけを叩く
@@ -134,7 +134,7 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 - ページ内アンカー (目次など) は `react-router` の `Link` を使う。素の `<a href="#...">`
   だと `<ScrollRestoration>` がブラウザのハッシュジャンプを打ち消してスクロールしない。
 - CSP nonce は `secureHeadersNonce` → `AppLoadContext.nonce` → `NonceContext` の順で運ぶ。
-  `<Scripts>` / `<ScrollRestoration>` には必ず nonce を渡す (ADR 0009)。
+  `<Scripts>` / `<ScrollRestoration>` には必ず nonce を渡す (ADR 0007)。
 - OGP・JSON-LD は `frontend/lib/page-meta.ts` の `buildPageMeta` 経由で組み立てる。
   React Router の meta は最も深いルートのものだけが採用され親とマージされないため、
   各ページが一式を出す必要がある。
@@ -230,7 +230,7 @@ CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザ
 - 自前で出す inline `<script>` には `c.get("secureHeadersNonce")` の nonce を付ける
 - `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
 
-### CSP は development では付かない (ADR 0011)
+### CSP は development では付かない (ADR 0007)
 
 Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
 `style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。そのため
@@ -259,13 +259,7 @@ critical CSS (`data-react-router-critical-css`) が `nonce=""` の `<link>` を�
 クライアント側の context には nonce が入らないため。本番の HTML にはこの `<link>`
 自体が存在しないので発生しない。**本番ビルドで再現しなければ追わなくてよい。**
 
-判断の経緯は [ADR 0009](../../docs/adr/0009-strict-csp-without-unsafe-inline.md) と
-[ADR 0011](../../docs/adr/0011-csp-enforced-outside-development.md) を参照。
-
-> ⚠️ ADR 0011 の本文は確認手順を `pnpm run preview` と書いているが、これは誤り
-> (preview は development ビルドなので CSP が付かない)。ADR は不変なので本文は
-> 直さず、**手順は本ファイルの `pnpm run preview:staging` が正**とする
-> (adr.md の「規範＝可変, ADR＝不変」に従う)。
+判断の経緯は [ADR 0007](../../docs/adr/0007-strict-csp-outside-development.md) を参照。
 
 ## URL 命名規則
 

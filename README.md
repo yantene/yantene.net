@@ -52,7 +52,7 @@ pnpm dev                # 開発サーバー (http://localhost:5173)
 app/
 ├── backend/                # Hono バックエンド (Clean Architecture)
 │   ├── domain/             # ドメイン層 (インフラ非依存): entity / VO / repo・port interface
-│   ├── infra/              # インフラ層: d1 / r2 / artifacts / console (domain の interface を実装)
+│   ├── infra/              # インフラ層: d1 / r2 / github / console (domain の interface を実装)
 │   ├── services/           # アプリケーションサービス (ユースケース)
 │   ├── handlers/           # HTTP ハンドラ (Composition Root): notes/ / feed / og / seo
 │   ├── middleware/         # BASIC 認証
@@ -76,7 +76,7 @@ docs/adr/                   # Architecture Decision Records (設計判断の記�
 
 Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` が組み立てた Hono が
 API・フィード等を先に処理し、残りを React Router のページルーティングへ委譲する
-(詳細は [ADR 0010](docs/adr/0010-react-router-v7-over-inertia.md))。
+(詳細は [ADR 0006](docs/adr/0006-react-router-framework-mode.md))。
 
 ## 使い方レシピ
 

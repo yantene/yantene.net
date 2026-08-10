@@ -6,9 +6,10 @@
 
 ## Context / 背景
 
-エッジランタイム (Cloudflare Workers) 上に Hono + Inertia.js でフルスタックアプリケーションを
-構築するにあたり、ビジネスロジックとインフラ技術の結合度が問題になる。D1 (SQLite)・R2・KV など
-Cloudflare 固有のバインディングにドメインロジックが直接依存すると、テスト困難・技術ロックインが生じる。
+エッジランタイム (Cloudflare Workers) 上に Hono + React Router でフルスタックアプリケーションを
+構築するにあたり、ビジネスロジックとインフラ技術の結合度が問題になる。D1 (SQLite)・R2 など
+Cloudflare 固有のバインディングや、コンテンツ正本の外部 API にドメインロジックが直接依存すると、
+テスト困難・技術ロックインが生じる。
 
 また、読み取りと書き込みでは要件が異なる場合が多い (一覧はページネーション付き・詳細は
 単一取得・書き込みはバリデーション + 永続化)。単一のリポジトリに両方を持たせると
@@ -34,6 +35,10 @@ Cloudflare 固有のバインディングにドメインロジックが直接依
 - リポジトリは Command (書き込み) と Query (読み取り) に分割する。
 - 具象クラスの生成・注入は Composition Root (handlers/) のみが行う。
 - レイヤー間の依存方向は `domain ← services ← handlers / middleware, infra → domain` とする。
+
+この抽象は実際に効いている。コンテンツ正本の読み取り口はドメインの `IContentStore`
+(`listTree` / `readFile`) に閉じており、どのストレージを正本にするかは infra の実装詳細に
+とどまる ([0004](0004-github-as-content-source-of-truth.md))。
 
 ## 帰結 / Consequences
 

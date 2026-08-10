@@ -2,7 +2,7 @@
  * Service Worker を登録する。
  *
  * 登録は inline script ではなくここから行う。CSP が `script-src 'self'` + nonce で
- * inline を許していないため (ADR 0009)。Service Worker 自体の方針は ADR 0015 を参照。
+ * inline を許していないため (ADR 0007)。Service Worker 自体の方針は ADR 0010 を参照。
  *
  * 失敗しても読む分にはまったく困らないので、握って記録だけ残す。開発中は登録しない
  * (蓄えが挟まると、直したはずのものが古いまま出て混乱するため)。

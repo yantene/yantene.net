@@ -2,7 +2,7 @@
 
 ```bash
 # 開発
-pnpm dev              # 開発サーバー起動 (CSP は付かない: ADR 0011)
+pnpm dev              # 開発サーバー起動 (CSP は付かない: ADR 0007)
 pnpm run preview      # 本番ビルドをローカルで確認 (development 相当・CSP なし)
 pnpm run preview:staging  # staging ビルドで確認。CSP を検証したいときはこちら
 pnpm test             # テスト watch mode

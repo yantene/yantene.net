@@ -5,8 +5,8 @@ import type { IValueObject } from "~/backend/domain/shared";
 // VO 化する前提で、ここでは解決済みの「ルート相対パス」だけを受け入れる。
 //
 // 絶対 URL は弾く。これは 2 つの規約を同時に満たすため:
-//   - Artifacts の直接 URL を露出させない (product 規約)。絶対 URL を許すと
-//     未解決の生 Artifacts URL がそのまま通り得る。
+//   - コンテンツ正本の直接 URL を露出させない (product 規約)。絶対 URL を許すと
+//     未解決の生の正本 URL がそのまま通り得る。
 //   - 画像はアセット API (self) 経由で配信する。CSP の img-src は 'self' data:
 //     のみで外部ホストの画像は表示できないため、絶対 URL を持たせても無意味。
 const MAX_LENGTH = 2048;

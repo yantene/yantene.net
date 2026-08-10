@@ -27,7 +27,7 @@ interface NoteFields<T extends IPersisted | IUnpersisted> {
   readonly lastModifiedOn: Temporal.PlainDate;
   /**
    * コンテンツ正本 (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
-   * (Artifacts のツリーが返すファイルハッシュ)。
+   * (正本のツリーが返すファイルハッシュ)。
    */
   readonly sourceHash: string;
   /** D1 行の作成・更新時刻 (永続化メタデータ。コンテンツ日付とは別)。 */

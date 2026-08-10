@@ -8,7 +8,7 @@ export interface CachedAsset {
 
 /**
  * ノート本文 (原文 Markdown・パース済み MDAST) と画像アセットのキャッシュ。
- * 通常リクエストはこのキャッシュから配信し、Artifacts には触らない (ADR 0005)。
+ * 通常リクエストはこのキャッシュから配信し、正本には触らない (ADR 0004)。
  * ドメインはストレージ技術 (R2) を知らない。infra が実装する。
  */
 export interface INoteContentCache {

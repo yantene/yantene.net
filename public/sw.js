@@ -1,4 +1,4 @@
-// yantene.net の Service Worker。設計の背景は docs/adr/0015 を参照。
+// yantene.net の Service Worker。設計の背景は docs/adr/0010 を参照。
 // このファイルはビルドを介さずそのまま配られるので、注記は動作を追うのに要る分だけ。
 
 // 蓄えの意味が変わったら上げる (古い蓄えは有効化時に捨てる)。

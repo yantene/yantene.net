@@ -12,14 +12,14 @@ const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
  * ノートの原文 Markdown を返す公開ルータ (`/notes/<slug>.md`)。認証不要。
  *
  * ページではなく「ファイルとしてのノート」を返すエンドポイントなので、React Router へ
- * 委譲せず Hono 側で完結させる (ADR 0010)。`.md` は index.ts で `app.all("*")` より前に
+ * 委譲せず Hono 側で完結させる (ADR 0006)。`.md` は index.ts で `app.all("*")` より前に
  * マウントし、素の `/notes/<slug>` はこれまで通りページ描画に落ちる。
  *
  * slug に `.` は使えない (NoteSlug の制約) ため、`<slug>.md` を別のノートと取り違える
  * 余地はない。`.md` を落とした残りが slug として妥当でなければ 404。
  *
  * 本文は正本そのまま (フロントマター込み・画像の相対パスも書き換えない) を返す。
- * 解決済みの URL が要るクライアントには MDAST を返す JSON API がある (ADR 0006)。
+ * 解決済みの URL が要るクライアントには MDAST を返す JSON API がある (ADR 0005)。
  */
 export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();

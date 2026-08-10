@@ -16,14 +16,14 @@ describe("ImageUrl", () => {
     expect(() => ImageUrl.create("cover.png")).toThrow(InvalidImageUrlError);
   });
 
-  it("rejects absolute URLs, including raw Artifacts URLs", () => {
-    // 絶対 URL は Artifacts の直接 URL 露出につながり、CSP (img-src 'self') でも
+  it("rejects absolute URLs, including raw source-repository URLs", () => {
+    // 絶対 URL は正本の直接 URL 露出につながり、CSP (img-src 'self') でも
     // 表示できないため弾く。
     expect(() => ImageUrl.create("https://example.com/a.png")).toThrow(
       InvalidImageUrlError,
     );
     expect(() =>
-      ImageUrl.create("https://artifacts.example/raw/notes/x/cover.png"),
+      ImageUrl.create("https://raw.example/notes/x/cover.png"),
     ).toThrow(InvalidImageUrlError);
   });
 

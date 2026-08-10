@@ -26,7 +26,7 @@ const noteSourcePattern = /^notes\/[^/]+\.md$/;
 export interface RefreshResult {
   /** 再処理した slug。 */
   readonly processed: string[];
-  /** 削除した slug (Artifacts から消えたノート)。 */
+  /** 削除した slug (正本から消えたノート)。 */
   readonly deleted: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
@@ -58,14 +58,14 @@ class NoteContentError extends Error {
 }
 
 /**
- * Artifacts → D1 + R2 のコンテンツ同期サービス。
+ * 正本 (GitHub) → D1 + R2 のコンテンツ同期サービス。
  *
  * ツリーを取得し、md + アセットの合成ハッシュで変更を検出、変わったノートだけ内容を
  * 読み直して MDAST を R2 にキャッシュ・メタデータを D1 に upsert・画像を R2 にキャッシュ
- * する。Artifacts から消えたノートは D1 / R2 から掃除する (ADR 0005)。
+ * する。正本から消えたノートは D1 / R2 から掃除する (ADR 0004)。
  *
  * コンテンツ不正 (フロントマター欠落等) はスキップして結果に記録するが、infra 障害
- * (Artifacts / R2 / D1) は握りつぶさず throw する (fail-loud)。
+ * (正本 / R2 / D1) は握りつぶさず throw する (fail-loud)。
  */
 export class NotesRefreshService {
   constructor(
@@ -289,7 +289,7 @@ function buildNoteContent(
       sourceHash: group.contentHash,
     });
 
-    // 本文中の相対画像 URL をアセット API URL に解決してからキャッシュする (ADR 0006)。
+    // 本文中の相対画像 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
     resolveMdastImageUrls(parsed.mdast, slug);
     return { note, mdast: parsed.mdast };
   } catch (error) {

@@ -42,7 +42,7 @@ const baseSecureHeaderOptions: SecureHeadersOptions = {
   },
 };
 
-/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0009)。 */
+/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0007)。 */
 const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
   ...baseSecureHeaderOptions,
   contentSecurityPolicy: {
@@ -65,7 +65,7 @@ const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> = secureHeaders(
 );
 
 /**
- * CSP は development でのみ外す (ADR 0011)。
+ * CSP は development でのみ外す (ADR 0007)。
  *
  * Vite の dev サーバーは HMR で CSS を inline `<style>` として注入するため、
  * `style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。

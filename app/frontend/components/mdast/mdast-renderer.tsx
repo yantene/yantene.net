@@ -275,7 +275,7 @@ export interface MdastRendererProps {
 
 /**
  * MDAST を React 要素に変換して描画する (MDAST → HAST → React)。
- * サーバー側では本文を HTML 化せず MDAST のまま渡し、ここでレンダリングする (ADR 0006)。
+ * サーバー側では本文を HTML 化せず MDAST のまま渡し、ここでレンダリングする (ADR 0005)。
  */
 export function MdastRenderer({
   node,

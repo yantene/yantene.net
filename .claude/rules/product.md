@@ -31,7 +31,8 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 
 ## コンテンツワークフロー
 
-手元で Markdown を書き、Cloudflare Artifacts リポジトリに `git push` する。管理画面は設けない。
+手元で Markdown を書き、コンテンツ正本のリポジトリ (`yantene/notes`) に `git push` する。
+その後 `POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
 
 ### 実装変更を既存ノートに反映するとき (force refresh)
 
@@ -55,11 +56,11 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 ## データモデルとストレージ戦略
 
-コンテンツの正本は Cloudflare Artifacts (Git ベースのストレージ) に置く。
-D1 はメタデータのインデックス、R2 はパース済み MDAST と画像のキャッシュを担う。
-設計判断の詳細は [ADR 0005](../../docs/adr/0005-artifacts-as-content-source-of-truth.md) を参照。
+コンテンツの正本は GitHub リポジトリ (`yantene/notes`) に置く。
+D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・画像のキャッシュを担う。
+設計判断の詳細は [ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) を参照。
 
-- Artifacts: Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
+- 正本 (GitHub): Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
 - R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
@@ -90,19 +91,19 @@ lastModifiedOn: 2026-01-20
 
 Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) のまま JSON API で返す。
 フロントエンド側の MDAST/HAST レンダラーが React コンポーネントに変換する。
-設計判断の詳細は [ADR 0006](../../docs/adr/0006-mdast-over-html-rendering.md) を参照。
+設計判断の詳細は [ADR 0005](../../docs/adr/0005-mdast-over-html-rendering.md) を参照。
 
 ### 画像はアセット API 経由で配信
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
-`/api/v1/notes/<slug>/assets/<path>` に解決する。Artifacts の直接 URL を露出させない。
+`/api/v1/notes/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
 
 ### 原文は `/notes/<slug>.md` で取れる
 
 記事ページ (`/notes/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
 **そのまま** (フロントマター込み・画像の相対パスも書き換えない) 返す。R2 の原文キャッシュ
 から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
-[ADR 0014](../../docs/adr/0014-serve-note-source-markdown-verbatim.md) を参照。
+[ADR 0009](../../docs/adr/0009-serve-note-source-markdown-verbatim.md) を参照。
 
 ## 補助ドメイン
 

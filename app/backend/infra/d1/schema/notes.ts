@@ -7,9 +7,9 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 /**
- * ノートのメタデータインデックス。コンテンツ正本は Cloudflare Artifacts、
+ * ノートのメタデータインデックス。コンテンツ正本は GitHub リポジトリ、
  * 本文 (MDAST) と画像は R2 にあり、この D1 テーブルは一覧・ルーティング用の
- * メタデータだけを保持する (ADR 0005)。
+ * メタデータだけを保持する (ADR 0004)。
  *
  * - published_on / last_modified_on: フロントマター由来の日付。ISO 日付文字列
  *   ("YYYY-MM-DD") で保存し、辞書順ソート = 日付順ソートを利用する。

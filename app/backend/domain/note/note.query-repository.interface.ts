@@ -59,7 +59,7 @@ export interface INoteQueryRepository {
   listTags(): Promise<readonly NoteTagCount[]>;
   /**
    * 全ノートの slug → sourceHash の対応を返す。refresh の変更検出に使う
-   * (Artifacts のツリーが返すハッシュと突き合わせる)。
+   * (正本のツリーが返すハッシュと突き合わせる)。
    */
   listSourceHashes(): Promise<ReadonlyMap<string, string>>;
 }
