@@ -23,38 +23,38 @@ function executionCtx(): ExecutionContext {
  */
 /* eslint-disable no-secrets/no-secrets -- 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。 */
 const noteRedirects: readonly (readonly [string, string])[] = [
-  ["/i_bought_arduino.html", "/notes/i-bought-arduino"],
-  ["/sugoroku_by_c.html", "/notes/sugoroku-by-c"],
-  ["/one_month_before_the_fe_exam.html", "/notes/one-month-before-the-fe-exam"],
+  ["/i_bought_arduino.html", "/notes/playing-with-arduino"],
+  ["/sugoroku_by_c.html", "/notes/sugoroku-in-c"],
+  ["/one_month_before_the_fe_exam.html", "/notes/one-month-until-fe-exam"],
   ["/aichi_breaker.html", "/notes/aichi-breaker"],
   ["/passed_fe_exam.html", "/notes/passed-fe-exam"],
-  ["/first_challenge_of_topcoder.html", "/notes/first-challenge-of-topcoder"],
-  ["/practice_of_topcoder.html", "/notes/practice-of-topcoder"],
-  ["/first_challenge_of_srm.html", "/notes/first-challenge-of-srm"],
+  ["/first_challenge_of_topcoder.html", "/notes/first-topcoder-contest"],
+  ["/practice_of_topcoder.html", "/notes/practicing-topcoder"],
+  ["/first_challenge_of_srm.html", "/notes/first-topcoder-srm"],
   ["/practice_practice.html", "/notes/practice-practice"],
-  ["/combsort.html", "/notes/combsort"],
-  ["/opencobol_in_ubuntu.html", "/notes/opencobol-in-ubuntu"],
-  ["/clang_for_joi.html", "/notes/clang-for-joi"],
+  ["/combsort.html", "/notes/comb-sort"],
+  ["/opencobol_in_ubuntu.html", "/notes/opencobol-on-ubuntu"],
+  ["/clang_for_joi.html", "/notes/back-to-c-for-joi"],
   ["/amidakuji.html", "/notes/amidakuji"],
-  ["/joi2009_yosen_q4.html", "/notes/joi2009-yosen-q4"],
-  ["/joi2009_yosen_q5_failed.html", "/notes/joi2009-yosen-q5-failed"],
-  ["/amidakuji_by_cobol.html", "/notes/amidakuji-by-cobol"],
-  ["/joi2009_yosen_q5_succeed.html", "/notes/joi2009-yosen-q5-succeed"],
+  ["/joi2009_yosen_q4.html", "/notes/joi-2009-qual-q4"],
+  ["/joi2009_yosen_q5_failed.html", "/notes/joi-2009-qual-q5-failed"],
+  ["/amidakuji_by_cobol.html", "/notes/amidakuji-in-cobol"],
+  ["/joi2009_yosen_q5_succeed.html", "/notes/joi-2009-qual-q5-solved"],
   ["/passed_ap_exam.html", "/notes/passed-ap-exam"],
   [
     "/svt1311aj_linux_brightness_adjustment.html",
-    "/notes/svt1311aj-linux-brightness-adjustment",
+    "/notes/vaio-svt1311aj-brightness-on-linux",
   ],
   ["/code_thanks_festival_2014.html", "/notes/code-thanks-festival-2014"],
   [
     "/install_arch_linux_on_uefi_machine.html",
     "/notes/install-arch-linux-on-uefi-machine",
   ],
-  ["/tut_tani_checker.html", "/notes/tut-tani-checker"],
-  ["/tut_photographs.html", "/notes/tut-photographs"],
-  ["/install_arch_on_kvi-70b.html", "/notes/install-arch-on-kvi-70b"],
+  ["/tut_tani_checker.html", "/notes/tut-credit-checker"],
+  ["/tut_photographs.html", "/notes/tut-in-photos"],
+  ["/install_arch_on_kvi-70b.html", "/notes/install-arch-linux-on-kvi-70b"],
   ["/hacku_2016.html", "/notes/hacku-2016"],
-  ["/use_tutvpn_wisely.html", "/notes/use-tutvpn-wisely"],
+  ["/use_tutvpn_wisely.html", "/notes/use-tut-vpn-wisely"],
   ["/invitation_to_flared.html", "/notes/invitation-to-flared"],
 ];
 /* eslint-enable no-secrets/no-secrets */
@@ -94,7 +94,7 @@ describe("legacy note URLs", () => {
     );
 
     expect(res.status).toBe(308);
-    expect(res.headers.get("location")).toBe("/notes/combsort");
+    expect(res.headers.get("location")).toBe("/notes/comb-sort");
   });
 
   it("caches the redirect under the same rule as note content", async () => {
