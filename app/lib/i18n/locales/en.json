@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "yantene.net",
-    "description": "Web application built with Hono + Inertia.js + React on Cloudflare Workers"
+    "description": "Web application built with Hono + React Router + React on Cloudflare Workers"
   },
   "home": {
     "heading": "yantene.net",

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "yantene.net",
-    "description": "Hono + Inertia.js + React + Cloudflare Workers で構成される Web アプリケーション"
+    "description": "Hono + React Router + React + Cloudflare Workers で構成される Web アプリケーション"
   },
   "home": {
     "heading": "yantene.net",
