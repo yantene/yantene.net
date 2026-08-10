@@ -82,7 +82,8 @@ function isCacheable(url) {
 
 // 蓄えられる応答か。
 //
-// 転送を経たものは put が拒むので外す (/tags -> /notes のような恒久転送がある)。
+// 転送を経たものは put が拒むので外す (/combsort.html -> /notes/combsort のような
+// 旧サイトからの恒久転送がある)。
 // 弾かないと put の例外で「通信できなかった」の扱いになり、オフラインの案内が出てしまう。
 function isStorable(response) {
   return response.ok && !response.redirected;

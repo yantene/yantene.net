@@ -1,5 +1,5 @@
-/* eslint-disable no-secrets/no-secrets -- 旧サイトの記事スラグを高エントロピーの秘匿情報と誤検知するため無効化 (秘密は含まない)。 */
 import { describe, expect, it } from "vitest";
+import { noteSlugByLegacySlug } from "./legacy-redirects.handler";
 import { createTestApp } from "~/backend/test-app";
 
 function env(): Env {
@@ -21,6 +21,7 @@ function executionCtx(): ExecutionContext {
  * 旧サイトの記事 URL と移転先の対応表。実装の表とは別に、仕様としてここに書き下す
  * (取り違え・取りこぼしをテスト側から独立に押さえるため)。
  */
+/* eslint-disable no-secrets/no-secrets -- 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。 */
 const noteRedirects: readonly (readonly [string, string])[] = [
   ["/i_bought_arduino.html", "/notes/i-bought-arduino"],
   ["/sugoroku_by_c.html", "/notes/sugoroku-by-c"],
@@ -56,10 +57,14 @@ const noteRedirects: readonly (readonly [string, string])[] = [
   ["/use_tutvpn_wisely.html", "/notes/use-tutvpn-wisely"],
   ["/invitation_to_flared.html", "/notes/invitation-to-flared"],
 ];
+/* eslint-enable no-secrets/no-secrets */
 
 describe("legacy note URLs", () => {
-  it("covers every article of the old site", () => {
+  // 実装の表に余分なエントリが紛れると、404 になる URL への恒久リダイレクトが
+  // 読者のブラウザに焼き付く。件数を実装側から取って突き合わせる。
+  it("covers every article of the old site and nothing else", () => {
     expect(noteRedirects).toHaveLength(27);
+    expect(noteSlugByLegacySlug.size).toBe(noteRedirects.length);
   });
 
   it.each(noteRedirects)("permanently redirects %s to %s", async (from, to) => {
@@ -80,6 +85,7 @@ describe("legacy note URLs", () => {
     expect(res.status).toBe(404);
   });
 
+  // Hono は HEAD を GET として dispatch するので、GET だけの登録で HEAD にも応える。
   it("answers a HEAD request the same way", async () => {
     const res = await createTestApp().request(
       "/combsort.html",
@@ -91,10 +97,22 @@ describe("legacy note URLs", () => {
     expect(res.headers.get("location")).toBe("/notes/combsort");
   });
 
-  it("caches the redirect for a day", async () => {
+  it("caches the redirect under the same rule as note content", async () => {
     const res = await createTestApp().request("/combsort.html", {}, env());
 
-    expect(res.headers.get("cache-control")).toBe("public, max-age=86400");
+    expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+  });
+
+  /*
+   * ルート直下でカスタム正規表現のパラメータを使うと、Hono の SmartRouter が
+   * RegExpRouter を諦めて TrieRouter に落ち、この 27 本のためにアプリ全体のリクエストが
+   * 遅いマッチャーを通ることになる。記事を静的パスで登録している理由をここで固定する。
+   */
+  it("keeps the whole app on the faster router", async () => {
+    const app = createTestApp();
+    await app.request("/combsort.html", {}, env());
+
+    expect(app.router.name).toBe("SmartRouter + RegExpRouter");
   });
 });
 
@@ -123,6 +141,7 @@ describe("legacy pages other than articles", () => {
   });
 
   // 旧サイトのタグには `GNU/Linux` のようにスラッシュを含むものがある。
+  /* eslint-disable no-secrets/no-secrets -- 符号化したタグ名を高エントロピーの秘匿情報と誤検知するため (秘密は含まない)。 */
   it("escapes a slash inside a tag", async () => {
     const res = await createTestApp().request(
       "/list.html?tag=GNU%2FLinux",
@@ -132,6 +151,7 @@ describe("legacy pages other than articles", () => {
 
     expect(res.headers.get("location")).toBe("/notes?tag=GNU%2FLinux");
   });
+  /* eslint-enable no-secrets/no-secrets */
 });
 
 describe("legacy image URLs", () => {
@@ -148,9 +168,25 @@ describe("legacy image URLs", () => {
     );
   });
 
-  it("lets a site-wide asset fall through to the page router", async () => {
+  /*
+   * パスパラメータは復号済みで届く。素通しすると `#` 以降が fragment に化けて
+   * 別のリソースを指し、その 404 がキャッシュされてしまう。
+   */
+  it("re-encodes characters that would change the target", async () => {
     const res = await createTestApp().request(
-      "/images/logo.svg",
+      "/images/2016-09-26-hacku_2016/a%23b.png",
+      {},
+      env(),
+    );
+
+    expect(res.headers.get("location")).toBe(
+      "/api/v1/notes/hacku-2016/assets/a%23b.png",
+    );
+  });
+
+  it("lets a directory without a date prefix fall through", async () => {
+    const res = await createTestApp().request(
+      "/images/icons/logo.svg",
       {},
       env(),
       executionCtx(),
