@@ -74,8 +74,8 @@ self.addEventListener("fetch", (event) => {
 // 鮮度が要るものは触らない。
 function isCacheable(url) {
   const path = url.pathname;
-  if (path.startsWith("/api/") || path.startsWith("/auth/")) return false;
-  if (["/logout", "/feed.xml", "/sitemap.xml"].includes(path)) return false;
+  if (path.startsWith("/api/")) return false;
+  if (["/feed.xml", "/sitemap.xml"].includes(path)) return false;
   // 原文 Markdown は保存目的で開かれるので素通しにする。
   return !path.endsWith(".md");
 }
