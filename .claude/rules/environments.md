@@ -1,13 +1,17 @@
 # 環境構成
 
-| 環境        | トリガー          | URL                         | DB                          |
-| ----------- | ----------------- | --------------------------- | --------------------------- |
-| development | ローカル          | localhost                   | yantene-development (local) |
-| staging     | PR / push to main | https://staging.yantene.net | yantene-staging             |
-| production  | GitHub Release    | https://yantene.net         | yantene-production          |
+| 環境        | トリガー          | URL                                            | DB                          |
+| ----------- | ----------------- | ---------------------------------------------- | --------------------------- |
+| development | ローカル          | localhost                                      | yantene-development (local) |
+| staging     | PR / push to main | https://staging.yantene.net                    | yantene-staging             |
+| production  | GitHub Release    | https://yantene-production.yantene.workers.dev | yantene-production          |
 
 staging は workers.dev (`yantene-staging.yantene.workers.dev`) からも引ける。PR ごとの
 preview デプロイがプレビュー URL を workers.dev 上に作るため、両方を有効にしている。
+
+production は当面 workers.dev で動かす。`yantene.net` は今も旧サイト (GitHub Pages) を
+向いており、カスタムドメインを設定すると「デプロイした瞬間が本番公開」になって事前確認の
+余地が無いため。中身を確認したうえで切り替える ([#130](https://github.com/yantene/yantene.net/issues/130))。
 
 ビルド時に環境を切り替える。
 
