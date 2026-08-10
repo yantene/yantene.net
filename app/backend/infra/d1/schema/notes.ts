@@ -26,8 +26,8 @@ export const notes = sqliteTable(
     publishedOn: text("published_on").notNull(),
     lastModifiedOn: text("last_modified_on").notNull(),
     // コンテンツ正本のリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
-    // refresh の変更検出に使う。既存行への ADD COLUMN を安全にするため DEFAULT '' を持つ
-    // (空ハッシュは次回 refresh で必ず不一致になり再処理される)。
+    // refresh の変更検出に使う。既定は空ハッシュで、これは次回 refresh で必ず不一致に
+    // なり再処理される (書き損じた行が「同じ内容」として素通りしない)。
     sourceHash: text("source_hash").notNull().default(""),
     /*
      * 読まれた回数と、そこから作る人気の目安。
