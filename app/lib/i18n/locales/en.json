@@ -48,14 +48,5 @@
     "placeholder": "Type keywords",
     "empty": "No matching notes.",
     "resultsFor": "Results for \"{{query}}\" — {{count}}"
-  },
-  "series": {
-    "label": "Series",
-    "count": "{{count}} articles",
-    "position": "{{position}} of {{total}}",
-    "notFound": {
-      "title": "Series not found",
-      "heading": "Series not found"
-    }
   }
 }

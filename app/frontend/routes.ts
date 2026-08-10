@@ -9,5 +9,4 @@ export default [
 
   route("notes", "routes/notes.tsx"),
   route("notes/:slug", "routes/notes.$slug.tsx"),
-  route("series/:slug", "routes/series.$slug.tsx"),
 ] satisfies RouteConfig;

@@ -48,14 +48,5 @@
     "placeholder": "キーワードを入力",
     "empty": "一致するノートがない。",
     "resultsFor": "「{{query}}」の検索結果 — {{count}} 件"
-  },
-  "series": {
-    "label": "連載",
-    "count": "全 {{count}} 記事",
-    "position": "{{position}} / {{total}}",
-    "notFound": {
-      "title": "連載が見つからない",
-      "heading": "連載が見つからない"
-    }
   }
 }

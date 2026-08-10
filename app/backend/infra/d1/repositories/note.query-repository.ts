@@ -157,16 +157,6 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       .filter((note): note is Note => note !== undefined);
   }
 
-  async listBySeries(seriesSlug: string): Promise<readonly Note[]> {
-    const rows = await this.db
-      .select()
-      .from(notes)
-      .where(eq(notes.seriesSlug, seriesSlug))
-      .orderBy(asc(notes.seriesOrder), asc(notes.slug));
-    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
-    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
-  }
-
   /**
    * id をまとめて引く。並び順は呼び出し側が決めるので、ここでは整えない。
    * (人気順のように、DB の並びとは別の順序で使われるため)
