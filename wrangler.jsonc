@@ -63,11 +63,14 @@
       ],
     },
     "production": {
-      // まずは workers.dev (yantene-production.yantene.workers.dev) で本番を立ち上げる。
-      // yantene.net は今も GitHub Pages を向いており、カスタムドメインを設定すると
-      // 「デプロイした瞬間が本番公開」になって事前確認の余地が無いため。
-      // 中身を確認したうえで yantene.net へ切り替える (#130)。
-      "workers_dev": true,
+      // workers.dev は開かない。同じ内容が 2 つの URL で引けると、検索エンジンから見て
+      // 重複コンテンツになるため。
+      "routes": [
+        {
+          "pattern": "yantene.net",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "APP_ENV": "production",
         "GITHUB_OWNER": "yantene",

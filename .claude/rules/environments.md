@@ -1,21 +1,16 @@
 # 環境構成
 
-| 環境        | トリガー          | URL                                            | DB                          |
-| ----------- | ----------------- | ---------------------------------------------- | --------------------------- |
-| development | ローカル          | localhost                                      | yantene-development (local) |
-| staging     | PR / push to main | https://staging.yantene.net                    | yantene-staging             |
-| production  | GitHub Release    | https://yantene-production.yantene.workers.dev | yantene-production          |
+| 環境        | トリガー          | URL                         | DB                          |
+| ----------- | ----------------- | --------------------------- | --------------------------- |
+| development | ローカル          | localhost                   | yantene-development (local) |
+| staging     | PR / push to main | https://staging.yantene.net | yantene-staging             |
+| production  | GitHub Release    | https://yantene.net         | yantene-production          |
 
 staging は workers.dev (`yantene-staging.yantene.workers.dev`) からも引ける。PR ごとの
 preview デプロイがプレビュー URL を workers.dev 上に作るため、両方を有効にしている。
 
-production は当面 workers.dev で動かす。`yantene.net` は今も旧サイト (GitHub Pages) を
-向いており、カスタムドメインを設定すると「デプロイした瞬間が本番公開」になって事前確認の
-余地が無いため。中身を確認したうえで切り替える ([#130](https://github.com/yantene/yantene.net/issues/130))。
-
-> ⚠️ production は BASIC 認証を持たないため `robots.txt` は `Allow: /` を返し、sitemap も
-> 公開される。workers.dev で暫定運用している間に検索エンジンへ載ると、独自ドメインへ
-> 移したときに重複コンテンツになる。切り替えまでが長引くなら手を打つこと。
+production は `workers_dev` を開かない。同じ内容が 2 つの URL で引けると、検索エンジンから
+見て重複コンテンツになるため。
 
 ビルド時に環境を切り替える。
 
@@ -79,7 +74,7 @@ staging → staging)。
 ### 4. スモークで確かめる
 
 ```bash
-SMOKE_BASE=https://yantene-production.yantene.workers.dev pnpm run smoke
+SMOKE_BASE=https://yantene.net pnpm run smoke
 ```
 
 1 と 2 の抜けはここで 500 として出る。
