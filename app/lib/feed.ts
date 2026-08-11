@@ -7,7 +7,7 @@
  * 別フィード」に見えてしまう。フロント・バック共通のここを唯一の出どころにする。
  */
 
-const FEED_TITLE = "yantene.net";
+const FEED_TITLE = "やんてね";
 const FEED_SUBTITLE = "yantene の発信を集約するハブ";
 
 export interface FeedIdentity {

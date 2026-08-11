@@ -64,6 +64,20 @@ describe("buildPageMeta", () => {
     );
   });
 
+  // トップは見出しがサイト名そのものなので、機械的に繋ぐと二重になる。
+  it("does not repeat the site title when the page title is the same", () => {
+    const site = translationsFor("ja").meta;
+    const meta = buildPageMeta({
+      locale: "ja",
+      origin,
+      pathname,
+      title: site.title,
+    });
+
+    expect(meta[0]).toEqual({ title: site.title });
+    expect(find(meta, "property", "og:title")).toBe(site.title);
+  });
+
   it("builds an absolute OG image URL from origin and imagePath", () => {
     const meta = buildPageMeta({
       locale: "ja",
@@ -141,14 +155,14 @@ describe("buildPageMeta", () => {
       locale: "ja",
       origin,
       pathname,
-      feed: { path: "/feed.xml?tag=Web", title: "yantene.net — Web" },
+      feed: { path: "/feed.xml?tag=Web", title: "やんてね — Web" },
     });
 
     expect(meta).toContainEqual({
       tagName: "link",
       rel: "alternate",
       type: "application/atom+xml",
-      title: "yantene.net — Web",
+      title: "やんてね — Web",
       href: "https://yantene.net/feed.xml?tag=Web",
     });
   });
