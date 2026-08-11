@@ -11,6 +11,7 @@ import {
 import type { Route } from "./+types/root";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { buildPageMeta } from "~/frontend/lib/page-meta";
+import { feedIdentity } from "~/lib/feed";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 import "./app.css";
 
@@ -43,11 +44,13 @@ export const links: Route.LinksFunction = () => [
   // iOS はホーム画面に置くときに manifest ではなくこれを見る。
   { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
   { rel: "manifest", href: "/manifest.webmanifest" },
+  // 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
+  // フィード本体の <title> がずれる。
   {
     rel: "alternate",
     type: "application/atom+xml",
-    title: "yantene.net",
-    href: "/feed.xml",
+    title: feedIdentity(null).title,
+    href: feedIdentity(null).path,
   },
 ];
 

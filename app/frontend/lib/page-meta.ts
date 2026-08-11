@@ -71,10 +71,14 @@ export function buildPageMeta({
   feed,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
+  /*
+   * ページ名がサイト名と同じときは重ねない。トップは見出しがサイト名そのものなので、
+   * 機械的に繋ぐと「yantene.net | yantene.net」になってしまう。
+   */
   const resolvedTitle =
-    title === undefined || title.length === 0
+    title === undefined || title.length === 0 || title === site.title
       ? site.title
-      : `${title} | ${site.title}`;
+      : `${title} - ${site.title}`;
   const resolvedDescription =
     description === undefined || description.length === 0
       ? site.description
@@ -86,7 +90,8 @@ export function buildPageMeta({
     { title: resolvedTitle },
     { name: "description", content: resolvedDescription },
     { tagName: "link", rel: "canonical", href: url },
-    { property: "og:site_name", content: "yantene.net" },
+    // サイト名は locale に追従させる (英語では仮名が読めないため)。
+    { property: "og:site_name", content: site.title },
     /*
      * コンテンツは日本語なので ja_JP で固定する (locale に連動させない)。
      * UI 文言のロケールは Accept-Language 次第で en になるが、クローラーは
