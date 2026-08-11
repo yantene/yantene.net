@@ -33,11 +33,22 @@ export async function loader({
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin, tag } = loaderData;
   const { title, path } = feedIdentity(tag);
+  const notes = translationsFor(locale).notes;
+  /*
+   * 絞り込んでいるときは、どのタグの一覧かを title に出す。検索結果や共有先では
+   * title しか見えないため、絞り込みなしと同じ名前だと区別が付かない。
+   * 画面の見出しと同じ表現 (filteredByTag) を使って言い回しを揃える。
+   * 置換先は関数で渡す ($& などの特殊な並びをタグ名がそのまま含み得るため)。
+   */
+  const pageTitle =
+    tag === null
+      ? notes.title
+      : notes.filteredByTag.replace("{{tag}}", () => tag);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    title: translationsFor(locale).notes.title,
+    title: pageTitle,
     /*
      * 絞り込んでいないときは何も足さない。root が出すサイト全体のフィードと
      * 同じものになり、リーダーに同じ購読先を二重に見せてしまう。
