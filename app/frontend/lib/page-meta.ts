@@ -78,7 +78,7 @@ export function buildPageMeta({
   const resolvedTitle =
     title === undefined || title.length === 0 || title === site.title
       ? site.title
-      : `${title} | ${site.title}`;
+      : `${title} - ${site.title}`;
   const resolvedDescription =
     description === undefined || description.length === 0
       ? site.description

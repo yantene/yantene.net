@@ -58,9 +58,9 @@ describe("buildPageMeta", () => {
     });
     const site = translationsFor("ja").meta;
 
-    expect(meta[0]).toEqual({ title: `記事タイトル | ${site.title}` });
+    expect(meta[0]).toEqual({ title: `記事タイトル - ${site.title}` });
     expect(find(meta, "property", "og:title")).toBe(
-      `記事タイトル | ${site.title}`,
+      `記事タイトル - ${site.title}`,
     );
   });
 
