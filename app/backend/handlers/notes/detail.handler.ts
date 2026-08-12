@@ -6,17 +6,24 @@ import { recordNoteView, type NoteViewRecording } from "./view-recording";
 import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
+import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import { LinkCardUrl } from "~/backend/domain/link-card";
 import {
   InvalidNoteSlugError,
   NoteNotFoundError,
   NoteSlug,
   NoteTag,
 } from "~/backend/domain/note";
+import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import {
+  D1LinkCardQueryRepository,
+  D1NoteQueryRepository,
+} from "~/backend/infra/d1/repositories";
 import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /** 記事末に出す関連記事の最大件数。 */
 const RELATED_LIMIT = 6;
@@ -50,7 +57,24 @@ async function loadNoteDetail(
       `MDAST cache is missing for an indexed note: ${slug.toString()}`,
     );
   }
-  return { detail: toNoteDetail(note, mdast), noteId: note.id };
+  const linkCards = await loadLinkCards(env, mdast as Root);
+  return { detail: toNoteDetail(note, mdast, linkCards), noteId: note.id };
+}
+
+/**
+ * 本文に貼られたむき出しの URL のカードを引く。
+ *
+ * カードが無い URL は表に載らず、描画側は素のリンクのまま描く。ここで取りに行くことは
+ * しない。通常のリクエストで外部を叩かないため (ADR 0004)、取得は refresh の仕事。
+ */
+async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
+  const urls = collectBareLinkUrls(mdast);
+  if (urls.length === 0) return {};
+
+  const cards = await new D1LinkCardQueryRepository(env.D1).findByUrls(
+    urls.map((url) => LinkCardUrl.create(url)),
+  );
+  return toLinkCardMap(cards);
 }
 
 function parseSlug(raw: string): NoteSlug | undefined {
@@ -116,6 +140,8 @@ export type NoteDetailPageData =
       readonly note: PublicNoteMeta;
       /** パース済み MDAST。loader を通して渡すため具体型で持つ (unknown だと型が落ちる)。 */
       readonly mdast: Root;
+      /** 本文に貼られたむき出しの URL のカード。URL をキーに引く。 */
+      readonly linkCards: LinkCardMap;
       readonly related: readonly PublicNote[];
       readonly headings: readonly TocHeading[];
       /**
@@ -166,6 +192,7 @@ export async function loadNoteDetailPage(
     found: true,
     note: detail.note,
     mdast,
+    linkCards: detail.linkCards,
     related: related.map((note) => toPublicNote(note)),
     headings: extractHeadings(mdast),
     reactions,

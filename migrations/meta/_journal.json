@@ -15,6 +15,13 @@
       "when": 1786525063805,
       "tag": "0001_create_note_reactions_table",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786541413283,
+      "tag": "0002_create_link_cards_table",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,9 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   force refresh を流すまで `/notes/<slug>.md` は 500 になる (fail-loud)
 - 数式の MathML 埋め込み ([#174](https://github.com/yantene/yantene.net/issues/174))。
   force refresh を流すまで既存ノートの `$...$` は素の文字列のまま出る
+- 本文のむき出し URL のリンクカード ([#172](https://github.com/yantene/yantene.net/issues/172))。
+  カードの取得は「変更のあった記事が参照する URL」と「期限切れの既存カード」を対象にするので、
+  導入直後は既存記事のリンクが 1 つもカードにならない。一度 force refresh を流すこと
 
 ## データモデルとストレージ戦略
 
@@ -96,6 +99,13 @@ lastModifiedOn: 2026-01-20
 Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) のまま JSON API で返す。
 フロントエンド側の MDAST/HAST レンダラーが React コンポーネントに変換する。
 設計判断の詳細は [ADR 0005](../../docs/adr/0005-mdast-over-html-rendering.md) を参照。
+
+### むき出しの URL はリンクカードになる
+
+段落がリンク 1 つだけでできているとき、リンク先の OGP を読んでカードとして描く
+(リスト項目と脚注の中は対象外)。取得は refresh のときだけで、読み手のリクエストは
+外部に触れない。取れなければ素のリンクのまま描く。設計判断の詳細は
+[ADR 0014](../../docs/adr/0014-link-cards-from-ogp-only.md) を参照。
 
 ### 画像はアセット API 経由で配信
 
