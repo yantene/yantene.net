@@ -79,11 +79,6 @@
   background-color: var(--color-base-100);
   color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
   cursor: pointer;
-  list-style: none;
-}
-
-.reaction-palette-trigger::-webkit-details-marker {
-  display: none;
 }
 
 .reaction-palette-trigger:hover {

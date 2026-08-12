@@ -64,6 +64,11 @@ export function ReactionBar({
       method="post"
       className="reaction-bar"
       aria-label={t("reaction.reactionsLabel")}
+      /*
+       * 押した位置に留まる。action は記事へ送り返すので、そのままだと読み終えた足元で
+       * 押したのに記事の先頭へ飛ばされる。
+       */
+      preventScrollReset
     >
       {/*
         押すと「いまの 1 つ」を置き換える。すでにハートなら空を送って取り消す
@@ -100,37 +105,46 @@ export function ReactionBar({
       {/*
         パレットの入口。開閉と選択には JS が要るので、動かない環境では出さない
         (ハートと、すでに押されている絵文字は素のフォームとして押せるまま残る)。
+
+        details ではなく button で開閉する。details は state と DOM のトグルが二重になり、
+        閉じたつもりが開いたままになる。ここは JS 前提なので、状態を 1 つに絞ってよい。
       */}
-      <details
-        className="reaction-palette"
-        open={isPaletteOpen}
-        onToggle={(event) => {
-          setPaletteOpen(event.currentTarget.open);
-        }}
-      >
-        <summary
-          className="reaction-palette-trigger press-control"
+      <div className="reaction-palette">
+        <button
+          type="button"
           aria-label={t("reaction.openPalette")}
+          aria-expanded={isPaletteOpen}
+          className="reaction-palette-trigger press-control"
+          onClick={() => {
+            setPaletteOpen(!isPaletteOpen);
+          }}
         >
           <HiOutlineFaceSmile aria-hidden />
           <HiOutlinePlus aria-hidden className="reaction-palette-plus" />
-        </summary>
-        <div className="reaction-palette-panel">
-          {/*
-            選んだらその場で送る。フォームの submit を使わないのは、パレットの中に
-            1902 個の submit ボタンを置かないため (押した 1 つだけを送れば足りる)。
-          */}
-          <EmojiPalette
-            onPick={(emoji) => {
-              setPaletteOpen(false);
-              void fetcher.submit(
-                { emoji: emoji === view.mine ? "" : emoji },
-                { method: "post" },
-              );
-            }}
-          />
-        </div>
-      </details>
+        </button>
+
+        {/*
+          開いたときだけ描く。パレットのデータ (数百 KB) を読むのはこの中なので、
+          畳んだまま置くと記事を開いただけで通信が起きる。
+        */}
+        {isPaletteOpen && (
+          <div className="reaction-palette-panel">
+            {/*
+              選んだらその場で送る。フォームの submit を使わないのは、パレットの中に
+              1902 個の submit ボタンを置かないため (押した 1 つだけを送れば足りる)。
+            */}
+            <EmojiPalette
+              onPick={(emoji) => {
+                setPaletteOpen(false);
+                void fetcher.submit(
+                  { emoji: emoji === view.mine ? "" : emoji },
+                  { method: "post", preventScrollReset: true },
+                );
+              }}
+            />
+          </div>
+        )}
+      </div>
     </fetcher.Form>
   );
 }
