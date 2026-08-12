@@ -10,7 +10,7 @@ import type {
 } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { viewWeightLog } from "~/backend/domain/note-view";
-import { noteTags, notes } from "~/backend/infra/d1/schema";
+import { noteTags, notes, webmentions } from "~/backend/infra/d1/schema";
 import { instantToUnix, plainDateToIso } from "~/backend/infra/d1/temporal";
 
 export class D1NoteCommandRepository implements INoteCommandRepository {
@@ -69,17 +69,21 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
   }
 
   async deleteBySlug(slug: NoteSlug): Promise<void> {
-    // note_tags は FK cascade だが D1 は FK 強制が既定で無効なため明示的に掃除する。
+    // 子テーブルは FK cascade だが D1 は FK 強制が既定で無効なため明示的に掃除する。
     const noteIds = this.db
       .select({ id: notes.id })
       .from(notes)
       .where(eq(notes.slug, slug.toString()));
     await this.db.delete(noteTags).where(inArray(noteTags.noteId, noteIds));
+    await this.db
+      .delete(webmentions)
+      .where(inArray(webmentions.noteId, noteIds));
     await this.db.delete(notes).where(eq(notes.slug, slug.toString()));
   }
 
   async delete(id: NoteId): Promise<void> {
     await this.db.delete(noteTags).where(eq(noteTags.noteId, id));
+    await this.db.delete(webmentions).where(eq(webmentions.noteId, id));
     await this.db.delete(notes).where(eq(notes.id, id));
   }
 }

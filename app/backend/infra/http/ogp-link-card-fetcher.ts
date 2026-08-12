@@ -69,7 +69,7 @@ function truncate(value: string | undefined, max: number): string | undefined {
 /**
  * OGP を読んでカードの材料を作る {@link ILinkCardFetcher} 実装。
  *
- * **この層は外部サイトの不調で throw しない** (ADR 0013)。相手が落ちている・OGP を
+ * **この層は外部サイトの不調で throw しない** (ADR 0014)。相手が落ちている・OGP を
  * 持っていない・画像が大きすぎるといったことはどれも想定内なので、記録を残して
  * undefined を返す。このサイトの既定は fail-loud だが、外部依存はその例外に当たる。
  */
