@@ -8,6 +8,7 @@ import {
   parseNoteContent,
   type ParsedNoteContent,
 } from "./note-content-parser";
+import type { Root } from "mdast";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type {
   INoteCommandRepository,
@@ -23,6 +24,7 @@ import {
   NoteTag,
   NoteTitle,
 } from "~/backend/domain/note";
+import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 const noteSourcePattern = /^notes\/[^/]+\.md$/;
 
@@ -34,6 +36,13 @@ export interface RefreshResult {
   readonly deleted: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
+  /**
+   * 再処理した記事が参照しているカード化対象の URL (重複なし)。
+   *
+   * カードの取得はこのサービスの役目ではない (外部サイトに依存するので失敗の扱いが違う)。
+   * 誰が何を参照しているかだけを返し、取りに行くかどうかは Composition Root が決める。
+   */
+  readonly linkedUrls: string[];
 }
 
 export interface RefreshOptions {
@@ -88,6 +97,7 @@ export class NotesRefreshService {
     const processed: string[] = [];
     const skipped: { path: string; reason: string }[] = [];
     const seen = new Set<string>();
+    const linkedUrls = new Set<string>();
 
     for (const group of groups) {
       const slug = group.slug.toString();
@@ -96,7 +106,8 @@ export class NotesRefreshService {
       const isUnchanged = stored.get(slug) === group.contentHash;
       if (options.force !== true && isUnchanged) continue;
       try {
-        await this.syncNote(group);
+        const urls = await this.syncNote(group);
+        for (const url of urls) linkedUrls.add(url);
         processed.push(slug);
       } catch (error) {
         // コンテンツ不正はスキップ。infra 障害はここで握りつぶさず再送出する。
@@ -109,7 +120,7 @@ export class NotesRefreshService {
     }
 
     const deleted = await this.deleteRemoved(stored, seen);
-    return { processed, deleted, skipped };
+    return { processed, deleted, skipped, linkedUrls: [...linkedUrls] };
   }
 
   /**
@@ -117,8 +128,10 @@ export class NotesRefreshService {
    * エラーとして送出)、成功したら古いキャッシュを消してから原文・MDAST・アセット・
    * メタデータを書き込む。D1 upsert を最後に置くことで、途中失敗時も次回 refresh で
    * 再処理される。
+   *
+   * 併せて、本文がカード化対象として参照している URL を返す。
    */
-  private async syncNote(group: NoteGroup): Promise<void> {
+  private async syncNote(group: NoteGroup): Promise<readonly string[]> {
     const bytes = await this.content.readFile(group.sourcePath);
     if (bytes === undefined) {
       // ツリーには在るのに読めない = infra 障害。fail-loud で送出。
@@ -147,6 +160,8 @@ export class NotesRefreshService {
       title: note.title.toString(),
       body: mdastToString(mdast),
     });
+
+    return collectBareLinkUrls(mdast);
   }
 
   /**
@@ -280,7 +295,7 @@ function parseContent(markdown: string): ParsedNoteContent {
 function buildNoteContent(
   group: NoteGroup,
   markdown: string,
-): { note: Note<IUnpersisted>; mdast: unknown } {
+): { note: Note<IUnpersisted>; mdast: Root } {
   const parsed = parseContent(markdown);
   const slug = group.slug.toString();
 

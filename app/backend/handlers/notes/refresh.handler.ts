@@ -1,12 +1,19 @@
+import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { resolveContentStore } from "./resolve-content-store";
+import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import {
+  D1LinkCardCommandRepository,
+  D1LinkCardQueryRepository,
   D1NoteCommandRepository,
   D1NoteQueryRepository,
   D1NoteSearchIndex,
 } from "~/backend/infra/d1/repositories";
+import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
+import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
 import { NotesRefreshService } from "~/backend/services/notes-refresh.service";
 
 /** シークレットを載せるヘッダ。staging の BASIC 認証 (Authorization) と衝突しないよう専用ヘッダにする。 */
@@ -55,10 +62,21 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
       new D1NoteSearchIndex(c.env.D1),
     );
     // ?force=true でコンテンツ未変更のノートも再処理する (実装変更の反映用)。
-    const result = await service.refresh({
-      force: c.req.query("force") === "true",
-    });
-    return c.json(result);
+    const isForce = c.req.query("force") === "true";
+    const result = await service.refresh({ force: isForce });
+
+    // 本文に貼られた URL のカードを揃える。ノートの同期とは失敗の扱いが違う
+    // (外部サイトが落ちていることは異常ではない) ので、別のサービスに分けている。
+    const logger = new ConsoleLogger({ component: "link-cards" });
+    const linkCards = await new LinkCardsRefreshService(
+      new OgpLinkCardFetcher(logger),
+      new D1LinkCardCommandRepository(c.env.D1),
+      new D1LinkCardQueryRepository(c.env.D1),
+      new R2LinkCardAssetCache(c.env.R2),
+      logger,
+    ).sync(result.linkedUrls, Temporal.Now.instant(), { force: isForce });
+
+    return c.json({ ...result, linkCards });
   });
 
   return router;

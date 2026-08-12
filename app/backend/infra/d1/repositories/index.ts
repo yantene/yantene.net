@@ -1,3 +1,5 @@
+export { D1LinkCardCommandRepository } from "./link-card.command-repository";
+export { D1LinkCardQueryRepository } from "./link-card.query-repository";
 export { D1NoteCommandRepository } from "./note.command-repository";
 export { D1NoteQueryRepository } from "./note.query-repository";
 export { D1NoteReactionCommandRepository } from "./note-reaction.command-repository";

@@ -1,7 +1,14 @@
 import { raw } from "hast-util-raw";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
-import { toHast } from "mdast-util-to-hast";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { defaultHandlers, toHast } from "mdast-util-to-hast";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { createPortal } from "react-dom";
 import rehypeHighlight from "rehype-highlight";
@@ -11,8 +18,27 @@ import { unified } from "unified";
 import { normalizeEmbedSrc } from "./embed";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import type { Element, Root as HastRoot, RootContent } from "hast";
-import type { Html, Root as MdastRoot } from "mdast";
+import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
+import type {
+  LinkCardMap,
+  LinkCardView,
+} from "~/backend/handlers/link-cards/link-card-view";
+import { LinkCard } from "~/frontend/components/link-card/link-card";
+import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
+
+/** カードに差し替える段落を表す、本文には現れない要素名。 */
+const LINK_CARD_TAG = "link-card";
+
+/*
+ * カードの中身を描画側へ渡す道。
+ *
+ * hast を通せるのは URL 1 つだけなので、中身は文脈に載せる。toJsxRuntime に渡す
+ * components は要素の属性しか受け取らず、外側の値を閉じ込められないため。
+ */
+const LinkCardsContext = createContext<ReadonlyMap<string, LinkCardView>>(
+  new Map(),
+);
 
 /*
  * sanitize に iframe を通す。本文には生の iframe (YouTube の埋め込み) が書かれており、
@@ -28,10 +54,18 @@ import type { Handler, Raw, State } from "mdast-util-to-hast";
  */
 const sanitizeSchema = {
   ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), "iframe", ...mathMlTagNames],
+  // link-card はこちらが組み立てた印で、本文からは書けない (Markdown の生 HTML は
+  // keepEmbedHtml が iframe 以外を落とす)。運ぶのは URL 1 つだけ。
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    "iframe",
+    LINK_CARD_TAG,
+    ...mathMlTagNames,
+  ],
   attributes: {
     ...defaultSchema.attributes,
     iframe: ["src", "title", "allow", "allowFullScreen", "loading"],
+    [LINK_CARD_TAG]: ["url"],
     ...Object.fromEntries(
       mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]]),
     ),
@@ -63,6 +97,60 @@ function keepEmbedHtml(state: State, node: Html): ReturnType<Handler> {
   const result: Raw = { type: "raw", value: node.value };
   state.patch(node, result);
   return state.applyData(node, result);
+}
+
+/**
+ * MDAST → HAST のハンドラ差し替え。カード化する段落を印つきの要素に置き換える。
+ *
+ * 段落そのもの (ノードの同一性) で照合する。位置で数えると、脚注やリストを跨いだときに
+ * ずれる。差し替えを MDAST の書き換えではなく変換時に行うのは、入力の木を汚さないため。
+ */
+function linkCardParagraph(targets: ReadonlyMap<Paragraph, string>): Handler {
+  return (state: State, node: Paragraph): ReturnType<Handler> => {
+    const url = targets.get(node);
+    if (url === undefined) return defaultHandlers.paragraph(state, node);
+
+    const result: Element = {
+      type: "element",
+      tagName: LINK_CARD_TAG,
+      properties: { url },
+      children: [],
+    };
+    state.patch(node, result);
+    return state.applyData(node, result);
+  };
+}
+
+/**
+ * 印のついた要素を実際のカードにする。
+ *
+ * 中身が見つからないときは素のリンクに戻す。カードにできなかっただけで本文から
+ * URL が消えるのは、静かに壊れているのと変わらない。
+ *
+ * 素のリンクに落とすときは、ここでもう一度スキームを確かめる。印を付けるのは
+ * こちら側 (linkCardParagraph) だけで、そこは http(s) しか通していないが、
+ * href に値を渡す場所で二度目の関門を持たせておく。
+ */
+function LinkCardSlot({ url }: { readonly url?: string }): React.JSX.Element {
+  const cards = useContext(LinkCardsContext);
+  const card = url === undefined ? undefined : cards.get(url);
+
+  if (card === undefined) {
+    const href = url !== undefined && isExternalHref(url) ? url : undefined;
+    return (
+      <p>
+        <a
+          className="press-control"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          {url}
+        </a>
+      </p>
+    );
+  }
+  return <LinkCard card={card} />;
 }
 
 /** 生 HTML の断片 (raw) がツリーに残っているか。 */
@@ -306,6 +394,13 @@ export interface MdastRendererProps {
   readonly transformImageUrl?: (src: string) => string;
   /** ルート要素に付与する追加クラス。 */
   readonly className?: string;
+  /**
+   * 本文に貼られたむき出しの URL のカード。URL をキーに引く。
+   *
+   * 渡さなければカード化しない (素のリンクのまま描く)。取得は refresh の仕事で、
+   * ここでは表に在るものだけを差し替える。
+   */
+  readonly linkCards?: LinkCardMap;
 }
 
 /**
@@ -316,13 +411,26 @@ export function MdastRenderer({
   node,
   transformImageUrl,
   className,
+  linkCards,
 }: MdastRendererProps): React.JSX.Element {
+  const cardsByUrl = useMemo(
+    () => new Map(Object.entries(linkCards ?? {})),
+    [linkCards],
+  );
+
   const content = useMemo(() => {
+    // カードにするのは、中身が揃っている URL の段落だけ。表に無ければ素のリンクのまま
+    // 描く (取れなかったリンクが本文から消えないように)。
+    const targets = new Map<Paragraph, string>();
+    for (const { paragraph, url } of collectBareLinkParagraphs(node)) {
+      if (cardsByUrl.has(url)) targets.set(paragraph, url);
+    }
+
     // allowDangerousHtml で生 HTML を hast へ運べるようにし、実際に何を運ぶかは
     // keepEmbedHtml が選ぶ (既定の挙動どおり、埋め込み以外の生 HTML は捨てる)。
     const hast = toHast(node, {
       allowDangerousHtml: true,
-      handlers: { html: keepEmbedHtml },
+      handlers: { html: keepEmbedHtml, paragraph: linkCardParagraph(targets) },
     }) as HastRoot;
     const transformed = hastProcessor.runSync(expandRawHtml(hast));
     applyElementTransforms(transformed, transformImageUrl);
@@ -331,15 +439,20 @@ export function MdastRenderer({
       Fragment,
       jsx,
       jsxs,
-      components: { pre: CodeBlock, img: LightboxImage, iframe: Embed },
+      components: {
+        pre: CodeBlock,
+        img: LightboxImage,
+        iframe: Embed,
+        [LINK_CARD_TAG]: LinkCardSlot,
+      },
     }) as React.JSX.Element;
-  }, [node, transformImageUrl]);
+  }, [node, transformImageUrl, cardsByUrl]);
 
   return (
     <article
       className={`note-prose prose max-w-none ${className ?? ""}`.trim()}
     >
-      {content}
+      <LinkCardsContext value={cardsByUrl}>{content}</LinkCardsContext>
     </article>
   );
 }

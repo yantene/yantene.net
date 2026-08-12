@@ -1,0 +1,257 @@
+import { Temporal } from "@js-temporal/polyfill";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LinkCardsRefreshService } from "./link-cards-refresh.service";
+import type {
+  FetchedLinkCard,
+  ILinkCardAssetCache,
+  ILinkCardCommandRepository,
+  ILinkCardFetcher,
+  ILinkCardQueryRepository,
+  LinkCard,
+  LinkCardAsset,
+  LinkCardUrl,
+  StaleLinkCardQuery,
+} from "~/backend/domain/link-card";
+import type { ILogger } from "~/backend/domain/shared";
+
+const now = Temporal.Instant.from("2026-02-01T00:00:00Z");
+
+function silentLogger(): ILogger {
+  const logger: ILogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: () => logger,
+  };
+  return logger;
+}
+
+const pngAsset: LinkCardAsset = {
+  bytes: new Uint8Array([1]),
+  contentType: "image/png",
+};
+
+function fetchedCard(
+  overrides: Partial<FetchedLinkCard> = {},
+): FetchedLinkCard {
+  return {
+    title: "題",
+    description: "説明",
+    siteName: "サイト",
+    image: pngAsset,
+    favicon: undefined,
+    ...overrides,
+  };
+}
+
+/** 保存されたカードを覚えておくだけのリポジトリ。 */
+class FakeRepository
+  implements ILinkCardCommandRepository, ILinkCardQueryRepository
+{
+  readonly stored = new Map<string, LinkCard>();
+  stale: LinkCard[] = [];
+  readonly staleQueries: StaleLinkCardQuery[] = [];
+
+  upsert(card: LinkCard): Promise<void> {
+    this.stored.set(card.url.toString(), card);
+    return Promise.resolve();
+  }
+
+  findByUrls(urls: readonly LinkCardUrl[]): Promise<readonly LinkCard[]> {
+    const found = urls
+      .map((url) => this.stored.get(url.toString()))
+      .filter((card): card is LinkCard => card !== undefined);
+    return Promise.resolve(found);
+  }
+
+  listStale(query: StaleLinkCardQuery): Promise<readonly LinkCard[]> {
+    this.staleQueries.push(query);
+    return Promise.resolve(this.stale.slice(0, query.limit));
+  }
+}
+
+class FakeAssetCache implements ILinkCardAssetCache {
+  readonly images = new Map<string, LinkCardAsset>();
+  readonly favicons = new Map<string, LinkCardAsset>();
+  readonly deleted: string[] = [];
+
+  putImage(id: string, asset: LinkCardAsset): Promise<void> {
+    this.images.set(id, asset);
+    return Promise.resolve();
+  }
+
+  putFavicon(id: string, asset: LinkCardAsset): Promise<void> {
+    this.favicons.set(id, asset);
+    return Promise.resolve();
+  }
+
+  getImage(id: string): Promise<LinkCardAsset | undefined> {
+    return Promise.resolve(this.images.get(id));
+  }
+
+  getFavicon(id: string): Promise<LinkCardAsset | undefined> {
+    return Promise.resolve(this.favicons.get(id));
+  }
+
+  deleteAssets(id: string): Promise<void> {
+    this.deleted.push(id);
+    this.images.delete(id);
+    this.favicons.delete(id);
+    return Promise.resolve();
+  }
+}
+
+describe("LinkCardsRefreshService", () => {
+  let repository: FakeRepository;
+  let assets: FakeAssetCache;
+  let fetcher: ILinkCardFetcher & { fetch: ReturnType<typeof vi.fn> };
+  let service: LinkCardsRefreshService;
+
+  beforeEach(() => {
+    repository = new FakeRepository();
+    assets = new FakeAssetCache();
+    fetcher = { fetch: vi.fn().mockResolvedValue(fetchedCard()) };
+    service = new LinkCardsRefreshService(
+      fetcher,
+      repository,
+      repository,
+      assets,
+      silentLogger(),
+    );
+  });
+
+  it("未取得の URL を取りに行って保存する", async () => {
+    const result = await service.sync(["https://example.com/a"], now);
+
+    expect(result.fetched).toEqual(["https://example.com/a"]);
+    expect(result.failed).toEqual([]);
+    const stored = repository.stored.get("https://example.com/a");
+    expect(stored?.isAvailable).toBe(true);
+    expect(stored?.metadata).toMatchObject({
+      title: "題",
+      hasImage: true,
+      hasFavicon: false,
+    });
+  });
+
+  it("取れた画像を写す", async () => {
+    await service.sync(["https://example.com/a"], now);
+
+    const id = repository.stored.get("https://example.com/a")?.id ?? "";
+    expect(assets.images.get(id)).toEqual(pngAsset);
+  });
+
+  it("取れなければ「取れなかった」として保存する", async () => {
+    fetcher.fetch.mockResolvedValue(undefined);
+
+    const result = await service.sync(["https://example.com/a"], now);
+
+    expect(result.fetched).toEqual([]);
+    expect(result.failed).toEqual(["https://example.com/a"]);
+    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(
+      false,
+    );
+  });
+
+  it("期限内のカードは取りに行かない", async () => {
+    await service.sync(["https://example.com/a"], now);
+    fetcher.fetch.mockClear();
+
+    const result = await service.sync(
+      ["https://example.com/a"],
+      now.add({ hours: 24 }),
+    );
+
+    expect(fetcher.fetch).not.toHaveBeenCalled();
+    expect(result.fetched).toEqual([]);
+  });
+
+  it("期限切れのカードは取り直す", async () => {
+    await service.sync(["https://example.com/a"], now);
+    fetcher.fetch.mockClear();
+
+    const later = now.add({ hours: 24 * 15 });
+    const result = await service.sync(["https://example.com/a"], later);
+
+    expect(fetcher.fetch).toHaveBeenCalledTimes(1);
+    expect(result.fetched).toEqual(["https://example.com/a"]);
+  });
+
+  it("force なら期限内でも取り直す", async () => {
+    await service.sync(["https://example.com/a"], now);
+    fetcher.fetch.mockClear();
+
+    await service.sync(["https://example.com/a"], now, { force: true });
+
+    expect(fetcher.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("参照されていない期限切れのカードも洗い替える", async () => {
+    await service.sync(["https://example.com/old"], now);
+    const old = repository.stored.get("https://example.com/old");
+    expect(old).toBeDefined();
+    repository.stale = old === undefined ? [] : [old];
+    fetcher.fetch.mockClear();
+
+    // 今回の記事はこの URL に触れていないが、期限切れなので拾われる。
+    const result = await service.sync([], now.add({ hours: 24 * 15 }));
+
+    expect(result.fetched).toEqual(["https://example.com/old"]);
+  });
+
+  it("期限の境目はドメインの決めたものを渡す", async () => {
+    await service.sync([], now);
+
+    expect(repository.staleQueries[0]?.available.toString()).toBe(
+      "2026-01-18T00:00:00Z",
+    );
+    expect(repository.staleQueries[0]?.unavailable.toString()).toBe(
+      "2026-01-31T00:00:00Z",
+    );
+  });
+
+  it("取り直す前に前回の画像を捨てる", async () => {
+    await service.sync(["https://example.com/a"], now);
+    const id = repository.stored.get("https://example.com/a")?.id ?? "";
+
+    fetcher.fetch.mockResolvedValue(fetchedCard({ image: undefined }));
+    await service.sync(["https://example.com/a"], now, { force: true });
+
+    expect(assets.deleted).toContain(id);
+    expect(assets.images.has(id)).toBe(false);
+    expect(
+      repository.stored.get("https://example.com/a")?.metadata?.hasImage,
+    ).toBe(false);
+  });
+
+  it("同じ URL が何度出てきても 1 回しか取りに行かない", async () => {
+    await service.sync(["https://example.com/a", "https://example.com/a"], now);
+
+    expect(fetcher.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("カードにできない URL は黙って飛ばす", async () => {
+    const result = await service.sync(
+      ["not a url", "mailto:a@example.com"],
+      now,
+    );
+
+    expect(fetcher.fetch).not.toHaveBeenCalled();
+    expect(result.fetched).toEqual([]);
+    expect(result.failed).toEqual([]);
+  });
+
+  it("1 回の上限を超えた分は見送り、件数を報告する", async () => {
+    const urls = Array.from(
+      { length: 45 },
+      (_, index) => `https://example.com/${String(index)}`,
+    );
+
+    const result = await service.sync(urls, now);
+
+    expect(result.fetched).toHaveLength(40);
+    expect(result.deferred).toBe(5);
+    expect(fetcher.fetch).toHaveBeenCalledTimes(40);
+  });
+});

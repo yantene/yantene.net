@@ -8,6 +8,7 @@ import {
 } from "hono/secure-headers";
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
+import { createLinkCardAssetsRouter } from "./handlers/link-cards/assets.handler";
 import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
@@ -115,6 +116,7 @@ export const getApp = (
   app.route("/api/v1/notes", createNoteDetailApiRouter());
   app.route("/api/v1/notes", createNoteAssetsRouter());
   app.route("/api/v1/notes", createNoteReactionApiRouter());
+  app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/tags", createTagsApiRouter());
   app.route("/api/v1/search", createSearchApiRouter());
   app.route("/og", createOgRouter());

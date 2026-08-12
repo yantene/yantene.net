@@ -144,7 +144,8 @@ export default function NoteShow({
     );
   }
 
-  const { note, mdast, related, headings, origin, reactions } = loaderData;
+  const { note, mdast, related, headings, origin, reactions, linkCards } =
+    loaderData;
 
   return (
     <AppLayout>
@@ -199,7 +200,7 @@ export default function NoteShow({
               />
             )}
           </header>
-          <MdastRenderer node={mdast} />
+          <MdastRenderer node={mdast} linkCards={linkCards} />
           {/*
             読み終えた足元に、反応する手と共有する手を並べる。どちらも読み終えてからの
             行動なので、本文の直後に置く。
