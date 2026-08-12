@@ -11,7 +11,12 @@ export interface PaginationProps {
   readonly hrefForPage: (page: number) => string;
 }
 
-/** ページネーション UI。総ページ数が 1 以下のときは何も描画しない。 */
+/**
+ * ページネーション UI。総ページ数が 1 以下のときは何も描画しない。
+ *
+ * daisyUI の btn 自体も押している間に少し沈むが、それだけでは指の下で気づけないので、
+ * サイト共通の press-control を重ねる (押している間は薄くもなる)。
+ */
 export function Pagination({
   page,
   totalPages,
@@ -30,7 +35,7 @@ export function Pagination({
         <Link
           to={hrefForPage(page - 1)}
           rel="prev"
-          className="join-item btn"
+          className="join-item btn press-control"
           aria-label={t("notes.pagination.previous")}
         >
           «
@@ -54,7 +59,7 @@ export function Pagination({
           <Link
             key={item.page}
             to={hrefForPage(item.page)}
-            className={`join-item btn${item.page === page ? " btn-active" : ""}`}
+            className={`join-item btn press-control${item.page === page ? " btn-active" : ""}`}
             aria-current={item.page === page ? "page" : undefined}
           >
             {item.page}
@@ -66,7 +71,7 @@ export function Pagination({
         <Link
           to={hrefForPage(page + 1)}
           rel="next"
-          className="join-item btn"
+          className="join-item btn press-control"
           aria-label={t("notes.pagination.next")}
         >
           »

@@ -1,0 +1,78 @@
+/*
+ * 押したことが分かるようにするための、サイト共通の作法。
+ *
+ * ブラウザ既定のタップハイライトは Tailwind の preflight と daisyUI の reset が
+ * どちらも html に `-webkit-tap-highlight-color: transparent` を置いて消している。
+ * これを上書きして戻す手もあったが、取らなかった。色をテーマの token に合わせられず、
+ * 端末とエンジンごとに濃さも形も変わるうえ、マウスとキーボードには何も起きないため。
+ * 押下の反応は :active で自前に持ち、どの入力手段でも同じ見え方にする。
+ *
+ * hover と active で意味を分ける。hover は「これは押せる」、active は「いま押している」。
+ * 前者は色で (primary へ寄せる・淡く敷く)、後者は明るさと沈み込みで表す。同じ軸で
+ * 二重に表すと、押した瞬間に何が変わったのかが読み取れなくなる。
+ *
+ * 押せるものは形で 2 つに分かれるので、作法も 2 つ用意する。押せるものには必ずどちらかを
+ * 付けること (付け忘れた場所だけが無反応になり、押せないものに見える)。
+ *
+ *   .press-surface — 行そのものが押し場所になっている広い面 (一覧の項目・関連ノート)。
+ *                    面を淡く塗る。広い面を縮めると行が動いて、読んでいた場所を見失う。
+ *   .press-control — 文字・アイコン・バッジ・ボタンといった小さな操作子。
+ *                    薄くして 1 px 沈める。小さいので面を塗っても変化が目に入らない。
+ *
+ * 反応は押した瞬間に出し (transition-duration: 0s)、離してから戻る間だけ時間をかける。
+ * 逆にすると、待たされている最中に手応えのほうが遅れて届く。
+ *
+ * 押下の反応は装飾ではなく操作の手応えなので、prefers-reduced-motion でも残す。
+ * 動くのは 1 px の沈み込みだけで、視界を横切るものは出さない。
+ */
+
+/* 押している間に敷く色。面と操作子で出し方は違うが、色相は primary で揃える。 */
+:root {
+  --press-tint: color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+
+.press-surface {
+  transition-property: background-color;
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+.press-surface:active {
+  background-color: var(--press-tint);
+  transition-duration: 0s;
+}
+
+.press-control {
+  /*
+   * color / background-color / border-color も並べておく。hover で色が変わる操作子が
+   * 多く、ここで transition-property を置き換えると、その色変化まで止まってしまう。
+   */
+  transition-property:
+    opacity, transform, color, background-color, border-color;
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+.press-control:active {
+  opacity: 0.6;
+  /*
+   * transform は非置換のインライン要素には効かない (本文中のリンクなど、囲みが
+   * flex でも block でもない場所)。そこでは沈み込みだけが落ち、薄くなる反応は残る。
+   */
+  transform: translateY(1px);
+  transition-duration: 0s;
+}
+
+/*
+ * キーボードで辿っているときの現在地。
+ *
+ * ブラウザ既定の輪郭でも見えはするが、色が端末任せで primary と揃わない。押下の反応を
+ * 自前で持つのと同じ理由で、ここも token の色で描く。
+ *
+ * :where() で詳細度を 0 にしてあるので、自前の focus-visible を持つコンポーネント CSS
+ * (time-scrubber の軸など) はそちらが勝つ。
+ */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

@@ -10,6 +10,9 @@
     "popularNotes": "Popular notes",
     "viewAll": "View all"
   },
+  "navigation": {
+    "loading": "Loading"
+  },
   "feed": {
     "label": "Feed",
     "tagLabel": "“{{tag}}” feed"

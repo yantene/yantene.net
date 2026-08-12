@@ -59,7 +59,7 @@ export function HeroSection(): React.JSX.Element {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-2xl text-foreground/85 transition-colors hover:text-primary"
+              className="press-control text-2xl text-foreground/85 transition-colors hover:text-primary"
               title={link.label}
             >
               <link.icon />

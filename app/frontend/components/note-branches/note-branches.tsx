@@ -24,7 +24,11 @@ export function NoteBranches({ notes }: NoteBranchesProps): React.JSX.Element {
     <ul className="note-branches">
       {notes.map((note) => (
         <li key={note.slug} className="note-branch">
-          <Link to={`/notes/${note.slug}`} className="note-branch-link group">
+          {/* 一覧の項目と同じく行全体が押し場所なので、押下の反応も同じ press-surface。 */}
+          <Link
+            to={`/notes/${note.slug}`}
+            className="note-branch-link press-surface group"
+          >
             <span className="note-branch-body">
               <span className="note-branch-title">{note.title}</span>
               <span className="note-branch-summary">{note.summary}</span>

@@ -1,0 +1,67 @@
+/*
+ * 遷移中であることを示す、画面上端の細い帯。
+ *
+ * <Link> のクライアント遷移は loader の応答が返るまで前の画面のままなので、押してから
+ * 画面が変わるまでに何も起きない時間ができる。押下の反応 (interaction.css) が伝えるのは
+ * 「押せた」ことまでで、「いま取りに行っている」ことは別に出す必要がある。
+ *
+ * 押されたリンク自身を沈めておく形も考えたが、取らなかった。リンクごとに遷移先と
+ * navigation.location を突き合わせる必要があり、置き忘れた場所だけが無反応になる。
+ * 画面の端に 1 つ置けば、ヘッダーのナビでもタグでもページ送りでも同じ帯が出る。
+ *
+ * 進み具合は出せない。残り時間が分からないうえ、CSP (style-src 'self') で inline style が
+ * 落ちるため幅を JS から書き込めない (ADR 0007)。左から右へ光が流れる不定形の
+ * アニメーションにして、「動いている」ことだけを伝える。
+ */
+
+.navigation-progress {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  /* ヘッダー (z-50) より手前。sticky ヘッダーの下に潜ると出した意味がなくなる。 */
+  z-index: 100;
+  height: 3px;
+  overflow: hidden;
+  /* 帯の下にあるものを押せなくしない (待っている間も操作は妨げない)。 */
+  pointer-events: none;
+}
+
+.navigation-progress-bar {
+  display: block;
+  height: 100%;
+  /* 帯の幅。流れる距離 (translateX の終点) はこの値から決まる。 */
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-primary),
+    transparent
+  );
+  animation: navigation-progress-sweep 1.1s ease-in-out infinite;
+}
+
+/*
+ * 左の外から入り、右の外へ抜ける。終点の 250% は帯の幅 40% に対する倍率で、
+ * 40% × 250% = 100% ぶん進んだところで左端が画面の右端に並ぶ。幅を変えたらここも直す。
+ */
+@keyframes navigation-progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/*
+ * 動きを減らす設定では流さない。代わりに帯を全幅で置いたままにして、
+ * 「いま何かを待っている」ことは色の有無だけで残す。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .navigation-progress-bar {
+    width: 100%;
+    animation: none;
+    background: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  }
+}

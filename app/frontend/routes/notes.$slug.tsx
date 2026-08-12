@@ -90,7 +90,7 @@ export default function NoteShow({
           <p className="mt-4 text-base-content/60">
             {t("notes.notFound.description")}
           </p>
-          <Link to="/notes" className="btn btn-primary mt-8">
+          <Link to="/notes" className="btn btn-primary press-control mt-8">
             {t("notes.notFound.backToList")}
           </Link>
         </main>
@@ -125,7 +125,7 @@ export default function NoteShow({
               */}
               <a
                 href={`/notes/${note.slug}.md`}
-                className="inline-flex items-center gap-1 hover:text-primary hover:underline"
+                className="press-control inline-flex items-center gap-1 hover:text-primary hover:underline"
               >
                 <SiMarkdown aria-hidden="true" />
                 {t("notes.viewMarkdown")}
@@ -137,7 +137,7 @@ export default function NoteShow({
                   <Link
                     key={tg}
                     to={`/notes?tag=${encodeURIComponent(tg)}`}
-                    className="badge badge-outline gap-1 hover:badge-primary"
+                    className="badge badge-outline press-control gap-1 hover:badge-primary"
                   >
                     {tg}
                   </Link>

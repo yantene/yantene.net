@@ -102,7 +102,7 @@ export function TableOfContents({
               */}
               <Link
                 to={`#${section.heading.id}`}
-                className={`-ml-px block border-l-2 py-1 pl-4 transition-colors ${
+                className={`press-control -ml-px block border-l-2 py-1 pl-4 transition-colors ${
                   section.heading.id === activeId
                     ? "border-primary font-medium text-primary"
                     : "border-transparent text-base-content/60 hover:text-base-content"
@@ -116,7 +116,7 @@ export function TableOfContents({
                     <li key={child.id}>
                       <Link
                         to={`#${child.id}`}
-                        className={`-ml-px block border-l-2 py-0.5 pl-8 text-xs transition-colors ${
+                        className={`press-control -ml-px block border-l-2 py-0.5 pl-8 text-xs transition-colors ${
                           child.id === activeId
                             ? "border-primary font-medium text-primary"
                             : "border-transparent text-base-content/50 hover:text-base-content"

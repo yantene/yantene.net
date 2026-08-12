@@ -2,6 +2,7 @@ import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
+import { enableActiveOnTouch } from "~/frontend/lib/enable-active-on-touch";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { registerServiceWorker } from "~/frontend/lib/register-service-worker";
 import { initI18nGlobal } from "~/lib/i18n/init";
@@ -16,6 +17,9 @@ const nonce =
   "";
 
 const i18n = await initI18nGlobal(locale);
+
+// 押下の反応が iOS でも出るようにする。描画の前に置くのは、最初の 1 タップから効かせるため。
+enableActiveOnTouch();
 
 startTransition(() => {
   hydrateRoot(

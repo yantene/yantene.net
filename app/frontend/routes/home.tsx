@@ -81,7 +81,10 @@ export default function Home({
               絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
             */}
             <p className="home-view-all">
-              <Link to="/notes" className="link link-primary text-sm">
+              <Link
+                to="/notes"
+                className="link link-primary press-control text-sm"
+              >
                 {t("home.viewAll")}
               </Link>
             </p>
