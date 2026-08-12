@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { KvSessionCommandRepository } from "./session.command-repository";
 import { KvSessionQueryRepository } from "./session.query-repository";
 import { NoteSlug } from "~/backend/domain/note";
+import { ReactionEmoji } from "~/backend/domain/note-reaction";
 import {
   SESSION_LIFETIME_DAYS,
   Session,
@@ -120,6 +121,47 @@ describe("KvSessionCommandRepository#save", () => {
       startedOn: "2026-08-11",
       viewedOn: "2026-08-12",
       viewedNotes: ["alpha"],
+      reactions: [],
     });
+  });
+
+  /*
+   * リアクションは閲覧と違って日をまたいでも捨てない。捨てると取り消しも差し替えも
+   * できなくなり、同じ人が何度でも押せてしまう。
+   */
+  it("リアクションは日が変わっても持ち回る", async () => {
+    const { store, commands } = setup();
+    const yesterday = today.subtract({ days: 1 });
+    const session = Session.start(SessionId.issue(), yesterday)
+      .withReaction(alpha, ReactionEmoji.like(), yesterday)
+      .withView(NoteSlug.create("beta"), today);
+    await commands.save(session);
+
+    const stored: unknown = JSON.parse(
+      store.get(`session:${session.id.toString()}`)?.value ?? "",
+    );
+    expect(stored).toStrictEqual({
+      startedOn: "2026-08-11",
+      viewedOn: "2026-08-12",
+      viewedNotes: ["beta"],
+      reactions: [{ slug: "alpha", emoji: "❤️", reactedOn: "2026-08-11" }],
+    });
+  });
+
+  it("保存したリアクションを読み戻せる", async () => {
+    const { commands, queries } = setup();
+    const session = Session.start(SessionId.issue(), today).withReaction(
+      alpha,
+      ReactionEmoji.create("🎉"),
+      today,
+    );
+    await commands.save(session);
+
+    const restored = await queries.findById(session.id);
+
+    expect(restored?.reactionFor(alpha)?.emoji.toString()).toBe("🎉");
+    expect(restored?.reactionFor(alpha)?.reactedOn.toString()).toBe(
+      "2026-08-12",
+    );
   });
 });

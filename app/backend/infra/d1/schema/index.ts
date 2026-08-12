@@ -1,2 +1,3 @@
+export { noteReactions } from "./note-reactions";
 export { noteTags } from "./note-tags";
 export { notes } from "./notes";

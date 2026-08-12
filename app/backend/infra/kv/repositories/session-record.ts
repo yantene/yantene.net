@@ -1,6 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
-import type { SessionId } from "~/backend/domain/session";
+import type { SessionId, SessionReaction } from "~/backend/domain/session";
 import { NoteSlug } from "~/backend/domain/note";
+import { ReactionEmoji } from "~/backend/domain/note-reaction";
 import { Session } from "~/backend/domain/session";
 
 /** KV に置く形。JSON にできる値だけで持つ。 */
@@ -8,6 +9,14 @@ export interface SessionRecord {
   readonly startedOn: string;
   readonly viewedOn?: string;
   readonly viewedNotes?: readonly string[];
+  readonly reactions?: readonly SessionReactionRecord[];
+}
+
+/** 押したリアクション 1 件ぶん。 */
+export interface SessionReactionRecord {
+  readonly slug: string;
+  readonly emoji: string;
+  readonly reactedOn: string;
 }
 
 /** セッションを引くキー。名前空間はセッション専用なので接頭辞だけで足りる。 */
@@ -22,6 +31,11 @@ export function sessionToRecord(session: Session): SessionRecord {
       viewedOn: session.viewedOn.toString(),
     }),
     viewedNotes: session.viewedNotes.map((slug) => slug.toString()),
+    reactions: session.reactions.map((reaction) => ({
+      slug: reaction.slug.toString(),
+      emoji: reaction.emoji.toString(),
+      reactedOn: reaction.reactedOn.toString(),
+    })),
   };
 }
 
@@ -39,7 +53,10 @@ export function recordToSession(
 ): Session | undefined {
   if (typeof value !== "object" || value === null) return undefined;
 
-  const { startedOn, viewedOn, viewedNotes } = value as Record<string, unknown>;
+  const { startedOn, viewedOn, viewedNotes, reactions } = value as Record<
+    string,
+    unknown
+  >;
   if (typeof startedOn !== "string") return undefined;
 
   try {
@@ -51,10 +68,45 @@ export function recordToSession(
           ? Temporal.PlainDate.from(viewedOn)
           : undefined,
       viewedNotes: toSlugs(viewedNotes),
+      reactions: toReactions(reactions),
     });
   } catch {
     return undefined;
   }
+}
+
+/**
+ * 記録の中のリアクションを VO に戻す。
+ *
+ * slug と同じく、ひとつでも読めなければ throw して記録ごと捨てさせる。絵文字は
+ * 一覧から外れたものが読めなくなる (Unicode の版を上げて減ることは無いが、こちらの
+ * 除外の方針を変えれば起こりうる)。そのときはセッションごと作り直しになる。
+ */
+function toReactions(value: unknown): readonly SessionReaction[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new TypeError("reactions must be an array");
+  }
+
+  return value.map((entry: unknown) => {
+    if (typeof entry !== "object" || entry === null) {
+      throw new TypeError("reactions must contain objects");
+    }
+    const { slug, emoji, reactedOn } = entry as Record<string, unknown>;
+    if (
+      typeof slug !== "string" ||
+      typeof emoji !== "string" ||
+      typeof reactedOn !== "string"
+    ) {
+      throw new TypeError("reaction fields must be strings");
+    }
+
+    return {
+      slug: NoteSlug.create(slug),
+      emoji: ReactionEmoji.create(emoji),
+      reactedOn: Temporal.PlainDate.from(reactedOn),
+    };
+  });
 }
 
 /**

@@ -90,6 +90,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitest/eslint-plugin": "^1.6.21",
     "drizzle-kit": "^0.31.10",
+    "emojibase-data": "^17.0.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import-x": "^4.17.1",
