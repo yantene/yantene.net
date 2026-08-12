@@ -5,6 +5,7 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { describe, expect, it } from "vitest";
 import { MdastRenderer } from "./mdast-renderer";
+import type { ElementContent, Properties } from "hast";
 import type { Root as MdastRoot } from "mdast";
 
 function md(markdown: string): MdastRoot {
@@ -148,5 +149,165 @@ describe("MdastRenderer", () => {
     );
     expect(html).not.toContain("blockquote");
     expect(html).not.toContain("tweet");
+  });
+});
+
+/*
+ * 数式は refresh 時に MathML へ組み、MDAST の data (hChildren) に埋めてある
+ * (ADR 0013)。ここで確かめるのは、その木が sanitize を越えて `<math>` として出ること。
+ */
+describe("MdastRenderer: MathML", () => {
+  /** refresh が埋める形の数式ノードを組む。 */
+  function mathNode(
+    children: readonly ElementContent[],
+    properties: Properties = {},
+  ): MdastRoot {
+    return {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            { type: "text", value: "式 " },
+            {
+              type: "inlineMath",
+              value: "a^2",
+              data: {
+                hName: "math",
+                hProperties: {
+                  xmlns: "http://www.w3.org/1998/Math/MathML",
+                  ...properties,
+                },
+                hChildren: [...children],
+              },
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  const element = (
+    tagName: string,
+    properties: Properties,
+    children: readonly ElementContent[],
+  ): ElementContent => ({
+    type: "element",
+    tagName,
+    properties,
+    children: [...children],
+  });
+
+  const superscript = [
+    element("mrow", {}, [
+      element("msup", {}, [
+        element("mi", {}, [{ type: "text", value: "a" }]),
+        element("mn", {}, [{ type: "text", value: "2" }]),
+      ]),
+    ]),
+  ];
+
+  it("renders the embedded MathML as a <math> element", () => {
+    const { container } = render(
+      <MdastRenderer node={mathNode(superscript)} />,
+    );
+    const math = container.querySelector("math");
+    expect(math).not.toBeNull();
+    expect(math?.querySelector(":scope msup mi")?.textContent).toBe("a");
+    expect(math?.getAttribute("xmlns")).toBe(
+      "http://www.w3.org/1998/Math/MathML",
+    );
+  });
+
+  it("keeps the typesetting attributes the allow list names", () => {
+    const html = renderToStaticMarkup(
+      <MdastRenderer
+        node={mathNode(
+          [
+            element("mtable", { columnalign: "center", rowspacing: "0.16em" }, [
+              element("mtr", {}, [
+                element("mtd", {}, [
+                  element("mo", { stretchy: "false", fence: "true" }, [
+                    { type: "text", value: "(" },
+                  ]),
+                ]),
+              ]),
+            ]),
+          ],
+          { display: "block" },
+        )}
+      />,
+    );
+    expect(html).toContain('display="block"');
+    expect(html).toContain('columnalign="center"');
+    expect(html).toContain('rowspacing="0.16em"');
+    expect(html).toContain('stretchy="false"');
+  });
+
+  /* allowlist に無いものは落ちる。CSP で消える style を通さないことも含めて固定する。 */
+  it("strips attributes and elements outside the MathML allow list", () => {
+    const html = renderToStaticMarkup(
+      <MdastRenderer
+        node={mathNode([
+          element(
+            "mi",
+            {
+              style: "position:absolute",
+              className: ["katex"],
+              onClick: "alert(1)",
+              href: "javascript:alert(1)",
+            },
+            [{ type: "text", value: "a" }],
+          ),
+          element("mglyph", { src: "https://evil.example/pixel.png" }, []),
+          element("script", {}, [{ type: "text", value: "alert(1)" }]),
+        ])}
+      />,
+    );
+    expect(html).toContain("<mi>a</mi>");
+    expect(html).not.toContain("style=");
+    expect(html).not.toContain("onclick");
+    expect(html).not.toContain("javascript:");
+    expect(html).not.toContain("mglyph");
+    expect(html).not.toContain("evil.example");
+    expect(html).not.toContain("<script");
+  });
+
+  /*
+   * MathML の要素は `<math>` の中でしか意味を持たない。埋め込みと同じ生 HTML に
+   * 紛れ込ませると sanitize まで届く (埋め込みがある記事だけ raw を展開するため) ので、
+   * ancestors で `<math>` の中に限る。sanitize は要素を剥がして中身を残す作りなので、
+   * 見るのはタグが出ないことまで。
+   */
+  it("drops MathML elements that appear outside <math>", () => {
+    const embed = "<iframe src='https://www.youtube.com/embed/abc123'>";
+    const html = ssr(`<div><mi>loose</mi>${embed}</iframe></div>`);
+    expect(html).toContain("youtube-nocookie.com/embed/abc123");
+    expect(html).not.toContain("<mi");
+  });
+
+  /*
+   * 埋め込みのある記事では、生 HTML を要素に組み直すためにツリー全体を HTML へ直して
+   * 読み直す (expandRawHtml)。数式もその往復を通るので、MathML が別の名前空間で
+   * 読み直されて崩れないことを見る。
+   */
+  it("survives the raw HTML round trip that embeds trigger", () => {
+    const node = mathNode(superscript);
+    const embed: MdastRoot = {
+      type: "root",
+      children: [
+        {
+          type: "html",
+          value: "<iframe src='https://www.youtube.com/embed/abc123'></iframe>",
+        },
+        ...node.children,
+      ],
+    };
+
+    const html = renderToStaticMarkup(<MdastRenderer node={embed} />);
+    expect(html).toContain("youtube-nocookie.com/embed/abc123");
+    expect(html).toContain("<math");
+    expect(html).toContain("<msup>");
+    expect(html).toContain("<mi>a</mi>");
   });
 });

@@ -209,6 +209,28 @@
   width: 100%;
 }
 
+/*
+ * 数式 (MathML)。組版はブラウザに任せ、こちらは本文への収まりだけを見る。
+ *
+ * 本文は行間を広く取っている (line-height: 2) が、それを数式にも効かせると
+ * 上下の添字が間延びする。数式の中だけ素の行間に戻す。
+ */
+.note-prose :where(math) {
+  line-height: normal;
+}
+
+/*
+ * 別行立ての数式 (`$$...$$`)。長い式が本文の幅を押し広げないよう、その場で横に流す。
+ * MathML には折り返しが無いので、はみ出す式はスクロールで見せるしかない。
+ */
+.note-prose :where(math[display="block"]) {
+  margin-block: 1.5em;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* スクロールバーが式に重なって下端を隠さないよう、下に少しだけ空ける。 */
+  padding-bottom: 0.25em;
+}
+
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
 .note-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;

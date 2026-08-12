@@ -301,6 +301,52 @@ describe("NotesRefreshService", () => {
     expect(await query.findBySlug(NoteSlug.create("bad"))).toBeUndefined();
   });
 
+  /*
+   * 数式は refresh のときに MathML へ組む。読めない LaTeX があったら、そのノードだけを
+   * 落として理由を返す (refresh 全体を落とすと他のノートまで同期されない)。
+   */
+  it("skips notes whose LaTeX cannot be parsed", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }] as const,
+      [
+        "notes/bad-math.md",
+        {
+          hash: "m1",
+          bytes: bytes(
+            "---\ntitle: Bad math\npublishedOn: 2026-01-15\n---\n\n式 $\\frac{$ です。\n",
+          ),
+        },
+      ] as const,
+    ]);
+    const { service, query } = setup(new Map(files));
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("notes/bad-math.md");
+    expect(await query.findBySlug(NoteSlug.create("bad-math"))).toBeUndefined();
+  });
+
+  it("caches the MathML built from the LaTeX in the note body", async () => {
+    const files = new Map([
+      [
+        "notes/hello.md",
+        {
+          hash: "h1",
+          bytes: bytes(
+            "---\ntitle: Math\npublishedOn: 2026-01-15\n---\n\n式 $a^2$ です。\n",
+          ),
+        },
+      ],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+    const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
+    expect(mdastJson).toContain("http://www.w3.org/1998/Math/MathML");
+    expect(mdastJson).toContain("msup");
+  });
+
   it("reprocesses when only an asset changes (image-only edit)", async () => {
     const files = new Map([
       ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],

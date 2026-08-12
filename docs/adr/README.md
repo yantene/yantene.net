@@ -26,3 +26,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0010](0010-hand-written-service-worker-without-precache.md) | Service Worker を手書きし、先回りして蓄えない                    | Accepted |
 | [0011](0011-reader-session-in-kv.md)                         | 読み手のセッションを KV に置き、同じ日の読み直しを数えない       | Accepted |
 | [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションを一人 1 つに限り、意匠は Twemoji を self-host する  | Accepted |
+| [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に MathML へ組み、MDAST に埋めて配る            | Accepted |

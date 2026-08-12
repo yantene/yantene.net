@@ -1,14 +1,19 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { VFile } from "vfile";
 import { matter } from "vfile-matter";
+import { latexToMathMl } from "./latex-to-mathml";
 import type { Nodes, Root, RootContent } from "mdast";
 
 const SUMMARY_MAX_CHARS = 160;
 
-const markdownProcessor = unified().use(remarkParse).use(remarkGfm);
+const markdownProcessor = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkMath);
 
 /** フロントマターから取り出した生のメタデータ (検証前)。 */
 export interface NoteFrontmatter {
@@ -21,22 +26,27 @@ export interface NoteFrontmatter {
 
 export interface ParsedNoteContent {
   readonly frontmatter: NoteFrontmatter;
-  /** フロントマターを除いた本文の MDAST。 */
+  /** フロントマターを除いた本文の MDAST (数式には MathML を埋めてある)。 */
   readonly mdast: Root;
-  /** 見出し・脚注を除いた本文先頭 160 文字の要約。 */
+  /** 見出し・脚注・数式を除いた本文先頭 160 文字の要約。 */
   readonly summary: string;
 }
 
 /**
  * Markdown を解析してフロントマター・MDAST・要約に分解する。
  * フロントマターは vfile-matter で抽出・除去し、残りの本文を MDAST に変換する。
+ *
+ * 読めない LaTeX があると MathSyntaxError (latex-to-mathml.ts) を送出する。
+ * 呼び出し側 (refresh) がノート単位で拾う。
  */
 export function parseNoteContent(markdown: string): ParsedNoteContent {
   const file = new VFile({ value: markdown });
   matter(file, { strip: true });
   const rawMatter = (file.data.matter ?? {}) as Record<string, unknown>;
 
-  const mdast = withCollapsedSoftBreaks(markdownProcessor.parse(file));
+  const mdast = withMathMl(
+    withCollapsedSoftBreaks(markdownProcessor.parse(file)),
+  );
 
   return {
     frontmatter: {
@@ -144,6 +154,37 @@ function withCollapsedSoftBreaks<T extends Nodes>(node: T): T {
 }
 
 /**
+ * 木を写しながら、数式ノードに組み上げた MathML を埋める。元の木は変えない。
+ *
+ * remark-math が置く既定の data は `<code class="language-math">` / `<pre>` で、
+ * そのままだと LaTeX 原文が本文に出る。ここで hName / hProperties / hChildren を
+ * 差し替えると、mdast-util-to-hast がそれを `<math>` 要素として起こす。描画側は
+ * 埋まった MathML を出すだけで済み、読者に数式ライブラリを送らずにすむ (ADR 0013)。
+ *
+ * 変換は refresh のときにしか走らない。読めない LaTeX は MathSyntaxError として
+ * 送出し、呼び出し側がノート単位で拾う。
+ */
+function withMathMl<T extends Nodes>(node: T): T {
+  if (node.type === "inlineMath" || node.type === "math") {
+    const { properties, children } = latexToMathMl(node.value, {
+      display: node.type === "math",
+    });
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        hName: "math",
+        hProperties: properties,
+        hChildren: children,
+      },
+    };
+  }
+
+  if (!("children" in node)) return node;
+  return { ...node, children: node.children.map((child) => withMathMl(child)) };
+}
+
+/**
  * 見出し・脚注定義・水平線・生 HTML を除いた本文ブロックのテキストを連結し、
  * 先頭 160 文字を返す。
  */
@@ -169,6 +210,9 @@ export function extractSummary(root: Root): string {
  * 要約に含めないノード種別。html を含めるのは、生 HTML のタグ文字列 (`<s>` や
  * `<div class='box'>`) がそのまま要約に露出するのを防ぐため。段落中に現れる
  * インライン HTML も対象なので、判定は入れ子の内側まで再帰的に効かせる。
+ *
+ * 数式 (math / inlineMath) も同じ理由で除く。value に持つのは LaTeX 原文なので、
+ * 残すと `\frac{-b \pm \sqrt{b^2-4ac}}{2a}` が一覧や OGP にそのまま出てしまう。
  */
 const excludedFromSummary = new Set<Nodes["type"]>([
   "heading",
@@ -176,6 +220,8 @@ const excludedFromSummary = new Set<Nodes["type"]>([
   "thematicBreak",
   "code",
   "html",
+  "math",
+  "inlineMath",
 ]);
 
 function isSummaryNode(node: Nodes): boolean {

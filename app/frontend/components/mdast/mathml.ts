@@ -1,0 +1,112 @@
+/**
+ * MathML を sanitize に通すための allowlist。
+ *
+ * 数式は refresh 時に MathML へ組んで MDAST に埋めてある (ADR 0013)。描画側は
+ * それを hast として出すだけだが、`rehypeSanitize` の schema に無いタグ・属性は
+ * 落ちるため、通す形をここに明示する。
+ *
+ * 正本は自分のリポジトリだが、他の要素と同じく素通しにはしない。並べるのは
+ * 「組版の意味を持つだけの」タグと属性に限り、URL・スクリプト・inline style を
+ * 運べるものは 1 つも入れない。
+ */
+
+/**
+ * 通す MathML 要素。
+ *
+ * KaTeX の MathML 出力が使う要素に、MathML Core の基本要素を足したもの。
+ * `mglyph` は入れない (src で外部の画像を読み込むため。本文の画像は Markdown で書く)。
+ */
+export const mathMlTagNames = [
+  "math",
+  "semantics",
+  "annotation",
+  "mrow",
+  "mi",
+  "mn",
+  "mo",
+  "ms",
+  "mtext",
+  "mspace",
+  "mfrac",
+  "msqrt",
+  "mroot",
+  "mstyle",
+  "merror",
+  "mpadded",
+  "mphantom",
+  "menclose",
+  "msub",
+  "msup",
+  "msubsup",
+  "munder",
+  "mover",
+  "munderover",
+  "mmultiscripts",
+  "mprescripts",
+  "none",
+  "mtable",
+  "mtr",
+  "mtd",
+] as const;
+
+/**
+ * 通す属性。要素ごとに分けず、MathML の要素すべてに同じ一覧を当てる。
+ *
+ * どれも寸法・整列・書体といった組版の指定でしかなく、外部を参照する術がないため、
+ * 要素ごとに刻んでも防御は増えない。`href` (MathML でもリンクを張れる)、`class`、
+ * `style`、`id` は意図的に外してある。
+ */
+export const mathMlAttributes = [
+  // 全要素共通 (MathML Core)
+  "dir",
+  "displaystyle",
+  "mathbackground",
+  "mathcolor",
+  "mathsize",
+  "mathvariant",
+  "scriptlevel",
+  // math
+  "alttext",
+  "display",
+  "xmlns",
+  // mo
+  "fence",
+  "form",
+  "largeop",
+  "lspace",
+  "maxsize",
+  "minsize",
+  "movablelimits",
+  "rspace",
+  "separator",
+  "stretchy",
+  "symmetric",
+  // mfrac
+  "linethickness",
+  // mspace / mpadded
+  "depth",
+  "height",
+  "voffset",
+  "width",
+  // munder / mover / munderover
+  "accent",
+  "accentunder",
+  // mtable / mtr / mtd
+  "columnalign",
+  "columnlines",
+  "columnspacing",
+  "columnspan",
+  "rowalign",
+  "rowlines",
+  "rowspacing",
+  "rowspan",
+  // annotation
+  "encoding",
+  // menclose (MathML Core 外だが KaTeX が \cancel などで使う)
+  "notation",
+] as const;
+
+/** `<math>` の中でしか許さない要素 (裸の `<mi>` などが本文に紛れ込むのを防ぐ)。 */
+export const mathMlDescendants = mathMlTagNames.filter(
+  (tagName) => tagName !== "math",
+);

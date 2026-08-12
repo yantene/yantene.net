@@ -1,12 +1,14 @@
-import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
 import { MdastRenderer } from "./mdast-renderer";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { Root as MdastRoot } from "mdast";
+import { parseNoteContent } from "~/backend/services/note-content-parser";
 
+/*
+ * 本番と同じ経路で MDAST を組む。数式の MathML は refresh 時にここで埋まるので、
+ * 素の remark で組むと数式だけがストーリーと本番で食い違う。
+ */
 function markdownToMdast(markdown: string): MdastRoot {
-  return unified().use(remarkParse).use(remarkGfm).parse(markdown);
+  return parseNoteContent(markdown).mdast;
 }
 
 const sample = `# 見出し 1
@@ -73,6 +75,25 @@ export const Headings: Story = {
       ["# H1", "## H2", "### H3", "#### H4", "##### H5", "###### H6"].join(
         "\n\n",
       ),
+    ),
+  },
+};
+
+/*
+ * 数式。組版はブラウザの MathML に任せているので、見え方は環境の数式フォントに左右される
+ * (Windows は Cambria Math が入っており概ね綺麗に出る。Linux は一部の記号が豆腐になる)。
+ */
+export const Formulas: Story = {
+  args: {
+    node: markdownToMdast(
+      [
+        "文中に $a^2 + b^2 = c^2$ と書くと、その場に組まれる。",
+        "$$\n\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\n$$",
+        "$$\n\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}\n$$",
+        "$$\n\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}\n$$",
+        "$$\n\\int_0^\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}\n$$",
+        "$$\n\\text{速さ} = \\frac{\\text{距離}}{\\text{時間}}\n$$",
+      ].join("\n\n"),
     ),
   },
 };
