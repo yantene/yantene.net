@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   HiHeart,
@@ -9,6 +9,7 @@ import {
 import { useFetcher } from "react-router";
 import { EmojiPalette } from "./emoji-palette";
 import { withPendingReaction } from "./reaction-state";
+import { useDismiss } from "./use-dismiss";
 import type { ReactionState } from "./reaction-state";
 
 /** 既定のリアクション。ハートを押すと「いいね」になる (サーバー側の like と同じ値)。 */
@@ -50,6 +51,25 @@ export function ReactionBar({
   const { t } = useTranslation();
   const fetcher = useFetcher();
   const [isPaletteOpen, setPaletteOpen] = useState(false);
+  const paletteRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  /*
+   * 外側の押下と Esc で閉じる。
+   *
+   * Esc のときだけ焦点を入口に戻す。キーボードで閉じた人の焦点が行き場を失うため。
+   * 外側を押して閉じたときは、押した先に焦点が移るのが自然なので触らない。
+   */
+  const closePalette = useCallback((reason: "escape" | "outside") => {
+    setPaletteOpen(false);
+    if (reason === "escape") triggerRef.current?.focus();
+  }, []);
+
+  useDismiss({
+    isOpen: isPaletteOpen,
+    containerRef: paletteRef,
+    onDismiss: closePalette,
+  });
 
   /*
    * 送信中は結果を先に見せる。確定値は action からの戻りで loader が引き直すので、
@@ -109,8 +129,9 @@ export function ReactionBar({
         details ではなく button で開閉する。details は state と DOM のトグルが二重になり、
         閉じたつもりが開いたままになる。ここは JS 前提なので、状態を 1 つに絞ってよい。
       */}
-      <div className="reaction-palette">
+      <div className="reaction-palette" ref={paletteRef}>
         <button
+          ref={triggerRef}
           type="button"
           aria-label={t("reaction.openPalette")}
           aria-expanded={isPaletteOpen}
