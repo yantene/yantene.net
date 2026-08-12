@@ -51,5 +51,12 @@
     "placeholder": "Type keywords",
     "empty": "No matching notes.",
     "resultsFor": "Results for \"{{query}}\" — {{count}}"
+  },
+  "share": {
+    "title": "Share",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy",
+    "shareOn": "Share on {{service}}"
   }
 }
