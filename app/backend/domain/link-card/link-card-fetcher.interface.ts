@@ -24,7 +24,7 @@ export interface ILinkCardFetcher {
    *
    * **相手が落ちていること・OGP が無いことは異常ではないので throw しない。**
    * このサイトの既定は fail-loud だが、外部サイトへの依存はその例外に当たる
-   * (ADR 0013)。
+   * (ADR 0014)。
    */
   fetch(url: LinkCardUrl): Promise<FetchedLinkCard | undefined>;
 }

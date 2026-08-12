@@ -20,7 +20,7 @@ export interface NoteDetail {
    * 本文に貼られたむき出しの URL のカード。URL をキーに引く。
    *
    * 本文 (MDAST) には URL しか無いので、カードの中身は別に渡す。取れていない URL は
-   * この表に現れず、描画側は素のリンクのまま描く (ADR 0013)。
+   * この表に現れず、描画側は素のリンクのまま描く (ADR 0014)。
    */
   readonly linkCards: LinkCardMap;
 }
