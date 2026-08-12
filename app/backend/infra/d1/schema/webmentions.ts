@@ -11,8 +11,10 @@ import { notes } from "./notes";
  *
  * - (note_id, source) で一意。Webmention は再送で更新される仕様なので、同じ送り元から
  *   何度届いても行は 1 つに保つ。
- * - author_name / content は保存の時点で HTML を落としたテキストになっている
- *   (domain/webmention の VO が均す)。表示側は素の文字列として出してよい。
+ * - author_name / content は保存の時点でタグを落としたテキストになっている
+ *   (domain/webmention の VO が均す)。ただし `<` や `>` は**文字として**残りうるので
+ *   (`&lt;script&gt;` を実体参照から戻したものなど)、表示は必ずエスケープされる経路
+ *   (React の子要素) で出すこと。`dangerouslySetInnerHTML` に渡してはならない。
  * - published_at は送り元の記事の公開日時 (Unix 秒)。読めなければ NULL。
  * - received_at は初めて受け取った時刻、updated_at は最後に検証し直した時刻。
  *   再送で received_at を動かさないのは、表示の並びが送り手の都合で入れ替わらない

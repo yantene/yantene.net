@@ -64,9 +64,13 @@ function harness(result: SourceFetchResult): {
   };
 }
 
-function fetched(html: string): SourceFetchResult {
-  return { kind: "fetched", url: WebmentionUrl.create(SOURCE), html };
+function fetched(html: string, resolvedUrl = SOURCE): SourceFetchResult {
+  return { kind: "fetched", url: WebmentionUrl.create(resolvedUrl), html };
 }
+
+/** どこへ転送されても、こちらの記事を指すリンクを持つ文書。 */
+const SELF_CANONICAL_HTML =
+  '<link rel="canonical" href="https://yantene.net/notes/hello">';
 
 describe("WebmentionVerificationService", () => {
   it("target をリンクしていれば保存する", async () => {
@@ -119,6 +123,46 @@ describe("WebmentionVerificationService", () => {
 
     expect(upsert).not.toHaveBeenCalled();
     expect(deleteBySource).not.toHaveBeenCalled();
+  });
+
+  /*
+   * 転送で別のホストへ着いたら、読んだ文書は source の文書ではない。
+   *
+   * これを許すと、記事ページが出している自分自身への canonical リンクを使って
+   * 「こちらへ転送するだけ」で検証を通せてしまう。第三者サイトのオープンリダイレクタを
+   * 1 つ見つければ、その名前で好きな記事に行を作れる。
+   */
+  it("自サイトへ転送されたら保存しない", async () => {
+    const { service, upsert, deleteBySource } = harness(
+      fetched(SELF_CANONICAL_HTML, "https://yantene.net/notes/hello"),
+    );
+
+    await service.verify(noteId, request);
+
+    expect(upsert).not.toHaveBeenCalled();
+    expect(deleteBySource).not.toHaveBeenCalled();
+  });
+
+  /* 他人の本物の返信ページへ転送して、その人の名前と本文を横取りさせない。 */
+  it("別のホストへ転送されたら保存しない", async () => {
+    const { service, upsert } = harness(
+      fetched(LINKING_HTML, "https://elsewhere.example/reply"),
+    );
+
+    await service.verify(noteId, request);
+
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  /* スキームだけの転送 (http → https) は素通しさせる。 */
+  it("同じホストの中での転送は通す", async () => {
+    const { service, upsert } = harness(
+      fetched(LINKING_HTML, "https://example.com/post/1/amp"),
+    );
+
+    await service.verify(noteId, request);
+
+    expect(upsert).toHaveBeenCalledTimes(1);
   });
 
   it("mf2 の印が無いページはただの言及として保存する", async () => {

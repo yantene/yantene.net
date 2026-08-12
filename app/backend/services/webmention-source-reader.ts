@@ -118,7 +118,10 @@ function collectEntries(roots: readonly Mf2Root[]): Mf2Root[] {
  *
  * 1. target を `u-in-reply-to` 等で名指ししているもの
  * 2. 本文の中で target にリンクしているもの
- * 3. それも無ければ先頭
+ * 3. h-entry が 1 つしか無ければそれ
+ *
+ * 並んでいるうちのどれとも結び付かないときは選ばない。索引ページのように h-entry が
+ * 並ぶ相手で先頭を拾うと、target とは無関係な記事の著者と本文を保存してしまう。
  */
 function pickEntry(
   entries: readonly Mf2Root[],
@@ -131,7 +134,7 @@ function pickEntry(
       const html = contentHtmlOf(entry);
       return html !== undefined && hasLinkToTarget(html, baseUrl, target);
     }) ??
-    entries.at(0)
+    (entries.length === 1 ? entries.at(0) : undefined)
   );
 }
 

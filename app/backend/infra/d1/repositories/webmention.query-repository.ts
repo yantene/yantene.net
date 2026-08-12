@@ -8,6 +8,14 @@ import type {
 } from "~/backend/domain/webmention";
 import { webmentions } from "~/backend/infra/d1/schema";
 
+/**
+ * 1 記事ぶんで読み出す上限。
+ *
+ * 送り手の数はこちらでは決められないので、際限なく読み出す口を作らない。ここに届く
+ * ほど付いた記事は、そもそも読み切れる量ではない。
+ */
+const MAX_ROWS = 500;
+
 export class D1WebmentionQueryRepository implements IWebmentionQueryRepository {
   private readonly db;
 
@@ -26,7 +34,8 @@ export class D1WebmentionQueryRepository implements IWebmentionQueryRepository {
       .select()
       .from(webmentions)
       .where(eq(webmentions.noteId, noteId))
-      .orderBy(webmentions.receivedAt, webmentions.source);
+      .orderBy(webmentions.receivedAt, webmentions.source)
+      .limit(MAX_ROWS);
 
     return rows.map((row) => rowToWebmention(row));
   }

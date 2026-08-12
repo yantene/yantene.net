@@ -96,11 +96,15 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
         reason: `status ${String(response.status)}`,
       };
     }
-    if (!isHtml(response.headers.get("content-type"))) {
+    const contentType = response.headers.get("content-type");
+    if (!isHtml(contentType)) {
       return { kind: "unavailable", reason: "not html" };
     }
 
-    const html = await this.readCapped(response);
+    const body = response.body;
+    if (body === null) return { kind: "unavailable", reason: "no body" };
+
+    const html = await this.readCapped(body, charsetOf(contentType));
     if (html === undefined) {
       return { kind: "unavailable", reason: "body too large" };
     }
@@ -113,11 +117,12 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
   }
 
   /** 上限まで読む。超えたら打ち切って undefined を返す。 */
-  private async readCapped(response: Response): Promise<string | undefined> {
-    const reader = response.body?.getReader();
-    if (reader === undefined) return undefined;
-
-    const decoder = new TextDecoder();
+  private async readCapped(
+    body: ReadableStream<Uint8Array>,
+    charset: string,
+  ): Promise<string | undefined> {
+    const reader = body.getReader();
+    const decoder = decoderFor(charset);
     const parts: string[] = [];
     let total = 0;
 
@@ -142,6 +147,26 @@ function isHtml(contentType: string | null): boolean {
   if (contentType === null) return false;
   const mediaType = contentType.split(";", 1)[0]?.trim().toLowerCase() ?? "";
   return htmlContentTypes.has(mediaType);
+}
+
+/** Content-Type が名乗る文字コード。名乗らなければ UTF-8 とみなす。 */
+function charsetOf(contentType: string | null): string {
+  const found = /;\s*charset\s*=\s*"?([^";]+)"?/i.exec(contentType ?? "");
+  return found?.[1]?.trim() ?? "utf8";
+}
+
+/**
+ * その文字コードの復号器。知らない名前なら UTF-8 に倒す。
+ *
+ * 日本語圏の個人サイトには Shift_JIS や EUC-JP のページが残っている。決め打ちで UTF-8 に
+ * すると、著者名も本文も文字化けしたまま保存されてしまう。
+ */
+function decoderFor(charset: string): TextDecoder {
+  try {
+    return new TextDecoder(charset);
+  } catch {
+    return new TextDecoder();
+  }
 }
 
 /** 転送後の URL。読めなければ送り手の書いた URL のままにする。 */

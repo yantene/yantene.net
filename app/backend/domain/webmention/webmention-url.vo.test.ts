@@ -9,6 +9,26 @@ describe("WebmentionUrl", () => {
     );
   });
 
+  /*
+   * 素片はサーバーに送られないので、`#1` から `#9999` まで並べても相手が返す文書は同じ。
+   * 残すと「別の source」として何行でも積めてしまう (source は行の一意キーの一部)。
+   */
+  it("素片は落とす", () => {
+    expect(WebmentionUrl.create("https://example.com/x#a").toString()).toBe(
+      "https://example.com/x",
+    );
+    expect(WebmentionUrl.create("https://example.com/x?q=1#a").toString()).toBe(
+      "https://example.com/x?q=1",
+    );
+  });
+
+  /* クエリは残す。`?p=123` のような形で記事を分ける相手がいる。 */
+  it("クエリは残す", () => {
+    expect(WebmentionUrl.create("https://example.com/?p=123").toString()).toBe(
+      "https://example.com/?p=123",
+    );
+  });
+
   it("前後の空白は落とす", () => {
     expect(WebmentionUrl.create("  https://example.com/  ").toString()).toBe(
       "https://example.com/",

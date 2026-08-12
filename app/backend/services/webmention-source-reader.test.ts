@@ -193,6 +193,26 @@ describe("readMention", () => {
     expect(parsed.content?.toString()).toBe("要約だけある");
   });
 
+  /*
+   * 索引ページのように h-entry が並ぶ相手で、どれとも結び付かないときは選ばない。
+   * 先頭を拾うと、target とは無関係な記事の著者と本文を保存してしまう。
+   */
+  it("どの h-entry とも結び付かなければ、中身を読まない", () => {
+    const parsed = read(`
+      <div class="h-entry">
+        <div class="p-author h-card"><span class="p-name">Alice</span></div>
+        <div class="e-content"><p>無関係な記事 1</p></div>
+      </div>
+      <div class="h-entry">
+        <div class="e-content"><p>無関係な記事 2</p></div>
+      </div>
+      <p><a href="https://yantene.net/notes/hello">脇のリンク</a></p>`);
+
+    expect(parsed.type.toString()).toBe("mention");
+    expect(parsed.content).toBeUndefined();
+    expect(parsed.author.name).toBeUndefined();
+  });
+
   /* 一覧ページのように h-entry が並ぶ相手でも、target を指すものを選ぶ。 */
   it("target を指す h-entry を選ぶ", () => {
     const parsed = read(`

@@ -1,4 +1,8 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import type { NoteId } from "~/backend/domain/note";
+import type { ILogger } from "~/backend/domain/shared";
+import { errorToContext } from "~/backend/domain/shared";
 import {
   TargetNoteNotFoundError,
   WebmentionRejectedError,
@@ -36,7 +40,7 @@ import { createProblemResponse } from "~/lib/problem-details";
 export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
-  router.post(WEBMENTION_PATH, async (c) => {
+  router.post(WEBMENTION_PATH, limitBody, async (c) => {
     const form = await readForm(c.req.raw);
     if (form === undefined) {
       return createProblemResponse(
@@ -69,7 +73,7 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
         new D1WebmentionCommandRepository(c.env.D1),
         logger,
       );
-      c.executionCtx.waitUntil(service.verify(note.id, request));
+      c.executionCtx.waitUntil(verifyAndLog(service, note.id, request, logger));
     } catch (error) {
       if (error instanceof WebmentionRejectedError) {
         return createProblemResponse(
@@ -86,6 +90,48 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
   });
 
   return router;
+}
+
+/**
+ * 受け取る本文の上限。
+ *
+ * 中身は URL 2 本だけなので、これで足りる。誰でも叩ける口なので、読み込む前に頭を
+ * 押さえる (`formData()` は渡されただけ読んでしまう)。
+ */
+const MAX_BODY_BYTES = 4096;
+
+const limitBody = bodyLimit({
+  maxSize: MAX_BODY_BYTES,
+  onError: () =>
+    createProblemResponse(
+      httpStatus.PAYLOAD_TOO_LARGE,
+      "Payload Too Large",
+      "source and target are all this endpoint accepts",
+    ),
+});
+
+/**
+ * 検証を回し、落ちたらログに残して終える。
+ *
+ * 202 を返したあとに起きた失敗 (D1 の書き込みなど) は、もう応答に載せられない。握り
+ * つぶすと何も残らないので、error として吐く。取りに行けなかったこと自体は fetcher が
+ * info として扱っており、ここに来るのはこちら側の不具合だけ。
+ */
+async function verifyAndLog(
+  service: WebmentionVerificationService,
+  noteId: NoteId,
+  request: WebmentionRequest,
+  logger: ILogger,
+): Promise<void> {
+  try {
+    await service.verify(noteId, request);
+  } catch (error) {
+    logger.error("webmention verification failed", {
+      source: request.source.toString(),
+      target: request.target.toString(),
+      ...errorToContext(error),
+    });
+  }
 }
 
 /** フォームとして読む。読めなければ undefined (本文が壊れている / 形式が違う)。 */

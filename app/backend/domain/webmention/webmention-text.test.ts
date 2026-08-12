@@ -38,6 +38,18 @@ describe("WebmentionContent", () => {
     expect(WebmentionContent.fromText(" ".repeat(3))).toBeUndefined();
     expect(WebmentionContent.fromText("<br>")).toBeUndefined();
   });
+
+  /*
+   * 保存済みの値を読み戻すときに均し直さないこと。掛け直すと、均した結果に残った
+   * `<` をタグの始まりと見なして落としてしまい、読んだ値が保存した値と変わる。
+   */
+  it("保存済みの値は均し直さずに戻す", () => {
+    const stored = "<script>alert(1)</script>";
+
+    expect(WebmentionContent.reconstruct(stored)?.toString()).toBe(stored);
+    // 均し直す方を通すと、こうなってしまう。
+    expect(WebmentionContent.fromText(stored)?.toString()).toBe("alert(1)");
+  });
 });
 
 describe("WebmentionAuthor", () => {
@@ -59,6 +71,16 @@ describe("WebmentionAuthor", () => {
     expect(
       WebmentionAuthor.create({ name: "x".repeat(500) }).name,
     ).toHaveLength(100);
+  });
+
+  it("復元時に名前を均し直さない", () => {
+    const author = WebmentionAuthor.reconstruct({
+      name: "<Alice>",
+      url: null,
+      photo: null,
+    });
+
+    expect(author.name).toBe("<Alice>");
   });
 
   /* 行が壊れていても、読める部分だけで復元する。 */

@@ -29,6 +29,17 @@ export class WebmentionContent implements IValueObject<WebmentionContent> {
     return text.length === 0 ? undefined : new WebmentionContent(text);
   }
 
+  /**
+   * 保存済みの値から戻す。均し直さない。
+   *
+   * 保存の時点で均してあるので、読むたびに掛け直すと**読んだ値が保存した値と変わる**。
+   * 均した結果には `<` や `>` が文字として残りうるため (`&lt;script&gt;` を戻したもの
+   * など)、掛け直すとそれをタグと見なして落としてしまう。
+   */
+  static reconstruct(value: string): WebmentionContent | undefined {
+    return value.length === 0 ? undefined : new WebmentionContent(value);
+  }
+
   equals(other: WebmentionContent): boolean {
     return this.value === other.value;
   }

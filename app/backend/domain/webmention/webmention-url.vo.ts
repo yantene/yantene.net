@@ -40,6 +40,14 @@ export class WebmentionUrl implements IValueObject<WebmentionUrl> {
         `Webmention URL must be http or https: ${trimmed}`,
       );
     }
+
+    /*
+     * 素片 (#...) は落とす。サーバーには送られないので、`#1` から `#9999` まで並べても
+     * 相手が返す文書は同じ 1 つ。落としておかないと「別の source」として何行でも
+     * 積めてしまう (source は行の一意キーの一部)。
+     */
+    parsed.hash = "";
+
     return new WebmentionUrl(parsed.href);
   }
 
@@ -63,6 +71,11 @@ export class WebmentionUrl implements IValueObject<WebmentionUrl> {
   /** スキームとホストの部分 (例: `https://example.com`)。 */
   get origin(): string {
     return new URL(this.value).origin;
+  }
+
+  /** ホスト名 (例: `example.com`)。港とスキームは含まない。 */
+  get hostname(): string {
+    return new URL(this.value).hostname;
   }
 
   /** パス部分 (例: `/notes/hello`)。 */

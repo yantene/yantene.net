@@ -118,6 +118,32 @@ describe("HttpWebmentionSourceFetcher", () => {
     expect(init?.redirect).toBe("follow");
   });
 
+  /*
+   * 日本語圏の個人サイトには Shift_JIS のページが残っている。決め打ちで UTF-8 に
+   * すると、著者名も本文も文字化けしたまま保存されてしまう。
+   */
+  it("Content-Type が名乗る文字コードで復号する", async () => {
+    // "あ" (Shift_JIS) = 0x82 0xA0
+    const body = new Uint8Array([0x82, 0xa0]);
+    const response = new Response(body, {
+      headers: { "content-type": "text/html; charset=Shift_JIS" },
+    });
+
+    const result = await fetcherFor(response).fetch(SOURCE);
+
+    expect(result.kind === "fetched" && result.html).toBe("あ");
+  });
+
+  it("知らない文字コードなら UTF-8 に倒す", async () => {
+    const response = new Response("hi", {
+      headers: { "content-type": "text/html; charset=x-nonexistent" },
+    });
+
+    const result = await fetcherFor(response).fetch(SOURCE);
+
+    expect(result.kind === "fetched" && result.html).toBe("hi");
+  });
+
   /* 転送先の相対リンクを解決する基準になるので、最終 URL を返す。 */
   it("転送を追い切ったあとの URL を返す", async () => {
     const redirected = new Response("<p>hi</p>", {

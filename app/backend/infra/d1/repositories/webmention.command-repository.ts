@@ -41,7 +41,7 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
       updatedAt: nowUnix,
     };
 
-    const [row] = await this.db
+    const rows = await this.db
       .insert(webmentions)
       .values({
         id: crypto.randomUUID(),
@@ -55,6 +55,12 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
         set: content,
       })
       .returning();
+
+    // 分割代入だと型の上では必ず取れることになってしまうので、at で受けて確かめる。
+    const row = rows.at(0);
+    if (row === undefined) {
+      throw new Error("Webmention upsert returned no row");
+    }
 
     return rowToWebmention(row);
   }

@@ -49,6 +49,27 @@ export class WebmentionVerificationService {
       return;
     }
 
+    /*
+     * 転送の追い先が別のホストなら、読んだ文書は source の文書ではない。名乗りと中身が
+     * 食い違ったまま保存すると、次の二つを許してしまう。
+     *
+     * - **自分のページを読んで自分で頷く**: 記事ページは自分自身への canonical リンクを
+     *   出しているので、こちらへ転送するだけでリンクの検証を通ってしまう。第三者サイトの
+     *   オープンリダイレクタを 1 つ見つければ、その名前で好きな記事に行を作れる
+     * - **他人の返信を横取りする**: 誰かの本物の返信ページへ転送すれば、その人の名前と
+     *   本文を、こちらの選んだ source の行として保存させられる
+     *
+     * スキームだけの転送 (http → https) は素通しさせたいので、origin ではなくホスト名で
+     * 見る。別ホストへの転送 (短縮 URL や www の付け外し) は通らなくなるが、送り手は
+     * 記事そのものの URL を投げればよい。
+     */
+    if (result.url.hostname !== request.source.hostname) {
+      log.info("webmention skipped: redirected to another host", {
+        resolved: result.url.toString(),
+      });
+      return;
+    }
+
     if (!hasLinkToTarget(result.html, result.url, request.target)) {
       // リンクが消えた = 取り消し。初回なら消す行が無いだけで、結果は同じ。
       await this.commands.deleteBySource(noteId, request.source);

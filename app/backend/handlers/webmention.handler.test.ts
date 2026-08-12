@@ -238,6 +238,20 @@ describe("POST /webmention", () => {
       );
     });
 
+    /* 誰でも叩ける口なので、読み込む前に本文の大きさで頭を押さえる。 */
+    it("本文が大きすぎれば 413", async () => {
+      const harness = await setup();
+      stubSource(LINKING_HTML);
+
+      const response = await post(harness, {
+        source: SOURCE,
+        target: TARGET,
+        padding: "x".repeat(8192),
+      });
+
+      expect(response.status).toBe(413);
+    });
+
     it("断ったときは source を取りに行かない", async () => {
       const harness = await setup();
       stubSource(LINKING_HTML);

@@ -16,6 +16,9 @@ import { unixToInstant } from "~/backend/infra/d1/temporal";
  * source / type は保存時に VO を通しているので、ここでの再検証は破損データの検知を
  * 兼ねる (不正なら VO factory が throw する)。著者の URL だけは例外で、読めなければ
  * 落として名前だけ残す (欠けても Webmention としては成立するため)。
+ *
+ * 著者名と本文は `reconstruct` で**均し直さずに**包む。保存の時点で均してあり、掛け直すと
+ * 読んだ値が保存した値と変わってしまう。
  */
 export function rowToWebmention(
   row: typeof webmentions.$inferSelect,
@@ -34,7 +37,7 @@ export function rowToWebmention(
     content:
       row.content === null
         ? undefined
-        : WebmentionContent.fromText(row.content),
+        : WebmentionContent.reconstruct(row.content),
     publishedAt:
       row.publishedAt === null ? undefined : unixToInstant(row.publishedAt),
     receivedAt: unixToInstant(row.receivedAt),

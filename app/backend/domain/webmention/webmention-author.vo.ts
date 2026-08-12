@@ -42,14 +42,22 @@ export class WebmentionAuthor implements IValueObject<WebmentionAuthor> {
     return this.create({});
   }
 
-  /** D1 の行から戻す。壊れた URL は捨てて、名前だけでも残す。 */
+  /**
+   * D1 の行から戻す。壊れた URL は捨てて、名前だけでも残す。
+   *
+   * 名前は均し直さない。保存の時点で均してあるので、読むたびに掛け直すと**読んだ値が
+   * 保存した値と変わる** (均した結果に残った `<` を、タグの始まりと見なして落とす)。
+   */
   static reconstruct(params: {
     name: string | null;
     url: string | null;
     photo: string | null;
   }): WebmentionAuthor {
-    return this.create({
-      name: params.name ?? undefined,
+    return new WebmentionAuthor({
+      name:
+        params.name === null || params.name.length === 0
+          ? undefined
+          : params.name,
       url: WebmentionUrl.parse(params.url),
       photo: WebmentionUrl.parse(params.photo),
     });
