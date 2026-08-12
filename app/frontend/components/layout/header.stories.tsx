@@ -49,6 +49,19 @@ export const TransparentWithoutLogo: Story = {
   ],
 };
 
+/*
+ * 検索フォームを畳む幅の姿。Notes の字と検索欄が消え、同じ /notes を指す虫眼鏡だけが
+ * 残ることを確かめる。同じ行き先のリンクを 2 つ並べた回帰 (#154) を見張る場所。
+ */
+export const SolidNarrow: Story = {
+  args: {
+    variant: "solid",
+  },
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+};
+
 /* 下層ページでロゴを伏せる使い方は今のところ無いが、変種の組み合わせとして見られるように。 */
 export const SolidWithoutLogo: Story = {
   args: {
