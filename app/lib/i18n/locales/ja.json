@@ -44,7 +44,9 @@
       "backToList": "ノート一覧へ戻る"
     },
     "resultsForTag": "「{{tag}}」のノート — {{count}} 件",
-    "resultsForQueryAndTag": "「{{query}}」×「{{tag}}」— {{count}} 件"
+    "resultsForQueryAndTag": "「{{query}}」×「{{tag}}」— {{count}} 件",
+    "actionsTop": "この記事に反応する・共有する (冒頭)",
+    "actionsBottom": "この記事に反応する・共有する (末尾)"
   },
   "search": {
     "title": "検索",

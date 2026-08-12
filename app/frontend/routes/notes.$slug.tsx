@@ -11,9 +11,8 @@ import { applyReaction } from "~/backend/handlers/notes/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
+import { NoteActions } from "~/frontend/components/note-actions/note-actions";
 import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
-import { ReactionBar } from "~/frontend/components/reaction/reaction-bar";
-import { ShareMenu } from "~/frontend/components/share/share-menu";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { resolveCurrentYear } from "~/frontend/lib/current-year";
@@ -203,13 +202,26 @@ export default function NoteShow({
               />
             )}
           </header>
-          <MdastRenderer node={mdast} linkCards={linkCards} />
           {/*
-            読み終えた足元に、反応する手と共有する手を並べる。どちらも読み終えてからの
-            行動なので、本文の直後に置く。
+            反応する手と共有する手は、読み終えた足元だけでなく本文の手前にも置く。
+            長い記事では、読み始めに共有しようと思っても末尾まで届かないため。
+            上下は同じ鍵の fetcher を共有するので、片方で押すともう片方も動く。
           */}
-          <ReactionBar reactions={reactions.reactions} mine={reactions.mine} />
-          <ShareMenu url={`${origin}/notes/${note.slug}`} title={note.title} />
+          <NoteActions
+            placement="top"
+            reactions={reactions.reactions}
+            mine={reactions.mine}
+            url={`${origin}/notes/${note.slug}`}
+            title={note.title}
+          />
+          <MdastRenderer node={mdast} linkCards={linkCards} />
+          <NoteActions
+            placement="bottom"
+            reactions={reactions.reactions}
+            mine={reactions.mine}
+            url={`${origin}/notes/${note.slug}`}
+            title={note.title}
+          />
           {related.length > 0 && (
             <section className="note-related">
               <h2 className="note-related-heading">{t("notes.related")}</h2>
