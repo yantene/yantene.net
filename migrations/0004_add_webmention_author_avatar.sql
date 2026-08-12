@@ -1,0 +1,1 @@
+ALTER TABLE `webmentions` ADD `author_avatar` text;

@@ -33,6 +33,7 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
       authorName: webmention.author.name ?? null,
       authorUrl: webmention.author.url?.toString() ?? null,
       authorPhoto: webmention.author.photo?.toString() ?? null,
+      authorAvatar: webmention.authorAvatar ?? null,
       content: webmention.content?.toString() ?? null,
       publishedAt:
         webmention.publishedAt === undefined

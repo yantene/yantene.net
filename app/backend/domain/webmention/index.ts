@@ -21,3 +21,9 @@ export type {
 } from "./webmention-source-fetcher.interface";
 export type { IWebmentionCommandRepository } from "./webmention.command-repository.interface";
 export type { IWebmentionQueryRepository } from "./webmention.query-repository.interface";
+export { webmentionAvatarIdFor } from "./webmention-avatar";
+export type {
+  IWebmentionAvatarCache,
+  IWebmentionAvatarMirror,
+  WebmentionAvatar,
+} from "./webmention-avatar";

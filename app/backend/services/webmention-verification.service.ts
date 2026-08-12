@@ -2,6 +2,7 @@ import { hasLinkToTarget, readMention } from "./webmention-source-reader";
 import type { NoteId } from "~/backend/domain/note";
 import type { ILogger } from "~/backend/domain/shared";
 import type {
+  IWebmentionAvatarMirror,
   IWebmentionCommandRepository,
   IWebmentionSourceFetcher,
   WebmentionRequest,
@@ -22,6 +23,7 @@ export class WebmentionVerificationService {
   constructor(
     private readonly fetcher: IWebmentionSourceFetcher,
     private readonly commands: IWebmentionCommandRepository,
+    private readonly avatars: IWebmentionAvatarMirror,
     private readonly logger: ILogger,
   ) {}
 
@@ -78,6 +80,16 @@ export class WebmentionVerificationService {
     }
 
     const parsed = readMention(result.html, result.url, request.target);
+
+    /*
+     * 著者アイコンを自分のところへ写す。相手のドメインからは読み込めない
+     * (`img-src 'self' data:`)。写せなくても mention は保存する — 顔が無いだけで、
+     * 誰が何を言ったかは残る。
+     */
+    const photo = parsed.author.photo;
+    const authorAvatar =
+      photo === undefined ? undefined : await this.avatars.mirror(photo);
+
     await this.commands.upsert(
       Webmention.create({
         noteId,
@@ -85,6 +97,7 @@ export class WebmentionVerificationService {
         source: request.source,
         type: parsed.type,
         author: parsed.author,
+        authorAvatar,
         content: parsed.content,
         publishedAt: parsed.publishedAt,
       }),

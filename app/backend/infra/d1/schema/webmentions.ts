@@ -38,6 +38,13 @@ export const webmentions = sqliteTable(
     authorName: text("author_name"),
     authorUrl: text("author_url"),
     authorPhoto: text("author_photo"),
+    /*
+     * 写したアイコンの識別子 (`/api/v1/webmentions/avatars/<id>`)。
+     *
+     * author_photo は相手のドメインの URL で、`img-src 'self' data:` の下では読み込め
+     * ない。写せたときだけこの列が埋まる。埋まっていなければ顔なしで描く。
+     */
+    authorAvatar: text("author_avatar"),
     content: text("content"),
     publishedAt: integer("published_at"),
     receivedAt: integer("received_at").notNull(),

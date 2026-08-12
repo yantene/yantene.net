@@ -74,5 +74,9 @@
     "noMatch": "見つからなかった。",
     "paletteFailed": "絵文字を読み込めなかった。",
     "onlyOne": "リアクションは 1 つだけ。別のものを選ぶと入れ替わる。"
+  },
+  "webmention": {
+    "heading": "この記事への反応",
+    "openSource": "出典を開く"
   }
 }

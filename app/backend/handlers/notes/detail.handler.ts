@@ -7,6 +7,7 @@ import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
 import {
   InvalidNoteSlugError,
@@ -14,12 +15,15 @@ import {
   NoteSlug,
   NoteTag,
 } from "~/backend/domain/note";
+import { entityId } from "~/backend/domain/shared";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
+import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import {
   D1LinkCardQueryRepository,
   D1NoteQueryRepository,
+  D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
@@ -142,6 +146,13 @@ export type NoteDetailPageData =
       readonly mdast: Root;
       /** 本文に貼られたむき出しの URL のカード。URL をキーに引く。 */
       readonly linkCards: LinkCardMap;
+      /**
+       * 受け取った Webmention。顔だけ並べるものと本文を読ませるものに分けてある。
+       *
+       * SSR の時点で確定させる。クライアントで問い直して描き分けると
+       * hydration mismatch になる (#156)。
+       */
+      readonly webmentions: WebmentionGroups;
       readonly related: readonly PublicNote[];
       readonly headings: readonly TocHeading[];
       /**
@@ -182,9 +193,13 @@ export async function loadNoteDetailPage(
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);
   const slug = NoteSlug.create(detail.note.slug);
-  const [related, reactions] = await Promise.all([
+  const [related, reactions, webmentions] = await Promise.all([
     query.findRelated(slug, relatedTags, RELATED_LIMIT),
     loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
+    // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
+    new D1WebmentionQueryRepository(env.D1).listByNoteId(
+      entityId<"Note">(resolved.noteId),
+    ),
   ]);
 
   const mdast = detail.mdast as Root;
@@ -193,6 +208,7 @@ export async function loadNoteDetailPage(
     note: detail.note,
     mdast,
     linkCards: detail.linkCards,
+    webmentions: toWebmentionGroups(webmentions),
     related: related.map((note) => toPublicNote(note)),
     headings: extractHeadings(mdast),
     reactions,

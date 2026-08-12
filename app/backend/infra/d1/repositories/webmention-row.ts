@@ -34,6 +34,7 @@ export function rowToWebmention(
       url: row.authorUrl,
       photo: row.authorPhoto,
     }),
+    authorAvatar: row.authorAvatar ?? undefined,
     content:
       row.content === null
         ? undefined
