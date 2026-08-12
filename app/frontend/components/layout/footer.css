@@ -33,3 +33,15 @@
     flex-direction: row;
   }
 }
+
+/*
+ * 絵文字の意匠の帰属 (CC-BY 4.0)。出典として要るが読み物ではないので、
+ * 著作権表示より一段下げて、地面の際に小さく置く。
+ */
+.site-footer-attribution {
+  padding: 0 1.5rem 1.25rem;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  text-align: center;
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}

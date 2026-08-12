@@ -1,5 +1,16 @@
 @import "tailwindcss" source(".");
 
+/*
+ * 絵文字の意匠 (Twemoji)。COLR フォントを 1 つ読むだけで、本文もリアクションも同じ絵になる。
+ *
+ * 外から読まない。CSP が `font-src 'self'` なので CDN は届かず、SVG を個別に置くと
+ * パレットで数千リクエストになる。パッケージが配る `@font-face` は `unicode-range` 付きで、
+ * 絵文字のコードポイントだけがこのフォントに解決される (日本語や英数字は下の指定のまま)。
+ *
+ * 意匠は CC-BY 4.0 (jdecked/twemoji)。帰属はフッターに出している。
+ */
+@import "@sableclient/twemoji-font";
+
 /* コンポーネント CSS はここに束ねる。dev の Vite は component の `import "./x.css"` を
  * JS からの <style> 注入で届けるが、CSP (style-src 'self') がそれをブロックするため
  * dev でだけスタイルが丸ごと消える。app.css は <link> で届くのでその影響を受けない。 */
@@ -83,12 +94,18 @@
     0 1px 8px rgb(255 255 255 / 0.5);
 }
 
-/* サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。 */
+/*
+ * サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。
+ *
+ * Twemoji を先頭に置く。`unicode-range` で絵文字のコードポイントだけを受け持つので、
+ * 日本語や英数字は後ろの指定にそのまま落ちる。後ろに置くと、先に来た日本語フォントが
+ * 自前の絵文字グリフで応えてしまい、意匠が環境ごとにばらける。
+ */
 @layer base {
   html {
     font-family:
-      "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic",
-      YuGothic, Meiryo, system-ui, sans-serif;
+      Twemoji, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+      "Yu Gothic", YuGothic, Meiryo, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* スクロールバー領域を常に確保し、ページ間で中央寄せが左右にズレないようにする。 */

@@ -40,6 +40,18 @@ describe("Footer", () => {
     );
   });
 
+  /*
+   * 絵文字の意匠は CC-BY 4.0 で、帰属の表示が使用の条件になっている。見た目の都合で
+   * 外せる類のものではないので、消えたら落ちるようにしておく。
+   */
+  it("絵文字の意匠の帰属を出す", () => {
+    renderFooter(2026);
+
+    const link = screen.getByRole("link", { name: "Twemoji" });
+    expect(link).toHaveAttribute("href", "https://github.com/jdecked/twemoji");
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("CC BY 4.0");
+  });
+
   it("自分では時計を読まない", () => {
     // Workers がモジュールのトップレベル評価に見せる時刻 (Unix epoch 0) を再現する。
     vi.useFakeTimers();
