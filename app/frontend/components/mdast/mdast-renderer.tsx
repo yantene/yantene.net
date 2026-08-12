@@ -9,6 +9,7 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { normalizeEmbedSrc } from "./embed";
+import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import type { Element, Root as HastRoot, RootContent } from "hast";
 import type { Html, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
@@ -20,13 +21,26 @@ import type { Handler, Raw, State } from "mdast-util-to-hast";
  * ここで許すのはタグと属性の形だけで、載せてよい相手かどうかは見ていない。src の中身は
  * 後段 (toEmbed) が決め打ちの相手に絞る。二段構えにしているのは、sanitize の
  * schema がホスト単位の判断を表せないため。
+ *
+ * 数式の MathML も通す。refresh 時に組んだ木を MDAST の hChildren として運んでいるので
+ * (ADR 0013)、schema に無いタグ・属性はここで落ちてしまう。allowlist の中身は
+ * mathml.ts を参照。`<math>` の外に単独で現れた MathML 要素は ancestors で落とす。
  */
 const sanitizeSchema = {
   ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), "iframe"],
+  tagNames: [...(defaultSchema.tagNames ?? []), "iframe", ...mathMlTagNames],
   attributes: {
     ...defaultSchema.attributes,
     iframe: ["src", "title", "allow", "allowFullScreen", "loading"],
+    ...Object.fromEntries(
+      mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]]),
+    ),
+  },
+  ancestors: {
+    ...defaultSchema.ancestors,
+    ...Object.fromEntries(
+      mathMlDescendants.map((tagName) => [tagName, ["math"]]),
+    ),
   },
 };
 

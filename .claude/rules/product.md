@@ -53,6 +53,8 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - 要約から生 HTML を除外 ([#112](https://github.com/yantene/yantene.net/issues/112))
 - 原文 Markdown の R2 キャッシュ ([#106](https://github.com/yantene/yantene.net/issues/106))。
   force refresh を流すまで `/notes/<slug>.md` は 500 になる (fail-loud)
+- 数式の MathML 埋め込み ([#174](https://github.com/yantene/yantene.net/issues/174))。
+  force refresh を流すまで既存ノートの `$...$` は素の文字列のまま出る
 
 ## データモデルとストレージ戦略
 
@@ -81,7 +83,9 @@ lastModifiedOn: 2026-01-20
 ### summary は MDAST から自動抽出
 
 一覧表示用の要約は手書きしない。Markdown を MDAST (AST) に変換した後、
-見出し・脚注・コードブロック・生 HTML を除いたテキストノードから先頭 160 文字を切り出す。
+見出し・脚注・コードブロック・生 HTML・数式を除いたテキストノードから先頭 160 文字を
+切り出す。数式を除くのは、ノードが持つ値が LaTeX 原文で、残すと `\frac{a}{b}` のような
+制御綴りが一覧や OGP にそのまま出るため。
 
 生 HTML (`html` ノード) を除くのは、`<s>` や `<div class='box'>` といったタグ文字列が
 そのまま要約に出てしまうため。段落中のインライン HTML も対象で、タグに囲まれた本文自体は
@@ -97,6 +101,16 @@ Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) の�
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
 `/api/v1/notes/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
+
+### 数式は refresh 時に MathML へ組む
+
+本文の `$...$` / `$$...$$` は remark-math で数式ノードにし、**refresh のときに KaTeX の
+MathML 出力で組んで MDAST に埋める**。描画側は埋まった MathML を出すだけで、読者に数式
+ライブラリは送らない。設計判断の詳細は [ADR 0013](../../docs/adr/0013-math-as-mathml-at-refresh-time.md) を参照。
+
+- KaTeX の既定の HTML 出力は使わない。inline `style` で位置を指定するため CSP 下で崩れる
+- 読めない LaTeX は refresh がそのノートをスキップし、理由を返す (fail-loud)
+- `$` は数式の開始と見なされる。`$100 と $200` のような書き方は数式になってしまう
 
 ### 原文は `/notes/<slug>.md` で取れる
 

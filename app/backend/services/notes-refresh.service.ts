@@ -2,8 +2,12 @@ import { Temporal } from "@js-temporal/polyfill";
 import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
 import { readImageDimensions, type ImageDimensions } from "./image-dimensions";
+import { MathSyntaxError } from "./latex-to-mathml";
 import { resolveAssetUrl } from "./note-asset-url";
-import { parseNoteContent } from "./note-content-parser";
+import {
+  parseNoteContent,
+  type ParsedNoteContent,
+} from "./note-content-parser";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type {
   INoteCommandRepository,
@@ -254,6 +258,22 @@ function fnv1a(input: string): string {
 }
 
 /**
+ * Markdown を解析する。読めない LaTeX はコンテンツ不正として扱い、そのノードだけを
+ * スキップの対象にする (数式 1 つの誤字で refresh 全体を落とさない)。
+ * それ以外の失敗はパーサの不具合なので、握りつぶさず送出する。
+ */
+function parseContent(markdown: string): ParsedNoteContent {
+  try {
+    return parseNoteContent(markdown);
+  } catch (error) {
+    if (error instanceof MathSyntaxError) {
+      throw new NoteContentError(error.message);
+    }
+    throw error;
+  }
+}
+
+/**
  * 原文 Markdown から Note エンティティと MDAST を組み立てる純関数。
  * 不正なフロントマター・VO 検証失敗は {@link NoteContentError} として送出する。
  */
@@ -261,7 +281,7 @@ function buildNoteContent(
   group: NoteGroup,
   markdown: string,
 ): { note: Note<IUnpersisted>; mdast: unknown } {
-  const parsed = parseNoteContent(markdown);
+  const parsed = parseContent(markdown);
   const slug = group.slug.toString();
 
   const publishedRaw = parsed.frontmatter.publishedOn;

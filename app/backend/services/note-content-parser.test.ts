@@ -1,5 +1,6 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import { describe, expect, it } from "vitest";
+import { MathSyntaxError } from "./latex-to-mathml";
 import { extractSummary, parseNoteContent } from "./note-content-parser";
 
 const withFrontmatter = `---
@@ -87,6 +88,73 @@ describe("extractSummary", () => {
       "<!-- 下書きメモ -->\n\n公開する本文。\n",
     );
     expect(extractSummary(mdast)).toBe("公開する本文。");
+  });
+
+  /*
+   * 数式ノードは value に LaTeX 原文を持つ。要約に混ぜると `\frac{a}{b}` のような
+   * 制御綴りが一覧や OGP にそのまま出るので、生 HTML と同じく除く。
+   */
+  it("drops the LaTeX source of inline math but keeps the prose around it", () => {
+    const { mdast } = parseNoteContent(
+      "解の公式は $\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ である。\n",
+    );
+    expect(extractSummary(mdast)).toBe("解の公式は である。");
+  });
+
+  it("drops display math blocks entirely", () => {
+    const { mdast } = parseNoteContent("$$\n\\frac{a}{b}\n$$\n\n本文。\n");
+    expect(extractSummary(mdast)).toBe("本文。");
+  });
+});
+
+describe("math", () => {
+  it("turns $...$ into an inlineMath node carrying MathML", () => {
+    const { mdast } = parseNoteContent("式 $a^2$ です。\n");
+    const paragraph = mdast.children.at(0);
+    const math =
+      paragraph?.type === "paragraph"
+        ? paragraph.children.find((child) => child.type === "inlineMath")
+        : undefined;
+    expect(math?.data?.hName).toBe("math");
+    expect(math?.data?.hProperties?.xmlns).toBe(
+      "http://www.w3.org/1998/Math/MathML",
+    );
+    expect(math?.data?.hChildren?.at(0)).toMatchObject({
+      type: "element",
+      tagName: "semantics",
+    });
+  });
+
+  it("turns $$...$$ into a display math node", () => {
+    const { mdast } = parseNoteContent("$$\na^2\n$$\n");
+    const math = mdast.children.at(0);
+    expect(math?.type).toBe("math");
+    expect(math?.data?.hName).toBe("math");
+    expect(math?.data?.hProperties?.display).toBe("block");
+  });
+
+  /* 既定の hName は code / pre。上書きし損ねると数式が LaTeX のまま出る。 */
+  it("replaces the code fallback that remark-math sets by default", () => {
+    const { mdast } = parseNoteContent("$$\na^2\n$$\n");
+    expect(mdast.children.at(0)?.data?.hChildren).not.toMatchObject([
+      { tagName: "code" },
+    ]);
+  });
+
+  it("leaves math inside inline code alone", () => {
+    const { mdast } = parseNoteContent("記法は `$a$` と書く。\n");
+    const paragraph = mdast.children.at(0);
+    const kinds =
+      paragraph?.type === "paragraph"
+        ? paragraph.children.map((child) => child.type)
+        : [];
+    expect(kinds).not.toContain("inlineMath");
+  });
+
+  it("throws MathSyntaxError so refresh can skip the note", () => {
+    expect(() => parseNoteContent("壊れた式 $\\frac{$ です。\n")).toThrow(
+      MathSyntaxError,
+    );
   });
 });
 
