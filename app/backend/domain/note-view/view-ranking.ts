@@ -55,10 +55,43 @@ export function viewWeightLog(viewedOn: string): number {
 }
 
 /**
- * 1 回読まれたあとのスコア (対数)。
+ * リアクション 1 つが、閲覧何回ぶんの重みを持つか。
  *
- * 対数のまま足すために log-sum-exp を使う。大きいほうを括り出してから足すので、
- * `Math.exp` の引数が 0 以下に収まり、途中の計算でも溢れない。
+ * 読むより強い意思表示なので重くする。対数の世界では倍率は足し算になるので、
+ * この値の対数を重みに足すだけで済む。
+ */
+export const REACTION_WEIGHT_IN_VIEWS = 5;
+
+/** リアクション 1 つの重み (対数)。 */
+export function reactionWeightLog(reactedOn: string): number {
+  return viewWeightLog(reactedOn) + Math.log(REACTION_WEIGHT_IN_VIEWS);
+}
+
+/**
+ * 対数のまま 2 つを足す (log-sum-exp)。
+ *
+ * 大きいほうを括り出してから足すので、`Math.exp` の引数が 0 以下に収まり、
+ * 途中の計算でも溢れない。
+ */
+function logAddExp(a: number, b: number): number {
+  const larger = Math.max(a, b);
+  const smaller = Math.min(a, b);
+  return larger + Math.log1p(Math.exp(smaller - larger));
+}
+
+/**
+ * 対数のまま引く (log-sub-exp)。log-sum-exp の裏返し。
+ *
+ * 引く側が引かれる側以上なら素の値が 0 以下になり、対数では表せない。-Infinity を返して
+ * 呼び出し側に下限を決めさせる。
+ */
+function logSubExp(a: number, b: number): number {
+  if (b >= a) return -Infinity;
+  return a + Math.log1p(-Math.exp(b - a));
+}
+
+/**
+ * 1 回読まれたあとのスコア (対数)。
  *
  * 出発点は投稿日の重み (viewWeightLog(publishedOn))。まだ読まれていないぶんを素の 0
  * とすると対数が -∞ になってしまうので、下限を「投稿日に 1 回読まれた」ぶんに引き上げて
@@ -73,10 +106,44 @@ export function logScoreAfterView(
   currentLogScore: number,
   viewedOn: string,
 ): number {
-  const weight = viewWeightLog(viewedOn);
-  const larger = Math.max(currentLogScore, weight);
-  const smaller = Math.min(currentLogScore, weight);
-  return larger + Math.log1p(Math.exp(smaller - larger));
+  return logAddExp(currentLogScore, viewWeightLog(viewedOn));
+}
+
+/** リアクションが付いたあとのスコア (対数)。 */
+export function logScoreAfterReaction(
+  currentLogScore: number,
+  reactedOn: string,
+): number {
+  return logAddExp(currentLogScore, reactionWeightLog(reactedOn));
+}
+
+/**
+ * リアクションが外されたあとのスコア (対数)。
+ *
+ * 押したときに足したのと同じ値を引く。だから「いつ押したか」を覚えておく必要がある
+ * (読み手のセッションが持つ)。押した日の重みではなく今日の重みを引くと、日をまたいで
+ * 押し消しするだけでスコアを削れてしまう。
+ *
+ * 絵文字を別のものに差し替えるときは、ここを通さない。リアクションしている事実自体は
+ * 続いているので、スコアは動かさず数だけを移す。今日の重みに付け替える形にすると、
+ * 押し直すだけでスコアが上がる抜け道になる。
+ *
+ * ## 下限が要る理由
+ *
+ * 対数のまま足すと、桁が離れた小さいほうは丸めで消える。古い記事がまだ一度も
+ * 読まれていない場合、スコアは投稿日の下駄だけで、そこに今日のリアクションを足すと
+ * 下駄は倍精度の外に落ちる (重みの差が 37 桁ぶんを超えると exp が 0 に潰れる)。
+ * 消えた値は引き戻せないので、引いた結果が下限を割ったら下限に戻す。
+ *
+ * @param floorLogScore 下限。この記事の出発点 (投稿日の重み) を渡す。
+ */
+export function logScoreAfterReactionRemoved(
+  currentLogScore: number,
+  reactedOn: string,
+  floorLogScore: number,
+): number {
+  const removed = logSubExp(currentLogScore, reactionWeightLog(reactedOn));
+  return Math.max(removed, floorLogScore);
 }
 
 const MILLISECONDS_PER_DAY = 86_400_000;

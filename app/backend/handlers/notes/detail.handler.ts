@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { toNoteDetail } from "./note-detail-view";
+import { buildPayload, type ReactionsPayload } from "./reaction.handler";
 import { extractHeadings } from "./toc-headings";
 import { recordNoteView, type NoteViewRecording } from "./view-recording";
 import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
@@ -12,7 +13,9 @@ import {
   NoteTag,
 } from "~/backend/domain/note";
 import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
+import { readSessionId } from "~/backend/handlers/session-cookie";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 
 /** 記事末に出す関連記事の最大件数。 */
@@ -85,6 +88,27 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
   return router;
 }
 
+/**
+ * 押されているリアクションと、この読み手が押しているものを読む。
+ *
+ * cookie を持っていない相手には「誰も押していない」を返すだけで、セッションは起こさない。
+ * ページを開いただけの人にまで識別子を配る必要はない (発行は押したときに API が行う)。
+ */
+async function loadReactions(
+  env: Env,
+  noteId: string,
+  slug: NoteSlug,
+  cookie: string | null,
+): Promise<ReactionsPayload> {
+  const sessionId = readSessionId(cookie);
+  if (sessionId === undefined) return buildPayload(env, noteId, undefined);
+
+  const session = await new KvSessionQueryRepository(env.SESSIONS).findById(
+    sessionId,
+  );
+  return buildPayload(env, noteId, session?.reactionFor(slug)?.emoji);
+}
+
 export type NoteDetailPageData =
   | { readonly found: false }
   | {
@@ -94,6 +118,13 @@ export type NoteDetailPageData =
       readonly mdast: Root;
       readonly related: readonly PublicNote[];
       readonly headings: readonly TocHeading[];
+      /**
+       * 押されているリアクションと、この読み手が押しているもの。
+       *
+       * ページの描画に混ぜて返すのは、SSR の時点で「自分が押したか」を確定させるため。
+       * クライアントで問い直して描き分けると hydration mismatch になる (#156)。
+       */
+      readonly reactions: ReactionsPayload;
       /** schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。 */
       readonly jsonLd: Record<string, unknown>;
     };
@@ -124,11 +155,11 @@ export async function loadNoteDetailPage(
 
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);
-  const related = await query.findRelated(
-    NoteSlug.create(detail.note.slug),
-    relatedTags,
-    RELATED_LIMIT,
-  );
+  const slug = NoteSlug.create(detail.note.slug);
+  const [related, reactions] = await Promise.all([
+    query.findRelated(slug, relatedTags, RELATED_LIMIT),
+    loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
+  ]);
 
   const mdast = detail.mdast as Root;
   return {
@@ -137,6 +168,7 @@ export async function loadNoteDetailPage(
     mdast,
     related: related.map((note) => toPublicNote(note)),
     headings: extractHeadings(mdast),
+    reactions,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "BlogPosting",

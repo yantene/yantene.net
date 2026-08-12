@@ -1,6 +1,7 @@
 import type { SessionId } from "./session-id.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { NoteSlug } from "~/backend/domain/note";
+import type { ReactionEmoji } from "~/backend/domain/note-reaction";
 
 /**
  * セッションの寿命 (日)。
@@ -11,6 +12,18 @@ import type { NoteSlug } from "~/backend/domain/note";
  */
 export const SESSION_LIFETIME_DAYS = 400;
 
+/**
+ * この人がノートに押したリアクション。
+ *
+ * 押した日を持つのは、取り消すときに「押したときに足したのと同じ重み」を引くため。
+ * 今日の重みで引くと、日をまたいで押し消しするだけでスコアを削れてしまう。
+ */
+export interface SessionReaction {
+  readonly slug: NoteSlug;
+  readonly emoji: ReactionEmoji;
+  readonly reactedOn: Temporal.PlainDate;
+}
+
 interface SessionFields {
   readonly id: SessionId;
   /** 発行した日 (UTC)。 */
@@ -19,6 +32,14 @@ interface SessionFields {
   readonly viewedOn: Temporal.PlainDate | undefined;
   /** viewedOn に数えたノート。日が変われば捨てる。 */
   readonly viewedNotes: readonly NoteSlug[];
+  /**
+   * 押したリアクション。1 ノートにつき 1 つ。
+   *
+   * 閲覧の記録と違って**日が変わっても捨てない**。捨てると、取り消しも差し替えも
+   * できなくなり、同じ人が何度でも押せてしまう。閲覧のほうは「その日に数えたか」しか
+   * 要らないので捨てられるが、こちらは押した状態そのものなので持ち続ける。
+   */
+  readonly reactions: readonly SessionReaction[];
 }
 
 /**
@@ -43,6 +64,7 @@ export class Session {
       startedOn: on,
       viewedOn: undefined,
       viewedNotes: [],
+      reactions: [],
     });
   }
 
@@ -52,6 +74,7 @@ export class Session {
     startedOn: Temporal.PlainDate;
     viewedOn: Temporal.PlainDate | undefined;
     viewedNotes: readonly NoteSlug[];
+    reactions: readonly SessionReaction[];
   }): Session {
     return new Session(params);
   }
@@ -92,6 +115,55 @@ export class Session {
       ...this.fields,
       viewedOn: on,
       viewedNotes: isSameDay ? [...this.fields.viewedNotes, slug] : [slug],
+    });
+  }
+
+  get reactions(): readonly SessionReaction[] {
+    return this.fields.reactions;
+  }
+
+  /** そのノートに押しているリアクション。押していなければ undefined。 */
+  reactionFor(slug: NoteSlug): SessionReaction | undefined {
+    return this.fields.reactions.find((reaction) => reaction.slug.equals(slug));
+  }
+
+  /**
+   * リアクションを押した新しいセッションを返す (非破壊)。
+   *
+   * 1 ノートにつき 1 つなので、すでに押していれば差し替える。差し替えでは押した日を
+   * 引き継ぐ。取り消すときに引く重みは最初に押した日で決まっており、押し直しで
+   * 今日の日付に更新すると、押し直すだけでスコアを積める抜け道になる。
+   */
+  withReaction(
+    slug: NoteSlug,
+    emoji: ReactionEmoji,
+    on: Temporal.PlainDate,
+  ): Session {
+    const existing = this.reactionFor(slug);
+    const reaction: SessionReaction = {
+      slug,
+      emoji,
+      reactedOn: existing?.reactedOn ?? on,
+    };
+
+    return new Session({
+      ...this.fields,
+      reactions: [
+        ...this.fields.reactions.filter(
+          (current) => !current.slug.equals(slug),
+        ),
+        reaction,
+      ],
+    });
+  }
+
+  /** リアクションを取り消した新しいセッションを返す (非破壊)。 */
+  withoutReaction(slug: NoteSlug): Session {
+    return new Session({
+      ...this.fields,
+      reactions: this.fields.reactions.filter(
+        (reaction) => !reaction.slug.equals(slug),
+      ),
     });
   }
 }

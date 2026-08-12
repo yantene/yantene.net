@@ -12,6 +12,7 @@ import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
 import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
 import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
 import { createNoteMarkdownRouter } from "./handlers/notes/markdown.handler";
+import { createNoteReactionApiRouter } from "./handlers/notes/reaction.handler";
 import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createSearchApiRouter } from "./handlers/notes/search.handler";
 import { createTagsApiRouter } from "./handlers/notes/tags.handler";
@@ -113,6 +114,7 @@ export const getApp = (
   app.route("/api/v1/notes", createNotesApiRouter());
   app.route("/api/v1/notes", createNoteDetailApiRouter());
   app.route("/api/v1/notes", createNoteAssetsRouter());
+  app.route("/api/v1/notes", createNoteReactionApiRouter());
   app.route("/api/v1/tags", createTagsApiRouter());
   app.route("/api/v1/search", createSearchApiRouter());
   app.route("/og", createOgRouter());

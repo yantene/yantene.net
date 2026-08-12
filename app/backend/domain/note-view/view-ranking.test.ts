@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  logScoreAfterReaction,
+  logScoreAfterReactionRemoved,
   logScoreAfterView,
+  reactionWeightLog,
   VIEW_SCORE_EPOCH,
   VIEW_SCORE_HALF_LIFE_DAYS,
   viewWeightLog,
@@ -135,5 +138,102 @@ describe("logScoreAfterView", () => {
 
   it("読めない日付は受け付けない", () => {
     expect(() => logScoreAfterView(UNREAD, "not-a-date")).toThrow(RangeError);
+  });
+});
+
+describe("リアクションのスコア", () => {
+  it("リアクション 1 つは閲覧 5 回ぶんの重みを持つ", () => {
+    const day = dayAfterEpoch(60);
+    const byReaction = logScoreAfterReaction(UNREAD, day);
+    const byViews = viewedTimes(UNREAD, 5, day);
+
+    // 出発点 (UNREAD の下駄) が両方に等しく乗っているので、素の差は消える。
+    expect(plain(byReaction)).toBeCloseTo(plain(byViews), 10);
+  });
+
+  /*
+   * 押して消したら元に戻ること。ここが崩れると、押し消しを繰り返すだけでスコアを
+   * 上げ下げできてしまう。
+   */
+  it("押して消すと元のスコアに戻る", () => {
+    const day = dayAfterEpoch(120);
+    const before = viewedTimes(UNREAD, 30, day);
+
+    const after = logScoreAfterReactionRemoved(
+      logScoreAfterReaction(before, day),
+      day,
+      UNREAD,
+    );
+
+    expect(after).toBeCloseTo(before, 10);
+  });
+
+  /* 往復の丸め誤差が積もっても、順位に出る大きさにならないこと。 */
+  it("押し消しを 1000 回繰り返しても元の値から動かない", () => {
+    const day = dayAfterEpoch(200);
+    const before = viewedTimes(UNREAD, 50, day);
+
+    let score = before;
+    for (let i = 0; i < 1000; i++) {
+      score = logScoreAfterReaction(score, day);
+      score = logScoreAfterReactionRemoved(score, day, UNREAD);
+    }
+
+    expect(score).toBeCloseTo(before, 9);
+  });
+
+  /* 引く値は「押した日」から作る。今日の重みで引かせない。 */
+  it("押した日の重みで引く (日をまたいでも目減りしない)", () => {
+    const reactedOn = dayAfterEpoch(100);
+    const before = viewedTimes(UNREAD, 30, reactedOn);
+
+    const after = logScoreAfterReactionRemoved(
+      logScoreAfterReaction(before, reactedOn),
+      reactedOn,
+      UNREAD,
+    );
+    // 同じ値を引いているので、いつ消したかに関わらず元に戻る。
+    expect(after).toBeCloseTo(before, 10);
+  });
+
+  /*
+   * 引きすぎになる状況ではスコアを動かさない。構造上は起きないが、丸めで逆転したときに
+   * -∞ を書き込むと、その記事は二度と順位に戻ってこない。
+   */
+  it("引きすぎるときは下限まで戻す", () => {
+    const day = dayAfterEpoch(300);
+    const tiny = viewWeightLog(dayAfterEpoch(0));
+
+    const after = logScoreAfterReactionRemoved(tiny, day, tiny);
+
+    expect(after).toBe(tiny);
+    expect(Number.isFinite(after)).toBe(true);
+  });
+
+  /*
+   * まだ一度も読まれていない古い記事で踏んだ穴。出発点とリアクションの重みが桁違いに
+   * 離れていると、足した時点で出発点が丸めで消える。消えた値は引き戻せないので、
+   * 下限を渡していないと引ききったまま戻らなくなる。
+   */
+  it("読まれていない古い記事でも、取り消せば出発点に戻る", () => {
+    const publishedOn = dayAfterEpoch(6114); // 投稿は遠い過去
+    const today = dayAfterEpoch(9720);
+    const floor = viewWeightLog(publishedOn);
+
+    const reacted = logScoreAfterReaction(floor, today);
+    // 桁が離れすぎて、足した結果には出発点の情報が残っていない。
+    expect(reacted).toBe(reactionWeightLog(today));
+
+    const after = logScoreAfterReactionRemoved(reacted, today, floor);
+
+    expect(after).toBe(floor);
+  });
+
+  it("リアクションは読まれた回数より順位を押し上げる", () => {
+    const day = dayAfterEpoch(60);
+    const reacted = logScoreAfterReaction(viewedTimes(UNREAD, 10, day), day);
+    const readMore = viewedTimes(UNREAD, 14, day);
+
+    expect(reacted).toBeGreaterThan(readMore);
   });
 });
