@@ -264,6 +264,21 @@ critical CSS (`data-react-router-critical-css`) が `nonce=""` の `<link>` を�
 
 判断の経緯は [ADR 0007](../../docs/adr/0007-strict-csp-outside-development.md) を参照。
 
+## モジュールスコープで時刻を読まない (Workers)
+
+Cloudflare Workers は I/O の外 — つまりモジュールのトップレベル評価時 — の時刻を
+Unix epoch 0 に固定する。そこで求めた「いまの時刻」は本番でだけ 1970 年になり、
+ローカルの `pnpm dev` (workerd) では再現しない。
+
+過去にフッターの著作権表示がこれで全ページ `© 1970` になり、hydration で
+クライアントが差し替えることで React error #418 (text mismatch) まで出していた ([#156](https://github.com/yantene/yantene.net/issues/156))。
+
+- 時刻は loader・ハンドラ・関数の中 (呼ばれたときに走る場所) で読む
+- SSR とクライアントの両方で使う値は、サーバーが決めた値を loader 経由で描画へ渡す。
+  それぞれが描画時に時計を読むと、年末年始のように UTC と閲覧者のローカル時刻で
+  結果が食い違う瞬間に hydration mismatch が残る
+- `app/module-scope-clock.test.ts` が app / workers のソース全体を見張っている
+
 ## URL 命名規則
 
 URL パスセグメントとクエリパラメータは kebab-case で統一する。
