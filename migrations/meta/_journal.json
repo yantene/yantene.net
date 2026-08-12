@@ -29,6 +29,13 @@
       "when": 1786545159887,
       "tag": "0003_create_webmentions_table",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1786551827112,
+      "tag": "0004_add_webmention_author_avatar",
+      "breakpoints": true
     }
   ]
 }

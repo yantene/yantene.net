@@ -74,5 +74,9 @@
     "noMatch": "Nothing matched.",
     "paletteFailed": "Couldn't load the emoji.",
     "onlyOne": "One reaction at a time. Picking another replaces it."
+  },
+  "webmention": {
+    "heading": "Responses",
+    "openSource": "Open the source"
   }
 }

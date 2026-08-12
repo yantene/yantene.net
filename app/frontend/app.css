@@ -29,6 +29,7 @@
 @import "./components/mdast/mdast-renderer.css";
 @import "./components/navigation-progress/navigation-progress.css";
 @import "./components/note-actions/note-actions.css";
+@import "./components/webmention/webmention-list.css";
 @import "./components/note-timeline/note-timeline.css";
 @import "./components/note-branches/note-branches.css";
 @import "./components/reaction/reaction-bar.css";

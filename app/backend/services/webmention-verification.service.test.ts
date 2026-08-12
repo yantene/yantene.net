@@ -57,6 +57,8 @@ function harness(result: SourceFetchResult): {
     service: new WebmentionVerificationService(
       fetcher,
       commands,
+      // アイコンの写しはここでは見ない (写せなかった場合と同じ形で通す)。
+      { mirror: () => Promise.resolve(undefined) },
       silentLogger(),
     ),
     upsert,

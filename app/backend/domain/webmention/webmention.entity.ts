@@ -22,6 +22,13 @@ interface WebmentionFields<T extends IPersisted | IUnpersisted> {
   readonly source: WebmentionUrl;
   readonly type: WebmentionType;
   readonly author: WebmentionAuthor;
+  /**
+   * 写した著者アイコンの識別子。写せなかったときは欠ける。
+   *
+   * 相手のドメインのアイコンは `img-src 'self' data:` の下では読み込めないので、
+   * 自分のところへ写したものを指す。写しの失敗は異常ではないため、無い状態も持つ。
+   */
+  readonly authorAvatar: string | undefined;
   /** 本文。いいね等は本文を持たないので欠けうる。 */
   readonly content: WebmentionContent | undefined;
   /** 送り元の記事の公開日時 (microformats2 の `dt-published`)。読めなければ欠ける。 */
@@ -52,6 +59,7 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
     source: WebmentionUrl;
     type: WebmentionType;
     author: WebmentionAuthor;
+    authorAvatar?: string;
     content?: WebmentionContent;
     publishedAt?: Temporal.Instant;
   }): Webmention<IUnpersisted> {
@@ -62,6 +70,7 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
       source: params.source,
       type: params.type,
       author: params.author,
+      authorAvatar: params.authorAvatar,
       content: params.content,
       publishedAt: params.publishedAt,
       receivedAt: undefined,
@@ -76,6 +85,7 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
     source: WebmentionUrl;
     type: WebmentionType;
     author: WebmentionAuthor;
+    authorAvatar: string | undefined;
     content: WebmentionContent | undefined;
     publishedAt: Temporal.Instant | undefined;
     receivedAt: Temporal.Instant;
@@ -106,6 +116,10 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get author(): WebmentionAuthor {
     return this.fields.author;
+  }
+
+  get authorAvatar(): string | undefined {
+    return this.fields.authorAvatar;
   }
 
   get content(): WebmentionContent | undefined {

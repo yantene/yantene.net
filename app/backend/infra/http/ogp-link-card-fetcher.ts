@@ -1,4 +1,5 @@
 import { fetchCapped } from "./fetch-capped";
+import { isAllowedImageType, mediaTypeOf } from "./image-content-type";
 import { parseOgp } from "./parse-ogp";
 import type {
   FetchedLinkCard,
@@ -19,29 +20,6 @@ const DESCRIPTION_MAX_CHARS = 300;
 
 /** OGP を探す相手。HTML 以外を渡されたら読まない。 */
 const htmlContentTypes = new Set(["text/html", "application/xhtml+xml"]);
-
-/*
- * 写してよい画像の種類。
- *
- * **SVG は受け入れない。** カード自体は `<img>` で描くのでスクリプトは動かないが、
- * 写した先は自分のオリジンなので、配信 URL を直接開かれるとスクリプト入りの SVG が
- * 自分のオリジンで実行されうる。favicon が SVG しかないサイトはアイコン無しのカードに
- * なるが、絵ひとつのために穴を開ける理由がない。
- */
-const allowedImageTypes: ReadonlySet<string> = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/gif",
-  "image/webp",
-  "image/avif",
-  "image/x-icon",
-  "image/vnd.microsoft.icon",
-]);
-
-/** Content-Type からパラメータ (charset 等) を落として型だけにする。 */
-function mediaTypeOf(contentType: string): string {
-  return (contentType.split(";", 1)[0] ?? "").trim().toLowerCase();
-}
 
 function isHtml(contentType: string): boolean {
   return htmlContentTypes.has(mediaTypeOf(contentType));
@@ -130,10 +108,12 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
       });
       if (response === undefined) return undefined;
 
-      const contentType = mediaTypeOf(response.contentType);
-      if (!allowedImageTypes.has(contentType)) return undefined;
+      if (!isAllowedImageType(response.contentType)) return undefined;
 
-      return { bytes: response.bytes, contentType };
+      return {
+        bytes: response.bytes,
+        contentType: mediaTypeOf(response.contentType),
+      };
     } catch (error) {
       this.logger.debug("link card asset fetch failed", {
         url,

@@ -20,6 +20,7 @@ import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
 import { createWebmentionRouter } from "./handlers/webmention.handler";
+import { createWebmentionAvatarsRouter } from "./handlers/webmentions/avatars.handler";
 import type { MiddlewareHandler } from "hono";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
@@ -118,6 +119,7 @@ export const getApp = (
   app.route("/api/v1/notes", createNoteAssetsRouter());
   app.route("/api/v1/notes", createNoteReactionApiRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
+  app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
   app.route("/api/v1/tags", createTagsApiRouter());
   app.route("/api/v1/search", createSearchApiRouter());
   app.route("/og", createOgRouter());

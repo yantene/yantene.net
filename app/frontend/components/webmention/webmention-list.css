@@ -1,0 +1,117 @@
+/*
+ * 記事に届いた Webmention。
+ *
+ * いいね・リポストは顔だけを並べ、返信・言及は本文を読ませる。数の多い前者に本文と
+ * 同じ面積を割くと、読むべき後者が埋もれる。
+ */
+
+.webmentions {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.webmentions-heading {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* 顔の並び。少し重ねて「人の集まり」に見せる。 */
+.webmention-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.webmention-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  background-color: var(--color-base-200);
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.webmention-face:hover {
+  border-color: var(--color-primary);
+}
+
+.webmention-face-photo {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+}
+
+.webmention-replies {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.webmention-reply {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-base-100);
+}
+
+.webmention-reply-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.webmention-reply-author:hover {
+  color: var(--color-primary);
+}
+
+.webmention-reply-photo {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.webmention-reply-content {
+  margin: 0.5rem 0 0;
+  overflow: hidden;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  /* 長い返信で記事の末尾が埋まらないよう 4 行で切る。続きは出典から読める。 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.webmention-reply-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.webmention-reply-source:hover {
+  color: var(--color-primary);
+}

@@ -13,7 +13,9 @@ import {
   D1NoteQueryRepository,
   D1WebmentionCommandRepository,
 } from "~/backend/infra/d1/repositories";
+import { HttpWebmentionAvatarMirror } from "~/backend/infra/http/http-webmention-avatar-mirror";
 import { HttpWebmentionSourceFetcher } from "~/backend/infra/http/http-webmention-source-fetcher";
+import { R2WebmentionAvatarCache } from "~/backend/infra/r2/r2-webmention-avatar-cache";
 import { WebmentionVerificationService } from "~/backend/services/webmention-verification.service";
 import { httpStatus } from "~/lib/constants/http-status";
 import { WEBMENTION_PATH } from "~/lib/constants/webmention";
@@ -71,6 +73,10 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
       const service = new WebmentionVerificationService(
         new HttpWebmentionSourceFetcher(logger),
         new D1WebmentionCommandRepository(c.env.D1),
+        new HttpWebmentionAvatarMirror(
+          new R2WebmentionAvatarCache(c.env.R2),
+          logger,
+        ),
         logger,
       );
       c.executionCtx.waitUntil(verifyAndLog(service, note.id, request, logger));
