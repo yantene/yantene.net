@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-illustration.svg から、実装で使う 3 つの素材を切り出す。
+illustration.svg から、実装で使う 2 つの素材を切り出す。
 
 illustration.svg はワイヤーの下敷きを敷いた作業用の一枚絵で、座標は Inkscape の mm、
 レイヤーに translate が掛かっている。切り出す側はそれを知らずに済むよう、各素材の
@@ -41,7 +41,6 @@ DEST = ROOT / "app" / "frontend" / "assets"
 BOXES = {
     "cityscape": (0, 240, 1539, 464),  # 街 + 雲。下端がそのまま地平線になる
     "highlight": (600, 195, 938, 220),
-    "logo": (38, 31, 161, 55),
 }
 
 
@@ -50,7 +49,7 @@ BOXES = {
 OUTLINE_STROKES = ("#9488d3", "#6d6d6d")
 
 
-def clean(el: ET.Element, *, ink: bool = False) -> None:
+def clean(el: ET.Element) -> None:
     """Inkscape の作業用属性を落とし、輪郭の色を currentColor に置き換える。"""
     for key in list(el.attrib):
         if key.startswith(f"{{{INK}}}") or key.startswith(f"{{{SODI}}}"):
@@ -61,18 +60,10 @@ def clean(el: ET.Element, *, ink: bool = False) -> None:
         for color in OUTLINE_STROKES:
             style = style.replace(f"stroke:{color}", "stroke:currentColor")
         style = style.replace("fill:#000000", "fill:currentColor")
-        if ink:
-            # パス化した文字には font-family が残るが、もう字形を持たないので落とす。
-            style = re.sub(r"(?:-inkscape-)?font-[^;]*;?", "", style)
-            style = re.sub(r"letter-spacing:[^;]*;?|line-height:[^;]*;?", "", style)
         el.set("style", style.strip(";"))
 
-    # 文字は塗りの指定を持たないまま黒で描かれる。載せる場所の色に従わせる。
-    if ink and el.tag.endswith("path") and "fill" not in el.get("style", ""):
-        el.set("fill", "currentColor")
-
     for child in el:
-        clean(child, ink=ink)
+        clean(child)
 
 
 def wrap(
@@ -115,15 +106,6 @@ NOTES = {
 
   preserveAspectRatio="none" で見出しの幅まで引き伸ばすため、縦横比は保たれない。
 """,
-    "logo": """
-  ロゴ「やんてね！」。illustration.svg から切り出したもので、直接は編集しない。
-
-  字形はフォントをパス化したもの。閲覧環境に 'Noto Sans CJK JP' がある保証はなく、
-  このサイトは CSP (font-src 'self') の下で外部フォントも読めないため、text 要素のまま
-  置くと環境ごとに字形が変わる。差し替えるときもパス化した状態で書き出すこと。
-
-  色は currentColor で受ける (ヘッダーの文字色に追従させるため)。
-""",
 }
 
 
@@ -139,7 +121,6 @@ def main() -> None:
     clouds: list[ET.Element] = []
     skyline: list[ET.Element] = []
     highlight: list[ET.Element] = []
-    logo: list[ET.Element] = []
 
     for el in layer:
         tag = el.tag.split("}")[-1]
@@ -151,15 +132,16 @@ def main() -> None:
         elif ident == "path112":
             highlight.append(el)
         elif ident == "g113":
-            logo.extend(list(el))
+            # ロゴ「やんてね！」。ヘッダーはヒーローと同じ「下線付きのやんてね」
+            # (highlight + テキスト) で組むようになったので、切り出さない。
+            # 街に混ざらないよう、ここで明示的に落とす。
+            continue
         else:
             skyline.append(el)
 
     for group in (clouds, skyline, highlight):
         for el in group:
             clean(el)
-    for el in logo:
-        clean(el, ink=True)
 
     # 街。雲は 1 枚ぶん右にも複製を置き、横に流したとき継ぎ目が出ないようにする。
     box = BOXES["cityscape"]
@@ -183,9 +165,6 @@ def main() -> None:
         "cityscape.svg": wrap([cloud_group, sky_group], box, NOTES["cityscape"]),
         "highlight.svg": wrap(
             highlight, BOXES["highlight"], NOTES["highlight"], ' preserveAspectRatio="none"'
-        ),
-        "logo.svg": wrap(
-            logo, BOXES["logo"], NOTES["logo"], ' role="img" aria-label="やんてね！"'
         ),
     }
     for name, text in written.items():

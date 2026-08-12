@@ -45,8 +45,11 @@ export default function Home({
 
   return (
     <AppLayout>
-      {/* 透過ヘッダを Celestim ヒーローの上に重ねる。ヒーローは pt で頭を空けている。 */}
-      <Header variant="transparent" />
+      {/*
+        透過ヘッダを Celestim ヒーローの上に重ねる。ヒーローは pt で頭を空けている。
+        ロゴは伏せる。すぐ下のヒーローが同じ「やんてね」を出すので、二つ並ぶと煩わしい。
+      */}
+      <Header variant="transparent" showLogo={false} />
       <HeroSection />
 
       {recent.length > 0 && (
