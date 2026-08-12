@@ -1,7 +1,17 @@
 import { Temporal } from "@js-temporal/polyfill";
+import { NoteSlug } from "~/backend/domain/note";
 import { logScoreAfterView } from "~/backend/domain/note-view";
+import { Session, SessionId } from "~/backend/domain/session";
+import {
+  buildSessionCookie,
+  readSessionId,
+} from "~/backend/handlers/session-cookie";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1NoteViewCommandRepository } from "~/backend/infra/d1/repositories";
+import {
+  KvSessionCommandRepository,
+  KvSessionQueryRepository,
+} from "~/backend/infra/kv/repositories";
 
 /**
  * 閲覧を記録するために呼び出し側から預かるもの。
@@ -12,7 +22,17 @@ import { D1NoteViewCommandRepository } from "~/backend/infra/d1/repositories";
  */
 export interface NoteViewRecording {
   readonly userAgent: string | null;
+  /** 受け取った Cookie ヘッダー。セッション識別子を取り出すのに使う。 */
+  readonly cookie: string | null;
   readonly waitUntil: (promise: Promise<unknown>) => void;
+  /** セッション識別子を預け直す Set-Cookie を応答に載せる。 */
+  readonly setCookie: (value: string) => void;
+}
+
+/** 読まれたノート。数を足すのに id が、読み直しの判定に slug が要る。 */
+export interface ViewedNoteRef {
+  readonly id: string;
+  readonly slug: string;
 }
 
 /*
@@ -41,22 +61,70 @@ export function isLikelyBot(userAgent: string | null): boolean {
 }
 
 /**
- * ノートが読まれたことを日次の数に足す。
+ * ノートが読まれたことを数に足す。
  *
- * 記録するのは記事と日付だけで、読んだ人を特定できる値は保存しない。同じ人が続けて
- * 開けばその分だけ数える (誰が読んだかを持たない以上、区別のしようがない)。
+ * 同じ人が同じ日に同じ記事を開き直したぶんは数えない。誰が何を読んだかはセッション
+ * (KV) が持ち、読み手のブラウザには KV を指す識別子だけを預ける。
+ *
+ * セッションを起こすのは人が読んだときだけ。クローラーに識別子を配っても意味がない。
  */
 export function recordNoteView(
   env: Env,
-  noteId: string,
+  note: ViewedNoteRef,
   recording: NoteViewRecording,
 ): void {
   if (isLikelyBot(recording.userAgent)) return;
 
-  // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、重みが土地によってずれる。
-  const viewedOn = Temporal.Now.plainDateISO("UTC").toString();
+  // 持っていれば引き継ぐ。読めない値なら発行し直す (なりすましは形の検証では防げず、
+  // 防ぐ必要もない。当てられない乱数であることだけが効いている)。
+  const sessionId = readSessionId(recording.cookie) ?? SessionId.issue();
+  recording.setCookie(
+    buildSessionCookie(sessionId, {
+      // CSP と同じく、development でだけ外す (ADR 0007)。dev は http で開くことが
+      // あり、Secure を付けると cookie が落ちてセッションが繋がらなくなる。
+      secure: env.APP_ENV !== "development",
+    }),
+  );
 
-  recording.waitUntil(applyView(env, noteId, viewedOn));
+  // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、重みが土地によってずれる。
+  const viewedOn = Temporal.Now.plainDateISO("UTC");
+
+  recording.waitUntil(applyView(env, sessionId, note, viewedOn));
+}
+
+/**
+ * セッションに「今日この記事を数えた」を書き、それから数を足す。
+ *
+ * 先にセッションを書くのは、途中で落ちたときに数え過ぎより数え落としを選ぶため。
+ * 逆順にすると、書き込みに失敗した回だけ何度でも数えられてしまい、読み直しを
+ * 数えないという目的そのものが崩れる。
+ */
+async function applyView(
+  env: Env,
+  sessionId: SessionId,
+  note: ViewedNoteRef,
+  viewedOn: Temporal.PlainDate,
+): Promise<void> {
+  try {
+    const slug = NoteSlug.create(note.slug);
+    const session =
+      (await new KvSessionQueryRepository(env.SESSIONS).findById(sessionId)) ??
+      Session.start(sessionId, viewedOn);
+    if (session.hasViewed(slug, viewedOn)) return;
+
+    await new KvSessionCommandRepository(env.SESSIONS).save(
+      session.withView(slug, viewedOn),
+    );
+
+    await applyScore(env, note.id, viewedOn.toString());
+  } catch (error) {
+    // 記録に失敗しても読む側には関係がないので、握って記録だけ残す。
+    new ConsoleLogger().error("failed to record a note view", {
+      noteId: note.id,
+      viewedOn: viewedOn.toString(),
+      error,
+    });
+  }
 }
 
 /**
@@ -65,24 +133,15 @@ export function recordNoteView(
  * 読んでから書く 2 手になるのは、対数のまま足すのに log-sum-exp が要り、SQL では
  * 書けないため。累計のほうは SQL 側で足すので取りこぼさない。
  */
-async function applyView(
+async function applyScore(
   env: Env,
   noteId: string,
   viewedOn: string,
 ): Promise<void> {
-  try {
-    const repository = new D1NoteViewCommandRepository(env.D1);
-    const current = await repository.findLogScore(noteId);
-    // 記事が無ければ何もしない (0 は「まだ読まれていない」なので記録する)。
-    if (current === undefined) return;
+  const repository = new D1NoteViewCommandRepository(env.D1);
+  const current = await repository.findLogScore(noteId);
+  // 記事が無ければ何もしない (0 は「まだ読まれていない」なので記録する)。
+  if (current === undefined) return;
 
-    await repository.applyView(noteId, logScoreAfterView(current, viewedOn));
-  } catch (error) {
-    // 記録に失敗しても読む側には関係がないので、握って記録だけ残す。
-    new ConsoleLogger().error("failed to record a note view", {
-      noteId,
-      viewedOn,
-      error,
-    });
-  }
+  await repository.applyView(noteId, logScoreAfterView(current, viewedOn));
 }

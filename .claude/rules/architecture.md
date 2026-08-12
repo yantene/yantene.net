@@ -53,6 +53,7 @@ app/
 │   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ILogger 等)
 │   │   ├── note/               # Note 集約 (entity, VO, CQRS repo interface, errors)
 │   │   ├── note-view/          # 閲覧数と人気ランキング
+│   │   ├── session/            # 読み手のセッション (ADR 0011)
 │   │   └── content/            # コンテンツ正本のポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）
 │   │   ├── d1/                 # D1 (SQLite) 実装
@@ -61,10 +62,12 @@ app/
 │   │   │   ├── temporal.ts     # Temporal.Instant ↔ D1 integer 変換
 │   │   │   └── test-helper.ts  # テスト用 D1 ヘルパー
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
+│   │   ├── kv/                 # KV 実装 (読み手のセッション)
 │   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)
+│   │   ├── session-cookie.ts   # セッション識別子を運ぶ cookie の読み書き
 │   │   ├── feed.handler.ts     # Atom フィード
 │   │   ├── og.handler.ts       # OG 画像
 │   │   └── seo.handler.ts      # sitemap.xml / robots.txt

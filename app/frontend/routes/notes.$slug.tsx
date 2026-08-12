@@ -24,14 +24,21 @@ export async function loader({
 > {
   const url = new URL(request.url);
   const cloudflare = context.get(cloudflareContext);
+  // 読み手のセッション識別子を預け直す cookie を応答に載せる (ADR 0011)。
+  // React Router は loader が付けた Set-Cookie を、文書・データどちらの応答にも運ぶ。
+  const headers = new Headers();
   const detail = await loadNoteDetailPage(
     cloudflare.env,
     params.slug,
     url.origin,
     {
       userAgent: request.headers.get("user-agent"),
+      cookie: request.headers.get("cookie"),
       waitUntil: (promise) => {
         cloudflare.ctx.waitUntil(promise);
+      },
+      setCookie: (value) => {
+        headers.append("set-cookie", value);
       },
     },
   );
@@ -39,9 +46,9 @@ export async function loader({
 
   // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
   if (!detail.found) {
-    return data({ ...base, ...detail }, { status: 404 });
+    return data({ ...base, ...detail }, { status: 404, headers });
   }
-  return data({ ...base, ...detail });
+  return data({ ...base, ...detail }, { headers });
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
