@@ -89,6 +89,10 @@ export function recordNoteView(
   // 日付は UTC で切る。閲覧者の時間帯ごとに日が変わると、重みが土地によってずれる。
   const viewedOn = Temporal.Now.plainDateISO("UTC");
 
+  // 留保事項: 記録は応答を返し終えてから走るので、1 秒ほどの間に同じ記事を続けて
+  // 開かれると、2 つ目がこの書き込みより先に読んでしまい両方とも数える。KV の結果
+  // 整合も重なるが、主因はここで後ろに回していること。人のリロードでは滅多に当たらず、
+  // 順位の目安としては誤差なので許容している (ADR 0011)。
   recording.waitUntil(applyView(env, sessionId, note, viewedOn));
 }
 
