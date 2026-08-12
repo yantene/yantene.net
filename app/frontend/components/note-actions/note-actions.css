@@ -1,0 +1,33 @@
+/*
+ * 記事に対して手を動かす場所 (リアクションと共有)。記事の上と下の両方に出る。
+ *
+ * 中の部品は単体でも使えるよう自前の余白を持っているが、ここでは並べ方をこちらが
+ * 決めるので打ち消す。上下の違いは、このまとまりが持つ余白と区切りだけで表す。
+ */
+
+.note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.note-actions .reaction-bar,
+.note-actions .share-menu {
+  margin-top: 0;
+}
+
+/*
+ * 上に置くもの。本文の手前なので主張を抑え、細い線で本文と隔てる
+ * (記事の頭が重くならないように)。
+ */
+.note-actions-top {
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 下に置くもの。読み終えた足元なので、本文との間を広く取る。 */
+.note-actions-bottom {
+  margin-top: 2.5rem;
+}

@@ -44,7 +44,9 @@
       "backToList": "Back to notes"
     },
     "resultsForTag": "Notes tagged \"{{tag}}\" — {{count}}",
-    "resultsForQueryAndTag": "\"{{query}}\" × \"{{tag}}\" — {{count}}"
+    "resultsForQueryAndTag": "\"{{query}}\" × \"{{tag}}\" — {{count}}",
+    "actionsTop": "React to and share this note (top)",
+    "actionsBottom": "React to and share this note (bottom)"
   },
   "search": {
     "title": "Search",

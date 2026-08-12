@@ -15,6 +15,9 @@ import type { ReactionState } from "./reaction-state";
 /** 既定のリアクション。ハートを押すと「いいね」になる (サーバー側の like と同じ値)。 */
 const LIKE = "❤️";
 
+/** 同じ記事のリアクションはどこに置かれても 1 つの送信として扱う。 */
+const REACTION_FETCHER_KEY = "note-reaction";
+
 type ReactionBarProps = ReactionState;
 
 /**
@@ -49,7 +52,11 @@ export function ReactionBar({
   mine,
 }: ReactionBarProps): React.JSX.Element {
   const { t } = useTranslation();
-  const fetcher = useFetcher();
+  /*
+   * 上下に 2 つ置かれるので、同じ鍵で fetcher を共有する。別々にすると、送信中の
+   * 楽観表示が押したほうにしか出ず、もう片方だけ古い姿のまま残る。
+   */
+  const fetcher = useFetcher({ key: REACTION_FETCHER_KEY });
   const [isPaletteOpen, setPaletteOpen] = useState(false);
   const paletteRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
