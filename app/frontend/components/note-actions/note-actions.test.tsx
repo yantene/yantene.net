@@ -48,8 +48,8 @@ describe("NoteActions", () => {
   it("反応する手と共有する手を両方出す", () => {
     renderActions("bottom");
 
-    expect(screen.getByRole("button", { name: /いいね/ })).toBeTruthy();
-    expect(screen.getByRole("group", { name: "リアクション" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "いいね" })).toBeTruthy();
+    expect(screen.getByRole("form", { name: "リアクション" })).toBeTruthy();
     // 共有はメニューの入口が出ていればよい (中身は share-menu のテストが見る)。
     expect(screen.getByRole("button", { name: /共有|コピー/ })).toBeTruthy();
   });

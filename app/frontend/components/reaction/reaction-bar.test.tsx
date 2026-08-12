@@ -44,52 +44,66 @@ describe("ReactionBar", () => {
     i18nRef.current = await createI18nInstance("ja");
   });
 
-  it("ハートと絵文字を 1 つのまとまりに入れる", () => {
+  it("誰も押していなくてもハートを 0 件で出す", () => {
+    renderBar({ reactions: [], mine: null });
+
+    const like = screen.getByRole("button", { name: "いいね" });
+    expect(like.textContent).toContain("❤️");
+    expect(like.textContent).toContain("0");
+  });
+
+  it("ハートは常に先頭に置く (数で動かさない)", () => {
+    renderBar({ reactions: [{ emoji: "🎉", count: 9 }], mine: null });
+
+    const [likeChip, otherChip] = [
+      ...document.querySelectorAll(":scope .reaction-chip"),
+    ];
+    expect(likeChip.textContent).toContain("❤️");
+    expect(otherChip.textContent).toContain("🎉");
+  });
+
+  it("ハートも他の絵文字も同じ形で並べる", () => {
     renderBar({ reactions, mine: null });
 
-    const group = screen.getByRole("group", { name: "リアクション" });
-    // ハート (いいね) と押されている絵文字が同じまとまりに居る。
-    expect(group.querySelectorAll(":scope button")).toHaveLength(
-      reactions.length + 1,
+    // ハートだけ別の姿だと、独立したトグルに見えて排他が伝わらない。
+    expect(document.querySelectorAll(":scope .reaction-chip")).toHaveLength(
+      reactions.length,
     );
   });
 
-  it("まとまりに「1 つだけ」の説明を結び付ける", () => {
+  it("押しているものだけが光る", () => {
+    renderBar({ reactions, mine: "🎉" });
+
+    const active = [
+      ...document.querySelectorAll(":scope .reaction-chip.is-active"),
+    ];
+    expect(active).toHaveLength(1);
+    expect(active[0].textContent).toContain("🎉");
+  });
+
+  it("押しているものをもう一度押すと取り消しを送る", () => {
+    renderBar({ reactions, mine: "🎉" });
+
+    const chips = [...document.querySelectorAll(":scope .reaction-chip")];
+    const mine = chips.find((chip) => chip.className.includes("is-active"));
+    expect(mine?.getAttribute("value")).toBe("");
+  });
+
+  it("パレットの入口は選択肢の並びの外に置く", () => {
     renderBar({ reactions, mine: null });
 
-    const group = screen.getByRole("group", { name: "リアクション" });
-    const hintId = group.getAttribute("aria-describedby") ?? "";
+    const trigger = screen.getByRole("button", { name: /絵文字を選ぶ/ });
+    expect(trigger.className).not.toContain("reaction-chip");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("行に「1 つだけ」の説明を結び付ける", () => {
+    renderBar({ reactions, mine: null });
+
+    const form = screen.getByRole("form", { name: "リアクション" });
+    const hintId = form.getAttribute("aria-describedby") ?? "";
     expect(hintId).not.toBe("");
     const hint = document.querySelector(`#${CSS.escape(hintId)}`);
     expect(hint?.textContent).toContain("1 つだけ");
-  });
-
-  it("パレットの入口はまとまりの外に置く", () => {
-    renderBar({ reactions, mine: null });
-
-    const group = screen.getByRole("group", { name: "リアクション" });
-    const trigger = screen.getByRole("button", { name: /他の絵文字を選ぶ/ });
-    expect(group.contains(trigger)).toBe(false);
-  });
-
-  it("押しているものがあるとまとまりを縁取る", () => {
-    renderBar({ reactions, mine: "🎉" });
-
-    const group = screen.getByRole("group", { name: "リアクション" });
-    expect(group.dataset["chosen"]).toBe("true");
-  });
-
-  it("何も押していなければ縁取らない", () => {
-    renderBar({ reactions, mine: null });
-
-    const group = screen.getByRole("group", { name: "リアクション" });
-    expect(group.dataset["chosen"]).toBe("false");
-  });
-
-  it("絵文字を押しているときハートは消灯する (同じ 1 枠のため)", () => {
-    renderBar({ reactions, mine: "🎉" });
-
-    const like = screen.getByRole("button", { name: /いいね/ });
-    expect(like.getAttribute("aria-pressed")).toBe("false");
   });
 });

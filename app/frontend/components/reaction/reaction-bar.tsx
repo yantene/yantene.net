@@ -1,16 +1,11 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  HiHeart,
-  HiOutlineFaceSmile,
-  HiOutlineHeart,
-  HiOutlinePlus,
-} from "react-icons/hi2";
+import { HiOutlineFaceSmile, HiOutlinePlus } from "react-icons/hi2";
 import { useFetcher } from "react-router";
 import { EmojiPalette } from "./emoji-palette";
 import { withPendingReaction } from "./reaction-state";
 import { useDismiss } from "./use-dismiss";
-import type { ReactionState } from "./reaction-state";
+import type { ReactionCount, ReactionState } from "./reaction-state";
 
 /** 既定のリアクション。ハートを押すと「いいね」になる (サーバー側の like と同じ値)。 */
 const LIKE = "❤️";
@@ -19,6 +14,22 @@ const LIKE = "❤️";
 const REACTION_FETCHER_KEY = "note-reaction";
 
 type ReactionBarProps = ReactionState;
+
+/**
+ * 画面に出す並び。**ハートは押されていなくても必ず先頭に出す。**
+ *
+ * 何も押されていない記事に手がかりが 1 つも無いと、押せること自体が伝わらない。
+ * 既定のリアクションだけは 0 件でも席を用意しておく。
+ *
+ * 位置を固定するのは、数で並び替えると押した瞬間にハートが動いて見失うため。
+ */
+function toChips(
+  reactions: readonly ReactionCount[],
+): readonly ReactionCount[] {
+  const like = reactions.find((reaction) => reaction.emoji === LIKE);
+  const others = reactions.filter((reaction) => reaction.emoji !== LIKE);
+  return [like ?? { emoji: LIKE, count: 0 }, ...others];
+}
 
 /**
  * 送信中なら、その結果を先に見せる姿を返す。送信していなければそのまま。
@@ -84,7 +95,6 @@ export function ReactionBar({
    */
   const view = pendingView({ reactions, mine }, fetcher.formData);
 
-  const isLiked = view.mine === LIKE;
   // 同じページに 2 つ置かれても id がぶつからないようにする。
   const hintId = useId();
 
@@ -93,6 +103,7 @@ export function ReactionBar({
       method="post"
       className="reaction-bar"
       aria-label={t("reaction.reactionsLabel")}
+      aria-describedby={hintId}
       /*
        * 押した位置に留まる。action は記事へ送り返すので、そのままだと読み終えた足元で
        * 押したのに記事の先頭へ飛ばされる。
@@ -100,57 +111,32 @@ export function ReactionBar({
       preventScrollReset
     >
       {/*
-        ハートと押されている絵文字は「この中から 1 つ」を選ぶもの。別々に押せるように
-        見えると、パレットで選んだときにハートが黙って消えたように映るので、1 つの
-        まとまりとして囲い、その旨を読み上げにも出す。
+        押されている絵文字の並び。ハートも同じ形の 1 つとして混ぜる。
 
-        role="radiogroup" は使わない。矢印キーでの移動と roving tabindex が要るが、
-        それらは JS 前提になり、JS 無しでも押せるという性質を壊す。囲いと説明で示す。
-      */}
-      <div
-        className="reaction-choices"
-        role="group"
-        aria-label={t("reaction.reactionsLabel")}
-        aria-describedby={hintId}
-        data-chosen={view.mine === null ? "false" : "true"}
-      >
-        {/*
-        押すと「いまの 1 つ」を置き換える。すでにハートなら空を送って取り消す
+        ハートだけ別の姿にすると、独立したトグルに見えて「同じ 1 枠を奪い合う」ことが
+        伝わらない (ADR 0012)。同じ形で並べれば、常にどれか 1 つだけが光る。
+        押すと「いまの 1 つ」を置き換える。すでに押しているものなら空を送って取り消す
         (値の有無だけで意図が決まるので、別の hidden を足さなくてよい)。
       */}
-        <button
-          type="submit"
-          name="emoji"
-          value={isLiked ? "" : LIKE}
-          aria-pressed={isLiked}
-          className={`reaction-like press-control${isLiked ? " is-active" : ""}`}
-        >
-          {isLiked ? <HiHeart aria-hidden /> : <HiOutlineHeart aria-hidden />}
-          {t(isLiked ? "reaction.liked" : "reaction.like")}
-        </button>
-
-        {view.reactions.map((reaction) => {
-          const isMine = view.mine === reaction.emoji;
-          return (
-            <button
-              key={reaction.emoji}
-              type="submit"
-              name="emoji"
-              value={isMine ? "" : reaction.emoji}
-              aria-pressed={isMine}
-              className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
-            >
-              <span className="reaction-chip-emoji">{reaction.emoji}</span>
-              <span className="reaction-chip-count">{reaction.count}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 排他であることの説明。囲いから aria-describedby で指す。 */}
-      <p id={hintId} className="sr-only">
-        {t("reaction.onlyOne")}
-      </p>
+      {toChips(view.reactions).map((reaction) => {
+        const isMine = view.mine === reaction.emoji;
+        return (
+          <button
+            key={reaction.emoji}
+            type="submit"
+            name="emoji"
+            value={isMine ? "" : reaction.emoji}
+            aria-pressed={isMine}
+            aria-label={
+              reaction.emoji === LIKE ? t("reaction.like") : undefined
+            }
+            className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
+          >
+            <span className="reaction-chip-emoji">{reaction.emoji}</span>
+            <span className="reaction-chip-count">{reaction.count}</span>
+          </button>
+        );
+      })}
 
       {/*
         パレットの入口。開閉と選択には JS が要るので、動かない環境では出さない
@@ -196,6 +182,15 @@ export function ReactionBar({
           </div>
         )}
       </div>
+      {/*
+        排他であることの説明。行そのものから aria-describedby で指す。
+
+        並びを見れば「常に 1 つだけ光る」ことは分かるが、読み上げでは押せるものが
+        いくつも並んでいるようにしか聞こえない。言葉でも 1 度だけ添える。
+      */}
+      <p id={hintId} className="sr-only">
+        {t("reaction.onlyOne")}
+      </p>
     </fetcher.Form>
   );
 }
