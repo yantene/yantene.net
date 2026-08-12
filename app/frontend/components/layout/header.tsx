@@ -67,13 +67,27 @@ export function Header({
             className={`ml-auto flex items-center gap-5 sm:gap-7${isTransparent ? " text-halo" : ""}`}
           >
             <nav className="flex items-center gap-5 sm:gap-7">
-              {/* ノート一覧が検索とタグの索引を兼ねるので、入口はここ 1 つで足りる。 */}
-              <Link to="/notes" className={linkClassName}>
+              {/*
+                ノート一覧が検索とタグの索引を兼ねるので、入口はここ 1 つで足りる。
+                狭い幅では字を伏せ、下の虫眼鏡に同じ入口を引き継ぐ。
+              */}
+              <Link to="/notes" className={`${linkClassName} hidden sm:inline`}>
                 Notes
               </Link>
-              {/* 検索フォームを畳む幅では、探せる場所へのリンクで代替する。 */}
-              <Link to="/notes" className={`${linkClassName} sm:hidden`}>
-                Search
+              {/*
+                検索フォームを畳む幅の入口。行き先は上と同じ /notes で、字を並べる幅が
+                無いぶんを虫眼鏡 1 つに代える (畳んだフォームの在り処を指す形にする)。
+                字が無いので aria-label で名前を与える。
+
+                負のマージンで相殺した padding は、見た目の位置を変えずにタップ領域だけを
+                44px 角へ広げるためのもの。アイコンの 1.25rem だけでは指には小さすぎる。
+              */}
+              <Link
+                to="/notes"
+                aria-label={t("search.title")}
+                className={`${linkClassName} -m-3 p-3 sm:hidden`}
+              >
+                <HiMagnifyingGlass className="size-5" aria-hidden />
               </Link>
             </nav>
 
