@@ -11,17 +11,21 @@ import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline"
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
+import { currentYear } from "~/lib/current-year";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & HomePageData> {
+}: Route.LoaderArgs): Promise<
+  PageMetaBase & HomePageData & { readonly year: number }
+> {
   const home = await loadHomePage(context.get(cloudflareContext).env);
   return {
     ...home,
     locale: resolveLocale(request),
     origin: new URL(request.url).origin,
+    year: currentYear(),
   };
 }
 
@@ -41,7 +45,7 @@ export default function Home({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { recent, popular } = loaderData;
+  const { recent, popular, year } = loaderData;
 
   return (
     <AppLayout>
@@ -92,7 +96,7 @@ export default function Home({
         </section>
       )}
 
-      <Footer />
+      <Footer year={year} />
     </AppLayout>
   );
 }

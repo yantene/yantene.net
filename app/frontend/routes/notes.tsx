@@ -16,6 +16,7 @@ import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
+import { currentYear } from "~/lib/current-year";
 import { feedIdentity } from "~/lib/feed";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
@@ -24,10 +25,17 @@ const DEFAULT_PER_PAGE = 20;
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & NotesListPageData> {
+}: Route.LoaderArgs): Promise<
+  PageMetaBase & NotesListPageData & { readonly year: number }
+> {
   const url = new URL(request.url);
   const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
-  return { ...data, locale: resolveLocale(request), origin: url.origin };
+  return {
+    ...data,
+    locale: resolveLocale(request),
+    origin: url.origin,
+    year: currentYear(),
+  };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
@@ -131,7 +139,7 @@ export default function NotesIndex({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, query, tag, tags, sort } = loaderData;
+  const { notes, pagination, query, tag, tags, sort, year } = loaderData;
   const hrefForPage = (page: number): string =>
     buildHrefForPage(page, pagination.perPage, sort, tag);
   /*
@@ -231,7 +239,7 @@ export default function NotesIndex({
           </div>
         </noscript>
       </main>
-      <Footer />
+      <Footer year={year} />
     </AppLayout>
   );
 }

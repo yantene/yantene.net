@@ -222,6 +222,31 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
   または関数を分離する
 - TDD: Red → Green → Refactor
 
+## モジュールスコープで時計を読まない (Workers)
+
+Cloudflare Workers は I/O の外 — モジュールのトップレベル評価時 — の時刻を Unix epoch 0 に
+固定する。そのため次のコードは、ローカルでは正しく動くのに本番の SSR だけ 1970 年になる。
+
+```ts
+// ❌ Workers 上では 1970 になる
+const currentYear = new Date().getFullYear();
+
+export function Footer() {
+  return <p>&copy; {currentYear} yantene.net</p>;
+}
+```
+
+しかも画面上は hydration でクライアントの値に差し替わるため、目で見ても気づけない。JS を
+実行しない閲覧者とクローラーにだけ 1970 年が見え、差し替えは全ページで hydration mismatch
+(React error #418) を出す。
+
+時計はリクエストの中 (loader・ハンドラ) で読み、値は props で描画へ渡す。**描画のたびに
+読む形にもしない。** SSR (Workers は UTC) と閲覧者のローカル時刻とで年月日が食い違う時間帯に、
+同じ mismatch が残るため。loader が決めた 1 つの値を使う。
+
+`app/lib/current-year.test.ts` が app / workers のソースを AST で走査し、関数の外で
+`new Date()` / `Date.now()` / `Temporal.Now.*` を読んでいないかを見張る。
+
 ## inline style を使わない (CSP)
 
 CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザは inline `style`

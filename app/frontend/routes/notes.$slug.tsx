@@ -13,6 +13,7 @@ import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
+import { currentYear } from "~/lib/current-year";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 export async function loader({
@@ -20,7 +21,9 @@ export async function loader({
   params,
   context,
 }: Route.LoaderArgs): Promise<
-  ReturnType<typeof data<PageMetaBase & NoteDetailPageData>>
+  ReturnType<
+    typeof data<PageMetaBase & NoteDetailPageData & { readonly year: number }>
+  >
 > {
   const url = new URL(request.url);
   const cloudflare = context.get(cloudflareContext);
@@ -42,7 +45,11 @@ export async function loader({
       },
     },
   );
-  const base = { locale: resolveLocale(request), origin: url.origin };
+  const base = {
+    locale: resolveLocale(request),
+    origin: url.origin,
+    year: currentYear(),
+  };
 
   // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
   if (!detail.found) {
@@ -80,6 +87,8 @@ export default function NoteShow({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  // 見つからない側でも足元は同じように描くので、found の判定より前に取り出す。
+  const { year } = loaderData;
 
   if (!loaderData.found) {
     return (
@@ -94,7 +103,7 @@ export default function NoteShow({
             {t("notes.notFound.backToList")}
           </Link>
         </main>
-        <Footer />
+        <Footer year={year} />
       </AppLayout>
     );
   }
@@ -170,7 +179,7 @@ export default function NoteShow({
           </aside>
         )}
       </div>
-      <Footer />
+      <Footer year={year} />
     </AppLayout>
   );
 }
