@@ -1,4 +1,4 @@
-# 0013. Webmention の受信を自前で実装し、検証は非同期に回す
+# 0016. Webmention の受信を自前で実装し、検証は非同期に回す
 
 - Status: Accepted
 - Date: 2026-08-12

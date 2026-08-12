@@ -22,6 +22,13 @@
       "when": 1786541413283,
       "tag": "0002_create_link_cards_table",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1786545159887,
+      "tag": "0003_create_webmentions_table",
+      "breakpoints": true
     }
   ]
 }
