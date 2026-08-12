@@ -1,11 +1,17 @@
 @import "tailwindcss" source(".");
 
 /*
- * 絵文字の意匠 (Twemoji)。COLR フォントを 1 つ読むだけで、本文もリアクションも同じ絵になる。
+ * 絵文字の意匠 (Twemoji)。リアクション (パレットと押された絵文字) に当てる。
  *
  * 外から読まない。CSP が `font-src 'self'` なので CDN は届かず、SVG を個別に置くと
- * パレットで数千リクエストになる。パッケージが配る `@font-face` は `unicode-range` 付きで、
- * 絵文字のコードポイントだけがこのフォントに解決される (日本語や英数字は下の指定のまま)。
+ * パレットで数千リクエストになる。
+ *
+ * **このフォントをページ全体のフォントスタックに置かないこと。** `unicode-range` には
+ * キーキャップ絵文字 (`1️⃣` = U+0031 U+FE0F U+20E3) を組むために `U+23` (`#`)・
+ * `U+2A` (`*`)・`U+30-39` (ASCII 数字) が入っている。先頭に置くと本文の素の数字まで
+ * このフォントに解決され、素の数字グリフが無いので**日付も型番も金額も画面から消える**
+ * (#180)。例外も警告も出ず、字が無くなるだけで気づけない。当てる先は
+ * components/reaction/reaction-bar.css で、絵文字だけが入る要素に絞ってある。
  *
  * 意匠は CC-BY 4.0 (jdecked/twemoji)。帰属はフッターに出している。
  */
@@ -106,8 +112,8 @@
 @layer base {
   html {
     font-family:
-      Twemoji, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
-      "Yu Gothic", YuGothic, Meiryo, system-ui, sans-serif;
+      "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic",
+      YuGothic, Meiryo, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* スクロールバー領域を常に確保し、ページ間で中央寄せが左右にズレないようにする。 */

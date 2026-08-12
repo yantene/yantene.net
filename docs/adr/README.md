@@ -28,3 +28,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションを一人 1 つに限り、意匠は Twemoji を self-host する  | Accepted |
 | [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に MathML へ組み、MDAST に埋めて配る            | Accepted |
 | [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす    | Accepted |
+| [0015](0015-twemoji-scoped-to-reaction-ui.md)                | Twemoji はリアクションの UI にだけ当て、ページ全体には当てない   | Accepted |

@@ -47,6 +47,19 @@
   color: var(--color-primary);
 }
 
+/*
+ * 絵文字の意匠 (Twemoji) を当てるのはここだけ。
+ *
+ * このフォントは `unicode-range` に ASCII の数字を含むので、ページ全体に効かせると
+ * 本文の数字が消える (#180、ADR 0012)。当てる先を「中身が絵文字しかない要素」に
+ * 絞ることで、数字を巻き込まずに意匠だけを揃える。押された数 (.reaction-chip-count) は
+ * 別の要素なので、この指定は届かない。
+ */
+.reaction-chip-emoji,
+.emoji-palette-item {
+  font-family: Twemoji, inherit;
+}
+
 .reaction-chip-emoji {
   /* 絵文字は字より一回り大きく。押した対象がひと目で分かるように。 */
   font-size: 1.125rem;
