@@ -30,3 +30,29 @@ export const Transparent: Story = {
     ),
   ],
 };
+
+/*
+ * トップページの姿。ヒーローが同じ「やんてね」を出すのでロゴを伏せる。
+ * ロゴが無くてもナビと検索が右端に留まることを、ここで見て確かめられる。
+ */
+export const TransparentWithoutLogo: Story = {
+  args: {
+    variant: "transparent",
+    showLogo: false,
+  },
+  decorators: [
+    (Story) => (
+      <div className="relative h-48 bg-sky-300">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/* 下層ページでロゴを伏せる使い方は今のところ無いが、変種の組み合わせとして見られるように。 */
+export const SolidWithoutLogo: Story = {
+  args: {
+    variant: "solid",
+    showLogo: false,
+  },
+};

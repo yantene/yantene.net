@@ -1,13 +1,24 @@
 import { useTranslation } from "react-i18next";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { Link } from "react-router";
-import Logo from "~/frontend/assets/logo.svg?react";
+import Highlight from "~/frontend/assets/highlight.svg?react";
 
 type HeaderProps = {
   readonly variant?: "solid" | "transparent";
+  /*
+   * ロゴを出すか。トップはヒーローが同じ「やんてね」を大きく出すので、ヘッダーでは伏せる。
+   *
+   * variant から暗に導かない。透過ヘッダーはヒーローに重ねるための見た目の話で、ロゴを
+   * 出すかどうかは「同じ字がページ内に既にあるか」の話。トップ以外で透過を使いたくなった
+   * ときに、ロゴが黙って消えることのないよう別の prop にしてある。
+   */
+  readonly showLogo?: boolean;
 };
 
-export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
+export function Header({
+  variant = "solid",
+  showLogo = true,
+}: HeaderProps): React.JSX.Element {
   const { t } = useTranslation();
   const isTransparent = variant === "transparent";
 
@@ -26,17 +37,34 @@ export function Header({ variant = "solid" }: HeaderProps): React.JSX.Element {
       }
     >
       <div className={isTransparent ? "" : "bg-white/60 backdrop-blur-sm"}>
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
-          {/* ロゴがホームへのリンクを兼ねる (ナビに Home を置かない)。 */}
-          <Link
-            to="/"
-            className={`shrink-0 text-foreground${isTransparent ? " text-halo" : ""}`}
-          >
-            <Logo className="h-8 w-auto" />
-          </Link>
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
+          {/*
+            ロゴがホームへのリンクを兼ねる (ナビに Home を置かない)。ヒーローの見出しと
+            同じ「下線付きのやんてね」を、ヘッダーの字の大きさで組む。
 
+            字は翻訳しない。ロゴは意匠であって文章ではないうえ、i18n の home.heading は
+            英語ロケールで "yantene" になり、同じページのヒーロー (ハードコードの
+            「やんてね」) と食い違う。ヒーロー側に合わせてここも直に書く。
+          */}
+          {showLogo && (
+            <Link
+              to="/"
+              className={`site-header-wordmark shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
+            >
+              <Highlight
+                className="site-header-wordmark-highlight"
+                aria-hidden="true"
+              />
+              <span className="relative">やんてね</span>
+            </Link>
+          )}
+
+          {/*
+            右の一群は ml-auto で押しやる。justify-between だとロゴを伏せたページ (トップ)
+            で残った一群が左端へ寄ってしまい、ページごとにナビの位置が変わる。
+          */}
           <div
-            className={`flex items-center gap-5 sm:gap-7${isTransparent ? " text-halo" : ""}`}
+            className={`ml-auto flex items-center gap-5 sm:gap-7${isTransparent ? " text-halo" : ""}`}
           >
             <nav className="flex items-center gap-5 sm:gap-7">
               {/* ノート一覧が検索とタグの索引を兼ねるので、入口はここ 1 つで足りる。 */}
