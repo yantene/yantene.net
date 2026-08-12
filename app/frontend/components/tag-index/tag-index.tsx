@@ -42,7 +42,7 @@ export function TagIndex({
         <li key={tag}>
           <Link
             to={hrefFor(tag)}
-            className="tag-index-item"
+            className="tag-index-item press-control"
             aria-current={tag === selected ? "true" : undefined}
           >
             {tag}

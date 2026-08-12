@@ -105,8 +105,25 @@ function transformImage(
   element.properties.alt ??= "";
 }
 
-/** a 要素: 外部リンクは別タブで開き、noreferrer 等を付けて安全にする。 */
+/** hast の className (配列とも文字列とも取れる) をクラスの列に均す。 */
+function toClassList(value: unknown): readonly string[] {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value === "string") return value.split(" ").filter(Boolean);
+  return [];
+}
+
+/**
+ * a 要素: 外部リンクは別タブで開き、noreferrer 等を付けて安全にする。
+ *
+ * 押下の反応 (press-control) もここで足す。本文中のリンクは MDAST から起こすので
+ * 書き手がクラスを付けられず、ここで足さないと本文の中だけ手応えが無くなる。
+ */
 function transformAnchor(element: Element): void {
+  element.properties.className = [
+    ...toClassList(element.properties.className),
+    "press-control",
+  ];
+
   const href = element.properties.href;
   if (typeof href === "string" && isExternalHref(href)) {
     element.properties.target = "_blank";
@@ -192,7 +209,7 @@ function CodeBlock(
     <div className="code-block">
       <button
         type="button"
-        className="code-copy"
+        className="code-copy press-control"
         onClick={() => void copy()}
         aria-label="コードをコピー"
       >
@@ -222,7 +239,7 @@ function LightboxImage(
     <>
       <button
         type="button"
-        className="lightbox-trigger"
+        className="lightbox-trigger press-control"
         onClick={() => setIsOpen(true)}
         aria-label="画像を拡大"
       >
@@ -232,6 +249,10 @@ function LightboxImage(
         createPortal(
           // オーバーレイ自体を button にして、背景クリック・Enter/Space・Esc
           // (グローバル keydown) のいずれでも閉じられるようにする。
+          //
+          // ここだけは押下の反応 (press-control) を付けない。画面いっぱいの暗幕を
+          // 押している間だけ薄くすると、後ろのページが透けて明滅する。
+          // 押した結果 (暗幕が消える) がその場で出るので、手応えは足りている。
           <button
             type="button"
             className="lightbox-overlay"

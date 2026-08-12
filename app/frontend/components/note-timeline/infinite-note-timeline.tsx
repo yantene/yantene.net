@@ -142,7 +142,7 @@ export function InfiniteNoteTimeline({
               onClick={() => {
                 void loadMore();
               }}
-              className="link link-primary"
+              className="link link-primary press-control"
             >
               {t("timeline.retry")}
             </button>

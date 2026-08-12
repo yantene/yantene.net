@@ -24,7 +24,7 @@ export function Header({
 
   // 透過時は動く空の上に載る。白地前提の text-muted-foreground (62% 透過) では
   // 夜側でコントラストが 4.5:1 を割るため、濃いめの色に切り替える。
-  const linkClassName = `text-sm font-medium transition-colors hover:text-primary ${
+  const linkClassName = `press-control text-sm font-medium transition-colors hover:text-primary ${
     isTransparent ? "text-foreground/80" : "text-muted-foreground"
   }`;
 
@@ -49,7 +49,7 @@ export function Header({
           {showLogo && (
             <Link
               to="/"
-              className={`site-header-wordmark shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
+              className={`site-header-wordmark press-control shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
             >
               <Highlight
                 className="site-header-wordmark-highlight"
@@ -100,7 +100,7 @@ export function Header({
                 <button
                   type="submit"
                   aria-label={t("search.title")}
-                  className="text-base-content/50 transition-colors hover:text-primary"
+                  className="press-control text-base-content/50 transition-colors hover:text-primary"
                 >
                   <HiMagnifyingGlass />
                 </button>

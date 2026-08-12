@@ -37,7 +37,7 @@ export function FeedLink({
     <a
       href={href}
       type="application/atom+xml"
-      className={`inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:text-primary hover:underline ${className}`}
+      className={`press-control inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:text-primary hover:underline ${className}`}
     >
       <HiOutlineRss aria-hidden="true" />
       {label ?? t("feed.label")}

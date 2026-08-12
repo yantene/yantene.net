@@ -49,9 +49,10 @@ export function NoteTimelineItem({
 
   return (
     <li className="note-timeline-item">
+      {/* 行そのものが押し場所なので、押下の反応は面を塗る press-surface で受ける。 */}
       <Link
         to={`/notes/${slug}`}
-        className="note-timeline-link group border-b border-border/60 transition-colors hover:bg-base-200/40"
+        className="note-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40"
       >
         {rank === undefined ? (
           // ドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため

@@ -9,12 +9,21 @@
 @import "./components/layout/footer.css";
 @import "./components/layout/header.css";
 @import "./components/mdast/mdast-renderer.css";
+@import "./components/navigation-progress/navigation-progress.css";
 @import "./components/note-timeline/note-timeline.css";
 @import "./components/note-branches/note-branches.css";
 @import "./components/tag-index/tag-index.css";
 @import "./routes/home.css";
 @import "./routes/notes.css";
 @import "./routes/notes.$slug.css";
+/*
+ * 押下・フォーカスの作法はサイト全体で 1 つ。個別のコンポーネントには持たせない。
+ *
+ * 束ねる順の最後に置く。押下の反応は transition-property をまとめて置き換えるので、
+ * コンポーネント側が自前で transition を書いている場所より後で読ませないと、
+ * 押している間の変化だけが遷移せずに飛ぶ。
+ */
+@import "./interaction.css";
 
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
