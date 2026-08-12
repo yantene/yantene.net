@@ -65,6 +65,11 @@
     "reactionsLabel": "Reactions",
     "count_one": "{{count}}",
     "count_other": "{{count}}",
-    "failed": "That didn't go through. Please try again."
+    "failed": "That didn't go through. Please try again.",
+    "openPalette": "Pick another emoji",
+    "searchPlaceholder": "Search emoji",
+    "loading": "Loading…",
+    "noMatch": "Nothing matched.",
+    "paletteFailed": "Couldn't load the emoji."
   }
 }

@@ -1,6 +1,13 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { HiHeart, HiOutlineHeart } from "react-icons/hi2";
+import {
+  HiHeart,
+  HiOutlineFaceSmile,
+  HiOutlineHeart,
+  HiOutlinePlus,
+} from "react-icons/hi2";
 import { useFetcher } from "react-router";
+import { EmojiPalette } from "./emoji-palette";
 import { withPendingReaction } from "./reaction-state";
 import type { ReactionState } from "./reaction-state";
 
@@ -42,6 +49,7 @@ export function ReactionBar({
 }: ReactionBarProps): React.JSX.Element {
   const { t } = useTranslation();
   const fetcher = useFetcher();
+  const [isPaletteOpen, setPaletteOpen] = useState(false);
 
   /*
    * 送信中は結果を先に見せる。確定値は action からの戻りで loader が引き直すので、
@@ -88,6 +96,41 @@ export function ReactionBar({
           </button>
         );
       })}
+
+      {/*
+        パレットの入口。開閉と選択には JS が要るので、動かない環境では出さない
+        (ハートと、すでに押されている絵文字は素のフォームとして押せるまま残る)。
+      */}
+      <details
+        className="reaction-palette"
+        open={isPaletteOpen}
+        onToggle={(event) => {
+          setPaletteOpen(event.currentTarget.open);
+        }}
+      >
+        <summary
+          className="reaction-palette-trigger press-control"
+          aria-label={t("reaction.openPalette")}
+        >
+          <HiOutlineFaceSmile aria-hidden />
+          <HiOutlinePlus aria-hidden className="reaction-palette-plus" />
+        </summary>
+        <div className="reaction-palette-panel">
+          {/*
+            選んだらその場で送る。フォームの submit を使わないのは、パレットの中に
+            1902 個の submit ボタンを置かないため (押した 1 つだけを送れば足りる)。
+          */}
+          <EmojiPalette
+            onPick={(emoji) => {
+              setPaletteOpen(false);
+              void fetcher.submit(
+                { emoji: emoji === view.mine ? "" : emoji },
+                { method: "post" },
+              );
+            }}
+          />
+        </div>
+      </details>
     </fetcher.Form>
   );
 }
