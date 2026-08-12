@@ -29,6 +29,13 @@
       "bucket_name": "yantene-development",
     },
   ],
+  // KV: 読み手のセッション (ADR 0011)。development はローカルで模擬されるので id は使わない。
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      "id": "00000000000000000000000000000000",
+    },
+  ],
   "env": {
     "staging": {
       // workers.dev も残す。PR ごとの preview (versions upload --preview-alias) が
@@ -61,6 +68,12 @@
           "bucket_name": "yantene-staging",
         },
       ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSIONS",
+          "id": "2ef09db83bcb407198426e0c14f766b7",
+        },
+      ],
     },
     "production": {
       // workers.dev は開かない。同じ内容が 2 つの URL で引けると、検索エンジンから見て
@@ -89,6 +102,12 @@
         {
           "binding": "R2",
           "bucket_name": "yantene-production",
+        },
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "SESSIONS",
+          "id": "4710c1549b9c40ba97e0c05131caff53",
         },
       ],
     },

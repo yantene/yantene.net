@@ -24,3 +24,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0008](0008-interactive-day-clock-via-web-animations-api.md) | 時間の表現を Web Animations API で操作可能にする                 | Accepted |
 | [0009](0009-serve-note-source-markdown-verbatim.md)          | ノートの原文 Markdown を R2 から verbatim で配信する             | Accepted |
 | [0010](0010-hand-written-service-worker-without-precache.md) | Service Worker を手書きし、先回りして蓄えない                    | Accepted |
+| [0011](0011-reader-session-in-kv.md)                         | 読み手のセッションを KV に置き、同じ日の読み直しを数えない       | Accepted |

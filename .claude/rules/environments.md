@@ -31,8 +31,8 @@ CLOUDFLARE_ENV=production pnpm run build
 
 ## 環境を新しく作るときの手作業
 
-**デプロイだけでは動かない。** バインディング (D1 / R2) は `wrangler.jsonc` が持つが、
-secret と R2 の中身はリポジトリの外にあるため、環境ごとに人が用意する必要がある。
+**デプロイだけでは動かない。** バインディング (D1 / R2 / KV) は `wrangler.jsonc` が持つが、
+実体・secret・R2 の中身はリポジトリの外にあるため、環境ごとに人が用意する必要がある。
 以下は production を例にした手順で、作り直すときも同じことが要る。
 
 ### 1. secret を設定する
@@ -51,7 +51,18 @@ gh secret set PRODUCTION_REFRESH_SECRET -R yantene/notes
 `REFRESH_SECRET` が無いと `POST /api/v1/refresh` を叩けず、**記事が 1 件も入らないまま
 公開される**。
 
-### 2. R2 に OG 画像用のフォントを置く
+### 2. KV namespace を作る
+
+読み手のセッション (ADR 0011) を置く先。作って、返ってきた id を `wrangler.jsonc` の
+該当環境の `kv_namespaces` に書く。
+
+```bash
+pnpm exec wrangler kv namespace create yantene-production-sessions
+```
+
+無いとデプロイが `SESSIONS` を解決できずに失敗する。
+
+### 3. R2 に OG 画像用のフォントを置く
 
 OG カードの描画は R2 上のフォント (`og/fonts/*.ttf`) を読む。refresh が同期するのは
 ノートの本文とアセットだけなので、フォントは手で置く。
@@ -66,18 +77,18 @@ pnpm exec wrangler r2 object put yantene-production/og/fonts/noto-sans-jp-700-fu
 無いと `/og/*` が 500 になる (`og.handler.ts` が fail-loud で throw する)。豆腐の画像を
 黙って返すよりよいが、スモークまで気づかない。
 
-### 3. コンテンツを投入する
+### 4. コンテンツを投入する
 
 `yantene/notes` の refresh ワークフローを対象ブランチで実行する (main → production、
 staging → staging)。
 
-### 4. スモークで確かめる
+### 5. スモークで確かめる
 
 ```bash
 SMOKE_BASE=https://yantene.net pnpm run smoke
 ```
 
-1 と 2 の抜けはここで 500 として出る。
+1 と 3 の抜けはここで 500 として出る。
 
 ## リリースフロー
 

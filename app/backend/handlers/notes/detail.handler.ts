@@ -114,7 +114,13 @@ export async function loadNoteDetailPage(
 
   const detail = resolved.detail;
   // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
-  if (recording !== null) recordNoteView(env, resolved.noteId, recording);
+  if (recording !== null) {
+    recordNoteView(
+      env,
+      { id: resolved.noteId, slug: detail.note.slug },
+      recording,
+    );
+  }
 
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);
