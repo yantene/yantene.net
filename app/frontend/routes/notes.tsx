@@ -4,6 +4,7 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/notes";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
+import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
 import { FeedLink } from "~/frontend/components/feed/feed-link";
@@ -14,6 +15,7 @@ import { parseNoteListPayload } from "~/frontend/components/note-timeline/note-l
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
@@ -24,10 +26,17 @@ const DEFAULT_PER_PAGE = 20;
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & NotesListPageData> {
+}: Route.LoaderArgs): Promise<
+  PageMetaBase & CurrentYearData & NotesListPageData
+> {
   const url = new URL(request.url);
   const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
-  return { ...data, locale: resolveLocale(request), origin: url.origin };
+  return {
+    ...data,
+    locale: resolveLocale(request),
+    origin: url.origin,
+    currentYear: resolveCurrentYear(),
+  };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
@@ -131,7 +140,7 @@ export default function NotesIndex({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, query, tag, tags, sort } = loaderData;
+  const { notes, pagination, query, tag, tags, sort, currentYear } = loaderData;
   const hrefForPage = (page: number): string =>
     buildHrefForPage(page, pagination.perPage, sort, tag);
   /*
@@ -231,7 +240,7 @@ export default function NotesIndex({
           </div>
         </noscript>
       </main>
-      <Footer />
+      <Footer year={currentYear} />
     </AppLayout>
   );
 }

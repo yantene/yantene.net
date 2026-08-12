@@ -1,15 +1,19 @@
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 
-// ページの足元の地面。地平線を一本引くだけに留める (見た目は footer.css が持つ)。
-const currentYear = new Date().getFullYear();
+interface FooterProps {
+  /**
+   * 著作権表示に出す年。ここで時計を読まず loader が決めた年を受け取るのは、
+   * SSR とクライアントで必ず同じ年を出すため (理由は current-year.ts に書いてある)。
+   */
+  readonly year: number;
+}
 
-export function Footer(): React.JSX.Element {
+// ページの足元の地面。地平線を一本引くだけに留める (見た目は footer.css が持つ)。
+export function Footer({ year }: FooterProps): React.JSX.Element {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <p className="text-xs text-foreground/80">
-          &copy; {currentYear} yantene.net
-        </p>
+        <p className="text-xs text-foreground/80">&copy; {year} yantene.net</p>
         {/*
           全ページの足元に置く常設の購読導線。読み終えて出ていく場所が、
           この先も繋がっていられることを示すのに一番近い。

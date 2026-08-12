@@ -3,6 +3,7 @@ import { SiMarkdown } from "react-icons/si";
 import { data, Link } from "react-router";
 import type { Route } from "./+types/notes.$slug";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
+import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -11,6 +12,7 @@ import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
@@ -20,7 +22,7 @@ export async function loader({
   params,
   context,
 }: Route.LoaderArgs): Promise<
-  ReturnType<typeof data<PageMetaBase & NoteDetailPageData>>
+  ReturnType<typeof data<PageMetaBase & CurrentYearData & NoteDetailPageData>>
 > {
   const url = new URL(request.url);
   const cloudflare = context.get(cloudflareContext);
@@ -42,7 +44,11 @@ export async function loader({
       },
     },
   );
-  const base = { locale: resolveLocale(request), origin: url.origin };
+  const base = {
+    locale: resolveLocale(request),
+    origin: url.origin,
+    currentYear: resolveCurrentYear(),
+  };
 
   // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
   if (!detail.found) {
@@ -80,6 +86,7 @@ export default function NoteShow({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { currentYear } = loaderData;
 
   if (!loaderData.found) {
     return (
@@ -94,7 +101,7 @@ export default function NoteShow({
             {t("notes.notFound.backToList")}
           </Link>
         </main>
-        <Footer />
+        <Footer year={currentYear} />
       </AppLayout>
     );
   }
@@ -170,7 +177,7 @@ export default function NoteShow({
           </aside>
         )}
       </div>
-      <Footer />
+      <Footer year={currentYear} />
     </AppLayout>
   );
 }
