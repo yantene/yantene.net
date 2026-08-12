@@ -1,0 +1,85 @@
+/*
+ * 記事の末尾に置く共有の導線。
+ *
+ * 読み終えた足元に居座らないよう、畳んだ状態では小さなボタン 1 つに見せる。開いた一覧は
+ * 浮かせる (フローに割り込ませない)。ここで本文の高さが動くと、読み終えた位置が
+ * ずれてしまうため。
+ */
+
+.share-menu {
+  position: relative;
+  display: inline-block;
+  margin-top: 2.5rem;
+}
+
+.share-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  cursor: pointer;
+  /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
+  list-style: none;
+}
+
+.share-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.share-menu-trigger:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.share-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  padding: 0.375rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.75rem;
+  background-color: var(--color-base-100);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+}
+
+.share-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  /* 指で押せる高さを確保する。字の大きさだけだと 44px に届かない。 */
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--color-base-content);
+}
+
+.share-menu-item:hover {
+  background-color: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+}
+
+/*
+ * コピーの結果。入れ物は畳まず置いたままにするので (読み上げのため)、何も無いときは
+ * 高さを持たせない。
+ */
+.share-menu-feedback {
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+.share-menu-feedback:empty {
+  display: none;
+}

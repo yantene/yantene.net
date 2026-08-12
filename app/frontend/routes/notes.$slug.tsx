@@ -10,6 +10,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
+import { ShareMenu } from "~/frontend/components/share/share-menu";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { resolveCurrentYear } from "~/frontend/lib/current-year";
@@ -106,7 +107,7 @@ export default function NoteShow({
     );
   }
 
-  const { note, mdast, related, headings } = loaderData;
+  const { note, mdast, related, headings, origin } = loaderData;
 
   return (
     <AppLayout>
@@ -162,6 +163,11 @@ export default function NoteShow({
             )}
           </header>
           <MdastRenderer node={mdast} />
+          {/*
+            共有の導線は読み終えた足元に置く。頭に置いても、まだ読んでいないものを
+            共有する人はいない。
+          */}
+          <ShareMenu url={`${origin}/notes/${note.slug}`} title={note.title} />
           {related.length > 0 && (
             <section className="note-related">
               <h2 className="note-related-heading">{t("notes.related")}</h2>
