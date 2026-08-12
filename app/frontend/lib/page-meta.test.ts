@@ -167,6 +167,36 @@ describe("buildPageMeta", () => {
     });
   });
 
+  /*
+   * Webmention の受け口はノート宛だけなので、記事ページ以外は広告しない。
+   * 全ページが通る経路なので、渡されなかったときに何も足さないことを固定する
+   * (jsonLd で「渡さないページが全部 500」を出した前科がある)。
+   */
+  it("omits the webmention link when no endpoint is given", () => {
+    for (const pathname of ["/", "/notes", "/notes?tag=Web", "/notes/foo"]) {
+      const meta = buildPageMeta({ locale: "ja", origin, pathname });
+
+      expect(
+        meta.some((d) => (d as Record<string, unknown>).rel === "webmention"),
+      ).toBe(false);
+    }
+  });
+
+  it("emits the webmention link when an endpoint is given", () => {
+    const meta = buildPageMeta({
+      locale: "ja",
+      origin,
+      pathname,
+      webmentionPath: "/webmention",
+    });
+
+    expect(meta).toContainEqual({
+      tagName: "link",
+      rel: "webmention",
+      href: "https://yantene.net/webmention",
+    });
+  });
+
   it("marks article pages with og:type article", () => {
     expect(
       find(

@@ -19,6 +19,7 @@ import { createSearchApiRouter } from "./handlers/notes/search.handler";
 import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
+import { createWebmentionRouter } from "./handlers/webmention.handler";
 import type { MiddlewareHandler } from "hono";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
@@ -134,6 +135,10 @@ export const getApp = (
   // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。
   app.route("/api/v1", createRefreshRouter());
+
+  // Webmention の受け口 (POST /webmention)。ノート詳細ページの
+  // <link rel="webmention"> が広告している先。
+  app.route("/", createWebmentionRouter());
 
   // 上記以外はすべて React Router のページルーティングに委ねる。
   app.all("*", async (c) => {

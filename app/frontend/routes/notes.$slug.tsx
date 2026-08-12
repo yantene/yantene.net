@@ -19,6 +19,7 @@ import { AppLayout } from "~/frontend/layouts/app-layout";
 import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
+import { WEBMENTION_PATH } from "~/lib/constants/webmention";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 /**
@@ -117,6 +118,8 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     imagePath: `/og/notes/${note.slug}`,
     type: "article",
     jsonLd,
+    // 受け取れるのはノート宛だけなので、記事ページでだけ受け口を広告する。
+    webmentionPath: WEBMENTION_PATH,
   });
 };
 

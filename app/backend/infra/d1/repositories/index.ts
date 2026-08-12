@@ -7,3 +7,5 @@ export { D1NoteReactionQueryRepository } from "./note-reaction.query-repository"
 export { D1NoteSearchIndex } from "./note-search-index";
 export { D1NoteViewCommandRepository } from "./note-view.command-repository";
 export { D1NoteViewQueryRepository } from "./note-view.query-repository";
+export { D1WebmentionCommandRepository } from "./webmention.command-repository";
+export { D1WebmentionQueryRepository } from "./webmention.query-repository";

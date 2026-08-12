@@ -51,6 +51,13 @@ export interface PageMetaInput {
    * リーダーは title で区別するため、全体フィードと同じ名前にしないこと。
    */
   readonly feed?: { readonly path: string; readonly title: string };
+  /**
+   * Webmention の受け口 (`WEBMENTION_PATH`)。渡されたページだけが広告する。
+   *
+   * 受け取れるのはノート宛だけなので、一覧やトップで広告しても送り手を無駄に
+   * 400 へ歩かせるだけになる。
+   */
+  readonly webmentionPath?: string;
 }
 
 /**
@@ -69,6 +76,7 @@ export function buildPageMeta({
   type = "website",
   jsonLd,
   feed,
+  webmentionPath,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   /*
@@ -117,6 +125,14 @@ export function buildPageMeta({
       type: "application/atom+xml",
       title: feed.title,
       href: `${origin}${feed.path}`,
+    });
+  }
+
+  if (webmentionPath !== undefined) {
+    descriptors.push({
+      tagName: "link",
+      rel: "webmention",
+      href: `${origin}${webmentionPath}`,
     });
   }
 

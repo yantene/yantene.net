@@ -56,6 +56,7 @@
     "katex": "^0.18.4",
     "mdast-util-to-hast": "^13.2.1",
     "mdast-util-to-string": "^4.0.0",
+    "microformats-parser": "^2.0.6",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-i18next": "^17.0.11",
