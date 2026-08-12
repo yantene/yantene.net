@@ -13,29 +13,6 @@
   margin-top: 2.5rem;
 }
 
-/*
- * 「この中から 1 つ」を選ぶまとまり。
- *
- * ハートと押されている絵文字は同じ 1 枠を奪い合う (ADR 0012)。別々に押せるように見えると、
- * パレットで選んだときにハートが黙って消えたように映る。選ばれているものがあるときだけ
- * 囲いを見せて、その 1 つがどこに居るかを面で示す。
- */
-.reaction-choices {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem;
-  border: 1px solid transparent;
-  border-radius: 9999px;
-}
-
-.reaction-choices[data-chosen="true"] {
-  border-color: var(--color-base-300);
-  background-color: var(--color-base-200);
-}
-
-.reaction-like,
 .reaction-chip {
   display: inline-flex;
   align-items: center;
@@ -52,7 +29,6 @@
   cursor: pointer;
 }
 
-.reaction-like:hover,
 .reaction-chip:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
@@ -62,7 +38,6 @@
  * 自分が押しているもの。色だけで示すと、色が見えない読み手に伝わらないので、
  * 縁の濃さと地の塗りも一緒に変える (aria-pressed も出している)。
  */
-.reaction-like.is-active,
 .reaction-chip.is-active {
   border-color: var(--color-primary);
   background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
