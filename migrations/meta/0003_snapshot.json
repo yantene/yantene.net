@@ -69,16 +69,12 @@
       "indexes": {
         "link_cards_url_unique": {
           "name": "link_cards_url_unique",
-          "columns": [
-            "url"
-          ],
+          "columns": ["url"],
           "isUnique": true
         },
         "link_cards_fetched_at_idx": {
           "name": "link_cards_fetched_at_idx",
-          "columns": [
-            "fetched_at"
-          ],
+          "columns": ["fetched_at"],
           "isUnique": false
         }
       },
@@ -119,22 +115,15 @@
           "name": "note_reactions_note_id_notes_id_fk",
           "tableFrom": "note_reactions",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "note_reactions_note_id_emoji_pk": {
-          "columns": [
-            "note_id",
-            "emoji"
-          ],
+          "columns": ["note_id", "emoji"],
           "name": "note_reactions_note_id_emoji_pk"
         }
       },
@@ -162,9 +151,7 @@
       "indexes": {
         "note_tags_tag_idx": {
           "name": "note_tags_tag_idx",
-          "columns": [
-            "tag"
-          ],
+          "columns": ["tag"],
           "isUnique": false
         }
       },
@@ -173,22 +160,15 @@
           "name": "note_tags_note_id_notes_id_fk",
           "tableFrom": "note_tags",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "note_tags_note_id_tag_pk": {
-          "columns": [
-            "note_id",
-            "tag"
-          ],
+          "columns": ["note_id", "tag"],
           "name": "note_tags_note_id_tag_pk"
         }
       },
@@ -289,16 +269,12 @@
       "indexes": {
         "notes_slug_unique": {
           "name": "notes_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         },
         "notes_view_log_score_idx": {
           "name": "notes_view_log_score_idx",
-          "columns": [
-            "view_log_score"
-          ],
+          "columns": ["view_log_score"],
           "isUnique": false
         }
       },
@@ -398,10 +374,7 @@
       "indexes": {
         "webmentions_note_id_source_idx": {
           "name": "webmentions_note_id_source_idx",
-          "columns": [
-            "note_id",
-            "source"
-          ],
+          "columns": ["note_id", "source"],
           "isUnique": true
         }
       },
@@ -410,12 +383,8 @@
           "name": "webmentions_note_id_notes_id_fk",
           "tableFrom": "webmentions",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
