@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { deleteReaction, putReaction } from "./reaction-recording";
+import type { Context } from "hono";
 import {
   InvalidNoteSlugError,
   NoteNotFoundError,
@@ -75,6 +76,54 @@ async function readEmoji(request: Request): Promise<ReactionEmoji | undefined> {
   }
 }
 
+/** 記事が見つからないことを、呼び出し側が扱える形で返す。 */
+export interface ReactionOutcome {
+  readonly payload: ReactionsPayload;
+  /** セッション識別子を預け直す cookie の値。応答に載せること。 */
+  readonly setCookie: string;
+}
+
+/**
+ * リアクションを置く / 外す。
+ *
+ * API ルータ (JSON) とページの action (フォーム) の両方から呼ぶ。押した人の判定・
+ * セッションの発行・数とスコアの更新はどちらでも同じなので、入り口の形だけを分ける。
+ *
+ * @param emoji 押す絵文字。undefined なら取り消し。
+ */
+export async function applyReaction(
+  env: Env,
+  slugParam: string,
+  emoji: ReactionEmoji | undefined,
+  cookie: string | null,
+): Promise<ReactionOutcome> {
+  const slug = parseSlug(slugParam);
+  if (slug === undefined) throw new NoteNotFoundError(slugParam);
+
+  const note = await new D1NoteQueryRepository(env.D1).findBySlug(slug);
+  if (note === undefined) throw new NoteNotFoundError(slugParam);
+
+  const existingId = readSessionId(cookie);
+  // 取り消しは、持っていない相手には効かせようがない。発行もしない。
+  if (emoji === undefined && existingId === undefined) {
+    return {
+      payload: await buildPayload(env, note.id, undefined),
+      setCookie: "",
+    };
+  }
+
+  const sessionId = existingId ?? SessionId.issue();
+  const session =
+    emoji === undefined
+      ? await deleteReaction(env, { id: note.id, slug }, sessionId)
+      : await putReaction(env, { id: note.id, slug }, sessionId, emoji);
+
+  return {
+    payload: await buildPayload(env, note.id, session.reactionFor(slug)?.emoji),
+    setCookie: sessionCookieFor(env, sessionId),
+  };
+}
+
 /**
  * ノートのリアクション API。
  *
@@ -89,9 +138,6 @@ export function createNoteReactionApiRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.put("/:slug/reaction", async (c) => {
-    const slug = parseSlug(c.req.param("slug"));
-    if (slug === undefined) throw new NoteNotFoundError(c.req.param("slug"));
-
     const emoji = await readEmoji(c.req.raw);
     if (emoji === undefined) {
       return createProblemResponse(
@@ -101,53 +147,47 @@ export function createNoteReactionApiRouter(): Hono<{ Bindings: Env }> {
       );
     }
 
-    const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
-    if (note === undefined) throw new NoteNotFoundError(slug.toString());
-
-    const sessionId =
-      readSessionId(c.req.header("cookie") ?? null) ?? SessionId.issue();
-    const session = await putReaction(
-      c.env,
-      { id: note.id, slug },
-      sessionId,
-      emoji,
+    return respond(
+      c,
+      await applyReaction(
+        c.env,
+        c.req.param("slug"),
+        emoji,
+        c.req.header("cookie") ?? null,
+      ),
     );
-
-    const response = c.json(
-      await buildPayload(c.env, note.id, session.reactionFor(slug)?.emoji),
-    );
-    // 応答のたびに出して期限を引き直す。押し続けている人のセッションが、
-    // ある日突然切れて別人にならないようにする。
-    response.headers.set("set-cookie", sessionCookieFor(c.env, sessionId));
-    return response;
   });
 
-  router.delete("/:slug/reaction", async (c) => {
-    const slug = parseSlug(c.req.param("slug"));
-    if (slug === undefined) throw new NoteNotFoundError(c.req.param("slug"));
-
-    const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
-    if (note === undefined) throw new NoteNotFoundError(slug.toString());
-
-    const sessionId = readSessionId(c.req.header("cookie") ?? null);
-    // 持っていない相手には取り消すものが無い。発行だけして、いまの数を返す。
-    if (sessionId === undefined) {
-      return c.json(await buildPayload(c.env, note.id, undefined));
-    }
-
-    const session = await deleteReaction(
-      c.env,
-      { id: note.id, slug },
-      sessionId,
-    );
-    const response = c.json(
-      await buildPayload(c.env, note.id, session.reactionFor(slug)?.emoji),
-    );
-    response.headers.set("set-cookie", sessionCookieFor(c.env, sessionId));
-    return response;
-  });
+  router.delete("/:slug/reaction", async (c) =>
+    respond(
+      c,
+      await applyReaction(
+        c.env,
+        c.req.param("slug"),
+        undefined,
+        c.req.header("cookie") ?? null,
+      ),
+    ),
+  );
 
   return router;
+}
+
+/**
+ * 結果を JSON にして、セッションの cookie を載せる。
+ *
+ * cookie は応答のたびに出して期限を引き直す。押し続けている人のセッションが、ある日
+ * 突然切れて別人にならないようにするため。
+ */
+function respond(
+  c: Context<{ Bindings: Env }>,
+  outcome: ReactionOutcome,
+): Response {
+  const response = c.json(outcome.payload);
+  if (outcome.setCookie !== "") {
+    response.headers.set("set-cookie", outcome.setCookie);
+  }
+  return response;
 }
 
 /** 押されている数と、この読み手が押しているものをまとめる。 */

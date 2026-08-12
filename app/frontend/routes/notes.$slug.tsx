@@ -1,15 +1,18 @@
 import { useTranslation } from "react-i18next";
 import { SiMarkdown } from "react-icons/si";
-import { data, Link } from "react-router";
+import { data, Link, redirect } from "react-router";
 import type { Route } from "./+types/notes.$slug";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
 import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { ReactionEmoji } from "~/backend/domain/note-reaction";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
+import { applyReaction } from "~/backend/handlers/notes/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
+import { ReactionBar } from "~/frontend/components/reaction/reaction-bar";
 import { ShareMenu } from "~/frontend/components/share/share-menu";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -17,6 +20,40 @@ import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
+
+/**
+ * リアクションの押し外し。
+ *
+ * API (`PUT/DELETE /api/v1/notes/<slug>/reaction`) と同じ処理を、フォームからも
+ * 呼べるようにしてある。ページ側を素の `<Form method="post">` で組めば、JS が動かない
+ * 環境でもハートを押せる。
+ */
+export async function action({
+  request,
+  params,
+  context,
+}: Route.ActionArgs): Promise<Response> {
+  const form = await request.formData();
+  const raw = form.get("emoji");
+  const outcome = await applyReaction(
+    context.get(cloudflareContext).env,
+    params.slug,
+    // 値が無ければ取り消し。読めない絵文字は applyReaction が弾く。
+    typeof raw === "string" && raw !== ""
+      ? ReactionEmoji.create(raw)
+      : undefined,
+    request.headers.get("cookie"),
+  );
+
+  /*
+   * 結果は返さず、記事へ送り返す。JS の有無で経路を分けないためで、押した後の値は
+   * どちらの環境でも loader から降ってくる。JS があるときは押した瞬間に画面を先に
+   * 動かす (components/reaction) ので、往復の待ちは表に出ない。
+   */
+  const headers = new Headers();
+  if (outcome.setCookie !== "") headers.append("set-cookie", outcome.setCookie);
+  return redirect(`/notes/${params.slug}`, { headers, status: 303 });
+}
 
 export async function loader({
   request,
@@ -107,7 +144,7 @@ export default function NoteShow({
     );
   }
 
-  const { note, mdast, related, headings, origin } = loaderData;
+  const { note, mdast, related, headings, origin, reactions } = loaderData;
 
   return (
     <AppLayout>
@@ -164,9 +201,10 @@ export default function NoteShow({
           </header>
           <MdastRenderer node={mdast} />
           {/*
-            共有の導線は読み終えた足元に置く。頭に置いても、まだ読んでいないものを
-            共有する人はいない。
+            読み終えた足元に、反応する手と共有する手を並べる。どちらも読み終えてからの
+            行動なので、本文の直後に置く。
           */}
+          <ReactionBar reactions={reactions.reactions} mine={reactions.mine} />
           <ShareMenu url={`${origin}/notes/${note.slug}`} title={note.title} />
           {related.length > 0 && (
             <section className="note-related">
