@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   HiHeart,
@@ -78,6 +78,8 @@ export function ReactionBar({
   const view = pendingView({ reactions, mine }, fetcher.formData);
 
   const isLiked = view.mine === LIKE;
+  // 同じページに 2 つ置かれても id がぶつからないようにする。
+  const hintId = useId();
 
   return (
     <fetcher.Form
@@ -91,36 +93,57 @@ export function ReactionBar({
       preventScrollReset
     >
       {/*
+        ハートと押されている絵文字は「この中から 1 つ」を選ぶもの。別々に押せるように
+        見えると、パレットで選んだときにハートが黙って消えたように映るので、1 つの
+        まとまりとして囲い、その旨を読み上げにも出す。
+
+        role="radiogroup" は使わない。矢印キーでの移動と roving tabindex が要るが、
+        それらは JS 前提になり、JS 無しでも押せるという性質を壊す。囲いと説明で示す。
+      */}
+      <div
+        className="reaction-choices"
+        role="group"
+        aria-label={t("reaction.reactionsLabel")}
+        aria-describedby={hintId}
+        data-chosen={view.mine === null ? "false" : "true"}
+      >
+        {/*
         押すと「いまの 1 つ」を置き換える。すでにハートなら空を送って取り消す
         (値の有無だけで意図が決まるので、別の hidden を足さなくてよい)。
       */}
-      <button
-        type="submit"
-        name="emoji"
-        value={isLiked ? "" : LIKE}
-        aria-pressed={isLiked}
-        className={`reaction-like press-control${isLiked ? " is-active" : ""}`}
-      >
-        {isLiked ? <HiHeart aria-hidden /> : <HiOutlineHeart aria-hidden />}
-        {t(isLiked ? "reaction.liked" : "reaction.like")}
-      </button>
+        <button
+          type="submit"
+          name="emoji"
+          value={isLiked ? "" : LIKE}
+          aria-pressed={isLiked}
+          className={`reaction-like press-control${isLiked ? " is-active" : ""}`}
+        >
+          {isLiked ? <HiHeart aria-hidden /> : <HiOutlineHeart aria-hidden />}
+          {t(isLiked ? "reaction.liked" : "reaction.like")}
+        </button>
 
-      {view.reactions.map((reaction) => {
-        const isMine = view.mine === reaction.emoji;
-        return (
-          <button
-            key={reaction.emoji}
-            type="submit"
-            name="emoji"
-            value={isMine ? "" : reaction.emoji}
-            aria-pressed={isMine}
-            className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
-          >
-            <span className="reaction-chip-emoji">{reaction.emoji}</span>
-            <span className="reaction-chip-count">{reaction.count}</span>
-          </button>
-        );
-      })}
+        {view.reactions.map((reaction) => {
+          const isMine = view.mine === reaction.emoji;
+          return (
+            <button
+              key={reaction.emoji}
+              type="submit"
+              name="emoji"
+              value={isMine ? "" : reaction.emoji}
+              aria-pressed={isMine}
+              className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
+            >
+              <span className="reaction-chip-emoji">{reaction.emoji}</span>
+              <span className="reaction-chip-count">{reaction.count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 排他であることの説明。囲いから aria-describedby で指す。 */}
+      <p id={hintId} className="sr-only">
+        {t("reaction.onlyOne")}
+      </p>
 
       {/*
         パレットの入口。開閉と選択には JS が要るので、動かない環境では出さない
