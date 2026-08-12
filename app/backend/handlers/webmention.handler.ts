@@ -11,6 +11,7 @@ import {
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import {
   D1NoteQueryRepository,
+  D1WebmentionBlocklist,
   D1WebmentionCommandRepository,
 } from "~/backend/infra/d1/repositories";
 import { HttpWebmentionAvatarMirror } from "~/backend/infra/http/http-webmention-avatar-mirror";
@@ -77,6 +78,7 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
           new R2WebmentionAvatarCache(c.env.R2),
           logger,
         ),
+        new D1WebmentionBlocklist(c.env.D1),
         logger,
       );
       c.executionCtx.waitUntil(verifyAndLog(service, note.id, request, logger));
