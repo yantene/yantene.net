@@ -20,6 +20,23 @@ export function Footer({ year }: FooterProps): React.JSX.Element {
         */}
         <FeedLink className="text-xs text-foreground/80" />
       </div>
+      {/*
+        絵文字の意匠の出どころ。CC-BY 4.0 が求める帰属で、外せない。
+        Twemoji 側は「README か About かフッターに一言」で足りるとしているので、
+        本文の邪魔にならない大きさで足元に置く。
+      */}
+      <p className="site-footer-attribution">
+        絵文字は{" "}
+        <a
+          href="https://github.com/jdecked/twemoji"
+          target="_blank"
+          rel="noreferrer"
+          className="press-control hover:text-primary hover:underline"
+        >
+          Twemoji
+        </a>{" "}
+        (CC BY 4.0)
+      </p>
     </footer>
   );
 }

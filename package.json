@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
+    "@sableclient/twemoji-font": "^1.0.4",
     "daisyui": "^5.7.16",
     "drizzle-orm": "^0.45.2",
     "github-slugger": "^2.0.0",
