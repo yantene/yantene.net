@@ -1,0 +1,58 @@
+/*
+ * 記事の末尾に置くリアクションの行。
+ *
+ * 読み終えた足元で、押されている絵文字が横に並ぶ。数の多い順に並ぶので、押されるほど
+ * 左が伸びる。自分が押したものは縁と地で示す (色だけに頼らない)。
+ */
+
+.reaction-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+}
+
+.reaction-like,
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  /* 指で押せる高さ。字の大きさだけでは 44px に届かない。 */
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  background-color: var(--color-base-100);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  cursor: pointer;
+}
+
+.reaction-like:hover,
+.reaction-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/*
+ * 自分が押しているもの。色だけで示すと、色が見えない読み手に伝わらないので、
+ * 縁の濃さと地の塗りも一緒に変える (aria-pressed も出している)。
+ */
+.reaction-like.is-active,
+.reaction-chip.is-active {
+  border-color: var(--color-primary);
+  background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+.reaction-chip-emoji {
+  /* 絵文字は字より一回り大きく。押した対象がひと目で分かるように。 */
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.reaction-chip-count {
+  font-variant-numeric: tabular-nums;
+}

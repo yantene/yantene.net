@@ -58,5 +58,13 @@
     "copied": "コピーした",
     "copyFailed": "コピーできなかった",
     "shareOn": "{{service}} で共有"
+  },
+  "reaction": {
+    "like": "いいね",
+    "liked": "いいね済み",
+    "reactionsLabel": "リアクション",
+    "count_one": "{{count}} 件",
+    "count_other": "{{count}} 件",
+    "failed": "うまくいかなかった。もう一度試してほしい。"
   }
 }

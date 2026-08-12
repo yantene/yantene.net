@@ -58,5 +58,13 @@
     "copied": "Copied",
     "copyFailed": "Couldn't copy",
     "shareOn": "Share on {{service}}"
+  },
+  "reaction": {
+    "like": "Like",
+    "liked": "Liked",
+    "reactionsLabel": "Reactions",
+    "count_one": "{{count}}",
+    "count_other": "{{count}}",
+    "failed": "That didn't go through. Please try again."
   }
 }
