@@ -1,8 +1,13 @@
 # 0007. CSP に `'unsafe-inline'` を足さず、development でのみ CSP を外す
 
-- Status: Accepted
+- Status: Accepted (`style-src` の扱いのみ [0019](0019-inline-style-for-math.md) で置き換え)
 - Date: 2026-08-08
 - Deciders: @yantene
+
+> ⚠️ **`style-src` については [ADR 0019](0019-inline-style-for-math.md) を参照。**
+> 数式の組版のため `style-src` にだけ `'unsafe-inline'` を置いた。以下の記述のうち
+> 「inline style がブラウザに無視される」前提はもう成り立たない。
+> **`script-src` を厳格に保つ判断と、development でのみ CSP を外す判断は変わらない。**
 
 ## Context / 背景
 
