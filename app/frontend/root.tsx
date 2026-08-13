@@ -37,7 +37,47 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) =>
     pathname: location.pathname,
   });
 
+/**
+ * Google Fonts から読む 2 つ (ADR 0017)。
+ *
+ * - Noto Sans JP — 本文。読み手の OS で字面が変わらないように揃える
+ * - STIX Two Math — 数式。MATH テーブルを持つので大型演算子と根号が式に合わせて伸びる
+ *
+ * `display=swap` にしてあるので、届くまではシステムのフォントで出る。日本語は字幅が
+ * 変わるため差し替わりが目に見えるが、字が出ないまま待たせるよりはよい。
+ *
+ * CSP の許可と対で動く (`app/backend/index.ts`)。ここのホストを変えるならあちらも直すこと。
+ */
+const googleFontFamilies = [
+  // 本文。400 は地の文、700 は見出しと強調。
+  { name: "Noto Sans JP", weights: [400, 700] },
+  // 数式。ウェイトは 1 つしか無いので指定しない。
+  { name: "STIX Two Math", weights: [] },
+] as const satisfies readonly {
+  name: string;
+  weights: readonly number[];
+}[];
+
+/* 組み立ててあるのは、読む先を素の名前で並べておくため (URL を 1 本の文字列で持つと
+ * どの字を読んでいるのか読み取りにくく、lint も高エントロピー文字列として弾く)。 */
+const GOOGLE_FONTS_HREF = `https://fonts.googleapis.com/css2?${googleFontFamilies
+  .map(({ name, weights }) => {
+    const family = `family=${name.replaceAll(" ", "+")}`;
+    return weights.length === 0
+      ? family
+      : `${family}:wght@${weights.join(";")}`;
+  })
+  .join("&")}&display=swap`;
+
 export const links: Route.LinksFunction = () => [
+  // フォント本体は CSS を読んでから要求が始まるので、先に両方へ繋いでおく。
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+    crossOrigin: "anonymous" as const,
+  },
+  { rel: "stylesheet", href: GOOGLE_FONTS_HREF },
   { rel: "icon", type: "image/svg+xml", href: "/icons/icon.svg" },
   // SVG を読めない相手のために、素の favicon も置いておく。
   { rel: "icon", type: "image/x-icon", href: "/favicon.ico", sizes: "48x48" },

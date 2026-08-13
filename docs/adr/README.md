@@ -30,3 +30,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす    | Accepted |
 | [0015](0015-twemoji-scoped-to-reaction-ui.md)                | Twemoji はリアクションの UI にだけ当て、ページ全体には当てない   | Accepted |
 | [0016](0016-receive-webmentions-in-house.md)                 | Webmention の受信を自前で実装し、検証は非同期に回す              | Accepted |
+| [0017](0017-webfonts-from-google-fonts.md)                   | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く    | Accepted |

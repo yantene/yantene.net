@@ -46,16 +46,26 @@ const baseSecureHeaderOptions: SecureHeadersOptions = {
   },
 };
 
+/**
+ * Google Fonts の 2 ホスト。CSS を配る側とフォント本体を配る側で分かれている (ADR 0017)。
+ *
+ * 名指しした 2 つ以外は届かないままにする。`'unsafe-inline'` を足さない方針 (ADR 0007) は
+ * そのままで、ここで許すのは「この 2 ホストから CSS とフォントを読む」ことだけ。
+ */
+const GOOGLE_FONTS_CSS_ORIGIN = "https://fonts.googleapis.com";
+const GOOGLE_FONTS_FILE_ORIGIN = "https://fonts.gstatic.com";
+
 /** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0007)。 */
 const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
   ...baseSecureHeaderOptions,
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
     scriptSrc: [NONCE, "'self'"],
-    styleSrc: ["'self'"],
+    // Google Fonts の @font-face は CSS として配られるので、こちらにも読み込み先が要る。
+    styleSrc: ["'self'", GOOGLE_FONTS_CSS_ORIGIN],
     imgSrc: ["'self'", "data:"],
     connectSrc: ["'self'"],
-    fontSrc: ["'self'"],
+    fontSrc: ["'self'", GOOGLE_FONTS_FILE_ORIGIN],
     // 本文に埋め込む動画の読み込み先。ここに無いホストの iframe はブラウザが止める。
     // 描画側 (mdast-renderer) が src をこのホストへ正規化しているので、両者は対で動く。
     frameSrc: ["https://www.youtube-nocookie.com"],

@@ -38,6 +38,31 @@ describe("content security policy", () => {
     expect(await cspOf("unexpected")).toContain("style-src 'self'");
   });
 
+  /*
+   * 外に開いているホストは、開いた理由と対で固定する (ADR 0017)。
+   *
+   * ディレクティブ 1 つを丸ごと取り出して突き合わせる。`toContain` で部分一致を見ると
+   * `connect-src 'self' https://somewhere.example` も「`connect-src 'self'` を含む」ため
+   * 通ってしまい、**歯止めにならない** (足された分を検出できない)。
+   */
+  async function directivesOf(appEnv: string): Promise<string[]> {
+    const csp = await cspOf(appEnv);
+    return (csp ?? "").split(";").map((directive) => directive.trim());
+  }
+
+  it("opens style-src and font-src to Google Fonts, and nothing else", async () => {
+    const directives = await directivesOf("production");
+
+    expect(directives).toContain(
+      "style-src 'self' https://fonts.googleapis.com",
+    );
+    expect(directives).toContain("font-src 'self' https://fonts.gstatic.com");
+    // フォントを読むのに要らない口は 'self' のままであること (増えたらここで落ちる)。
+    expect(directives).toContain("default-src 'self'");
+    expect(directives).toContain("connect-src 'self'");
+    expect(directives).toContain("img-src 'self' data:");
+  });
+
   it("keeps the other security headers in every environment", async () => {
     for (const appEnv of ["development", "staging", "production"]) {
       const res = await createTestApp().request("/health", {}, env(appEnv));
