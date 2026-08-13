@@ -61,7 +61,30 @@ unicode-range: U+23, U+2A, U+30-39, U+200D, ...;
   要素に限られていることを固定する。**リアクション以外の場所で絵文字の意匠を揃えたく
   なったときも、フォントスタックの先頭に戻してはならない。** 対象の要素を増やすこと。
 
+## 追記 (2026-08-13): 当て方の書き方
+
+この決定を実装したとき `font-family: Twemoji, inherit` と書いており、**フォントは
+どこにも当たっていなかった** ([#193](https://github.com/yantene/yantene.net/issues/193))。
+`inherit` は CSS-wide keyword で、値全体が単独でそれのときにしか使えない。フォントの
+リストに混ぜると値がパースエラーになり、宣言ごと捨てられる。例外も警告も出ないので、
+上に挙げた (1)(2) はどちらも通っていた。
+
+対象の要素を増やすときは、`inherit` ではなく本文のフォントスタックそのものを後ろに
+従えること。`--body-font-stack` は `app.css` の `html` が定義する。
+
+```css
+.reaction-chip-emoji,
+.emoji-palette-item {
+  font-family: Twemoji, var(--body-font-stack, sans-serif);
+}
+```
+
+`twemoji.test.ts` は (1)(2) に加えて、この定義と参照が揃っていること・フォントの指定に
+CSS-wide keyword を混ぜていないことも見張る。(2) の検査は frontend 以下の CSS 全体を
+対象にするので、別のファイルに当て先を足しても素通りしない。
+
 ## 参考 / More Information
 
 - [#180](https://github.com/yantene/yantene.net/issues/180) — 数字が消えていた不具合
+- [#193](https://github.com/yantene/yantene.net/issues/193) — フォントが当たっていなかった不具合
 - [ADR 0012](0012-emoji-reactions-with-twemoji.md) — Twemoji を self-host すると決めた ADR
