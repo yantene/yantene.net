@@ -250,8 +250,13 @@
 /*
  * 別行立ての数式 (`$$...$$`)。長い式が本文の幅を押し広げないよう、その場で横に流す。
  * MathML には折り返しが無いので、はみ出す式はスクロールで見せるしかない。
+ *
+ * 少し大きくするのは、STIX Two Math の x-height が本文の Noto Sans JP より小さく、
+ * 同じ font-size だと数式だけ痩せて見えるため。字面を揃えるための係数で、数式を
+ * 目立たせたいわけではない。
  */
 .note-prose :where(math[display="block"]) {
+  font-size: 1.15em;
   margin-block: 1.5em;
   overflow-x: auto;
   overflow-y: hidden;
