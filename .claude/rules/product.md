@@ -132,3 +132,23 @@ MathML 出力で組んで MDAST に埋める**。描画側は埋まった MathML
 ## 補助ドメイン
 
 - 将来的な機能追加はノートを中心に拡張する
+
+## Webmention
+
+記事に届いた反応 (返信・いいね・リポスト・言及) を受け取り、記事末に出す。受信の設計判断は
+[ADR 0016](../../docs/adr/0016-receive-webmentions-in-house.md) を参照。
+
+### 荒らしはブロックリストで止める
+
+誰でも `POST /webmention` を叩けるので、リンクを張れば自分の名前・アイコン・本文を記事末に
+載せられる。**承認制は採らず、困った送信元だけを止める。**
+
+止めるときは D1 に 1 行足す。**登録したホストの下位ドメインも一緒に止まる。**
+
+```bash
+pnpm exec wrangler d1 execute yantene-production --env production --remote --command \
+  "INSERT INTO webmention_blocks (host, reason, created_at) VALUES ('spam.example', '理由', unixepoch());"
+```
+
+受信の時点でも読み出しの時点でも同じ判定を通すので、**すでに届いていた行も足した時点で
+表に出なくなる**。行そのものは次に再送が来たときに消える。

@@ -27,3 +27,5 @@ export type {
   IWebmentionAvatarMirror,
   WebmentionAvatar,
 } from "./webmention-avatar";
+export { isBlockedHost, isBlockedSource } from "./webmention-blocklist";
+export type { IWebmentionBlocklist } from "./webmention-blocklist";

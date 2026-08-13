@@ -3,11 +3,12 @@ import type { NoteId } from "~/backend/domain/note";
 import type { ILogger } from "~/backend/domain/shared";
 import type {
   IWebmentionAvatarMirror,
+  IWebmentionBlocklist,
   IWebmentionCommandRepository,
   IWebmentionSourceFetcher,
   WebmentionRequest,
 } from "~/backend/domain/webmention";
-import { Webmention } from "~/backend/domain/webmention";
+import { isBlockedSource, Webmention } from "~/backend/domain/webmention";
 
 /**
  * 受け取った Webmention を、送り元を実際に読んで確かめてから保存する。
@@ -24,6 +25,7 @@ export class WebmentionVerificationService {
     private readonly fetcher: IWebmentionSourceFetcher,
     private readonly commands: IWebmentionCommandRepository,
     private readonly avatars: IWebmentionAvatarMirror,
+    private readonly blocklist: IWebmentionBlocklist,
     private readonly logger: ILogger,
   ) {}
 
@@ -32,6 +34,20 @@ export class WebmentionVerificationService {
       source: request.source.toString(),
       target: request.target.toString(),
     });
+
+    /*
+     * 止めている送信元は、取りに行く前に落とす。
+     *
+     * 保存してから表示側で隠すのではなく、そもそも残さない。隠すだけだと、表示経路が
+     * 増えたときに漏れる。すでに保存済みの行もここで消える (止めた後に再送が来れば、
+     * その時点で消える)。
+     */
+    const blockedHosts = await this.blocklist.listBlockedHosts();
+    if (isBlockedSource(request.source, blockedHosts)) {
+      await this.commands.deleteBySource(noteId, request.source);
+      log.info("webmention blocked: source host is on the blocklist");
+      return;
+    }
 
     const result = await this.fetcher.fetch(request.source);
 

@@ -36,7 +36,10 @@ function silentLogger(): ILogger {
   return logger;
 }
 
-function harness(result: SourceFetchResult): {
+function harness(
+  result: SourceFetchResult,
+  blockedHosts: readonly string[] = [],
+): {
   service: WebmentionVerificationService;
   upsert: ReturnType<typeof vi.fn>;
   deleteBySource: ReturnType<typeof vi.fn>;
@@ -59,6 +62,8 @@ function harness(result: SourceFetchResult): {
       commands,
       // アイコンの写しはここでは見ない (写せなかった場合と同じ形で通す)。
       { mirror: () => Promise.resolve(undefined) },
+      // 既定では誰も止めていない。止める場合のふるまいは専用のテストで見る。
+      { listBlockedHosts: () => Promise.resolve(blockedHosts) },
       silentLogger(),
     ),
     upsert,
@@ -176,5 +181,38 @@ describe("WebmentionVerificationService", () => {
 
     const stored = upsert.mock.calls[0][0] as Webmention;
     expect(stored.type.toString()).toBe("mention");
+  });
+
+  describe("ブロックリスト", () => {
+    it("止めている送信元は取りに行かず、保存もしない", async () => {
+      const { service, upsert, deleteBySource } = harness(
+        fetched(LINKING_HTML),
+        ["example.com"],
+      );
+
+      await service.verify(noteId, request);
+
+      expect(upsert).not.toHaveBeenCalled();
+      // 止める前に届いていた行が残らないよう、消しにいく。
+      expect(deleteBySource).toHaveBeenCalledTimes(1);
+    });
+
+    it("止めている相手の下位ドメインからでも保存しない", async () => {
+      const { service, upsert } = harness(fetched(LINKING_HTML), ["com"]);
+
+      await service.verify(noteId, request);
+
+      expect(upsert).not.toHaveBeenCalled();
+    });
+
+    it("止めていない送信元はこれまでどおり保存する", async () => {
+      const { service, upsert } = harness(fetched(LINKING_HTML), [
+        "other.example",
+      ]);
+
+      await service.verify(noteId, request);
+
+      expect(upsert).toHaveBeenCalledTimes(1);
+    });
   });
 });

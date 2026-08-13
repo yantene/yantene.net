@@ -16,6 +16,7 @@ import {
   NoteTag,
 } from "~/backend/domain/note";
 import { entityId } from "~/backend/domain/shared";
+import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
@@ -23,6 +24,7 @@ import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-vi
 import {
   D1LinkCardQueryRepository,
   D1NoteQueryRepository,
+  D1WebmentionBlocklist,
   D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
@@ -193,14 +195,26 @@ export async function loadNoteDetailPage(
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);
   const slug = NoteSlug.create(detail.note.slug);
-  const [related, reactions, webmentions] = await Promise.all([
+  const [related, reactions, webmentions, blockedHosts] = await Promise.all([
     query.findRelated(slug, relatedTags, RELATED_LIMIT),
     loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
     // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
     new D1WebmentionQueryRepository(env.D1).listByNoteId(
       entityId<"Note">(resolved.noteId),
     ),
+    new D1WebmentionBlocklist(env.D1).listBlockedHosts(),
   ]);
+
+  /*
+   * 止めている送信元を落とす。
+   *
+   * 受信の時点でも弾いており、止めた後に再送が来れば行ごと消える。それでも読むときに
+   * もう一度通すのは、**止める前に届いていた行が残っている**ため。表を直に書き換えて
+   * 止めることもあるので、出す手前にも同じ判定を置く。
+   */
+  const shown = webmentions.filter(
+    (webmention) => !isBlockedSource(webmention.source, blockedHosts),
+  );
 
   const mdast = detail.mdast as Root;
   return {
@@ -208,7 +222,7 @@ export async function loadNoteDetailPage(
     note: detail.note,
     mdast,
     linkCards: detail.linkCards,
-    webmentions: toWebmentionGroups(webmentions),
+    webmentions: toWebmentionGroups(shown),
     related: related.map((note) => toPublicNote(note)),
     headings: extractHeadings(mdast),
     reactions,
