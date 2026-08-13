@@ -3,8 +3,8 @@
 /*
  * 絵文字の意匠 (Twemoji)。リアクション (パレットと押された絵文字) に当てる。
  *
- * 外から読まない。CSP が `font-src 'self'` なので CDN は届かず、SVG を個別に置くと
- * パレットで数千リクエストになる。
+ * 外から読まない。`font-src` で外に開いているのは Google Fonts だけ (ADR 0017) で
+ * Twemoji はそこに無く、SVG を個別に置くとパレットで数千リクエストになる。
  *
  * **このフォントをページ全体のフォントスタックに置かないこと。** `unicode-range` には
  * キーキャップ絵文字 (`1️⃣` = U+0031 U+FE0F U+20E3) を組むために `U+23` (`#`)・
@@ -105,7 +105,9 @@
 }
 
 /*
- * サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。
+ * サイト全体のフォント。字面を読み手の OS 任せにしないため、Noto Sans JP を Google Fonts
+ * から読んで先頭に置く (ADR 0017、読み込みは root.tsx の links)。後ろに続くシステムの
+ * 日本語フォントは、届くまでの代役と、届かなかったときの落とし先。
  *
  * **Twemoji はここに入れない** (ADR 0015)。`unicode-range` に ASCII の数字が入っており、
  * 先頭に置くと本文の数字が消える (#180)。
@@ -117,7 +119,7 @@
 @layer base {
   html {
     --body-font-stack:
-      "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic",
+      "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic",
       YuGothic, Meiryo, system-ui, sans-serif;
     font-family: var(--body-font-stack);
     -webkit-font-smoothing: antialiased;
