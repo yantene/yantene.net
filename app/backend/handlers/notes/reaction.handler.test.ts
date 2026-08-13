@@ -187,7 +187,20 @@ describe("リアクション API", () => {
     await put(harness, "❤️");
     await remove(harness);
 
-    expect(await logScore(harness)).toBe(floor);
+    const score = await logScore(harness);
+
+    /*
+     * 見たいのは「引ききったまま戻らなくなっていないこと」。
+     *
+     * 完全一致では見られない。足し引きは log-sum-exp を通るので、必ず丸めの誤差が残る。
+     * しかもリアクションの重みは**実行した日**で決まるため、出発点 (投稿日) から離れる
+     * ほど誤差の出方が変わる。実際、日付をまたいだだけでこのテストは落ちた。
+     *
+     * 下回っていないことと、実用上戻っていることの 2 つで見る。順位付けにしか使わない
+     * 値なので、小数第 6 位より下の差に意味はない。
+     */
+    expect(score).toBeGreaterThanOrEqual(floor);
+    expect(score).toBeCloseTo(floor, 6);
   });
 
   it("出発点は投稿日の重み", async () => {
