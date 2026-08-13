@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -14,49 +14,128 @@ import { describe, expect, it } from "vitest";
 
 const frontendDir = import.meta.dirname;
 
+/** Twemoji を当ててよい要素。中身が絵文字しかないものに限る。 */
+const allowedTargets = new Set([".reaction-chip-emoji", ".emoji-palette-item"]);
+
+/** Twemoji を当てている場所。ここを見失ったまま通ると、どのテストも意味がない。 */
+const knownTarget = "components/reaction/reaction-bar.css";
+
+/** `inherit` の仲間。値全体が単独でこれのときにしか使えない。 */
+const cssWideKeyword = /\b(?:inherit|initial|unset|revert|revert-layer)\b/i;
+
 function read(file: string): string {
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- リポジトリ内の固定パス
   return readFileSync(path.join(frontendDir, file), "utf8");
 }
 
-/** コメントを落とす。説明文に書いたセレクタ名を規則として数えないため。 */
+/** frontend 以下の CSS をすべて挙げる。フォントの指定はどこにでも書けるため。 */
+function cssFiles(): string[] {
+  return readdirSync(frontendDir, { recursive: true, encoding: "utf8" }).filter(
+    (entry) => entry.endsWith(".css"),
+  );
+}
+
+/** コメントを落とす。説明文に書いたセレクタ名やフォント名を数えないため。 */
 function withoutComments(css: string): string {
   return css.replaceAll(/\/\*[\s\S]*?\*\//g, "");
 }
 
-/** ページ全体のフォントを決めている `html` の指定を取り出す。 */
-function htmlFontFamily(css: string): string {
-  return /html\s*\{[^}]*?font-family:([^;]*);/s.exec(css)?.[1] ?? "";
+/** ページ全体のフォントを決めている `html` の中身を取り出す。 */
+function htmlBlock(css: string): string {
+  return /html\s*\{([^}]*)\}/s.exec(css)?.[1] ?? "";
+}
+
+/**
+ * フォントの指定を、どのファイルのものかと一緒に挙げる。
+ *
+ * `font-family` だけでなく `font` の一括指定も拾う。同じ値をそちらにも書けるため。
+ */
+function fontDeclarations(): { file: string; value: string }[] {
+  return cssFiles().flatMap((file) =>
+    Array.from(
+      withoutComments(read(file)).matchAll(/font(?:-family)?\s*:([^;}]*)/gi),
+      ([, value]) => ({ file, value: value.trim() }),
+    ),
+  );
+}
+
+/**
+ * Twemoji を当てている規則の当て先を、どのファイルのものかと一緒に挙げる。
+ *
+ * 規則の切り出しは分割で済ませる (入れ子の無い平たい CSS を前提にする)。入れ子の中に
+ * 書かれるとセレクタを取り違えるが、その場合は当て先が一覧に無い形になって落ちる。
+ */
+function twemojiTargets(): { file: string; target: string }[] {
+  return cssFiles().flatMap((file) =>
+    withoutComments(read(file))
+      .split("}")
+      .flatMap((chunk) => {
+        const parts = chunk.split("{");
+        // `{` を含まない末尾の断片は規則ではない。
+        if (parts.length < 2) return [];
+        const [selector, body] = parts;
+        if (!body.includes("Twemoji")) return [];
+        return selector
+          .split(",")
+          .map((target) => ({ file, target: target.trim() }));
+      }),
+  );
 }
 
 describe("Twemoji の適用範囲", () => {
   it("ページ全体のフォントスタックには入れない", () => {
-    const stack = htmlFontFamily(read("app.css"));
-    // 取り出せていること自体を先に確かめる (指定を見失ったまま通ると意味がない)。
-    expect(stack).toContain("sans-serif");
-    expect(stack).not.toContain("Twemoji");
+    expect(htmlBlock(withoutComments(read("app.css")))).not.toContain(
+      "Twemoji",
+    );
   });
 
   it("フォント自体は読み込む", () => {
     expect(read("app.css")).toContain('@import "@sableclient/twemoji-font"');
   });
 
-  it("絵文字だけが入る要素に当てる", () => {
-    const css = withoutComments(read("components/reaction/reaction-bar.css"));
-    expect(css).toContain("font-family: Twemoji");
+  /*
+   * 本文のフォントは custom property から引く。Twemoji を当てる要素が「絵文字だけ
+   * 受け持って残りは本文と同じ字で」と書くために名指しする先で、定義と参照のどちらが
+   * 欠けても、それを引いている側の宣言ごと無効になる。
+   */
+  it("本文のフォントスタックは custom property に出す", () => {
+    const block = htmlBlock(withoutComments(read("app.css")));
+    expect(block).toMatch(/--body-font-stack:[^;]*sans-serif/);
+    expect(block).toMatch(/font-family:\s*var\(--body-font-stack/);
+  });
 
-    // Twemoji を当てている規則のセレクタが、絵文字だけの要素に限られていること。
+  it("絵文字だけが入る要素に当てる", () => {
+    const targets = twemojiTargets();
+    // 当てている場所を見失っていないこと。
+    expect(targets.map(({ file }) => file)).toContain(knownTarget);
+
     // 押された数 (.reaction-chip-count) を巻き込むと、そこの数字が消える。
-    const allowed = new Set([".reaction-chip-emoji", ".emoji-palette-item"]);
-    // 規則の切り出しは分割で済ませる (入れ子の無い平たい CSS なので足りる)。
-    for (const chunk of css.split("}")) {
-      const parts = chunk.split("{");
-      // `{` を含まない末尾の断片は規則ではない。
-      if (parts.length < 2) continue;
-      const [selector, body] = parts;
-      if (!body.includes("Twemoji")) continue;
-      const targets = selector.split(",").map((value) => value.trim());
-      for (const target of targets) expect(allowed).toContain(target);
+    for (const { file, target } of targets) {
+      expect(allowedTargets, `${file}: ${target}`).toContain(target);
+    }
+  });
+
+  /*
+   * `font-family: Twemoji, inherit` と書いていて、フォントがどこにも当たっていなかった
+   * (#193)。`inherit` などの CSS-wide keyword は値全体が単独でそれのときにしか使えず、
+   * リストに混ぜると値がパースエラーになって宣言ごと捨てられる。
+   *
+   * 上のセレクタの検査と読み込みの検査は、どちらもこれを通してしまった。フォントは
+   * 617KB を読んだうえで誰にも当たらず、例外も警告も出ない。フォールバックに他の字を
+   * 従えたいときは `inherit` ではなく、そのスタック自体 (--body-font-stack) を書くこと。
+   *
+   * happy-dom は無効な値をそのまま保持するので、描画させても捕まらない。字面で見張る。
+   */
+  it("フォントの指定に CSS-wide keyword を混ぜない", () => {
+    const declarations = fontDeclarations();
+    // 拾えていること自体を先に確かめる。
+    expect(declarations.map(({ file }) => file)).toContain(knownTarget);
+
+    for (const { file, value } of declarations) {
+      // 単独なら CSS-wide keyword でよい (`font-family: inherit` は有効)。
+      // var() のフォールバックに隠れていても、置換後は同じ形になるので数える。
+      const isMixed = value.includes(",") && cssWideKeyword.test(value);
+      expect(isMixed, `${file}: font-family: ${value}`).toBe(false);
     }
   });
 });

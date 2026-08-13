@@ -107,15 +107,19 @@
 /*
  * サイト全体のフォント。外部読込なしでシステムの日本語フォントを優先する。
  *
- * Twemoji を先頭に置く。`unicode-range` で絵文字のコードポイントだけを受け持つので、
- * 日本語や英数字は後ろの指定にそのまま落ちる。後ろに置くと、先に来た日本語フォントが
- * 自前の絵文字グリフで応えてしまい、意匠が環境ごとにばらける。
+ * **Twemoji はここに入れない** (ADR 0015)。`unicode-range` に ASCII の数字が入っており、
+ * 先頭に置くと本文の数字が消える (#180)。
+ *
+ * スタックを custom property に出してあるのは、Twemoji を当てる要素 (リアクションの UI)
+ * が「絵文字だけ受け持って残りは本文と同じ字で」と書けるようにするため。そこで `inherit`
+ * は使えない (#193、components/reaction/reaction-bar.css)。
  */
 @layer base {
   html {
-    font-family:
+    --body-font-stack:
       "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic",
       YuGothic, Meiryo, system-ui, sans-serif;
+    font-family: var(--body-font-stack);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* スクロールバー領域を常に確保し、ページ間で中央寄せが左右にズレないようにする。 */
