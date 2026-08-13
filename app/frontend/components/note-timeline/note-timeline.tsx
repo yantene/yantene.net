@@ -56,7 +56,7 @@ export function NoteTimeline({
 }: NoteTimelineProps): React.JSX.Element {
   if (!groupByYear) {
     return (
-      <ol className="note-timeline note-timeline-list note-timeline-flat">
+      <ol className="note-timeline note-timeline-list note-timeline-flat h-feed">
         {notes.map((note, index) => (
           <NoteTimelineItem
             key={note.slug}
@@ -69,7 +69,11 @@ export function NoteTimeline({
   }
 
   return (
-    <div className="note-timeline">
+    /*
+      年で束ねるときは h-feed を外側に置く。年ごとの ol に付けると、1 ページに
+      いくつも feed があることになり、どれが記事の並びなのか読み取れなくなる。
+    */
+    <div className="note-timeline h-feed">
       {groupByPublishedYear(notes).map((group) => (
         // 年は見出しにしない。置かれる場所によって適切な見出しレベルが変わるうえ、
         // 日付は各項目の time 要素が持っているので、読み上げに年の見出しは要らない。
