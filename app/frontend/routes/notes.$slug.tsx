@@ -165,6 +165,19 @@ export default function NoteShow({
         <main className="w-full min-w-0 max-w-3xl h-entry">
           <header className="note-header mb-8">
             {/*
+              カバー画像は表題より上、記事の先頭に置く。読み始める前に絵で記事の顔を
+              立てる。ファーストビューに入るので lazy にはせず、最優先で取りに行く。
+            */}
+            {note.imageUrl !== null && (
+              <img
+                src={note.imageUrl}
+                alt=""
+                fetchPriority="high"
+                decoding="async"
+                className="note-header-cover"
+              />
+            )}
+            {/*
               読み始める前に「いつの、何を読むのか」が分かるようにする。日付と種別を
               表題の上に置き、細い線で本文と隔てる。
             */}
@@ -211,15 +224,6 @@ export default function NoteShow({
                   </Link>
                 ))}
               </div>
-            )}
-            {note.imageUrl !== null && (
-              <img
-                src={note.imageUrl}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                className="mt-6 w-full rounded-lg object-cover"
-              />
             )}
           </header>
           {/*
