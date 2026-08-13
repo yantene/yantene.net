@@ -49,20 +49,32 @@ const baseSecureHeaderOptions: SecureHeadersOptions = {
 /**
  * Google Fonts の 2 ホスト。CSS を配る側とフォント本体を配る側で分かれている (ADR 0017)。
  *
- * 名指しした 2 つ以外は届かないままにする。`'unsafe-inline'` を足さない方針 (ADR 0007) は
- * そのままで、ここで許すのは「この 2 ホストから CSS とフォントを読む」ことだけ。
+ * 名指しした 2 つ以外は届かないままにする。ここで許すのは「この 2 ホストから CSS と
+ * フォントを読む」ことだけ。
  */
 const GOOGLE_FONTS_CSS_ORIGIN = "https://fonts.googleapis.com";
 const GOOGLE_FONTS_FILE_ORIGIN = "https://fonts.gstatic.com";
 
-/** staging / production 用。'unsafe-inline' を許可しない厳格な CSP (ADR 0007)。 */
+/**
+ * staging / production 用の CSP。
+ *
+ * `script-src` は nonce 方式のまま厳格に保つ (ADR 0007)。`style-src` にだけ
+ * `'unsafe-inline'` を置いてある (ADR 0019、理由は下記)。**両者を混同しないこと。**
+ */
 const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
   ...baseSecureHeaderOptions,
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
     scriptSrc: [NONCE, "'self'"],
-    // Google Fonts の @font-face は CSS として配られるので、こちらにも読み込み先が要る。
-    styleSrc: ["'self'", GOOGLE_FONTS_CSS_ORIGIN],
+    /*
+     * Google Fonts の @font-face は CSS として配られるので、読み込み先が要る。
+     *
+     * `'unsafe-inline'` は数式のため (ADR 0019)。Temml は表組みの桁や数式番号の位置を
+     * inline style で渡してくる。**script-src は厳格なままにしてある。** 本文から任意の
+     * style を差し込めないよう、sanitize の allowlist では MathML の要素にだけ `style` を
+     * 許している (components/mdast/mathml.ts)。
+     */
+    styleSrc: ["'self'", "'unsafe-inline'", GOOGLE_FONTS_CSS_ORIGIN],
     imgSrc: ["'self'", "data:"],
     connectSrc: ["'self'"],
     fontSrc: ["'self'", GOOGLE_FONTS_FILE_ORIGIN],

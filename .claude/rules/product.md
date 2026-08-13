@@ -58,6 +58,9 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - 本文のむき出し URL のリンクカード ([#172](https://github.com/yantene/yantene.net/issues/172))。
   カードの取得は「変更のあった記事が参照する URL」と「期限切れの既存カード」を対象にするので、
   導入直後は既存記事のリンクが 1 つもカードにならない。一度 force refresh を流すこと
+- 数式の変換を Temml へ移した ([#208](https://github.com/yantene/yantene.net/issues/208))。
+  force refresh を流すまで、既存ノートの数式は KaTeX が組んだ MathML のまま出る
+  (関数名の後ろが詰まる)
 
 ## データモデルとストレージ戦略
 

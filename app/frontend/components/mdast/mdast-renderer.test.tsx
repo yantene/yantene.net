@@ -244,7 +244,14 @@ describe("MdastRenderer: MathML", () => {
     expect(html).toContain('stretchy="false"');
   });
 
-  /* allowlist に無いものは落ちる。CSP で消える style を通さないことも含めて固定する。 */
+  /*
+   * allowlist に無いものは落ちる。
+   *
+   * `style` は MathML の要素にだけ通す (ADR 0019)。Temml が桁や数式番号の位置を
+   * inline style で渡してくるため。**通すのはここだけで、本文の段落や見出しには
+   * 入らない** (そちらは rehype-sanitize の既定が落とす)。URL・スクリプトを運べる
+   * ものは MathML でも通さない。
+   */
   it("strips attributes and elements outside the MathML allow list", () => {
     const html = renderToStaticMarkup(
       <MdastRenderer
@@ -264,8 +271,9 @@ describe("MdastRenderer: MathML", () => {
         ])}
       />,
     );
-    expect(html).toContain("<mi>a</mi>");
-    expect(html).not.toContain("style=");
+    expect(html).toContain(">a</mi>");
+    // style は通す (上記)。class・イベント・URL は落とす。
+    expect(html).not.toContain("katex");
     expect(html).not.toContain("onclick");
     expect(html).not.toContain("javascript:");
     expect(html).not.toContain("mglyph");

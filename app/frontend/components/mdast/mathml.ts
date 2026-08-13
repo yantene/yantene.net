@@ -53,11 +53,16 @@ export const mathMlTagNames = [
  * 通す属性。要素ごとに分けず、MathML の要素すべてに同じ一覧を当てる。
  *
  * どれも寸法・整列・書体といった組版の指定でしかなく、外部を参照する術がないため、
- * 要素ごとに刻んでも防御は増えない。`href` (MathML でもリンクを張れる)、`class`、
- * `style`、`id` は意図的に外してある。
+ * 要素ごとに刻んでも防御は増えない。`href` (MathML でもリンクを張れる)、`class`、`id` は
+ * 意図的に外してある。
+ *
+ * **`style` はここにだけ通す。** Temml が表組みの桁や数式番号の位置を inline style で
+ * 渡してくるため (ADR 0019)。この一覧が当たるのは MathML の要素だけなので、本文の段落や
+ * 見出しに inline style が入ることはない (そちらは rehype-sanitize の既定が落とす)。
  */
 export const mathMlAttributes = [
   // 全要素共通 (MathML Core)
+  "style",
   "dir",
   "displaystyle",
   "mathbackground",

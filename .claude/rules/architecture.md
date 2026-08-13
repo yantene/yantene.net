@@ -224,9 +224,12 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
 
 ## inline style を使わない (CSP)
 
-CSP が `style-src 'self'` (`'unsafe-inline'` なし) なので、**ブラウザは inline `style`
-属性を丸ごと無視する**。nonce は要素にしか付けられず属性には効かないため、`style={...}`
-で渡した値は本番で必ず消える。しかも例外も警告も出ず、見た目だけが静かに壊れる。
+> ⚠️ `style-src` には数式のため `'unsafe-inline'` を置いてある (ADR 0019)。**ブラウザが
+> inline style を無視することはもう無い。** それでも自前のコードでは書かない方針を続ける
+> (下記)。強制は CSP ではなく ESLint が担う。`script-src` は厳格なままなので、inline
+> script は引き続き nonce が要る。
+
+CSP が止めなくなっても、自前のコードで連続値を `style` 属性に流す書き方は避ける。
 
 - 見た目の可変軸は**静的な CSS のクラスの段階**として持つ (連続値は使えない)
 - コンポーネント CSS は `app.css` に `@import` で束ねる

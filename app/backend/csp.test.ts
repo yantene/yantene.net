@@ -6,6 +6,10 @@ import { createTestApp } from "~/backend/test-app";
  *
  * ここが黙って壊れると本番の防御が消えるため、環境ごとの挙動をテストで固定する。
  * 「development 以外なら必ず付く」ことを staging / production の両方で確認する。
+ *
+ * `style-src` の `'unsafe-inline'` は数式のために意図して置いたもの (ADR 0019)。
+ * **`script-src` には決して足さないこと。** そちらは XSS 緩和の本体で、緩めると
+ * CSP を持つ意味がほぼ無くなる。下のテストがそれを見張る。
  */
 describe("content security policy", () => {
   function env(appEnv: string): Env {
@@ -22,15 +26,27 @@ describe("content security policy", () => {
   });
 
   it("enforces the CSP in staging", async () => {
-    const csp = await cspOf("staging");
-    expect(csp).toContain("style-src 'self'");
-    expect(csp).not.toContain("unsafe-inline");
+    expect(await cspOf("staging")).toContain("style-src 'self'");
   });
 
   it("enforces the CSP in production", async () => {
-    const csp = await cspOf("production");
-    expect(csp).toContain("style-src 'self'");
-    expect(csp).not.toContain("unsafe-inline");
+    expect(await cspOf("production")).toContain("style-src 'self'");
+  });
+
+  /*
+   * 数式のために緩めたのは style-src だけ (ADR 0019)。script-src まで一緒に緩むと
+   * XSS 緩和が消えるので、両者を別々に固定する。
+   */
+  it("never allows inline script, even though inline style is allowed", async () => {
+    for (const appEnv of ["staging", "production", "unexpected"]) {
+      const directives = await directivesOf(appEnv);
+      const scriptSrc = directives.find((d) => d.startsWith("script-src"));
+      expect(scriptSrc).toBeDefined();
+      expect(scriptSrc).not.toContain("unsafe-inline");
+      expect(scriptSrc).not.toContain("unsafe-eval");
+      // nonce を配って自前の inline script だけ通す形は維持する。
+      expect(scriptSrc).toContain("nonce-");
+    }
   });
 
   it("falls back to enforcing the CSP for an unknown APP_ENV (secure by default)", async () => {
@@ -54,7 +70,7 @@ describe("content security policy", () => {
     const directives = await directivesOf("production");
 
     expect(directives).toContain(
-      "style-src 'self' https://fonts.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     );
     expect(directives).toContain("font-src 'self' https://fonts.gstatic.com");
     // フォントを読むのに要らない口は 'self' のままであること (増えたらここで落ちる)。
