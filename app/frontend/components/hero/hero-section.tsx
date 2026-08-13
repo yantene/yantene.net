@@ -1,21 +1,51 @@
-import { SiBluesky, SiDiscord, SiGithub, SiX } from "react-icons/si";
+import {
+  SiBluesky,
+  SiDiscord,
+  SiGithub,
+  SiMastodon,
+  SiX,
+} from "react-icons/si";
 import { Celestim } from "./celestim";
 import { Cityscape } from "./cityscape";
 import { TimeScrubber } from "./time-scrubber";
 import Highlight from "~/frontend/assets/highlight.svg?react";
 
+/*
+ * 出ていく先。
+ *
+ * `isMe` は「これは自分のアカウントである」という主張 (`rel="me"`) を出すかどうか。
+ * **主張は相手側からの相互リンクがあって初めて成り立つ**ので、プロフィールに
+ * yantene.net を書いてあるものだけに付ける。書いていない先に付けると、確かめた側から
+ * 見て嘘になる。
+ *
+ * Discord は公開プロフィールに相互リンクを置けないため付けない。X は Bridgy が
+ * 2023 年に対応を終えており、反応を持ち帰る先にならないので今は付けない。
+ */
 const socialLinks = [
-  { label: "GitHub", href: "https://github.com/yantene", icon: SiGithub },
-  { label: "X", href: "https://x.com/yantene", icon: SiX },
+  {
+    label: "GitHub",
+    href: "https://github.com/yantene",
+    icon: SiGithub,
+    isMe: true,
+  },
+  { label: "X", href: "https://x.com/yantene", icon: SiX, isMe: false },
   {
     label: "Bluesky",
     href: "https://bsky.app/profile/yantene.net",
     icon: SiBluesky,
+    isMe: true,
+  },
+  {
+    label: "Mastodon",
+    href: "https://mastodon.social/@yantene",
+    icon: SiMastodon,
+    isMe: true,
   },
   {
     label: "Discord",
     href: "https://discord.com/users/yantene",
     icon: SiDiscord,
+    isMe: false,
   },
 ] as const;
 
@@ -30,15 +60,38 @@ export function HeroSection(): React.JSX.Element {
       {/* 空の手前に街。テキストは街の線画に重なってよい (線が薄いので読める)。 */}
       <Cityscape />
 
-      <div className="hero-intro relative flex flex-col items-center gap-5 px-6 text-center">
+      {/*
+        ここがこのサイトの代表 h-card。**ホームページに 1 つだけ置く。**
+        Bridgy Fed が「誰のサイトか」を読むのに最初に探す印で、これが無いと橋を架けられない。
+      */}
+      <div className="hero-intro h-card relative flex flex-col items-center gap-5 px-6 text-center">
         <span className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
           Web Developer
         </span>
 
         <h1 className="hero-heading text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
           <Highlight className="hero-heading-highlight" aria-hidden="true" />
-          <span className="relative">やんてね</span>
+          <span className="relative p-name">やんてね</span>
         </h1>
+
+        {/*
+          機械に読ませるためだけの、サイト自身への参照と顔。
+          見える形の対応物がヒーローに無いので、印だけを置く。
+
+          隠すのに `hidden` ではなく sr-only を使う。パーサが見えない要素を飛ばす作りだと
+          印ごと消えるが、そうなっても気づけないため (壊れても何も言わずに橋が架からない)。
+          顔は alt を空にしてあるので読み上げには出ない。
+        */}
+        <a className="sr-only u-url" href="/">
+          yantene.net
+        </a>
+        <img
+          className="sr-only u-photo"
+          src="/icons/icon-192.png"
+          alt=""
+          width={192}
+          height={192}
+        />
 
         {/*
           背後の光は控えめなので、文字も少しだけ透かして景色に馴染ませる。
@@ -58,7 +111,7 @@ export function HeroSection(): React.JSX.Element {
               key={link.label}
               href={link.href}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={link.isMe ? "me noopener noreferrer" : "noopener noreferrer"}
               className="press-control text-2xl text-foreground/85 transition-colors hover:text-primary"
               title={link.label}
             >

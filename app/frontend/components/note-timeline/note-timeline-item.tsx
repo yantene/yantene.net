@@ -48,11 +48,11 @@ export function NoteTimelineItem({
   const shownDate = omitYear ? publishedOn.slice(5) : publishedOn;
 
   return (
-    <li className="note-timeline-item">
+    <li className="note-timeline-item h-entry">
       {/* 行そのものが押し場所なので、押下の反応は面を塗る press-surface で受ける。 */}
       <Link
         to={`/notes/${slug}`}
-        className="note-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40"
+        className="note-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40 u-url"
       >
         {rank === undefined ? (
           // ドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため
@@ -69,16 +69,18 @@ export function NoteTimelineItem({
 
         <time
           dateTime={publishedOn}
-          className="note-timeline-date pt-1 text-sm tabular-nums text-base-content/60 sm:pt-0"
+          className="note-timeline-date dt-published pt-1 text-sm tabular-nums text-base-content/60 sm:pt-0"
         >
           {shownDate}
         </time>
 
         <div className="note-timeline-body flex flex-col gap-1">
-          <h3 className="font-bold leading-snug transition-colors group-hover:text-primary">
+          <h3 className="p-name font-bold leading-snug transition-colors group-hover:text-primary">
             {title}
           </h3>
-          <p className="line-clamp-2 text-sm text-base-content/70">{summary}</p>
+          <p className="p-summary line-clamp-2 text-sm text-base-content/70">
+            {summary}
+          </p>
           {tags.length > 0 && (
             <p className="note-timeline-tags">
               {tags.slice(0, SHOWN_TAG_COUNT).map((tag) => (
