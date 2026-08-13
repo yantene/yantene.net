@@ -22,11 +22,14 @@ function sourceLabelOf(card: LinkCardView): string {
  *
  * 見た目の可変軸は持たない。CSP が `style-src 'self'` なので inline style は
  * ブラウザに無視される (ADR 0007)。段階が要るものは CSS のクラスで持つ。
+ *
+ * `not-prose` を付けるのは、カードが本文の中に出ながら本文の組版に属さないため。
+ * 付けないと prose の a と img の既定 (下線・余白・角丸) がカードの中まで届く。
  */
 export function LinkCard({ card }: LinkCardProps): React.JSX.Element {
   return (
     <a
-      className="link-card press-control"
+      className="link-card press-control not-prose"
       href={card.url}
       target="_blank"
       rel="noopener noreferrer nofollow"

@@ -52,23 +52,39 @@
   --tw-prose-td-borders: var(--color-base-300);
 }
 
-/* note 風の段落・見出しリズム (日本語の可読性重視)。 */
-.note-prose :where(p) {
+/*
+ * note 風の段落・見出しリズム (日本語の可読性重視)。
+ *
+ * 素の要素に当てるこれらの規則には `:not(:where(.not-prose, .not-prose *))` を付ける。
+ * 本文の中には組版の対象でない差し込み (リンクカードなど) が混ざり、そこに本文用の
+ * 余白や角丸が乗ると崩れるため。typography プラグイン本体が同じ除外を持つので、それに
+ * 揃える。`:where()` の中なので詳細度は上がらない。
+ *
+ * 除外を書かないと、差し込み側が同じ詳細度 (クラス 1 つ) で打ち消そうとしても
+ * **後から読まれたこちらが勝ってしまう**。実際、リンクカードの favicon に
+ * `margin-inline: auto` が乗り、flex の中で中央に飛んでいた。
+ *
+ * 以降の記法まわりの規則 (インラインコード・コードブロック・数式・見出しの
+ * scroll-margin) には付けていない。どれも Markdown の記法からしか生まれない要素に
+ * 当たるので、差し込みの中には現れない。差し込みが素の要素を使うようになったら、
+ * そのときは同じ除外をそちらにも足すこと。
+ */
+.note-prose :where(p):not(:where(.not-prose, .not-prose *)) {
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
-.note-prose :where(h2) {
+.note-prose :where(h2):not(:where(.not-prose, .not-prose *)) {
   margin-top: 2.75em;
   margin-bottom: 1em;
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--color-base-300);
   font-weight: 700;
 }
-.note-prose :where(h3) {
+.note-prose :where(h3):not(:where(.not-prose, .not-prose *)) {
   margin-top: 2em;
   font-weight: 700;
 }
-.note-prose :where(img) {
+.note-prose :where(img):not(:where(.not-prose, .not-prose *)) {
   margin-inline: auto;
   border-radius: 0.5rem;
   /*
@@ -79,7 +95,7 @@
   max-width: 100%;
   height: auto;
 }
-.note-prose :where(a) {
+.note-prose :where(a):not(:where(.not-prose, .not-prose *)) {
   text-underline-offset: 0.2em;
 }
 
