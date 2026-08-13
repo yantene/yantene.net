@@ -25,13 +25,22 @@ const fullCard: LinkCardView = {
 const meta: Meta<typeof LinkCard> = {
   title: "LinkCard/LinkCard",
   component: LinkCard,
-  // 本文の中に出るものなので、prose の中で確かめる (下線・余白の打ち消しが効くか)。
+  /*
+   * 本文の中に出るものなので、prose の中で確かめる (本文の組版が漏れてこないか)。
+   * 幅は記事ページの本文と同じ 768px (max-w-3xl) にする。絵と文字の丈の釣り合いは数 px
+   * で決まるので、ここが本物とずれていると確かめたことにならない。
+   *
+   * 余白は外側に持たせる。prose 自身に padding を置くと中身が 720px に痩せて、
+   * 記事ページ (padding は外の行が持つ) と 48px ずれる。
+   */
   decorators: [
     (Story) => (
-      <div className="note-prose prose max-w-2xl p-6">
-        <p>直前の段落。</p>
-        <Story />
-        <p>直後の段落。</p>
+      <div className="p-6">
+        <div className="note-prose prose max-w-3xl">
+          <p>直前の段落。</p>
+          <Story />
+          <p>直後の段落。</p>
+        </div>
       </div>
     ),
   ],
