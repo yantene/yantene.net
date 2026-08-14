@@ -13,7 +13,7 @@
 /**
  * 通す MathML 要素。
  *
- * KaTeX の MathML 出力が使う要素に、MathML Core の基本要素を足したもの。
+ * Temml の MathML 出力が使う要素に、MathML Core の基本要素を足したもの (ADR 0018)。
  * `mglyph` は入れない (src で外部の画像を読み込むため。本文の画像は Markdown で書く)。
  */
 export const mathMlTagNames = [
@@ -107,7 +107,7 @@ export const mathMlAttributes = [
   "rowspan",
   // annotation
   "encoding",
-  // menclose (MathML Core 外だが KaTeX が \cancel などで使う)
+  // menclose (MathML Core 外だが Temml が \cancel などで使う)
   "notation",
 ] as const;
 
