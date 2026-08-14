@@ -322,8 +322,19 @@ const excludedFromSummary = new Set<Nodes["type"]>([
   "inlineMath",
 ]);
 
+/**
+ * Alert (`> [!NOTE]`) は本文ではなく但し書きなので要約から外す。
+ *
+ * 記事の頭に「リンク先が消えた」「画像を紛失した」と断りを置くことがあり、
+ * これを数えると一覧と OGP がその文言で埋まる。読者が最初に見るのは記事の書き出しで
+ * あってほしい。ラベルの無い引用は本文の一部なので、これまでどおり数える。
+ */
+function isAlertNode(node: Nodes): boolean {
+  return node.type === "blockquote" && node.data?.hName === ALERT_TAG_NAME;
+}
+
 function isSummaryNode(node: Nodes): boolean {
-  return !excludedFromSummary.has(node.type);
+  return !excludedFromSummary.has(node.type) && !isAlertNode(node);
 }
 
 /**

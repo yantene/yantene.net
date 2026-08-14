@@ -265,13 +265,24 @@ describe("GFM alerts", () => {
     expect(mdast.children.at(0)?.data).toBeUndefined();
   });
 
-  it("ラベルを要約に混ぜない", () => {
-    const { summary } = parseBody("> [!WARNING]\n> リンク先は消えました。\n");
-    expect(summary).toBe("リンク先は消えました。");
-  });
-
   it("ラベル行に続く強調などの装飾を落とさない", () => {
     const { mdast } = parseBody("> [!TIP]\n> **強調**した本文。\n");
     expect(mdastToString(mdast)).toBe("強調した本文。");
+  });
+});
+
+describe("要約と Alert", () => {
+  it("記事の頭に置いた Alert を要約に数えない", () => {
+    const { summary } = parseNoteContent(
+      `---\ntitle: T\n---\n\n> [!WARNING]\n> リンク先は消えました。\n\n本題はここから始まる。\n`,
+    );
+    expect(summary).toBe("本題はここから始まる。");
+  });
+
+  it("ラベルの無い引用は本文として要約に数える", () => {
+    const { summary } = parseNoteContent(
+      `---\ntitle: T\n---\n\n> 引用は本文の一部。\n\n続きの段落。\n`,
+    );
+    expect(summary).toBe("引用は本文の一部。 続きの段落。");
   });
 });
