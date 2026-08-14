@@ -15,16 +15,30 @@ const markdownProcessor = unified()
   .use(remarkGfm)
   .use(remarkMath);
 
-/** フロントマターから取り出した生のメタデータ (検証前)。 */
 /**
  * 記事の公開範囲。フロントマターの `visibility` で指定する。
  *
  * 既定は `public`。`private` を書いた記事は同期の対象から外れ、D1 にも R2 にも
- * 載らない (notes-refresh.service.ts)。読み取れない値は `private` に倒す。
- * 誤って公開する方が、誤って隠すより取り返しがつかない。
+ * 載らない (notes-refresh.service.ts)。
  */
 export type NoteVisibility = "public" | "private";
 
+/**
+ * `visibility` として読めない値が書かれていた。
+ *
+ * 呼び出し側 (refresh) がノート単位のコンテンツ不正として拾えるよう、infra 障害と
+ * 区別できる型にしておく。
+ *
+ * 読めない値を `private` に倒さないのは、綴りを間違えた記事が黙って消えるため。
+ * 隠す方が公開するより傷が浅いのは確かだが、それは「隠すと決めた記事」の話で、
+ * `visibility: pubic` と打ち間違えた記事は隠すと決めた覚えがない。同期しない点は
+ * 変わらないまま、異常を異常として報告する。
+ */
+export class VisibilityValueError extends Error {
+  readonly name = "VisibilityValueError";
+}
+
+/** フロントマターから取り出した生のメタデータ (検証前)。 */
 export interface NoteFrontmatter {
   readonly title: string | undefined;
   readonly imageUrl: string | undefined;
@@ -367,8 +381,9 @@ function asOptionalString(value: unknown): string | undefined {
 /**
  * フロントマターの visibility を読む。
  *
- * 書いていなければ公開。`public` / `private` 以外が書かれていたら公開しない。
- * 綴りを間違えた記事が黙って世に出るより、出ない方が傷が浅い。
+ * 書いていなければ公開。`public` / `private` 以外が書かれていたら
+ * {@link VisibilityValueError} を送出する (どちらとも読めない以上、公開しないまま
+ * 書き手に知らせる)。
  */
 function asVisibility(value: unknown): NoteVisibility {
   if (value === undefined || value === null) return "public";
@@ -377,7 +392,9 @@ function asVisibility(value: unknown): NoteVisibility {
     if (normalized === "public") return "public";
     if (normalized === "private") return "private";
   }
-  return "private";
+  throw new VisibilityValueError(
+    `frontmatter has unreadable visibility: ${JSON.stringify(value)}`,
+  );
 }
 
 /**

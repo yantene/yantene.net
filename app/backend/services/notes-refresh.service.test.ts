@@ -11,6 +11,9 @@ import {
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 class MockContentStore implements IContentStore {
+  /** readFile に渡されたパス。1 ノートを何度読んだかを見るために控える。 */
+  readonly reads: string[] = [];
+
   constructor(
     private readonly files: Map<string, { hash: string; bytes: Uint8Array }>,
   ) {}
@@ -22,6 +25,7 @@ class MockContentStore implements IContentStore {
   }
 
   readFile(path: string): Promise<Uint8Array | undefined> {
+    this.reads.push(path);
     return Promise.resolve(this.files.get(path)?.bytes);
   }
 }
@@ -94,20 +98,22 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   command: D1NoteCommandRepository;
   query: D1NoteQueryRepository;
   cache: InMemoryCache;
+  content: MockContentStore;
 } {
   const d1 = createTestD1();
   const command = new D1NoteCommandRepository(d1);
   const query = new D1NoteQueryRepository(d1);
   const cache = new InMemoryCache();
   const searchIndex = new D1NoteSearchIndex(d1);
+  const content = new MockContentStore(files);
   const service = new NotesRefreshService(
-    new MockContentStore(files),
+    content,
     command,
     query,
     cache,
     searchIndex,
   );
-  return { service, command, query, cache };
+  return { service, command, query, cache, content };
 }
 
 describe("NotesRefreshService", () => {
@@ -472,7 +478,7 @@ describe("visibility", () => {
     expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
   });
 
-  it("読めない値は公開しない", async () => {
+  it("読めない値は公開せず、綴りの誤りとして報告する", async () => {
     const files = new Map([
       [
         "notes/secret.md",
@@ -482,7 +488,11 @@ describe("visibility", () => {
     const { service, query } = setup(files);
 
     const result = await service.refresh();
-    expect(result.unpublished).toEqual(["secret"]);
+    // 隠すと決めた記事ではないので unpublished には数えない。
+    expect(result.unpublished).toEqual([]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.path).toBe("notes/secret.md");
+    expect(result.skipped[0]?.reason).toContain("visibility");
     expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
   });
 
@@ -497,5 +507,39 @@ describe("visibility", () => {
 
     const result = await service.refresh();
     expect(result.unpublished).toEqual(["secret"]);
+  });
+
+  it("公開範囲を見るために原文を読み直さない", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, content } = setup(files);
+
+    await service.refresh();
+
+    expect(content.reads.filter((path) => path === "notes/hello.md")).toEqual([
+      "notes/hello.md",
+    ]);
+  });
+
+  it("変更のない記事は原文を開かない", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, content, query } = setup(files);
+
+    await service.refresh();
+    const readsAfterFirst = content.reads.length;
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(content.reads).toHaveLength(readsAfterFirst);
+    // 読まなかったノートを「正本から消えた」と誤認して掃除していないこと。
+    expect(result.deleted).toEqual([]);
+    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
   });
 });

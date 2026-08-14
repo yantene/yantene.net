@@ -6,7 +6,7 @@ import { MathSyntaxError } from "./latex-to-mathml";
 import { resolveAssetUrl } from "./note-asset-url";
 import {
   parseNoteContent,
-  type NoteVisibility,
+  VisibilityValueError,
   type ParsedNoteContent,
 } from "./note-content-parser";
 import type { Root } from "mdast";
@@ -73,6 +73,13 @@ class NoteContentError extends Error {
   readonly name = "NoteContentError";
 }
 
+/** 読み取り済みの原文と、その解析結果。読むのは 1 ノートにつき 1 回に留める。 */
+interface NoteSource {
+  /** フロントマター込みの原文。`/notes/<slug>.md` の配信元として R2 に置く。 */
+  readonly markdown: string;
+  readonly parsed: ParsedNoteContent;
+}
+
 /**
  * 正本 (GitHub) → D1 + R2 のコンテンツ同期サービス。
  *
@@ -122,22 +129,33 @@ export class NotesRefreshService {
     for (const group of groups) {
       const slug = group.slug.toString();
 
+      // 変更なしは読まずに飛ばす。force のときは実装変更を既存ノートへ反映するため
+      // 読み直す。
+      //
+      // ハッシュが一致するのは前回同期できたノート、つまり前回は公開だったものに限る
+      // (非公開なら D1 に載らず、stored に無いので一致しようがない)。visibility を
+      // 書き換えれば contentHash も変わるため、公開 → 非公開の切り替えは必ず下に抜ける。
+      const isUnchanged = stored.get(slug) === group.contentHash;
+      if (options.force !== true && isUnchanged) {
+        seen.add(slug);
+        continue;
+      }
+
+      const source = await attempt(group, () => this.readNote(group));
+      if (!source.ok) continue;
+
       // 非公開の記事は seen に入れない。正本から消えたノートと同じ経路で
       // D1 と R2 から掃除され、以後どの配信経路にも現れなくなる。
       // 配信側で除外条件を書き足す方式だと、経路が増えるたびに漏れが起きる。
-      const visibility = await attempt(group, () => this.readVisibility(group));
-      if (!visibility.ok) continue;
-      if (visibility.value === "private") {
+      if (source.value.parsed.frontmatter.visibility === "private") {
         unpublished.push(slug);
         continue;
       }
 
       seen.add(slug);
-      // 変更なしは飛ばす。force のときは実装変更を既存ノートへ反映するため再処理する。
-      const isUnchanged = stored.get(slug) === group.contentHash;
-      if (options.force !== true && isUnchanged) continue;
-
-      const synced = await attempt(group, () => this.syncNote(group));
+      const synced = await attempt(group, () =>
+        this.syncNote(group, source.value),
+      );
       if (!synced.ok) continue;
       for (const url of synced.value) linkedUrls.add(url);
       processed.push(slug);
@@ -154,18 +172,20 @@ export class NotesRefreshService {
   }
 
   /**
-   * 同期に入る前に公開範囲だけを読む。
+   * 原文を読んで解析する。書き込みには進まない。
    *
-   * 本文の解析をここでもう一度行うのは無駄に見えるが、非公開の判定を syncNote の
-   * 内側に置くと、書き込みを始めてから引き返すことになる。読むだけで済ませたい。
+   * 非公開の判定を syncNote の内側に置くと、書き込みを始めてから引き返すことになる。
+   * かといって判定のためだけに読み直すと、公開する記事を 2 度読んで 2 度解析すること
+   * になる。読むのはここ 1 回にして、結果を syncNote へ渡す。
    */
-  private async readVisibility(group: NoteGroup): Promise<NoteVisibility> {
+  private async readNote(group: NoteGroup): Promise<NoteSource> {
     const bytes = await this.content.readFile(group.sourcePath);
     if (bytes === undefined) {
+      // ツリーには在るのに読めない = infra 障害。fail-loud で送出。
       throw new Error(`source file could not be read: ${group.sourcePath}`);
     }
     const markdown = new TextDecoder().decode(bytes);
-    return parseContent(markdown).frontmatter.visibility;
+    return { markdown, parsed: parseContent(markdown) };
   }
 
   /**
@@ -176,21 +196,17 @@ export class NotesRefreshService {
    *
    * 併せて、本文がカード化対象として参照している URL を返す。
    */
-  private async syncNote(group: NoteGroup): Promise<readonly string[]> {
-    const bytes = await this.content.readFile(group.sourcePath);
-    if (bytes === undefined) {
-      // ツリーには在るのに読めない = infra 障害。fail-loud で送出。
-      throw new Error(`source file could not be read: ${group.sourcePath}`);
-    }
-
-    const markdown = new TextDecoder().decode(bytes);
+  private async syncNote(
+    group: NoteGroup,
+    source: NoteSource,
+  ): Promise<readonly string[]> {
     // 検証込みでエンティティと MDAST を組み立てる (不正なら NoteContentError)。
-    const { note, mdast } = buildNoteContent(group, markdown);
+    const { note, mdast } = buildNoteContent(group, source.parsed);
 
     // 古いキャッシュ (リネーム・削除されたアセット含む) を消してから書き直す。
     await this.cache.deleteNote(group.slug);
     // 原文はそのまま (フロントマター込み) 置く。`/notes/<slug>.md` の配信元になる。
-    await this.cache.putSource(group.slug, markdown);
+    await this.cache.putSource(group.slug, source.markdown);
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
     applyImageDimensions(
@@ -318,15 +334,18 @@ function fnv1a(input: string): string {
 }
 
 /**
- * Markdown を解析する。読めない LaTeX はコンテンツ不正として扱い、そのノードだけを
- * スキップの対象にする (数式 1 つの誤字で refresh 全体を落とさない)。
+ * Markdown を解析する。読めない LaTeX と読めない visibility はコンテンツ不正として
+ * 扱い、そのノートだけをスキップの対象にする (誤字 1 つで refresh 全体を落とさない)。
  * それ以外の失敗はパーサの不具合なので、握りつぶさず送出する。
  */
 function parseContent(markdown: string): ParsedNoteContent {
   try {
     return parseNoteContent(markdown);
   } catch (error) {
-    if (error instanceof MathSyntaxError) {
+    if (
+      error instanceof MathSyntaxError ||
+      error instanceof VisibilityValueError
+    ) {
       throw new NoteContentError(error.message);
     }
     throw error;
@@ -334,14 +353,13 @@ function parseContent(markdown: string): ParsedNoteContent {
 }
 
 /**
- * 原文 Markdown から Note エンティティと MDAST を組み立てる純関数。
+ * 解析済みの本文から Note エンティティと MDAST を組み立てる純関数。
  * 不正なフロントマター・VO 検証失敗は {@link NoteContentError} として送出する。
  */
 function buildNoteContent(
   group: NoteGroup,
-  markdown: string,
+  parsed: ParsedNoteContent,
 ): { note: Note<IUnpersisted>; mdast: Root } {
-  const parsed = parseContent(markdown);
   const slug = group.slug.toString();
 
   const publishedRaw = parsed.frontmatter.publishedOn;
