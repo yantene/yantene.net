@@ -132,6 +132,17 @@ MathML 出力で組んで MDAST に埋める**。描画側は埋まった MathML
 から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
 [ADR 0009](../../docs/adr/0009-serve-note-source-markdown-verbatim.md) を参照。
 
+**拡張子なしでも `Accept` で名指しすれば同じものが返る。**
+
+```bash
+curl -H 'Accept: text/markdown' https://yantene.net/notes/<slug>
+```
+
+`text/markdown` の q 値が `text/html` のそれを厳密に上回ったときだけ原文になる。ブラウザの
+Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数えないので、記事ページが原文に
+化けることはない。判定と、同じ URL が 2 表現を持つことのキャッシュの扱いは
+[ADR 0020](../../docs/adr/0020-negotiate-note-source-markdown-on-accept.md) を参照。
+
 ## 補助ドメイン
 
 - 将来的な機能追加はノートを中心に拡張する

@@ -33,3 +33,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0017](0017-webfonts-from-google-fonts.md)                   | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く    | Accepted |
 | [0018](0018-typeset-math-with-temml.md)                      | 数式は Temml で組み、inline style は MathML の中へ移す           | Accepted |
 | [0019](0019-inline-style-for-math.md)                        | style-src に 'unsafe-inline' を置き、script-src は厳格なまま保つ | Accepted |
+| [0020](0020-negotiate-note-source-markdown-on-accept.md)     | `/notes/<slug>` は Accept を見て原文 Markdown を返す             | Accepted |

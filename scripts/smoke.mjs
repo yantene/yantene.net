@@ -27,39 +27,80 @@ if (user !== undefined && pass !== undefined) {
   authHeader = { Authorization: `Basic ${encoded}` };
 }
 
-/** 各ページ種別を 1 つずつ + 主要な公開エンドポイント。 */
-const paths = [
+/**
+ * 各ページ種別を 1 つずつ + 主要な公開エンドポイント。
+ *
+ * 文字列は「5xx でなければ ok」の確認。オブジェクトを書くと `headers` を足したうえで
+ * `expectContentType` (前方一致) まで確かめる。
+ */
+const targets = [
   "/",
   "/notes",
   "/notes/does-not-exist",
+  /*
+   * 記事 URL は Accept 次第で HTML と原文 Markdown に分かれる (ADR 0020)。取り違えは
+   * 5xx にならないので、両分岐の Content-Type を名指しで確かめる。存在しない slug でも
+   * 分岐は同じところを通るため、実在の slug を知らなくても検知できる。
+   */
+  {
+    label: "/notes/does-not-exist (browser Accept)",
+    path: "/notes/does-not-exist",
+    headers: {
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    },
+    expectContentType: "text/html",
+  },
+  {
+    label: "/notes/does-not-exist (Accept: text/markdown)",
+    path: "/notes/does-not-exist",
+    headers: { Accept: "text/markdown" },
+    expectContentType: "application/problem+json",
+  },
   "/feed.xml",
   "/sitemap.xml",
   "/robots.txt",
   "/og/default",
 ];
 
+/** 文字列指定と詳細指定を 1 つの形に均す。 */
+const paths = targets.map((target) =>
+  typeof target === "string"
+    ? { label: target, path: target, headers: {} }
+    : { headers: {}, ...target },
+);
+
 let failed = 0;
 let blockedByAuth = 0;
-for (const path of paths) {
+for (const { label, path, headers, expectContentType } of paths) {
   let status = 0;
+  let contentType = "";
   try {
     const res = await fetch(`${base}${path}`, {
-      headers: authHeader,
+      headers: { ...authHeader, ...headers },
       redirect: "manual",
     });
     status = res.status;
+    contentType = res.headers.get("content-type") ?? "";
   } catch (error) {
-    console.log(`x ERR ${path} (${error.message})`);
+    console.log(`x ERR ${label} (${error.message})`);
     failed += 1;
     continue;
   }
   // 401/403 はアプリのハンドラまで到達していないということ。500 未満だからと
   // 成功に数えると、BASIC 認証の壁で止まったまま「全部 ok」になってしまう。
   const isBlocked = status === 401 || status === 403;
-  const isOk = status < 500 && !isBlocked;
+  const isWrongType =
+    expectContentType !== undefined &&
+    !contentType.startsWith(expectContentType);
+  const isOk = status < 500 && !isBlocked && !isWrongType;
   if (!isOk) failed += 1;
   if (isBlocked) blockedByAuth += 1;
-  console.log(`${isOk ? "ok" : "x "} ${status} ${path}`);
+  console.log(`${isOk ? "ok" : "x "} ${status} ${label}`);
+  if (isWrongType) {
+    console.log(
+      `     expected content-type ${expectContentType}, got ${contentType}`,
+    );
+  }
 }
 
 if (blockedByAuth > 0) {
@@ -77,5 +118,5 @@ if (failed > 0) {
   process.exit(1);
 }
 console.log(
-  `\nok all ${paths.length} paths reached the app and responded < 500`,
+  `\nok all ${paths.length} checks reached the app and responded as expected`,
 );

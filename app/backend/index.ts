@@ -152,8 +152,10 @@ export const getApp = (
   // 表に無いパスは素通りするので、後続のルーティングには影響しない。
   app.route("/", createLegacyRedirectRouter());
 
-  // ノートの原文 Markdown (`/notes/<slug>.md`)。ページではなくファイルを返すので
-  // React Router へ委譲せず Hono で完結させる。`.md` 以外の /notes/* は素通りする。
+  // ノートの原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
+  // Hono で完結させる。`/notes/<slug>.md` と、`/notes/<slug>` のうち Accept が
+  // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /notes/* は
+  // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
   app.route("/notes", createNoteMarkdownRouter());
 
   // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
