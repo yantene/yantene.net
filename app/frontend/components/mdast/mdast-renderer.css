@@ -282,6 +282,29 @@
   padding-bottom: 0.25em;
 }
 
+/*
+ * Mermaid の図 (ADR 0023)。ソースは本文の ```mermaid のまま持ち、ブラウザで SVG に組む。
+ *
+ * Mermaid は SVG に `max-width` を書いて器の幅に収めるので、普通は溢れない。それでも
+ * `overflow-x` を置くのは、要素の多いシーケンス図やガントのように、収まりきらない図が
+ * あるため。読めないより横に流れる方がまだよい。
+ *
+ * 中央寄せは `margin-inline: auto` で行う。`text-align: center` だと、器より広い図の
+ * **左半分がスクロールで辿れなくなる** (はみ出しが左右に等分される)。auto マージンは
+ * 余りが無ければ 0 に潰れるだけなので、そうならない。
+ */
+.note-prose .mermaid-diagram {
+  margin: 1.75em 0;
+  overflow-x: auto;
+}
+
+.note-prose .mermaid-diagram svg {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
+}
+
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
 .note-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;

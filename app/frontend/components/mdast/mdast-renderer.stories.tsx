@@ -99,6 +99,23 @@ export const Formulas: Story = {
 };
 
 /*
+ * Mermaid の図 (ADR 0023)。本文には ```mermaid のフェンスだけを書き、ブラウザで SVG に
+ * 組む。読めないソースは図にならず、書いたままのコードブロックとして残る。
+ */
+export const Diagrams: Story = {
+  args: {
+    node: markdownToMdast(
+      [
+        "```mermaid\nflowchart LR\n  A[Markdown] --> B[MDAST]\n  B --> C{mermaid?}\n  C -- はい --> D[ブラウザで SVG に組む]\n  C -- いいえ --> E[コードブロックのまま]\n```",
+        '```mermaid\npie title 記事の内訳\n  "技術" : 5\n  "エッセイ" : 3\n  "その他" : 2\n```',
+        "```mermaid\nflowchart LR\n  A --> ((((\n```",
+        "```ts\n// mermaid 以外のコードブロックはこれまでどおり。\nconst x = 1;\n```",
+      ].join("\n\n"),
+    ),
+  },
+};
+
+/*
  * GFM の Alert。旧サイトから移した記事の但し書き — リンク切れ、サービス終了、
  * 失われた画像 — を地の文と分けて置くために入れた。
  */

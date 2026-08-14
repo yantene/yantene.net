@@ -145,6 +145,16 @@ MathML 出力で組んで MDAST に埋める**。描画側は埋まった MathML
 - 読めない LaTeX は refresh がそのノートをスキップし、理由を返す (fail-loud)
 - `$` は数式の開始と見なされる。`$100 と $200` のような書き方は数式になってしまう
 
+### Mermaid のコードフェンスはブラウザで図になる
+
+本文の ` ```mermaid ` は、**読み手のブラウザで** SVG に組んで差し替える。数式と違って
+refresh では何も変換しないので、MDAST は素の `code` ノードのまま、force refresh も要らない。
+設計判断の詳細は [ADR 0023](../../docs/adr/0023-render-mermaid-in-the-browser.md) を参照。
+
+- Mermaid 本体は動的 import で遅延して読む。**図を使わない記事には降りてこない**
+- 組めなかったソースは、書いたままのコードブロックとして残る (記事は壊れない)
+- 図が出るまでに一拍あり、JavaScript が動かない環境とクローラーにはソースが届く
+
 ### 原文は `/notes/<slug>.md` で取れる
 
 記事ページ (`/notes/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
