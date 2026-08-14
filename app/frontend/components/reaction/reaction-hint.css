@@ -1,0 +1,112 @@
+/*
+ * まだ押していない読み手に出す、リアクションへの促し。
+ *
+ * リアクションの行の真上に浮かべ、下向きの角で行を指す。流れの中に挟むと本文の丈が
+ * 変わってしまうので、位置は absolute で取る (基準は .reaction-bar)。
+ */
+
+.reaction-hint {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  /*
+   * 幅は中身なりに取り、画面に収まるところで止める。
+   *
+   * **`100%` で止めてはいけない。** 基準になるリアクションの行は中身なりの幅しか
+   * 持たず、**促しを出す場面 (まだ誰も押していない) が最も狭い** (ハートとパレットで
+   * 130px ほど)。そこに合わせると文言が 3 行に折り返す。画面幅で止めるのは
+   * パレット (.reaction-palette-panel) と同じ考え方。
+   */
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 3rem));
+  padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-base-100);
+  /*
+   * 影は box-shadow ではなく drop-shadow で付ける。box-shadow は要素の矩形にしか
+   * 落ちないので、下向きの角 (::before / ::after) だけ影の外に取り残されて浮かない。
+   */
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.12));
+  /* hydration の後に出るので、いきなり現れず短く浮かび上がらせる。 */
+  animation: reaction-hint-in 0.24s ease-out;
+}
+
+/*
+ * 下向きの角。枠線ごと再現するため、地の三角の上に少し小さい三角を重ねる。
+ * (border だけで作ると、吹き出し本体の枠と角の枠が繋がらない。)
+ */
+.reaction-hint::before,
+.reaction-hint::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 1.25rem;
+  /*
+   * 三角は border で作る。preflight が全要素に border-box を当てているので、
+   * ここだけ content-box に戻さないと幅が border に食われて潰れる。
+   */
+  box-sizing: content-box;
+  width: 0;
+  height: 0;
+  border-inline: 0.45rem solid transparent;
+}
+
+.reaction-hint::before {
+  border-top: 0.45rem solid var(--color-border);
+}
+
+.reaction-hint::after {
+  /* 枠の内側を隠す分だけ浅く置く。 */
+  margin-top: -1px;
+  border-top: 0.45rem solid var(--color-base-100);
+}
+
+.reaction-hint-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+}
+
+.reaction-hint-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* 指で押せる大きさ。字より先に、閉じられることが伝わるように。 */
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+}
+
+.reaction-hint-close:hover {
+  background-color: var(--color-base-200);
+  color: var(--color-foreground);
+}
+
+@keyframes reaction-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 動きを控える設定なら、浮かび上がらせず即座に出す。 */
+@media (prefers-reduced-motion: reduce) {
+  .reaction-hint {
+    animation: none;
+  }
+}

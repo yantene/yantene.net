@@ -73,7 +73,9 @@
     "loading": "Loading…",
     "noMatch": "Nothing matched.",
     "paletteFailed": "Couldn't load the emoji.",
-    "onlyOne": "One reaction at a time. Picking another replaces it."
+    "onlyOne": "One reaction at a time. Picking another replaces it.",
+    "hint": "React anonymously — no account needed.",
+    "hintClose": "Dismiss this tip"
   },
   "webmention": {
     "heading": "Responses",

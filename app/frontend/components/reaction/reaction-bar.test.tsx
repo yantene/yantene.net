@@ -1,7 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { beforeAll, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { ReactionBar } from "./reaction-bar";
 import type { ReactionState } from "./reaction-state";
 import type { i18n } from "i18next";
@@ -14,7 +22,7 @@ import { createI18nInstance } from "~/lib/i18n/init";
 /** 用意した i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
 const i18nRef: { current: i18n | undefined } = { current: undefined };
 
-function renderBar(state: ReactionState): void {
+function renderBar(state: ReactionState, shouldPromptReaction = false): void {
   const instance = i18nRef.current;
   if (instance === undefined) throw new Error("i18n is not ready");
   const router = createMemoryRouter(
@@ -23,7 +31,10 @@ function renderBar(state: ReactionState): void {
         path: "/",
         element: (
           <I18nextProvider i18n={instance}>
-            <ReactionBar {...state} />
+            <ReactionBar
+              {...state}
+              shouldPromptReaction={shouldPromptReaction}
+            />
           </I18nextProvider>
         ),
         action: () => null,
@@ -34,12 +45,39 @@ function renderBar(state: ReactionState): void {
   render(<RouterProvider router={router} />);
 }
 
+/** happy-dom は localStorage を持たない。促しがそこを読むので代役を置く。 */
+function createStorage(): Storage {
+  const entries = new Map<string, string>();
+  return {
+    get length() {
+      return entries.size;
+    },
+    clear: () => entries.clear(),
+    getItem: (key: string) => entries.get(key) ?? null,
+    key: () => null,
+    removeItem: (key: string) => {
+      entries.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      entries.set(key, value);
+    },
+  };
+}
+
 const reactions = [
   { emoji: "❤️", count: 3 },
   { emoji: "🎉", count: 1 },
 ];
 
 describe("ReactionBar", () => {
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", createStorage());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeAll(async () => {
     i18nRef.current = await createI18nInstance("ja");
   });
@@ -105,5 +143,31 @@ describe("ReactionBar", () => {
     expect(hintId).not.toBe("");
     const hint = document.querySelector(`#${CSS.escape(hintId)}`);
     expect(hint?.textContent).toContain("1 つだけ");
+  });
+
+  /*
+   * 促しは「まだ押していない人」にだけ。押したかどうかは送信中の姿 (楽観表示) で
+   * 判断するので、確定を待たずに引っ込む。
+   */
+  describe("promoting a reaction", () => {
+    it("shows the hint to someone who has not reacted", () => {
+      renderBar({ reactions, mine: null }, true);
+
+      expect(screen.getByRole("note")).toHaveTextContent(
+        "匿名でリアクションしてみよう",
+      );
+    });
+
+    it("stays quiet for someone who already reacted", () => {
+      renderBar({ reactions, mine: "❤️" }, true);
+
+      expect(screen.queryByRole("note")).toBeNull();
+    });
+
+    it("stays quiet where the caller does not ask for it", () => {
+      renderBar({ reactions, mine: null });
+
+      expect(screen.queryByRole("note")).toBeNull();
+    });
   });
 });
