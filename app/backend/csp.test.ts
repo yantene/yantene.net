@@ -75,8 +75,25 @@ describe("content security policy", () => {
     expect(directives).toContain("font-src 'self' https://fonts.gstatic.com");
     // フォントを読むのに要らない口は 'self' のままであること (増えたらここで落ちる)。
     expect(directives).toContain("default-src 'self'");
-    expect(directives).toContain("connect-src 'self'");
     expect(directives).toContain("img-src 'self' data:");
+  });
+
+  /*
+   * 外部スクリプトの穴は Web Analytics のビーコン 1 つだけ (ADR 0021)。
+   *
+   * `script-src` はパスまで書いて、同じホストの別のファイルを通さない。`connect-src` は
+   * ビーコンの送り先。**この 2 つは対で意味を持つ**ので、片方だけ増減したらここで落ちる。
+   */
+  it("opens script-src and connect-src to the Web Analytics beacon, and nothing else", async () => {
+    const directives = await directivesOf("production");
+
+    const scriptSrc = directives.find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).toMatch(
+      /^script-src 'nonce-[^']+' 'self' https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js$/,
+    );
+    expect(directives).toContain(
+      "connect-src 'self' https://cloudflareinsights.com",
+    );
   });
 
   it("keeps the other security headers in every environment", async () => {
