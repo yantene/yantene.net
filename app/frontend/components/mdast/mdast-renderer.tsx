@@ -19,7 +19,13 @@ import { Alert } from "./alert";
 import { isNoteAssetSrc } from "./audio";
 import { normalizeEmbedSrc } from "./embed";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
-import type { Element, Root as HastRoot, RootContent } from "hast";
+import { MermaidDiagram } from "./mermaid-diagram";
+import type {
+  Element,
+  ElementContent,
+  Root as HastRoot,
+  RootContent,
+} from "hast";
 import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
 import type {
@@ -32,6 +38,12 @@ import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
 /** カードに差し替える段落を表す、本文には現れない要素名。 */
 const LINK_CARD_TAG = "link-card";
+
+/** 図に差し替えるコードブロックを包む、本文には現れない要素名。 */
+const MERMAID_TAG = "mermaid-diagram";
+
+/** Mermaid のコードブロックを表すクラス。```mermaid のフェンスから付く。 */
+const MERMAID_CLASS = "language-mermaid";
 
 /*
  * カードの中身を描画側へ渡す道。
@@ -349,6 +361,65 @@ function applyElementTransforms(
   }
 }
 
+/** 要素の下にあるテキストを連結する。コードブロックの中身を取り出すのに使う。 */
+function textOf(node: ElementContent): string {
+  if (node.type === "text") return node.value;
+  if (node.type === "element")
+    return node.children.map((child) => textOf(child)).join("");
+  return "";
+}
+
+/**
+ * Mermaid のコードブロックなら、その中身を返す。そうでなければ null を返す。
+ *
+ * 見るのは `<pre>` の下に `<code class="language-mermaid">` が 1 つだけある形。
+ * rehype-highlight は登録の無い言語 (mermaid はそう) を素通しするので、この段でも
+ * 中身は書いたままのテキストで残っている。
+ */
+function mermaidSource(element: Element): string | null {
+  if (element.tagName !== "pre") return null;
+  if (element.children.length !== 1) return null;
+
+  const [code] = element.children;
+  if (code.type !== "element" || code.tagName !== "code") return null;
+  if (!toClassList(code.properties.className).includes(MERMAID_CLASS))
+    return null;
+
+  return textOf(code);
+}
+
+/**
+ * Mermaid のコードブロックを、図に差し替えるための要素で包む。
+ *
+ * 差し替えではなく「包む」のは、組み上がるまでと組めなかったときに出すものが、元の
+ * コードブロックそのものだから (MermaidDiagram がそれを children として受け取る)。
+ * ソースは属性として渡す。要素の中のテキストを描画時に読み直すこともできるが、
+ * コピーボタンの文字まで混ざるうえ、コードブロックの組み方に依存してしまう。
+ *
+ * 子から先に降りてから包む。包んだ結果に降りると、その中の `<pre>` をもう一度包み続ける。
+ *
+ * sanitize は既に通ったあとで呼ぶ。`MERMAID_TAG` を allowlist に足さずに済むので、
+ * 本文の生 HTML からこの要素を騙って書くことができない。
+ */
+function wrapMermaidBlocks(node: HastRoot | RootContent): void {
+  if (!("children" in node)) return;
+
+  for (const child of node.children) wrapMermaidBlocks(child);
+
+  node.children = node.children.map((child) => {
+    if (child.type !== "element") return child;
+    const source = mermaidSource(child);
+    if (source === null) return child;
+
+    return {
+      type: "element",
+      tagName: MERMAID_TAG,
+      properties: { source },
+      children: [child],
+    } satisfies Element;
+  });
+}
+
 /** コードブロック (pre) 差し替え: 右上にコピーボタンを添える。 */
 function CodeBlock(
   props: Readonly<React.ComponentPropsWithoutRef<"pre">>,
@@ -494,6 +565,7 @@ export function MdastRenderer({
     }) as HastRoot;
     const transformed = hastProcessor.runSync(expandRawHtml(hast));
     applyElementTransforms(transformed, transformImageUrl);
+    wrapMermaidBlocks(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
@@ -505,6 +577,7 @@ export function MdastRenderer({
         iframe: Embed,
         [LINK_CARD_TAG]: LinkCardSlot,
         [ALERT_TAG_NAME]: Alert,
+        [MERMAID_TAG]: MermaidDiagram,
       },
     }) as React.JSX.Element;
   }, [node, transformImageUrl, cardsByUrl]);

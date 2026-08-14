@@ -36,3 +36,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0020](0020-negotiate-note-source-markdown-on-accept.md)     | `/notes/<slug>` は Accept を見て原文 Markdown を返す             | Accepted |
 | [0021](0021-measure-reading-with-web-analytics-beacon.md)    | 閲覧は Web Analytics のビーコンで数え、script-src を 1 つ開く    | Accepted |
 | [0022](0022-bake-midi-into-opus-and-serve-audio-assets.md)   | 曲は refresh 前に Opus へ焼いて配り、MIDI は原本として添える     | Accepted |
+| [0023](0023-render-mermaid-in-the-browser.md)                | Mermaid の図はブラウザで組み、本体は遅延して読む                 | Accepted |
