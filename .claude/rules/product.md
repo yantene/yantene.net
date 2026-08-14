@@ -209,10 +209,8 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 読まれ、どこから来たか) は素の画面で足りる。Country / Host / Path / Referer / Device type /
 Browser / OS / Navigation type で絞れる。
 
-**Analytics Dashboards でチャートを組むのはやめた。** 以前あった「yantene.net の記事」は
-エッジの HTTP ログ (`httpRequestsAdaptiveGroups`) が元で、リファラーが無く半分近くがボット
-だった。組み方の問題ではなくデータ元の問題だったので、ビーコンに移した時点で役目が終わって
-いる ([#219](https://github.com/yantene/yantene.net/issues/219))。
+**Analytics Dashboards でチャートは組まない。** 素の画面で足りるものを二重に持つと、
+片方だけ古びる。
 
 例外は **Referer Path** で、これだけは素の画面に出ない (出るのは Referer Host まで)。
 「どのページのリンクから来たか」まで要るときだけ GraphQL API を叩く。
