@@ -27,7 +27,12 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* 下に置くもの。読み終えた足元なので、本文との間を広く取る。 */
+/*
+ * 下に置くもの。読み終えた足元なので、本文との間を広く取る。
+ *
+ * 促し (reaction-hint) がリアクションの行の上に浮かぶので、その丈 (約 46px) と
+ * 行との間 (0.5rem) を空けておく。足りないと**本文の最終行に重なって隠す**。
+ */
 .note-actions-bottom {
-  margin-top: 2.5rem;
+  margin-top: 4rem;
 }

@@ -6,6 +6,8 @@
  */
 
 .reaction-bar {
+  /* 促し (reaction-hint) がこの行を指して浮かぶので、位置の基準になる。 */
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

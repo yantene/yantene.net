@@ -40,7 +40,15 @@ export function NoteActions({
         placement === "top" ? "notes.actionsTop" : "notes.actionsBottom",
       )}
     >
-      <ReactionBar reactions={reactions} mine={mine} />
+      {/*
+        促しを出すのは**下に置いたときだけ**。上にも出すと同じ促しが 1 記事に 2 度並ぶ。
+        押したかどうかの判断は ReactionBar が持つ (送信中の姿と揃える必要があるため)。
+      */}
+      <ReactionBar
+        reactions={reactions}
+        mine={mine}
+        shouldPromptReaction={placement === "bottom"}
+      />
       <ShareMenu url={url} title={title} />
     </section>
   );

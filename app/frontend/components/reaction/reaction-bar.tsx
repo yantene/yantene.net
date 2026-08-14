@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineFaceSmile, HiOutlinePlus } from "react-icons/hi2";
 import { useFetcher } from "react-router";
 import { EmojiPalette } from "./emoji-palette";
+import { ReactionHint } from "./reaction-hint";
 import { withPendingReaction } from "./reaction-state";
 import { useDismiss } from "./use-dismiss";
 import type { ReactionCount, ReactionState } from "./reaction-state";
@@ -13,7 +14,16 @@ const LIKE = "❤️";
 /** 同じ記事のリアクションはどこに置かれても 1 つの送信として扱う。 */
 const REACTION_FETCHER_KEY = "note-reaction";
 
-type ReactionBarProps = ReactionState;
+interface ReactionBarProps extends ReactionState {
+  /**
+   * まだ押していない人に促しを出すか。
+   *
+   * 出す・出さないの判断のうち「置き場所」は呼び出し側が持ち、「押したかどうか」は
+   * ここで見る。**送信中の姿 (楽観表示) と同じ値で判定する**ので、押した瞬間に
+   * チップと促しが食い違わない。
+   */
+  readonly shouldPromptReaction?: boolean;
+}
 
 /**
  * 画面に出す並び。**ハートは押されていなくても必ず先頭に出す。**
@@ -61,6 +71,7 @@ function pendingView(
 export function ReactionBar({
   reactions,
   mine,
+  shouldPromptReaction = false,
 }: ReactionBarProps): React.JSX.Element {
   const { t } = useTranslation();
   /*
@@ -191,6 +202,12 @@ export function ReactionBar({
       <p id={hintId} className="sr-only">
         {t("reaction.onlyOne")}
       </p>
+
+      {/*
+        まだ押していない人への促し。送信中は view.mine が先に埋まるので、押した瞬間に
+        引っ込む (確定を待たない)。取り消したときは、また出る。
+      */}
+      {shouldPromptReaction && view.mine === null && <ReactionHint />}
     </fetcher.Form>
   );
 }
