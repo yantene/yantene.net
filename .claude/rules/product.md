@@ -182,6 +182,21 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 - サイトトークンは `app/lib/constants/web-analytics.ts` にある。HTML に載る公開値なので
   秘密ではない
 
+### 見るのは Web Analytics の素の画面
+
+数を見るのは Cloudflare ダッシュボードの Web Analytics そのもの。**チャートは組まない。**
+`Path` で `/notes/` に絞り、`Exclude Bots` を付ければ、この計測を入れた目的 (どの記事が
+読まれ、どこから来たか) は素の画面で足りる。Country / Host / Path / Referer / Device type /
+Browser / OS / Navigation type で絞れる。
+
+**Analytics Dashboards でチャートを組むのはやめた。** 以前あった「yantene.net の記事」は
+エッジの HTTP ログ (`httpRequestsAdaptiveGroups`) が元で、リファラーが無く半分近くがボット
+だった。組み方の問題ではなくデータ元の問題だったので、ビーコンに移した時点で役目が終わって
+いる ([#219](https://github.com/yantene/yantene.net/issues/219))。
+
+例外は **Referer Path** で、これだけは素の画面に出ない (出るのは Referer Host まで)。
+「どのページのリンクから来たか」まで要るときだけ GraphQL API を叩く。
+
 **ここの数と、記事の閲覧数・人気順は別物。** 人気順は D1 側でサーバーが数えたもので
 ([ADR 0011](../../docs/adr/0011-reader-session-in-kv.md))、母数も除外の仕方も違う。
 突き合わせても一致しない。
