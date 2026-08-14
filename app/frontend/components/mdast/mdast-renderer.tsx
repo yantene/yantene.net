@@ -16,6 +16,7 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { Alert } from "./alert";
+import { isNoteAssetSrc } from "./audio";
 import { normalizeEmbedSrc } from "./embed";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import type { Element, Root as HastRoot, RootContent } from "hast";
@@ -61,6 +62,8 @@ const sanitizeSchema = {
   tagNames: [
     ...(defaultSchema.tagNames ?? []),
     "iframe",
+    "audio",
+    "source",
     LINK_CARD_TAG,
     ALERT_TAG_NAME,
     ...mathMlTagNames,
@@ -68,6 +71,10 @@ const sanitizeSchema = {
   attributes: {
     ...defaultSchema.attributes,
     iframe: ["src", "title", "allow", "allowFullScreen", "loading"],
+    // 音源も iframe と同じ二段構え。ここで許すのは形だけで、src の中身は
+    // 後段 (toAudio) が自分のアセット API に絞る。
+    audio: ["controls", "preload"],
+    source: ["src", "type"],
     [LINK_CARD_TAG]: ["url"],
     // Alert も link-card と同じくこちらが組み立てた印で、本文からは書けない。
     // 運ぶのは種別 1 つだけ (note-content-parser.ts が引用から起こす)。
@@ -87,19 +94,22 @@ const sanitizeSchema = {
 /** 本文に直接書かれた HTML が埋め込みかどうか。属性の中身までは見ない。 */
 const hasIframe = (html: string): boolean => /<iframe[\s/>]/i.test(html);
 
+/** 本文に直接書かれた HTML が音源かどうか。属性の中身までは見ない。 */
+const hasAudio = (html: string): boolean => /<audio[\s/>]/i.test(html);
+
 /**
- * MDAST → HAST のハンドラ差し替え。生 HTML のうち埋め込みだけを後段へ通す。
+ * MDAST → HAST のハンドラ差し替え。生 HTML のうち埋め込みと音源だけを後段へ通す。
  *
  * 生 HTML は既定では捨てられる。過去の記事には Markdown 記法を抱えたままの p 要素や、
  * 外部スクリプト前提の Twitter 引用が残っており、要素として起こすと
  * `![](./foo.png)` のような素の文字列が本文に出てしまうため、捨てたままにしておきたい。
- * ただし埋め込みだけは、捨てると動画が跡形もなく消える。ここで選り分ける。
+ * ただし埋め込みと音源だけは、捨てると動画や曲が跡形もなく消える。ここで選り分ける。
  *
- * 通した先で何が残るかは rehypeSanitize と toEmbed が決めるので、
- * この関数は「埋め込みが書かれていそうか」だけを見れば足りる。
+ * 通した先で何が残るかは rehypeSanitize と toEmbed / toAudio が決めるので、
+ * この関数は「そう書かれていそうか」だけを見れば足りる。
  */
 function keepEmbedHtml(state: State, node: Html): ReturnType<Handler> {
-  if (!hasIframe(node.value)) return undefined;
+  if (!hasIframe(node.value) && !hasAudio(node.value)) return undefined;
   const result: Raw = { type: "raw", value: node.value };
   state.patch(node, result);
   return state.applyData(node, result);
@@ -270,8 +280,45 @@ function toEmbed(element: Element): Element | null {
 }
 
 /**
- * hast ツリーを再帰的に走査し、img / a / iframe 要素へ変換を適用する。toHast が毎回新しい
- * ツリーを生成するため、ここでの破壊的変更は入力の MDAST には影響しない。
+ * audio 要素: 自分のアセットを指す音源だけを残す。
+ *
+ * toEmbed と同じく、通せるものは一から組み直して返し、通せなければ null を返す。
+ * 属性を引き継がないのは、本文側が autoplay や loop を書けてしまうと絞る意味が
+ * 無くなるため。当時のページは `<embed autostart loop>` で強制再生していたが、
+ * それを再現はしない。
+ *
+ * source が 1 つも残らなければ音源ごと落とす。鳴らない再生バーだけが残るのは、
+ * 静かに壊れているのと変わらない。
+ */
+function toAudio(element: Element): Element | null {
+  const sources = element.children.flatMap((child) => {
+    if (child.type !== "element" || child.tagName !== "source") return [];
+    const src = child.properties.src;
+    if (typeof src !== "string" || !isNoteAssetSrc(src)) return [];
+    const type = child.properties.type;
+    return [
+      {
+        ...child,
+        properties: {
+          src,
+          ...(typeof type === "string" && type !== "" && { type }),
+        },
+        children: [],
+      },
+    ];
+  });
+  if (sources.length === 0) return null;
+
+  return {
+    ...element,
+    properties: { controls: true, preload: "none" },
+    children: sources,
+  };
+}
+
+/**
+ * hast ツリーを再帰的に走査し、img / a / iframe / audio 要素へ変換を適用する。toHast が
+ * 毎回新しいツリーを生成するため、ここでの破壊的変更は入力の MDAST には影響しない。
  */
 function applyElementTransforms(
   node: HastRoot | RootContent,
@@ -288,6 +335,13 @@ function applyElementTransforms(
         return [child];
       const embed = toEmbed(child);
       return embed === null ? [] : [embed];
+    });
+    // 音源も同じ。走査を分けているのは、1 つの flatMap に畳むと戻り値の型が
+    // 子の型と Element の合併になり、children へ代入できなくなるため。
+    node.children = node.children.flatMap((child) => {
+      if (child.type !== "element" || child.tagName !== "audio") return [child];
+      const audio = toAudio(child);
+      return audio === null ? [] : [audio];
     });
     for (const child of node.children) {
       applyElementTransforms(child, resolveImageUrl);

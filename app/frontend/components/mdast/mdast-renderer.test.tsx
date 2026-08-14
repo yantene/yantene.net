@@ -385,3 +385,52 @@ describe("GFM alerts", () => {
     expect(html).toContain("ヒント");
   });
 });
+
+/*
+ * 曲は refresh 前に Opus へ焼き、本文には生の `<audio>` で書く (ADR 0022)。
+ * 通してよいのは自分のアセット API を指す音源だけで、そこは toAudio が絞る。
+ *
+ * 埋め込みと同じ理由で、DOM に載せず SSR した文字列を読む。
+ */
+describe("MdastRenderer: audio", () => {
+  const ASSET = "/api/v1/notes/a-song-about-your-eyebrows/assets/song.opus";
+
+  it("自分のアセットを指す音源を再生バーとして残す", () => {
+    const html = ssr(
+      `<audio controls preload="none">\n<source src="${ASSET}" type="audio/ogg">\n</audio>`,
+    );
+    expect(html).toContain("<audio");
+    expect(html).toContain(`src="${ASSET}"`);
+    expect(html).toContain('type="audio/ogg"');
+    expect(html).toContain("controls");
+  });
+
+  it("自分のアセット以外を指す音源は、audio ごと落とす", () => {
+    const html = ssr(
+      '<audio controls>\n<source src="https://example.com/song.opus" type="audio/ogg">\n</audio>',
+    );
+    expect(html).not.toContain("<audio");
+    expect(html).not.toContain("example.com");
+  });
+
+  it("解決されていない相対パスは通さない", () => {
+    const html = ssr(
+      '<audio controls>\n<source src="./song.opus" type="audio/ogg">\n</audio>',
+    );
+    expect(html).not.toContain("<audio");
+  });
+
+  it("autoplay と loop は引き継がない", () => {
+    const html = ssr(
+      `<audio controls autoplay loop>\n<source src="${ASSET}" type="audio/ogg">\n</audio>`,
+    );
+    expect(html).toContain("<audio");
+    expect(html).not.toContain("autoplay");
+    expect(html).not.toContain("loop");
+  });
+
+  it("通せる音源が 1 つも無ければ audio ごと消える", () => {
+    const html = ssr("<audio controls>\n</audio>");
+    expect(html).not.toContain("<audio");
+  });
+});
