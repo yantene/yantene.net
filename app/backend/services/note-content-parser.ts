@@ -16,12 +16,22 @@ const markdownProcessor = unified()
   .use(remarkMath);
 
 /** フロントマターから取り出した生のメタデータ (検証前)。 */
+/**
+ * 記事の公開範囲。フロントマターの `visibility` で指定する。
+ *
+ * 既定は `public`。`private` を書いた記事は同期の対象から外れ、D1 にも R2 にも
+ * 載らない (notes-refresh.service.ts)。読み取れない値は `private` に倒す。
+ * 誤って公開する方が、誤って隠すより取り返しがつかない。
+ */
+export type NoteVisibility = "public" | "private";
+
 export interface NoteFrontmatter {
   readonly title: string | undefined;
   readonly imageUrl: string | undefined;
   readonly tags: readonly string[];
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
+  readonly visibility: NoteVisibility;
 }
 
 export interface ParsedNoteContent {
@@ -57,6 +67,7 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
       tags: asStringArray(rawMatter.tags),
       publishedOn: asDateString(rawMatter.publishedOn),
       lastModifiedOn: asDateString(rawMatter.lastModifiedOn),
+      visibility: asVisibility(rawMatter.visibility),
     },
     mdast,
     summary: extractSummary(mdast),
@@ -351,6 +362,22 @@ function summaryTextOf(node: RootContent): string {
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/**
+ * フロントマターの visibility を読む。
+ *
+ * 書いていなければ公開。`public` / `private` 以外が書かれていたら公開しない。
+ * 綴りを間違えた記事が黙って世に出るより、出ない方が傷が浅い。
+ */
+function asVisibility(value: unknown): NoteVisibility {
+  if (value === undefined || value === null) return "public";
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "public") return "public";
+    if (normalized === "private") return "private";
+  }
+  return "private";
 }
 
 /**

@@ -392,3 +392,110 @@ describe("NotesRefreshService", () => {
     await expect(service.refresh()).rejects.toThrow("R2 down");
   });
 });
+
+describe("visibility", () => {
+  const withVisibility = (value: string): string =>
+    `---\ntitle: Secret\npublishedOn: 2026-01-15\nvisibility: ${value}\n---\n\n人に見せたくない話。\n`;
+
+  it("private の記事は同期しない", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        { hash: "s1", bytes: bytes(withVisibility("private")) },
+      ],
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.unpublished).toEqual(["secret"]);
+
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+    expect(cache.sources.has("secret")).toBe(false);
+    expect(cache.mdasts.has("secret")).toBe(false);
+  });
+
+  it("公開済みの記事を private にすると D1 と R2 から消える", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes(
+            "---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n",
+          ),
+        },
+      ],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+    expect(cache.sources.has("secret")).toBe(true);
+
+    // 同じ slug を private にして再度 refresh
+    files.set("notes/secret.md", {
+      hash: "s2",
+      bytes: bytes(withVisibility("private")),
+    });
+    const result = await service.refresh();
+
+    expect(result.unpublished).toEqual(["secret"]);
+    expect(result.deleted).toEqual(["secret"]);
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+    expect(cache.sources.has("secret")).toBe(false);
+  });
+
+  it("visibility を書かなければ公開する", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.unpublished).toEqual([]);
+    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+  });
+
+  it("public を明示した記事は公開する", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        { hash: "s1", bytes: bytes(withVisibility("public")) },
+      ],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["secret"]);
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+  });
+
+  it("読めない値は公開しない", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        { hash: "s1", bytes: bytes(withVisibility("prvate")) },
+      ],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.unpublished).toEqual(["secret"]);
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+  });
+
+  it("大文字や前後の空白を許す", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        { hash: "s1", bytes: bytes(withVisibility('"  PRIVATE  "')) },
+      ],
+    ]);
+    const { service } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.unpublished).toEqual(["secret"]);
+  });
+});
