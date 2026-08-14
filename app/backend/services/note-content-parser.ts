@@ -44,9 +44,11 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
   matter(file, { strip: true });
   const rawMatter = (file.data.matter ?? {}) as Record<string, unknown>;
 
-  const mdast = withMathMl(
-    withCollapsedSoftBreaks(markdownProcessor.parse(file)),
-  );
+  // Alert の判定は改行を畳む前に済ませる。ラベル行の区切りは改行なので、
+  // 畳む処理が先に走ると `[!NOTE] 本文` と繋がって見分けが付かなくなる。
+  const parsed = markdownProcessor.parse(file);
+  const collapsed = withCollapsedSoftBreaks(withGfmAlerts(parsed));
+  const mdast = withMathMl(collapsed);
 
   return {
     frontmatter: {
@@ -183,6 +185,102 @@ function withMathMl<T extends Nodes>(node: T): T {
   if (!("children" in node)) return node;
   return { ...node, children: node.children.map((child) => withMathMl(child)) };
 }
+
+/** GFM の Alert 種別。GitHub が定める 5 つに揃える。 */
+export const alertKinds = [
+  "note",
+  "tip",
+  "important",
+  "warning",
+  "caution",
+] as const;
+
+export type AlertKind = (typeof alertKinds)[number];
+
+/** 引用の冒頭に置くラベル行。`> [!NOTE]` の形で、行末に他の文字を許さない。 */
+const alertLabelPattern =
+  /^\[!(note|tip|important|warning|caution)\][^\S\n]*(?:\n|$)/i;
+
+function toAlertKind(label: string): AlertKind | undefined {
+  const lowered = label.toLowerCase();
+  return alertKinds.find((kind) => kind === lowered);
+}
+
+/**
+ * ラベル行を取り除いた引用の中身を返す。Alert でなければ undefined。
+ *
+ * GFM の定義に合わせ、引用の最初の段落の先頭がラベルのときだけ Alert とみなす。
+ * 段落の途中や 2 つ目のブロックに現れた `[!NOTE]` はただの本文として扱う。
+ */
+function readAlertLabel(
+  children: readonly RootContent[],
+): { kind: AlertKind; children: RootContent[] } | undefined {
+  const first = children.at(0);
+  if (first === undefined || first.type !== "paragraph") return undefined;
+  const rest = children.slice(1);
+
+  const lead = first.children.at(0);
+  if (lead === undefined || lead.type !== "text") return undefined;
+  const tail = first.children.slice(1);
+
+  const matched = alertLabelPattern.exec(lead.value);
+  const label = matched?.[1];
+  if (matched === null || label === undefined) return undefined;
+
+  const kind = toAlertKind(label);
+  if (kind === undefined) return undefined;
+
+  const remainder = lead.value.slice(matched[0].length);
+
+  // ラベル行しか無ければ段落ごと落とす。`> [!NOTE]` だけの引用は中身が空になる。
+  const leadingParagraph: RootContent[] =
+    remainder.length === 0 && tail.length === 0
+      ? []
+      : [
+          {
+            ...first,
+            children:
+              remainder.length === 0
+                ? tail
+                : [{ ...lead, value: remainder }, ...tail],
+          },
+        ];
+
+  return { kind, children: [...leadingParagraph, ...rest] };
+}
+
+/**
+ * 木を写しながら、GFM の Alert 記法 (`> [!NOTE]`) を引用から起こす。元の木は変えない。
+ *
+ * ラベル行は本文から取り除き、種別だけを data に載せる。描画側は hName で拾った
+ * 要素にアイコンと見出しを添える。ラベルを本文に残さないのは、要約 (冒頭 160 文字) と
+ * 検索インデックスに `[!NOTE]` という文字列が混ざらないようにするため。
+ *
+ * 変換は refresh のときにしか走らない。MDAST を正本として R2 に置く構成 (ADR 0005) に
+ * 合わせ、描画側では引用の中身を判定しない。
+ */
+function withGfmAlerts<T extends Nodes>(node: T): T {
+  if (!("children" in node)) return node;
+
+  const children = node.children.map((child) => withGfmAlerts(child));
+  if (node.type !== "blockquote") return { ...node, children };
+
+  const alert = readAlertLabel(children);
+  if (alert === undefined) return { ...node, children };
+
+  return {
+    ...node,
+    children: alert.children,
+    data: {
+      ...node.data,
+      hName: ALERT_TAG_NAME,
+      hProperties: { kind: alert.kind },
+    },
+  };
+}
+
+/** Alert を運ぶ要素名。本文からは書けない、こちらが組み立てた印。 */
+export const ALERT_TAG_NAME = "markdown-alert";
 
 /**
  * 見出し・脚注定義・水平線・生 HTML を除いた本文ブロックのテキストを連結し、

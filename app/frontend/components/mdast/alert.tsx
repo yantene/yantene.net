@@ -1,0 +1,84 @@
+import {
+  alertKinds,
+  type AlertKind,
+} from "~/backend/services/note-content-parser";
+
+/**
+ * 種別ごとの見出し。本文が日本語なので、GFM の英語ラベルではなく日本語を出す。
+ * 記法そのもの (`> [!NOTE]`) は GFM のまま。
+ */
+const alertTitles: Record<AlertKind, string> = {
+  note: "ノート",
+  tip: "ヒント",
+  important: "重要",
+  warning: "注意",
+  caution: "警告",
+};
+
+/*
+ * アイコンは inline SVG で持つ。CSP がフォントも外部画像も通さないため (ADR 0007)、
+ * アイコンフォントや外部 SVG は使えない。形は Octicons に倣った。
+ */
+const alertIcons: Record<AlertKind, React.JSX.Element> = {
+  note: (
+    <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM6.92 6.085c.081-.16.19-.299.34-.398.145-.097.371-.187.74-.187.28 0 .553.087.738.225A.613.613 0 0 1 9 6.25c0 .177-.04.264-.077.318a.956.956 0 0 1-.277.245c-.076.051-.158.1-.258.161l-.007.004a7.728 7.728 0 0 0-.313.195 2.416 2.416 0 0 0-.692.661.75.75 0 0 0 1.248.832.956.956 0 0 1 .276-.245 6.3 6.3 0 0 1 .26-.16l.006-.004c.093-.057.204-.123.313-.195.222-.149.487-.355.692-.662.214-.32.329-.702.329-1.15 0-.76-.36-1.348-.863-1.725A2.76 2.76 0 0 0 8 4c-.631 0-1.14.166-1.535.429a2.276 2.276 0 0 0-.767.858.75.75 0 0 0 1.222.798Z" />
+  ),
+  tip: (
+    <path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z" />
+  ),
+  important: (
+    <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+  ),
+  warning: (
+    <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+  ),
+  caution: (
+    <path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+  ),
+};
+
+function isAlertKind(value: unknown): value is AlertKind {
+  return (
+    typeof value === "string" &&
+    (alertKinds as readonly string[]).includes(value)
+  );
+}
+
+export interface AlertProps {
+  /** refresh 時に MDAST へ載せた種別。読めないものは note に倒す。 */
+  readonly kind?: string;
+  readonly children?: React.ReactNode;
+}
+
+/**
+ * GFM の Alert (`> [!NOTE]`) を描く。
+ *
+ * 引用から起こすのは refresh 時のパースの役目で (note-content-parser.ts)、ここは
+ * 種別に応じた見出しとアイコンを添えるだけ。
+ */
+export function Alert({ kind, children }: AlertProps): React.JSX.Element {
+  const resolved: AlertKind = isAlertKind(kind) ? kind : "note";
+  // eslint-disable-next-line security/detect-object-injection -- 添字は isAlertKind で 5 種に絞った後の値
+  const title = alertTitles[resolved];
+  // eslint-disable-next-line security/detect-object-injection -- 同上
+  const icon = alertIcons[resolved];
+
+  return (
+    <div className={`markdown-alert markdown-alert-${resolved}`}>
+      <p className="markdown-alert-title">
+        <svg
+          className="markdown-alert-icon"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+          aria-hidden="true"
+          fill="currentColor"
+        >
+          {icon}
+        </svg>
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
