@@ -147,6 +147,26 @@ staging (と `preview:staging` の localhost) のぶんは同じサイトに混�
   - CSP に関わる変更なので、`pnpm run preview:staging` で `beacon.min.js` が実際に読まれ、
     コンソールに CSP 違反が出ないことを確認してから出す。
 
+## 追記 (2026-08-14): 見るのは Web Analytics の素の画面
+
+数をどこで見るかを決めていなかったので、ここに足す。**Cloudflare ダッシュボードの
+Web Analytics そのもので見る。チャートは組まない。**
+
+ビーコンを入れると専用の画面が付いてくる。`Path` で `/notes/` に絞り、`Exclude Bots` を
+付ければ、この ADR が解こうとした問い (どの記事が読まれ、どこから来たか) はそれで足りる。
+絞り込めるのは Country / Host / Path / Referer / Device type / Browser / Operating system /
+Navigation type。**背景で数え上げたボットの内訳は、`Exclude Bots` ひとつで済む。**
+
+対案は Analytics Dashboards で RUM の dataset に組み直すことだった。採らない。素の画面で
+足りるものを二重に持つことになり、片方だけ古びる。**以前あった「yantene.net の記事」は
+役目を終えている。** あれはエッジの HTTP ログが元で、リファラーが無く半分近くがボット
+だった — 組み方ではなくデータ元の問題だったので、ビーコンに移した時点で解けている。
+
+例外は **Referer Path** で、これだけは素の画面に出ない (出るのは Referer Host まで)。
+「どのページのリンクから来たか」まで要るときは GraphQL API を叩く。
+
+運用としての要約は `.claude/rules/product.md` にも置いてある。
+
 ## 参考 / More Information
 
 - [0007](0007-strict-csp-outside-development.md) — `script-src` を厳格に保つ判断。ここに穴を開けた
