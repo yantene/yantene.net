@@ -148,6 +148,35 @@ describe("NotesRefreshService", () => {
   });
 
   /*
+   * 画像として貼れないアセット (曲の MIDI など) へ、本文からリンクを張れるようにしてある
+   * (ADR 0022)。書き換わるのは相対パスだけで、外部リンクと記事間リンクには触らない。
+   */
+  it("resolves relative link URLs and leaves absolute ones alone", async () => {
+    const linksMd = `---
+title: Links
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[原本](./song.mid) と [外](https://example.com/song.mid) と [他の記事](/notes/other)。
+`;
+    const files = new Map([
+      ["notes/links.md", { hash: "h1", bytes: bytes(linksMd) }],
+      ["notes/links/song.mid", { hash: "a1", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("links"));
+    expect(mdastJson).toContain("/api/v1/notes/links/assets/song.mid");
+    // 外部リンクとルート相対はそのまま (アセット配下へ押し込まれない)。
+    expect(mdastJson).toContain("https://example.com/song.mid");
+    expect(mdastJson).not.toContain("assets/notes/other");
+    expect(mdastJson).toContain("/notes/other");
+  });
+
+  /*
    * `/notes/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
    * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
    */

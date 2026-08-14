@@ -87,6 +87,13 @@ const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
      */
     styleSrc: ["'self'", "'unsafe-inline'", GOOGLE_FONTS_CSS_ORIGIN],
     imgSrc: ["'self'", "data:"],
+    /*
+     * 本文に貼る音源 (ADR 0022)。配るのはアセット API 経由だけなので self で足りる。
+     *
+     * 既定 (default-src) に任せても同じ結果になるが、img や frame と揃えて書いておく。
+     * 外部の音源を許すつもりが無いことを、ここで読み取れるようにするため。
+     */
+    mediaSrc: ["'self'"],
     // ビーコンの送り先 (ADR 0021)。手で置いた `<script>` は自ドメインではなく
     // cloudflareinsights.com へ POST するので、'self' だけでは届かない。
     connectSrc: ["'self'", WEB_ANALYTICS_REPORT_ORIGIN],

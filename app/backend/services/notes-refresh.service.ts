@@ -387,8 +387,8 @@ function buildNoteContent(
       sourceHash: group.contentHash,
     });
 
-    // 本文中の相対画像 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
-    resolveMdastImageUrls(parsed.mdast, slug);
+    // 本文中の相対 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
+    resolveMdastAssetUrls(parsed.mdast, slug);
     return { note, mdast: parsed.mdast };
   } catch (error) {
     if (error instanceof NoteContentError) throw error;
@@ -409,14 +409,24 @@ interface MdastNodeLike {
 }
 
 /**
- * MDAST を走査し、画像の相対 URL をアセット API URL に書き換える。
- * `image` ノードと、`imageReference` から参照される `definition` のみを対象にし、
+ * MDAST を走査し、アセットの相対 URL をアセット API URL に書き換える。
+ *
+ * 対象は `image` ノード、`link` ノード、`imageReference` から参照される `definition`。
  * リンク参照 (linkReference) の definition は書き換えない。
+ *
+ * `link` を含めるのは、画像として貼れないアセット (曲の MIDI ファイルなど) へ本文から
+ * リンクを張るため。`resolveAssetUrl` は絶対 URL とルート相対を素通しするので、外部リンクも
+ * 記事間リンク (`/notes/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス
+ * だけで、これは解決しなければどのみち 404 になるものである。
+ *
+ * 生 HTML の中は書き換えない。`html` ノードが持つのは文字列で、属性を読むには HTML を
+ * 解析し直すことになる。本文に直接書く `<audio>` の src は、ルート相対の絶対パスで
+ * 書いてもらう (ADR 0022)。
  */
-export function resolveMdastImageUrls(node: unknown, slug: string): void {
+export function resolveMdastAssetUrls(node: unknown, slug: string): void {
   const imageRefIds = new Set<string>();
   collectImageReferenceIds(node, imageRefIds);
-  rewriteImageUrls(node, slug, imageRefIds);
+  rewriteAssetUrls(node, slug, imageRefIds);
 }
 
 function collectImageReferenceIds(node: unknown, ids: Set<string>): void {
@@ -433,7 +443,7 @@ function collectImageReferenceIds(node: unknown, ids: Set<string>): void {
   }
 }
 
-function rewriteImageUrls(
+function rewriteAssetUrls(
   node: unknown,
   slug: string,
   imageRefIds: ReadonlySet<string>,
@@ -441,16 +451,20 @@ function rewriteImageUrls(
   if (typeof node !== "object" || node === null) return;
   const record = node as MdastNodeLike;
   const isImage = record.type === "image";
+  const isLink = record.type === "link";
   const isImageDefinition =
     record.type === "definition" &&
     typeof record.identifier === "string" &&
     imageRefIds.has(record.identifier);
-  if ((isImage || isImageDefinition) && typeof record.url === "string") {
+  if (
+    (isImage || isLink || isImageDefinition) &&
+    typeof record.url === "string"
+  ) {
     record.url = resolveAssetUrl(slug, record.url);
   }
   if (Array.isArray(record.children)) {
     for (const child of record.children) {
-      rewriteImageUrls(child, slug, imageRefIds);
+      rewriteAssetUrls(child, slug, imageRefIds);
     }
   }
 }
@@ -462,7 +476,7 @@ function rewriteImageUrls(
  * フロント側の変更なしに `<img width height>` が出るようになる。
  * 寸法が取れなかった画像には何も付けない (誤った値で見た目を壊さない)。
  *
- * URL は rewriteImageUrls 済み (`/api/v1/notes/<slug>/assets/<path>`) の前提で、
+ * URL は rewriteAssetUrls 済み (`/api/v1/notes/<slug>/assets/<path>`) の前提で、
  * そこから相対パスを逆算して寸法表を引く。
  */
 function applyImageDimensions(

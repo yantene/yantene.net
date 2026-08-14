@@ -9,6 +9,13 @@ describe("contentTypeForPath", () => {
     expect(contentTypeForPath("photo.webp")).toBe("image/webp");
   });
 
+  it("maps audio extensions (case-insensitively)", () => {
+    expect(contentTypeForPath("song.opus")).toBe("audio/ogg");
+    expect(contentTypeForPath("song.mp3")).toBe("audio/mpeg");
+    expect(contentTypeForPath("song.mid")).toBe("audio/midi");
+    expect(contentTypeForPath("song.MIDI")).toBe("audio/midi");
+  });
+
   it("falls back to octet-stream for unknown or missing extensions", () => {
     expect(contentTypeForPath("file.bin")).toBe("application/octet-stream");
     expect(contentTypeForPath("noext")).toBe("application/octet-stream");

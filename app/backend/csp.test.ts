@@ -76,6 +76,8 @@ describe("content security policy", () => {
     // フォントを読むのに要らない口は 'self' のままであること (増えたらここで落ちる)。
     expect(directives).toContain("default-src 'self'");
     expect(directives).toContain("img-src 'self' data:");
+    // 音源は自分のアセット API からしか配らない (ADR 0022)。
+    expect(directives).toContain("media-src 'self'");
   });
 
   /*
