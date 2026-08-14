@@ -7,22 +7,30 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 import type { Route } from "./+types/root";
+import type { WebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
+import { resolveWebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { buildPageMeta } from "~/frontend/lib/page-meta";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 import "./app.css";
 
-export function loader({ request }: Route.LoaderArgs): {
+export function loader({ request, context }: Route.LoaderArgs): {
   locale: string;
   origin: string;
+  webAnalytics: WebAnalyticsBeacon | null;
 } {
   return {
     locale: resolveLocale(request),
     // OGP は絶対 URL を要求するため、リクエストの origin を各ページの meta へ渡す。
     origin: new URL(request.url).origin,
+    // 閲覧の計測 (ADR 0021)。載せるかどうかは環境で決まるので、描画側で判断せず
+    // Composition Root が決めた結果だけを渡す。
+    webAnalytics: resolveWebAnalyticsBeacon(context.get(cloudflareContext).env),
   };
 }
 
@@ -99,6 +107,12 @@ export function Layout({
 }: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
   const { i18n } = useTranslation();
   const nonce = useContext(NonceContext);
+  /*
+   * Layout は ErrorBoundary の描画にも使われ、そのとき root の loader は走り終えて
+   * いないことがある。読めなければ載せないだけにして、エラーページで更に転ばせない。
+   */
+  const webAnalytics =
+    useRouteLoaderData<typeof loader>("root")?.webAnalytics ?? null;
 
   // テーマは light 固定 (ダークモード不採用)。
   return (
@@ -109,6 +123,26 @@ export function Layout({
         <meta name="csp-nonce" content={nonce} />
         <Meta />
         <Links />
+        {/*
+         * Cloudflare Web Analytics のビーコン (ADR 0021)。
+         *
+         * Cloudflare の自動挿入ではなく手で置いている。自動挿入された `<script>` には
+         * nonce が付かず、CSP が止めてしまうため。nonce はこちらにも付けない。付けると
+         * 「nonce を持つから通った」ことになり、CSP に並べたビーコンの URL が効いて
+         * いるのか確かめられなくなる (`app/backend/index.ts` の script-src と対で動く)。
+         *
+         * ダッシュボードが配るスニペットは `type='module'` だが、こちらは素の `defer` で
+         * 置いている。ビーコンは設定を `document.currentScript` から読み、module では
+         * それが null になるため `script[data-cf-beacon]` を引き直す作りになっている。
+         * 素の `defer` なら最初の経路で読める。
+         */}
+        {webAnalytics !== null && (
+          <script
+            defer
+            src={webAnalytics.src}
+            data-cf-beacon={webAnalytics.config}
+          />
+        )}
       </head>
       <body>
         {children}

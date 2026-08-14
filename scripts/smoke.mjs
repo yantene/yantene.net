@@ -31,10 +31,23 @@ if (user !== undefined && pass !== undefined) {
  * 各ページ種別を 1 つずつ + 主要な公開エンドポイント。
  *
  * 文字列は「5xx でなければ ok」の確認。オブジェクトを書くと `headers` を足したうえで
- * `expectContentType` (前方一致) まで確かめる。
+ * `expectContentType` (前方一致) と `expectBodyIncludes` (部分一致) まで確かめる。
  */
 const targets = [
-  "/",
+  /*
+   * 閲覧の計測 (ADR 0021)。ビーコンが落ちても 5xx にはならず、ページは何事もなく出る。
+   * 気づく手がかりが「数が入らない」しか無いので、タグが実際に載っていることをここで見る。
+   * 単体テストは載せる判断までしか見られない (描画まで届かない)。
+   *
+   * ここが期待するのは staging / production の応答。`APP_ENV=development` のビルド
+   * (`pnpm run preview`) にビーコンは載らないので、そこへ向けると当然落ちる。このスモークは
+   * デプロイ後の環境に向けて走らせるもの。
+   */
+  {
+    label: "/",
+    path: "/",
+    expectBodyIncludes: "https://static.cloudflareinsights.com/beacon.min.js",
+  },
   "/notes",
   "/notes/does-not-exist",
   /*
@@ -71,9 +84,16 @@ const paths = targets.map((target) =>
 
 let failed = 0;
 let blockedByAuth = 0;
-for (const { label, path, headers, expectContentType } of paths) {
+for (const {
+  label,
+  path,
+  headers,
+  expectContentType,
+  expectBodyIncludes,
+} of paths) {
   let status = 0;
   let contentType = "";
+  let body = "";
   try {
     const res = await fetch(`${base}${path}`, {
       headers: { ...authHeader, ...headers },
@@ -81,6 +101,8 @@ for (const { label, path, headers, expectContentType } of paths) {
     });
     status = res.status;
     contentType = res.headers.get("content-type") ?? "";
+    // 本文を見るのは求められたときだけ。全件読むと OG 画像まで丸ごと落としてしまう。
+    if (expectBodyIncludes !== undefined) body = await res.text();
   } catch (error) {
     console.log(`x ERR ${label} (${error.message})`);
     failed += 1;
@@ -92,7 +114,9 @@ for (const { label, path, headers, expectContentType } of paths) {
   const isWrongType =
     expectContentType !== undefined &&
     !contentType.startsWith(expectContentType);
-  const isOk = status < 500 && !isBlocked && !isWrongType;
+  const isMissingBody =
+    expectBodyIncludes !== undefined && !body.includes(expectBodyIncludes);
+  const isOk = status < 500 && !isBlocked && !isWrongType && !isMissingBody;
   if (!isOk) failed += 1;
   if (isBlocked) blockedByAuth += 1;
   console.log(`${isOk ? "ok" : "x "} ${status} ${label}`);
@@ -100,6 +124,9 @@ for (const { label, path, headers, expectContentType } of paths) {
     console.log(
       `     expected content-type ${expectContentType}, got ${contentType}`,
     );
+  }
+  if (isMissingBody) {
+    console.log(`     expected the body to include ${expectBodyIncludes}`);
   }
 }
 

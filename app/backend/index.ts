@@ -24,6 +24,10 @@ import { createWebmentionAvatarsRouter } from "./handlers/webmentions/avatars.ha
 import type { MiddlewareHandler } from "hono";
 import { NoteNotFoundError } from "~/backend/domain/note";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
+import {
+  WEB_ANALYTICS_BEACON_SRC,
+  WEB_ANALYTICS_REPORT_ORIGIN,
+} from "~/lib/constants/web-analytics";
 import { createProblemResponse, notFoundResponse } from "~/lib/problem-details";
 
 type RootBindings = {
@@ -65,7 +69,14 @@ const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
   ...baseSecureHeaderOptions,
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: [NONCE, "'self'"],
+    /*
+     * 外から読む唯一のスクリプトが Web Analytics のビーコン (ADR 0021)。
+     *
+     * nonce を配れば載せられるが、あえてここに URL を名乗らせている。nonce に相乗り
+     * させると「外部のコードを 1 つ実行している」ことが CSP から読み取れなくなるため。
+     * ホストではなくパスまで書いてあるのは、同じホストの別のファイルを通さないため。
+     */
+    scriptSrc: [NONCE, "'self'", WEB_ANALYTICS_BEACON_SRC],
     /*
      * Google Fonts の @font-face は CSS として配られるので、読み込み先が要る。
      *
@@ -76,7 +87,9 @@ const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
      */
     styleSrc: ["'self'", "'unsafe-inline'", GOOGLE_FONTS_CSS_ORIGIN],
     imgSrc: ["'self'", "data:"],
-    connectSrc: ["'self'"],
+    // ビーコンの送り先 (ADR 0021)。手で置いた `<script>` は自ドメインではなく
+    // cloudflareinsights.com へ POST するので、'self' だけでは届かない。
+    connectSrc: ["'self'", WEB_ANALYTICS_REPORT_ORIGIN],
     fontSrc: ["'self'", GOOGLE_FONTS_FILE_ORIGIN],
     // 本文に埋め込む動画の読み込み先。ここに無いホストの iframe はブラウザが止める。
     // 描画側 (mdast-renderer) が src をこのホストへ正規化しているので、両者は対で動く。

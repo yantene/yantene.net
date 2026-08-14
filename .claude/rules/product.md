@@ -166,3 +166,22 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 
 受信の時点でも読み出しの時点でも同じ判定を通すので、**すでに届いていた行も足した時点で
 表に出なくなる**。行そのものは次に再送が来たときに消える。
+
+## 読まれ方の計測
+
+書き手が流入元と読まれ方を知るために、Cloudflare Web Analytics のビーコンを `<head>` に
+手で置いている。設計判断の詳細は
+[ADR 0021](../../docs/adr/0021-measure-reading-with-web-analytics-beacon.md) を参照。
+
+- 出すのは development 以外 (staging と production)。判断は `APP_ENV` だけを見るので、
+  **`pnpm run preview:staging` は手元の localhost でもビーコンを飛ばす**。CSP を確かめる
+  ための構成なので承知の上。混ざったぶんはホスト名で切り分ける
+- Cloudflare の自動挿入は使わない。挿し込まれたタグには nonce が付かず CSP が止めるため
+- CSP に開けてあるのは `script-src` の `beacon.min.js` と `connect-src` の
+  `cloudflareinsights.com` だけ。増減すると `app/backend/csp.test.ts` が落ちる
+- サイトトークンは `app/lib/constants/web-analytics.ts` にある。HTML に載る公開値なので
+  秘密ではない
+
+**ここの数と、記事の閲覧数・人気順は別物。** 人気順は D1 側でサーバーが数えたもので
+([ADR 0011](../../docs/adr/0011-reader-session-in-kv.md))、母数も除外の仕方も違う。
+突き合わせても一致しない。
