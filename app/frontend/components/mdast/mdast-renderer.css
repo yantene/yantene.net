@@ -289,3 +289,67 @@
   border: 0;
   display: block;
 }
+
+/*
+ * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (note-content-parser.ts)、
+ * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
+ *
+ * 配色は daisyUI のテーマ変数を参照するので、light/dark の切り替えに自動で追従する。
+ * 種別ごとの違いは --alert-accent 1 つに集約し、残りの指定は共通で持つ。
+ */
+.note-prose .markdown-alert {
+  --alert-accent: var(--color-info);
+  margin: 1.75em 0;
+  padding: 0.9em 1.25em;
+  border-left: 0.25em solid var(--alert-accent);
+  border-radius: 0.25rem;
+  background: color-mix(in oklch, var(--alert-accent) 8%, transparent);
+}
+
+.note-prose .markdown-alert > :first-child {
+  margin-top: 0;
+}
+
+.note-prose .markdown-alert > :last-child {
+  margin-bottom: 0;
+}
+
+.note-prose .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-bottom: 0.5em;
+  color: var(--alert-accent);
+  font-weight: 700;
+  /* 見出しではなく但し書きの札なので、本文より少しだけ小さく詰める。 */
+  font-size: 0.9375em;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}
+
+.note-prose .markdown-alert-icon {
+  flex: none;
+  /* テキストのベースラインに合わせる。アイコンは 16px 四方の viewBox。 */
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.note-prose .markdown-alert-note {
+  --alert-accent: var(--color-info);
+}
+
+.note-prose .markdown-alert-tip {
+  --alert-accent: var(--color-success);
+}
+
+.note-prose .markdown-alert-important {
+  --alert-accent: var(--color-secondary);
+}
+
+.note-prose .markdown-alert-warning {
+  --alert-accent: var(--color-warning);
+}
+
+.note-prose .markdown-alert-caution {
+  --alert-accent: var(--color-error);
+}

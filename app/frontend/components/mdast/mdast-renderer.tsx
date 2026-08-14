@@ -15,6 +15,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
+import { Alert } from "./alert";
 import { normalizeEmbedSrc } from "./embed";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import type { Element, Root as HastRoot, RootContent } from "hast";
@@ -24,6 +25,7 @@ import type {
   LinkCardMap,
   LinkCardView,
 } from "~/backend/handlers/link-cards/link-card-view";
+import { ALERT_TAG_NAME } from "~/backend/services/note-content-parser";
 import { LinkCard } from "~/frontend/components/link-card/link-card";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
@@ -60,12 +62,16 @@ const sanitizeSchema = {
     ...(defaultSchema.tagNames ?? []),
     "iframe",
     LINK_CARD_TAG,
+    ALERT_TAG_NAME,
     ...mathMlTagNames,
   ],
   attributes: {
     ...defaultSchema.attributes,
     iframe: ["src", "title", "allow", "allowFullScreen", "loading"],
     [LINK_CARD_TAG]: ["url"],
+    // Alert も link-card と同じくこちらが組み立てた印で、本文からは書けない。
+    // 運ぶのは種別 1 つだけ (note-content-parser.ts が引用から起こす)。
+    [ALERT_TAG_NAME]: ["kind"],
     ...Object.fromEntries(
       mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]]),
     ),
@@ -444,6 +450,7 @@ export function MdastRenderer({
         img: LightboxImage,
         iframe: Embed,
         [LINK_CARD_TAG]: LinkCardSlot,
+        [ALERT_TAG_NAME]: Alert,
       },
     }) as React.JSX.Element;
   }, [node, transformImageUrl, cardsByUrl]);

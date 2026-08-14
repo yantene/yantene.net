@@ -2,6 +2,7 @@ import { toString as mdastToString } from "mdast-util-to-string";
 import { describe, expect, it } from "vitest";
 import { MathSyntaxError } from "./latex-to-mathml";
 import { extractSummary, parseNoteContent } from "./note-content-parser";
+import type { ParsedNoteContent } from "./note-content-parser";
 
 const withFrontmatter = `---
 title: My Note
@@ -203,5 +204,85 @@ describe("collapsing soft line breaks", () => {
   it("leaves line breaks inside code untouched", () => {
     const { mdast } = parseNoteContent("```\n日本語\n改行\n```\n");
     expect(mdastToString(mdast)).toBe("日本語\n改行");
+  });
+});
+
+describe("GFM alerts", () => {
+  const parseBody = (body: string): ParsedNoteContent =>
+    parseNoteContent(`---\ntitle: T\n---\n\n${body}`);
+
+  it("引用の冒頭のラベルを種別として取り出し、ラベル行は本文に残さない", () => {
+    const { mdast } = parseBody("> [!NOTE]\n> 補足の本文。\n");
+    const alert = mdast.children.at(0);
+
+    expect(alert?.type).toBe("blockquote");
+    expect(alert?.data).toMatchObject({
+      hName: "markdown-alert",
+      hProperties: { kind: "note" },
+    });
+    expect(mdastToString(mdast)).toBe("補足の本文。");
+  });
+
+  it.each([
+    ["NOTE", "note"],
+    ["TIP", "tip"],
+    ["IMPORTANT", "important"],
+    ["WARNING", "warning"],
+    ["CAUTION", "caution"],
+  ])("%s を %s として扱う", (label, kind) => {
+    const { mdast } = parseBody(`> [!${label}]\n> 本文。\n`);
+    expect(mdast.children.at(0)?.data).toMatchObject({
+      hProperties: { kind },
+    });
+  });
+
+  it("ラベルの大文字小文字を問わない", () => {
+    const { mdast } = parseBody("> [!Warning]\n> 本文。\n");
+    expect(mdast.children.at(0)?.data).toMatchObject({
+      hProperties: { kind: "warning" },
+    });
+  });
+
+  it("ラベルだけの引用は中身を空にする", () => {
+    const { mdast } = parseBody("> [!NOTE]\n");
+    const alert = mdast.children.at(0);
+
+    expect(alert?.data).toMatchObject({ hProperties: { kind: "note" } });
+    expect(alert?.type === "blockquote" && alert.children).toEqual([]);
+  });
+
+  it("ラベルを含む引用でも、段落の途中に現れたものは本文として扱う", () => {
+    const { mdast } = parseBody("> 前置き [!NOTE]\n> 本文。\n");
+    const quote = mdast.children.at(0);
+
+    expect(quote?.type).toBe("blockquote");
+    expect(quote?.data).toBeUndefined();
+    expect(mdastToString(mdast)).toContain("[!NOTE]");
+  });
+
+  it("知らないラベルは引用のままにする", () => {
+    const { mdast } = parseBody("> [!HINT]\n> 本文。\n");
+    expect(mdast.children.at(0)?.data).toBeUndefined();
+  });
+
+  it("ラベル行に続く強調などの装飾を落とさない", () => {
+    const { mdast } = parseBody("> [!TIP]\n> **強調**した本文。\n");
+    expect(mdastToString(mdast)).toBe("強調した本文。");
+  });
+});
+
+describe("要約と Alert", () => {
+  it("記事の頭に置いた Alert を要約に数えない", () => {
+    const { summary } = parseNoteContent(
+      `---\ntitle: T\n---\n\n> [!WARNING]\n> リンク先は消えました。\n\n本題はここから始まる。\n`,
+    );
+    expect(summary).toBe("本題はここから始まる。");
+  });
+
+  it("ラベルの無い引用は本文として要約に数える", () => {
+    const { summary } = parseNoteContent(
+      `---\ntitle: T\n---\n\n> 引用は本文の一部。\n\n続きの段落。\n`,
+    );
+    expect(summary).toBe("引用は本文の一部。 続きの段落。");
   });
 });

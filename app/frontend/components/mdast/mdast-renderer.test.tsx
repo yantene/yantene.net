@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { MdastRenderer } from "./mdast-renderer";
 import type { ElementContent, Properties } from "hast";
 import type { Root as MdastRoot } from "mdast";
+import { parseNoteContent } from "~/backend/services/note-content-parser";
 
 function md(markdown: string): MdastRoot {
   return unified().use(remarkParse).use(remarkGfm).parse(markdown);
@@ -317,5 +318,70 @@ describe("MdastRenderer: MathML", () => {
     expect(html).toContain("<math");
     expect(html).toContain("<msup>");
     expect(html).toContain("<mi>a</mi>");
+  });
+});
+
+/*
+ * Alert は refresh 時のパースが引用から起こす (note-content-parser.ts)。
+ * md() は素の remark なので data が付かない。実際の経路に合わせてパーサを通す。
+ */
+function note(markdown: string): MdastRoot {
+  return parseNoteContent(`---\ntitle: T\n---\n\n${markdown}`).mdast;
+}
+
+describe("GFM alerts", () => {
+  it("種別に応じた見出しとアイコンを添えて描く", () => {
+    const { container } = render(
+      <MdastRenderer node={note("> [!WARNING]\n> リンク先は消えました。\n")} />,
+    );
+
+    const alert = container.querySelector(".markdown-alert");
+    expect(alert?.className).toContain("markdown-alert-warning");
+    expect(
+      alert?.querySelector(".markdown-alert-title")?.textContent,
+    ).toContain("注意");
+    expect(alert?.querySelector("svg")).not.toBeNull();
+    expect(alert?.textContent).toContain("リンク先は消えました。");
+  });
+
+  it("ラベル行を本文として描かない", () => {
+    const { container } = render(
+      <MdastRenderer node={note("> [!NOTE]\n> 補足。\n")} />,
+    );
+    expect(container.textContent).not.toContain("[!NOTE]");
+  });
+
+  it("Alert でない引用は blockquote のまま描く", () => {
+    const { container } = render(
+      <MdastRenderer node={note("> ただの引用。\n")} />,
+    );
+    expect(container.querySelector("blockquote")?.textContent).toContain(
+      "ただの引用。",
+    );
+    expect(container.querySelector(".markdown-alert")).toBeNull();
+  });
+
+  it("Alert の中のリンクや強調を保つ", () => {
+    const { container } = render(
+      <MdastRenderer
+        node={note(
+          "> [!CAUTION]\n> **危険**な [リンク](https://example.com)。\n",
+        )}
+      />,
+    );
+
+    const alert = container.querySelector(".markdown-alert-caution");
+    expect(alert?.querySelector("strong")?.textContent).toBe("危険");
+    expect(alert?.querySelector("a")?.getAttribute("href")).toBe(
+      "https://example.com",
+    );
+  });
+
+  it("sanitize が Alert の要素と種別を落とさない", () => {
+    const html = renderToStaticMarkup(
+      <MdastRenderer node={note("> [!TIP]\n> 助言。\n")} />,
+    );
+    expect(html).toContain("markdown-alert-tip");
+    expect(html).toContain("ヒント");
   });
 });
