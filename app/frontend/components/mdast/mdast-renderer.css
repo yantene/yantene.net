@@ -89,10 +89,19 @@
   border-radius: 0.5rem;
   /*
    * refresh 時に width/height 属性を埋めている (レイアウトシフト対策)。属性の値をそのまま
-   * 使うと横幅が本文からはみ出すので、幅は本文に合わせて縮め、高さは縦横比に追随させる。
-   * height: auto を落とすと属性の高さが固定され、画像が縦に潰れる。
+   * 使うと横幅が本文からはみ出すので、幅と高さに上限を置く。
+   *
+   * width / height をどちらも auto にするのが肝。属性から入る aspect-ratio が残るので、
+   * 上限に当たって縮んだ側にもう一方が追随する。片方を属性の値のまま固定すると、
+   * 上限で切り詰められた方向にだけ縮んで画像が歪む。
+   *
+   * 縦の上限はビューポート基準にする。スクロールで縦長の写真が画面を占領すると、
+   * 前後の文とのつながりが切れる。svh はモバイルでアドレスバーが出入りしても跳ねない。
    */
-  max-width: 100%;
+  max-width: min(100%, 40rem);
+  max-height: 70vh;
+  max-height: 70svh;
+  width: auto;
   height: auto;
 }
 .note-prose :where(a):not(:where(.not-prose, .not-prose *)) {
@@ -194,9 +203,18 @@
   opacity: 1;
 }
 
-/* 本文画像のクリック拡大 (lightbox)。 */
+/*
+ * 本文画像のクリック拡大 (lightbox)。
+ *
+ * 画像は img ではなくこの button が包む。img の margin-inline: auto は inline 要素には
+ * 効かないので、中央に寄せるのはこちら側の仕事になる。block にしただけでは button が
+ * 行いっぱいに広がって auto マージンが行き場を失うため、fit-content で中身の幅に詰める。
+ */
 .note-prose .lightbox-trigger {
-  display: inline-block;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
   padding: 0;
   border: 0;
   background: none;
