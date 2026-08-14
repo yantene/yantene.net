@@ -59,6 +59,12 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
+  // 原文 Markdown を名指しした要求には関わらない。記事 URL は Accept 次第で HTML と
+  // Markdown に分かれる (docs/adr/0020) ので、同じ鍵で蓄えると次の閲覧に取り違えた
+  // ものを返しかねない。判定は粗くてよい — 外したときの向きは常に「触らない」なので、
+  // 蓄えを 1 回逃すだけで済む。
+  if ((request.headers.get("accept") ?? "").includes("markdown")) return;
+
   const url = new URL(request.url);
   // 他所のもの (埋め込み動画など) には関わらない。
   if (url.origin !== self.location.origin) return;
@@ -114,7 +120,12 @@ async function networkFirst(request, isPage) {
     if (isStorable(response)) await cache.put(request, response.clone());
     return response;
   } catch {
-    const cached = await cache.match(request);
+    // 鍵の Vary は無視する。記事ページは `Vary: Accept` を出す (docs/adr/0020) ので、
+    // 素直に引くと蓄えたときと Accept が 1 バイトでも違えば当たらない。ブラウザが
+    // 更新で Accept の並びを変えるだけで、蓄えてある記事が全部オフラインで読めなくなる。
+    // 上の fetch リスナーが Markdown を名指しした要求には関わらないので、ここに
+    // 蓄わっているのは HTML の表現だけ。取り違える余地はない。
+    const cached = await cache.match(request, { ignoreVary: true });
     if (cached) return cached;
     if (isPage) {
       const offline = await cache.match(OFFLINE_URL);

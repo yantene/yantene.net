@@ -125,7 +125,8 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 1. ブラウザのリクエストは `workers/app.ts` → `getApp()` の Hono に入る
 2. Hono が先に応答するのは横断的関心事とページ以外のエンドポイント:
    secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
-   ノートの原文 Markdown (`/notes/<slug>.md`) / Webmention の受け口 (`POST /webmention`)
+   ノートの原文 Markdown (`/notes/<slug>.md` と、`Accept` が `text/markdown` を名指しした
+   ときの `/notes/<slug>`。ADR 0020) / Webmention の受け口 (`POST /webmention`)
 3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
 4. React Router がルートを解決し、loader が `context.get(cloudflareContext).env` から
    `backend/handlers` のローダを呼んでデータを揃える

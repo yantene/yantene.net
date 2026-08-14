@@ -15,3 +15,14 @@ export function contentCacheControlFor(env: Env): string {
   const scope = isBasicAuthEnabled ? "private" : "public";
   return `${scope}, max-age=${String(MAX_AGE_SECONDS)}`;
 }
+
+/**
+ * Accept で表現が分かれる URL (`/notes/<slug>`) の Markdown 応答に付ける Cache-Control。
+ *
+ * Cloudflare のエッジは `Accept-Encoding` 以外の `Vary` をキャッシュキーに含めないため、
+ * `Vary: Accept` を出しても共有キャッシュが表現を取り違え得る (ブラウザに原文が、
+ * 機械に HTML が配られる)。`private` を固定で置いて共有キャッシュへの保存そのものを
+ * 止める。環境に依らないのは、この危険が環境に依らないため
+ * (`contentCacheControlFor` が BASIC 認証で振り分けているのとは別の理由)。
+ */
+export const NEGOTIATED_CONTENT_CACHE_CONTROL = `private, max-age=${String(MAX_AGE_SECONDS)}`;
