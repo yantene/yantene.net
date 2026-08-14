@@ -6,6 +6,7 @@ import { MathSyntaxError } from "./latex-to-mathml";
 import { resolveAssetUrl } from "./note-asset-url";
 import {
   parseNoteContent,
+  type NoteVisibility,
   type ParsedNoteContent,
 } from "./note-content-parser";
 import type { Root } from "mdast";
@@ -34,6 +35,8 @@ export interface RefreshResult {
   readonly processed: string[];
   /** 削除した slug (正本から消えたノート)。 */
   readonly deleted: string[];
+  /** 非公開の指定により同期しなかった slug。既に載っていたものは deleted にも入る。 */
+  readonly unpublished: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
   /**
@@ -96,31 +99,73 @@ export class NotesRefreshService {
 
     const processed: string[] = [];
     const skipped: { path: string; reason: string }[] = [];
+    const unpublished: string[] = [];
     const seen = new Set<string>();
     const linkedUrls = new Set<string>();
 
+    // コンテンツ不正はスキップ。infra 障害はここで握りつぶさず再送出する。
+    const attempt = async <T>(
+      group: NoteGroup,
+      work: () => Promise<T>,
+    ): Promise<{ ok: true; value: T } | { ok: false }> => {
+      try {
+        return { ok: true, value: await work() };
+      } catch (error) {
+        if (error instanceof NoteContentError) {
+          skipped.push({ path: group.sourcePath, reason: error.message });
+          return { ok: false };
+        }
+        throw error;
+      }
+    };
+
     for (const group of groups) {
       const slug = group.slug.toString();
+
+      // 非公開の記事は seen に入れない。正本から消えたノートと同じ経路で
+      // D1 と R2 から掃除され、以後どの配信経路にも現れなくなる。
+      // 配信側で除外条件を書き足す方式だと、経路が増えるたびに漏れが起きる。
+      const visibility = await attempt(group, () => this.readVisibility(group));
+      if (!visibility.ok) continue;
+      if (visibility.value === "private") {
+        unpublished.push(slug);
+        continue;
+      }
+
       seen.add(slug);
       // 変更なしは飛ばす。force のときは実装変更を既存ノートへ反映するため再処理する。
       const isUnchanged = stored.get(slug) === group.contentHash;
       if (options.force !== true && isUnchanged) continue;
-      try {
-        const urls = await this.syncNote(group);
-        for (const url of urls) linkedUrls.add(url);
-        processed.push(slug);
-      } catch (error) {
-        // コンテンツ不正はスキップ。infra 障害はここで握りつぶさず再送出する。
-        if (error instanceof NoteContentError) {
-          skipped.push({ path: group.sourcePath, reason: error.message });
-          continue;
-        }
-        throw error;
-      }
+
+      const synced = await attempt(group, () => this.syncNote(group));
+      if (!synced.ok) continue;
+      for (const url of synced.value) linkedUrls.add(url);
+      processed.push(slug);
     }
 
     const deleted = await this.deleteRemoved(stored, seen);
-    return { processed, deleted, skipped, linkedUrls: [...linkedUrls] };
+    return {
+      processed,
+      deleted,
+      unpublished,
+      skipped,
+      linkedUrls: [...linkedUrls],
+    };
+  }
+
+  /**
+   * 同期に入る前に公開範囲だけを読む。
+   *
+   * 本文の解析をここでもう一度行うのは無駄に見えるが、非公開の判定を syncNote の
+   * 内側に置くと、書き込みを始めてから引き返すことになる。読むだけで済ませたい。
+   */
+  private async readVisibility(group: NoteGroup): Promise<NoteVisibility> {
+    const bytes = await this.content.readFile(group.sourcePath);
+    if (bytes === undefined) {
+      throw new Error(`source file could not be read: ${group.sourcePath}`);
+    }
+    const markdown = new TextDecoder().decode(bytes);
+    return parseContent(markdown).frontmatter.visibility;
   }
 
   /**

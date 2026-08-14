@@ -28,6 +28,7 @@ describe("parseNoteContent", () => {
       tags: ["日記", "プログラミング"],
       publishedOn: "2026-01-15",
       lastModifiedOn: "2026-01-20",
+      visibility: "public",
     });
   });
 
