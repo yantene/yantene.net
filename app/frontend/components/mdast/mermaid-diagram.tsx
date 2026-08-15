@@ -1,5 +1,30 @@
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { loadMermaid } from "./mermaid-loader.client";
+
+/*
+ * ここでスクリプトが動いているかどうかを、サーバーとクライアントで別々に答える。
+ * 読み込み中の印をいつ立ててよいかの判断に使う。
+ *
+ * サーバーの出力で印を立てると、JavaScript が動かない環境では下りる機会が無い。そこでは
+ * 図に差し替わることも無いので、支援技術には「永遠に読み込み中」とだけ伝わってしまう。
+ *
+ * effect で立てずに useSyncExternalStore で受けるのは、サーバー用のスナップショットを
+ * 持てるため。ハイドレーションはサーバー側の答え (動いていない) で行われるので、初回の
+ * 描画がサーバーと食い違うこともない。
+ *
+ * 購読はしない。一度きりの遷移で、後から戻ることがない。参照が変わると購読し直しになるので、
+ * 関数はモジュールに置いて固定する。
+ */
+const unsubscribe = (): void => undefined;
+const subscribeToNothing = (): (() => void) => unsubscribe;
+const hasScriptHere = (): boolean => true;
+const hasScriptOnServer = (): boolean => false;
 
 /**
  * React の `useId()` の返り値を、Mermaid に渡せる識別子に均す。
@@ -53,6 +78,11 @@ export function MermaidDiagram({
   const diagramId = toDiagramId(useId());
   const attempt = useRef(0);
   const hasSource = source !== undefined && source.trim() !== "";
+  const hasScript = useSyncExternalStore(
+    subscribeToNothing,
+    hasScriptHere,
+    hasScriptOnServer,
+  );
 
   useEffect(() => {
     if (source === undefined || source.trim() === "") return;
@@ -112,11 +142,15 @@ export function MermaidDiagram({
   /*
    * まだ図になっていないもの。組んでいる最中と、組めなかったときの両方がここへ来る。
    *
-   * `aria-busy` は決着が付くまで立てておく。JavaScript が動かない読み手には下りない
-   * ままになるが、そこでは図に差し替わることも無いので、印としては正しい。
+   * `aria-busy` を立てるのは、スクリプトが動いてから決着が付くまでの間だけ。サーバーの
+   * 出力では立てない。JavaScript が動かない環境で立ててしまうと、下りる機会が無いまま
+   * 残る (hasScript の宣言に付けた説明を参照)。
    */
   return (
-    <div className="mermaid-source" aria-busy={hasSource && !isSettled}>
+    <div
+      className="mermaid-source"
+      aria-busy={hasScript && hasSource && !isSettled}
+    >
       {children}
     </div>
   );

@@ -41,6 +41,7 @@ function fence(language: string, body: string): MdastRoot {
 
 describe("MermaidDiagram", () => {
   beforeEach(() => {
+    mermaid.initialize.mockReset();
     mermaid.render.mockReset();
   });
 
@@ -114,6 +115,53 @@ describe("MermaidDiagram", () => {
     expect(container.querySelector("svg")).toBeNull();
   });
 
+  /*
+   * 取り寄せに失敗した Promise を握り続けると、chunk の取得に一度転けただけで、その後は
+   * 別の記事へ移っても図が出なくなる。React Router の遷移はクライアント側で起きるので、
+   * 読み手がページを読み直すまで直らない (issue #239)。
+   *
+   * 握りはモジュールに載っている。他のテストが先に取り寄せを済ませていると失敗そのものを
+   * 作れないので、ここだけモジュールを読み直して真新しい loader を掴む。
+   */
+  it("本体の取り寄せに失敗しても、次にマウントされたときに取り直す", async () => {
+    vi.resetModules();
+    const { MermaidDiagram } = await import("./mermaid-diagram");
+    // 取り寄せの途中で転ける様子を、初期化を 1 度だけ失敗させて作る。
+    mermaid.initialize.mockImplementationOnce(() => {
+      throw new Error("Failed to fetch dynamically imported module");
+    });
+    mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
+    const diagram = (
+      <MermaidDiagram source={DIAGRAM}>
+        <pre>
+          <code className="language-mermaid">{DIAGRAM}</code>
+        </pre>
+      </MermaidDiagram>
+    );
+
+    const failed = render(diagram);
+
+    // 読み込み中の印が下りたら決着が付いている。組む所まで行かずに落ちる。
+    await waitFor(() => {
+      expect(failed.container.querySelector(".mermaid-source")).toHaveAttribute(
+        "aria-busy",
+        "false",
+      );
+    });
+    expect(mermaid.render).not.toHaveBeenCalled();
+    failed.unmount();
+
+    const retried = render(diagram);
+
+    await waitFor(() => {
+      expect(
+        retried.container.querySelector(":scope .mermaid-diagram svg"),
+      ).not.toBeNull();
+    });
+    // 拒否済みの Promise を握っていれば、2 度目の取り寄せは始まらない。
+    expect(mermaid.initialize).toHaveBeenCalledTimes(2);
+  });
+
   it("mermaid 以外の言語のコードブロックには手を触れない", () => {
     const { container } = render(
       <MdastRenderer node={fence("ts", "const x = 1;")} />,
@@ -140,5 +188,18 @@ describe("MermaidDiagram", () => {
     expect(html).toContain("graph TD;");
     expect(html).not.toContain("<svg");
     expect(mermaid.render).not.toHaveBeenCalled();
+  });
+
+  /*
+   * 読み込み中の印はサーバーの出力に立てない。JavaScript が動かない環境では下りる機会が
+   * 無く、図に差し替わることも無いのに「永遠に読み込み中」と支援技術に伝わるため。
+   */
+  it("SSR では読み込み中の印を立てない", () => {
+    const html = renderToStaticMarkup(
+      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
+    );
+
+    expect(html).toContain('class="mermaid-source"');
+    expect(html).not.toContain('aria-busy="true"');
   });
 });
