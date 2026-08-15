@@ -9,7 +9,7 @@ describe("feedIdentity", () => {
   it("names the site-wide feed after the site and points at its root", () => {
     expect(feedIdentity()).toEqual({
       title: "やんてね",
-      subtitle: "yantene の発信を集約するハブ",
+      subtitle: "Web の向こうから。エッセイ、技術記事、つくったもの。",
       path: "/feed.xml",
       alternatePath: "/",
     });
@@ -21,7 +21,7 @@ describe("feedIdentity", () => {
 
   it("names a tag feed after the tag and points at the filtered list", () => {
     expect(feedIdentity("Web")).toEqual({
-      title: "やんてね — Web",
+      title: "やんてね - Web",
       subtitle: "タグ「Web」のノート",
       path: "/feed.xml?tag=Web",
       alternatePath: "/notes?tag=Web",

@@ -155,14 +155,14 @@ describe("buildPageMeta", () => {
       locale: "ja",
       origin,
       pathname,
-      feed: { path: "/feed.xml?tag=Web", title: "やんてね — Web" },
+      feed: { path: "/feed.xml?tag=Web", title: "やんてね - Web" },
     });
 
     expect(meta).toContainEqual({
       tagName: "link",
       rel: "alternate",
       type: "application/atom+xml",
-      title: "やんてね — Web",
+      title: "やんてね - Web",
       href: "https://yantene.net/feed.xml?tag=Web",
     });
   });

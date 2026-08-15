@@ -8,7 +8,10 @@
  */
 
 const FEED_TITLE = "やんてね";
-const FEED_SUBTITLE = "yantene の発信を集約するハブ";
+/* i18n の meta.description と同じ一文。リーダーに出る名乗りなので、サイトの説明と
+ * 食い違わせない。ja.json を書き換えたらここも合わせること (あちらは React の外から
+ * 引けないので、同じ文字列を二度持つしかない)。 */
+const FEED_SUBTITLE = "Web の向こうから。エッセイ、技術記事、つくったもの。";
 
 export interface FeedIdentity {
   readonly title: string;
@@ -43,7 +46,7 @@ export function feedIdentity(tag?: string | null): FeedIdentity {
 
   const encoded = encodeURIComponent(tag);
   return {
-    title: `${FEED_TITLE} — ${tag}`,
+    title: `${FEED_TITLE} - ${tag}`,
     subtitle: `タグ「${tag}」のノート`,
     path: `/feed.xml?tag=${encoded}`,
     alternatePath: `/notes?tag=${encoded}`,
