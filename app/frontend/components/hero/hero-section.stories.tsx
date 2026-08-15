@@ -7,6 +7,13 @@ const meta: Meta<typeof HeroSection> = {
   parameters: {
     layout: "fullscreen",
   },
+  /*
+   * 本番では loader が実際の時刻と月齢を渡すが、ここは南中の満月に固定する。
+   * 見た目を見比べる場所なので、開くたびに空が変わると差分が読めない。
+   */
+  args: {
+    clockOrigin: { minutesOfDay: 12 * 60, moonAgeDay: 14 },
+  },
 };
 
 export default meta;

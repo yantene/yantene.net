@@ -1,0 +1,319 @@
+/*
+ * 時計の開き位置を段階クラスとして持つ。
+ *
+ * loader が「開いた時点の JST の時刻」と「そのときの月齢」を決め、ヒーローの節へ
+ * この 3 系統のクラスを載せる (clock-origin.ts)。連続値を style 属性で渡さないのは
+ * ADR 0019 の規律に従うため。CSP はもう inline style を落とさないが、見た目の可変軸を
+ * 静的なクラスの段階で持つ書き方は続ける。
+ *
+ * 時刻の刻みをこれ以上細かくしても意味がない。1 日を 288 秒で回しているので、実時間の
+ * 1 秒が世界内の 5 分にあたる。ページが描き終わる頃には 5 分ぶん進んでいる。
+ *
+ * 以下のルールは機械的な列挙で、値のほかに読むところはない。刻みを変えるときは
+ * clock-origin.ts の定数と必ず対で直すこと (片方だけ変えると存在しないクラスが出る)。
+ */
+
+:root {
+  /* クラスを載せない画面 (Storybook や単体テスト) は南中から始まる。 */
+  --clock-shift-days: 0;
+}
+
+/*
+ * 開き位置のずらし量 (日)。時計に属するアニメーションは、これに自分の 1 日の長さを
+ * 掛けたものを animation-delay に足す。全部に同じ絶対時間を与えることになるので、
+ * 太陽と月の離角も月相も崩れない (ADR 0008)。
+ *
+ * 末尾で 1 日ぶん引いているのは、この値が必ず負でなければならないため。正の
+ * animation-delay は「まだ始まっていない」を意味し、fill-mode が none なのでその間は
+ * キーフレームが一切当たらない。空は背景色を失って透け、太陽も止まったままになる。
+ * 南中 (位相 0) より前の時刻をそのまま書くと正の値になるので、代わりに翌日の同じ時刻
+ * まで進める。空も太陽も目盛りも周期がちょうど 1 日なので、進めても絵は変わらない。
+ * 月は 1 日ぶん進むが、その分は clock-origin.ts が月齢から差し引いてある。
+ *
+ * 組み立てる場所は、時と分のクラスを載せる要素と同じでなければならない。custom
+ * property の置換は宣言した要素の上で起きるので、:root で組み立てると :root の既定で
+ * 計算が済んでしまい、子孫に付けたクラスが一切効かない。この間違いは何のエラーも
+ * 出さず、空が南中のまま出るだけになる。
+ *
+ * var() に既定値を添えてあるのは、クラスを載せない .hero-clock (Storybook) でも値が
+ * 壊れないようにするため。custom property の置換が失敗すると、それを使う animation
+ * ショートハンドごと無効になり、天体が動かなくなる。
+ */
+.hero-clock {
+  --clock-shift-days: calc(
+    (720 - var(--clock-hour, 12) * 60 - var(--clock-minute, 0)) / 1440 - 1
+  );
+}
+
+/* 時 (0〜23)。 */
+
+.clock-hour-0 {
+  --clock-hour: 0;
+}
+
+.clock-hour-1 {
+  --clock-hour: 1;
+}
+
+.clock-hour-2 {
+  --clock-hour: 2;
+}
+
+.clock-hour-3 {
+  --clock-hour: 3;
+}
+
+.clock-hour-4 {
+  --clock-hour: 4;
+}
+
+.clock-hour-5 {
+  --clock-hour: 5;
+}
+
+.clock-hour-6 {
+  --clock-hour: 6;
+}
+
+.clock-hour-7 {
+  --clock-hour: 7;
+}
+
+.clock-hour-8 {
+  --clock-hour: 8;
+}
+
+.clock-hour-9 {
+  --clock-hour: 9;
+}
+
+.clock-hour-10 {
+  --clock-hour: 10;
+}
+
+.clock-hour-11 {
+  --clock-hour: 11;
+}
+
+.clock-hour-12 {
+  --clock-hour: 12;
+}
+
+.clock-hour-13 {
+  --clock-hour: 13;
+}
+
+.clock-hour-14 {
+  --clock-hour: 14;
+}
+
+.clock-hour-15 {
+  --clock-hour: 15;
+}
+
+.clock-hour-16 {
+  --clock-hour: 16;
+}
+
+.clock-hour-17 {
+  --clock-hour: 17;
+}
+
+.clock-hour-18 {
+  --clock-hour: 18;
+}
+
+.clock-hour-19 {
+  --clock-hour: 19;
+}
+
+.clock-hour-20 {
+  --clock-hour: 20;
+}
+
+.clock-hour-21 {
+  --clock-hour: 21;
+}
+
+.clock-hour-22 {
+  --clock-hour: 22;
+}
+
+.clock-hour-23 {
+  --clock-hour: 23;
+}
+
+/* 分 (5 分刻み)。 */
+
+.clock-minute-0 {
+  --clock-minute: 0;
+}
+
+.clock-minute-5 {
+  --clock-minute: 5;
+}
+
+.clock-minute-10 {
+  --clock-minute: 10;
+}
+
+.clock-minute-15 {
+  --clock-minute: 15;
+}
+
+.clock-minute-20 {
+  --clock-minute: 20;
+}
+
+.clock-minute-25 {
+  --clock-minute: 25;
+}
+
+.clock-minute-30 {
+  --clock-minute: 30;
+}
+
+.clock-minute-35 {
+  --clock-minute: 35;
+}
+
+.clock-minute-40 {
+  --clock-minute: 40;
+}
+
+.clock-minute-45 {
+  --clock-minute: 45;
+}
+
+.clock-minute-50 {
+  --clock-minute: 50;
+}
+
+.clock-minute-55 {
+  --clock-minute: 55;
+}
+
+/*
+ * 月齢 (日)。この空の朔望月は 28 日。
+ *
+ * 端数を持たせてはいけない。この値は月の 2 つのアニメーション (公転・位相) にだけ効き、
+ * 空と太陽には効かない。整数日なら太陽の側が 1 日周期でちょうど元に戻るので「時計全体を
+ * N 日進めた」のと同じ絵になるが、端数を入れると太陽だけが取り残され、月の位置が離角と
+ * 食い違う (0.25 日で 90 度ずれる)。月相のほうは正しく出るので、満ち欠けと位置が噛み
+ * 合わない月が静かに出来上がる。
+ *
+ * 1 日より細かい月齢は、時刻のずらし (--clock-shift-days) が受け持つ。画面に出る月齢は
+ * 両者の和で、その差し引きは clock-origin.ts がやっている。
+ */
+
+.moon-age-0 {
+  --moon-age-day: 0;
+}
+
+.moon-age-1 {
+  --moon-age-day: 1;
+}
+
+.moon-age-2 {
+  --moon-age-day: 2;
+}
+
+.moon-age-3 {
+  --moon-age-day: 3;
+}
+
+.moon-age-4 {
+  --moon-age-day: 4;
+}
+
+.moon-age-5 {
+  --moon-age-day: 5;
+}
+
+.moon-age-6 {
+  --moon-age-day: 6;
+}
+
+.moon-age-7 {
+  --moon-age-day: 7;
+}
+
+.moon-age-8 {
+  --moon-age-day: 8;
+}
+
+.moon-age-9 {
+  --moon-age-day: 9;
+}
+
+.moon-age-10 {
+  --moon-age-day: 10;
+}
+
+.moon-age-11 {
+  --moon-age-day: 11;
+}
+
+.moon-age-12 {
+  --moon-age-day: 12;
+}
+
+.moon-age-13 {
+  --moon-age-day: 13;
+}
+
+.moon-age-14 {
+  --moon-age-day: 14;
+}
+
+.moon-age-15 {
+  --moon-age-day: 15;
+}
+
+.moon-age-16 {
+  --moon-age-day: 16;
+}
+
+.moon-age-17 {
+  --moon-age-day: 17;
+}
+
+.moon-age-18 {
+  --moon-age-day: 18;
+}
+
+.moon-age-19 {
+  --moon-age-day: 19;
+}
+
+.moon-age-20 {
+  --moon-age-day: 20;
+}
+
+.moon-age-21 {
+  --moon-age-day: 21;
+}
+
+.moon-age-22 {
+  --moon-age-day: 22;
+}
+
+.moon-age-23 {
+  --moon-age-day: 23;
+}
+
+.moon-age-24 {
+  --moon-age-day: 24;
+}
+
+.moon-age-25 {
+  --moon-age-day: 25;
+}
+
+.moon-age-26 {
+  --moon-age-day: 26;
+}
+
+.moon-age-27 {
+  --moon-age-day: 27;
+}

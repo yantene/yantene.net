@@ -157,8 +157,13 @@
   }
 }
 
+/*
+ * 読み込み直後の時刻ぶんのずらしは雲にも掛ける (clock-origin.css)。周期が 4 日でも
+ * 与える量は同じ絶対時間でよく、そうすることで時計に属するもの全部の位相が揃う。
+ */
 .cityscape-svg #clouds {
-  animation: cityscape-cloud-drift calc(var(--day-cycle) * 4) linear infinite;
+  animation: cityscape-cloud-drift calc(var(--day-cycle) * 4)
+    calc(var(--day-cycle) * var(--clock-shift-days)) linear infinite;
 }
 
 /*

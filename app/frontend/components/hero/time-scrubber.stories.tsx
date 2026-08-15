@@ -7,6 +7,8 @@ const meta: Meta<typeof TimeScrubber> = {
   title: "Hero/TimeScrubber",
   component: TimeScrubber,
   parameters: { layout: "fullscreen" },
+  // 本番では loader が渡す。ここは空の既定 (南中) と揃えて固定する。
+  args: { initialMinutes: 12 * 60 },
   decorators: [
     // 目盛りも歩行者もヒーローの下端に絶対配置されるので、高さのある器を与える。
     (Story) => (
