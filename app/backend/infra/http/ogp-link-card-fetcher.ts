@@ -1,3 +1,4 @@
+import { charsetOf, decoderFor } from "./charset";
 import { fetchCapped } from "./fetch-capped";
 import { isAllowedImageType, mediaTypeOf } from "./image-content-type";
 import { parseOgp } from "./parse-ogp";
@@ -73,7 +74,10 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
     });
     if (page === undefined || !isHtml(page.contentType)) return undefined;
 
-    const ogp = parseOgp(new TextDecoder().decode(page.bytes));
+    // 相手が名乗った文字コードで読む。UTF-8 決め打ちだと Shift_JIS や EUC-JP のページの
+    // 題と説明が文字化けしたままカードに載る。
+    const decoder = decoderFor(charsetOf(page.contentType));
+    const ogp = parseOgp(decoder.decode(page.bytes));
     // 題が無いページはカードにしようがない。素のリンクのままにする。
     if (ogp.title === undefined) return undefined;
 
