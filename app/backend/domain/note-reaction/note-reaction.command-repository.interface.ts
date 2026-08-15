@@ -19,23 +19,31 @@ export interface INoteReactionCommandRepository {
   decrement(noteId: string, emoji: ReactionEmoji): Promise<void>;
 
   /**
-   * いまの対数スコアを読む。記事が無ければ undefined。
+   * その記事の投稿日を読む。記事が無ければ undefined。
    *
-   * スコアの更新は閲覧と同じ列を触る。対数のまま足し引きするには log-sum-exp が要り
-   * SQL では書けないので、計算はドメインで行い、ここは書くだけにする。
+   * リアクションを外すときの下限 (出発点 = 投稿日の重み) を出すのに要る。重みそのものを
+   * 実装側に作らせないのは、投稿日をどう重みに直すかが順位付けの意味そのものだから。
    */
-  findLogScore(noteId: string): Promise<number | undefined>;
+  findPublishedOn(noteId: string): Promise<string | undefined>;
 
   /**
-   * いまのスコアと、その記事の出発点を決める投稿日を読む。
+   * 対数スコアに重み 1 つぶんを足す。
    *
-   * リアクションを外すときに要る。引いた結果が出発点を割らないよう下限を置くため、
-   * スコアだけでなく投稿日も要る (下限は投稿日の重み)。
+   * スコアの更新は閲覧と同じ列を触る。受け取るのは足す重み (reactionWeightLog) で、
+   * 書き換え後のスコアではない。読んでから書き戻す形にすると、2 手の間に別の書き込みが
+   * 挟まったときに片方の加算がまるごと消える。
    */
-  findScoreContext(
-    noteId: string,
-  ): Promise<{ logScore: number; publishedOn: string } | undefined>;
+  addLogScore(noteId: string, weightLog: number): Promise<void>;
 
-  /** 対数スコアを与えられた値に置き換える。 */
-  applyLogScore(noteId: string, logScore: number): Promise<void>;
+  /**
+   * 対数スコアから重み 1 つぶんを引く。引ききったら下限に倒す。
+   *
+   * @param floorLogScore 下限。その記事の出発点 (投稿日の重み) を渡す。理由は
+   *   domain/note-view の logScoreAfterReactionRemoved に書いてある。
+   */
+  subtractLogScore(
+    noteId: string,
+    weightLog: number,
+    floorLogScore: number,
+  ): Promise<void>;
 }
