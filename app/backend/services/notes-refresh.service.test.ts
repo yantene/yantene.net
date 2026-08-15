@@ -4,9 +4,17 @@ import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type { CachedAsset, INoteContentCache } from "~/backend/domain/note";
 import { NoteSlug } from "~/backend/domain/note";
 import {
+  Webmention,
+  WebmentionAuthor,
+  WebmentionType,
+  WebmentionUrl,
+} from "~/backend/domain/webmention";
+import {
   D1NoteCommandRepository,
   D1NoteQueryRepository,
   D1NoteSearchIndex,
+  D1WebmentionCommandRepository,
+  D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
@@ -99,6 +107,8 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   query: D1NoteQueryRepository;
   cache: InMemoryCache;
   content: MockContentStore;
+  /** Webmention など、同期の巻き添えを見るために同じ DB を触る用。 */
+  d1: D1Database;
 } {
   const d1 = createTestD1();
   const command = new D1NoteCommandRepository(d1);
@@ -113,7 +123,7 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
     cache,
     searchIndex,
   );
-  return { service, command, query, cache, content };
+  return { service, command, query, cache, content, d1 };
 }
 
 describe("NotesRefreshService", () => {
@@ -196,6 +206,8 @@ lastModifiedOn: 2026-01-15
   it("drops the cached source when the note disappears from the content store", async () => {
     const files = new Map([
       ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係のノートを 1 本残す。
+      ["notes/other.md", { hash: "o1", bytes: bytes(helloMd) }],
     ]);
     const { service, cache } = setup(files);
     await service.refresh();
@@ -308,6 +320,8 @@ lastModifiedOn: 2026-01-15
   it("deletes notes removed from the tree", async () => {
     const files = new Map([
       ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係のノートを 1 本残す。
+      ["notes/other.md", { hash: "o1", bytes: bytes(helloMd) }],
     ]);
     const { service, query, cache } = setup(files);
 
@@ -525,6 +539,37 @@ describe("visibility", () => {
     expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
   });
 
+  /*
+   * 綴りの誤りは「隠すと決めた意思」ではないので、公開済みの記事を取り下げる理由にも
+   * ならない。書き直すまで前回の内容を出し続ける。
+   */
+  it("公開済みの記事の visibility が読めなくなっても消さない", async () => {
+    const files = new Map([
+      [
+        "notes/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes(
+            "---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n",
+          ),
+        },
+      ],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.set("notes/secret.md", {
+      hash: "s2",
+      bytes: bytes(withVisibility("prvate")),
+    });
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
+    expect(result.deleted).toEqual([]);
+    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+    expect(cache.sources.has("secret")).toBe(true);
+  });
+
   it("大文字や前後の空白を許す", async () => {
     const files = new Map([
       [
@@ -570,5 +615,107 @@ describe("visibility", () => {
     // 読まなかったノートを「正本から消えた」と誤認して掃除していないこと。
     expect(result.deleted).toEqual([]);
     expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+  });
+});
+
+/*
+ * コンテンツ不正 (読めない LaTeX / 読めない visibility) はそのノートを飛ばすだけで、
+ * 前回同期した内容には手を付けない。スキップしたノートを掃除の対象に残していたころは、
+ * 書き手の誤字 1 つで公開中の記事が 404 になり、閲覧数も届いた Webmention も
+ * 巻き添えで消えていた ([#250](https://github.com/yantene/yantene.net/issues/250))。
+ */
+describe("コンテンツ不正でスキップしたノート", () => {
+  /** 公開に必要なフロントマターは揃っていて、本文の LaTeX だけが読めない。 */
+  const brokenMathMd = String.raw`---
+title: Broken
+publishedOn: 2026-01-15
+---
+
+式 $\frac{$ です。
+`;
+
+  it("公開済みの本文を壊しても、D1 と R2 の旧版を残す", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.set("notes/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("notes/hello.md");
+    expect(result.processed).toEqual([]);
+    // 正本には在るのだから、消えたノートとして掃除してはいけない。
+    expect(result.deleted).toEqual([]);
+
+    const note = await query.findBySlug(NoteSlug.create("hello"));
+    expect(note?.title.toString()).toBe("Hello");
+    // 原文と MDAST も前回同期したまま。記事は読めるままになる。
+    expect(cache.sources.get("hello")).toBe(helloMd);
+    expect(cache.mdasts.has("hello")).toBe(true);
+  });
+
+  it("公開済みの本文を壊しても、届いた Webmention を消さない", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, d1 } = setup(files);
+
+    await service.refresh();
+    const note = await query.findBySlug(NoteSlug.create("hello"));
+    if (note === undefined) throw new Error("1 回目の同期で載っていること");
+
+    // 記事に反応が 1 件届いた状態を作る。
+    await new D1WebmentionCommandRepository(d1).upsert(
+      Webmention.create({
+        noteId: note.id,
+        target: note.slug,
+        source: WebmentionUrl.create("https://example.com/post/1"),
+        type: WebmentionType.reply(),
+        author: WebmentionAuthor.create({ name: "Alice" }),
+      }),
+    );
+
+    files.set("notes/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
+    await service.refresh();
+
+    // ノートの行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
+    const stored = await new D1WebmentionQueryRepository(d1).listByNoteId(
+      note.id,
+    );
+    expect(stored).toHaveLength(1);
+    expect(stored[0].source.toString()).toBe("https://example.com/post/1");
+  });
+});
+
+/*
+ * 掃除の経路は「正本から消えた 1 本」を消すためのもので、「正本が空に見える」を
+ * 全件削除の合図として受け取らない。ブランチの取り違えや正本側の事故で notes/ を
+ * 持たない応答が返ったとき、被害はコンテンツ不正のときと同じになる。
+ */
+describe("空のツリー", () => {
+  it("1 件も見つからないときは全件削除せず送出する", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.clear();
+
+    await expect(service.refresh()).rejects.toThrow(/refusing to delete/);
+    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+    expect(cache.sources.has("hello")).toBe(true);
+  });
+
+  it("まだ 1 件も載っていなければ空のツリーを受け入れる", async () => {
+    const { service } = setup(new Map());
+
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.deleted).toEqual([]);
   });
 });
