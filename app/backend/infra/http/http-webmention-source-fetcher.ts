@@ -1,4 +1,5 @@
 import { charsetFor, decoderFor } from "./charset";
+import { readCapped } from "./read-capped";
 import type {
   IWebmentionSourceFetcher,
   SourceFetchResult,
@@ -105,7 +106,7 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
     const body = response.body;
     if (body === null) return { kind: "unavailable", reason: "no body" };
 
-    const bytes = await this.readCapped(body);
+    const bytes = await readCapped(body, this.maxBytes);
     if (bytes === undefined) {
       return { kind: "unavailable", reason: "body too large" };
     }
@@ -120,34 +121,6 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
      * 送り手が書いた URL のままだと転送先の相対リンクが別の場所を指してしまう。
      */
     return { kind: "fetched", url: finalUrl(response, source), html };
-  }
-
-  /** 上限まで読む。超えたら打ち切って undefined を返す。 */
-  private async readCapped(
-    body: ReadableStream<Uint8Array>,
-  ): Promise<Uint8Array | undefined> {
-    const reader = body.getReader();
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-
-    let chunk = await reader.read();
-    while (!chunk.done) {
-      total += chunk.value.byteLength;
-      if (total > this.maxBytes) {
-        await reader.cancel();
-        return undefined;
-      }
-      chunks.push(chunk.value);
-      chunk = await reader.read();
-    }
-
-    const joined = new Uint8Array(total);
-    let offset = 0;
-    for (const part of chunks) {
-      joined.set(part, offset);
-      offset += part.byteLength;
-    }
-    return joined;
   }
 }
 
