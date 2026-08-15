@@ -16,7 +16,7 @@ const FONT_KEY = "og/fonts/noto-sans-jp-700-full.ttf";
  */
 const TITLE_MAX = 56;
 /** カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。 */
-const OG_TEMPLATE_VERSION = "v8";
+const OG_TEMPLATE_VERSION = "v9";
 
 /** yantene アイコン (data URI で OG カードに埋め込む)。 */
 const YANTENE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 67.733 67.733"><g transform="translate(-121.17 -27.445)"><path d="M73.685 39.527h135.467v67.733H73.685z" style="fill:#f8e5d6;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><path d="M73.685-28.206h135.467v67.733H73.685z" style="fill:#c9ab80;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><circle cx="88.27" cy="-72.048" r="39.677" style="fill:#c9ab80;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><circle cx="167.625" cy="-72.048" r="39.677" style="fill:#f8e5d6;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><path d="M159.46 46.99a14.817 14.74 0 0 1 12.379-6.118 14.817 14.74 0 0 1 12.066 6.708M125.887 41.94a14.817 14.74 0 0 1 13.395-3.669 14.817 14.74 0 0 1 10.561 8.981" style="fill:none;fill-opacity:1;stroke:#78a2d2;stroke-width:4.23333;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;stop-color:#000"/><path d="m128.378 51.872 16.39 5.9-16.08 7.858M180.139 53.64l-16.668 5.057 15.658 8.666" style="fill:none;stroke:#78a2d2;stroke-width:4.23334;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/><path d="M143.31 78.073c-3.662 3.393-2.03 25.136 6.81 26.34 8.842 1.204 15.08-18.378 12.73-22.413s-15.876-7.32-19.54-3.927" style="fill:#d47d7d;fill-opacity:1;stroke:none;stroke-width:.529166px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"/></g></svg>`;
@@ -121,9 +121,15 @@ const CITYSCAPE_HEIGHT = 175;
  */
 const artwork: { cityscape?: string; marker?: string } = {};
 
-/** カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。 */
+/**
+ * カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。
+ *
+ * 通常の流れから外して底に貼ってあるのは、日付から署名までの一行を街に重ねられるように
+ * するため。線が薄いので重なっても字は読める (画面のヒーローも同じ扱いで、
+ * hero-section.css が「テキストを街の上に逃がすとヒーローが間延びする」と書いている)。
+ */
 function cityscapeHtml(): string {
-  artwork.cityscape ??= `<img src="data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}" width="1200" height="${CITYSCAPE_HEIGHT.toString()}" />`;
+  artwork.cityscape ??= `<img src="data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}" width="1200" height="${CITYSCAPE_HEIGHT.toString()}" style="position:absolute;left:0;bottom:0;" />`;
   return artwork.cityscape;
 }
 
@@ -230,9 +236,10 @@ function truncate(value: string, max: number): string {
 /**
  * OG カードの HTML (Satori 制約: flex レイアウトのみ)。
  *
- * 下の余白を厚く取ってあるのは、日付から署名までのひとかたまりを表題の近くへ引き上げる
- * ため。上下に振り分ける (`space-between`) だけだと、表題の行数が少ないときに真ん中が
- * 大きく空いて、日付と署名だけが取り残されて見える。余った高さは足元の街が引き受ける。
+ * 日付から署名までの一行は、表題が何行になってもカードの決まった高さに置く。上下に
+ * 振り分ける (`space-between`) だけだと、表題が短いときにこの行が真ん中まで上がってきて、
+ * 記事ごとに居場所が変わる。街を通常の流れから外して底に貼り、その高さぶんを下の余白で
+ * 埋め戻すことで、街に触れない位置で止めている。
  */
 function cardHtml(params: {
   title: string;
@@ -254,9 +261,10 @@ function cardHtml(params: {
     .join("・");
 
   return `
-    <div style="display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
+    <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
+      ${cityscapeHtml()}
       ${TOP_BAND_HTML}
-      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px 96px;">
+      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px ${(CITYSCAPE_HEIGHT + 20).toString()}px;">
         <div style="display:flex;font-size:52px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
         <div style="display:flex;align-items:flex-end;justify-content:space-between;">
           <div style="display:flex;flex-direction:column;">
@@ -266,7 +274,6 @@ function cardHtml(params: {
           ${wordmarkHtml(34)}
         </div>
       </div>
-      ${cityscapeHtml()}
     </div>`;
 }
 
@@ -279,14 +286,14 @@ function cardHtml(params: {
  */
 function defaultCardHtml(): string {
   return `
-    <div style="display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
+    <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
+      ${cityscapeHtml()}
       ${TOP_BAND_HTML}
-      <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;padding-bottom:24px;">
+      <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;padding-bottom:${(CITYSCAPE_HEIGHT + 24).toString()}px;">
         <img src="${ICON_DATA_URI}" width="132" height="132" style="border-radius:26px;margin-bottom:32px;" />
         ${markedNameHtml(76)}
         <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:24px;">yantene の発信を集約するハブ</div>
       </div>
-      ${cityscapeHtml()}
     </div>`;
 }
 
