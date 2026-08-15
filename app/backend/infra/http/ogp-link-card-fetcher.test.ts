@@ -44,6 +44,31 @@ const pngBytes = new Uint8Array([137, 80, 78, 71]);
 /** fetch の差し替え。Promise を返すことを型に持たせないと、渡す実装が void 扱いになる。 */
 type FetchStub = (url: string) => Promise<Response>;
 
+/**
+ * 題だけを持つページ。題は符号化済みのバイト列で渡す。
+ *
+ * 文字コードの検証には「相手が流したバイトそのもの」が要るので、文字列ではなく
+ * バイト列を組み立てる (囲みの HTML は ASCII なのでどの文字コードでも同じ並びになる)。
+ */
+function pageWithTitleBytes(titleBytes: Uint8Array): Uint8Array<ArrayBuffer> {
+  const ascii = new TextEncoder();
+  const head = ascii.encode('<html><head><meta property="og:title" content="');
+  const tail = ascii.encode('"></head></html>');
+  const bytes = new Uint8Array(head.length + titleBytes.length + tail.length);
+  bytes.set(head, 0);
+  bytes.set(titleBytes, head.length);
+  bytes.set(tail, head.length + titleBytes.length);
+  return bytes;
+}
+
+/** ページだけを返す fetch。題の読み取りだけを見たいので画像は取れないことにする。 */
+function servePageOnly(body: BodyInit, contentType: string): FetchStub {
+  return (url: string) =>
+    url === "https://example.com/a"
+      ? Promise.resolve(respond(body, { contentType, url }))
+      : Promise.reject(new Error("画像は見ない"));
+}
+
 describe("OgpLinkCardFetcher", () => {
   let fetchMock: ReturnType<typeof vi.fn<FetchStub>>;
 
@@ -231,6 +256,48 @@ describe("OgpLinkCardFetcher", () => {
 
     expect(fetched?.title).toBe("記事の題");
     expect(fetched?.image).toBeUndefined();
+  });
+
+  /*
+   * 日本語圏の個人サイトには Shift_JIS や EUC-JP のページが残っている。UTF-8 決め打ちで
+   * 復号すると、題も説明も文字化けしたままカードに載る。
+   */
+  it("Content-Type が名乗る文字コードで復号する", async () => {
+    // "あ" (Shift_JIS) = 0x82 0xA0
+    const body = pageWithTitleBytes(new Uint8Array([0x82, 0xa0]));
+    fetchMock.mockImplementation(
+      servePageOnly(body, "text/html; charset=Shift_JIS"),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("あ");
+  });
+
+  it("知らない文字コードなら UTF-8 に倒す", async () => {
+    const body = pageWithTitleBytes(new TextEncoder().encode("あ"));
+    fetchMock.mockImplementation(
+      servePageOnly(body, "text/html; charset=x-nonexistent"),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("あ");
+  });
+
+  it("文字コードを名乗らないページは UTF-8 として読む", async () => {
+    const body = pageWithTitleBytes(new TextEncoder().encode("記事の題"));
+    fetchMock.mockImplementation(servePageOnly(body, "text/html"));
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("記事の題");
   });
 
   it("取りに行けなければ throw せず undefined を返し、記録を残す", async () => {

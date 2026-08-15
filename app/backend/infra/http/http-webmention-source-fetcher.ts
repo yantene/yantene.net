@@ -1,3 +1,4 @@
+import { charsetOf, decoderFor } from "./charset";
 import type {
   IWebmentionSourceFetcher,
   SourceFetchResult,
@@ -147,26 +148,6 @@ function isHtml(contentType: string | null): boolean {
   if (contentType === null) return false;
   const mediaType = contentType.split(";", 1)[0]?.trim().toLowerCase() ?? "";
   return htmlContentTypes.has(mediaType);
-}
-
-/** Content-Type が名乗る文字コード。名乗らなければ UTF-8 とみなす。 */
-function charsetOf(contentType: string | null): string {
-  const found = /;\s*charset\s*=\s*"?([^";]+)"?/i.exec(contentType ?? "");
-  return found?.[1]?.trim() ?? "utf8";
-}
-
-/**
- * その文字コードの復号器。知らない名前なら UTF-8 に倒す。
- *
- * 日本語圏の個人サイトには Shift_JIS や EUC-JP のページが残っている。決め打ちで UTF-8 に
- * すると、著者名も本文も文字化けしたまま保存されてしまう。
- */
-function decoderFor(charset: string): TextDecoder {
-  try {
-    return new TextDecoder(charset);
-  } catch {
-    return new TextDecoder();
-  }
 }
 
 /** 転送後の URL。読めなければ送り手の書いた URL のままにする。 */
