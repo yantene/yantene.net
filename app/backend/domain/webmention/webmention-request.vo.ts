@@ -48,8 +48,8 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
       throw new SameSourceAndTargetError("source and target must differ");
     }
 
-    const siteOrigin = readUrl(params.siteOrigin, "siteOrigin").origin;
-    if (target.origin !== siteOrigin) {
+    const site = readUrl(params.siteOrigin, "siteOrigin");
+    if (target.origin !== site.origin) {
       throw new TargetNotOnThisSiteError(
         `target is not on this site: ${target.toString()}`,
       );
@@ -65,8 +65,14 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
     /*
      * 自分で自分に送る mention は受けない。記事どうしのリンクで勝手に増えるだけで、
      * 読み手にとっての意味が無い。
+     *
+     * 見るのは origin ではなくホスト名。origin だとスキームを http に変えるだけで
+     * ここを抜けてしまい、記事ページは自分自身への canonical リンクを出しているので
+     * その先の検証も素通りする (source はクエリで幾らでも変えられるので、自分の名前の
+     * 行を好きなだけ積める)。転送の追い先もホスト名で見ており (検証段)、同じ「自分の
+     * サイトかどうか」を二か所で別の軸で測ると、片方に穴が開く。
      */
-    if (source.origin === siteOrigin) {
+    if (source.hostname === site.hostname) {
       throw new SelfMentionNotAcceptedError("source must not be on this site");
     }
 
@@ -76,7 +82,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
       // 送り手の書いた表記ではなく、スラグから組み直した正規の URL を持つ。
       // 末尾のスラッシュやクエリの有無で、リンクの照合が揺れないようにするため。
       target: WebmentionUrl.create(
-        `${siteOrigin}${NOTE_PATH_PREFIX}${targetSlug.toString()}`,
+        `${site.origin}${NOTE_PATH_PREFIX}${targetSlug.toString()}`,
       ),
     });
   }
