@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { NoteSlug } from "~/backend/domain/note";
-import { logScoreAfterView } from "~/backend/domain/note-view";
+import { viewWeightLog } from "~/backend/domain/note-view";
 import { Session, SessionId } from "~/backend/domain/session";
 import {
   buildSessionCookie,
@@ -120,7 +120,11 @@ async function applyView(
       session.withView(slug, viewedOn),
     );
 
-    await applyScore(env, note.id, viewedOn.toString());
+    // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
+    await new D1NoteViewCommandRepository(env.D1).addView(
+      note.id,
+      viewWeightLog(viewedOn.toString()),
+    );
   } catch (error) {
     // 記録に失敗しても読む側には関係がないので、握って記録だけ残す。
     new ConsoleLogger().error("failed to record a note view", {
@@ -129,23 +133,4 @@ async function applyView(
       error,
     });
   }
-}
-
-/**
- * いまの対数スコアを読み、その日の重みを足して書き戻す。
- *
- * 読んでから書く 2 手になるのは、対数のまま足すのに log-sum-exp が要り、SQL では
- * 書けないため。累計のほうは SQL 側で足すので取りこぼさない。
- */
-async function applyScore(
-  env: Env,
-  noteId: string,
-  viewedOn: string,
-): Promise<void> {
-  const repository = new D1NoteViewCommandRepository(env.D1);
-  const current = await repository.findLogScore(noteId);
-  // 記事が無ければ何もしない (0 は「まだ読まれていない」なので記録する)。
-  if (current === undefined) return;
-
-  await repository.applyView(noteId, logScoreAfterView(current, viewedOn));
 }

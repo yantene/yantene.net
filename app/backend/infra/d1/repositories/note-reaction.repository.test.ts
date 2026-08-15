@@ -5,14 +5,21 @@ import { D1NoteReactionQueryRepository } from "./note-reaction.query-repository"
 import { D1NoteCommandRepository } from "./note.command-repository";
 import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
 import { ReactionEmoji } from "~/backend/domain/note-reaction";
-import { viewWeightLog } from "~/backend/domain/note-view";
-import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import {
+  logScoreAfterReaction,
+  reactionWeightLog,
+  viewWeightLog,
+} from "~/backend/domain/note-view";
+import { createTestD1, readViewLogScore } from "~/backend/infra/d1/test-helper";
 
 const LIKE = ReactionEmoji.like();
 const PARTY = ReactionEmoji.create("🎉");
+const PUBLISHED_ON = "2026-01-15";
+const REACTED_ON = "2026-02-01";
 
 /** リアクションを付ける先の記事を 1 本用意する。 */
 async function setup(): Promise<{
+  d1: D1Database;
   noteId: string;
   commands: D1NoteReactionCommandRepository;
   queries: D1NoteReactionQueryRepository;
@@ -24,13 +31,14 @@ async function setup(): Promise<{
       title: NoteTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
-      publishedOn: Temporal.PlainDate.from("2026-01-15"),
-      lastModifiedOn: Temporal.PlainDate.from("2026-01-15"),
+      publishedOn: Temporal.PlainDate.from(PUBLISHED_ON),
+      lastModifiedOn: Temporal.PlainDate.from(PUBLISHED_ON),
       sourceHash: "hash-0",
     }),
   );
 
   return {
+    d1,
     noteId: note.id,
     commands: new D1NoteReactionCommandRepository(d1),
     queries: new D1NoteReactionQueryRepository(d1),
@@ -84,22 +92,54 @@ describe("D1NoteReactionCommandRepository", () => {
     expect(await queries.listByNoteId(noteId)).toEqual([]);
   });
 
-  it("スコアの読み書きは記事の列を触る", async () => {
-    const { noteId, commands } = await setup();
-
+  it("スコアの足し引きは記事の列を触る", async () => {
+    const { d1, noteId, commands } = await setup();
     // 出発点は投稿日の重み (upsert がそこから始めている)。
-    expect(await commands.findLogScore(noteId)).toBe(
-      viewWeightLog("2026-01-15"),
+    const start = viewWeightLog(PUBLISHED_ON);
+
+    await commands.addLogScore(noteId, reactionWeightLog(REACTED_ON));
+
+    expect(await readViewLogScore(d1, noteId)).toBe(
+      logScoreAfterReaction(start, REACTED_ON),
     );
 
-    await commands.applyLogScore(noteId, 1.5);
+    await commands.subtractLogScore(
+      noteId,
+      reactionWeightLog(REACTED_ON),
+      start,
+    );
 
-    expect(await commands.findLogScore(noteId)).toBe(1.5);
+    expect(await readViewLogScore(d1, noteId)).toBeCloseTo(start, 10);
   });
 
-  it("無い記事のスコアは undefined", async () => {
-    const { commands } = await setup();
+  /*
+   * 読んでから書き戻す 2 手だと、間に別の書き込みが挟まったときに片方の加算が
+   * まるごと消える (#258)。今の値に足すところまで SQL に任せて取りこぼさない。
+   */
+  it("同じ記事に同時に押されても、どちらの加算も消えない", async () => {
+    const { d1, noteId, commands } = await setup();
+    const start = viewWeightLog(PUBLISHED_ON);
+    const weight = reactionWeightLog(REACTED_ON);
 
-    expect(await commands.findLogScore("missing")).toBeUndefined();
+    await Promise.all([
+      commands.addLogScore(noteId, weight),
+      commands.addLogScore(noteId, weight),
+    ]);
+
+    expect(await readViewLogScore(d1, noteId)).toBeCloseTo(
+      logScoreAfterReaction(
+        logScoreAfterReaction(start, REACTED_ON),
+        REACTED_ON,
+      ),
+      12,
+    );
+  });
+
+  it("記事の投稿日を読む。無い記事は undefined", async () => {
+    const { noteId, commands } = await setup();
+
+    // 取り消しの下限を出すのに要る。重みに直すのはドメインの仕事なので日付のまま返す。
+    expect(await commands.findPublishedOn(noteId)).toBe(PUBLISHED_ON);
+    expect(await commands.findPublishedOn("missing")).toBeUndefined();
   });
 });

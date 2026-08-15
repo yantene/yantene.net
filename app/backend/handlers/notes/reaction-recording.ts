@@ -2,11 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import type { NoteSlug } from "~/backend/domain/note";
 import type { ReactionEmoji } from "~/backend/domain/note-reaction";
 import type { Session, SessionId } from "~/backend/domain/session";
-import {
-  logScoreAfterReaction,
-  logScoreAfterReactionRemoved,
-  viewWeightLog,
-} from "~/backend/domain/note-view";
+import { reactionWeightLog, viewWeightLog } from "~/backend/domain/note-view";
 import { Session as SessionEntity } from "~/backend/domain/session";
 import { D1NoteReactionCommandRepository } from "~/backend/infra/d1/repositories";
 import {
@@ -72,7 +68,8 @@ export async function putReaction(
   await reactions.increment(note.id, emoji);
 
   if (existing === undefined) {
-    await applyReactionScore(reactions, note.id, today.toString());
+    // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
+    await reactions.addLogScore(note.id, reactionWeightLog(today.toString()));
   }
 
   return next;
@@ -104,42 +101,27 @@ export async function deleteReaction(
   return next;
 }
 
-/** いまのスコアを読み、リアクションぶんを足して書き戻す。 */
-async function applyReactionScore(
-  reactions: D1NoteReactionCommandRepository,
-  noteId: string,
-  reactedOn: string,
-): Promise<void> {
-  const current = await reactions.findLogScore(noteId);
-  // 記事が無ければ何もしない (0 は「まだ読まれていない」なので記録する)。
-  if (current === undefined) return;
-
-  await reactions.applyLogScore(
-    noteId,
-    logScoreAfterReaction(current, reactedOn),
-  );
-}
-
 /**
- * いまのスコアから、押したときに足したのと同じ重みを引いて書き戻す。
+ * 押したときに足したのと同じ重みを、スコアから引く。
  *
  * 下限にはその記事の出発点 (投稿日の重み) を渡す。まだ読まれていない古い記事では、
  * リアクションを足した時点で出発点が丸めで消えており、素直に引くと引ききってしまう。
+ *
+ * 投稿日を先に読むのは下限を出すためで、スコアのように読んで書き戻しているわけではない。
+ * 投稿日は閲覧やリアクションでは動かないので、間に別の書き込みが挟まっても構わない。
+ * 記事が無ければ投稿日も読めず、そのまま何もしない。
  */
 async function removeReactionScore(
   reactions: D1NoteReactionCommandRepository,
   noteId: string,
   reactedOn: string,
 ): Promise<void> {
-  const context = await reactions.findScoreContext(noteId);
-  if (context === undefined) return;
+  const publishedOn = await reactions.findPublishedOn(noteId);
+  if (publishedOn === undefined) return;
 
-  await reactions.applyLogScore(
+  await reactions.subtractLogScore(
     noteId,
-    logScoreAfterReactionRemoved(
-      context.logScore,
-      reactedOn,
-      viewWeightLog(context.publishedOn),
-    ),
+    reactionWeightLog(reactedOn),
+    viewWeightLog(publishedOn),
   );
 }
