@@ -5,9 +5,11 @@ import type { Route } from "./+types/notes.$slug";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
 import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
-import { ReactionEmoji } from "~/backend/domain/note-reaction";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
-import { applyReaction } from "~/backend/handlers/notes/reaction.handler";
+import {
+  applyReaction,
+  parseReactionEmoji,
+} from "~/backend/handlers/notes/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
@@ -36,13 +38,31 @@ export async function action({
 }: Route.ActionArgs): Promise<Response> {
   const form = await request.formData();
   const raw = form.get("emoji");
+  // 値が無ければ取り消し。すでに押しているものは、チップが空を送ってくる。
+  const wanted = typeof raw === "string" && raw !== "" ? raw : undefined;
+  const emoji = wanted === undefined ? undefined : parseReactionEmoji(wanted);
+
+  /*
+   * 読めない絵文字は 400 で断る。JSON API と同じ判定 (parseReactionEmoji) を通し、
+   * 扱いも API に揃える。ここを取り消しに倒さないのは、押した人は「付ける」つもりで
+   * 押しているためで、読めない値でいまのリアクションを外すと、本人に見えている姿と
+   * 記録が食い違う (ADR 0012 の「黙って既定に倒さない」と同じ理由)。
+   *
+   * 一覧 (`app/lib/emoji/allowed-emoji.ts`) を絞り直すと、旧一覧で押された行がチップ
+   * として残るので、読み手からもここを踏める。
+   *
+   * throw ではなく return するのは、投げると ErrorBoundary のエラー画面になるため。
+   * 返せば React Router は action の結果として扱うので、記事はそのまま描かれ、状態
+   * だけが 400 になる。
+   */
+  if (wanted !== undefined && emoji === undefined) {
+    return new Response(null, { status: 400 });
+  }
+
   const outcome = await applyReaction(
     context.get(cloudflareContext).env,
     params.slug,
-    // 値が無ければ取り消し。読めない絵文字は applyReaction が弾く。
-    typeof raw === "string" && raw !== ""
-      ? ReactionEmoji.create(raw)
-      : undefined,
+    emoji,
     request.headers.get("cookie"),
   );
 

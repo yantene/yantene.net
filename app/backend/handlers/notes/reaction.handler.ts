@@ -50,12 +50,26 @@ function parseSlug(raw: string): NoteSlug | undefined {
 }
 
 /**
- * 本文から絵文字を取り出す。
+ * 受け取った文字列を絵文字にする。読めなければ undefined。
  *
  * 一覧に無いものは弾く (fail-loud)。肌の色・髪の色を含むものはそもそも一覧に無いので、
  * ここで落ちる。「知らない絵文字は黙って既定に倒す」ようなことはしない。押した本人に
  * 見えている絵文字と、記録される絵文字が食い違うため。
+ *
+ * API (JSON) とページの action (フォーム) の両方から呼ぶ。入り口ごとに `create` を
+ * 直に呼ぶと、片方だけ握り忘れて同じ入力の扱いが割れる (#253 がまさにそれで、ページ側は
+ * 500 になっていた)。受け入れる集合と読めなかったときの形を、ここ 1 箇所に持たせる。
  */
+export function parseReactionEmoji(raw: string): ReactionEmoji | undefined {
+  try {
+    return ReactionEmoji.create(raw);
+  } catch (error) {
+    if (error instanceof InvalidReactionEmojiError) return undefined;
+    throw error;
+  }
+}
+
+/** 本文から絵文字を取り出す。読めない・そもそも無いときは undefined。 */
 async function readEmoji(request: Request): Promise<ReactionEmoji | undefined> {
   let body: unknown;
   try {
@@ -68,12 +82,7 @@ async function readEmoji(request: Request): Promise<ReactionEmoji | undefined> {
   const { emoji } = body as Record<string, unknown>;
   if (typeof emoji !== "string") return undefined;
 
-  try {
-    return ReactionEmoji.create(emoji);
-  } catch (error) {
-    if (error instanceof InvalidReactionEmojiError) return undefined;
-    throw error;
-  }
+  return parseReactionEmoji(emoji);
 }
 
 /** 記事が見つからないことを、呼び出し側が扱える形で返す。 */
