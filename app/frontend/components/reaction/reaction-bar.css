@@ -47,6 +47,22 @@
 }
 
 /*
+ * 送信が終わるまで押下を受け取らない間 (reaction-bar.tsx)。
+ *
+ * 押した手応えだけ返して何も起きないと、届いたのかどうかが読み取れない。手応えのほうを
+ * 止める。hover の色はそのままにする。指もカーソルも置いたまま状態が入れ替わる位置なので、
+ * ここで色を動かすと往復のたびにちらつく。
+ */
+.reaction-chip[aria-disabled="true"] {
+  cursor: default;
+}
+
+.reaction-chip[aria-disabled="true"]:active {
+  opacity: 1;
+  transform: none;
+}
+
+/*
  * 絵文字の意匠 (Twemoji) を当てるのはここだけ。
  *
  * このフォントは `unicode-range` に ASCII の数字を含むので、ページ全体に効かせると

@@ -106,6 +106,22 @@ export function ReactionBar({
    */
   const view = pendingView({ reactions, mine }, fetcher.formData);
 
+  /*
+   * 送信が終わるまで、次の押下を受け取らない (#248)。
+   *
+   * 同じ押下が 2 度サーバーへ届くと、両方が「まだ押していない」を読んで数を 2 つ進める。
+   * セッションが持つリアクションは 1 件なので、取り消しても 1 しか戻らず、差が残り続ける。
+   *
+   * 待つのは応答までではなく idle までにする。`loading` の間は loader がまだ引き直して
+   * いないので、そこで次を送ると古い `mine` を元に「押す/取り消す」を決めることになる。
+   * 楽観表示は `fetcher.formData` が残っている間ずっと出るので、待たせても画面は止まらない。
+   *
+   * これで止まるのは読み手のダブルクリックだけ。意図的な二重送信も、JS が無い環境での
+   * 二重 submit も素通しのままになる。そこまで塞ぐなら、セッションの置き場所ごと
+   * 変えることになる。
+   */
+  const isSending = fetcher.state !== "idle";
+
   // 同じページに 2 つ置かれても id がぶつからないようにする。
   const hintId = useId();
 
@@ -115,6 +131,13 @@ export function ReactionBar({
       className="reaction-bar"
       aria-label={t("reaction.reactionsLabel")}
       aria-describedby={hintId}
+      /*
+       * 送信中の押下はここで捨てる。react-router の Form は、渡した onSubmit を先に
+       * 呼んでから `defaultPrevented` を見るので、これで送信そのものが止まる。
+       */
+      onSubmit={(event) => {
+        if (isSending) event.preventDefault();
+      }}
       /*
        * 押した位置に留まる。action は記事へ送り返すので、そのままだと読み終えた足元で
        * 押したのに記事の先頭へ飛ばされる。
@@ -138,6 +161,12 @@ export function ReactionBar({
             name="emoji"
             value={isMine ? "" : reaction.emoji}
             aria-pressed={isMine}
+            /*
+             * `disabled` は使わない。押した瞬間に焦点の当たっている要素が disabled に
+             * なると、焦点が body へ落ちて読み上げの現在地が失われる。押せる形のまま
+             * 残し、受け付けないことだけを伝える。
+             */
+            aria-disabled={isSending}
             aria-label={
               reaction.emoji === LIKE ? t("reaction.like") : undefined
             }
@@ -184,6 +213,8 @@ export function ReactionBar({
             <EmojiPalette
               onPick={(emoji) => {
                 setPaletteOpen(false);
+                // フォームの submit を通らない経路なので、門番をここにも置く。
+                if (isSending) return;
                 void fetcher.submit(
                   { emoji: emoji === view.mine ? "" : emoji },
                   { method: "post", preventScrollReset: true },
