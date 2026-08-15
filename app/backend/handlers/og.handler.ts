@@ -1,9 +1,10 @@
 /* eslint-disable no-secrets/no-secrets -- インライン SVG / CSS の高エントロピー文字列を秘匿情報と誤検知するため無効化 (このファイルは秘密を含まない)。 */
 import { Hono } from "hono";
-import { NoteSlug } from "~/backend/domain/note";
+import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
 import highlightSource from "~/frontend/assets/highlight.svg?raw";
+import { notFoundResponse } from "~/lib/problem-details";
 
 // フル字形の Noto Sans JP (サブセットだと ― 等の記号が豆腐になるため)。
 const FONT_KEY = "og/fonts/noto-sans-jp-700-full.ttf";
@@ -339,6 +340,10 @@ async function renderAndCache(
  * - GET /og/notes/:slug → 記事のブランドカード (imageUrl 有無に関わらず常に生成)
  * - GET /og/default     → サイト共通のデフォルトカード
  * R2 にキャッシュし、記事更新やテンプレ版変更で自動再生成する。
+ *
+ * 見つからないときは RFC 9457 の Problem Details で返す。返すものが画像であっても、
+ * 返せなかったときの形はサイト全体で 1 つに揃える。同じく画像を配る
+ * `handlers/link-cards/assets.handler.ts` も同じ形で断る。
  */
 export function createOgRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
@@ -355,12 +360,17 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     let slug: NoteSlug;
     try {
       slug = NoteSlug.create(c.req.param("slug"));
-    } catch {
-      return c.notFound();
+    } catch (error) {
+      // 404 に倒すのはスラグとして読めなかったときだけ。それ以外を一緒に握ると、
+      // 想定外の失敗が「カードの無い記事」の顔をして静かに通る (fail-loud)。
+      if (error instanceof InvalidNoteSlugError) {
+        return notFoundResponse("note not found");
+      }
+      throw error;
     }
 
     const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
-    if (note === undefined) return c.notFound();
+    if (note === undefined) return notFoundResponse("note not found");
 
     const html = cardHtml({
       title: note.title.toString(),
