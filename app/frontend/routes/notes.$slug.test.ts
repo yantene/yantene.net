@@ -58,10 +58,14 @@ async function setup(): Promise<Harness> {
 }
 
 /** リアクションの行から押下を 1 つ送る。空文字は取り消し。 */
-async function submit(harness: Harness, emoji: string): Promise<Response> {
+async function submit(
+  harness: Harness,
+  emoji: string,
+  slug: string = SLUG,
+): Promise<Response> {
   const body = new FormData();
   body.set("emoji", emoji);
-  const request = new Request(`https://example.test/notes/${SLUG}`, {
+  const request = new Request(`https://example.test/notes/${slug}`, {
     method: "POST",
     body,
     headers: harness.cookie === "" ? {} : { cookie: harness.cookie },
@@ -70,7 +74,7 @@ async function submit(harness: Harness, emoji: string): Promise<Response> {
   const response = await action({
     request,
     url: new URL(request.url),
-    params: { slug: SLUG },
+    params: { slug },
     pattern: "/notes/:slug",
     context: harness.context,
   } satisfies Route.ActionArgs);
@@ -118,6 +122,27 @@ describe("記事ページの action", () => {
     const response = await submit(harness, "👍🏽");
 
     expect(response.status).toBe(400);
+  });
+
+  /*
+   * 記事が無いときも同じ形で割れていた (#269)。applyReaction が投げる
+   * NoteNotFoundError は Hono の onError に届かないので、ページ側では 500 になる。
+   * 非公開に切り替えた直後、開いたままのタブから押すと踏める。
+   */
+  it("無い記事へ押しても throw せず、API と同じ 404 で断る", async () => {
+    const harness = await setup();
+
+    const response = await submit(harness, "❤️", "does-not-exist");
+
+    expect(response.status).toBe(404);
+  });
+
+  it("スラグとして読めない値も 404 で断る", async () => {
+    const harness = await setup();
+
+    const response = await submit(harness, "❤️", "not a slug!");
+
+    expect(response.status).toBe(404);
   });
 
   /*

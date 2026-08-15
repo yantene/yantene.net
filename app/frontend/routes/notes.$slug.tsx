@@ -67,6 +67,16 @@ export async function action({
   );
 
   /*
+   * 記事が無ければ 404。ここも 400 と同じく return で返す (#269)。
+   *
+   * 非公開に切り替えた直後、開いたままのタブから押すと踏める。loader が
+   * 「見つからない」を throw せず状態として返しているのと揃える。
+   */
+  if (outcome === undefined) {
+    return new Response(null, { status: 404 });
+  }
+
+  /*
    * 結果は返さず、記事へ送り返す。JS の有無で経路を分けないためで、押した後の値は
    * どちらの環境でも loader から降ってくる。JS があるときは押した瞬間に画面を先に
    * 動かす (components/reaction) ので、往復の待ちは表に出ない。
