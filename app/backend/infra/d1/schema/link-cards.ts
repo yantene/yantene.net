@@ -12,6 +12,9 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
  * - title: **NULL は「取得できなかった」を表す。** 行を作らずにおくと、落ちている相手を
  *   refresh のたびに叩き直すことになる。失敗も期限付きで覚えておく。
  * - has_image / has_favicon: 画像の実体は R2 にあるので、ここでは有無だけを持つ。
+ * - image_missed: **og:image はあるのに写せなかった**ことを表す。has_image と 2 列で
+ *   絵の状態 (写した / 無い / 取り逃した) を持つ。取り逃したカードは短い期限で
+ *   取り直すので、「絵を持たない相手」と分けて覚えておく必要がある。
  * - fetched_at: 最後に取りに行った時刻 (Unix 秒)。期限切れの判定に使う。
  */
 export const linkCards = sqliteTable(
@@ -23,6 +26,7 @@ export const linkCards = sqliteTable(
     description: text("description"),
     siteName: text("site_name"),
     hasImage: integer("has_image").notNull().default(0),
+    imageMissed: integer("image_missed").notNull().default(0),
     hasFavicon: integer("has_favicon").notNull().default(0),
     fetchedAt: integer("fetched_at").notNull(),
   },

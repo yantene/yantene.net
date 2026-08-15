@@ -8,6 +8,8 @@ export interface StaleLinkCardQuery {
   readonly available: Temporal.Instant;
   /** 取得できなかったカードは、この時刻より前に試したものが古い。 */
   readonly unavailable: Temporal.Instant;
+  /** 絵だけ取り逃したカードは、この時刻より前に取ったものが古い。 */
+  readonly imageMissed: Temporal.Instant;
   readonly limit: number;
 }
 

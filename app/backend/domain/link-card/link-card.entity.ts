@@ -12,17 +12,34 @@ import type { LinkCardUrl } from "./link-card-url.vo";
  * させたいため。逆に取れているものを長めにするのは、リンク先の見出しがそう頻繁に
  * 変わらないのと、refresh のたびに外部を叩き直す量を抑えたいため。
  *
+ * 絵だけ取り逃したカードを取れなかったものと同じ間隔にしているのは、取り逃しの多くが
+ * レート制限のような一時的なものだから。題が取れていれば「取得できた」として 14 日
+ * 待つことになり、絵が欠けたまま直らなかった (#255)。
+ *
  * Temporal.Instant は暦を持たないので日単位の加算ができない。時間で持つ。
  */
 const AVAILABLE_TTL_HOURS = 24 * 14;
 const UNAVAILABLE_TTL_HOURS = 24;
+const IMAGE_MISSED_TTL_HOURS = 24;
 
-/** 取得できたカードの中身。画像は R2 にあるので、ここでは有無だけを持つ。 */
+/**
+ * カードの絵をどうしたか。画像の実体は R2 にあるので、ここでは状態だけを持つ。
+ *
+ * - `stored`: 写した。自分のところから配れる
+ * - `absent`: 載せる絵が無い。相手が出していないか、載せられない型だった
+ * - `missed`: 絵はあるはずなのに写せなかった。次は取れるかもしれない
+ *
+ * `absent` と `missed` を分けるのは、取り直す価値があるのが `missed` だけだから。
+ * 一緒くたにすると、絵を持たない相手まで短い間隔で叩き直すことになる。
+ */
+export type LinkCardImageState = "stored" | "absent" | "missed";
+
+/** 取得できたカードの中身。 */
 export interface LinkCardMetadata {
   readonly title: string;
   readonly description: string | undefined;
   readonly siteName: string | undefined;
-  readonly hasImage: boolean;
+  readonly image: LinkCardImageState;
   readonly hasFavicon: boolean;
 }
 
@@ -92,10 +109,15 @@ export class LinkCard {
   }
 
   private staleAt(): Temporal.Instant {
-    const hours = this.isAvailable
-      ? AVAILABLE_TTL_HOURS
-      : UNAVAILABLE_TTL_HOURS;
-    return this.fields.fetchedAt.add({ hours });
+    return this.fields.fetchedAt.add({ hours: this.ttlHours() });
+  }
+
+  private ttlHours(): number {
+    const metadata = this.fields.metadata;
+    if (metadata === undefined) return UNAVAILABLE_TTL_HOURS;
+    return metadata.image === "missed"
+      ? IMAGE_MISSED_TTL_HOURS
+      : AVAILABLE_TTL_HOURS;
   }
 }
 
@@ -107,9 +129,11 @@ export class LinkCard {
 export function staleCutoffs(now: Temporal.Instant): {
   readonly available: Temporal.Instant;
   readonly unavailable: Temporal.Instant;
+  readonly imageMissed: Temporal.Instant;
 } {
   return {
     available: now.subtract({ hours: AVAILABLE_TTL_HOURS }),
     unavailable: now.subtract({ hours: UNAVAILABLE_TTL_HOURS }),
+    imageMissed: now.subtract({ hours: IMAGE_MISSED_TTL_HOURS }),
   };
 }

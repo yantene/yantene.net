@@ -2,11 +2,12 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { LinkCardUrl } from "./link-card-url.vo";
 import { LinkCard, staleCutoffs } from "./link-card.entity";
+import type { LinkCardImageState } from "./link-card.entity";
 
 const url = LinkCardUrl.create("https://example.com/a");
 const fetchedAt = Temporal.Instant.from("2026-01-01T00:00:00Z");
 
-function availableCard(): LinkCard {
+function availableCard(image: LinkCardImageState = "stored"): LinkCard {
   return LinkCard.available({
     id: "abc",
     url,
@@ -14,7 +15,7 @@ function availableCard(): LinkCard {
       title: "例",
       description: undefined,
       siteName: undefined,
-      hasImage: false,
+      image,
       hasFavicon: false,
     },
     fetchedAt,
@@ -50,14 +51,28 @@ describe("LinkCard", () => {
       expect(card.isStale(fetchedAt.add({ hours: 23 }))).toBe(false);
       expect(card.isStale(fetchedAt.add({ hours: 24 }))).toBe(true);
     });
+
+    it("絵だけ取り逃したカードは 1 日で古くなる", () => {
+      const card = availableCard("missed");
+      expect(card.isStale(fetchedAt.add({ hours: 23 }))).toBe(false);
+      expect(card.isStale(fetchedAt.add({ hours: 24 }))).toBe(true);
+    });
+
+    it("絵を持たない相手のカードは 14 日待つ", () => {
+      // 取り逃しと違い、短い間隔で叩き直しても結論は変わらない。
+      const card = availableCard("absent");
+      expect(card.isStale(fetchedAt.add({ hours: 24 * 14 - 1 }))).toBe(false);
+      expect(card.isStale(fetchedAt.add({ hours: 24 * 14 }))).toBe(true);
+    });
   });
 });
 
 describe("staleCutoffs", () => {
-  it("期限の境目を取得の成否ごとに返す", () => {
+  it("期限の境目を取得のされ方ごとに返す", () => {
     const now = Temporal.Instant.from("2026-02-01T00:00:00Z");
     const cutoffs = staleCutoffs(now);
     expect(cutoffs.available.toString()).toBe("2026-01-18T00:00:00Z");
     expect(cutoffs.unavailable.toString()).toBe("2026-01-31T00:00:00Z");
+    expect(cutoffs.imageMissed.toString()).toBe("2026-01-31T00:00:00Z");
   });
 });

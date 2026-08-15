@@ -37,7 +37,7 @@ export function toLinkCardView(card: LinkCard): LinkCardView | undefined {
     title: metadata.title,
     description: metadata.description ?? null,
     siteName: metadata.siteName ?? null,
-    imageUrl: metadata.hasImage ? assetUrl(card.id, "image") : null,
+    imageUrl: metadata.image === "stored" ? assetUrl(card.id, "image") : null,
     faviconUrl: metadata.hasFavicon ? assetUrl(card.id, "favicon") : null,
   };
 }

@@ -119,18 +119,20 @@ export class LinkCardsRefreshService {
     const id = await linkCardIdFor(url);
     const fetched = await this.fetcher.fetch(url);
 
-    // 前回の画像を先に捨てる。今回 og:image が消えていた場合に、古い絵が残り続けない。
-    await this.assets.deleteAssets(id);
-
     if (fetched === undefined) {
+      // 前回の写しには触れない。相手が一時的に落ちただけのことがあり、そのときに捨てると
+      // 復帰したときに写し直すだけの無駄になる。今回の中身が分かるまで掃除は待つ。
       await this.command.upsert(
         LinkCard.unavailable({ id, url, fetchedAt: now }),
       );
       return false;
     }
 
-    if (fetched.image !== undefined) {
-      await this.assets.putImage(id, fetched.image);
+    // 前回の写しを捨てる。今回 og:image が消えていた場合に、古い絵が残り続けない。
+    await this.assets.deleteAssets(id);
+
+    if (fetched.image.state === "stored") {
+      await this.assets.putImage(id, fetched.image.asset);
     }
     if (fetched.favicon !== undefined) {
       await this.assets.putFavicon(id, fetched.favicon);
@@ -144,7 +146,9 @@ export class LinkCardsRefreshService {
           title: fetched.title,
           description: fetched.description,
           siteName: fetched.siteName,
-          hasImage: fetched.image !== undefined,
+          // 絵を取り逃したことはここまで運ぶ。カード自体は取れているので、期限を
+          // 分けておかないと絵の欠けたまま 14 日直らない。
+          image: fetched.image.state,
           hasFavicon: fetched.favicon !== undefined,
         },
         fetchedAt: now,

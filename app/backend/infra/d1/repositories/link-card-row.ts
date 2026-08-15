@@ -1,3 +1,4 @@
+import type { LinkCardImageState } from "~/backend/domain/link-card";
 import { LinkCard, LinkCardUrl } from "~/backend/domain/link-card";
 import { unixToInstant } from "~/backend/infra/d1/temporal";
 
@@ -9,8 +10,21 @@ export interface LinkCardRow {
   readonly description: string | null;
   readonly siteName: string | null;
   readonly hasImage: number;
+  readonly imageMissed: number;
   readonly hasFavicon: number;
   readonly fetchedAt: number;
+}
+
+/**
+ * 2 つの列を 1 つの状態に畳む。
+ *
+ * 書くときは必ずどちらか一方だけを立てるので両方立った行は無いが、写しがあるなら
+ * それが事実なので、has_image を先に見る。
+ */
+function toImageState(row: LinkCardRow): LinkCardImageState {
+  if (row.hasImage !== 0) return "stored";
+  if (row.imageMissed !== 0) return "missed";
+  return "absent";
 }
 
 /**
@@ -34,7 +48,7 @@ export function toLinkCard(row: LinkCardRow): LinkCard {
       title: row.title,
       description: row.description ?? undefined,
       siteName: row.siteName ?? undefined,
-      hasImage: row.hasImage !== 0,
+      image: toImageState(row),
       hasFavicon: row.hasFavicon !== 0,
     },
     fetchedAt,

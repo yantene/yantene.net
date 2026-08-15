@@ -4,8 +4,8 @@ import { isAllowedImageType, mediaTypeOf } from "./image-content-type";
 import { parseOgp } from "./parse-ogp";
 import type {
   FetchedLinkCard,
+  FetchedLinkCardImage,
   ILinkCardFetcher,
-  LinkCardAsset,
   LinkCardUrl,
 } from "~/backend/domain/link-card";
 import type { ILogger } from "~/backend/domain/shared";
@@ -82,8 +82,9 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
     if (ogp.title === undefined) return undefined;
 
     // 画像は取れなくてもカードは成立する。ここで諦めるのは画像だけ。
+    const imageUrl = toAbsolute(ogp.imageUrl, page.url);
     const [image, favicon] = await Promise.all([
-      this.loadAsset(toAbsolute(ogp.imageUrl, page.url), IMAGE_MAX_BYTES),
+      this.loadAsset(imageUrl, IMAGE_MAX_BYTES),
       // rel=icon が書かれていなくても、慣例の位置に置かれていることが多い。
       this.loadAsset(
         toAbsolute(ogp.faviconUrl ?? "/favicon.ico", page.url),
@@ -91,39 +92,61 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
       ),
     ]);
 
+    // 絵だけ取り逃したことを残す。カードは題と説明で成立するので先へ進むが、無音だと
+    // 「絵の無いカード」と見分けが付かず、直すきっかけが無い (#255)。
+    if (image.state === "missed") {
+      this.logger.info("link card image not mirrored", {
+        url: url.toString(),
+        imageUrl,
+      });
+    }
+
     return {
       title: truncate(ogp.title, TITLE_MAX_CHARS) ?? ogp.title,
       description: truncate(ogp.description, DESCRIPTION_MAX_CHARS),
       siteName: truncate(ogp.siteName, TITLE_MAX_CHARS),
       image,
-      favicon,
+      favicon: favicon.state === "stored" ? favicon.asset : undefined,
     };
   }
 
+  /**
+   * 絵を 1 つ写す。
+   *
+   * 取れなかったこと (missed) と、載せる絵が無いこと (absent) を分けて返す。取り直す
+   * 価値があるのは前者だけで、一緒くたにすると絵を持たない相手まで短い間隔で叩き直す
+   * ことになる。
+   */
   private async loadAsset(
     url: string | undefined,
     maxBytes: number,
-  ): Promise<LinkCardAsset | undefined> {
-    if (url === undefined) return undefined;
+  ): Promise<FetchedLinkCardImage> {
+    // 書かれていない・http(s) で無い URL は、そもそも載せる絵が無いということ。
+    if (url === undefined) return { state: "absent" };
     try {
       const response = await fetchCapped(url, {
         accept: "image/*",
         maxBytes,
       });
-      if (response === undefined) return undefined;
+      // 取りに行って返ってこなかった (レート制限・不調・大きすぎ)。次は取れるかもしれない。
+      if (response === undefined) return { state: "missed" };
 
-      if (!isAllowedImageType(response.contentType)) return undefined;
+      // 載せられない型 (SVG 等) は、取り直しても結論が変わらない。
+      if (!isAllowedImageType(response.contentType)) return { state: "absent" };
 
       return {
-        bytes: response.bytes,
-        contentType: mediaTypeOf(response.contentType),
+        state: "stored",
+        asset: {
+          bytes: response.bytes,
+          contentType: mediaTypeOf(response.contentType),
+        },
       };
     } catch (error) {
       this.logger.debug("link card asset fetch failed", {
         url,
         ...errorToContext(error),
       });
-      return undefined;
+      return { state: "missed" };
     }
   }
 }

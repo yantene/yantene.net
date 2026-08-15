@@ -12,29 +12,30 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 
 ## 一覧
 
-| #                                                            | タイトル                                                         | Status   |
-| ------------------------------------------------------------ | ---------------------------------------------------------------- | -------- |
-| [0001](0001-record-architecture-decisions.md)                | アーキテクチャ決定を ADR として記録する                          | Accepted |
-| [0002](0002-value-objects-at-repository-boundaries.md)       | リポジトリ境界では Value Object / ブランド型で受け渡す           | Accepted |
-| [0003](0003-clean-architecture-and-cqrs.md)                  | Clean Architecture (DIP) と CQRS を採用する                      | Accepted |
-| [0004](0004-github-as-content-source-of-truth.md)            | コンテンツの正本を GitHub に置き、D1 / R2 をキャッシュにする     | Accepted |
-| [0005](0005-mdast-over-html-rendering.md)                    | Markdown を HTML ではなく MDAST でフロントエンドに渡す           | Accepted |
-| [0006](0006-react-router-framework-mode.md)                  | ページ描画は React Router のフレームワークモードに任せる         | Accepted |
-| [0007](0007-strict-csp-outside-development.md)               | CSP に `'unsafe-inline'` を足さず、development でのみ CSP を外す | Accepted |
-| [0008](0008-interactive-day-clock-via-web-animations-api.md) | 時間の表現を Web Animations API で操作可能にする                 | Accepted |
-| [0009](0009-serve-note-source-markdown-verbatim.md)          | ノートの原文 Markdown を R2 から verbatim で配信する             | Accepted |
-| [0010](0010-hand-written-service-worker-without-precache.md) | Service Worker を手書きし、先回りして蓄えない                    | Accepted |
-| [0011](0011-reader-session-in-kv.md)                         | 読み手のセッションを KV に置き、同じ日の読み直しを数えない       | Accepted |
-| [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションを一人 1 つに限り、意匠は Twemoji を self-host する  | Accepted |
-| [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に MathML へ組み、MDAST に埋めて配る            | Accepted |
-| [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす    | Accepted |
-| [0015](0015-twemoji-scoped-to-reaction-ui.md)                | Twemoji はリアクションの UI にだけ当て、ページ全体には当てない   | Accepted |
-| [0016](0016-receive-webmentions-in-house.md)                 | Webmention の受信を自前で実装し、検証は非同期に回す              | Accepted |
-| [0017](0017-webfonts-from-google-fonts.md)                   | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く    | Accepted |
-| [0018](0018-typeset-math-with-temml.md)                      | 数式は Temml で組み、inline style は MathML の中へ移す           | Accepted |
-| [0019](0019-inline-style-for-math.md)                        | style-src に 'unsafe-inline' を置き、script-src は厳格なまま保つ | Accepted |
-| [0020](0020-negotiate-note-source-markdown-on-accept.md)     | `/notes/<slug>` は Accept を見て原文 Markdown を返す             | Accepted |
-| [0021](0021-measure-reading-with-web-analytics-beacon.md)    | 閲覧は Web Analytics のビーコンで数え、script-src を 1 つ開く    | Accepted |
-| [0022](0022-bake-midi-into-opus-and-serve-audio-assets.md)   | 曲は refresh 前に Opus へ焼いて配り、MIDI は原本として添える     | Accepted |
-| [0023](0023-render-mermaid-in-the-browser.md)                | Mermaid の図はブラウザで組み、本体は遅延して読む                 | Accepted |
-| [0024](0024-clock-origin-from-real-time-at-ssr.md)           | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める  | Accepted |
+| #                                                            | タイトル                                                           | Status   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ | -------- |
+| [0001](0001-record-architecture-decisions.md)                | アーキテクチャ決定を ADR として記録する                            | Accepted |
+| [0002](0002-value-objects-at-repository-boundaries.md)       | リポジトリ境界では Value Object / ブランド型で受け渡す             | Accepted |
+| [0003](0003-clean-architecture-and-cqrs.md)                  | Clean Architecture (DIP) と CQRS を採用する                        | Accepted |
+| [0004](0004-github-as-content-source-of-truth.md)            | コンテンツの正本を GitHub に置き、D1 / R2 をキャッシュにする       | Accepted |
+| [0005](0005-mdast-over-html-rendering.md)                    | Markdown を HTML ではなく MDAST でフロントエンドに渡す             | Accepted |
+| [0006](0006-react-router-framework-mode.md)                  | ページ描画は React Router のフレームワークモードに任せる           | Accepted |
+| [0007](0007-strict-csp-outside-development.md)               | CSP に `'unsafe-inline'` を足さず、development でのみ CSP を外す   | Accepted |
+| [0008](0008-interactive-day-clock-via-web-animations-api.md) | 時間の表現を Web Animations API で操作可能にする                   | Accepted |
+| [0009](0009-serve-note-source-markdown-verbatim.md)          | ノートの原文 Markdown を R2 から verbatim で配信する               | Accepted |
+| [0010](0010-hand-written-service-worker-without-precache.md) | Service Worker を手書きし、先回りして蓄えない                      | Accepted |
+| [0011](0011-reader-session-in-kv.md)                         | 読み手のセッションを KV に置き、同じ日の読み直しを数えない         | Accepted |
+| [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションを一人 1 つに限り、意匠は Twemoji を self-host する    | Accepted |
+| [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に MathML へ組み、MDAST に埋めて配る              | Accepted |
+| [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす      | Accepted |
+| [0015](0015-twemoji-scoped-to-reaction-ui.md)                | Twemoji はリアクションの UI にだけ当て、ページ全体には当てない     | Accepted |
+| [0016](0016-receive-webmentions-in-house.md)                 | Webmention の受信を自前で実装し、検証は非同期に回す                | Accepted |
+| [0017](0017-webfonts-from-google-fonts.md)                   | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く      | Accepted |
+| [0018](0018-typeset-math-with-temml.md)                      | 数式は Temml で組み、inline style は MathML の中へ移す             | Accepted |
+| [0019](0019-inline-style-for-math.md)                        | style-src に 'unsafe-inline' を置き、script-src は厳格なまま保つ   | Accepted |
+| [0020](0020-negotiate-note-source-markdown-on-accept.md)     | `/notes/<slug>` は Accept を見て原文 Markdown を返す               | Accepted |
+| [0021](0021-measure-reading-with-web-analytics-beacon.md)    | 閲覧は Web Analytics のビーコンで数え、script-src を 1 つ開く      | Accepted |
+| [0022](0022-bake-midi-into-opus-and-serve-audio-assets.md)   | 曲は refresh 前に Opus へ焼いて配り、MIDI は原本として添える       | Accepted |
+| [0023](0023-render-mermaid-in-the-browser.md)                | Mermaid の図はブラウザで組み、本体は遅延して読む                   | Accepted |
+| [0024](0024-clock-origin-from-real-time-at-ssr.md)           | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める    | Accepted |
+| [0025](0025-retry-link-cards-that-missed-their-image.md)     | リンクカードの絵の取り逃しを別の状態として持ち、短い期限で取り直す | Accepted |
