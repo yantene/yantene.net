@@ -126,7 +126,7 @@ describe("GET /feed.xml?tag=...", () => {
     );
     const body = await res.text();
 
-    expect(body).toContain("<title>やんてね — 日記</title>");
+    expect(body).toContain("<title>やんてね - 日記</title>");
     expect(body).toContain(
       `<link href="https://example.test/feed.xml?tag=${encoded}" rel="self"`,
     );
@@ -149,9 +149,9 @@ describe("GET /feed.xml?tag=...", () => {
     );
     const body = await res.text();
 
-    expect(body).toContain("<title>やんてね — R&amp;D</title>");
+    expect(body).toContain("<title>やんてね - R&amp;D</title>");
     expect(body).toContain("tag=R%26D");
-    expect(body).not.toContain("<title>やんてね — R&D</title>");
+    expect(body).not.toContain("<title>やんてね - R&D</title>");
   });
 
   /*
@@ -171,7 +171,7 @@ describe("GET /feed.xml?tag=...", () => {
     const body = await res.text();
 
     expect(res.status).toBe(200);
-    expect(body).toContain("<title>やんてね — nope</title>");
+    expect(body).toContain("<title>やんてね - nope</title>");
     expect(body).not.toContain("<entry>");
   });
 
