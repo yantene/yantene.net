@@ -304,7 +304,11 @@ function withGfmAlerts<T extends Nodes>(node: T): T {
   };
 }
 
-/** Alert を運ぶ要素名。本文からは書けない、こちらが組み立てた印。 */
+/**
+ * Alert を運ぶ要素名。こちらが引用から組み立てた印。
+ *
+ * 印ではあるが、本文の生 HTML からも書けはする (mdast-renderer.tsx の sanitizeSchema を参照)。
+ */
 export const ALERT_TAG_NAME = "markdown-alert";
 
 /**
