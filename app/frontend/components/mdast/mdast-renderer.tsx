@@ -36,7 +36,7 @@ import { ALERT_TAG_NAME } from "~/backend/services/note-content-parser";
 import { LinkCard } from "~/frontend/components/link-card/link-card";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
-/** カードに差し替える段落を表す、本文には現れない要素名。 */
+/** カードに差し替える段落を表す、Markdown 記法には無い要素名。 */
 const LINK_CARD_TAG = "link-card";
 
 /** 図に差し替えるコードブロックを包む、本文には現れない要素名。 */
@@ -69,8 +69,10 @@ const LinkCardsContext = createContext<ReadonlyMap<string, LinkCardView>>(
  */
 const sanitizeSchema = {
   ...defaultSchema,
-  // link-card はこちらが組み立てた印で、本文からは書けない (Markdown の生 HTML は
-  // keepEmbedHtml が iframe 以外を落とす)。運ぶのは URL 1 つだけ。
+  // link-card はこちらが組み立てた印 (linkCardParagraph が起こす) だが、本文から書けない
+  // わけではない。iframe か audio を含む生 HTML のブロックは keepEmbedHtml が丸ごと通すので、
+  // そこに並べれば要素として残る。塞いでいないのは、運ぶのが URL 1 つだけで出力は
+  // LinkCardSlot がもう一度絞るうえ、本文を書けるのが書き手自身に限られるため。
   tagNames: [
     ...(defaultSchema.tagNames ?? []),
     "iframe",
@@ -88,7 +90,7 @@ const sanitizeSchema = {
     audio: ["controls", "preload"],
     source: ["src", "type"],
     [LINK_CARD_TAG]: ["url"],
-    // Alert も link-card と同じくこちらが組み立てた印で、本文からは書けない。
+    // Alert も link-card と同じくこちらが組み立てた印で、同じ経路なら本文からも書ける。
     // 運ぶのは種別 1 つだけ (note-content-parser.ts が引用から起こす)。
     [ALERT_TAG_NAME]: ["kind"],
     ...Object.fromEntries(

@@ -64,14 +64,16 @@ CSP はブラウザ側の許可でしかない。**こちらの sanitize は緩�
 リンクには従来どおり入らない (rehype-sanitize の既定が落とす)。
 
 ただし MathML なら、Temml が組んだものとは限らない。本文の生 HTML は既定では捨てるが、
-iframe を含むブロックだけは丸ごと通すので (`components/mdast/mdast-renderer.tsx` の
-`keepEmbedHtml`)、埋め込みと同じブロックに `<math style="...">` を並べれば、その inline
-style は落ちずに出る。`<mi>` のような中身は ancestors で `<math>` の下に縛ってあるが、
-`<math>` 自身はトップレベルに現れるので縛れない。
+iframe か audio を含むブロックだけは丸ごと通すので
+(`components/mdast/mdast-renderer.tsx` の `keepEmbedHtml`。音源については
+[ADR 0022](0022-bake-midi-into-opus-and-serve-audio-assets.md))、埋め込みや音源と同じ
+ブロックに `<math style="...">` を並べれば、その inline style は落ちずに出る。`<mi>` の
+ような中身は ancestors で `<math>` の下に縛ってあるが、`<math>` 自身はトップレベルに
+現れるので縛れない。
 
-つまり inline style が通る経路は 2 つ、refresh 時に Temml が組んだ MathML と、埋め込みの
-ある記事に書き手が直に書いた `<math>` である。後者を塞がないのは、そこを通れるのが書き手
-自身しかいないためである (次節)。
+つまり inline style が通る経路は 2 つ、refresh 時に Temml が組んだ MathML と、埋め込みか
+音源のある記事に書き手が直に書いた `<math>` である。後者を塞がないのは、そこを通れるのが
+書き手自身しかいないためである (次節)。
 
 ### 危険度の見積もり
 
@@ -122,6 +124,20 @@ Accepted な ADR の本文を書き換えない) に対する例外である。
 `<math style="...">` を並べれば通る。防御の根拠として誤った記述を残すほうが害が大きいため、
 追記ではなく本文の訂正で処理した。決定 (`style-src` にだけ `'unsafe-inline'` を置く) は
 変えていない。
+
+## 訂正 (2026-08-15)
+
+**再び本文を書き換えた。** 前節と同じく不変性に対する例外である。
+
+書き換えたのは同じ「数式以外に inline style は入らない」節の、生 HTML を通す条件である。
+公開時点では iframe を含むブロックだけを通していたが、
+[ADR 0022](0022-bake-midi-into-opus-and-serve-audio-assets.md) で `<audio>` が加わり、
+`keepEmbedHtml` は iframe **または** audio を含むブロックを通すようになった。前節の訂正と
+違って、この記述は書いた時点では正しく、実装が変わって古びたものである。
+
+それでも追記ではなく本文の訂正で処理したのは、ここが inline style の通る経路 (つまり
+防御の範囲) を説明する箇所だからである。本文が実態より狭い範囲を指したままだと、次に
+この判断へ触る人へ誤った前提を渡す。決定は変えていない。
 
 ## 参考 / More Information
 
