@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { SiMarkdown } from "react-icons/si";
 import { data, Link, redirect } from "react-router";
 import type { Route } from "./+types/notes.$slug";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
@@ -15,6 +14,7 @@ import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { NoteActions } from "~/frontend/components/note-actions/note-actions";
 import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
+import { NoteHeader } from "~/frontend/components/note-header/note-header";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -193,69 +193,14 @@ export default function NoteShow({
       <Header />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">
-          <header className="note-header mb-8">
-            {/*
-              カバー画像は表題より上、記事の先頭に置く。読み始める前に絵で記事の顔を
-              立てる。ファーストビューに入るので lazy にはせず、最優先で取りに行く。
-            */}
-            {note.imageUrl !== null && (
-              <img
-                src={note.imageUrl}
-                alt=""
-                fetchPriority="high"
-                decoding="async"
-                className="note-header-cover"
-              />
-            )}
-            {/*
-              読み始める前に「いつの、何を読むのか」が分かるようにする。日付と種別を
-              表題の上に置き、細い線で本文と隔てる。
-            */}
-            <p className="note-header-eyebrow">
-              <time className="dt-published" dateTime={note.publishedOn}>
-                {note.publishedOn.replaceAll("-", ".")}
-              </time>
-              <span className="note-header-kind">NOTE</span>
-            </p>
-            <h1 className="note-header-title p-name">{note.title}</h1>
-            {/*
-              この記事そのものを指す印と書き手の名乗り。Webmention を送る側・読む側の
-              パーサ (Bridgy 等) が「誰の何という記事への言及か」を辿るのに要る。
-              画面には出さないので視覚的には隠す。
-            */}
-            <a className="sr-only u-url" href={`${origin}/notes/${note.slug}`}>
-              {note.title}
-            </a>
-            <a className="sr-only p-author h-card" href={`${origin}/`}>
-              yantene
-            </a>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
-              {/*
-                原文 Markdown は React Router のルートではなく Hono が返すので、
-                Link ではなく素の <a> にする (クライアント遷移させない)。
-              */}
-              <a
-                href={`/notes/${note.slug}.md`}
-                className="press-control inline-flex items-center gap-1 hover:text-primary hover:underline"
-              >
-                <SiMarkdown aria-hidden="true" />
-                {t("notes.viewMarkdown")}
-              </a>
-            </div>
-            {note.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {note.tags.map((tg) => (
-                  <Link
-                    key={tg}
-                    to={`/notes?tag=${encodeURIComponent(tg)}`}
-                    className="badge badge-outline press-control gap-1 hover:badge-primary"
-                  >
-                    {tg}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </header>
+          <NoteHeader
+            slug={note.slug}
+            title={note.title}
+            imageUrl={note.imageUrl}
+            tags={note.tags}
+            publishedOn={note.publishedOn}
+            origin={origin}
+          />
           {/*
             反応する手と共有する手は、読み終えた足元だけでなく本文の手前にも置く。
             長い記事では、読み始めに共有しようと思っても末尾まで届かないため。
