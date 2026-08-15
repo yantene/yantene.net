@@ -98,6 +98,23 @@ describe("content security policy", () => {
     );
   });
 
+  /*
+   * 埋め込み動画のために開けた口が `frame-src` (ADR 0007)。
+   *
+   * リンクカードを OGP から自前で組むと決めたのは、相手が増えるたびに `frame-src` を
+   * 広げずに済ませるためだった (ADR 0014)。ここが広がるのは埋め込み先を増やすときで、
+   * **まさに歯止めが欲しい場面**なので、他のディレクティブと同じように丸ごと固定する。
+   *
+   * `frame-ancestors` は向きが逆で、こちらを枠に入れる側を閉じる。`X-Frame-Options: DENY`
+   * と対で効かせているため、片方だけ緩んでも気づけるよう両方を見る。
+   */
+  it("frame-src は埋め込み動画のホストにだけ開き、frame-ancestors は誰にも枠に入れさせない", async () => {
+    const directives = await directivesOf("production");
+
+    expect(directives).toContain("frame-src https://www.youtube-nocookie.com");
+    expect(directives).toContain("frame-ancestors 'none'");
+  });
+
   it("keeps the other security headers in every environment", async () => {
     for (const appEnv of ["development", "staging", "production"]) {
       const res = await createTestApp().request("/health", {}, env(appEnv));
