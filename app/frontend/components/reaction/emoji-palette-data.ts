@@ -29,11 +29,11 @@ function paletteUrl(locale: string): string {
 }
 
 /**
- * パレットのデータを読む。
+ * 取りに行った結果を覚えておく場所。開き直すたびに取りに行くと、閉じて開くだけで通信が増える。
  *
- * 一度読んだら覚えておく。開き直すたびに取りに行くと、閉じて開くだけで通信が増える。
- * 失敗はそのまま投げる。黙って空のパレットを出すと、壊れているのか絵文字が無いのか
- * 区別がつかない。
+ * ただし成功した結果だけを覚える。転けた Promise を持ち続けると、通信が切れている間に
+ * 一度開いただけで、そのタブでは二度と絵文字が並ばなくなる。開き直しても同じ拒否を
+ * 引き当てるので、読み手がページを読み直すまで直らない。
  */
 const cache = new Map<string, Promise<readonly PaletteGroup[]>>();
 
@@ -47,14 +47,32 @@ export function loadPalette(locale: string): Promise<readonly PaletteGroup[]> {
   return loading;
 }
 
+/**
+ * パレットのデータを取りに行く。転けたら覚えたものを捨ててから投げ直す。
+ *
+ * **捨てているのは、`loadPalette` が覚えた後のものである。** `fetch` は引数が不正でも
+ * 同期的に throw せず拒否した Promise を返す (仕様で決まっている) ので、catch 節へ入るのは
+ * 必ず最初の await より後、つまり `cache.set` より後になる。
+ *
+ * 投げ直すのは、呼び出し側 (`EmojiPalette`) が例外を受けて「読み込めなかった」を出すため。
+ * ここで握り潰して空のパレットを出すと、壊れているのか絵文字が無いのか区別がつかない。
+ *
+ * 取り直せるのは次に開いたときからで、いま開いているパレットは救わない。閉じて開けば
+ * effect が走り直して取りに行く。
+ */
 async function fetchPalette(url: string): Promise<readonly PaletteGroup[]> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(
-      `failed to load the emoji palette: ${String(response.status)}`,
-    );
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `failed to load the emoji palette: ${String(response.status)}`,
+      );
+    }
+    return await response.json();
+  } catch (error) {
+    cache.delete(url);
+    throw error;
   }
-  return await response.json();
 }
 
 /**
