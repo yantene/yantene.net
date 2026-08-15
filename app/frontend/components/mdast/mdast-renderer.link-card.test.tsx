@@ -141,7 +141,8 @@ describe("MdastRenderer のリンクカード", () => {
   });
 
   it("本文に link-card と書かれても要素にはならない", () => {
-    // 生 HTML は keepEmbedHtml が iframe 以外を落とす。印を外から差し込めないことを固定する。
+    // 生 HTML は keepEmbedHtml が iframe か audio を含むブロックしか通さない。
+    // 印を外から差し込めないことを固定する。
     const { container } = render(
       <MdastRenderer
         node={md('<link-card url="https://example.com/a"></link-card>\n')}
