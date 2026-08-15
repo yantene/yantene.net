@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "yantene.net",
-  "short_name": "yantene.net",
-  "description": "yantene の発信を集約するハブ。",
+  "name": "やんてね",
+  "short_name": "やんてね",
+  "description": "yantene の発信を集約するハブ。エッセイ、技術記事、つくったもの。",
   "lang": "ja",
   "start_url": "/",
   "scope": "/",

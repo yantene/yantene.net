@@ -3,14 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>オフライン | yantene.net</title>
+    <title>オフライン | やんてね</title>
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <!--
       Service Worker が電波の無いときに出すページ。ビルドを介さず配信され、蓄えから
       直接返るので、外部のものは一切読まない (読めない)。見た目もここに直接書く。
 
-      本体の CSS は使えないため、サイトと同じ色を数値で置いている。増やすとここだけ
+      本体の CSS は使えないため、サイトと同じ色を数値で置いている。出どころは
+      app.css の daisyUI テーマ (name: "yantene") と header.css。増やすとここだけ
       古びるので、最小限に留めること。
+
+      ロゴにヒーローやヘッダーの手書きマーカーは敷かない。素材 (highlight.svg) を
+      data URI で抱え込むことになり、素材を差し替えたときにここだけ古い線が残る。
     -->
     <style>
       :root {
@@ -25,42 +29,69 @@
         justify-content: center;
         gap: 1.5rem;
         padding: 2rem;
-        background-color: #f7f8fb;
-        color: #1f2430;
+        background-color: #ffffff; /* = --color-base-100 */
+        color: #1a2740; /* = --color-base-content */
+        /*
+          本体と同じ字面で組む (app.css の --body-font-stack)。ただし Noto Sans JP は
+          Google Fonts から読んでいるぶんここには届かないので、入っている端末だけが
+          本体と同じ字で、それ以外は後ろのシステムの日本語フォントに落ちる。
+        */
         font-family:
-          system-ui,
-          -apple-system,
-          "Hiragino Kaku Gothic ProN",
-          "Noto Sans JP",
-          sans-serif;
+          "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+          "Yu Gothic", YuGothic, Meiryo, system-ui, sans-serif;
         line-height: 1.8;
         text-align: center;
       }
+      /*
+        ページの頭。本体のヘッダーと同じ見立てで、ロゴのすぐ下に地平線を引く。
+        本文との間合いは body の gap が持つので、ここは 2 つの間隔だけを決める。
+      */
+      .brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        width: min(28rem, 100%);
+      }
+      /* ヘッダーのロゴと同じ字の大きさ。マーカーは敷かない (上の但し書きを参照)。 */
+      .wordmark {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.025em;
+      }
       h1 {
         margin: 0;
-        font-size: 1.25rem;
+        font-size: 1.75rem;
         font-weight: 700;
       }
       p {
         margin: 0;
-        font-size: 0.875rem;
-        color: #5b6172;
+        font-size: 0.9375rem;
+        /* base-content を 62% で白地に乗せた色 (--color-muted-foreground と同じ濃さ)。 */
+        color: #717989;
       }
-      /* 地平線。ヘッダーとフッターに引いてあるものと同じ色。 */
+      /*
+        地平線。ヘッダーの下に引いてあるものと同じ色と濃さ (header.css は 45%)。
+        フッターは同じ色を 40% で使うが、あちらは base-200 の地の上に乗る。
+      */
       .horizon {
-        width: min(28rem, 100%);
+        width: 100%;
         height: 1px;
-        background-color: #9488d3;
-        opacity: 0.4;
+        background-color: #9488d3; /* = --horizon-ink */
+        opacity: 0.45;
       }
       a {
-        color: #5b51a5;
+        color: #2b4a76; /* = --color-primary */
         font-size: 0.875rem;
       }
     </style>
   </head>
   <body>
-    <div class="horizon"></div>
+    <div class="brand">
+      <div class="wordmark">やんてね</div>
+      <div class="horizon"></div>
+    </div>
     <div>
       <h1>いまは繋がっていない</h1>
       <p>

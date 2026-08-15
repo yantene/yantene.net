@@ -2,7 +2,12 @@
 // このファイルはビルドを介さずそのまま配られるので、注記は動作を追うのに要る分だけ。
 
 // 蓄えの意味が変わったら上げる (古い蓄えは有効化時に捨てる)。
-const CACHE_VERSION = "v1";
+//
+// offline.html を書き換えたときも上げること。あの中身を蓄えに入れるのは install の
+// storeOfflinePage() だけで、install が走り直すのはこのファイルのバイト列が変わったとき
+// だけ。ここを据え置くと、すでに Service Worker が入っている読み手には古い案内が
+// 出続ける (誰も /offline.html を開かないので networkFirst でも入れ替わらない)。
+const CACHE_VERSION = "v2";
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
 
