@@ -86,14 +86,44 @@ lspace / rspace を **0 と定めている**。TeX が入れる thin space (3/18
 
 CSP を緩めても、**本文の段落や見出しに inline style が入るわけではない。**
 sanitize の allowlist で `style` を通すのは MathML の要素だけにしてある
-(`components/mdast/mathml.ts`)。本文の生 HTML は iframe 以外が落ちるので、そもそも
-書き手が MathML を直に書くこともできない。
+(`components/mdast/mathml.ts`)。
+
+ただし「MathML なら Temml が組んだものに限る」わけではない。通る経路と、それを塞がない
+理由は [ADR 0019](0019-inline-style-for-math.md) が持っているので、そちらを見ること。
+ここに写しを置かない (かつて写しを置いて、片方だけ直され食い違った。下記の訂正)。
 
 ## 参考 / More Information
 
 - [ADR 0013](0013-math-as-mathml-at-refresh-time.md) — 数式を refresh 時に MathML へ組む
 - [ADR 0007](0007-strict-csp-outside-development.md) — inline style が CSP に無視される
 - [ADR 0017](0017-webfonts-from-google-fonts.md) — 数式の字 (STIX Two Math)
+- [ADR 0019](0019-inline-style-for-math.md) — inline style が通る経路とその見積もり
 - [#208](https://github.com/yantene/yantene.net/issues/208)
 - 実装: `app/backend/services/latex-to-mathml.ts` /
   `app/frontend/components/mdast/mdast-renderer.css` (mtd の打ち消し)
+
+## 訂正 (2026-08-15)
+
+**本 ADR は production 公開後に本文を書き換えた。** `.claude/rules/adr.md` の不変性
+(公開後は Accepted な ADR の本文を書き換えない) に対する例外で、
+[ADR 0019](0019-inline-style-for-math.md) の 2 度の訂正と同じ扱いである。決定
+(数式を Temml で組む) は変えていない。
+
+書き換えたのは「数式以外に inline style は入らない」節の末尾で、公開時点では
+
+> 本文の生 HTML は iframe 以外が落ちるので、そもそも書き手が MathML を直に書くことも
+> できない
+
+としていた。ここには誤りが 2 つ乗っていた。書き手は埋め込みと同じ生 HTML のブロックに
+`<math style="...">` を並べれば通せる (0019 が 2026-08-14 に訂正済み)。また
+[ADR 0022](0022-bake-midi-into-opus-and-serve-audio-assets.md) で `<audio>` が加わり、
+生 HTML を通す条件も iframe **または** audio になっている (同じく 0019 が 2026-08-15 に
+訂正済み)。
+
+追記ではなく本文の訂正で処理したのは 0019 と同じ理由で、ここが防御の範囲を説明する
+箇所だからである。本文が実態より狭い範囲を指したままだと、次にこの判断へ触る人へ誤った
+前提を渡す。
+
+**同じ説明を 2 つの ADR に写したことが、この食い違いの原因だった。** 0019 の訂正が
+0018 の写しに及ばなかったためである。写しを戻さず 0019 への参照に置き換えたのは、
+同じことを繰り返さないため。
