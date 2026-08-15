@@ -73,6 +73,16 @@ const targets = [
   "/sitemap.xml",
   "/robots.txt",
   "/og/default",
+  /*
+   * OG カードが無い記事の断り方。単体テストはルータを単体で呼ぶので、マウントした後の
+   * 姿 (index.ts の並び順・中間層・アプリ側の notFound) までは見られない。ここで
+   * 実物の応答を確かめる。上の Accept 分岐と同じ理由で、実在の slug は要らない。
+   */
+  {
+    label: "/og/notes/does-not-exist",
+    path: "/og/notes/does-not-exist",
+    expectContentType: "application/problem+json",
+  },
 ];
 
 /** 文字列指定と詳細指定を 1 つの形に均す。 */
