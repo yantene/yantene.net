@@ -85,7 +85,7 @@ async function readEmoji(request: Request): Promise<ReactionEmoji | undefined> {
   return parseReactionEmoji(emoji);
 }
 
-/** 記事が見つからないことを、呼び出し側が扱える形で返す。 */
+/** リアクションを置いた / 外した結果。記事が無いときは代わりに undefined が返る。 */
 export interface ReactionOutcome {
   readonly payload: ReactionsPayload;
   /** セッション識別子を預け直す cookie の値。応答に載せること。 */
@@ -98,6 +98,11 @@ export interface ReactionOutcome {
  * API ルータ (JSON) とページの action (フォーム) の両方から呼ぶ。押した人の判定・
  * セッションの発行・数とスコアの更新はどちらでも同じなので、入り口の形だけを分ける。
  *
+ * **記事が見つからないときは投げずに undefined を返す。** 投げると、Hono の外にいる
+ * ページの action では onError に届かず ErrorBoundary のエラー画面 (500) になる
+ * (#269)。どう応えるかは入り口ごとに違うので、判断はそちらに残す
+ * (resolveDetail と同じ形)。
+ *
  * @param emoji 押す絵文字。undefined なら取り消し。
  */
 export async function applyReaction(
@@ -105,12 +110,12 @@ export async function applyReaction(
   slugParam: string,
   emoji: ReactionEmoji | undefined,
   cookie: string | null,
-): Promise<ReactionOutcome> {
+): Promise<ReactionOutcome | undefined> {
   const slug = parseSlug(slugParam);
-  if (slug === undefined) throw new NoteNotFoundError(slugParam);
+  if (slug === undefined) return undefined;
 
   const note = await new D1NoteQueryRepository(env.D1).findBySlug(slug);
-  if (note === undefined) throw new NoteNotFoundError(slugParam);
+  if (note === undefined) return undefined;
 
   const existingId = readSessionId(cookie);
   // 取り消しは、持っていない相手には効かせようがない。発行もしない。
@@ -156,30 +161,35 @@ export function createNoteReactionApiRouter(): Hono<{ Bindings: Env }> {
       );
     }
 
-    return respond(
-      c,
-      await applyReaction(
-        c.env,
-        c.req.param("slug"),
-        emoji,
-        c.req.header("cookie") ?? null,
-      ),
-    );
+    return respond(c, await apply(c, c.req.param("slug"), emoji));
   });
 
   router.delete("/:slug/reaction", async (c) =>
-    respond(
-      c,
-      await applyReaction(
-        c.env,
-        c.req.param("slug"),
-        undefined,
-        c.req.header("cookie") ?? null,
-      ),
-    ),
+    respond(c, await apply(c, c.req.param("slug"), undefined)),
   );
 
   return router;
+}
+
+/**
+ * API から applyReaction を呼び、記事が無ければ 404 に落とす。
+ *
+ * ここで投げるのは Hono の中だからで、`app.onError` が Problem Details の 404 に
+ * マップする (detail.handler の resolveDetail と同じ形)。
+ */
+async function apply(
+  c: Context<{ Bindings: Env }>,
+  slugParam: string,
+  emoji: ReactionEmoji | undefined,
+): Promise<ReactionOutcome> {
+  const outcome = await applyReaction(
+    c.env,
+    slugParam,
+    emoji,
+    c.req.header("cookie") ?? null,
+  );
+  if (outcome === undefined) throw new NoteNotFoundError(slugParam);
+  return outcome;
 }
 
 /**
