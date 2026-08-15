@@ -87,8 +87,9 @@ interface NoteSource {
  * 読み直して MDAST を R2 にキャッシュ・メタデータを D1 に upsert・画像を R2 にキャッシュ
  * する。正本から消えたノートは D1 / R2 から掃除する (ADR 0004)。
  *
- * コンテンツ不正 (フロントマター欠落等) はスキップして結果に記録するが、infra 障害
- * (正本 / R2 / D1) は握りつぶさず throw する (fail-loud)。
+ * コンテンツ不正 (フロントマター欠落等) はそのノートだけをスキップして結果に記録する。
+ * スキップしたノートは掃除の対象にせず、前回同期した内容を残す (誤字 1 つで公開中の
+ * 記事を消さない)。infra 障害 (正本 / R2 / D1) は握りつぶさず throw する (fail-loud)。
  */
 export class NotesRefreshService {
   constructor(
@@ -103,6 +104,19 @@ export class NotesRefreshService {
     const tree = await this.content.listTree();
     const groups = groupNotes(tree);
     const stored = await this.query.listSourceHashes();
+
+    // 空のツリーを「全部消してよい」の合図として受け取らない。ブランチの取り違えや
+    // 正本側の事故で notes/ を持たない応答が返ると、掃除の経路がそのまま全件削除に
+    // なる。閲覧数も届いた Webmention も正本には無いので、消したら戻せない。
+    // 既に何件か載っているのに 1 件も見つからないのは、同期ではなく事故である。
+    //
+    // 全記事を private にしたときはここに掛からない (非公開のノートもツリーには
+    // 在るので groups には入る)。掛かるのは正本の側が空に見えるときだけ。
+    if (stored.size > 0 && groups.length === 0) {
+      throw new Error(
+        `refusing to delete all ${stored.size.toString()} note(s): the content tree has no notes/*.md`,
+      );
+    }
 
     const processed: string[] = [];
     const skipped: { path: string; reason: string }[] = [];
@@ -142,7 +156,18 @@ export class NotesRefreshService {
       }
 
       const source = await attempt(group, () => this.readNote(group));
-      if (!source.ok) continue;
+      if (!source.ok) {
+        // 読めなかった理由はコンテンツ不正 (読めない LaTeX / 読めない visibility) に
+        // 限られる。infra 障害は attempt が握らずに送出するので、ここには来ない。
+        // つまりノート自体は正本に在るので、seen に入れて掃除の対象から外す。
+        // 入れ忘れると「正本から消えたノート」と同じ経路で D1・R2 から消え、閲覧数も
+        // 届いた Webmention も道連れになる。Webmention は正本のどこにも無いので戻せない。
+        //
+        // 読み取りの後で落ちる不正 (publishedOn 欠落など) は seen.add より後の
+        // buildNoteContent で起きるため元から旧版が残る。この分岐だけが非対称だった。
+        seen.add(slug);
+        continue;
+      }
 
       // 非公開の記事は seen に入れない。正本から消えたノートと同じ経路で
       // D1 と R2 から掃除され、以後どの配信経路にも現れなくなる。
