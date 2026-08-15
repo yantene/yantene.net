@@ -77,6 +77,7 @@ export function MermaidDiagram({
   const [rendered, setRendered] = useState<Rendered | null>(null);
   const diagramId = toDiagramId(useId());
   const attempt = useRef(0);
+  const stage = useRef<HTMLDivElement>(null);
   const hasSource = source !== undefined && source.trim() !== "";
   const hasScript = useSyncExternalStore(
     subscribeToNothing,
@@ -86,6 +87,19 @@ export function MermaidDiagram({
 
   useEffect(() => {
     if (source === undefined || source.trim() === "") return;
+
+    /*
+     * 字を測る場所。掴めるのは、この effect が描画のあとに走るため。
+     * 置き場所の意味は `mermaid-stage` を描いている所に書いた。
+     *
+     * 掴めなかったときも、決着だけは付けて元のコードブロックへ落とす。黙って戻ると
+     * 読み込み中の印が下りず、支援技術に「永遠に読み込み中」と伝わってしまう。
+     */
+    const measureIn = stage.current;
+    if (measureIn === null) {
+      setRendered({ source, svg: null });
+      return;
+    }
 
     /*
      * 取り消しの合図。ソースが変わったときと、外されたときに倒す。先に始めた描画の
@@ -103,7 +117,7 @@ export function MermaidDiagram({
     void (async () => {
       try {
         const mermaid = await loadMermaid();
-        const { svg } = await mermaid.render(renderId, source);
+        const { svg } = await mermaid.render(renderId, source, measureIn);
         if (!abort.signal.aborted) setRendered({ source, svg });
       } catch {
         // 構文が読めなかった場合も、Mermaid 自体を取り寄せられなかった場合も、
@@ -152,6 +166,22 @@ export function MermaidDiagram({
       aria-busy={hasScript && hasSource && !isSettled}
     >
       {children}
+      {/*
+       * Mermaid が字の寸法を測る場所。**本文の中に置くことに意味がある。**
+       *
+       * 渡さずに呼ぶと、Mermaid は `document.body` の直下に作業用の要素を作ってそこで測る。
+       * 出来上がった図を置くのは本文 (`.note-prose`) の中なので、**本文から継承する字組みが
+       * 計測に乗らない。** 実際、本文の `letter-spacing` が抜けたぶんラベルの実幅が枠を
+       * 越え、長いラベルほど末尾から欠けていた (#283)。ここで測れば、字組みの指定が
+       * 増えても計測と描画が一致し続ける。
+       *
+       * **React に中身を持たせないこと。** Mermaid は渡された要素の `innerHTML` を
+       * 空にしてから使い、済んだら自分が足したものを片付ける。空のまま貸すぶんには
+       * React の管理と衝突しない。
+       *
+       * 見えない置き方は CSS (`.mermaid-stage`) が受け持つ。
+       */}
+      <div className="mermaid-stage" ref={stage} aria-hidden="true" />
     </div>
   );
 }
