@@ -38,13 +38,39 @@ const mermaidConfig: MermaidConfig = {
   fontFamily: "var(--body-font-stack)",
 };
 
-/** 取り寄せは 1 度だけ。図が複数あっても本体を読み直さない。 */
+/**
+ * 取り寄せた本体を掴んでおく場所。図が複数あっても本体を読み直さない。
+ *
+ * ただし成功した結果だけを掴む。転けた Promise を持ち続けると、chunk の取得に一度
+ * 失敗しただけで、そのタブでは二度と図が出なくなる。React Router の遷移はクライアント側で
+ * 起きるので、図のある別の記事へ回っても同じ Promise を引き当て、読み手がページを
+ * 読み直すまで直らない。
+ */
 const loader: { promise?: Promise<Mermaid> } = {};
 
+/**
+ * 本体を取り寄せて初期化する。転けたら掴んだものを捨ててから投げ直す。
+ *
+ * **捨てているのは、`loadMermaid` が代入した後のものである。** この関数は async 関数で、
+ * 最初に行うのが `import()` の await だから、同期的に throw して代入より先に catch 節へ
+ * 入ることがない。
+ *
+ * 投げ直すのは、呼び出し側 (`MermaidDiagram`) が例外を受けて元のコードブロックへ落ちる
+ * ため。ここで握り潰すと、図にならないまま印だけが残る。
+ *
+ * 取り直せるのは次にマウントされる図からで、いま並んでいる図は救わない。同じページの図は
+ * 同じコミットで effect が走って同じ Promise を掴むため、片方が転べば両方転ける。
+ * その場で読み直す仕掛けは持たせず、次のマウントに任せる。
+ */
 async function importMermaid(): Promise<Mermaid> {
-  const { default: mermaid } = await import("mermaid");
-  mermaid.initialize(mermaidConfig);
-  return mermaid;
+  try {
+    const { default: mermaid } = await import("mermaid");
+    mermaid.initialize(mermaidConfig);
+    return mermaid;
+  } catch (error) {
+    loader.promise = undefined;
+    throw error;
+  }
 }
 
 export async function loadMermaid(): Promise<Mermaid> {
