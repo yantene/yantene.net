@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "yantene",
-    "description": "The hub for everything yantene publishes — essays, technical writing, and things built."
+    "description": "From the other side of the web — essays, technical notes, and things built."
   },
   "home": {
     "heading": "yantene",
-    "tagline": "A hub for everything yantene publishes",
+    "tagline": "From the other side of the web",
     "recentNotes": "Recent notes",
     "popularNotes": "Popular notes",
     "viewAll": "View all"

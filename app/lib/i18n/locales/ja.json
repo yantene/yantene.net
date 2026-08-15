@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "やんてね",
-    "description": "yantene の発信を集約するハブ。エッセイ、技術記事、つくったもの。"
+    "description": "Web の向こうから。エッセイ、技術記事、つくったもの。"
   },
   "home": {
     "heading": "やんてね",
-    "tagline": "yantene の発信を集約するハブ",
+    "tagline": "Web の向こうから",
     "recentNotes": "最近のノート",
     "popularNotes": "人気のノート",
     "viewAll": "すべて見る"
