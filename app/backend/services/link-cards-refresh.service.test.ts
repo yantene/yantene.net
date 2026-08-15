@@ -154,6 +154,19 @@ describe("LinkCardsRefreshService", () => {
     );
   });
 
+  it("取れなくても前回写した画像は残す", async () => {
+    await service.sync(["https://example.com/a"], now);
+    const id = repository.stored.get("https://example.com/a")?.id ?? "";
+    const deletedSoFar = assets.deleted.length;
+    fetcher.fetch.mockResolvedValue(undefined);
+
+    await service.sync(["https://example.com/a"], now, { force: true });
+
+    // 相手が一時的に落ちただけのことがある。写しを捨てても得るものは無い。
+    expect(assets.deleted).toHaveLength(deletedSoFar);
+    expect(assets.images.get(id)).toEqual(pngAsset);
+  });
+
   it("期限内のカードは取りに行かない", async () => {
     await service.sync(["https://example.com/a"], now);
     fetcher.fetch.mockClear();
