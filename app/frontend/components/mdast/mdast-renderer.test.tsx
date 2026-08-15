@@ -1,5 +1,7 @@
 import { render } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderToStaticMarkup } from "react-dom/server";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
@@ -150,6 +152,131 @@ describe("MdastRenderer", () => {
     );
     expect(html).not.toContain("blockquote");
     expect(html).not.toContain("tweet");
+  });
+});
+
+/*
+ * 脚注が注へ飛べるために要ることが 2 つある (#268)。
+ *
+ * 1. リンクの行き先が実在すること。id は toHast と sanitize が別々に前置を足すため、
+ *    両方が当てると id にだけ二重に乗り、href が取り残される
+ * 2. Router を通ること。素の `<a href="#...">` は ScrollRestoration がブラウザの
+ *    ハッシュジャンプを打ち消すのでスクロールしない (目次が Link を使うのと同じ理由)
+ *
+ * id と href を直に比べず「指した先が在るか」で書くのは、前置の綴りが変わっても
+ * 壊れないようにするため。
+ */
+describe("MdastRenderer: ページ内アンカー", () => {
+  const withFootnote = "本文[^1]\n\n[^1]: 注の中身\n";
+
+  /** 記事ページと同じ位置。Link が href をここからの絶対パスに直すので、素の "/" だと粗い。 */
+  const notePath = "/notes/foo";
+
+  /** 脚注つきの本文を Router の中で描く。ページ内アンカーは Link になるため要る。 */
+  function renderWithFootnote(element?: React.JSX.Element): HTMLElement {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/notes/:slug",
+          element: element ?? <MdastRenderer node={md(withFootnote)} />,
+        },
+      ],
+      { initialEntries: [notePath] },
+    );
+    return render(<RouterProvider router={router} />).container;
+  }
+
+  /** ページ内アンカーとその行き先の id。Link は "#x" を "/notes/foo#x" に直す。 */
+  function inPageAnchors(container: HTMLElement): readonly HTMLAnchorElement[] {
+    return [...container.querySelectorAll("a")].filter((anchor) =>
+      (anchor.getAttribute("href") ?? "").includes("#"),
+    );
+  }
+
+  it("keeps every in-page anchor pointing at an element that exists", () => {
+    const container = renderWithFootnote();
+
+    const anchors = inPageAnchors(container);
+    // 脚注番号と戻り矢印の 2 本。0 本だと「リンクが無いので全部通った」になる。
+    expect(anchors).toHaveLength(2);
+
+    // 落ちたときに「どの行き先が無いか」が出るよう、まとめてから比べる。
+    const dangling = anchors
+      .map(
+        (anchor) => (anchor.getAttribute("href") ?? "").split("#", 2)[1] ?? "",
+      )
+      .filter(
+        (id) => container.querySelector(`[id="${CSS.escape(id)}"]`) === null,
+      );
+    expect(dangling).toEqual([]);
+  });
+
+  it("keeps in-page anchors on the note's own path", () => {
+    // "#x" が "/#x" に解決されると、注へ飛ぶかわりにトップへ飛ぶ。
+    const container = renderWithFootnote();
+
+    const strayed = inPageAnchors(container)
+      .map((anchor) => anchor.getAttribute("href") ?? "")
+      .filter((href) => !href.startsWith(`${notePath}#`));
+    expect(strayed).toEqual([]);
+  });
+
+  it("points aria-describedby at an element that exists", () => {
+    const container = renderWithFootnote();
+
+    const described = container.querySelector("[aria-describedby]");
+    const id = described?.getAttribute("aria-describedby") ?? "";
+    expect(id).not.toBe("");
+    expect(container.querySelector(`[id="${CSS.escape(id)}"]`)).not.toBeNull();
+  });
+
+  it("still prefixes footnote ids so they cannot clobber the DOM", () => {
+    const container = renderWithFootnote();
+
+    const ids = [...container.querySelectorAll("[id]")].map((el) => el.id);
+    const footnoteIds = ids.filter((id) => /fn(ref)?-/.test(id));
+    expect(footnoteIds).not.toHaveLength(0);
+    expect(footnoteIds.filter((id) => !id.startsWith("user-content-"))).toEqual(
+      [],
+    );
+    // 二重に乗っていないこと。
+    expect(
+      footnoteIds.filter((id) => id.startsWith("user-content-user-content-")),
+    ).toEqual([]);
+  });
+
+  it("routes an in-page anchor through the router instead of a bare hash jump", async () => {
+    // Router が見ている hash を画面に出して、遷移が Router を通ったかを読む。
+    // 素の <a> だとメモリ履歴は動かないので、ここが空のままになる。
+    function Probe(): React.JSX.Element {
+      return (
+        <>
+          <MdastRenderer node={md(withFootnote)} />
+          <output>{useLocation().hash}</output>
+        </>
+      );
+    }
+    const container = renderWithFootnote(<Probe />);
+    expect(container.querySelector("output")?.textContent).toBe("");
+
+    const reference = container.querySelector<HTMLAnchorElement>(
+      'a[data-footnote-ref="true"]',
+    );
+    if (reference === null) throw new Error("脚注のリンクが描かれていない");
+    await userEvent.click(reference);
+
+    const href = reference.getAttribute("href") ?? "";
+    expect(container.querySelector("output")?.textContent).toBe(
+      href.slice(href.indexOf("#")),
+    );
+  });
+
+  it("leaves links that are not in-page anchors as plain anchors", () => {
+    // Router の外でも描けること。ページ内アンカーだけを Link に通す狙いの裏返し。
+    const { container } = render(
+      <MdastRenderer node={md("[x](/notes/other) [y](https://example.com)")} />,
+    );
+    expect(container.querySelectorAll("a")).toHaveLength(2);
   });
 });
 

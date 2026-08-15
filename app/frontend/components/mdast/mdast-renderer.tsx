@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import { createPortal } from "react-dom";
+import { Link } from "react-router";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
@@ -69,6 +70,25 @@ const LinkCardsContext = createContext<ReadonlyMap<string, LinkCardView>>(
  */
 const sanitizeSchema = {
   ...defaultSchema,
+  /*
+   * id への前置は toHast に任せ、ここでは足さない。
+   *
+   * 両方が既定の `user-content-` を当てると、脚注の id にだけ二重に乗る。toHast は
+   * id と href の両方を前置するが、sanitize が前置するのは id と aria-describedby
+   * だけで href は据え置くため、`href="#user-content-fn-1"` が
+   * `id="user-content-user-content-fn-1"` を探しにいって行き先を見失う (#268)。
+   *
+   * DOM clobbering への備えが消えるわけではない。脚注の id は toHast が
+   * `user-content-` を付けたものがそのまま残る。素通しになるのは本文が生 HTML に
+   * 自分で書いた id だが、生 HTML が通るのは iframe か audio を含むブロックだけで
+   * (keepEmbedHtml)、iframe は toEmbed が属性を一から組み直して id を落とす。
+   * 残るのは音源の周りに書いた id で、本文を書けるのが書き手自身に限られる以上
+   * (下記の link-card と同じ理由)、ここは許容する。
+   *
+   * 逆に toHast 側の前置を外しても直らない。id は sanitize が前置して
+   * `user-content-fn-1`、href は素の `#fn-1` のままで、ずれが残る。
+   */
+  clobberPrefix: "",
   // link-card はこちらが組み立てた印 (linkCardParagraph が起こす) だが、本文から書けない
   // わけではない。iframe か audio を含む生 HTML のブロックは keepEmbedHtml が丸ごと通すので、
   // そこに並べれば要素として残る。塞いでいないのは、運ぶのが URL 1 つだけで出力は
@@ -517,6 +537,35 @@ function Embed(
   );
 }
 
+/**
+ * a 要素: ページ内アンカーだけ React Router の Link に通す。
+ *
+ * 素の `<a href="#...">` は `<ScrollRestoration>` がブラウザのハッシュジャンプを
+ * 打ち消すためスクロールしない (目次が Link を使っているのと同じ理由)。本文で
+ * ページ内アンカーになるのは脚注の行き来なので、これが無いと注へ飛べない。
+ *
+ * 外部・内部リンクは素の `<a>` のまま返す。Router の文脈を要らない場所でも
+ * 描けるようにしておくため。
+ */
+function Anchor({
+  href,
+  children,
+  ...rest
+}: Readonly<React.ComponentPropsWithoutRef<"a">>): React.JSX.Element {
+  if (href === undefined || !href.startsWith("#")) {
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link to={href} {...rest}>
+      {children}
+    </Link>
+  );
+}
+
 export interface MdastRendererProps {
   /** レンダリング対象の MDAST (Markdown AST) ルート。 */
   readonly node: MdastRoot;
@@ -577,6 +626,7 @@ export function MdastRenderer({
         pre: CodeBlock,
         img: LightboxImage,
         iframe: Embed,
+        a: Anchor,
         [LINK_CARD_TAG]: LinkCardSlot,
         [ALERT_TAG_NAME]: Alert,
         [MERMAID_TAG]: MermaidDiagram,
