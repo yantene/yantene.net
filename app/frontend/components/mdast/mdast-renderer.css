@@ -305,6 +305,34 @@
   height: auto;
 }
 
+/*
+ * 図を組む間、Mermaid が字の寸法を測る場所 (mermaid-diagram.tsx)。
+ *
+ * **本文の中に置いたまま、読み手には見せない。** 本文から継承する字組み
+ * (`letter-spacing` など) を計測に乗せるのが目的なので、`display: none` は使えない。
+ * 隠したうえで寸法が取れるのは `visibility: hidden` の方。
+ *
+ * `position: fixed` なのは、**測っている間だけ現れる中身をページの寸法から外す**ため。
+ * 絶対配置だと、はみ出したぶんがページのスクロールできる範囲に加わる。丈の高い図
+ * (長いシーケンス図やガント) を組む間だけスクロールバーが伸び縮みし、位置の復元とも
+ * ぶつかる。固定配置の要素はスクロールできる範囲に加わらない。
+ *
+ * `width: max-content` は器の幅で折り返させないため。ここで折り返すと、本番の器
+ * (`.mermaid-diagram`) より狭く測ってしまう。
+ *
+ * **`.note-prose` で絞らない。** 隠すのはこの要素そのものの性質であって、置かれた場所の
+ * 性質ではない。本文の外で図を描いたとき (Storybook やテスト) にだけ、組んでいる最中の
+ * 図が流れの中に現れる、という差を作らない。
+ */
+.mermaid-stage {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
 .note-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;

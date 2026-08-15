@@ -79,6 +79,36 @@ describe("MermaidDiagram", () => {
   });
 
   /*
+   * 測る場所を渡さないと、Mermaid は `document.body` の直下で字の寸法を測る。本文から
+   * 継承する字組み (`letter-spacing` など) が計測に乗らず、組み上がった図を本文に置いた
+   * ときにラベルが枠から欠ける (#283)。
+   */
+  it("字の寸法は本文の中で測る", async () => {
+    let didMeasureInProse = false;
+    /*
+     * 見るのは呼ばれた瞬間の在り処。決着が付くと図に差し替わり、測った場所は本文から
+     * 外れるので、後から引数を辿っても祖先を持たない。
+     */
+    mermaid.render.mockImplementation(
+      (_id: string, _source: string, element?: Element) => {
+        didMeasureInProse = element?.closest(".note-prose") != null;
+        return Promise.resolve({ svg: SVG, diagramType: "flowchart" });
+      },
+    );
+
+    const { container } = render(
+      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
+    );
+
+    await waitFor(() => {
+      expect(
+        container.querySelector(":scope .mermaid-diagram svg"),
+      ).not.toBeNull();
+    });
+    expect(didMeasureInProse).toBe(true);
+  });
+
+  /*
    * Mermaid は渡した id を DOM の id にも、生成する CSS のセレクタにも使う。React の
    * `useId()` は記号を含む文字列を返すので (`«r0»` / `:r0:`)、素通しすると読めない
    * セレクタになり、例外を出さないまま図の配色だけが落ちる。
