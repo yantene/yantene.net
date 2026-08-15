@@ -2,9 +2,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import type { HomePageData } from "~/backend/handlers/notes/pages.handler";
+import type { ClockOriginData } from "~/frontend/components/hero/clock-origin";
 import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadHomePage } from "~/backend/handlers/notes/pages.handler";
+import { resolveClockOrigin } from "~/frontend/components/hero/clock-origin";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
@@ -18,13 +20,20 @@ import { resolveLocale } from "~/lib/i18n/resolve-locale";
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & CurrentYearData & HomePageData> {
+}: Route.LoaderArgs): Promise<
+  PageMetaBase & CurrentYearData & ClockOriginData & HomePageData
+> {
   const home = await loadHomePage(context.get(cloudflareContext).env);
   return {
     ...home,
     locale: resolveLocale(request),
     origin: new URL(request.url).origin,
     currentYear: resolveCurrentYear(),
+    /*
+     * ヒーローの空をどの時刻から始めるか。ここで時計を読むのは、Workers が I/O の外の
+     * 時刻を Unix epoch 0 に固定するため (current-year.ts に同じ注意がある)。
+     */
+    clockOrigin: resolveClockOrigin(new Date()),
   };
 }
 
@@ -44,7 +53,7 @@ export default function Home({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { recent, popular, currentYear } = loaderData;
+  const { recent, popular, currentYear, clockOrigin } = loaderData;
 
   return (
     <AppLayout>
@@ -53,7 +62,7 @@ export default function Home({
         ロゴは伏せる。すぐ下のヒーローが同じ「やんてね」を出すので、二つ並ぶと煩わしい。
       */}
       <Header variant="transparent" showLogo={false} />
-      <HeroSection />
+      <HeroSection clockOrigin={clockOrigin} />
 
       {recent.length > 0 && (
         <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">

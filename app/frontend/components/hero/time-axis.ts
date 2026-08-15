@@ -12,7 +12,7 @@ export const MINUTES_PER_DAY = 1440;
 export const TICK_INTERVAL_MINUTES = 180;
 
 /** アニメーションの位相 0 が指す時刻 (分)。Celestim の位相 0 は南中。 */
-const PHASE_ORIGIN_MINUTES = 12 * 60;
+export const PHASE_ORIGIN_MINUTES = 12 * 60;
 
 /** 1 日分の目盛りの時刻 (分)。0:00 から 3 時間ごと。 */
 export function dayTickMinutes(): readonly number[] {

@@ -10,7 +10,7 @@ import { HeroSection } from "./hero-section";
 function renderHero(): HTMLElement {
   const { container } = render(
     <MemoryRouter>
-      <HeroSection />
+      <HeroSection clockOrigin={{ minutesOfDay: 12 * 60, moonAgeDay: 14 }} />
     </MemoryRouter>,
   );
   return container;

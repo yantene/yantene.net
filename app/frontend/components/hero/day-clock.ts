@@ -1,10 +1,14 @@
 /**
  * ヒーローの時計 (空・太陽・月・雲・目盛り) を進退させる。
  *
- * 動かす手段に Web Animations API を選んでいる理由は CSP にある。このサイトは
- * `style-src 'self'` で inline style が効かない (ADR 0007) ため、連続値を style 属性や
- * CSS 変数で渡す手が使えない。`Animation.currentTime` は style を一切経由しないので、
- * CSP と関係なく動かせる。
+ * 動かす手段に Web Animations API を選んでいる理由は、連続値の受け渡しにある (ADR 0008)。
+ * `Animation.currentTime` は style を一切経由しないので、style 属性にも CSS 変数にも
+ * 触らずに位相だけを飛ばせる。`style-src` は数式のために緩めてあるが (ADR 0019)、
+ * 見た目の可変軸を静的なクラスの段階で持つ書き方はそのまま続けている。
+ *
+ * 開始位置 (どの時刻・どの月齢から始めるか) はここでは決めない。SSR した HTML が
+ * 描かれてからでは南中の絵が一度出てしまうので、loader が決めて段階クラスで渡す
+ * (clock-origin.ts / clock-origin.css)。
  *
  * 進め方は「全部に同じ増分を与える」だけでよい。空も太陽も月も雲も目盛りも、同じ
  * document timeline 上の linear infinite アニメーションとして、1 日の長さ
@@ -54,31 +58,6 @@ export function advanceDayClock(deltaMs: number): void {
 }
 
 /**
- * 時計を任意の時刻から始める。
- *
- * 手を入れないと毎回 currentTime 0、つまり必ず南中の満月から始まる。開くたびに同じ絵に
- * なってしまうので、全アニメーションが揃って元の位相に戻る周期の中から 1 点を選ぶ。
- * 時刻と月相の組み合わせが毎回変わり、運がよければ日食の日に行き当たる。
- */
-export function randomizeDayClock(): void {
-  const cycle = loopCycleMs();
-  if (cycle <= 0) return;
-  advanceDayClock(randomRatio() * cycle);
-}
-
-/**
- * 0 以上 1 未満の乱数。
- *
- * 見た目を散らすためだけのものだが、種を持たない API があるのでそれを使う
- * (Math.random は用途によっては咎められるうえ、ここでは避ける理由もない)。
- */
-function randomRatio(): number {
-  const buffer = new Uint32Array(1);
-  crypto.getRandomValues(buffer);
-  return buffer[0] / 2 ** 32;
-}
-
-/**
  * 巻き戻して 0 を割りそうなとき、何ミリ秒ぶん底上げすればよいかを返す。
  *
  * currentTime が負に入ると、アニメーションは「まだ始まっていない」ものとして扱われる。
@@ -86,6 +65,10 @@ function randomRatio(): number {
  * 天体も目盛りも止まる。つまり手当てをしないと、ページを開いた時刻より前には遡れない。
  *
  * 底上げする量は loopCycleMs() の倍数にする。そこだけずらしても絵は変わらない。
+ *
+ * 開始位置ぶんの負の animation-delay (clock-origin.css) が入っているので、実際に
+ * キーフレームが外れる境目は 0 ではなく delay の位置にある。ここを 0 のままにして
+ * あるのは、早めに底上げしても周期の倍数である限り絵が変わらないためである。
  */
 function liftToStayPositive(
   animations: readonly Animation[],
@@ -128,6 +111,10 @@ function loopCycleMs(): number {
  *
  * 位相 0 は南中。何日ぶん進んでいるかは畳まずそのまま返すので、時刻に直すときは
  * time-axis.ts の phaseToMinutes に渡すこと。
+ *
+ * currentTime をそのまま使えないのは、開始位置が負の animation-delay で与えられて
+ * いるため (clock-origin.css)。currentTime は delay を含まず必ず 0 から始まるので、
+ * 差し引かないと「ページを開いてからの経過時間」しか読めない。
  */
 export function readDayClockPhase(): number {
   const reference = clockAnimations().find(
@@ -137,7 +124,7 @@ export function readDayClockPhase(): number {
 
   const current = currentTimeOf(reference);
   if (current === null) return 0;
-  return elapsedToPhase(current, durationOf(reference));
+  return elapsedToPhase(current - delayOf(reference), durationOf(reference));
 }
 
 /** 1 日ぶんの長さ (ミリ秒) を、実際に動いているアニメーションから読む。 */
@@ -183,4 +170,10 @@ function currentTimeOf(animation: Animation): number | null {
 function durationOf(animation: Animation): number {
   const duration: unknown = animation.effect?.getComputedTiming().duration;
   return typeof duration === "number" ? duration : 0;
+}
+
+/** animation-delay をミリ秒で返す。開始位置ぶんの負の値が入っている。 */
+function delayOf(animation: Animation): number {
+  const delay: unknown = animation.effect?.getComputedTiming().delay;
+  return typeof delay === "number" ? delay : 0;
 }

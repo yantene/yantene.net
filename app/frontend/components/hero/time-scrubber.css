@@ -52,7 +52,8 @@
   top: 0;
   left: calc(50% - var(--day-width) / 2);
   display: flex;
-  animation: time-axis-scroll var(--day-cycle) linear infinite;
+  animation: time-axis-scroll var(--day-cycle)
+    calc(var(--day-cycle) * var(--clock-shift-days)) linear infinite;
 }
 
 @keyframes time-axis-scroll {

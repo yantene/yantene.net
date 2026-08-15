@@ -7,7 +7,9 @@ import {
 } from "react-icons/si";
 import { Celestim } from "./celestim";
 import { Cityscape } from "./cityscape";
+import { clockOriginClassName } from "./clock-origin";
 import { TimeScrubber } from "./time-scrubber";
+import type { ClockOrigin } from "./clock-origin";
 import Highlight from "~/frontend/assets/highlight.svg?react";
 
 /*
@@ -49,9 +51,25 @@ const socialLinks = [
   },
 ] as const;
 
-export function HeroSection(): React.JSX.Element {
+interface HeroSectionProps {
+  /**
+   * 時計をどの時刻・どの月齢から始めるか。loader が決めた値を受け取る
+   * (理由は clock-origin.ts に書いてある)。
+   */
+  readonly clockOrigin: ClockOrigin;
+}
+
+export function HeroSection({
+  clockOrigin,
+}: HeroSectionProps): React.JSX.Element {
   return (
-    <section className="hero-clock relative overflow-hidden border-b border-border/60">
+    /*
+      開始位置は段階クラスで渡す。ここに載せたクラスは CSS 変数を差し替えるだけで、
+      空・太陽・月・雲・目盛りが同じ量だけ進んだ状態から始まる。
+    */
+    <section
+      className={`hero-clock ${clockOriginClassName(clockOrigin)} relative overflow-hidden border-b border-border/60`}
+    >
       {/* 天体アニメの空 (Celestim)。文字を載せるので読みやすさ用のヴェールを有効にする。 */}
       <div className="absolute inset-0">
         <Celestim veil />
@@ -122,7 +140,7 @@ export function HeroSection(): React.JSX.Element {
       </div>
 
       {/* 地平線の上を歩く人と、掴んで時間を進められる目盛り。 */}
-      <TimeScrubber />
+      <TimeScrubber initialMinutes={clockOrigin.minutesOfDay} />
     </section>
   );
 }

@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   advanceDayClock,
-  randomizeDayClock,
   readDayClockPhase,
   readDayDurationMs,
 } from "./day-clock";
@@ -23,10 +22,17 @@ const ARROW_STEP_MINUTES = 15;
 /** PageUp / PageDown 1 回で動かす時間 (分)。目盛りの間隔と揃えてある。 */
 const PAGE_STEP_MINUTES = 180;
 
-/** 位相 0 が指す時刻。SSR とハイドレーション直後はここから始まる。 */
-const INITIAL_MINUTES = 12 * 60;
-
 const TICKS = dayTickMinutes();
+
+interface TimeScrubberProps {
+  /**
+   * 目盛りが最初に指す時刻 (0:00 からの分)。
+   *
+   * 空の開始位置と同じ値を loader から受け取る (clock-origin.ts)。ここで時計を読んだり
+   * 描画後に読み直したりしないのは、SSR とハイドレーションで必ず同じ値を出すため。
+   */
+  readonly initialMinutes: number;
+}
 
 /**
  * ヒーロー下部の時刻の目盛りと、その上を歩く人。
@@ -37,8 +43,10 @@ const TICKS = dayTickMinutes();
  * 操作しないあいだも目盛りは流れ続ける (CSS アニメーション)。JS が無い環境では
  * 掴めなくなるだけで、時計は止まらない。
  */
-export function TimeScrubber(): React.JSX.Element {
-  const [minutes, setMinutes] = useState(INITIAL_MINUTES);
+export function TimeScrubber({
+  initialMinutes,
+}: TimeScrubberProps): React.JSX.Element {
+  const [minutes, setMinutes] = useState(initialMinutes);
   const dayRef = useRef<HTMLDivElement>(null);
   const walkerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -57,21 +65,6 @@ export function TimeScrubber(): React.JSX.Element {
   const syncTime = useCallback((): void => {
     setMinutes(phaseToMinutes(readDayClockPhase()));
   }, []);
-
-  /*
-   * 開いた時刻を毎回散らす。手を入れないと必ず南中の満月から始まってしまう。
-   * SSR で決めると読み込みごとに描き分けが要るので、描画がついた後に一度だけ動かす。
-   *
-   * 読み上げ用の時刻を合わせるのは次のフレームに回す。ここで直に state を書くと、
-   * 描画のたびに描画を呼ぶ形になってしまう。
-   */
-  useEffect(() => {
-    randomizeDayClock();
-    const frame = requestAnimationFrame(syncTime);
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [syncTime]);
 
   const scrub = useCallback(
     (elapsedMs: number): void => {
