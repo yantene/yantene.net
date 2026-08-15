@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import {
@@ -22,7 +23,11 @@ import { createI18nInstance } from "~/lib/i18n/init";
 /** 用意した i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
 const i18nRef: { current: i18n | undefined } = { current: undefined };
 
-function renderBar(state: ReactionState, shouldPromptReaction = false): void {
+function renderBar(
+  state: ReactionState,
+  shouldPromptReaction = false,
+  action: () => unknown = () => null,
+): void {
   const instance = i18nRef.current;
   if (instance === undefined) throw new Error("i18n is not ready");
   const router = createMemoryRouter(
@@ -37,12 +42,32 @@ function renderBar(state: ReactionState, shouldPromptReaction = false): void {
             />
           </I18nextProvider>
         ),
-        action: () => null,
+        action,
       },
     ],
     { initialEntries: ["/"] },
   );
   render(<RouterProvider router={router} />);
+}
+
+/**
+ * 決着を手元で握る約束。
+ *
+ * 送信中の姿は往復の間しか出ないので、こちらで往復を止めないと観測できない。
+ */
+function defer(): {
+  readonly promise: Promise<null>;
+  readonly settle: () => void;
+} {
+  // Promise の実行子は同期に走るので、return までに必ず入れ替わっている。
+  let settle = (): void => undefined;
+  const promise = new Promise<null>((resolve) => {
+    settle = () => {
+      resolve(null);
+    };
+  });
+
+  return { promise, settle };
 }
 
 /** happy-dom は localStorage を持たない。促しがそこを読むので代役を置く。 */
@@ -143,6 +168,63 @@ describe("ReactionBar", () => {
     expect(hintId).not.toBe("");
     const hint = document.querySelector(`#${CSS.escape(hintId)}`);
     expect(hint?.textContent).toContain("1 つだけ");
+  });
+
+  /*
+   * 連打が 2 度サーバーへ届くと、両方が「まだ押していない」を読んで数が 2 つ進む。
+   * 取り消しても 1 しか戻らないので、差がそのまま残る (#248)。
+   */
+  describe("連打", () => {
+    it("送信が終わるまで、2 度目からの押下は届かない", async () => {
+      const pending = defer();
+      let calls = 0;
+      renderBar({ reactions, mine: null }, false, () => {
+        calls += 1;
+        return pending.promise;
+      });
+
+      const like = screen.getByRole("button", { name: "いいね" });
+      await userEvent.click(like);
+      await userEvent.click(like);
+      await userEvent.click(like);
+
+      expect(calls).toBe(1);
+    });
+
+    it("受け付けないことは示すが、焦点は奪わない", async () => {
+      const pending = defer();
+      renderBar({ reactions, mine: null }, false, () => pending.promise);
+
+      const like = screen.getByRole("button", { name: "いいね" });
+      await userEvent.click(like);
+
+      expect(like).toHaveAttribute("aria-disabled", "true");
+      // disabled にすると焦点が body へ落ちて、読み上げの現在地が失われる。
+      expect(like).not.toBeDisabled();
+      expect(document.activeElement).toBe(like);
+    });
+
+    it("送信が終われば、また押せる", async () => {
+      const pending = defer();
+      let calls = 0;
+      renderBar({ reactions, mine: null }, false, () => {
+        calls += 1;
+        return calls === 1 ? pending.promise : null;
+      });
+
+      const like = screen.getByRole("button", { name: "いいね" });
+      await userEvent.click(like);
+      await act(async () => {
+        pending.settle();
+        await pending.promise;
+      });
+      await waitFor(() => {
+        expect(like).toHaveAttribute("aria-disabled", "false");
+      });
+      await userEvent.click(like);
+
+      expect(calls).toBe(2);
+    });
   });
 
   /*
