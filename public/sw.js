@@ -7,7 +7,7 @@
 // storeOfflinePage() だけで、install が走り直すのはこのファイルのバイト列が変わったとき
 // だけ。ここを据え置くと、すでに Service Worker が入っている読み手には古い案内が
 // 出続ける (誰も /offline.html を開かないので networkFirst でも入れ替わらない)。
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const PAGE_CACHE = `pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `assets-${CACHE_VERSION}`;
 
