@@ -78,7 +78,10 @@ describe("OgpLinkCardFetcher", () => {
     expect(fetched?.title).toBe("記事の題");
     expect(fetched?.description).toBe("説明");
     expect(fetched?.siteName).toBe("サイト名");
-    expect(fetched?.image?.contentType).toBe("image/png");
+    expect(fetched?.image).toMatchObject({
+      state: "stored",
+      asset: { contentType: "image/png" },
+    });
     expect(fetched?.favicon?.contentType).toBe("image/png");
     // og:image の相対パスは最終 URL を基準に解決する。
     expect(fetchMock).toHaveBeenCalledWith(
@@ -208,11 +211,32 @@ describe("OgpLinkCardFetcher", () => {
     );
 
     expect(fetched?.title).toBe("記事の題");
-    expect(fetched?.image).toBeUndefined();
+    // 載せられない型は取り直しても結論が変わらないので、取り逃しには数えない。
+    expect(fetched?.image).toEqual({ state: "absent" });
     expect(fetched?.favicon).toBeUndefined();
   });
 
-  it("画像だけ取れなくてもカードは作る", async () => {
+  it("og:image が書かれていなければ取り逃しではない", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (url === "https://example.com/a") {
+        return Promise.resolve(
+          respond(`<title>題</title>`, {
+            contentType: "text/html",
+            url: "https://example.com/a",
+          }),
+        );
+      }
+      return Promise.reject(new Error("no favicon"));
+    });
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.image).toEqual({ state: "absent" });
+  });
+
+  it("画像だけ取れなくてもカードは作り、取り逃しとして残す", async () => {
     fetchMock.mockImplementation((url: string) => {
       if (url === "https://example.com/a") {
         return Promise.resolve(
@@ -224,13 +248,48 @@ describe("OgpLinkCardFetcher", () => {
       }
       return Promise.reject(new Error("network down"));
     });
+    const logger = silentLogger();
+
+    const fetched = await new OgpLinkCardFetcher(logger).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("記事の題");
+    expect(fetched?.image).toEqual({ state: "missed" });
+    expect(logger.info).toHaveBeenCalledWith(
+      "link card image not mirrored",
+      expect.objectContaining({ imageUrl: "https://example.com/og.png" }),
+    );
+  });
+
+  it("画像がレート制限で返らなくても取り逃しとして残す", async () => {
+    // 本番で踏んだのはこれ。応答は返るが 429 なので、写しだけ作れない (#255)。
+    fetchMock.mockImplementation((url: string) => {
+      if (url === "https://example.com/a") {
+        return Promise.resolve(
+          respond(page, {
+            contentType: "text/html",
+            url: "https://example.com/a",
+          }),
+        );
+      }
+      return Promise.resolve(
+        respond("rate limited", {
+          contentType: "text/plain",
+          status: 429,
+          url,
+        }),
+      );
+    });
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
     );
 
     expect(fetched?.title).toBe("記事の題");
-    expect(fetched?.image).toBeUndefined();
+    expect(fetched?.image).toEqual({ state: "missed" });
+    // favicon の取り逃しは数えない (置いていない相手が毎回引っ掛かるため)。
+    expect(fetched?.favicon).toBeUndefined();
   });
 
   it("取りに行けなければ throw せず undefined を返し、記録を残す", async () => {

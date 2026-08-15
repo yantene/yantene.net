@@ -1,6 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { toLinkCardMap, toLinkCardView } from "./link-card-view";
+import type { LinkCardImageState } from "~/backend/domain/link-card";
 import { LinkCard, LinkCardUrl } from "~/backend/domain/link-card";
 
 const fetchedAt = Temporal.Instant.from("2026-02-01T00:00:00Z");
@@ -8,7 +9,7 @@ const fetchedAt = Temporal.Instant.from("2026-02-01T00:00:00Z");
 function card(params: {
   id: string;
   raw: string;
-  hasImage?: boolean;
+  image?: LinkCardImageState;
   hasFavicon?: boolean;
 }): LinkCard {
   return LinkCard.available({
@@ -18,7 +19,7 @@ function card(params: {
       title: "題",
       description: "説明",
       siteName: "サイト",
-      hasImage: params.hasImage ?? false,
+      image: params.image ?? "absent",
       hasFavicon: params.hasFavicon ?? false,
     },
     fetchedAt,
@@ -34,7 +35,7 @@ describe("toLinkCardView", () => {
       card({
         id: ID,
         raw: "https://example.com/a",
-        hasImage: true,
+        image: "stored",
         hasFavicon: true,
       }),
     );
@@ -56,6 +57,16 @@ describe("toLinkCardView", () => {
 
     expect(view?.imageUrl).toBeNull();
     expect(view?.faviconUrl).toBeNull();
+  });
+
+  it("取り逃した画像は配信 URL を出さない", () => {
+    // 写しが無いのに URL を出すと、カードに壊れた画像が出る。
+    const view = toLinkCardView(
+      card({ id: ID, raw: "https://example.com/a", image: "missed" }),
+    );
+
+    expect(view?.imageUrl).toBeNull();
+    expect(view?.title).toBe("題");
   });
 
   it("取得できなかったカードは外に出さない", () => {

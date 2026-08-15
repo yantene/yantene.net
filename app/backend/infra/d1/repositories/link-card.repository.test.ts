@@ -2,6 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { beforeEach, describe, expect, it } from "vitest";
 import { D1LinkCardCommandRepository } from "./link-card.command-repository";
 import { D1LinkCardQueryRepository } from "./link-card.query-repository";
+import type { LinkCardImageState } from "~/backend/domain/link-card";
 import { LinkCard, LinkCardUrl } from "~/backend/domain/link-card";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
@@ -15,7 +16,7 @@ function availableCard(params: {
   id: string;
   raw: string;
   fetchedAt?: Temporal.Instant;
-  hasImage?: boolean;
+  image?: LinkCardImageState;
 }): LinkCard {
   return LinkCard.available({
     id: params.id,
@@ -24,11 +25,24 @@ function availableCard(params: {
       title: "題",
       description: "説明",
       siteName: "サイト",
-      hasImage: params.hasImage ?? true,
+      image: params.image ?? "stored",
       hasFavicon: false,
     },
     fetchedAt: params.fetchedAt ?? now,
   });
+}
+
+/** 期限の境目。ドメインの決めた値と同じ刻みで渡す。 */
+function cutoffs(): {
+  available: Temporal.Instant;
+  unavailable: Temporal.Instant;
+  imageMissed: Temporal.Instant;
+} {
+  return {
+    available: now.subtract({ hours: 24 * 14 }),
+    unavailable: now.subtract({ hours: 24 }),
+    imageMissed: now.subtract({ hours: 24 }),
+  };
 }
 
 describe("D1LinkCard リポジトリ", () => {
@@ -54,7 +68,7 @@ describe("D1LinkCard リポジトリ", () => {
       title: "題",
       description: "説明",
       siteName: "サイト",
-      hasImage: true,
+      image: "stored",
       hasFavicon: false,
     });
   });
@@ -93,18 +107,36 @@ describe("D1LinkCard リポジトリ", () => {
 
   it("画像の有無が消えたことも上書きで反映される", async () => {
     await command.upsert(
-      availableCard({ id: "a1", raw: "https://example.com/a", hasImage: true }),
+      availableCard({
+        id: "a1",
+        raw: "https://example.com/a",
+        image: "stored",
+      }),
     );
     await command.upsert(
       availableCard({
         id: "a1",
         raw: "https://example.com/a",
-        hasImage: false,
+        image: "absent",
       }),
     );
 
     const [found] = await query.findByUrls([url("https://example.com/a")]);
-    expect(found.metadata?.hasImage).toBe(false);
+    expect(found.metadata?.image).toBe("absent");
+  });
+
+  it("絵を取り逃したことも覚えておける", async () => {
+    // 「絵が無い」と同じ 0 に畳むと、短い期限で取り直す相手が分からなくなる。
+    await command.upsert(
+      availableCard({
+        id: "a1",
+        raw: "https://example.com/a",
+        image: "missed",
+      }),
+    );
+
+    const [found] = await query.findByUrls([url("https://example.com/a")]);
+    expect(found.metadata?.image).toBe("missed");
   });
 
   it("見つからない URL は結果に現れない", async () => {
@@ -159,24 +191,47 @@ describe("D1LinkCard リポジトリ", () => {
       );
     });
 
-    it("成否ごとの期限で絞り、古い順に返す", async () => {
-      const stale = await query.listStale({
-        available: now.subtract({ hours: 24 * 14 }),
-        unavailable: now.subtract({ hours: 24 }),
-        limit: 10,
-      });
+    it("取得のされ方ごとの期限で絞り、古い順に返す", async () => {
+      const stale = await query.listStale({ ...cutoffs(), limit: 10 });
 
       expect(stale.map((card) => card.id)).toEqual(["old-ok", "old-ng"]);
     });
 
     it("limit で件数を抑える", async () => {
-      const stale = await query.listStale({
-        available: now.subtract({ hours: 24 * 14 }),
-        unavailable: now.subtract({ hours: 24 }),
-        limit: 1,
-      });
+      const stale = await query.listStale({ ...cutoffs(), limit: 1 });
 
       expect(stale.map((card) => card.id)).toEqual(["old-ok"]);
+    });
+
+    it("絵を取り逃したカードは 14 日を待たずに拾う", async () => {
+      // 題が取れているので「取得できた」の側だが、2 日前の取り逃しは短い境目で拾う。
+      await command.upsert(
+        availableCard({
+          id: "missed-img",
+          raw: "https://example.com/missed-img",
+          image: "missed",
+          fetchedAt: now.subtract({ hours: 48 }),
+        }),
+      );
+
+      const stale = await query.listStale({ ...cutoffs(), limit: 10 });
+
+      expect(stale.map((card) => card.id)).toContain("missed-img");
+    });
+
+    it("取り逃してから 1 日経っていないカードは拾わない", async () => {
+      await command.upsert(
+        availableCard({
+          id: "fresh-missed-img",
+          raw: "https://example.com/fresh-missed-img",
+          image: "missed",
+          fetchedAt: now.subtract({ hours: 1 }),
+        }),
+      );
+
+      const stale = await query.listStale({ ...cutoffs(), limit: 10 });
+
+      expect(stale.map((card) => card.id)).not.toContain("fresh-missed-img");
     });
   });
 });

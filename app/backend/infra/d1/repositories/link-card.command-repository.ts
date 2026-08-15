@@ -27,7 +27,9 @@ export class D1LinkCardCommandRepository implements ILinkCardCommandRepository {
       title: metadata?.title ?? null,
       description: metadata?.description ?? null,
       siteName: metadata?.siteName ?? null,
-      hasImage: metadata?.hasImage === true ? 1 : 0,
+      // 絵の状態は 2 列に分けて持つ。両方立つ組み合わせをここで作らないこと。
+      hasImage: metadata?.image === "stored" ? 1 : 0,
+      imageMissed: metadata?.image === "missed" ? 1 : 0,
       hasFavicon: metadata?.hasFavicon === true ? 1 : 0,
       fetchedAt: instantToUnix(card.fetchedAt),
     };

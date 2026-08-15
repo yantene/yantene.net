@@ -61,6 +61,9 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - 数式の変換を Temml へ移した ([#208](https://github.com/yantene/yantene.net/issues/208))。
   force refresh を流すまで、既存ノートの数式は KaTeX が組んだ MathML のまま出る
   (関数名の後ろが詰まる)
+- リンクカードの絵の取り逃しを覚えるようにした ([#255](https://github.com/yantene/yantene.net/issues/255))。
+  既存のカードは「取り逃していない」ものとして入っているので、いま絵の欠けているカードは
+  14 日の期限が切れるまで取り直されない。急ぐなら force refresh を流すこと
 
 ## データモデルとストレージ戦略
 

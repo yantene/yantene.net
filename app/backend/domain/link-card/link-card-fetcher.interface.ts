@@ -1,13 +1,32 @@
 import type { LinkCardAsset } from "./link-card-asset";
 import type { LinkCardUrl } from "./link-card-url.vo";
 
+/**
+ * 絵をどうしたか。取れなかったことを取れたことと同じ形で返すための入れ物。
+ *
+ * 「取りに行けなかった (missed)」と「載せる絵が無い (absent)」を分けて返す。カードの
+ * 期限がこの区別で変わるためで、畳んでしまうと絵を持たない相手まで短い間隔で
+ * 叩き直すことになる。状態の名前はドメインの LinkCardImageState と揃えてある。
+ */
+export type FetchedLinkCardImage =
+  | { readonly state: "stored"; readonly asset: LinkCardAsset }
+  | { readonly state: "absent" }
+  | { readonly state: "missed" };
+
 /** リンク先から読み取ったカードの材料。 */
 export interface FetchedLinkCard {
   /** OGP の og:title。無ければ `<title>` で代える。 */
   readonly title: string;
   readonly description: string | undefined;
   readonly siteName: string | undefined;
-  readonly image: LinkCardAsset | undefined;
+  readonly image: FetchedLinkCardImage;
+  /**
+   * favicon。**こちらは取り逃しを区別しない。**
+   *
+   * rel=icon が書かれていない相手には慣例の `/favicon.ico` を試すので、置いていない
+   * サイトでは毎回取れない。これを取り逃しに数えると、そういう相手のカードが
+   * 短い期限で永久に取り直され続ける。
+   */
   readonly favicon: LinkCardAsset | undefined;
 }
 

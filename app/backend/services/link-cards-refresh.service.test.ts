@@ -39,7 +39,7 @@ function fetchedCard(
     title: "題",
     description: "説明",
     siteName: "サイト",
-    image: pngAsset,
+    image: { state: "stored", asset: pngAsset },
     favicon: undefined,
     ...overrides,
   };
@@ -130,7 +130,7 @@ describe("LinkCardsRefreshService", () => {
     expect(stored?.isAvailable).toBe(true);
     expect(stored?.metadata).toMatchObject({
       title: "題",
-      hasImage: true,
+      image: "stored",
       hasFavicon: false,
     });
   });
@@ -222,20 +222,54 @@ describe("LinkCardsRefreshService", () => {
     expect(repository.staleQueries[0]?.unavailable.toString()).toBe(
       "2026-01-31T00:00:00Z",
     );
+    expect(repository.staleQueries[0]?.imageMissed.toString()).toBe(
+      "2026-01-31T00:00:00Z",
+    );
   });
 
   it("取り直す前に前回の画像を捨てる", async () => {
     await service.sync(["https://example.com/a"], now);
     const id = repository.stored.get("https://example.com/a")?.id ?? "";
 
-    fetcher.fetch.mockResolvedValue(fetchedCard({ image: undefined }));
+    fetcher.fetch.mockResolvedValue(
+      fetchedCard({ image: { state: "absent" } }),
+    );
     await service.sync(["https://example.com/a"], now, { force: true });
 
     expect(assets.deleted).toContain(id);
     expect(assets.images.has(id)).toBe(false);
     expect(
-      repository.stored.get("https://example.com/a")?.metadata?.hasImage,
-    ).toBe(false);
+      repository.stored.get("https://example.com/a")?.metadata?.image,
+    ).toBe("absent");
+  });
+
+  it("絵を取り逃したカードは短い期限で取り直す", async () => {
+    fetcher.fetch.mockResolvedValue(
+      fetchedCard({ image: { state: "missed" } }),
+    );
+    await service.sync(["https://example.com/a"], now);
+    fetcher.fetch.mockClear();
+
+    // 題が取れているので「取得できた」の側だが、14 日は待たない。
+    const result = await service.sync(
+      ["https://example.com/a"],
+      now.add({ hours: 24 }),
+    );
+
+    expect(fetcher.fetch).toHaveBeenCalledTimes(1);
+    expect(result.fetched).toEqual(["https://example.com/a"]);
+  });
+
+  it("絵を持たない相手のカードは期限内なら取りに行かない", async () => {
+    fetcher.fetch.mockResolvedValue(
+      fetchedCard({ image: { state: "absent" } }),
+    );
+    await service.sync(["https://example.com/a"], now);
+    fetcher.fetch.mockClear();
+
+    await service.sync(["https://example.com/a"], now.add({ hours: 24 }));
+
+    expect(fetcher.fetch).not.toHaveBeenCalled();
   });
 
   it("同じ URL が何度出てきても 1 回しか取りに行かない", async () => {

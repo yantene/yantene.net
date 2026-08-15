@@ -131,8 +131,8 @@ export class LinkCardsRefreshService {
     // 前回の写しを捨てる。今回 og:image が消えていた場合に、古い絵が残り続けない。
     await this.assets.deleteAssets(id);
 
-    if (fetched.image !== undefined) {
-      await this.assets.putImage(id, fetched.image);
+    if (fetched.image.state === "stored") {
+      await this.assets.putImage(id, fetched.image.asset);
     }
     if (fetched.favicon !== undefined) {
       await this.assets.putFavicon(id, fetched.favicon);
@@ -146,7 +146,9 @@ export class LinkCardsRefreshService {
           title: fetched.title,
           description: fetched.description,
           siteName: fetched.siteName,
-          hasImage: fetched.image !== undefined,
+          // 絵を取り逃したことはここまで運ぶ。カード自体は取れているので、期限を
+          // 分けておかないと絵の欠けたまま 14 日直らない。
+          image: fetched.image.state,
           hasFavicon: fetched.favicon !== undefined,
         },
         fetchedAt: now,
