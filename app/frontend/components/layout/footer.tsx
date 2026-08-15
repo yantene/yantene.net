@@ -13,7 +13,7 @@ export function Footer({ year }: FooterProps): React.JSX.Element {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <p className="text-xs text-foreground/80">&copy; {year} yantene.net</p>
+        <p className="text-xs text-foreground/80">&copy; {year} やんてね</p>
         {/*
           全ページの足元に置く常設の購読導線。読み終えて出ていく場所が、
           この先も繋がっていられることを示すのに一番近い。

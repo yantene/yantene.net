@@ -81,7 +81,7 @@ export function buildPageMeta({
   const site = translationsFor(locale).meta;
   /*
    * ページ名がサイト名と同じときは重ねない。トップは見出しがサイト名そのものなので、
-   * 機械的に繋ぐと「yantene.net | yantene.net」になってしまう。
+   * 機械的に繋ぐと「やんてね - やんてね」になってしまう。
    */
   const resolvedTitle =
     title === undefined || title.length === 0 || title === site.title

@@ -36,7 +36,7 @@ describe("Footer", () => {
     renderFooter(2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2026 yantene.net",
+      "© 2026 やんてね",
     );
   });
 
@@ -60,7 +60,7 @@ describe("Footer", () => {
     renderFooter(2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2026 yantene.net",
+      "© 2026 やんてね",
     );
     expect(screen.getByRole("contentinfo")).not.toHaveTextContent("1970");
   });
