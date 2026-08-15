@@ -144,6 +144,24 @@ describe("HttpWebmentionSourceFetcher", () => {
     expect(result.kind === "fetched" && result.html).toBe("hi");
   });
 
+  /*
+   * サーバーが charset を名乗らず、宣言が本文の meta にしか無いページがある。
+   * ヘッダーしか見ないと、そこだけ UTF-8 決め打ちに戻って文字化けする (#271)。
+   */
+  it("Content-Type が名乗らなければ本文の meta charset で復号する", async () => {
+    const ascii = new TextEncoder();
+    const declaration = ascii.encode('<meta charset="Shift_JIS">');
+    // "あ" (Shift_JIS) = 0x82 0xA0
+    const body = new Uint8Array([...declaration, 0x82, 0xa0]);
+    const response = new Response(body, {
+      headers: { "content-type": "text/html" },
+    });
+
+    const result = await fetcherFor(response).fetch(SOURCE);
+
+    expect(result.kind === "fetched" && result.html).toContain("あ");
+  });
+
   /* 転送先の相対リンクを解決する基準になるので、最終 URL を返す。 */
   it("転送を追い切ったあとの URL を返す", async () => {
     const redirected = new Response("<p>hi</p>", {

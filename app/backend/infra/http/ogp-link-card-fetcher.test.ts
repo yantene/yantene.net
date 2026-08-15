@@ -49,10 +49,19 @@ type FetchStub = (url: string) => Promise<Response>;
  *
  * 文字コードの検証には「相手が流したバイトそのもの」が要るので、文字列ではなく
  * バイト列を組み立てる (囲みの HTML は ASCII なのでどの文字コードでも同じ並びになる)。
+ *
+ * @param metaCharset 本文に置く `<meta charset>`。省略すると宣言を持たないページになる。
  */
-function pageWithTitleBytes(titleBytes: Uint8Array): Uint8Array<ArrayBuffer> {
+function pageWithTitleBytes(
+  titleBytes: Uint8Array,
+  metaCharset?: string,
+): Uint8Array<ArrayBuffer> {
   const ascii = new TextEncoder();
-  const head = ascii.encode('<html><head><meta property="og:title" content="');
+  const declaration =
+    metaCharset === undefined ? "" : `<meta charset="${metaCharset}">`;
+  const head = ascii.encode(
+    `<html><head>${declaration}<meta property="og:title" content="`,
+  );
   const tail = ascii.encode('"></head></html>');
   const bytes = new Uint8Array(head.length + titleBytes.length + tail.length);
   bytes.set(head, 0);
@@ -340,6 +349,21 @@ describe("OgpLinkCardFetcher", () => {
     fetchMock.mockImplementation(
       servePageOnly(body, "text/html; charset=x-nonexistent"),
     );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("あ");
+  });
+
+  /*
+   * サーバーが charset を名乗らず、宣言が本文の meta にしか無いページがある。
+   * ヘッダーしか見ないと、そこだけ UTF-8 決め打ちに戻って文字化けする (#271)。
+   */
+  it("Content-Type が名乗らなければ本文の meta charset で復号する", async () => {
+    const body = pageWithTitleBytes(new Uint8Array([0x82, 0xa0]), "Shift_JIS");
+    fetchMock.mockImplementation(servePageOnly(body, "text/html"));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
