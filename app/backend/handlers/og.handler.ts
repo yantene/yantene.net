@@ -34,8 +34,10 @@ const ICON_DATA_URI = `data:image/svg+xml,${encodeURIComponent(YANTENE_ICON_SVG)
  */
 /** 地平線と街の輪郭。 */
 const HORIZON_INK = "#9488d3"; /* = --horizon-ink */
-/** その地平線を白地に 45% で乗せた色 (header.css の ::after と同じ濃さ)。 */
-const HORIZON_LINE = "#cfc9eb";
+/** 上端の帯に流すテーマの色。 */
+const PRIMARY = "#2b4a76"; /* = --color-primary */
+const SECONDARY = "#78a2d2"; /* = --color-secondary */
+const ACCENT = "#c9ab80"; /* = --color-accent */
 /** 本文の色。 */
 const INK = "#1a2740"; /* = --color-base-content */
 /** 日付の色 (base-content を 62% で白地に乗せた色。--color-muted-foreground と同じ)。 */
@@ -168,16 +170,19 @@ function wordmarkHtml(fontSize: number): string {
 }
 
 /*
- * カードの上端に引く地平線。header.css がヘッダーの下に引いているものと同じ作りで、
- * 線を 1 本引き、その下へ淡い翳りを落とす。
+ * カードの上端の帯。
  *
- * 太さは画面の 1px ではなく 3px。OG はタイムラインで縮んで表示されるので、
- * 等倍の細さだと線が消える。
+ * 白いカードがタイムラインの白地に溶けないよう、上端だけは色を持たせる。流す色は
+ * テーマから取り、両端に accent (tan)、中ほどに primary (紺) を置いて、真ん中がいちばん
+ * 濃くなるようにしてある。端を濃くすると、縮んだときに帯が片側へ寄って見える。
+ *
+ * 下に落とす翳りは header.css がヘッダーの下に引いているものと同じ。帯だけだと切り口が
+ * 硬く、カードの縁に貼り付けた線に見える。
  */
-const HORIZON_HTML = `
+const TOP_BAND_HTML = `
   <div style="display:flex;flex-direction:column;width:100%;">
-    <div style="display:flex;height:3px;width:100%;background:${HORIZON_LINE};"></div>
-    <div style="display:flex;height:16px;width:100%;background:linear-gradient(180deg,${withAlpha(HORIZON_INK, 0.12)},${withAlpha(HORIZON_INK, 0)});"></div>
+    <div style="display:flex;height:10px;width:100%;background:linear-gradient(90deg,${ACCENT},${SECONDARY},${PRIMARY},${HORIZON_INK},${ACCENT});"></div>
+    <div style="display:flex;height:14px;width:100%;background:linear-gradient(180deg,${withAlpha(HORIZON_INK, 0.12)},${withAlpha(HORIZON_INK, 0)});"></div>
   </div>`;
 
 /** isolate 内でフォントを使い回す (R2 からの再取得を避ける)。FONT_KEY をキーにして
@@ -222,7 +227,13 @@ function truncate(value: string, max: number): string {
     : value;
 }
 
-/** OG カードの HTML (Satori 制約: flex レイアウトのみ)。 */
+/**
+ * OG カードの HTML (Satori 制約: flex レイアウトのみ)。
+ *
+ * 下の余白を厚く取ってあるのは、日付から署名までのひとかたまりを表題の近くへ引き上げる
+ * ため。上下に振り分ける (`space-between`) だけだと、表題の行数が少ないときに真ん中が
+ * 大きく空いて、日付と署名だけが取り残されて見える。余った高さは足元の街が引き受ける。
+ */
 function cardHtml(params: {
   title: string;
   date: string;
@@ -230,18 +241,22 @@ function cardHtml(params: {
 }): string {
   const title = escapeHtml(truncate(params.title, TITLE_MAX));
   /*
-   * タグは中黒で区切って並べるだけにする。囲みを付けない理由は note-timeline.css に
-   * 書いてあるとおりで、表題と主張が競るため。一覧とカードで同じ見え方にしておく。
+   * タグは中黒で繋ぐ。囲みを付けない理由は note-timeline.css に書いてあるとおりで、
+   * 表題と主張が競るため。
+   *
+   * ただし並べ方は一覧と変えてある。あちらは各タグの頭に中黒を置く (`::before`) が、
+   * この字の大きさで同じことをすると「・プログラミング」がひと塊に見えて、中黒が
+   * 区切りではなく飾りとして読める。ここでは語と語の間にだけ置く。
    */
   const tagLine = params.tags
     .slice(0, 4)
-    .map((tag) => `・${escapeHtml(tag)}`)
-    .join(" ");
+    .map((tag) => escapeHtml(tag))
+    .join("・");
 
   return `
     <div style="display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
-      ${HORIZON_HTML}
-      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:48px 80px 24px;">
+      ${TOP_BAND_HTML}
+      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px 96px;">
         <div style="display:flex;font-size:52px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
         <div style="display:flex;align-items:flex-end;justify-content:space-between;">
           <div style="display:flex;flex-direction:column;">
@@ -265,7 +280,7 @@ function cardHtml(params: {
 function defaultCardHtml(): string {
   return `
     <div style="display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
-      ${HORIZON_HTML}
+      ${TOP_BAND_HTML}
       <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;padding-bottom:24px;">
         <img src="${ICON_DATA_URI}" width="132" height="132" style="border-radius:26px;margin-bottom:32px;" />
         ${markedNameHtml(76)}
