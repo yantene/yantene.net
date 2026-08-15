@@ -238,8 +238,11 @@ function truncate(value: string, max: number): string {
  *
  * 日付から署名までの一行は、表題が何行になってもカードの決まった高さに置く。上下に
  * 振り分ける (`space-between`) だけだと、表題が短いときにこの行が真ん中まで上がってきて、
- * 記事ごとに居場所が変わる。街を通常の流れから外して底に貼り、その高さぶんを下の余白で
- * 埋め戻すことで、街に触れない位置で止めている。
+ * 記事ごとに居場所が変わる。
+ *
+ * 下の余白が 30px しかないのは、その一行を街の高さまで下ろすため。街は通常の流れから
+ * 外して底に貼ってあるので、ここで場所を空けておく必要がない。線画に重なるが、線が薄い
+ * ぶん字は読める (画面のヒーローも同じ扱いにしてある)。
  */
 function cardHtml(params: {
   title: string;
@@ -264,7 +267,7 @@ function cardHtml(params: {
     <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
       ${cityscapeHtml()}
       ${TOP_BAND_HTML}
-      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px ${(CITYSCAPE_HEIGHT + 20).toString()}px;">
+      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px 30px;">
         <div style="display:flex;font-size:52px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
         <div style="display:flex;align-items:flex-end;justify-content:space-between;">
           <div style="display:flex;flex-direction:column;">
