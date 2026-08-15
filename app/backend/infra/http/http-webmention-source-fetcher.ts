@@ -1,4 +1,4 @@
-import { charsetOf, decoderFor } from "./charset";
+import { charsetFor, decoderFor } from "./charset";
 import type {
   IWebmentionSourceFetcher,
   SourceFetchResult,
@@ -105,10 +105,15 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
     const body = response.body;
     if (body === null) return { kind: "unavailable", reason: "no body" };
 
-    const html = await this.readCapped(body, charsetOf(contentType));
-    if (html === undefined) {
+    const bytes = await this.readCapped(body);
+    if (bytes === undefined) {
       return { kind: "unavailable", reason: "body too large" };
     }
+    /*
+     * 読み終えてから文字コードを決める。ヘッダーが名乗らない相手は本文の `<meta>` を
+     * 見るので、流しながら復号すると宣言を読む前に復号器を選ぶことになる。
+     */
+    const html = decoderFor(charsetFor(contentType, bytes)).decode(bytes);
 
     /*
      * 転送を追い切ったあとの URL を返す。相対リンクの解決基準になるので、
@@ -120,11 +125,9 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
   /** 上限まで読む。超えたら打ち切って undefined を返す。 */
   private async readCapped(
     body: ReadableStream<Uint8Array>,
-    charset: string,
-  ): Promise<string | undefined> {
+  ): Promise<Uint8Array | undefined> {
     const reader = body.getReader();
-    const decoder = decoderFor(charset);
-    const parts: string[] = [];
+    const chunks: Uint8Array[] = [];
     let total = 0;
 
     let chunk = await reader.read();
@@ -134,12 +137,17 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
         await reader.cancel();
         return undefined;
       }
-      parts.push(decoder.decode(chunk.value, { stream: true }));
+      chunks.push(chunk.value);
       chunk = await reader.read();
     }
-    parts.push(decoder.decode());
 
-    return parts.join("");
+    const joined = new Uint8Array(total);
+    let offset = 0;
+    for (const part of chunks) {
+      joined.set(part, offset);
+      offset += part.byteLength;
+    }
+    return joined;
   }
 }
 
