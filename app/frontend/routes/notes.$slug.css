@@ -1,68 +1,9 @@
 /*
  * 記事ページ固有の見た目。
  *
- * 本文の描画は MdastRenderer が持つので、ここに置くのは記事を囲む部分だけ。
+ * 本文の描画は MdastRenderer が、記事の頭は NoteHeader が持つので、ここに置くのは
+ * どちらにも属さない部分だけ。
  */
-
-/*
- * 記事の顔になるカバー画像。表題より上に置く。
- *
- * 枠の比率は 21 / 9 に固定し、はみ出す分は中央基準で切る。元画像の比率は書き手任せで、
- * そのまま幅に合わせると正方形寄りの絵が読み始めの一画面を占めてしまうため。
- *
- * この比率は本文幅 (48rem) のとき高さ 329px になり、note.com の見出し画像 (本文幅
- * 620px で高さ 325px) と同じ高さに収まる。note.com は投稿時のトリミング枠で 1.91:1 に
- * 切らせるので表示側では切っていないが、こちらは Markdown を手で書くだけで投稿の口が
- * 無いため、表示側で切る。
- */
-.note-header-cover {
-  width: 100%;
-  aspect-ratio: 21 / 9;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-/* 表題の上に置く、日付と種別の行。 */
-.note-header-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
-}
-
-.note-header-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/*
- * 種別の前に引く細い線。日付と種別を繋ぎ、そのまま表題へ導く。
- * 幅は固定で、文字量に関わらず同じ長さになるようにする。
- */
-.note-header-kind::before {
-  content: "";
-  width: 2rem;
-  height: 1px;
-  background-color: var(--color-base-300);
-}
-
-.note-header-title {
-  margin-top: 0.625rem;
-  font-size: 2.25rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-@media (width < 40rem) {
-  .note-header-title {
-    font-size: 1.75rem;
-  }
-}
 
 /*
  * 関連ノートへの分かれ道。
