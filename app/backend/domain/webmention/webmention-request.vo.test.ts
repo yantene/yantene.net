@@ -79,4 +79,39 @@ describe("WebmentionRequest", () => {
       ),
     ).toThrow(SelfMentionNotAcceptedError);
   });
+
+  /* eslint-disable unicorn/prefer-https -- http にしても抜けられないことが以下の眼目。https に直すと確かめたいものが消える */
+
+  /*
+   * 判定はホスト名なので、スキームや港を変えても抜けられない。origin で見ると
+   * `http://` にするだけでここを通り、記事ページは自分自身への canonical リンクを
+   * 出しているので、その先のリンクの検証まで通ってしまう (source はクエリで幾らでも
+   * 変えられるため、自分の名前の行を好きなだけ積める)。
+   */
+  it.each([
+    ["同じ記事", "http://yantene.net/notes/hello"],
+    ["別の記事", "http://yantene.net/notes/other"],
+    ["クエリ違い", "http://yantene.net/notes/hello?x=1"],
+    ["港違い", "https://yantene.net:8443/notes/other"],
+  ])(
+    "スキームや港を変えた自サイトからの mention も断る (%s)",
+    (_case, source) => {
+      expect(() => create(source, "https://yantene.net/notes/hello")).toThrow(
+        SelfMentionNotAcceptedError,
+      );
+    },
+  );
+
+  /* 断るのはホスト名が一致するときだけ。他所からの mention は http でも受け取る。 */
+  it("他所のサイトからの mention は http でも受け入れる", () => {
+    const request = create(
+      "http://example.com/post",
+      "https://yantene.net/notes/hello",
+    );
+
+    expect(request.source.toString()).toBe("http://example.com/post");
+    expect(request.targetSlug.toString()).toBe("hello");
+  });
+
+  /* eslint-enable unicorn/prefer-https */
 });
