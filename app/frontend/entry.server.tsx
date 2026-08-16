@@ -5,8 +5,7 @@ import { ServerRouter } from "react-router";
 import type { EntryContext, RouterContextProvider } from "react-router";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { nonceRouteContext } from "~/frontend/lib/route-context";
-import { createI18nInstance } from "~/lib/i18n/init";
-import { resolveLocale } from "~/lib/i18n/resolve-locale";
+import { prepareI18n } from "~/lib/i18n/prepare-i18n";
 
 export default async function handleRequest(
   request: Request,
@@ -16,7 +15,7 @@ export default async function handleRequest(
   loadContext: RouterContextProvider,
 ): Promise<Response> {
   const nonce = loadContext.get(nonceRouteContext);
-  const i18n = await createI18nInstance(resolveLocale(request));
+  const i18n = await prepareI18n(request);
 
   let isShellRendered = false;
   let statusCode = responseStatusCode;

@@ -16,6 +16,7 @@ import { NonceContext } from "~/frontend/lib/nonce-context";
 import { buildPageMeta } from "~/frontend/lib/page-meta";
 import { cloudflareContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
+import { defaultLocale } from "~/lib/i18n/locale";
 import { resolveLocale } from "~/lib/i18n/resolve-locale";
 import "./app.css";
 
@@ -40,7 +41,7 @@ export function loader({ request, context }: Route.LoaderArgs): {
  */
 export const meta: Route.MetaFunction = ({ loaderData, location }) =>
   buildPageMeta({
-    locale: loaderData?.locale ?? "en",
+    locale: loaderData?.locale ?? defaultLocale,
     origin: loaderData?.origin ?? "",
     pathname: location.pathname,
   });
