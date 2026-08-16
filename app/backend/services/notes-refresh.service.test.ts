@@ -94,6 +94,27 @@ class InMemoryCache implements INoteContentCache {
   }
 }
 
+interface WalkedNode {
+  type: string;
+  url?: string;
+  data?: { hProperties?: Record<string, unknown> };
+  children?: WalkedNode[];
+}
+
+/** 木からその種別のノードをすべて集める。 */
+function collectByType(node: unknown, type: string): WalkedNode[] {
+  if (typeof node !== "object" || node === null) return [];
+  const record = node as WalkedNode;
+  const here = record.type === type ? [record] : [];
+  const children = record.children ?? [];
+  return [...here, ...children.flatMap((child) => collectByType(child, type))];
+}
+
+/** 木から最初のその種別のノードを探す。 */
+function findByType(node: unknown, type: string): WalkedNode | undefined {
+  return collectByType(node, type).at(0);
+}
+
 function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
@@ -244,6 +265,75 @@ lastModifiedOn: 2026-01-15
     // リンク参照が指す定義は書いたまま残る。
     expect(mdastJson).toContain("./song.mid");
     expect(mdastJson).not.toContain("assets/song.mid");
+  });
+
+  /*
+   * 参照記法で貼った画像にも寸法を持たせる。
+   *
+   * **載せる先は定義ではなく参照の側。** mdast-util-to-hast の imageReference ハンドラは
+   * 定義から URL と alt だけを引いて img を組み、applyData を当てるのは参照の側なので、
+   * 定義に載せても描画には届かない (#296)。
+   */
+  it("embeds dimensions on the reference, not the definition", async () => {
+    const refsMd = `---
+title: Sized refs
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic]
+
+[pic]: ./ref.png
+`;
+    const files = new Map([
+      ["notes/sized.md", { hash: "h1", bytes: bytes(refsMd) }],
+      ["notes/sized/ref.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const root = cache.mdasts.get("sized");
+    const reference = findByType(root, "imageReference");
+    const definition = findByType(root, "definition");
+
+    expect(reference?.data?.hProperties).toEqual({ width: 800, height: 450 });
+    // 定義には付けない。読む者がいないので、付けても誤解のもとになる。
+    expect(definition).toBeDefined();
+    expect(definition?.data).toBeUndefined();
+  });
+
+  /*
+   * 同じ名前の定義が並んだら、**先に書いたほうが勝つ。**
+   *
+   * mdast-util-to-hast は `if (!map.has(id))` で先勝ちにしている (CommonMark の定義の
+   * 扱いに合わせたもの)。こちらが後勝ちだと、描かれるのは 1 つめの画像なのに埋まる
+   * 寸法は 2 つめのものになり、**縦横比の違う枠を確保する** = 直したかったはずの
+   * レイアウトシフトを自分で起こす。
+   */
+  it("uses the first definition when a label is repeated", async () => {
+    const dupeMd = `---
+title: Dupe
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic]
+
+[pic]: ./first.png
+[pic]: ./second.png
+`;
+    const files = new Map([
+      ["notes/dupe.md", { hash: "h1", bytes: bytes(dupeMd) }],
+      ["notes/dupe/first.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["notes/dupe/second.png", { hash: "a2", bytes: pngBytes(100, 1000) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const reference = findByType(cache.mdasts.get("dupe"), "imageReference");
+    expect(reference?.data?.hProperties).toEqual({ width: 800, height: 450 });
   });
 
   /*
@@ -528,23 +618,7 @@ lastModifiedOn: 2026-01-15
 
     await service.refresh();
 
-    const mdast = cache.mdasts.get("hello") as {
-      children: { type: string; children?: unknown[] }[];
-    };
-    const images: { url?: string; data?: { hProperties?: unknown } }[] = [];
-    const walk = (node: unknown): void => {
-      if (typeof node !== "object" || node === null) return;
-      const record = node as {
-        type?: string;
-        url?: string;
-        data?: { hProperties?: unknown };
-        children?: unknown[];
-      };
-      if (record.type === "image") images.push(record);
-      const children = record.children ?? [];
-      for (const child of children) walk(child);
-    };
-    walk(mdast);
+    const images = collectByType(cache.mdasts.get("hello"), "image");
 
     expect(images).toHaveLength(1);
     expect(images[0].url).toBe("/api/v1/notes/hello/assets/inline.png");

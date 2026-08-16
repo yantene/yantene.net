@@ -241,7 +241,11 @@ export class NotesRefreshService {
      */
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
-    const sized = withImageDimensions(mdast, dimensions);
+    const sized = withImageDimensions(
+      mdast,
+      dimensions,
+      definitionUrlsOf(mdast),
+    );
     /*
      * 本文の 2 つの姿 (MDAST と原文) は隣り合わせに書く。同じ URL の 2 表現なので
      * (ADR 0020)、間に他の書き込みを挟むと、途中で落ちたときに**記事ページと
@@ -532,6 +536,46 @@ function withResolvedAssetUrls(root: Root, slug: string): Root {
 }
 
 /**
+ * 定義の名前から、解決後の URL を引く表。参照記法の寸法を引くのに使う。
+ *
+ * **同じ名前が並んだら先に書いたほうが勝つ。** mdast-util-to-hast が
+ * `if (!map.has(id))` で先勝ちにしており (CommonMark の定義の扱いに合わせている)、
+ * ここが後勝ちだと**描かれる画像と埋めた寸法が別物になる。**
+ *
+ * 名前はそのまま鍵にしてよい。mdast は `identifier` を参照側も定義側も小文字に均して
+ * おり (`label` が書いたままを持つ)、あちらが両側を大文字に揃えているのと同じことに
+ * なる。
+ */
+function definitionUrlsOf(node: Nodes): ReadonlyMap<string, string> {
+  const urls = new Map<string, string>();
+  collectDefinitionUrls(node, urls);
+  return urls;
+}
+
+function collectDefinitionUrls(node: Nodes, urls: Map<string, string>): void {
+  if (node.type === "definition" && !urls.has(node.identifier))
+    urls.set(node.identifier, node.url);
+  if (!("children" in node)) return;
+  for (const child of node.children) collectDefinitionUrls(child, urls);
+}
+
+/**
+ * そのノードが指す画像の URL。寸法を持たせる対象でなければ undefined。
+ *
+ * 直書き (`image`) は自分の URL、参照記法 (`imageReference`) は定義の URL を見る。
+ */
+function sizedUrlOf(
+  node: Nodes,
+  definitionUrls: ReadonlyMap<string, string>,
+): string | undefined {
+  if (node.type === "image") return node.url;
+  if (node.type === "imageReference") {
+    return definitionUrls.get(node.identifier);
+  }
+  return undefined;
+}
+
+/**
  * 木を写しながら、画像に width/height を埋める (レイアウトシフト対策)。元の木は変えない。
  *
  * `data.hProperties` は mdast-util-to-hast が要素の属性に展開する仕組みなので、
@@ -540,19 +584,18 @@ function withResolvedAssetUrls(root: Root, slug: string): Root {
  *
  * 表の鍵は解決後の URL なので、ノードの URL をそのまま引くだけでよい (cacheAssets)。
  *
- * ⚠️ `definition` に載せた寸法は、いまのところ描画に届いていない
- * ([#296](https://github.com/yantene/yantene.net/issues/296))。`imageReference` を
- * 要素にするのは参照の側で、定義から引くのは URL と alt だけのため。ここは元の実装
- * からの持ち越しで、直すのは #296 の仕事。
+ * **参照記法 (`![alt][id]`) では、寸法を載せる先が定義ではなく参照の側になる。**
+ * mdast-util-to-hast の imageReference ハンドラは、定義から URL と alt だけを引いて
+ * `img` を組み、`applyData` を当てるのは参照の側である。定義に載せても読む者がいない
+ * (#296)。
  */
 function withImageDimensions<T extends Nodes>(
   node: T,
   dimensions: ReadonlyMap<string, ImageDimensions>,
+  definitionUrls: ReadonlyMap<string, string>,
 ): T {
-  const size =
-    node.type === "image" || node.type === "definition"
-      ? dimensions.get(node.url)
-      : undefined;
+  const url = sizedUrlOf(node, definitionUrls);
+  const size = url === undefined ? undefined : dimensions.get(url);
 
   const sized: T =
     size === undefined
@@ -573,7 +616,7 @@ function withImageDimensions<T extends Nodes>(
   return {
     ...sized,
     children: sized.children.map((child) =>
-      withImageDimensions(child, dimensions),
+      withImageDimensions(child, dimensions, definitionUrls),
     ),
   };
 }
