@@ -454,7 +454,7 @@ function buildNoteContent(
     });
 
     // 本文中の相対 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
-    return { note, mdast: withResolvedAssetUrls(parsed.mdast, slug) };
+    return { note, mdast: withAssetUrls(parsed.mdast, slug) };
   } catch (error) {
     if (error instanceof NoteContentError) throw error;
     // VO 検証・日付パース失敗はコンテンツ不正として扱う。
@@ -464,46 +464,42 @@ function buildNoteContent(
   }
 }
 
+/** URL を持ち、アセットを指しうるノードの種別。 */
+const assetUrlTypes: ReadonlySet<Nodes["type"]> = new Set([
+  "image",
+  "link",
+  "definition",
+]);
+
 /**
- * 画像参照 (`![alt][id]`) が名指ししている定義の名前を集める。
+ * アセットの相対 URL を持ちうるノードか。
  *
- * リンク参照 (`[text][id]`) の定義と見分けるために要る。定義自体はどちらの参照から
- * 指されているかを知らないので、参照の側から辿る。
+ * 直書き (`image` / `link`) と、参照記法の行き先を持つ `definition` が対象。
+ * **画像参照とリンク参照で扱いを分けない。** 以前は画像参照から指された定義だけを
+ * 直しており、`[曲][tune]` + `[tune]: ./song.mid` と書くと解決されずに 404 していた。
+ * 同じことを `[曲](./song.mid)` と書けば通るので、書き方で結果が変わっていた (#295)。
  *
- * 受け皿を 1 つ持ち回る。階層ごとに集合を作り直すと、深いところで見つけた名前を
- * 祖先の数だけ入れ直すことになる (collectBareLinkParagraphs と同じ形)。
+ * 分けても守りにはならない。resolveAssetUrl は絶対 URL・ルート相対・同一文書参照を
+ * 素通しするので、`[x]: https://example.com` や `[x]: /notes/other` のような定義は
+ * どちらの扱いでも触られない。
  */
-function imageReferenceIdsOf(root: Nodes): ReadonlySet<string> {
-  const ids = new Set<string>();
-  collectImageReferenceIds(root, ids);
-  return ids;
-}
-
-function collectImageReferenceIds(node: Nodes, ids: Set<string>): void {
-  if (node.type === "imageReference") ids.add(node.identifier);
-  if (!("children" in node)) return;
-  for (const child of node.children) collectImageReferenceIds(child, ids);
-}
-
-/** アセットの相対 URL を持ちうるノードか。 */
-function isAssetUrlNode(
-  node: Nodes,
-  imageRefIds: ReadonlySet<string>,
-): node is Definition | Image | Link {
-  if (node.type === "image" || node.type === "link") return true;
-  // 画像参照から指されている定義だけを直す。リンク参照の定義は触らない。
-  return node.type === "definition" && imageRefIds.has(node.identifier);
+function isAssetUrlNode(node: Nodes): node is Definition | Image | Link {
+  return assetUrlTypes.has(node.type);
 }
 
 /**
  * 木を写しながら、アセットの相対 URL をアセット API の URL に直す。元の木は変えない。
  *
- * 対象は `image`・`link`・`imageReference` から参照される `definition`。
+ * 対象は {@link isAssetUrlNode} が答える (`image` / `link` / `definition`)。
  *
  * `link` を含めるのは、画像として貼れないアセット (曲の MIDI ファイルなど) へ本文から
  * リンクを張るため。`resolveAssetUrl` は絶対 URL とルート相対を素通しするので、外部リンクも
- * 記事間リンク (`/notes/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス
- * だけで、これは解決しなければどのみち 404 になるものである。
+ * 記事間リンク (`/notes/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス。
+ *
+ * ⚠️ **素の相対パスもアセット扱いになる。** `[前の記事](other-note)` は
+ * `/api/v1/notes/<slug>/assets/other-note` になり 404 する。記事間のリンクはルート相対
+ * (`/notes/other`) で書くこと。参照記法もこれに揃った (#295) ので、`[prev]: other-note`
+ * のように書いていた定義は同じ角に当たる。
  *
  * `link` は子を持つので、URL を直したうえで中まで降りる (リンクで包んだ画像がある)。
  *
@@ -511,12 +507,8 @@ function isAssetUrlNode(
  * 解析し直すことになる。本文に直接書く `<audio>` の src は、ルート相対の絶対パスで
  * 書いてもらう (ADR 0022)。
  */
-function withAssetUrls<T extends Nodes>(
-  node: T,
-  slug: string,
-  imageRefIds: ReadonlySet<string>,
-): T {
-  const resolved: T = isAssetUrlNode(node, imageRefIds)
+function withAssetUrls<T extends Nodes>(node: T, slug: string): T {
+  const resolved: T = isAssetUrlNode(node)
     ? { ...node, url: resolveAssetUrl(slug, node.url) }
     : node;
 
@@ -524,15 +516,8 @@ function withAssetUrls<T extends Nodes>(
   // 子の種別は写しても変わらないので、親の型はそのまま保たれる。
   return {
     ...resolved,
-    children: resolved.children.map((child) =>
-      withAssetUrls(child, slug, imageRefIds),
-    ),
+    children: resolved.children.map((child) => withAssetUrls(child, slug)),
   };
-}
-
-/** 木を写しながらアセットの URL を直す。参照の集約はここで済ませる。 */
-function withResolvedAssetUrls(root: Root, slug: string): Root {
-  return withAssetUrls(root, slug, imageReferenceIdsOf(root));
 }
 
 /**
@@ -583,6 +568,7 @@ function sizedUrlOf(
  * 画像には何も付けない (誤った値で見た目を壊さない)。
  *
  * 表の鍵は解決後の URL なので、ノードの URL をそのまま引くだけでよい (cacheAssets)。
+ * URL は {@link withAssetUrls} を通った後のものを渡すこと。
  *
  * **参照記法 (`![alt][id]`) では、寸法を載せる先が定義ではなく参照の側になる。**
  * mdast-util-to-hast の imageReference ハンドラは、定義から URL と alt だけを引いて
