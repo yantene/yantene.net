@@ -253,6 +253,110 @@ lastModifiedOn: 2026-01-15
   });
 
   /*
+   * 符号として読めない `%` を持つファイル名。以前は寸法を引く手前の
+   * decodeURIComponent が URIError を投げ、**その記事のキャッシュを消した後で
+   * refresh 全体が止まっていた** (#297)。ファイル名を変えるまで毎回同じ場所で死ぬ。
+   *
+   * 巻き添えを見るために、後ろにもう 1 本ノートを置いてある。
+   */
+  it("survives an asset name with a stray percent sign", async () => {
+    const oddMd = `---
+title: Odd
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵](./50%off.png)
+`;
+    const files = new Map([
+      ["notes/odd.md", { hash: "h1", bytes: bytes(oddMd) }],
+      ["notes/odd/50%off.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["notes/hello.md", { hash: "h2", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a2", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a3", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    const result = await service.refresh();
+
+    // 落ちずに両方とも入る。後ろのノートが巻き添えにならない。
+    expect(result.processed).toContain("odd");
+    expect(result.processed).toContain("hello");
+    expect(result.skipped).toEqual([]);
+    // 消しただけで終わらず、MDAST が書き直されている。
+    expect(cache.mdasts.get("odd")).toBeDefined();
+    const oddJson = JSON.stringify(cache.mdasts.get("odd"));
+    expect(oddJson).toContain("/api/v1/notes/odd/assets/50%off.png");
+    /*
+     * 落ちないだけでなく、寸法も引けていること。ここを見ないと「例外を握った」だけの
+     * 直しでも通ってしまい、その名前の画像だけ静かにレイアウトシフトを起こす。
+     */
+    expect(oddJson).toContain('"width":800');
+  });
+
+  /*
+   * `#` 始まりを素通しするようにしたので、フロントマターの imageUrl に書かれると
+   * ImageUrl.create (ルート相対しか受けない) で弾かれ、そのノートは skipped になる。
+   *
+   * これは `imageUrl: https://example.com/a.png` が以前から辿る道と同じで、#297 で
+   * 増えたのは入口が 1 つ増えたことだけ。**黙って壊れた絵を出すより、報告して止まる
+   * ほうがよい**という既存の判断に揃えてある。ここで固定しておかないと、次に
+   * resolveAssetUrl を触る人が気づかないまま挙動を変える。
+   */
+  it("reports a note whose imageUrl is not a resolvable asset", async () => {
+    const oddCover = `---
+title: Odd cover
+imageUrl: "#cover"
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+本文。
+`;
+    const files = new Map([
+      ["notes/odd-cover.md", { hash: "h1", bytes: bytes(oddCover) }],
+      ["notes/hello.md", { hash: "h2", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service } = setup(files);
+
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("notes/odd-cover.md");
+  });
+
+  /*
+   * ページ内アンカーは相対パスではない。assets 配下へ押し込むと、押しても 404 になる
+   * (#297)。脚注は footnoteReference なのでこの経路を通らないが、手書きの目次や
+   * 「先頭へ戻る」は link ノードとしてここを通る。
+   */
+  it("leaves in-page anchors alone", async () => {
+    const anchorMd = `---
+title: Anchors
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+## 見出し
+
+[先頭に戻る](#top) と [外](https://example.com/)。
+`;
+    const files = new Map([
+      ["notes/anchors.md", { hash: "h1", bytes: bytes(anchorMd) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("anchors"));
+    expect(mdastJson).toContain('"#top"');
+    expect(mdastJson).not.toContain("assets/");
+  });
+
+  /*
    * `/notes/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
    * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
    */

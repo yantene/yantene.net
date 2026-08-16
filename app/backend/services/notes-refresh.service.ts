@@ -234,11 +234,7 @@ export class NotesRefreshService {
     await this.cache.putSource(group.slug, source.markdown);
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
-    const sized = withImageDimensions(
-      mdast,
-      `/api/v1/notes/${group.slug.toString()}/assets/`,
-      dimensions,
-    );
+    const sized = withImageDimensions(mdast, dimensions);
     await this.cache.putMdast(group.slug, sized);
     await this.command.upsert(note);
     await this.searchIndex.index({
@@ -267,7 +263,14 @@ export class NotesRefreshService {
         contentType: contentTypeForPath(relPath),
       });
       const size = readImageDimensions(bytes);
-      if (size !== undefined) dimensions.set(relPath, size);
+      /*
+       * 鍵は**解決後の URL**。本文の側も同じ resolveAssetUrl を通るので、符号化の
+       * 揺れ (`絵.png` → `%E7%B5%B5.png`、`100%25.png` はそのまま) を気にせず突き合わせ
+       * られる。URL から名前へ戻す方向だと、`%25` を含む名前が別物に化ける (#297)。
+       */
+      if (size !== undefined) {
+        dimensions.set(resolveAssetUrl(group.slug.toString(), relPath), size);
+      }
     }
     return dimensions;
   }
@@ -494,16 +497,6 @@ function withResolvedAssetUrls(root: Root, slug: string): Root {
   return withAssetUrls(root, slug, imageReferenceIdsOf(root));
 }
 
-/** そのノードの URL に対応する寸法。表に無ければ undefined。 */
-function sizeOf(
-  node: Definition | Image,
-  assetPrefix: string,
-  dimensions: ReadonlyMap<string, ImageDimensions>,
-): ImageDimensions | undefined {
-  if (!node.url.startsWith(assetPrefix)) return undefined;
-  return dimensions.get(decodeURIComponent(node.url.slice(assetPrefix.length)));
-}
-
 /**
  * 木を写しながら、画像に width/height を埋める (レイアウトシフト対策)。元の木は変えない。
  *
@@ -511,8 +504,7 @@ function sizeOf(
  * フロント側の変更なしに `<img width height>` が出るようになる。寸法が取れなかった
  * 画像には何も付けない (誤った値で見た目を壊さない)。
  *
- * URL は {@link withResolvedAssetUrls} を通った後 (`/api/v1/notes/<slug>/assets/<path>`)
- * の前提で、そこから相対パスを逆算して寸法表を引く。
+ * 表の鍵は解決後の URL なので、ノードの URL をそのまま引くだけでよい (cacheAssets)。
  *
  * ⚠️ `definition` に載せた寸法は、いまのところ描画に届いていない
  * ([#296](https://github.com/yantene/yantene.net/issues/296))。`imageReference` を
@@ -521,12 +513,11 @@ function sizeOf(
  */
 function withImageDimensions<T extends Nodes>(
   node: T,
-  assetPrefix: string,
   dimensions: ReadonlyMap<string, ImageDimensions>,
 ): T {
   const size =
     node.type === "image" || node.type === "definition"
-      ? sizeOf(node, assetPrefix, dimensions)
+      ? dimensions.get(node.url)
       : undefined;
 
   const sized: T =
@@ -548,7 +539,7 @@ function withImageDimensions<T extends Nodes>(
   return {
     ...sized,
     children: sized.children.map((child) =>
-      withImageDimensions(child, assetPrefix, dimensions),
+      withImageDimensions(child, dimensions),
     ),
   };
 }
