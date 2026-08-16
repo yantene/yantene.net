@@ -100,6 +100,47 @@ describe("MdastRenderer", () => {
     );
   });
 
+  /*
+   * 参照記法 (`![alt][id]`) の画像に寸法が届くこと。
+   *
+   * **載っているのは参照の側。** mdast-util-to-hast の imageReference ハンドラは定義から
+   * URL と alt だけを引いて img を組み、applyData を当てるのは参照の側なので、定義に
+   * 載せても描画には届かない (#296)。refresh がどちらへ載せるかを変えたら、ここが落ちる。
+   */
+  it("参照記法の画像にも寸法が出る", () => {
+    const node: MdastRoot = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "imageReference",
+              identifier: "pic",
+              label: "pic",
+              referenceType: "full",
+              alt: "絵",
+              data: { hProperties: { width: 800, height: 450 } },
+            },
+          ],
+        },
+        {
+          type: "definition",
+          identifier: "pic",
+          label: "pic",
+          url: "/api/v1/notes/x/assets/ref.png",
+        },
+      ],
+    };
+
+    const { container } = render(<MdastRenderer node={node} />);
+    const img = container.querySelector("img");
+
+    expect(img?.getAttribute("src")).toBe("/api/v1/notes/x/assets/ref.png");
+    expect(img?.getAttribute("width")).toBe("800");
+    expect(img?.getAttribute("height")).toBe("450");
+  });
+
   it("keeps internal links as plain same-tab anchors", () => {
     const { container } = render(
       <MdastRenderer node={md("[x](/notes/other)")} />,
