@@ -77,11 +77,20 @@ describe("GitHubContentStore", () => {
     const result = await store(fetchFn).readFile("notes/a.md");
     expect(result).toEqual(bytes);
 
-    const [url] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock
+    const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock
       .calls[0];
     expect(url).toBe(
       "https://api.test/repos/yantene/notes/contents/notes/a.md?ref=main",
     );
+    /*
+     * raw メディアタイプで頼むこと。既定 (`application/vnd.github+json`) に戻ると、
+     * contents API は中身を base64 に包んだ JSON を返す。こちらはその生バイト列を
+     * そのまま Markdown として D1 と R2 に書くので、**何も throw せず全記事が
+     * 封筒の文字列に置き換わる** (#282)。URL だけ見ていると気づけない。
+     */
+    expect((init as RequestInit).headers).toMatchObject({
+      Accept: "application/vnd.github.raw+json",
+    });
   });
 
   it("returns undefined for a missing file (404)", async () => {

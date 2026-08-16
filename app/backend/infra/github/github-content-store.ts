@@ -33,7 +33,9 @@ export class GitHubRequestError extends Error {
  *
  * - listTree: git tree API (`?recursive=1`) で全 blob を取得し、`sha` (git blob ハッシュ)
  *   を {@link ContentEntry.hash} にする。変更検出はこのハッシュで行う。
- * - readFile: contents API でパス指定取得し、base64 を復号して生バイト列を返す。
+ * - readFile: contents API をパス指定で叩く。どのメディアタイプで受けるかは実装の
+ *   `Accept` に書いてある (ここに写しを置かない。写した説明が実装と食い違ったまま
+ *   残っていたのが #282)。
  *
  * ドメイン・refresh・D1/R2 は正本の種類を知らないので、別のストレージへ移すときも
  * この実装を差し替えるだけで済む (IContentStore の抽象の利点。ADR 0004)。
