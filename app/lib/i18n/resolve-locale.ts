@@ -1,4 +1,5 @@
 import {
+  defaultLocale,
   isSupportedLocale,
   localeCookieName,
   type SupportedLocale,
@@ -45,12 +46,12 @@ function parseAcceptLanguage(header: string): SupportedLocale | undefined {
 
 /**
  * リクエストから表示ロケールを決める。locale クッキーを優先し、
- * 無ければ Accept-Language、どちらも無ければ "en" にフォールバックする。
+ * 無ければ Accept-Language、どちらも無ければ defaultLocale にフォールバックする。
  */
 export function resolveLocale(request: Request): SupportedLocale {
   return (
     readLocaleCookie(request.headers.get("Cookie") ?? "") ??
     parseAcceptLanguage(request.headers.get("Accept-Language") ?? "") ??
-    "en"
+    defaultLocale
   );
 }

@@ -6,11 +6,12 @@ import { enableActiveOnTouch } from "~/frontend/lib/enable-active-on-touch";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { registerServiceWorker } from "~/frontend/lib/register-service-worker";
 import { initI18nGlobal } from "~/lib/i18n/init";
+import { defaultLocale } from "~/lib/i18n/locale";
 
 const locale =
   document.documentElement.lang.length > 0
     ? document.documentElement.lang
-    : "en";
+    : defaultLocale;
 
 const nonce =
   document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") ??
