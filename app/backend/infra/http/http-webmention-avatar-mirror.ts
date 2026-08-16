@@ -33,6 +33,14 @@ export class HttpWebmentionAvatarMirror implements IWebmentionAvatarMirror {
       });
       if (response === undefined) return undefined;
       if (!isAllowedImageType(response.contentType)) return undefined;
+      // 中身の無い 200 は写さない。写すと、顔の欄に 0 バイトの絵が並ぶ。
+      if (response.bytes.byteLength === 0) {
+        // 無音だと「顔を持たない送り手」と見分けが付かず、直すきっかけが無い (#255)。
+        this.logger.info("webmention avatar was empty", {
+          photo: photo.toString(),
+        });
+        return undefined;
+      }
 
       const id = await webmentionAvatarIdFor(photo);
       await this.cache.put(id, {

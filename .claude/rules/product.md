@@ -64,6 +64,13 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - リンクカードの絵の取り逃しを覚えるようにした ([#255](https://github.com/yantene/yantene.net/issues/255))。
   既存のカードは「取り逃していない」ものとして入っているので、いま絵の欠けているカードは
   14 日の期限が切れるまで取り直されない。急ぐなら force refresh を流すこと
+- 中身の無い応答を「取れた」ことにしないようにした ([#293](https://github.com/yantene/yantene.net/issues/293))。
+  0 バイトの絵は `has_image` が立ったまま入っているので、**14 日の期限が切れるまで
+  取り直されない**。急ぐなら force refresh を流すこと。
+
+  ⚠️ **Webmention の顔には効かない。** あちらは送り手が再送してきたときにしか写し直さず、
+  期限で取り直す仕組みが無い。既に入っている 0 バイトの顔は、D1 の `author_avatar` を
+  消して R2 の写しを捨てる手作業が要る ([#322](https://github.com/yantene/yantene.net/issues/322))。
 
 ## データモデルとストレージ戦略
 
