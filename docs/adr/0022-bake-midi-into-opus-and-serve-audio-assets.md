@@ -96,7 +96,7 @@ fluidsynth の既定ゲインは 0.2 と控えめで、素直に焼くとピー�
 
 ### `<audio>` の src はルート相対で書く
 
-相対 URL の解決は `resolveMdastAssetUrls` が MDAST の上で行う。今回、対象を `image` から
+相対 URL の解決は `withAssetUrls` が MDAST の上で行う (下記の訂正)。今回、対象を `image` から
 `link` へ広げた (MIDI のリンクを `./song.mid` と書けるようにするため)。既存記事に画像以外の
 相対リンクは 1 本も無いので、挙動が変わるコンテンツは無い。
 
@@ -150,5 +150,22 @@ CSP には `media-src 'self'` を明示する。`default-src` に任せても同
 - 実装: `app/backend/services/asset-content-type.ts` /
   `app/frontend/components/mdast/audio.ts` /
   `app/frontend/components/mdast/mdast-renderer.tsx` (`keepEmbedHtml`, `toAudio`) /
-  `app/backend/services/notes-refresh.service.ts` (`resolveMdastAssetUrls`) /
+  `app/backend/services/notes-refresh.service.ts` (`withAssetUrls`) /
   `app/backend/index.ts` (CSP)
+
+## 訂正 (2026-08-17)
+
+本 ADR が指していた関数名 `resolveMdastAssetUrls` は、いまのコードに存在しない。
+[#279](https://github.com/yantene/yantene.net/issues/279) で走査を型付き・非破壊に
+書き直したときに `withResolvedAssetUrls` へ改名し、
+[#295](https://github.com/yantene/yantene.net/issues/295) で素通しの包みを畳んで
+`withAssetUrls` になった。**改名した側が ADR の参照を直し忘れていた。**
+
+決定 (音源をアセットとして配り、src はルート相対で書く) は変えていない。実装を指す
+名前だけを現在のものに直した。
+
+`.claude/rules/adr.md` の不変性に対する例外という点は
+[ADR 0004](0004-github-as-content-source-of-truth.md) /
+[0018](0018-typeset-math-with-temml.md) / [0019](0019-inline-style-for-math.md) と同じ。
+本文を直したのは、**ここが「どこを読めばよいか」を示す場所**だからで、存在しない名前を
+残すと読む人が探しに行って見つけられない。

@@ -232,13 +232,13 @@ lastModifiedOn: 2026-01-15
 
   /*
    * 参照記法 (`![alt][id]` と `[text][id]`) は、行き先を離れた場所の定義に持つ。
-   * 定義そのものはどちらの参照から指されているかを知らないので、参照の側から辿って
-   * **画像参照から指されている定義だけ**を直す。
+   * **画像参照でもリンク参照でも同じように解決する。**
    *
-   * リンク参照の定義に触らないのは元からの振る舞い。ここで固定しておかないと、
-   * 走査の書き換えで境目が動いても気づけない (#279 の変異テストで実際に素通りした)。
+   * 以前は画像参照から指された定義だけを直しており、`[曲][tune]` と書くと 404 して
+   * いた。同じことを `[曲](./song.mid)` と書けば通るので、書き方で結果が変わって
+   * いた (#295)。
    */
-  it("resolves definitions used by image references only", async () => {
+  it("resolves definitions for both image and link references", async () => {
     const refsMd = `---
 title: Refs
 publishedOn: 2026-01-15
@@ -260,11 +260,74 @@ lastModifiedOn: 2026-01-15
     await service.refresh();
 
     const mdastJson = JSON.stringify(cache.mdasts.get("refs"));
-    // 画像参照が指す定義は解決する。
     expect(mdastJson).toContain("/api/v1/notes/refs/assets/inline.png");
-    // リンク参照が指す定義は書いたまま残る。
-    expect(mdastJson).toContain("./song.mid");
-    expect(mdastJson).not.toContain("assets/song.mid");
+    expect(mdastJson).toContain("/api/v1/notes/refs/assets/song.mid");
+    // 相対パスのまま残っていないこと。
+    expect(mdastJson).not.toContain("./song.mid");
+  });
+
+  /*
+   * 分けても守りにはならないことの裏取り。resolveAssetUrl は絶対 URL・ルート相対・
+   * 同一文書参照を素通しするので、定義をすべて対象にしても触られない。
+   *
+   * 同一文書参照 (`#` と `?`) は、この変更で初めて定義の側からこの経路に入る。直書きの
+   * 側は別のテストが押さえているが、定義の側は押さえられていなかった。
+   */
+  it("leaves absolute and root-relative definitions alone", async () => {
+    const outerMd = `---
+title: Outer
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[外][away] と [他の記事][other] と [まとめ][sum] と [問い][q]。
+
+[away]: https://example.com/a
+[other]: /notes/other
+[sum]: #summary
+[q]: ?v=2
+`;
+    const files = new Map([
+      ["notes/outer.md", { hash: "h1", bytes: bytes(outerMd) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("outer"));
+    expect(mdastJson).toContain("https://example.com/a");
+    expect(mdastJson).toContain("/notes/other");
+    expect(mdastJson).toContain('"#summary"');
+    expect(mdastJson).toContain('"?v=2"');
+    expect(mdastJson).not.toContain("assets/");
+  });
+
+  /*
+   * **素の相対パスはアセット扱いになる。** 直書きの `[前の記事](other-note)` が元から
+   * こうで、#295 で参照記法もこれに揃った。記事間のリンクはルート相対で書くという
+   * 決まりを、ここで固定しておく (書き方で結果が変わらないことのほうを取った)。
+   */
+  it("treats a bare relative definition as an asset path", async () => {
+    const bareMd = `---
+title: Bare
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[前の記事][prev]
+
+[prev]: other-note
+`;
+    const files = new Map([
+      ["notes/bare.md", { hash: "h1", bytes: bytes(bareMd) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    expect(JSON.stringify(cache.mdasts.get("bare"))).toContain(
+      "/api/v1/notes/bare/assets/other-note",
+    );
   });
 
   /*
