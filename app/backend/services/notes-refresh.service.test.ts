@@ -187,6 +187,72 @@ lastModifiedOn: 2026-01-15
   });
 
   /*
+   * 参照記法 (`![alt][id]` と `[text][id]`) は、行き先を離れた場所の定義に持つ。
+   * 定義そのものはどちらの参照から指されているかを知らないので、参照の側から辿って
+   * **画像参照から指されている定義だけ**を直す。
+   *
+   * リンク参照の定義に触らないのは元からの振る舞い。ここで固定しておかないと、
+   * 走査の書き換えで境目が動いても気づけない (#279 の変異テストで実際に素通りした)。
+   */
+  it("resolves definitions used by image references only", async () => {
+    const refsMd = `---
+title: Refs
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic] と [曲][tune]。
+
+[pic]: ./inline.png
+[tune]: ./song.mid
+`;
+    const files = new Map([
+      ["notes/refs.md", { hash: "h1", bytes: bytes(refsMd) }],
+      ["notes/refs/inline.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["notes/refs/song.mid", { hash: "a2", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("refs"));
+    // 画像参照が指す定義は解決する。
+    expect(mdastJson).toContain("/api/v1/notes/refs/assets/inline.png");
+    // リンク参照が指す定義は書いたまま残る。
+    expect(mdastJson).toContain("./song.mid");
+    expect(mdastJson).not.toContain("assets/song.mid");
+  });
+
+  /*
+   * リンクで包んだ画像 (`[![alt](./a.png)](./b.mid)`) は、link の下に image が入る。
+   * link 自身の URL を直したところで止まると、中の画像が相対パスのまま残る。
+   */
+  it("resolves an image nested inside a link", async () => {
+    const nestedMd = `---
+title: Nested
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[![ジャケット](./inline.png)](./song.mid)
+`;
+    const files = new Map([
+      ["notes/nested.md", { hash: "h1", bytes: bytes(nestedMd) }],
+      ["notes/nested/inline.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["notes/nested/song.mid", { hash: "a2", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("nested"));
+    expect(mdastJson).toContain("/api/v1/notes/nested/assets/inline.png");
+    expect(mdastJson).toContain("/api/v1/notes/nested/assets/song.mid");
+    // 寸法も、入れ子の中の画像に届いている。
+    expect(mdastJson).toContain('"width":800');
+  });
+
+  /*
    * `/notes/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
    * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
    */

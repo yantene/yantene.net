@@ -9,7 +9,7 @@ import {
   VisibilityValueError,
   type ParsedNoteContent,
 } from "./note-content-parser";
-import type { Root } from "mdast";
+import type { Definition, Image, Link, Nodes, Root } from "mdast";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type {
   INoteCommandRepository,
@@ -234,20 +234,20 @@ export class NotesRefreshService {
     await this.cache.putSource(group.slug, source.markdown);
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
-    applyImageDimensions(
+    const sized = withImageDimensions(
       mdast,
       `/api/v1/notes/${group.slug.toString()}/assets/`,
       dimensions,
     );
-    await this.cache.putMdast(group.slug, mdast);
+    await this.cache.putMdast(group.slug, sized);
     await this.command.upsert(note);
     await this.searchIndex.index({
       slug: group.slug,
       title: note.title.toString(),
-      body: mdastToString(mdast),
+      body: mdastToString(sized),
     });
 
-    return collectBareLinkUrls(mdast);
+    return collectBareLinkUrls(sized);
   }
 
   /**
@@ -413,8 +413,7 @@ function buildNoteContent(
     });
 
     // 本文中の相対 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
-    resolveMdastAssetUrls(parsed.mdast, slug);
-    return { note, mdast: parsed.mdast };
+    return { note, mdast: withResolvedAssetUrls(parsed.mdast, slug) };
   } catch (error) {
     if (error instanceof NoteContentError) throw error;
     // VO 検証・日付パース失敗はコンテンツ不正として扱う。
@@ -424,113 +423,132 @@ function buildNoteContent(
   }
 }
 
-interface MdastNodeLike {
-  type: string;
-  url?: string;
-  identifier?: string;
-  children?: MdastNodeLike[];
-  /** mdast-util-to-hast が要素の属性に展開する追加データ (hProperties)。 */
-  data?: { hProperties?: Record<string, unknown> };
+/**
+ * 画像参照 (`![alt][id]`) が名指ししている定義の名前を集める。
+ *
+ * リンク参照 (`[text][id]`) の定義と見分けるために要る。定義自体はどちらの参照から
+ * 指されているかを知らないので、参照の側から辿る。
+ *
+ * 受け皿を 1 つ持ち回る。階層ごとに集合を作り直すと、深いところで見つけた名前を
+ * 祖先の数だけ入れ直すことになる (collectBareLinkParagraphs と同じ形)。
+ */
+function imageReferenceIdsOf(root: Nodes): ReadonlySet<string> {
+  const ids = new Set<string>();
+  collectImageReferenceIds(root, ids);
+  return ids;
+}
+
+function collectImageReferenceIds(node: Nodes, ids: Set<string>): void {
+  if (node.type === "imageReference") ids.add(node.identifier);
+  if (!("children" in node)) return;
+  for (const child of node.children) collectImageReferenceIds(child, ids);
+}
+
+/** アセットの相対 URL を持ちうるノードか。 */
+function isAssetUrlNode(
+  node: Nodes,
+  imageRefIds: ReadonlySet<string>,
+): node is Definition | Image | Link {
+  if (node.type === "image" || node.type === "link") return true;
+  // 画像参照から指されている定義だけを直す。リンク参照の定義は触らない。
+  return node.type === "definition" && imageRefIds.has(node.identifier);
 }
 
 /**
- * MDAST を走査し、アセットの相対 URL をアセット API URL に書き換える。
+ * 木を写しながら、アセットの相対 URL をアセット API の URL に直す。元の木は変えない。
  *
- * 対象は `image` ノード、`link` ノード、`imageReference` から参照される `definition`。
- * リンク参照 (linkReference) の definition は書き換えない。
+ * 対象は `image`・`link`・`imageReference` から参照される `definition`。
  *
  * `link` を含めるのは、画像として貼れないアセット (曲の MIDI ファイルなど) へ本文から
  * リンクを張るため。`resolveAssetUrl` は絶対 URL とルート相対を素通しするので、外部リンクも
  * 記事間リンク (`/notes/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス
  * だけで、これは解決しなければどのみち 404 になるものである。
  *
- * 生 HTML の中は書き換えない。`html` ノードが持つのは文字列で、属性を読むには HTML を
+ * `link` は子を持つので、URL を直したうえで中まで降りる (リンクで包んだ画像がある)。
+ *
+ * 生 HTML の中は直さない。`html` ノードが持つのは文字列で、属性を読むには HTML を
  * 解析し直すことになる。本文に直接書く `<audio>` の src は、ルート相対の絶対パスで
  * 書いてもらう (ADR 0022)。
  */
-export function resolveMdastAssetUrls(node: unknown, slug: string): void {
-  const imageRefIds = new Set<string>();
-  collectImageReferenceIds(node, imageRefIds);
-  rewriteAssetUrls(node, slug, imageRefIds);
-}
-
-function collectImageReferenceIds(node: unknown, ids: Set<string>): void {
-  if (typeof node !== "object" || node === null) return;
-  const record = node as MdastNodeLike;
-  if (
-    record.type === "imageReference" &&
-    typeof record.identifier === "string"
-  ) {
-    ids.add(record.identifier);
-  }
-  if (Array.isArray(record.children)) {
-    for (const child of record.children) collectImageReferenceIds(child, ids);
-  }
-}
-
-function rewriteAssetUrls(
-  node: unknown,
+function withAssetUrls<T extends Nodes>(
+  node: T,
   slug: string,
   imageRefIds: ReadonlySet<string>,
-): void {
-  if (typeof node !== "object" || node === null) return;
-  const record = node as MdastNodeLike;
-  const isImage = record.type === "image";
-  const isLink = record.type === "link";
-  const isImageDefinition =
-    record.type === "definition" &&
-    typeof record.identifier === "string" &&
-    imageRefIds.has(record.identifier);
-  if (
-    (isImage || isLink || isImageDefinition) &&
-    typeof record.url === "string"
-  ) {
-    record.url = resolveAssetUrl(slug, record.url);
-  }
-  if (Array.isArray(record.children)) {
-    for (const child of record.children) {
-      rewriteAssetUrls(child, slug, imageRefIds);
-    }
-  }
+): T {
+  const resolved: T = isAssetUrlNode(node, imageRefIds)
+    ? { ...node, url: resolveAssetUrl(slug, node.url) }
+    : node;
+
+  if (!("children" in resolved)) return resolved;
+  // 子の種別は写しても変わらないので、親の型はそのまま保たれる。
+  return {
+    ...resolved,
+    children: resolved.children.map((child) =>
+      withAssetUrls(child, slug, imageRefIds),
+    ),
+  };
+}
+
+/** 木を写しながらアセットの URL を直す。参照の集約はここで済ませる。 */
+function withResolvedAssetUrls(root: Root, slug: string): Root {
+  return withAssetUrls(root, slug, imageReferenceIdsOf(root));
+}
+
+/** そのノードの URL に対応する寸法。表に無ければ undefined。 */
+function sizeOf(
+  node: Definition | Image,
+  assetPrefix: string,
+  dimensions: ReadonlyMap<string, ImageDimensions>,
+): ImageDimensions | undefined {
+  if (!node.url.startsWith(assetPrefix)) return undefined;
+  return dimensions.get(decodeURIComponent(node.url.slice(assetPrefix.length)));
 }
 
 /**
- * MDAST の image ノードに width/height を埋める (レイアウトシフト対策)。
+ * 木を写しながら、画像に width/height を埋める (レイアウトシフト対策)。元の木は変えない。
  *
  * `data.hProperties` は mdast-util-to-hast が要素の属性に展開する仕組みなので、
- * フロント側の変更なしに `<img width height>` が出るようになる。
- * 寸法が取れなかった画像には何も付けない (誤った値で見た目を壊さない)。
+ * フロント側の変更なしに `<img width height>` が出るようになる。寸法が取れなかった
+ * 画像には何も付けない (誤った値で見た目を壊さない)。
  *
- * URL は rewriteAssetUrls 済み (`/api/v1/notes/<slug>/assets/<path>`) の前提で、
- * そこから相対パスを逆算して寸法表を引く。
+ * URL は {@link withResolvedAssetUrls} を通った後 (`/api/v1/notes/<slug>/assets/<path>`)
+ * の前提で、そこから相対パスを逆算して寸法表を引く。
+ *
+ * ⚠️ `definition` に載せた寸法は、いまのところ描画に届いていない
+ * ([#296](https://github.com/yantene/yantene.net/issues/296))。`imageReference` を
+ * 要素にするのは参照の側で、定義から引くのは URL と alt だけのため。ここは元の実装
+ * からの持ち越しで、直すのは #296 の仕事。
  */
-function applyImageDimensions(
-  node: unknown,
+function withImageDimensions<T extends Nodes>(
+  node: T,
   assetPrefix: string,
   dimensions: ReadonlyMap<string, ImageDimensions>,
-): void {
-  if (typeof node !== "object" || node === null) return;
-  const record = node as MdastNodeLike;
-  const isImageLike = record.type === "image" || record.type === "definition";
-  if (isImageLike && typeof record.url === "string") {
-    const relPath = record.url.startsWith(assetPrefix)
-      ? decodeURIComponent(record.url.slice(assetPrefix.length))
+): T {
+  const size =
+    node.type === "image" || node.type === "definition"
+      ? sizeOf(node, assetPrefix, dimensions)
       : undefined;
-    const size = relPath === undefined ? undefined : dimensions.get(relPath);
-    if (size !== undefined) {
-      record.data = {
-        ...record.data,
-        hProperties: {
-          ...record.data?.hProperties,
-          width: size.width,
-          height: size.height,
-        },
-      };
-    }
-  }
-  if (Array.isArray(record.children)) {
-    for (const child of record.children) {
-      applyImageDimensions(child, assetPrefix, dimensions);
-    }
-  }
+
+  const sized: T =
+    size === undefined
+      ? node
+      : {
+          ...node,
+          data: {
+            ...node.data,
+            hProperties: {
+              ...node.data?.hProperties,
+              width: size.width,
+              height: size.height,
+            },
+          },
+        };
+
+  if (!("children" in sized)) return sized;
+  return {
+    ...sized,
+    children: sized.children.map((child) =>
+      withImageDimensions(child, assetPrefix, dimensions),
+    ),
+  };
 }
