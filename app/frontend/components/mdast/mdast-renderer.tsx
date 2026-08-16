@@ -29,6 +29,7 @@ import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { ALERT_TAG_NAME } from "~/backend/services/note-content-parser";
+import { withLowercaseScheme } from "~/lib/http-url";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
 /** 図に差し替えるコードブロックを包む、本文には現れない要素名。 */
@@ -150,6 +151,28 @@ function linkCardParagraph(targets: ReadonlyMap<Paragraph, string>): Handler {
     state.patch(node, result);
     return state.applyData(node, result);
   };
+}
+
+/**
+ * URL のスキームを小文字に揃える。**sanitize より前に通すこと。**
+ *
+ * hast-util-sanitize は許すスキームを大小を区別する完全一致で照合する
+ * (`url.slice(0, protocol.length) === protocol`)。だから `HTTPS://example.com/` は
+ * 許可リストに載っていない扱いになり、**href ごと落ちて押せない文字列になる** (#306)。
+ * スキームは RFC 3986 で大小を区別しないので、揃えてから渡す。
+ */
+function lowercaseSchemes(node: HastRoot | RootContent): void {
+  if (node.type === "element") {
+    const { href, src } = node.properties;
+    if (typeof href === "string") {
+      node.properties.href = withLowercaseScheme(href);
+    }
+    if (typeof src === "string") {
+      node.properties.src = withLowercaseScheme(src);
+    }
+  }
+  if (!("children" in node)) return;
+  for (const child of node.children) lowercaseSchemes(child);
 }
 
 /** 生 HTML の断片 (raw) がツリーに残っているか。 */
@@ -434,7 +457,10 @@ export function MdastRenderer({
       allowDangerousHtml: true,
       handlers: { html: keepEmbedHtml, paragraph: linkCardParagraph(targets) },
     }) as HastRoot;
-    const transformed = hastProcessor.runSync(expandRawHtml(hast));
+    const expanded = expandRawHtml(hast);
+    // sanitize がスキームを大小を区別して照合するので、その手前で揃える (#306)。
+    lowercaseSchemes(expanded);
+    const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl);
     wrapMermaidBlocks(transformed);
 

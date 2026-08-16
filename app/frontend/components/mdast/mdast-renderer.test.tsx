@@ -70,6 +70,36 @@ describe("MdastRenderer", () => {
     expect(a?.getAttribute("rel")).toContain("noopener");
   });
 
+  /*
+   * RFC 3986 でスキームは大小を区別しない。`HTTPS://` は正しい書き方で、ブラウザは
+   * 普通に開く。
+   *
+   * ここが**単体のテストでは捕まらない**のが肝。rehype-sanitize は許すスキームを
+   * 大小を区別する完全一致で照合するので、揃えずに渡すと href ごと落ちる。判定側
+   * (isExternalHref) をいくら直しても、そこへ届く前に消えている (#306)。
+   */
+  it.each(["HTTPS://example.com/", "HtTp://example.com/"])(
+    "スキームが大文字でもリンクとして残す (%s)",
+    (url) => {
+      const { container } = render(<MdastRenderer node={md(`[x](${url})`)} />);
+      const a = container.querySelector("a");
+
+      expect(a?.getAttribute("href")).toBe(url.toLowerCase());
+      expect(a?.getAttribute("target")).toBe("_blank");
+      expect(a?.getAttribute("rel")).toContain("noopener");
+    },
+  );
+
+  it("スキームが大文字でも画像として残す", () => {
+    const { container } = render(
+      <MdastRenderer node={md("![a](HTTPS://example.com/a.png)")} />,
+    );
+
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://example.com/a.png",
+    );
+  });
+
   it("keeps internal links as plain same-tab anchors", () => {
     const { container } = render(
       <MdastRenderer node={md("[x](/notes/other)")} />,
