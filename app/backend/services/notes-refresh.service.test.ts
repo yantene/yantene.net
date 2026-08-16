@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { NotesRefreshService } from "./notes-refresh.service";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type { CachedAsset, INoteContentCache } from "~/backend/domain/note";
@@ -50,7 +50,12 @@ class InMemoryCache implements INoteContentCache {
   getSource(slug: NoteSlug): Promise<string | undefined> {
     return Promise.resolve(this.sources.get(slug.toString()));
   }
+  /** この slug の putMdast で落とす。同期の途中で落ちたときの姿を見るために使う。 */
+  failMdastFor?: string;
   putMdast(slug: NoteSlug, mdast: unknown): Promise<void> {
+    if (this.failMdastFor === slug.toString()) {
+      return Promise.reject(new Error("R2 is down"));
+    }
     this.mdasts.set(slug.toString(), mdast);
     return Promise.resolve();
   }
@@ -63,6 +68,20 @@ class InMemoryCache implements INoteContentCache {
   }
   getAsset(slug: NoteSlug, path: string): Promise<CachedAsset | undefined> {
     return Promise.resolve(this.assets.get(`${slug.toString()}::${path}`));
+  }
+  /** この slug の pruneAssets で落とす。 */
+  failPruneFor?: string;
+  pruneAssets(slug: NoteSlug, keep: ReadonlySet<string>): Promise<void> {
+    if (this.failPruneFor === slug.toString()) {
+      return Promise.reject(new Error("R2 list failed"));
+    }
+    const prefix = `${slug.toString()}::`;
+    for (const key of this.assets.keys()) {
+      if (key.startsWith(prefix) && !keep.has(key.slice(prefix.length))) {
+        this.assets.delete(key);
+      }
+    }
+    return Promise.resolve();
   }
   deleteNote(slug: NoteSlug): Promise<void> {
     this.sources.delete(slug.toString());
@@ -125,6 +144,10 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   );
   return { service, command, query, cache, content, d1 };
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("NotesRefreshService", () => {
   it("indexes a note, caches its MDAST and assets, resolves image URLs", async () => {
@@ -250,6 +273,107 @@ lastModifiedOn: 2026-01-15
     expect(mdastJson).toContain("/api/v1/notes/nested/assets/song.mid");
     // 寸法も、入れ子の中の画像に届いている。
     expect(mdastJson).toContain('"width":800');
+  });
+
+  /*
+   * 同期の途中で落ちても、**その記事を消したまま残さない。**
+   *
+   * 以前は先に deleteNote してから書き直していたので、途中で落ちると D1 に行があるのに
+   * R2 に原文も MDAST も無い状態になり、記事ページが 500 になった。しかも落ちた原因が
+   * ファイル名のような固定のものだと毎回同じ場所で死ぬ (#297 がまさにそれ)。
+   */
+  it("keeps the previous cache when a sync fails midway", async () => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    // 1 回目は成功させる。
+    await service.refresh();
+    const before = JSON.stringify(cache.mdasts.get("hello"));
+    expect(before).toBeDefined();
+
+    // 2 回目は MDAST の書き込みで落とす (force で読み直させる)。
+    cache.failMdastFor = "hello";
+    await expect(service.refresh({ force: true })).rejects.toThrow(
+      "R2 is down",
+    );
+
+    // 前回の写しが残っていること。記事ページが 500 にならない。
+    expect(JSON.stringify(cache.mdasts.get("hello"))).toBe(before);
+    expect(cache.sources.get("hello")).toBeDefined();
+    expect(cache.assets.has("hello::cover.png")).toBe(true);
+  });
+
+  /*
+   * **D1 の upsert より前に済ませるものが、本当に前で走っているか。**
+   *
+   * contentHash が入った時点でそのノートは「同期済み」になり、次の refresh は読まずに
+   * 飛ばす。だから upsert より後ろに置いた処理は、落ちても二度と直らない (force を
+   * 流すまで) うえ、直す必要があることも表に出ない。
+   */
+  it.each([
+    [
+      "検索の索引",
+      (harness: ReturnType<typeof setup>) => {
+        vi.spyOn(D1NoteSearchIndex.prototype, "index").mockRejectedValue(
+          new Error("step failed"),
+        );
+        return harness;
+      },
+    ],
+    [
+      "アセットの片付け",
+      (harness: ReturnType<typeof setup>) => {
+        harness.cache.failPruneFor = "hello";
+        return harness;
+      },
+    ],
+  ])("%s が落ちたら同期済みにしない", async (_name, breakStep) => {
+    const files = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const harness = breakStep(setup(files));
+
+    await expect(harness.service.refresh()).rejects.toThrow();
+
+    // contentHash が入っていないこと。次の refresh が読み直す。
+    expect(await harness.query.listSourceHashes()).toEqual(new Map());
+  });
+
+  /*
+   * 消してから書く形をやめた代わりに、行き場を失ったアセットは明示的に片付ける。
+   * リネームや削除で残った写しが、いつまでも配信され続けないように。
+   */
+  it("prunes assets that disappeared from the source of truth", async () => {
+    const before = new Map([
+      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["notes/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["notes/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+      ["notes/hello/old.png", { hash: "a3", bytes: bytes("OLD") }],
+    ]);
+    const { service, cache } = setup(before);
+    await service.refresh();
+    expect(cache.assets.has("hello::old.png")).toBe(true);
+
+    /*
+     * **md は触らない。** 実際の流れは `git rm notes/hello/old.png` だけで、本文は
+     * そのまま。それでも再同期が走るのは、contentHash がアセットの (path, hash) も
+     * 畳んでいるため。ここで md のハッシュも変えてしまうと、その仕掛けが壊れても
+     * 気づけない。
+     */
+    before.delete("notes/hello/old.png");
+
+    await service.refresh();
+
+    expect(cache.assets.has("hello::old.png")).toBe(false);
+    // 残っているものは消さない。
+    expect(cache.assets.has("hello::cover.png")).toBe(true);
+    expect(cache.assets.has("hello::inline.png")).toBe(true);
   });
 
   /*

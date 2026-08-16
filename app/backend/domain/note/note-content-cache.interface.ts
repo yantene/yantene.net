@@ -27,6 +27,14 @@ export interface INoteContentCache {
   /** 画像アセットを取得する。無ければ undefined。 */
   getAsset(slug: NoteSlug, path: string): Promise<CachedAsset | undefined>;
 
-  /** ノートのキャッシュ (MDAST + 全アセット) を削除する。 */
+  /**
+   * このノートのアセットのうち、`keep` に無いものを消す。
+   *
+   * リネーム・削除されたアセットの片付けに使う。**原文と MDAST は消さない。**
+   * 消してから書き直す形にすると、途中で落ちたときに記事が消えたまま残る (#310)。
+   */
+  pruneAssets(slug: NoteSlug, keep: ReadonlySet<string>): Promise<void>;
+
+  /** ノートのキャッシュ (原文・MDAST・全アセット) を削除する。正本から消えたとき用。 */
   deleteNote(slug: NoteSlug): Promise<void>;
 }
