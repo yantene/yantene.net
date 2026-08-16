@@ -215,9 +215,12 @@ export class NotesRefreshService {
 
   /**
    * 1 ノートを同期する。まず読み取り・検証を済ませ (この間の失敗は content or infra
-   * エラーとして送出)、成功したら古いキャッシュを消してから原文・MDAST・アセット・
-   * メタデータを書き込む。D1 upsert を最後に置くことで、途中失敗時も次回 refresh で
-   * 再処理される。
+   * エラーとして送出)、成功したら R2 へ書き、行き場を失ったアセットを片付け、最後に
+   * D1 を更新する。
+   *
+   * **D1 の upsert を最後に置くのが肝。** contentHash が入った時点でそのノートは
+   * 「同期済み」になり、次の refresh は読まずに飛ばす。だから upsert より前に済ませて
+   * おかないものは、失敗しても二度と直らない。
    *
    * 併せて、本文がカード化対象として参照している URL を返す。
    */
@@ -228,20 +231,44 @@ export class NotesRefreshService {
     // 検証込みでエンティティと MDAST を組み立てる (不正なら NoteContentError)。
     const { note, mdast } = buildNoteContent(group, source.parsed);
 
-    // 古いキャッシュ (リネーム・削除されたアセット含む) を消してから書き直す。
-    await this.cache.deleteNote(group.slug);
-    // 原文はそのまま (フロントマター込み) 置く。`/notes/<slug>.md` の配信元になる。
-    await this.cache.putSource(group.slug, source.markdown);
+    /*
+     * **書いてから片付ける。** 先に消す形だと、途中で落ちたときにその記事が消えたまま
+     * 残り、D1 に行があるのに R2 に MDAST が無い状態になる (記事ページが 500)。しかも
+     * 落ちた原因がファイル名のような固定のものだと、毎回同じ場所で死んで直らない (#310)。
+     *
+     * 原文と MDAST は鍵が決まっているので上書きで足りる。消す必要があるのは、リネーム
+     * ・削除されて**行き場を失ったアセット**だけ。
+     */
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
     const sized = withImageDimensions(mdast, dimensions);
+    /*
+     * 本文の 2 つの姿 (MDAST と原文) は隣り合わせに書く。同じ URL の 2 表現なので
+     * (ADR 0020)、間に他の書き込みを挟むと、途中で落ちたときに**記事ページと
+     * `/notes/<slug>.md` が違う版を出す**時間が延びる。
+     */
     await this.cache.putMdast(group.slug, sized);
-    await this.command.upsert(note);
+    // 原文はそのまま (フロントマター込み) 置く。`/notes/<slug>.md` の配信元になる。
+    await this.cache.putSource(group.slug, source.markdown);
+    /*
+     * 片付けは D1 の upsert より前に置く。後ろだと、片付けに失敗したときに
+     * contentHash だけが新しくなり、行き場を失った写しが次の refresh でも拾われない。
+     *
+     * 残す一覧は「正本にあるアセット」であって「今回書けたもの」ではない。読めなかった
+     * アセットまで消すと、一時的な失敗で前回の写しを落とすことになる。
+     */
+    await this.cache.pruneAssets(group.slug, assetPathsOf(group));
+    /*
+     * 検索の索引も upsert より前。後ろだと、索引の更新に失敗したときに contentHash
+     * だけが新しくなり、**次の refresh がこのノートを読まずに飛ばす**ので索引が古い
+     * まま固まる。force を流すまで直らず、直す必要があることも表に出ない。
+     */
     await this.searchIndex.index({
       slug: group.slug,
       title: note.title.toString(),
       body: mdastToString(sized),
     });
+    await this.command.upsert(note);
 
     return collectBareLinkUrls(sized);
   }
@@ -336,6 +363,13 @@ function groupNotes(tree: readonly ContentEntry[]): NoteGroup[] {
     });
   }
   return groups;
+}
+
+/** そのノートが正本に持っているアセットの相対パス。 */
+function assetPathsOf(group: NoteGroup): ReadonlySet<string> {
+  return new Set(
+    group.assets.map((asset) => asset.path.slice(group.assetPrefix.length)),
+  );
 }
 
 /** md + アセットの (path, hash) を合成した変更検出用ハッシュ。 */

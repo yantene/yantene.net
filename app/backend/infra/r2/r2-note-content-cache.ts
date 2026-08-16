@@ -79,13 +79,32 @@ export class R2NoteContentCache implements INoteContentCache {
     };
   }
 
+  async pruneAssets(slug: NoteSlug, keep: ReadonlySet<string>): Promise<void> {
+    await this.deleteUnder(`${this.prefix(slug)}assets/`, keep);
+  }
+
   async deleteNote(slug: NoteSlug): Promise<void> {
-    const prefix = this.prefix(slug);
+    await this.deleteUnder(this.prefix(slug));
+  }
+
+  /**
+   * その前置の下を消す。`keep` に前置を落とした名前があるものは残す。
+   *
+   * 列挙は頁に分かれて返るので cursor を辿る。**残したものは次の頁でも列挙されない**
+   * (cursor は列挙の位置であって、消した件数ではない) ので、辿り方は消す・残すに
+   * よらず同じでよい。
+   */
+  private async deleteUnder(
+    prefix: string,
+    keep: ReadonlySet<string> = new Set(),
+  ): Promise<void> {
     let cursor: string | undefined;
     do {
       const listing = await this.bucket.list({ prefix, cursor });
-      const keys = listing.objects.map((object) => object.key);
-      if (keys.length > 0) await this.bucket.delete(keys);
+      const stale = listing.objects
+        .map((object) => object.key)
+        .filter((key) => !keep.has(key.slice(prefix.length)));
+      if (stale.length > 0) await this.bucket.delete(stale);
       cursor = listing.truncated ? listing.cursor : undefined;
     } while (cursor !== undefined);
   }
