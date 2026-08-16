@@ -134,6 +134,15 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
       // 載せられない型 (SVG 等) は、取り直しても結論が変わらない。
       if (!isAllowedImageType(response.contentType)) return { state: "absent" };
 
+      /*
+       * 中身の無い 200 は「取れた」ことにしない。**absent ではなく missed。**
+       *
+       * absent にすると #255 の取り直しの対象から外れ、0 バイトの写しが 14 日の期限が
+       * 切れるまでカードに出続ける。相手の一時的な不調で空を返すことはあるので、
+       * 次は取れるかもしれない側に倒す。
+       */
+      if (response.bytes.byteLength === 0) return { state: "missed" };
+
       return {
         state: "stored",
         asset: {

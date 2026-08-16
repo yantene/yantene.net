@@ -111,6 +111,17 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
       return { kind: "unavailable", reason: "body too large" };
     }
     /*
+     * 中身の無い 200 を「読めた」ことにしない。
+     *
+     * 空を本文として通すと、リンクが見つからない = 取り消しと読まれ、**過去に受け取った
+     * 返信やいいねが消える。** 送り元の一時的な不調でそれが起きるのは、`unavailable` の
+     * 枝を用意した理由 (一時的な障害で過去の行を消さない) と食い違う。Webmention は
+     * 正本のどこにも無いので、消したら戻せない (#293)。
+     */
+    if (bytes.byteLength === 0) {
+      return { kind: "unavailable", reason: "empty body" };
+    }
+    /*
      * 読み終えてから文字コードを決める。ヘッダーが名乗らない相手は本文の `<meta>` を
      * 見るので、流しながら復号すると宣言を読む前に復号器を選ぶことになる。
      */

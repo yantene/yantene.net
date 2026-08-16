@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OgpLinkCardFetcher } from "./ogp-link-card-fetcher";
+import { emptyStream } from "./test-helper";
 import type { ILogger } from "~/backend/domain/shared";
 import { LinkCardUrl } from "~/backend/domain/link-card";
 
@@ -323,6 +324,39 @@ describe("OgpLinkCardFetcher", () => {
     expect(fetched?.title).toBe("記事の題");
     expect(fetched?.image).toEqual({ state: "missed" });
     // favicon の取り逃しは数えない (置いていない相手が毎回引っ掛かるため)。
+    expect(fetched?.favicon).toBeUndefined();
+  });
+
+  /*
+   * 中身の無い 200 を「取れた」ことにしない。
+   *
+   * **absent ではなく missed。** absent にすると #255 の取り直しの対象から外れ、
+   * 0 バイトの写しが 14 日の期限が切れるまでカードに出続ける。相手の一時的な不調で
+   * 空を返すことはあるので、次は取れるかもしれない側に倒す (#293)。
+   */
+  it("中身の無い画像は取り逃しとして残す", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (url === "https://example.com/a") {
+        return Promise.resolve(
+          respond(page, {
+            contentType: "text/html",
+            url: "https://example.com/a",
+          }),
+        );
+      }
+      // 200 で content-type も画像だが、本文が空。
+      return Promise.resolve(
+        respond(emptyStream(), { contentType: "image/png", url }),
+      );
+    });
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("記事の題");
+    expect(fetched?.image).toEqual({ state: "missed" });
+    // 顔も同じ扱い。0 バイトの写しを載せない。
     expect(fetched?.favicon).toBeUndefined();
   });
 

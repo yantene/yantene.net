@@ -6,6 +6,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import { HttpWebmentionSourceFetcher } from "./http-webmention-source-fetcher";
+import { emptyStream } from "./test-helper";
 import type { ILogger } from "~/backend/domain/shared";
 import { WebmentionUrl } from "~/backend/domain/webmention";
 
@@ -160,6 +161,24 @@ describe("HttpWebmentionSourceFetcher", () => {
     const result = await fetcherFor(response).fetch(SOURCE);
 
     expect(result.kind === "fetched" && result.html).toContain("あ");
+  });
+
+  /*
+   * 中身の無い 200 を「読めた」ことにしない。
+   *
+   * 空を本文として通すと、リンクが見つからない = 取り消しと読まれ、**過去に受け取った
+   * 返信やいいねが消える** (webmention-verification.service.ts が deleteBySource を呼ぶ)。
+   * 送り元の一時的な不調でそれが起きるのは、unavailable の枝を用意した理由と食い違う。
+   * Webmention は正本のどこにも無いので、消したら戻せない (#293)。
+   */
+  it("中身の無い本文は取れなかったことにする", async () => {
+    const response = new Response(emptyStream(), {
+      headers: { "content-type": "text/html" },
+    });
+
+    const result = await fetcherFor(response).fetch(SOURCE);
+
+    expect(result).toEqual({ kind: "unavailable", reason: "empty body" });
   });
 
   /* 転送先の相対リンクを解決する基準になるので、最終 URL を返す。 */
