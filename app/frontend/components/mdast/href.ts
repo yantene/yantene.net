@@ -1,22 +1,19 @@
-/**
- * 本文のリンクが外向きかどうか。
- *
- * 使う場所が 2 つある。hast の段で `target` と `rel` を足すところ
- * (mdast-renderer.tsx の transformAnchor) と、カードにできなかった URL を素のリンクに
- * 戻すところ (link-card-slot.tsx) である。
- *
- * ⚠️ **この 2 つが問うていることは本当は違う。** 前者は「別タブで開くべきか」、後者は
- * 「href に置いてよいスキームか」で、いま同じ関数で済んでいるのは答えがたまたま一致して
- * いるためにすぎない。片方の都合で広げると (`mailto:` を外部扱いにする等) もう片方が
- * 通してはいけないものを通す。分けるべきかは [#306](https://github.com/yantene/yantene.net/issues/306) で見る。
- *
- * また `app/lib/link-card/bare-link.ts` の `isCardableUrl` (カード化する URL の判定) とも
- * 答えが揃っていない (#306)。あちらは `new URL()` でスキームを見るので `//host` を弾き、大文字の
- * スキームも正しく読む。
- */
+import { isHttpUrl } from "~/lib/http-url";
 
-/** 別タブ + rel を付ける対象。http(s) 絶対 URL とプロトコル相対 (`//host`) を外部扱いにする。 */
-export const isExternalHref = (href: string): boolean =>
-  href.startsWith("//") ||
-  href.startsWith("http://") ||
-  href.startsWith("https://");
+/**
+ * 別タブで開き、`rel` を付ける相手か。
+ *
+ * 見ているのは「**絶対 URL か**」であって「よそのサイトか」ではない。自分のサイトを
+ * 絶対 URL で書いたリンク (`https://yantene.net/notes/x`) も外部として扱う (#318)。
+ *
+ * 「href に置いてよいか」を問う {@link isHttpUrl} とも別の問い。同じ答えになることが
+ * 多いが、片方の都合で広げると (`mailto:` を外部扱いにする等) もう片方が通しては
+ * いけないものを通す。
+ *
+ * プロトコル相対 (`//host`) を含めるのは、文書の中では現在のスキームが補われて
+ * よそのホストへ出るため。`isHttpUrl` は基準の無い文字列として読めないので false を
+ * 返すが、ここでは外部として扱う。
+ */
+export function isExternalHref(href: string): boolean {
+  return href.startsWith("//") || isHttpUrl(href);
+}

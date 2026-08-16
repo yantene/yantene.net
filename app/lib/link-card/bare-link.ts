@@ -1,16 +1,17 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import type { Link, Nodes, Paragraph, Root } from "mdast";
+import { isHttpUrl } from "~/lib/http-url";
 
 /**
  * 本文中の「むき出しの URL だけの段落」を見つける。
  *
- * カードにしてよい場所かどうかの判断はここ 1 つに集める。取得側 (refresh) と描画側
+ * カードにしてよい**場所**かどうかの判断はここ 1 つに集める。取得側 (refresh) と描画側
  * (MdastRenderer) が別々に判定すると、片方だけカードになる・ならないという食い違いが
  * 静かに起きる。同じ木を同じ関数で見る。
+ *
+ * URL として載せてよいかは `~/lib/http-url` の isHttpUrl が答える。描画側の落とし所
+ * (link-card-slot.tsx) も同じ関数を通るので、こちらとあちらで答えが割れない。
  */
-
-/** カードにできる URL のスキーム。 */
-const cardableProtocols: ReadonlySet<string> = new Set(["http:", "https:"]);
 
 /**
  * カードにしない入れ物。
@@ -42,15 +43,6 @@ function isBare(link: Link): boolean {
   return [text, `http://${text}`, `https://${text}`].includes(link.url);
 }
 
-/** カードにできる URL か。相対 URL や mailto: は対象外。 */
-function isCardableUrl(url: string): boolean {
-  try {
-    return cardableProtocols.has(new URL(url).protocol);
-  } catch {
-    return false;
-  }
-}
-
 /** 段落がむき出しの URL 1 つだけでできているなら、その URL を返す。 */
 function bareLinkUrlOf(paragraph: Paragraph): string | undefined {
   const children = paragraph.children.filter((child) => !isBlankText(child));
@@ -58,7 +50,8 @@ function bareLinkUrlOf(paragraph: Paragraph): string | undefined {
 
   const [only] = children;
   if (only.type !== "link") return undefined;
-  if (!isBare(only) || !isCardableUrl(only.url)) return undefined;
+  // カードにできるのは http(s) だけ (相対 URL や mailto: は対象外)。
+  if (!isBare(only) || !isHttpUrl(only.url)) return undefined;
   return only.url;
 }
 
