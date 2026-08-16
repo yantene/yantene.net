@@ -1,24 +1,22 @@
 import { raw } from "hast-util-raw";
 import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { defaultHandlers, toHast } from "mdast-util-to-hast";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useMemo } from "react";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
-import { createPortal } from "react-dom";
-import { Link } from "react-router";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { Alert } from "./alert";
+import { Anchor } from "./anchor";
 import { isNoteAssetSrc } from "./audio";
+import { CodeBlock } from "./code-block";
 import { normalizeEmbedSrc } from "./embed";
+import { DEFAULT_EMBED_TITLE, EmbedFrame } from "./embed-frame";
+import { isExternalHref } from "./href";
+import { LightboxImage } from "./lightbox-image";
+import { LINK_CARD_TAG, LinkCardsContext } from "./link-card-context";
+import { LinkCardSlot } from "./link-card-slot";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import { MermaidDiagram } from "./mermaid-diagram";
 import type {
@@ -29,32 +27,15 @@ import type {
 } from "hast";
 import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
-import type {
-  LinkCardMap,
-  LinkCardView,
-} from "~/backend/handlers/link-cards/link-card-view";
+import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { ALERT_TAG_NAME } from "~/backend/services/note-content-parser";
-import { LinkCard } from "~/frontend/components/link-card/link-card";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
-
-/** カードに差し替える段落を表す、Markdown 記法には無い要素名。 */
-const LINK_CARD_TAG = "link-card";
 
 /** 図に差し替えるコードブロックを包む、本文には現れない要素名。 */
 const MERMAID_TAG = "mermaid-diagram";
 
 /** Mermaid のコードブロックを表すクラス。```mermaid のフェンスから付く。 */
 const MERMAID_CLASS = "language-mermaid";
-
-/*
- * カードの中身を描画側へ渡す道。
- *
- * hast を通せるのは URL 1 つだけなので、中身は文脈に載せる。toJsxRuntime に渡す
- * components は要素の属性しか受け取らず、外側の値を閉じ込められないため。
- */
-const LinkCardsContext = createContext<ReadonlyMap<string, LinkCardView>>(
-  new Map(),
-);
 
 /*
  * sanitize に iframe を通す。本文には生の iframe (YouTube の埋め込み) が書かれており、
@@ -171,38 +152,6 @@ function linkCardParagraph(targets: ReadonlyMap<Paragraph, string>): Handler {
   };
 }
 
-/**
- * 印のついた要素を実際のカードにする。
- *
- * 中身が見つからないときは素のリンクに戻す。カードにできなかっただけで本文から
- * URL が消えるのは、静かに壊れているのと変わらない。
- *
- * 素のリンクに落とすときは、ここでもう一度スキームを確かめる。印を付けるのは
- * こちら側 (linkCardParagraph) だけで、そこは http(s) しか通していないが、
- * href に値を渡す場所で二度目の関門を持たせておく。
- */
-function LinkCardSlot({ url }: { readonly url?: string }): React.JSX.Element {
-  const cards = useContext(LinkCardsContext);
-  const card = url === undefined ? undefined : cards.get(url);
-
-  if (card === undefined) {
-    const href = url !== undefined && isExternalHref(url) ? url : undefined;
-    return (
-      <p>
-        <a
-          className="press-control"
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-        >
-          {url}
-        </a>
-      </p>
-    );
-  }
-  return <LinkCard card={card} />;
-}
-
 /** 生 HTML の断片 (raw) がツリーに残っているか。 */
 function hasRawNode(node: HastRoot | RootContent): boolean {
   if (node.type === "raw") return true;
@@ -236,12 +185,6 @@ const hastProcessor = unified()
   .use(rehypeSanitize, sanitizeSchema)
   .use(rehypeSlug)
   .use(rehypeHighlight);
-
-// 別タブ + rel を付ける対象。http(s) 絶対 URL とプロトコル相対 (//host) を外部扱いにする。
-const isExternalHref = (href: string): boolean =>
-  href.startsWith("//") ||
-  href.startsWith("http://") ||
-  href.startsWith("https://");
 
 /** img 要素: 相対 URL を解決し、遅延読み込み・非同期デコードを既定にする。 */
 function transformImage(
@@ -300,7 +243,8 @@ function toEmbed(element: Element): Element | null {
     ...element,
     properties: {
       src: normalized,
-      title: typeof title === "string" && title !== "" ? title : "埋め込み動画",
+      title:
+        typeof title === "string" && title !== "" ? title : DEFAULT_EMBED_TITLE,
       loading: "lazy",
       // 出どころは伝える必要がある。YouTube は埋め込み元を見て可否を決めており、
       // no-referrer にすると再生を断られる (プレーヤーの設定エラー)。読んでいる
@@ -442,130 +386,6 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
   });
 }
 
-/** コードブロック (pre) 差し替え: 右上にコピーボタンを添える。 */
-function CodeBlock(
-  props: Readonly<React.ComponentPropsWithoutRef<"pre">>,
-): React.JSX.Element {
-  const ref = useRef<HTMLPreElement>(null);
-  const [isCopied, setIsCopied] = useState(false);
-
-  async function copy(): Promise<void> {
-    const text = ref.current?.textContent ?? "";
-    try {
-      await globalThis.navigator.clipboard.writeText(text);
-      setIsCopied(true);
-      globalThis.setTimeout(() => setIsCopied(false), 1500);
-    } catch {
-      // クリップボード API が使えない環境 (非セキュアコンテキスト等) では何もしない。
-    }
-  }
-
-  return (
-    <div className="code-block">
-      <button
-        type="button"
-        className="code-copy press-control"
-        onClick={() => void copy()}
-        aria-label="コードをコピー"
-      >
-        {isCopied ? "コピーしました" : "コピー"}
-      </button>
-      <pre ref={ref} {...props} />
-    </div>
-  );
-}
-
-/** 画像 (img) 差し替え: クリックで lightbox 拡大 (Esc / 背景クリックで閉じる)。 */
-function LightboxImage(
-  props: Readonly<React.ComponentPropsWithoutRef<"img">>,
-): React.JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    function onKey(event: KeyboardEvent): void {
-      if (event.key === "Escape") setIsOpen(false);
-    }
-    globalThis.addEventListener("keydown", onKey);
-    return () => globalThis.removeEventListener("keydown", onKey);
-  }, [isOpen]);
-
-  return (
-    <>
-      <button
-        type="button"
-        className="lightbox-trigger press-control"
-        onClick={() => setIsOpen(true)}
-        aria-label="画像を拡大"
-      >
-        <img {...props} alt={props.alt ?? ""} />
-      </button>
-      {isOpen &&
-        createPortal(
-          // オーバーレイ自体を button にして、背景クリック・Enter/Space・Esc
-          // (グローバル keydown) のいずれでも閉じられるようにする。
-          //
-          // ここだけは押下の反応 (press-control) を付けない。画面いっぱいの暗幕を
-          // 押している間だけ薄くすると、後ろのページが透けて明滅する。
-          // 押した結果 (暗幕が消える) がその場で出るので、手応えは足りている。
-          <button
-            type="button"
-            className="lightbox-overlay"
-            aria-label="拡大画像を閉じる"
-            onClick={() => setIsOpen(false)}
-          >
-            <img
-              className="lightbox-full"
-              src={props.src}
-              alt={props.alt ?? ""}
-            />
-          </button>,
-          document.body,
-        )}
-    </>
-  );
-}
-
-/** 埋め込み (iframe) 差し替え: 幅に追随する枠に収める。 */
-function Embed(
-  props: Readonly<React.ComponentPropsWithoutRef<"iframe">>,
-): React.JSX.Element {
-  return (
-    <div className="note-embed">
-      <iframe {...props} title={props.title ?? "埋め込み動画"} />
-    </div>
-  );
-}
-
-/**
- * a 要素: ページ内アンカーだけ React Router の Link に通す。
- *
- * 素の `<a href="#...">` は `<ScrollRestoration>` がブラウザのハッシュジャンプを
- * 打ち消すためスクロールしない (目次が Link を使っているのと同じ理由)。本文で
- * ページ内アンカーになるのは脚注の行き来なので、これが無いと注へ飛べない。
- *
- * 外部・内部リンクは素の `<a>` のまま返す。Router の文脈を要らない場所でも
- * 描けるようにしておくため。
- */
-function Anchor({
-  href,
-  children,
-  ...rest
-}: Readonly<React.ComponentPropsWithoutRef<"a">>): React.JSX.Element {
-  if (href === undefined || !href.startsWith("#")) {
-    return (
-      <a href={href} {...rest}>
-        {children}
-      </a>
-    );
-  }
-  return (
-    <Link to={href} {...rest}>
-      {children}
-    </Link>
-  );
-}
-
 export interface MdastRendererProps {
   /** レンダリング対象の MDAST (Markdown AST) ルート。 */
   readonly node: MdastRoot;
@@ -625,7 +445,7 @@ export function MdastRenderer({
       components: {
         pre: CodeBlock,
         img: LightboxImage,
-        iframe: Embed,
+        iframe: EmbedFrame,
         a: Anchor,
         [LINK_CARD_TAG]: LinkCardSlot,
         [ALERT_TAG_NAME]: Alert,
