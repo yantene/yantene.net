@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./content-cache-control";
-import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
+import { NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
@@ -20,15 +20,8 @@ export function createNoteAssetsRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/:slug/assets/:path{.+}", async (c) => {
-    let slug: NoteSlug;
-    try {
-      slug = NoteSlug.create(c.req.param("slug"));
-    } catch (error) {
-      if (error instanceof InvalidNoteSlugError) {
-        return notFoundResponse("asset not found");
-      }
-      throw error;
-    }
+    const slug = NoteSlug.parse(c.req.param("slug"));
+    if (slug === undefined) return notFoundResponse("asset not found");
 
     const path = c.req.param("path");
     // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。

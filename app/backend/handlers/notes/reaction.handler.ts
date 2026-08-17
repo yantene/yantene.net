@@ -1,11 +1,7 @@
 import { Hono } from "hono";
 import { deleteReaction, putReaction } from "./reaction-recording";
 import type { Context } from "hono";
-import {
-  InvalidNoteSlugError,
-  NoteNotFoundError,
-  NoteSlug,
-} from "~/backend/domain/note";
+import { NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
 import {
   InvalidReactionEmojiError,
   ReactionEmoji,
@@ -38,15 +34,6 @@ function sessionCookieFor(env: Env, sessionId: SessionId): string {
     // CSP と同じく development でだけ外す (dev は http で開くことがある)。
     secure: env.APP_ENV !== "development",
   });
-}
-
-function parseSlug(raw: string): NoteSlug | undefined {
-  try {
-    return NoteSlug.create(raw);
-  } catch (error) {
-    if (error instanceof InvalidNoteSlugError) return undefined;
-    throw error;
-  }
 }
 
 /**
@@ -111,7 +98,7 @@ export async function applyReaction(
   emoji: ReactionEmoji | undefined,
   cookie: string | null,
 ): Promise<ReactionOutcome | undefined> {
-  const slug = parseSlug(slugParam);
+  const slug = NoteSlug.parse(slugParam);
   if (slug === undefined) return undefined;
 
   const note = await new D1NoteQueryRepository(env.D1).findBySlug(slug);

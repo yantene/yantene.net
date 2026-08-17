@@ -4,7 +4,7 @@ import {
   NEGOTIATED_CONTENT_CACHE_CONTROL,
 } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
-import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
+import { NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";
@@ -14,15 +14,6 @@ const MARKDOWN_SUFFIX = ".md";
 const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
 
 /** slug として妥当なら VO を、そうでなければ undefined を返す。 */
-function toNoteSlug(raw: string): NoteSlug | undefined {
-  try {
-    return NoteSlug.create(raw);
-  } catch (error) {
-    if (error instanceof InvalidNoteSlugError) return undefined;
-    throw error;
-  }
-}
-
 /** HTML 応答に添える「Markdown 版もある」の広告 (RFC 8288)。 */
 function markdownAlternateLink(slug: NoteSlug): string {
   const target = `/notes/${slug.toString()}${MARKDOWN_SUFFIX}`;
@@ -133,7 +124,7 @@ export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
     if (file.endsWith(MARKDOWN_SUFFIX)) {
       return noteSourceResponse(
         c.env,
-        toNoteSlug(file.slice(0, -MARKDOWN_SUFFIX.length)),
+        NoteSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)),
         { cacheControl: contentCacheControlFor(c.env) },
       );
     }
@@ -148,14 +139,14 @@ export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
       // (loader が status 404 を返す) にまで付けると、`rel=alternate` を辿る相手に
       // 必ず 404 になる URL を教えることになる。ここで在否を確かめ直すと D1 の読み取りが
       // ページ表示のたびに 1 回増えるので、下流が出した status をそのまま使う。
-      const slug = toNoteSlug(file);
+      const slug = NoteSlug.parse(file);
       if (slug !== undefined && c.res.ok) {
         c.header("Link", markdownAlternateLink(slug), { append: true });
       }
       return;
     }
 
-    return negotiatedSourceResponse(c.env, toNoteSlug(file));
+    return negotiatedSourceResponse(c.env, NoteSlug.parse(file));
   });
 
   return router;
