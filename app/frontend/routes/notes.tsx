@@ -17,9 +17,11 @@ import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import { cloudflareContext } from "~/frontend/lib/route-context";
+import {
+  cloudflareContext,
+  localeRouteContext,
+} from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
-import { resolveLocale } from "~/lib/i18n/resolve-locale";
 
 const DEFAULT_PER_PAGE = 20;
 
@@ -33,7 +35,7 @@ export async function loader({
   const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
   return {
     ...data,
-    locale: resolveLocale(request),
+    locale: context.get(localeRouteContext),
     origin: url.origin,
     currentYear: resolveCurrentYear(),
   };

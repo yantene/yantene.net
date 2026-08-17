@@ -14,8 +14,10 @@ import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline"
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import { cloudflareContext } from "~/frontend/lib/route-context";
-import { resolveLocale } from "~/lib/i18n/resolve-locale";
+import {
+  cloudflareContext,
+  localeRouteContext,
+} from "~/frontend/lib/route-context";
 
 export async function loader({
   request,
@@ -26,7 +28,7 @@ export async function loader({
   const home = await loadHomePage(context.get(cloudflareContext).env);
   return {
     ...home,
-    locale: resolveLocale(request),
+    locale: context.get(localeRouteContext),
     origin: new URL(request.url).origin,
     currentYear: resolveCurrentYear(),
     /*

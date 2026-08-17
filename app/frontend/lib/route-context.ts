@@ -1,4 +1,5 @@
 import { createContext } from "react-router";
+import { defaultLocale, type SupportedLocale } from "~/lib/i18n/locale";
 
 /**
  * loader / entry.server が Worker のランタイム値を受け取るためのコンテキストキー。
@@ -25,3 +26,15 @@ export const cloudflareContext = createContext<{
  * Worker から受け取るための別物。
  */
 export const nonceRouteContext = createContext<string>("");
+
+/**
+ * このリクエストの表示ロケール。**1 リクエストにつき 1 回だけ決める。**
+ *
+ * 決めるのは workers/app.ts (Composition Root)。以前はルートの loader 4 つと
+ * entry.server が**それぞれ**リクエストのヘッダーを読み直しており、決め方を変えたい
+ * ときに 5 か所を回ることになっていた (#313)。
+ *
+ * 既定値を持たせてあるのは、この道を通らない経路 (テストの直接描画など) で throw
+ * させないため。nonce と同じ扱い。
+ */
+export const localeRouteContext = createContext<SupportedLocale>(defaultLocale);

@@ -2,8 +2,10 @@ import { createRequestHandler, RouterContextProvider } from "react-router";
 import { getApp } from "~/backend";
 import {
   cloudflareContext,
+  localeRouteContext,
   nonceRouteContext,
 } from "~/frontend/lib/route-context";
+import { resolveLocaleOrDefault } from "~/lib/i18n/resolve-locale";
 
 const requestHandler = createRequestHandler(
   async () => import("virtual:react-router/server-build"),
@@ -16,6 +18,8 @@ const app = getApp(async (request, env, ctx, nonce) => {
   const context = new RouterContextProvider();
   context.set(cloudflareContext, { env, ctx });
   context.set(nonceRouteContext, nonce);
+  // ロケールはここで 1 回だけ決める。loader も entry.server もこの値を読む (#313)。
+  context.set(localeRouteContext, resolveLocaleOrDefault(request));
   return requestHandler(request, context);
 });
 

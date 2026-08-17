@@ -14,10 +14,12 @@ import type { WebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
 import { resolveWebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { buildPageMeta } from "~/frontend/lib/page-meta";
-import { cloudflareContext } from "~/frontend/lib/route-context";
+import {
+  cloudflareContext,
+  localeRouteContext,
+} from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
 import { defaultLocale } from "~/lib/i18n/locale";
-import { resolveLocale } from "~/lib/i18n/resolve-locale";
 import "./app.css";
 
 export function loader({ request, context }: Route.LoaderArgs): {
@@ -26,7 +28,7 @@ export function loader({ request, context }: Route.LoaderArgs): {
   webAnalytics: WebAnalyticsBeacon | null;
 } {
   return {
-    locale: resolveLocale(request),
+    locale: context.get(localeRouteContext),
     // OGP は絶対 URL を要求するため、リクエストの origin を各ページの meta へ渡す。
     origin: new URL(request.url).origin,
     // 閲覧の計測 (ADR 0021)。載せるかどうかは環境で決まるので、描画側で判断せず

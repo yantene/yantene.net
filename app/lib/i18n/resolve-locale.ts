@@ -1,3 +1,4 @@
+import { readCookieValues } from "~/lib/cookie";
 import {
   defaultLocale,
   isSupportedLocale,
@@ -8,28 +9,17 @@ import {
 /**
  * Cookie ヘッダーから、読める locale を取り出す。無ければ undefined。
  *
- * **百分率符号化は解かない。** 解いていたときは `Cookie: locale=%` を送るだけで
- * `decodeURIComponent` が URIError を投げ、**その相手にはサイトの全ページが 500 に
- * なっていた** (#309)。cookie の中身は読み手が好きに決められるうえ、cookie は消すまで
- * 送られ続けるので、一度そうなると開けなくなる。
- *
- * 解かなくても困らない。通すのは `en` と `ja` だけで、どちらも符号化しても同じ文字列に
- * なる。cookie を書く側もこのリポジトリには居ない。同じ Cookie ヘッダーを読む
- * `handlers/session-cookie.ts` の pickCookie も解いていない。
- *
  * **名前が一致した最初のものではなく、読める最初のものを返す。** `locale=%; locale=ja`
  * のように同じ名前が並ぶことがあり (ドメインやパスの違う cookie が両方送られる)、
- * 先頭だけを見ると後ろにある正しい値が黙って捨てられる。
+ * 先頭だけを見ると後ろにある正しい値が黙って捨てられる。符号化を解かない理由は
+ * {@link readCookieValues} を参照。
  */
-function readLocaleCookie(cookieHeader: string): SupportedLocale | undefined {
-  for (const part of cookieHeader.split(";")) {
-    const [name, ...rest] = part.split("=");
-    if (name.trim() !== localeCookieName) continue;
-
-    const value = rest.join("=").trim();
-    if (isSupportedLocale(value)) return value;
-  }
-  return undefined;
+function readLocaleCookie(
+  cookieHeader: string | null,
+): SupportedLocale | undefined {
+  return readCookieValues(cookieHeader, localeCookieName).find((value) =>
+    isSupportedLocale(value),
+  );
 }
 
 /**
@@ -50,8 +40,29 @@ function parseAcceptLanguage(header: string): SupportedLocale | undefined {
  */
 export function resolveLocale(request: Request): SupportedLocale {
   return (
-    readLocaleCookie(request.headers.get("Cookie") ?? "") ??
+    readLocaleCookie(request.headers.get("Cookie")) ??
     parseAcceptLanguage(request.headers.get("Accept-Language") ?? "") ??
     defaultLocale
   );
+}
+
+/**
+ * リクエストから表示ロケールを決める。**決められなければ既定に倒す。**
+ *
+ * 呼ぶのは workers/app.ts、つまり**どの ErrorBoundary の外**。ルートの loader が投げれば
+ * React Router がそのルートの ErrorBoundary を描くが、ここで投げると全ルートが素の
+ * 500 になる。cookie を復号していた頃は `Cookie: locale=%` を送るだけでそれが起き、
+ * cookie は消すまで送られ続けるので開けなくなっていた (#309)。
+ *
+ * ロケールは読み手のヘッダーから導く値で、**中身をこちらで決められない。** だから
+ * 「決められなかった」を異常として扱わず、既定に倒して描き進める。倒したことは残す
+ * (静かに劣化させない)。
+ */
+export function resolveLocaleOrDefault(request: Request): SupportedLocale {
+  try {
+    return resolveLocale(request);
+  } catch (error) {
+    console.error("failed to resolve the locale; falling back", error);
+    return defaultLocale;
+  }
 }

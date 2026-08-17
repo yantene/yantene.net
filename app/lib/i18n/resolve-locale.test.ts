@@ -4,9 +4,12 @@
  * `Cookie` は Fetch 仕様の禁止ヘッダーで、happy-dom の Request は組み立て時に落とす。
  * ここで見たいのは Workers が受け取る姿なので、素の実装で走らせる。
  */
-import { describe, expect, it } from "vitest";
-import { localeCookieName } from "~/lib/i18n/locale";
-import { resolveLocale } from "~/lib/i18n/resolve-locale";
+import { describe, expect, it, vi } from "vitest";
+import { defaultLocale, localeCookieName } from "~/lib/i18n/locale";
+import {
+  resolveLocale,
+  resolveLocaleOrDefault,
+} from "~/lib/i18n/resolve-locale";
 
 function requestWith(headers: Record<string, string>): Request {
   return new Request("https://yantene.net/", { headers });
@@ -97,5 +100,39 @@ describe("resolveLocale: 読み手が壊した cookie", () => {
     });
 
     expect(resolveLocale(request)).toBe("ja");
+  });
+
+  /*
+   * 決めるのを workers/app.ts へ移した分、握りもこちらへ移ってきた (#313)。
+   *
+   * 呼ばれるのはどの ErrorBoundary の外なので、投げると全ルートが素の 500 になる。
+   * 原因が読み手のヘッダーなら cookie を消すまで直らない (#309)。ロケールは中身を
+   * こちらで決められない値なので、決められないことを異常として扱わない。
+   */
+  describe("resolveLocaleOrDefault", () => {
+    it("決まればそのロケールを返す", () => {
+      const request = new Request("https://yantene.net/", {
+        headers: { "Accept-Language": "ja" },
+      });
+
+      expect(resolveLocaleOrDefault(request)).toBe("ja");
+    });
+
+    it("決められなくても投げず、既定に倒す", () => {
+      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+      // ヘッダーの読み出し自体が失敗する状況を作る。
+      const request = {
+        headers: {
+          get(): string {
+            throw new TypeError("broken header");
+          },
+        },
+      } as unknown as Request;
+
+      expect(resolveLocaleOrDefault(request)).toBe(defaultLocale);
+      // 静かに劣化させない。倒したことは残す。
+      expect(logged).toHaveBeenCalledTimes(1);
+      logged.mockRestore();
+    });
   });
 });
