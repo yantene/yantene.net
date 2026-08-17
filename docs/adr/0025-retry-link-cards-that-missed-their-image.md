@@ -88,3 +88,5 @@
 - [#255](https://github.com/yantene/yantene.net/issues/255)
 - [ADR 0014](0014-link-cards-from-ogp-only.md) — カードの期限を決めた ADR。期限の刻み
   だけをこの ADR で置き換える
+- [ADR 0026](0026-hold-link-cards-through-short-outages.md) — **ここに書いた「この 3 通りは
+  絵にだけ持たせる」の線を、上限つきで 1 度だけ越えた ADR。** 越えた理由はそちらに書いた

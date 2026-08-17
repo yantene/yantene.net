@@ -50,6 +50,13 @@
       "when": 1786788678031,
       "tag": "0006_add_link_cards_image_missed",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1786983050693,
+      "tag": "0007_add_link_cards_fetch_failed_since",
+      "breakpoints": true
     }
   ]
 }

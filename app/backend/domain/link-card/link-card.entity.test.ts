@@ -64,6 +64,126 @@ describe("LinkCard", () => {
       expect(card.isStale(fetchedAt.add({ hours: 24 * 14 - 1 }))).toBe(false);
       expect(card.isStale(fetchedAt.add({ hours: 24 * 14 }))).toBe(true);
     });
+
+    it("前回の中身を持ちこたえているカードは 1 日で古くなる", () => {
+      // 中身は在るが見せているのは古いもの。14 日ではなく短い側で確かめ直す。
+      const card = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: availableCard(),
+        now: fetchedAt,
+      });
+      expect(card.isStale(fetchedAt.add({ hours: 23 }))).toBe(false);
+      expect(card.isStale(fetchedAt.add({ hours: 24 }))).toBe(true);
+    });
+  });
+
+  describe("afterFailedFetch", () => {
+    it("前回の中身があれば持ちこたえる", () => {
+      const card = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: availableCard(),
+        now: fetchedAt,
+      });
+
+      expect(card.isAvailable).toBe(true);
+      expect(card.metadata?.title).toBe("例");
+      // 今回が失敗の起点。
+      expect(card.fetchFailedSince?.equals(fetchedAt)).toBe(true);
+    });
+
+    it("前回が無ければ素のリンクに落ちる", () => {
+      const card = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: undefined,
+        now: fetchedAt,
+      });
+
+      expect(card.isAvailable).toBe(false);
+      expect(card.fetchFailedSince).toBeUndefined();
+    });
+
+    it("前回も中身が無ければ素のリンクのまま", () => {
+      const card = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: unavailableCard(),
+        now: fetchedAt.add({ hours: 24 }),
+      });
+
+      expect(card.isAvailable).toBe(false);
+    });
+
+    it("失敗が続いても起点は動かない", () => {
+      // 起点まで進めてしまうと上限にいつまでも届かず、永久に持ちこたえてしまう。
+      const first = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: availableCard(),
+        now: fetchedAt,
+      });
+      const second = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: first,
+        now: fetchedAt.add({ hours: 24 }),
+      });
+
+      expect(second.fetchFailedSince?.equals(fetchedAt)).toBe(true);
+      expect(second.fetchedAt.equals(fetchedAt.add({ hours: 24 }))).toBe(true);
+    });
+
+    it("失敗し始めてから 3 日を越えると中身を捨てる", () => {
+      const first = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: availableCard(),
+        now: fetchedAt,
+      });
+
+      const justBefore = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: first,
+        now: fetchedAt.add({ hours: 24 * 3 - 1 }),
+      });
+      expect(justBefore.isAvailable).toBe(true);
+
+      const atLimit = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: first,
+        now: fetchedAt.add({ hours: 24 * 3 }),
+      });
+      expect(atLimit.isAvailable).toBe(false);
+      expect(atLimit.fetchFailedSince).toBeUndefined();
+    });
+
+    it("一度取れれば上限は測り直しになる", () => {
+      const failed = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: availableCard(),
+        now: fetchedAt,
+      });
+      expect(failed.fetchFailedSince?.equals(fetchedAt)).toBe(true);
+
+      // 相手が戻り、また落ちた。前の失敗の分まで数えない。
+      const recovered = availableCard();
+      const again = LinkCard.afterFailedFetch({
+        id: "abc",
+        url,
+        previous: recovered,
+        now: fetchedAt.add({ hours: 24 * 10 }),
+      });
+
+      expect(again.isAvailable).toBe(true);
+      expect(
+        again.fetchFailedSince?.equals(fetchedAt.add({ hours: 24 * 10 })),
+      ).toBe(true);
+    });
   });
 });
 
@@ -74,5 +194,6 @@ describe("staleCutoffs", () => {
     expect(cutoffs.available.toString()).toBe("2026-01-18T00:00:00Z");
     expect(cutoffs.unavailable.toString()).toBe("2026-01-31T00:00:00Z");
     expect(cutoffs.imageMissed.toString()).toBe("2026-01-31T00:00:00Z");
+    expect(cutoffs.keptAfterFailure.toString()).toBe("2026-01-31T00:00:00Z");
   });
 });

@@ -137,8 +137,29 @@ Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) の�
 
 段落がリンク 1 つだけでできているとき、リンク先の OGP を読んでカードとして描く
 (リスト項目と脚注の中は対象外)。取得は refresh のときだけで、読み手のリクエストは
-外部に触れない。取れなければ素のリンクのまま描く。設計判断の詳細は
+外部に触れない。設計判断の詳細は
 [ADR 0014](../../docs/adr/0014-link-cards-from-ogp-only.md) を参照。
+
+**一度も取れていない URL は素のリンクのまま描く。** 一度は取れた URL が取れなくなった
+ときは、**しばらくは前回の中身のままカードとして出る** ([ADR 0026](../../docs/adr/0026-hold-link-cards-through-short-outages.md))。
+相手の短い不調で記事の見た目が変わらないようにするためで、失敗し始めてから 3 日を
+越えてもなお取れなければ素のリンクに落ちる。
+
+⚠️ **この「3 日」は壁時計ではない。** 判定されるのは次に取りに行って失敗したときで、
+refresh はコンテンツの push で走る。**3 週間 push が無ければ、古い中身が 3 週間出続ける。**
+出ている間、消す手立ては無い (force refresh も同じ失敗の経路を通る)。急ぐなら D1 の行を
+直接消すことになる。
+
+```bash
+pnpm exec wrangler d1 execute yantene-production --env production --remote --command \
+  "DELETE FROM link_cards WHERE url = 'https://dead.example/';"
+```
+
+**行を消しても R2 の写しは残る。** 掃除は同期の経路でしか走らないので、絵と favicon は
+`link-cards/<id>/` に置き去りになる (数 KB)。気になるなら一緒に消すこと。
+
+refresh の結果では `kept` (古い中身のまま持ちこたえた) と `failed` (素のリンクに落ちた)
+を分けて返す。見た目の壊れ方が違うので、混ぜて読まないこと。
 
 ### 画像はアセット API 経由で配信
 

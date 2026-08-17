@@ -32,16 +32,41 @@ function availableCard(params: {
   });
 }
 
+/** 前回の中身を持ちこたえているカード。 */
+function keptCard(params: {
+  id: string;
+  raw: string;
+  fetchFailedSince: Temporal.Instant;
+  fetchedAt: Temporal.Instant;
+  image?: LinkCardImageState;
+}): LinkCard {
+  return LinkCard.keptAfterFailure({
+    id: params.id,
+    url: url(params.raw),
+    metadata: {
+      title: "題",
+      description: "説明",
+      siteName: "サイト",
+      image: params.image ?? "stored",
+      hasFavicon: false,
+    },
+    fetchFailedSince: params.fetchFailedSince,
+    fetchedAt: params.fetchedAt,
+  });
+}
+
 /** 期限の境目。ドメインの決めた値と同じ刻みで渡す。 */
 function cutoffs(): {
   available: Temporal.Instant;
   unavailable: Temporal.Instant;
   imageMissed: Temporal.Instant;
+  keptAfterFailure: Temporal.Instant;
 } {
   return {
     available: now.subtract({ hours: 24 * 14 }),
     unavailable: now.subtract({ hours: 24 }),
     imageMissed: now.subtract({ hours: 24 }),
+    keptAfterFailure: now.subtract({ hours: 24 }),
   };
 }
 
@@ -233,5 +258,113 @@ describe("D1LinkCard リポジトリ", () => {
 
       expect(stale.map((card) => card.id)).not.toContain("fresh-missed-img");
     });
+
+    it("前回の中身を持ちこたえているカードは 14 日を待たずに拾う", async () => {
+      // 題が入っているので「取得できた」の側に見えるが、直近は失敗しているので短い側。
+      await command.upsert(
+        keptCard({
+          id: "kept",
+          raw: "https://example.com/kept",
+          fetchFailedSince: now.subtract({ hours: 48 }),
+          fetchedAt: now.subtract({ hours: 48 }),
+        }),
+      );
+
+      const stale = await query.listStale({ ...cutoffs(), limit: 10 });
+
+      expect(stale.map((card) => card.id)).toContain("kept");
+    });
+
+    it("持ちこたえているカードも、試してから 1 日経っていなければ拾わない", async () => {
+      // 失敗の起点は古いが、直近に試したばかり。見るのは fetched_at の側。
+      await command.upsert(
+        keptCard({
+          id: "fresh-kept",
+          raw: "https://example.com/fresh-kept",
+          fetchFailedSince: now.subtract({ hours: 48 }),
+          fetchedAt: now.subtract({ hours: 1 }),
+        }),
+      );
+
+      const stale = await query.listStale({ ...cutoffs(), limit: 10 });
+
+      expect(stale.map((card) => card.id)).not.toContain("fresh-kept");
+    });
+
+    /*
+     * 持ちこたえている行が、取得できたカードや取り逃したカードの枝に紛れないこと。
+     *
+     * SQL の OR は枝が重なっても行を 2 度返さないので、重なりは件数では見えない。
+     * 現れるのは**期限を別々に動かしたとき**で、そのとき短いほうの枝が黙って効く
+     * (ADR 0025 が「重ねると黙って長いほうが効く」と書いたのと同じ危険)。
+     * そこで持ちこたえの境目だけを遠い過去に置き、他の枝を極端に手前に置いて試す。
+     */
+    it("持ちこたえているカードは、他の枝の期限では拾わない", async () => {
+      await command.upsert(
+        keptCard({
+          id: "kept-stored",
+          raw: "https://example.com/kept-stored",
+          fetchFailedSince: now.subtract({ hours: 48 }),
+          fetchedAt: now.subtract({ hours: 48 }),
+        }),
+      );
+      await command.upsert(
+        keptCard({
+          id: "kept-missed",
+          raw: "https://example.com/kept-missed",
+          image: "missed",
+          fetchFailedSince: now.subtract({ hours: 48 }),
+          fetchedAt: now.subtract({ hours: 48 }),
+        }),
+      );
+
+      const stale = await query.listStale({
+        ...cutoffs(),
+        // 他の枝は何でも拾う手前に、持ちこたえの枝だけ届かない遠くに置く。
+        available: now.subtract({ hours: 1 }),
+        imageMissed: now.subtract({ hours: 1 }),
+        keptAfterFailure: now.subtract({ hours: 24 * 100 }),
+        limit: 10,
+      });
+
+      const ids = stale.map((card) => card.id);
+      expect(ids).not.toContain("kept-stored");
+      expect(ids).not.toContain("kept-missed");
+    });
+  });
+
+  it("持ちこたえているカードは失敗の起点ごと往復する", async () => {
+    const since = now.subtract({ hours: 30 });
+    await command.upsert(
+      keptCard({
+        id: "k1",
+        raw: "https://example.com/k",
+        fetchFailedSince: since,
+        fetchedAt: now,
+      }),
+    );
+
+    const [found] = await query.findByUrls([url("https://example.com/k")]);
+    expect(found.isAvailable).toBe(true);
+    expect(found.metadata?.title).toBe("題");
+    expect(found.fetchFailedSince?.equals(since)).toBe(true);
+  });
+
+  it("取れたカードで上書きすると失敗の起点が消える", async () => {
+    await command.upsert(
+      keptCard({
+        id: "k2",
+        raw: "https://example.com/k2",
+        fetchFailedSince: now.subtract({ hours: 30 }),
+        fetchedAt: now.subtract({ hours: 1 }),
+      }),
+    );
+    // 相手が戻ってきた。ここで起点が残ると、以後ずっと短い期限で回り続ける。
+    await command.upsert(
+      availableCard({ id: "k2", raw: "https://example.com/k2" }),
+    );
+
+    const [found] = await query.findByUrls([url("https://example.com/k2")]);
+    expect(found.fetchFailedSince).toBeUndefined();
   });
 });

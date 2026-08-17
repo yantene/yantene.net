@@ -39,3 +39,4 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0023](0023-render-mermaid-in-the-browser.md)                | Mermaid の図はブラウザで組み、本体は遅延して読む                   | Accepted |
 | [0024](0024-clock-origin-from-real-time-at-ssr.md)           | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める    | Accepted |
 | [0025](0025-retry-link-cards-that-missed-their-image.md)     | リンクカードの絵の取り逃しを別の状態として持ち、短い期限で取り直す | Accepted |
+| [0026](0026-hold-link-cards-through-short-outages.md)        | リンクカードは短い不調の間だけ前回の中身で持ちこたえる             | Accepted |

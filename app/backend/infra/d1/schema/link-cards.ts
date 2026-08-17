@@ -28,6 +28,19 @@ export const linkCards = sqliteTable(
     hasImage: integer("has_image").notNull().default(0),
     imageMissed: integer("image_missed").notNull().default(0),
     hasFavicon: integer("has_favicon").notNull().default(0),
+    /*
+     * 続いている失敗が始まった時刻 (Unix 秒)。**NULL は「直近の取得は成功した」。**
+     *
+     * 「いま出せる中身」と「直近の取得結果」は別のことで、title だけでは表せない。
+     * 分けずにいた頃は、相手が一瞬落ちただけで題も説明も NULL に上書きされ、記事の
+     * カードが素のリンクへ落ちていた (#323)。
+     *
+     * 真偽値ではなく時刻で持つのは、**持ちこたえる上限を測るため**。失敗が続く間この列は
+     * 動かさず、fetched_at だけが進む。両方進めると上限にいつまでも届かない。
+     *
+     * title が NULL の行では常に NULL になる (持ちこたえる中身が無い)。
+     */
+    fetchFailedSince: integer("fetch_failed_since"),
     fetchedAt: integer("fetched_at").notNull(),
   },
   // 期限切れの洗い替えは「古い順に数件」を引くだけなので、この索引で足りる。

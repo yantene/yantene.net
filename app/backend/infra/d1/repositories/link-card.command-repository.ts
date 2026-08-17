@@ -31,6 +31,11 @@ export class D1LinkCardCommandRepository implements ILinkCardCommandRepository {
       hasImage: metadata?.image === "stored" ? 1 : 0,
       imageMissed: metadata?.image === "missed" ? 1 : 0,
       hasFavicon: metadata?.hasFavicon === true ? 1 : 0,
+      // 失敗が続く間だけ入る。取れたら NULL に戻り、期限は 14 日側へ帰る。
+      fetchFailedSince:
+        card.fetchFailedSince === undefined
+          ? null
+          : instantToUnix(card.fetchFailedSince),
       fetchedAt: instantToUnix(card.fetchedAt),
     };
 
