@@ -378,6 +378,50 @@ describe("OgpLinkCardFetcher", () => {
     expect(fetched?.title).toBe("あ");
   });
 
+  /*
+   * 題の切り詰めは書記素で数える。符号単位で切ると、上限がちょうど絵文字に当たった
+   * ときに上位サロゲートだけが残って豆腐になる (#300)。切り口は相手の OGP 次第なので、
+   * こちらでは当たる位置を選べない。
+   */
+  it("上限が絵文字に当たっても割らずに切る", async () => {
+    // 上限は 200 書記素。199 文字 + 絵文字なら、符号単位では 201 で切り口が絵文字の中。
+    const title = `${"あ".repeat(199)}\u{1F389}`;
+    fetchMock.mockImplementation(
+      servePageOnly(
+        new TextEncoder().encode(
+          `<html><head><meta property="og:title" content="${title}"></head></html>`,
+        ),
+        "text/html; charset=UTF-8",
+      ),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe(title);
+    // 片割れが残っていれば上位サロゲートで終わる。
+    expect(fetched?.title.at(-1)?.codePointAt(0)).not.toBe(0xd8_3c);
+  });
+
+  it("上限を越えた分は落とすが、絵文字は丸ごと落とす", async () => {
+    const title = `${"あ".repeat(200)}\u{1F389}`;
+    fetchMock.mockImplementation(
+      servePageOnly(
+        new TextEncoder().encode(
+          `<html><head><meta property="og:title" content="${title}"></head></html>`,
+        ),
+        "text/html; charset=UTF-8",
+      ),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("あ".repeat(200));
+  });
+
   it("知らない文字コードなら UTF-8 に倒す", async () => {
     const body = pageWithTitleBytes(new TextEncoder().encode("あ"));
     fetchMock.mockImplementation(

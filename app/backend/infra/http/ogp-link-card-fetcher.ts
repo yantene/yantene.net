@@ -10,6 +10,7 @@ import type {
 } from "~/backend/domain/link-card";
 import type { ILogger } from "~/backend/domain/shared";
 import { errorToContext } from "~/backend/domain/shared";
+import { truncateByGrapheme } from "~/lib/truncate";
 
 const HTML_MAX_BYTES = 512 * 1024;
 const IMAGE_MAX_BYTES = 2 * 1024 * 1024;
@@ -40,9 +41,15 @@ function toAbsolute(raw: string | undefined, base: string): string | undefined {
   }
 }
 
+/**
+ * 相手の書きようで青天井にならないよう切り詰める。
+ *
+ * 数えるのは書記素。符号単位で切ると絵文字が半分に割れて豆腐になる (#300)。
+ * ここで切った文字列がそのまま D1 に入り、一覧にも OGP にも出る。
+ */
 function truncate(value: string | undefined, max: number): string | undefined {
   if (value === undefined) return undefined;
-  return value.length <= max ? value : value.slice(0, max);
+  return truncateByGrapheme(value, max);
 }
 
 /**
