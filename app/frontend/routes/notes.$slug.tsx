@@ -217,6 +217,7 @@ export default function NoteShow({
             node={mdast}
             linkCards={linkCards}
             className="e-content"
+            siteOrigin={origin}
           />
           <NoteActions
             placement="bottom"

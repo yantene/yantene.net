@@ -236,14 +236,17 @@ function toClassList(value: unknown): readonly string[] {
  * 押下の反応 (press-control) もここで足す。本文中のリンクは MDAST から起こすので
  * 書き手がクラスを付けられず、ここで足さないと本文の中だけ手応えが無くなる。
  */
-function transformAnchor(element: Element): void {
+function transformAnchor(
+  element: Element,
+  siteOrigin: string | undefined,
+): void {
   element.properties.className = [
     ...toClassList(element.properties.className),
     "press-control",
   ];
 
   const href = element.properties.href;
-  if (typeof href === "string" && isExternalHref(href)) {
+  if (typeof href === "string" && isExternalHref(href, siteOrigin)) {
     element.properties.target = "_blank";
     element.properties.rel = ["noopener", "noreferrer", "nofollow"];
   }
@@ -324,10 +327,11 @@ function toAudio(element: Element): Element | null {
 function applyElementTransforms(
   node: HastRoot | RootContent,
   resolveImageUrl: ((src: string) => string) | undefined,
+  siteOrigin: string | undefined,
 ): void {
   if (node.type === "element") {
     if (node.tagName === "img") transformImage(node, resolveImageUrl);
-    else if (node.tagName === "a") transformAnchor(node);
+    else if (node.tagName === "a") transformAnchor(node, siteOrigin);
   }
   if ("children" in node) {
     // 埋め込みは形を整えたものに差し替え、通せないものはここで落とす。
@@ -345,7 +349,7 @@ function applyElementTransforms(
       return audio === null ? [] : [audio];
     });
     for (const child of node.children) {
-      applyElementTransforms(child, resolveImageUrl);
+      applyElementTransforms(child, resolveImageUrl, siteOrigin);
     }
   }
 }
@@ -426,6 +430,13 @@ export interface MdastRendererProps {
    * ここでは表に在るものだけを差し替える。
    */
   readonly linkCards?: LinkCardMap;
+  /**
+   * このサイトの出どころ (`https://yantene.net` 等)。
+   *
+   * 本文に絶対 URL で書かれた自分のサイトへのリンクを、内部として扱うために使う。
+   * **渡さなければ絶対 URL はすべて外部** (別タブ + `rel`) になる (#318)。
+   */
+  readonly siteOrigin?: string;
 }
 
 /**
@@ -437,6 +448,7 @@ export function MdastRenderer({
   transformImageUrl,
   className,
   linkCards,
+  siteOrigin,
 }: MdastRendererProps): React.JSX.Element {
   const cardsByUrl = useMemo(
     () => new Map(Object.entries(linkCards ?? {})),
@@ -461,7 +473,7 @@ export function MdastRenderer({
     // sanitize がスキームを大小を区別して照合するので、その手前で揃える (#306)。
     lowercaseSchemes(expanded);
     const transformed = hastProcessor.runSync(expanded);
-    applyElementTransforms(transformed, transformImageUrl);
+    applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
 
     return toJsxRuntime(transformed, {
@@ -478,7 +490,7 @@ export function MdastRenderer({
         [MERMAID_TAG]: MermaidDiagram,
       },
     }) as React.JSX.Element;
-  }, [node, transformImageUrl, cardsByUrl]);
+  }, [node, transformImageUrl, cardsByUrl, siteOrigin]);
 
   return (
     <article
