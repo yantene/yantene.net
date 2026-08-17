@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineArrowTopRightOnSquare } from "react-icons/hi2";
 import type {
@@ -30,6 +31,48 @@ function initialOf(name: string): string {
 }
 
 /**
+ * 著者のアイコン。**読み込めなければ代わりを出す。**
+ *
+ * 写しが 0 バイトで入ってしまった顔がある ([#322](https://github.com/yantene/yantene.net/issues/322))。
+ * 写すのは送り手が Webmention を送ってきたときだけで、リンクカードのように期限で
+ * 取り直す仕組みが顔には無いため、**一度空で入ると送り手が再送するまで直らない。**
+ *
+ * 配信側を 404 にしても同じ壊れた図が出る (どちらでも `<img>` は描けない)。ここで
+ * 受けて代わりに倒すのがいちばん確実で、0 バイトに限らず「読めない写し」全部に効く。
+ *
+ * SSR では素直に `<img>` を出す。壊れているかどうかはブラウザが読んで初めて分かる。
+ */
+function AuthorPhoto({
+  src,
+  className,
+  size,
+  fallback,
+}: {
+  readonly src: string;
+  readonly className: string;
+  readonly size: number;
+  readonly fallback: React.ReactNode;
+}): React.JSX.Element {
+  const [isBroken, setIsBroken] = useState(false);
+  if (isBroken) return <>{fallback}</>;
+
+  return (
+    <img
+      className={className}
+      src={src}
+      alt=""
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        setIsBroken(true);
+      }}
+    />
+  );
+}
+
+/**
  * 顔ひとつ。アイコンが写せていなければ、名前の頭文字を出す。
  *
  * 画像が無いときに空白を置くと、誰が居るのか分からないまま席だけが並ぶ。
@@ -40,6 +83,11 @@ function Face({
   readonly mention: WebmentionView;
 }): React.JSX.Element {
   const name = displayName(mention);
+  const initial = (
+    <span className="webmention-face-initial" aria-hidden>
+      {initialOf(name)}
+    </span>
+  );
   return (
     <a
       className="webmention-face press-control h-card"
@@ -49,18 +97,13 @@ function Face({
       title={name}
     >
       {mention.authorAvatarUrl === null ? (
-        <span className="webmention-face-initial" aria-hidden>
-          {initialOf(name)}
-        </span>
+        initial
       ) : (
-        <img
+        <AuthorPhoto
           className="webmention-face-photo u-photo"
           src={mention.authorAvatarUrl}
-          alt=""
-          width={32}
-          height={32}
-          loading="lazy"
-          decoding="async"
+          size={32}
+          fallback={initial}
         />
       )}
       <span className="sr-only p-name">{name}</span>
@@ -86,14 +129,11 @@ function Reply({
         rel="noopener noreferrer nofollow"
       >
         {mention.authorAvatarUrl !== null && (
-          <img
+          <AuthorPhoto
             className="webmention-reply-photo u-photo"
             src={mention.authorAvatarUrl}
-            alt=""
-            width={28}
-            height={28}
-            loading="lazy"
-            decoding="async"
+            size={28}
+            fallback={null}
           />
         )}
         <span className="p-name">{name}</span>

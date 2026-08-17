@@ -69,8 +69,10 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   取り直されない**。急ぐなら force refresh を流すこと。
 
   ⚠️ **Webmention の顔には効かない。** あちらは送り手が再送してきたときにしか写し直さず、
-  期限で取り直す仕組みが無い。既に入っている 0 バイトの顔は、D1 の `author_avatar` を
-  消して R2 の写しを捨てる手作業が要る ([#322](https://github.com/yantene/yantene.net/issues/322))。
+  期限で取り直す仕組みが無い。**既に入っている 0 バイトの写しは残ったまま**だが、
+  読み手の画面では頭文字 (返信なら名前だけ) に倒れるので、見た目は壊れない
+  ([#322](https://github.com/yantene/yantene.net/issues/322))。R2 の置き場を空けたければ
+  手で消すこと。
 
 ## データモデルとストレージ戦略
 
