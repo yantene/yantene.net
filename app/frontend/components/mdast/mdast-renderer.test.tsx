@@ -159,6 +159,43 @@ describe("MdastRenderer", () => {
     expect(a?.getAttribute("href")).toBeNull();
   });
 
+  /*
+   * 自分のサイトを絶対 URL で書いたリンクが、別タブで開いて nofollow まで付いていた。
+   * 自分で自分の記事同士の繋がりを検索エンジンに対して切っていた (#318)。
+   */
+  it("keeps same-origin absolute links in the same tab when siteOrigin is given", () => {
+    const { container } = render(
+      <MdastRenderer
+        node={md("[x](https://yantene.net/notes/other)")}
+        siteOrigin="https://yantene.net"
+      />,
+    );
+    const a = container.querySelector("a");
+    expect(a?.getAttribute("target")).toBeNull();
+    expect(a?.getAttribute("rel")).toBeNull();
+  });
+
+  it("still marks other origins as external when siteOrigin is given", () => {
+    const { container } = render(
+      <MdastRenderer
+        node={md("[x](https://example.com/page)")}
+        siteOrigin="https://yantene.net"
+      />,
+    );
+    const a = container.querySelector("a");
+    expect(a?.getAttribute("target")).toBe("_blank");
+    expect(a?.getAttribute("rel")).toContain("nofollow");
+  });
+
+  it("treats absolute links as external when siteOrigin is absent", () => {
+    // 出どころが決まらない場所 (Storybook 等) では安全側に倒す。
+    const { container } = render(
+      <MdastRenderer node={md("[x](https://yantene.net/notes/other)")} />,
+    );
+    const a = container.querySelector("a");
+    expect(a?.getAttribute("target")).toBe("_blank");
+  });
+
   it("treats protocol-relative links as external (new tab + rel)", () => {
     const { container } = render(
       <MdastRenderer node={md("[x](//example.com/page)")} />,
