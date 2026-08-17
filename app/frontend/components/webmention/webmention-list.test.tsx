@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { beforeAll, describe, expect, it } from "vitest";
 import { WebmentionList } from "./webmention-list";
@@ -77,6 +77,53 @@ describe("WebmentionList", () => {
     });
     const photo = document.querySelector(":scope .webmention-face-photo");
     expect(photo?.getAttribute("src")).toBe("/api/v1/webmentions/avatars/abc");
+  });
+
+  /*
+   * 0 バイトの写しが入ってしまった顔がある。写すのは送り手が再送してきたときだけで、
+   * 期限で取り直す仕組みが顔には無いので、放っておいても直らない (#322)。
+   * 配信を 404 にしても同じ壊れた図が出るので、描画側で受けて代わりに倒す。
+   */
+  it("アイコンが読めなければ頭文字に倒す", () => {
+    renderList({
+      faces: [
+        mention({
+          id: "f1",
+          type: "like",
+          authorName: "あかり",
+          authorAvatarUrl: "/api/v1/webmentions/avatars/broken",
+        }),
+      ],
+      replies: [],
+    });
+    const photo = document.querySelector(":scope .webmention-face-photo");
+    expect(photo).not.toBeNull();
+
+    fireEvent.error(photo as Element);
+
+    expect(document.querySelector(":scope .webmention-face-photo")).toBeNull();
+    const initial = document.querySelector(":scope .webmention-face-initial");
+    expect(initial?.textContent).toBe("あ");
+  });
+
+  it("返信のアイコンが読めなければ名前だけにする", () => {
+    renderList({
+      faces: [],
+      replies: [
+        mention({
+          id: "r1",
+          authorName: "あかり",
+          authorAvatarUrl: "/api/v1/webmentions/avatars/broken",
+        }),
+      ],
+    });
+    const photo = document.querySelector(":scope .webmention-reply-photo");
+    expect(photo).not.toBeNull();
+
+    fireEvent.error(photo as Element);
+
+    expect(document.querySelector(":scope .webmention-reply-photo")).toBeNull();
+    expect(screen.getByText("あかり")).toBeTruthy();
   });
 
   it("返信は本文と出典を出す", () => {

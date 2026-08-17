@@ -20,7 +20,16 @@ export function createWebmentionAvatarsRouter(): Hono<{ Bindings: Env }> {
     const avatar = await new R2WebmentionAvatarCache(c.env.R2).get(
       c.req.param("id"),
     );
-    if (avatar === undefined) return notFoundResponse("avatar not found");
+    /*
+     * 中身の無い写しを「在る」と答えない。
+     *
+     * 0 バイトの顔が入ってしまったものがある (#322)。**これだけでは読み手の画面は
+     * 直らない** (404 でも `<img>` は描けない。代わりを出すのは webmention-list.tsx の
+     * 仕事)。ここで落とすのは、空を 200 で配ると経路上の蓄えに空が乗るため。
+     */
+    if (avatar === undefined || avatar.bytes.byteLength === 0) {
+      return notFoundResponse("avatar not found");
+    }
 
     // Uint8Array はランタイムでは有効な body。型上の齟齬だけをキャストで解消する。
     return new Response(avatar.bytes as BodyInit, {
