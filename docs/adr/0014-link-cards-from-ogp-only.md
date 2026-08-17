@@ -1,6 +1,6 @@
 # 0014. リンクカードは OGP だけを見て、取れなければ素のリンクに落とす
 
-- Status: Accepted (期限の刻みのみ [0025](0025-retry-link-cards-that-missed-their-image.md) で置き換え)
+- Status: Accepted (期限の刻みのみ [0025](0025-retry-link-cards-that-missed-their-image.md)、落とすまでの猶予のみ [0026](0026-hold-link-cards-through-short-outages.md) で置き換え)
 - Date: 2026-08-12
 - Deciders: @yantene
 
@@ -8,6 +8,10 @@
 > 絵だけ取り逃したカードを別の状態として持ち、そこだけ 1 日で取り直すようにした。
 > 以下の「取れたものは 14 日、取れなかったものは 1 日」の 2 段は、3 段になっている。
 > **OGP だけを見る判断と、取れなければ素のリンクに落とす判断は変わらない。**
+>
+> ⚠️ **素のリンクに落とすまでの猶予については [ADR 0026](0026-hold-link-cards-through-short-outages.md)
+> を参照。** 前回きちんと取れていたカードは、失敗しても 3 日は前回の中身で持ちこたえる。
+> 落とす判断そのものは変わらず、効くのが 3 日遅れる。
 
 ## Context / 背景
 

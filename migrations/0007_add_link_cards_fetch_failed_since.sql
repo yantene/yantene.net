@@ -1,0 +1,1 @@
+ALTER TABLE `link_cards` ADD `fetch_failed_since` integer;
