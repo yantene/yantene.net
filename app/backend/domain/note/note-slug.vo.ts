@@ -33,6 +33,26 @@ export class NoteSlug implements IValueObject<NoteSlug> {
     return new NoteSlug(trimmed);
   }
 
+  /**
+   * 読めればスラグ、読めなければ undefined。
+   *
+   * **握るのはスラグとして読めなかったときだけで、それ以外の失敗は投げる。** 一緒に
+   * 握ると、想定外の失敗が「そんな記事は無い」の顔をして静かに通る (fail-loud)。
+   * 実際、同じ処理が 5 か所に写されていた頃、1 か所だけ `catch {}` で全部を握って
+   * いた (#291)。
+   *
+   * 返すのは「読めたか」だけ。undefined を 404 にするか別の応答にするかは、受け取る
+   * 側 (handlers) の関心なのでここでは決めない。
+   */
+  static parse(raw: string): NoteSlug | undefined {
+    try {
+      return this.create(raw);
+    } catch (error) {
+      if (error instanceof InvalidNoteSlugError) return undefined;
+      throw error;
+    }
+  }
+
   toString(): string {
     return this.value;
   }

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cardHtml, defaultCardHtml, OG_TEMPLATE_VERSION } from "./og-card";
-import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
+import { NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -82,17 +82,8 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
   );
 
   router.get("/notes/:slug", async (c) => {
-    let slug: NoteSlug;
-    try {
-      slug = NoteSlug.create(c.req.param("slug"));
-    } catch (error) {
-      // 404 に倒すのはスラグとして読めなかったときだけ。それ以外を一緒に握ると、
-      // 想定外の失敗が「カードの無い記事」の顔をして静かに通る (fail-loud)。
-      if (error instanceof InvalidNoteSlugError) {
-        return notFoundResponse("note not found");
-      }
-      throw error;
-    }
+    const slug = NoteSlug.parse(c.req.param("slug"));
+    if (slug === undefined) return notFoundResponse("note not found");
 
     const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
     if (note === undefined) return notFoundResponse("note not found");

@@ -9,12 +9,7 @@ import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
-import {
-  InvalidNoteSlugError,
-  NoteNotFoundError,
-  NoteSlug,
-  NoteTag,
-} from "~/backend/domain/note";
+import { NoteNotFoundError, NoteSlug, NoteTag } from "~/backend/domain/note";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
@@ -83,21 +78,12 @@ async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
   return toLinkCardMap(cards);
 }
 
-function parseSlug(raw: string): NoteSlug | undefined {
-  try {
-    return NoteSlug.create(raw);
-  } catch (error) {
-    if (error instanceof InvalidNoteSlugError) return undefined;
-    throw error;
-  }
-}
-
 /** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */
 async function resolveDetail(
   env: Env,
   slugParam: string,
 ): Promise<ResolvedNote | undefined> {
-  const slug = parseSlug(slugParam);
+  const slug = NoteSlug.parse(slugParam);
   return slug === undefined ? undefined : loadNoteDetail(env, slug);
 }
 
