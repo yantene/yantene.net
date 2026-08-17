@@ -310,6 +310,35 @@ describe("LinkCardsRefreshService", () => {
     expect(result.fetched).toEqual(["https://example.com/old"]);
   });
 
+  /*
+   * refresh の主経路はこちら。
+   *
+   * refresh が渡す referencedUrls は**中身の変わったノートのぶんだけ**なので、変わって
+   * いない記事に貼られたカードは listStale からしか来ない。前回の行を known からしか
+   * 集めていないと、そのカードは「初めて見る URL」として扱われ、失敗した瞬間に中身ごと
+   * 捨てられる。**#323 のバグがそのまま戻る。**
+   */
+  it("参照されていないカードでも、前回の中身を持ちこたえる", async () => {
+    await service.sync(["https://example.com/old"], now);
+    const old = repository.stored.get("https://example.com/old");
+    const id = old?.id ?? "";
+    repository.stale = old === undefined ? [] : [old];
+    const deletedSoFar = assets.deleted.length;
+    fetcher.fetch.mockResolvedValue(undefined);
+
+    // 今回の記事はこの URL に触れていない。期限切れとして拾われ、そして取れない。
+    const result = await service.sync([], now.add({ hours: 24 * 15 }));
+
+    const stored = repository.stored.get("https://example.com/old");
+    expect(stored?.isAvailable).toBe(true);
+    expect(stored?.metadata?.title).toBe("題");
+    expect(result.kept).toEqual(["https://example.com/old"]);
+    expect(result.failed).toEqual([]);
+    // 写しにも触れない。
+    expect(assets.deleted).toHaveLength(deletedSoFar);
+    expect(assets.images.get(id)).toEqual(pngAsset);
+  });
+
   it("期限の境目はドメインの決めたものを渡す", async () => {
     await service.sync([], now);
 
@@ -320,6 +349,9 @@ describe("LinkCardsRefreshService", () => {
       "2026-01-31T00:00:00Z",
     );
     expect(repository.staleQueries[0]?.imageMissed.toString()).toBe(
+      "2026-01-31T00:00:00Z",
+    );
+    expect(repository.staleQueries[0]?.keptAfterFailure.toString()).toBe(
       "2026-01-31T00:00:00Z",
     );
   });
