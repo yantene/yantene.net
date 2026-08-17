@@ -3,6 +3,7 @@ import {
   SESSION_LIFETIME_DAYS,
   SessionId,
 } from "~/backend/domain/session";
+import { readCookieValues } from "~/lib/cookie";
 
 /**
  * 読み手のセッション識別子を運ぶ cookie。
@@ -61,16 +62,16 @@ export function buildSessionCookie(
   ].join("; ");
 }
 
-/** Cookie ヘッダーから名前の一致する値を取り出す。無ければ undefined。 */
+/**
+ * Cookie ヘッダーから名前の一致する値を取り出す。無ければ undefined。
+ *
+ * **同じ名前が並んでいたら先頭を採る。** 鍵として読めるかどうかの判定は呼ぶ側が持って
+ * いて、ここで選び直す手掛かりが無い (ロケールのほうは「読める最初」を採る。
+ * app/lib/cookie.ts を参照)。
+ */
 function pickCookie(
   cookieHeader: string | null,
   name: string,
 ): string | undefined {
-  const prefix = `${name}=`;
-  const entry = cookieHeader
-    ?.split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(prefix));
-
-  return entry?.slice(prefix.length);
+  return readCookieValues(cookieHeader, name).at(0);
 }
