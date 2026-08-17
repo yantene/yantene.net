@@ -1,0 +1,46 @@
+/*
+ * 本文画像のクリック拡大 (lightbox-image.tsx)。
+ *
+ * 押す側 (`.lightbox-trigger`) は **`.note-prose` の中に置かれている前提**で書いてある。
+ * 暗幕 (`.lightbox-overlay`) のほうは createPortal で body の下に出るので器を持たない。
+ */
+
+/*
+ * 本文画像のクリック拡大 (lightbox)。
+ *
+ * 画像は img ではなくこの button が包む。img の margin-inline: auto は inline 要素には
+ * 効かないので、中央に寄せるのはこちら側の仕事になる。block にしただけでは button が
+ * 行いっぱいに広がって auto マージンが行き場を失うため、fit-content で中身の幅に詰める。
+ */
+.note-prose .lightbox-trigger {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgb(0 0 0 / 0.85);
+  cursor: zoom-out;
+}
+.lightbox-full {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.25rem;
+}
+.lightbox-overlay {
+  border: 0;
+  appearance: none;
+  width: 100%;
+}
