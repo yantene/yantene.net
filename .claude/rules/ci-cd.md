@@ -2,14 +2,14 @@
 
 ## ワークフロー一覧
 
-| ワークフロー            | トリガー                     | 内容                                              |
-| ----------------------- | ---------------------------- | ------------------------------------------------- |
-| `pull-request.yml`      | PR open/edit/sync            | ブランチ名・PR タイトルのフォーマット検証         |
-| `lint.yml`              | PR to main / `workflow_call` | Prettier・ESLint・TypeScript・wrangler.jsonc 検証 |
-| `test.yml`              | PR to main                   | Vitest 実行                                       |
-| `deploy-preview.yml`    | PR to main                   | staging へ preview デプロイ                       |
-| `deploy-staging.yml`    | push to main                 | staging 自動デプロイ                              |
-| `deploy-production.yml` | GitHub Release published     | production デプロイ                               |
+| ワークフロー            | トリガー                     | 内容                                                 |
+| ----------------------- | ---------------------------- | ---------------------------------------------------- |
+| `pull-request.yml`      | PR open/edit/sync            | ブランチ名・PR タイトルのフォーマット検証            |
+| `lint.yml`              | PR to main / `workflow_call` | Prettier・ESLint・TypeScript・wrangler.jsonc 検証    |
+| `test.yml`              | PR to main                   | Vitest 実行                                          |
+| `deploy-preview.yml`    | PR to main                   | staging の D1 に migration を適用 + preview デプロイ |
+| `deploy-staging.yml`    | push to main                 | staging 自動デプロイ                                 |
+| `deploy-production.yml` | GitHub Release published     | production デプロイ (**migration は当てない**)       |
 
 ## PR で走るチェック
 
@@ -29,6 +29,9 @@ PR を main にマージする前に、以下のチェックがすべて pass �
 | `deploy`          | `deploy-preview.yml` | staging preview デプロイ                   |
 
 **マージ判断基準: 上記が全て pass であること。** 一部ジョブが失敗した状態でのマージは禁止。
+
+> ⚠️ `deploy` ジョブは **staging の D1 に migration を当ててから**デプロイする。
+> **production には当たらない**ので、リリース前に手で流すこと (environments.md 参照)。
 
 > ⚠️ 現状 GitHub 側のブランチ保護ルール・Ruleset は未設定のため、上記は CI 上で走るだけで
 > マージが機械的にブロックされるわけではない。当面は手動で全チェック pass を確認してから

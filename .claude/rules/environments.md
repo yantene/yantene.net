@@ -100,6 +100,31 @@ SMOKE_BASE=https://yantene.net pnpm run smoke
 
 Release が公開されると `deploy-production.yml` が自動起動し production にデプロイされる。
 
+### ⚠️ migration を含むリリースは、先に production へ当てる
+
+**staging と production で自動適用の有無が違う。**
+
+| 環境       | 誰が当てるか                                             |
+| ---------- | -------------------------------------------------------- |
+| staging    | `deploy-preview.yml` が **PR を出した時点で自動適用**    |
+| production | **誰も当てない。人が `pnpm run db:prod:migrate` を流す** |
+
+この非対称のせいで、列を足す変更は次の順で静かに壊れる。
+
+1. PR を出す → staging には列が入る → **staging では動くのを確認できる**
+2. main にマージ → staging へ自動デプロイ → 引き続き動く
+3. `pnpm run release` → **列の無い production DB に新しいコードが乗る**
+
+3 の瞬間にその列を読むクエリが全部落ちる。**staging がずっと緑だったぶん気づきにくい。**
+
+```bash
+pnpm run db:prod:migrate   # ← リリースの前に
+pnpm run release
+```
+
+staging を手で流す必要は無い (流しても `No migrations to apply` になる)。列の削除など
+後方互換でない変更は、これに加えてデプロイとの順序を個別に決めること。
+
 ## wrangler.jsonc の注意点
 
 - カスタムドメインは `routes` + `custom_domain: true` で指定する
