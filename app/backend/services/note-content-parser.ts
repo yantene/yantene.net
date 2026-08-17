@@ -6,6 +6,7 @@ import { unified } from "unified";
 import { VFile } from "vfile";
 import { matter } from "vfile-matter";
 import { latexToMathMl } from "./latex-to-mathml";
+import { mapTree, withChildren } from "./mdast-tree";
 import type { Nodes, Root, RootContent } from "mdast";
 
 const SUMMARY_MAX_CHARS = 160;
@@ -171,13 +172,11 @@ function collapseAcrossSiblings(
  * そのまま残る (どれも text ではない)。
  */
 function withCollapsedSoftBreaks<T extends Nodes>(node: T): T {
-  if (!("children" in node)) return node;
-
-  const children = collapseAcrossSiblings(
-    node.children.map((child) => withCollapsedSoftBreaks(child)),
+  return mapTree(node, (child) =>
+    "children" in child
+      ? withChildren(child, collapseAcrossSiblings(child.children))
+      : child,
   );
-  // 子の種別は写しても変わらないので、親の型はそのまま保たれる。
-  return { ...node, children };
 }
 
 /**
@@ -192,23 +191,22 @@ function withCollapsedSoftBreaks<T extends Nodes>(node: T): T {
  * 送出し、呼び出し側がノート単位で拾う。
  */
 function withMathMl<T extends Nodes>(node: T): T {
-  if (node.type === "inlineMath" || node.type === "math") {
-    const { properties, children } = latexToMathMl(node.value, {
-      display: node.type === "math",
+  return mapTree(node, (child) => {
+    if (child.type !== "inlineMath" && child.type !== "math") return child;
+
+    const { properties, children } = latexToMathMl(child.value, {
+      display: child.type === "math",
     });
     return {
-      ...node,
+      ...child,
       data: {
-        ...node.data,
+        ...child.data,
         hName: "math",
         hProperties: properties,
         hChildren: children,
       },
     };
-  }
-
-  if (!("children" in node)) return node;
-  return { ...node, children: node.children.map((child) => withMathMl(child)) };
+  });
 }
 
 /** GFM の Alert 種別。GitHub が定める 5 つに揃える。 */
@@ -285,23 +283,25 @@ function readAlertLabel(
  * 合わせ、描画側では引用の中身を判定しない。
  */
 function withGfmAlerts<T extends Nodes>(node: T): T {
-  if (!("children" in node)) return node;
+  return mapTree(node, (child) => {
+    if (child.type !== "blockquote") return child;
 
-  const children = node.children.map((child) => withGfmAlerts(child));
-  if (node.type !== "blockquote") return { ...node, children };
+    // 印を読むのは写し終えた子から。この向きは mapTree が保証している。
+    const alert = readAlertLabel(child.children);
+    if (alert === undefined) return child;
 
-  const alert = readAlertLabel(children);
-  if (alert === undefined) return { ...node, children };
-
-  return {
-    ...node,
-    children: alert.children,
-    data: {
-      ...node.data,
-      hName: ALERT_TAG_NAME,
-      hProperties: { kind: alert.kind },
-    },
-  };
+    // 中身の差し替えは withChildren に通す。引用の子の型 (BlockContent) と
+    // readAlertLabel が返す RootContent の食い違いを、あちらの 1 か所で吸収する。
+    const body = withChildren(child, alert.children);
+    return {
+      ...body,
+      data: {
+        ...body.data,
+        hName: ALERT_TAG_NAME,
+        hProperties: { kind: alert.kind },
+      },
+    };
+  });
 }
 
 /**
