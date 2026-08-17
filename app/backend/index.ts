@@ -192,6 +192,22 @@ export const getApp = (
     return handler(c.req.raw, c.env, c.executionCtx as ExecutionContext, nonce);
   });
 
+  /*
+   * `c.notFound()` を呼んだハンドラの応答。
+   *
+   * 置かないと Hono 既定の `text/plain` の `404 Not Found` が返り、サイトの他の 404
+   * (RFC 9457 Problem Details) と形が揃わない。**実際に揃っていなかった。** #277 で
+   * og.handler.ts の 2 か所を直したが、次に `c.notFound()` を書いた人が同じ穴に落ちる
+   * 構造が残っていた。`c.notFound()` は Hono のいちばん素直な書き方なので、知らずに
+   * 使われる方が自然である (#290)。
+   *
+   * **いまこれが発火する経路は無い。** 末尾の `app.all("*")` がどのメソッド・どのパス
+   * にも応答するので、路の見つからない要求はすべてページ委譲へ落ちる (未マッチの
+   * ページが HTML の 404 になるのは意図した姿)。ここに置くのは、次に書かれる
+   * `c.notFound()` のための既定を用意しておくため。
+   */
+  app.notFound(() => notFoundResponse());
+
   app.onError((error, _context) => {
     if (error instanceof HTTPException) {
       const response = createProblemResponse(error.status, error.message);
