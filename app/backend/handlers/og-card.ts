@@ -11,6 +11,7 @@
  */
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
 import highlightSource from "~/frontend/assets/highlight.svg?raw";
+import { truncateByGrapheme } from "~/lib/truncate";
 
 /*
  * 表題の上限。
@@ -214,23 +215,6 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
-function truncate(value: string, max: number): string {
-  /*
-   * 数えるのは書記素。UTF-16 の単位で切ると絵文字や拡張漢字を半分に割って豆腐になり、
-   * code point で切ると異体字選択子や結合済みの絵文字がばらける。
-   *
-   * 区切りを毎回作り直しているのは、切り詰めが走るのが R2 に蓄えの無いカードを描く
-   * ときだけで、使い回して抱えておくほどの回数にならないため。
-   */
-  const graphemes = Array.from(
-    new Intl.Segmenter("ja").segment(value),
-    (segment) => segment.segment,
-  );
-  return graphemes.length > max
-    ? `${graphemes.slice(0, max - 1).join("")}…`
-    : value;
-}
-
 /**
  * OG カードの HTML (Satori 制約: flex レイアウトのみ)。
  *
@@ -247,7 +231,9 @@ export function cardHtml(params: {
   date: string;
   tags: readonly string[];
 }): string {
-  const title = escapeHtml(truncate(params.title, TITLE_MAX));
+  const title = escapeHtml(
+    truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }),
+  );
   /*
    * タグは中黒で繋ぐ。囲みを付けない理由は note-timeline.css に書いてあるとおりで、
    * 表題と主張が競るため。
