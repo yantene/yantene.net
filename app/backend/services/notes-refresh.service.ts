@@ -3,6 +3,7 @@ import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
 import { readImageDimensions, type ImageDimensions } from "./image-dimensions";
 import { MathSyntaxError } from "./latex-to-mathml";
+import { mapTree } from "./mdast-tree";
 import { resolveAssetUrl } from "./note-asset-url";
 import {
   parseNoteContent,
@@ -508,16 +509,12 @@ function isAssetUrlNode(node: Nodes): node is Definition | Image | Link {
  * 書いてもらう (ADR 0022)。
  */
 function withAssetUrls<T extends Nodes>(node: T, slug: string): T {
-  const resolved: T = isAssetUrlNode(node)
-    ? { ...node, url: resolveAssetUrl(slug, node.url) }
-    : node;
-
-  if (!("children" in resolved)) return resolved;
-  // 子の種別は写しても変わらないので、親の型はそのまま保たれる。
-  return {
-    ...resolved,
-    children: resolved.children.map((child) => withAssetUrls(child, slug)),
-  };
+  return mapTree(node, (child) => {
+    if (!isAssetUrlNode(child)) return child;
+    const url = resolveAssetUrl(slug, child.url);
+    // 変わらなければ写さない。ルート相対や絶対 URL はそのまま返ってくる。
+    return url === child.url ? child : { ...child, url };
+  });
 }
 
 /**
@@ -580,29 +577,21 @@ function withImageDimensions<T extends Nodes>(
   dimensions: ReadonlyMap<string, ImageDimensions>,
   definitionUrls: ReadonlyMap<string, string>,
 ): T {
-  const url = sizedUrlOf(node, definitionUrls);
-  const size = url === undefined ? undefined : dimensions.get(url);
+  return mapTree(node, (child) => {
+    const url = sizedUrlOf(child, definitionUrls);
+    const size = url === undefined ? undefined : dimensions.get(url);
+    if (size === undefined) return child;
 
-  const sized: T =
-    size === undefined
-      ? node
-      : {
-          ...node,
-          data: {
-            ...node.data,
-            hProperties: {
-              ...node.data?.hProperties,
-              width: size.width,
-              height: size.height,
-            },
-          },
-        };
-
-  if (!("children" in sized)) return sized;
-  return {
-    ...sized,
-    children: sized.children.map((child) =>
-      withImageDimensions(child, dimensions, definitionUrls),
-    ),
-  };
+    return {
+      ...child,
+      data: {
+        ...child.data,
+        hProperties: {
+          ...child.data?.hProperties,
+          width: size.width,
+          height: size.height,
+        },
+      },
+    };
+  });
 }
