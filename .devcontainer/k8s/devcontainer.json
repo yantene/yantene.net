@@ -6,7 +6,7 @@
   },
 
   "remoteEnv": {
-    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${containerEnv:PATH}"
+    "PATH": "/home/node/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${containerEnv:PATH}"
   },
 
   "forwardPorts": [5173],

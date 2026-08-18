@@ -32,5 +32,8 @@ RUN set -e -o pipefail && \
     sh /tmp/herdr-install.sh && \
     rm /tmp/herdr-install.sh
 
+# claude and herdr install into ~/.local/bin, which is not on the default PATH
+ENV PATH="/home/node/.local/bin:${PATH}"
+
 # Fish shell configuration
 COPY --chown=node:node .devcontainer/fish/ /home/node/.config/fish/
