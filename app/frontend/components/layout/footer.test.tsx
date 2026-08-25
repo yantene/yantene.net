@@ -72,8 +72,9 @@ describe("Footer", () => {
   it("ライセンスのページへ繋ぐ", () => {
     renderFooter(2019, 2026);
 
-    expect(
-      screen.getByRole("link", { name: "Open source licenses" }),
-    ).toHaveAttribute("href", "/licenses");
+    expect(screen.getByRole("link", { name: "Colophon" })).toHaveAttribute(
+      "href",
+      "/licenses",
+    );
   });
 });

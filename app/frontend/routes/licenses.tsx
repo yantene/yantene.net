@@ -1,4 +1,10 @@
 import { useTranslation } from "react-i18next";
+import {
+  HiOutlineFaceSmile,
+  HiOutlineLanguage,
+  HiOutlineVariable,
+} from "react-icons/hi2";
+import { SiGithub } from "react-icons/si";
 import type { Route } from "./+types/licenses";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
@@ -25,6 +31,9 @@ const OPEN_FONT_LICENSE_URL = "https://openfontlicense.org/";
  * 何も載せないより悪い。全体はリポジトリの package.json を正とする。
  *
  * ここに足すのは、ライセンスが帰属の表示そのものを条件にしているものだけ。
+ *
+ * icon は的の絵で、意味は隣の文字が全部持っている。読み上げには渡さない
+ * (描くところで aria-hidden にしてある)。
  */
 export const ATTRIBUTIONS = [
   {
@@ -33,6 +42,7 @@ export const ATTRIBUTIONS = [
     license: "CC BY 4.0",
     licenseHref: "https://creativecommons.org/licenses/by/4.0/",
     usageKey: "licenses.usage.twemoji",
+    icon: HiOutlineFaceSmile,
   },
   {
     name: "Noto Sans JP",
@@ -40,6 +50,7 @@ export const ATTRIBUTIONS = [
     license: "SIL Open Font License 1.1",
     licenseHref: OPEN_FONT_LICENSE_URL,
     usageKey: "licenses.usage.notoSansJp",
+    icon: HiOutlineLanguage,
   },
   {
     name: "STIX Two Math",
@@ -47,6 +58,7 @@ export const ATTRIBUTIONS = [
     license: "SIL Open Font License 1.1",
     licenseHref: OPEN_FONT_LICENSE_URL,
     usageKey: "licenses.usage.stixTwoMath",
+    icon: HiOutlineVariable,
   },
 ] as const satisfies readonly {
   name: string;
@@ -54,6 +66,7 @@ export const ATTRIBUTIONS = [
   license: string;
   licenseHref: string;
   usageKey: string;
+  icon: React.ComponentType<{ readonly "aria-hidden": "true" }>;
 }[];
 
 export async function loader({
@@ -110,7 +123,12 @@ export default function Licenses({
               key={attribution.name}
               className="border-l-2 border-border pl-4"
             >
-              <p className="text-base font-semibold text-foreground">
+              {/*
+                的の絵を名前の前に置く。意味は名前と用途が持っているので、
+                読み上げには渡さない。
+              */}
+              <p className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <attribution.icon aria-hidden="true" />
                 <a
                   href={attribution.href}
                   target="_blank"
@@ -144,8 +162,9 @@ export default function Licenses({
             href={REPOSITORY_URL}
             target="_blank"
             rel="noreferrer"
-            className={linkClassName}
+            className={`${linkClassName} inline-flex items-center gap-1.5`}
           >
+            <SiGithub aria-hidden="true" />
             {t("licenses.rest.linkLabel")}
           </a>
         </p>
