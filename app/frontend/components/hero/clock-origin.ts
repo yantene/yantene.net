@@ -77,7 +77,7 @@ export interface ClockOriginData {
  *
  * 必ず loader のような I/O の内側から呼ぶこと。Cloudflare Workers は I/O の外の時刻を
  * Unix epoch 0 に固定するため、モジュールスコープで時計を読むと本番の SSR だけが
- * 1970 年になる (current-year.ts に同じ注意がある)。読む時計を引数で受けているのは、
+ * 1970 年になる (backend/handlers/copyright.ts に同じ注意がある)。読む時計を引数で受けているのは、
  * 呼ぶ場所を呼び出し側に選ばせるためでもある。
  */
 export function resolveClockOrigin(now: Date): ClockOrigin {

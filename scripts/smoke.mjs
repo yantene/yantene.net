@@ -49,6 +49,17 @@ const targets = [
     expectBodyIncludes: "https://static.cloudflareinsights.com/beacon.min.js",
   },
   "/notes",
+  /*
+   * 帰属の置き場所。CC BY 4.0 が要る表示なので、落ちていることに気づけるようにしておく。
+   *
+   * 本文まで見る。ルートの登録が外れた・ページを消したときに返るのは 404 で、
+   * 素の指定 (500 未満なら ok) では見張ったことにならない。
+   */
+  {
+    label: "/licenses",
+    path: "/licenses",
+    expectBodyIncludes: "CC BY 4.0",
+  },
   "/notes/does-not-exist",
   /*
    * 記事 URL は Accept 次第で HTML と原文 Markdown に分かれる (ADR 0020)。取り違えは

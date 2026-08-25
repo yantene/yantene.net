@@ -80,5 +80,24 @@
   "webmention": {
     "heading": "Responses",
     "openSource": "Open the source"
+  },
+  "footer": {
+    "navLabel": "Footer",
+    "licenses": "Open source licenses"
+  },
+  "licenses": {
+    "title": "Open source licenses",
+    "description": "The open source work this site is built with, and its licenses.",
+    "lead": "This site is built with the work below. Listed here is the work whose license makes attribution a condition of use.",
+    "licenseLabel": "License",
+    "usage": {
+      "twemoji": "Emoji artwork for reactions",
+      "notoSansJp": "Body and heading typeface",
+      "stixTwoMath": "Typeface for mathematics"
+    },
+    "rest": {
+      "lead": "Plenty of other open source software goes into this site. What it is, and which versions, is listed in package.json in the repository.",
+      "linkLabel": "yantene/yantene.net"
+    }
   }
 }

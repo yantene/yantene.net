@@ -59,7 +59,11 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) =>
  *
  * CSP の許可と対で動く (`app/backend/index.ts`)。ここのホストを変えるならあちらも直すこと。
  */
-const googleFontFamilies = [
+/*
+ * export しているのは、/licenses が挙げる帰属と突き合わせるため
+ * (routes/licenses.test.ts)。ここに書体を足したら、あちらにも帰属が要る。
+ */
+export const googleFontFamilies = [
   // 本文。400 は地の文、700 は見出しと強調。
   { name: "Noto Sans JP", weights: [400, 700] },
   // 数式。ウェイトは 1 つしか無いので指定しない。

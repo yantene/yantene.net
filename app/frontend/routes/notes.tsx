@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/notes";
+import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
-import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -15,7 +16,6 @@ import { parseNoteListPayload } from "~/frontend/components/note-timeline/note-l
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
-import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import {
   cloudflareContext,
@@ -29,15 +29,20 @@ export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<
-  PageMetaBase & CurrentYearData & NotesListPageData
+  PageMetaBase & CopyrightData & NotesListPageData
 > {
   const url = new URL(request.url);
-  const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
+  const env = context.get(cloudflareContext).env;
+  // 互いに独立した読み出しなので、往復を直列に積まない。
+  const [data, copyright] = await Promise.all([
+    loadNotesListPage(env, url),
+    loadCopyrightYears(env),
+  ]);
   return {
     ...data,
     locale: context.get(localeRouteContext),
     origin: url.origin,
-    currentYear: resolveCurrentYear(),
+    copyright,
   };
 }
 
@@ -142,7 +147,7 @@ export default function NotesIndex({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, query, tag, tags, sort, currentYear } = loaderData;
+  const { notes, pagination, query, tag, tags, sort, copyright } = loaderData;
   const hrefForPage = (page: number): string =>
     buildHrefForPage(page, pagination.perPage, sort, tag);
   /*
@@ -242,7 +247,7 @@ export default function NotesIndex({
           </div>
         </noscript>
       </main>
-      <Footer year={currentYear} />
+      <Footer copyright={copyright} />
     </AppLayout>
   );
 }

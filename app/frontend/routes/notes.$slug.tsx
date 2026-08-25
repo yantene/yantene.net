@@ -1,9 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { data, Link, redirect } from "react-router";
 import type { Route } from "./+types/notes.$slug";
+import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
-import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
 import {
   applyReaction,
@@ -18,7 +19,6 @@ import { NoteHeader } from "~/frontend/components/note-header/note-header";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
-import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import {
   cloudflareContext,
@@ -93,18 +93,16 @@ export async function loader({
   params,
   context,
 }: Route.LoaderArgs): Promise<
-  ReturnType<typeof data<PageMetaBase & CurrentYearData & NoteDetailPageData>>
+  ReturnType<typeof data<PageMetaBase & CopyrightData & NoteDetailPageData>>
 > {
   const url = new URL(request.url);
   const cloudflare = context.get(cloudflareContext);
   // 読み手のセッション識別子を預け直す cookie を応答に載せる (ADR 0011)。
   // React Router は loader が付けた Set-Cookie を、文書・データどちらの応答にも運ぶ。
   const headers = new Headers();
-  const detail = await loadNoteDetailPage(
-    cloudflare.env,
-    params.slug,
-    url.origin,
-    {
+  // 互いに独立した読み出しなので、往復を直列に積まない。
+  const [detail, copyright] = await Promise.all([
+    loadNoteDetailPage(cloudflare.env, params.slug, url.origin, {
       userAgent: request.headers.get("user-agent"),
       cookie: request.headers.get("cookie"),
       waitUntil: (promise) => {
@@ -113,12 +111,13 @@ export async function loader({
       setCookie: (value) => {
         headers.append("set-cookie", value);
       },
-    },
-  );
+    }),
+    loadCopyrightYears(cloudflare.env),
+  ]);
   const base = {
     locale: context.get(localeRouteContext),
     origin: url.origin,
-    currentYear: resolveCurrentYear(),
+    copyright,
   };
 
   // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
@@ -159,7 +158,7 @@ export default function NoteShow({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { currentYear } = loaderData;
+  const { copyright } = loaderData;
 
   if (!loaderData.found) {
     return (
@@ -174,7 +173,7 @@ export default function NoteShow({
             {t("notes.notFound.backToList")}
           </Link>
         </main>
-        <Footer year={currentYear} />
+        <Footer copyright={copyright} />
       </AppLayout>
     );
   }
@@ -245,7 +244,7 @@ export default function NoteShow({
           </aside>
         )}
       </div>
-      <Footer year={currentYear} />
+      <Footer copyright={copyright} />
     </AppLayout>
   );
 }

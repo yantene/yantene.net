@@ -35,13 +35,13 @@
 }
 
 /*
- * 絵文字の意匠の帰属 (CC-BY 4.0)。出典として要るが読み物ではないので、
- * 著作権表示より一段下げて、地面の際に小さく置く。
+ * 足元の導線 (フィード・ライセンス)。著作権表示と同じ行に並べ、狭い幅では
+ * 縦に積まれた著作権表示の下へ回る (site-footer-inner が向きを決める)。
  */
-.site-footer-attribution {
-  padding: 0 1.5rem 1.25rem;
-  font-size: 0.6875rem;
-  line-height: 1.5;
-  text-align: center;
-  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
 }
