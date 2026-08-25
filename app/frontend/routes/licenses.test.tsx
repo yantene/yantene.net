@@ -45,7 +45,7 @@ async function renderPage(): Promise<void> {
   );
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
-  await screen.findByRole("heading", { name: "奥付" });
+  await screen.findByRole("heading", { name: "ライセンス表示" });
 }
 
 describe("ライセンスのページ", () => {

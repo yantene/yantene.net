@@ -83,20 +83,20 @@
   },
   "footer": {
     "navLabel": "Footer",
-    "licenses": "Colophon"
+    "licenses": "Open source licenses"
   },
   "licenses": {
-    "title": "Colophon",
-    "description": "The open source work this site is set in, and its licenses.",
-    "lead": "This site is set in the work below. Listed here is what asks to be named in return.",
+    "title": "Open source licenses",
+    "description": "The open source software and artwork this site uses, and its licenses.",
+    "lead": "This site uses the open source software and artwork listed below. These are the ones whose licenses require attribution.",
     "licenseLabel": "License",
     "usage": {
       "twemoji": "Emoji artwork for reactions",
-      "notoSansJp": "Sets the body and the headings",
-      "stixTwoMath": "Sets the mathematics"
+      "notoSansJp": "Body and heading typeface",
+      "stixTwoMath": "Typeface for mathematics"
     },
     "rest": {
-      "lead": "Countless other open source projects hold this site up. What they are, and at which versions, is what package.json in the repository says.",
+      "lead": "This site uses plenty of other open source software as well. What it is, and which versions, is listed in package.json in the repository.",
       "linkLabel": "yantene/yantene.net"
     }
   }
