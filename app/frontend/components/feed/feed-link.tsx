@@ -1,6 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { HiOutlineRss } from "react-icons/hi2";
 
+/**
+ * 絵を伴う導線の見た目。フッターではフィードとライセンス表示が並ぶので、
+ * 絵と字の間隔・下線・hover をここ 1 箇所で決める。
+ *
+ * 大きさと色は含めない。置き場所で地の色が違うので、呼び出し側が渡す。
+ */
+export const INLINE_ICON_LINK =
+  "press-control inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:text-primary hover:underline";
+
 type FeedLinkProps = {
   /**
    * 購読先。既定はサイト全体のフィード。タグで絞った一覧など、その場に対応する
@@ -37,7 +46,7 @@ export function FeedLink({
     <a
       href={href}
       type="application/atom+xml"
-      className={`press-control inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:text-primary hover:underline ${className}`}
+      className={`${INLINE_ICON_LINK} ${className}`}
     >
       <HiOutlineRss aria-hidden="true" />
       {label ?? t("feed.label")}

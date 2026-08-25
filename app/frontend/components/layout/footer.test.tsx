@@ -39,7 +39,7 @@ describe("Footer", () => {
     renderFooter(2019, 2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2019–2026 やんてね",
+      "© 2019 – 2026 やんてね",
     );
   });
 
@@ -48,7 +48,7 @@ describe("Footer", () => {
 
     const footer = screen.getByRole("contentinfo");
     expect(footer).toHaveTextContent("© 2026 やんてね");
-    expect(footer).not.toHaveTextContent("2026–2026");
+    expect(footer).not.toHaveTextContent("2026 – 2026");
   });
 
   it("自分では時計を読まない", () => {
@@ -59,7 +59,7 @@ describe("Footer", () => {
     renderFooter(2019, 2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2019–2026 やんてね",
+      "© 2019 – 2026 やんてね",
     );
     expect(screen.getByRole("contentinfo")).not.toHaveTextContent("1970");
   });
@@ -72,9 +72,8 @@ describe("Footer", () => {
   it("ライセンスのページへ繋ぐ", () => {
     renderFooter(2019, 2026);
 
-    expect(screen.getByRole("link", { name: "Colophon" })).toHaveAttribute(
-      "href",
-      "/licenses",
-    );
+    expect(
+      screen.getByRole("link", { name: "Open source licenses" }),
+    ).toHaveAttribute("href", "/licenses");
   });
 });
