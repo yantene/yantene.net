@@ -40,8 +40,15 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
+        {/*
+          "Copyright" と "All rights reserved." は和文のサイトでも英語のまま置くのが
+          通例なので、翻訳リソースには持たせず、名前と同じくここに直に書く。
+          法的な効力はどちらにも無い (ベルヌ条約の下では書かなくても権利は生じる) が、
+          誰の著作物で、いつからいつまでのものかを読み手に示す表示として出す。
+        */}
         <p className="text-xs text-foreground/80">
-          &copy; {formatCopyrightYears(copyright)} やんてね
+          Copyright &copy; {formatCopyrightYears(copyright)} やんてね All rights
+          reserved.
         </p>
         {/*
           全ページの足元に置く常設の導線。読み終えて出ていく場所が、この先も

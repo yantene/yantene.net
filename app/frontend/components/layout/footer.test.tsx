@@ -39,7 +39,7 @@ describe("Footer", () => {
     renderFooter(2019, 2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2019 – 2026 やんてね",
+      "Copyright © 2019 – 2026 やんてね All rights reserved.",
     );
   });
 
@@ -47,7 +47,9 @@ describe("Footer", () => {
     renderFooter(2026, 2026);
 
     const footer = screen.getByRole("contentinfo");
-    expect(footer).toHaveTextContent("© 2026 やんてね");
+    expect(footer).toHaveTextContent(
+      "Copyright © 2026 やんてね All rights reserved.",
+    );
     expect(footer).not.toHaveTextContent("2026 – 2026");
   });
 
@@ -59,7 +61,7 @@ describe("Footer", () => {
     renderFooter(2019, 2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(
-      "© 2019 – 2026 やんてね",
+      "Copyright © 2019 – 2026 やんてね All rights reserved.",
     );
     expect(screen.getByRole("contentinfo")).not.toHaveTextContent("1970");
   });
