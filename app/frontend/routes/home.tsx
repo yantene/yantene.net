@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
+import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { HomePageData } from "~/backend/handlers/notes/pages.handler";
 import type { ClockOriginData } from "~/frontend/components/hero/clock-origin";
-import type { CurrentYearData } from "~/frontend/lib/current-year";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { loadCopyrightYears } from "~/backend/handlers/copyright";
 import { loadHomePage } from "~/backend/handlers/notes/pages.handler";
 import { resolveClockOrigin } from "~/frontend/components/hero/clock-origin";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
@@ -12,7 +13,6 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
-import { resolveCurrentYear } from "~/frontend/lib/current-year";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import {
   cloudflareContext,
@@ -23,17 +23,22 @@ export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<
-  PageMetaBase & CurrentYearData & ClockOriginData & HomePageData
+  PageMetaBase & CopyrightData & ClockOriginData & HomePageData
 > {
-  const home = await loadHomePage(context.get(cloudflareContext).env);
+  const env = context.get(cloudflareContext).env;
+  // 互いに独立した読み出しなので、往復を直列に積まない。
+  const [home, copyright] = await Promise.all([
+    loadHomePage(env),
+    loadCopyrightYears(env),
+  ]);
   return {
     ...home,
     locale: context.get(localeRouteContext),
     origin: new URL(request.url).origin,
-    currentYear: resolveCurrentYear(),
+    copyright,
     /*
      * ヒーローの空をどの時刻から始めるか。ここで時計を読むのは、Workers が I/O の外の
-     * 時刻を Unix epoch 0 に固定するため (current-year.ts に同じ注意がある)。
+     * 時刻を Unix epoch 0 に固定するため (backend/handlers/copyright.ts に同じ注意がある)。
      */
     clockOrigin: resolveClockOrigin(new Date()),
   };
@@ -55,7 +60,7 @@ export default function Home({
   loaderData,
 }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { recent, popular, currentYear, clockOrigin } = loaderData;
+  const { recent, popular, copyright, clockOrigin } = loaderData;
 
   return (
     <AppLayout>
@@ -106,7 +111,7 @@ export default function Home({
         </section>
       )}
 
-      <Footer year={currentYear} />
+      <Footer copyright={copyright} />
     </AppLayout>
   );
 }

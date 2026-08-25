@@ -33,7 +33,7 @@ function loaderData(): unknown {
     found: true,
     locale: "ja",
     origin: ORIGIN,
-    currentYear: 2026,
+    copyright: { from: 2024, to: 2026 },
     note: {
       slug: SLUG,
       title: "はじめてのノート",

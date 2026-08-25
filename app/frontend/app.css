@@ -13,7 +13,7 @@
  * (#180)。例外も警告も出ず、字が無くなるだけで気づけない。当てる先は
  * components/reaction/reaction-bar.css で、絵文字だけが入る要素に絞ってある。
  *
- * 意匠は CC-BY 4.0 (jdecked/twemoji)。帰属はフッターに出している。
+ * 意匠は CC-BY 4.0 (jdecked/twemoji)。帰属は /licenses に出し、フッターからそこへ繋ぐ。
  */
 @import "@sableclient/twemoji-font";
 

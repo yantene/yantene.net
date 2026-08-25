@@ -22,7 +22,7 @@ function urlEntry(loc: string, lastmod?: string): string {
 
 /**
  * SEO 関連の公開ルータ。
- * - GET /sitemap.xml : ホーム / 一覧 / タグ索引 / 全記事を列挙 (記事は lastmod つき)
+ * - GET /sitemap.xml : ホーム / 一覧 / ライセンス / 全記事を列挙 (記事は lastmod つき)
  * - GET /robots.txt  : production は sitemap を案内、staging (BASIC 認証あり) は全 Disallow
  */
 export function createSeoRouter(): Hono<{ Bindings: Env }> {
@@ -37,7 +37,11 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
       direction: "desc",
     });
 
-    const staticUrls = [urlEntry(`${origin}/`), urlEntry(`${origin}/notes`)];
+    const staticUrls = [
+      urlEntry(`${origin}/`),
+      urlEntry(`${origin}/notes`),
+      urlEntry(`${origin}/licenses`),
+    ];
     const noteUrls = result.notes.map((note) =>
       urlEntry(
         `${origin}/notes/${note.slug.toJSON()}`,

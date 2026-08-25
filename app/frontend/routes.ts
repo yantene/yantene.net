@@ -9,4 +9,7 @@ export default [
 
   route("notes", "routes/notes.tsx"),
   route("notes/:slug", "routes/notes.$slug.tsx"),
+
+  // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
+  route("licenses", "routes/licenses.tsx"),
 ] satisfies RouteConfig;

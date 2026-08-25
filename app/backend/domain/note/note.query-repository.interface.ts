@@ -26,6 +26,16 @@ export interface NoteListResult {
   readonly total: number;
 }
 
+/**
+ * 公開されているノートの、最も古い公開年と最も新しい公開年。
+ *
+ * 著作権表示の期間に使う。1 件しか無ければ from と to は同じ年になる。
+ */
+export interface NotePublishedYearSpan {
+  readonly from: number;
+  readonly to: number;
+}
+
 /** タグと、そのタグを持つノート数。 */
 export interface NoteTagCount {
   readonly tag: string;
@@ -57,6 +67,13 @@ export interface INoteQueryRepository {
   ): Promise<readonly Note[]>;
   /** 全タグと各記事数を返す (タグ索引ページ用)。件数降順・タグ昇順。 */
   listTags(): Promise<readonly NoteTagCount[]>;
+  /**
+   * 最も古いノートと最も新しいノートの公開年を返す。1 件も無ければ undefined。
+   *
+   * 著作権表示の期間を引くためのもので、年しか要らない。日付そのものを返さないのは、
+   * 「いつからいつまで書いてきたか」以外の用途にこの問い合わせが流用されるのを防ぐため。
+   */
+  findPublishedYearSpan(): Promise<NotePublishedYearSpan | undefined>;
   /**
    * 全ノートの slug → sourceHash の対応を返す。refresh の変更検出に使う
    * (正本のツリーが返すハッシュと突き合わせる)。
