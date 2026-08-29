@@ -40,9 +40,7 @@
  * ショートハンドごと無効になり、天体が動かなくなる。
  */
 .hero-clock {
-  --clock-shift-days: calc(
-    (720 - var(--clock-hour, 12) * 60 - var(--clock-minute, 0)) / 1440 - 1
-  );
+  --clock-shift-days: calc((720 - var(--clock-hour, 12) * 60 - var(--clock-minute, 0)) / 1440 - 1);
 }
 
 /* 時 (0〜23)。 */

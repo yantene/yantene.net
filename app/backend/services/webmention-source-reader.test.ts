@@ -11,9 +11,7 @@ function hasLink(html: string): boolean {
 
 describe("hasLinkToTarget", () => {
   it("素のリンクを見つける", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/hello">x</a>')).toBe(
-      true,
-    );
+    expect(hasLink('<a href="https://yantene.net/notes/hello">x</a>')).toBe(true);
   });
 
   it("引用符なしの属性も読む", () => {
@@ -21,9 +19,7 @@ describe("hasLinkToTarget", () => {
   });
 
   it("素片やクエリが付いていても同じ資源として数える", () => {
-    expect(
-      hasLink('<a href="https://yantene.net/notes/hello?ref=x#top">x</a>'),
-    ).toBe(true);
+    expect(hasLink('<a href="https://yantene.net/notes/hello?ref=x#top">x</a>')).toBe(true);
   });
 
   it("相対リンクは source の URL を基準に解決する", () => {
@@ -32,15 +28,11 @@ describe("hasLinkToTarget", () => {
   });
 
   it("img の src も数える", () => {
-    expect(hasLink('<img src="https://yantene.net/notes/hello" alt="">')).toBe(
-      true,
-    );
+    expect(hasLink('<img src="https://yantene.net/notes/hello" alt="">')).toBe(true);
   });
 
   it("属性の中の `&amp;` を戻してから解決する", () => {
-    expect(
-      hasLink('<a href="https://yantene.net/notes/hello?a=1&amp;b=2">x</a>'),
-    ).toBe(true);
+    expect(hasLink('<a href="https://yantene.net/notes/hello?a=1&amp;b=2">x</a>')).toBe(true);
   });
 
   /*
@@ -48,15 +40,11 @@ describe("hasLinkToTarget", () => {
    * 読んでしまうと、誰でも好きな記事に行を作れてしまう。
    */
   it("本文に書かれただけの URL は数えない", () => {
-    expect(hasLink("<p>https://yantene.net/notes/hello は良い記事だ</p>")).toBe(
-      false,
-    );
+    expect(hasLink("<p>https://yantene.net/notes/hello は良い記事だ</p>")).toBe(false);
   });
 
   it("別の記事へのリンクは数えない", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/other">x</a>')).toBe(
-      false,
-    );
+    expect(hasLink('<a href="https://yantene.net/notes/other">x</a>')).toBe(false);
   });
 
   it("リンクが一つも無ければ false", () => {
@@ -117,9 +105,7 @@ describe("readMention", () => {
   });
 
   it("mf2 が無いページも言及として読める", () => {
-    const parsed = read(
-      '<p><a href="https://yantene.net/notes/hello">x</a></p>',
-    );
+    const parsed = read('<p><a href="https://yantene.net/notes/hello">x</a></p>');
 
     expect(parsed.type.toString()).toBe("mention");
     expect(parsed.author.name).toBeUndefined();

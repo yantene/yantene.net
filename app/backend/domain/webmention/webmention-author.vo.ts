@@ -25,10 +25,7 @@ export class WebmentionAuthor implements IValueObject<WebmentionAuthor> {
     url?: WebmentionUrl;
     photo?: WebmentionUrl;
   }): WebmentionAuthor {
-    const name =
-      params.name === undefined
-        ? undefined
-        : toPlainText(params.name, MAX_NAME_LENGTH);
+    const name = params.name === undefined ? undefined : toPlainText(params.name, MAX_NAME_LENGTH);
 
     return new WebmentionAuthor({
       name: name === undefined || name.length === 0 ? undefined : name,
@@ -54,10 +51,7 @@ export class WebmentionAuthor implements IValueObject<WebmentionAuthor> {
     photo: string | null;
   }): WebmentionAuthor {
     return new WebmentionAuthor({
-      name:
-        params.name === null || params.name.length === 0
-          ? undefined
-          : params.name,
+      name: params.name === null || params.name.length === 0 ? undefined : params.name,
       url: WebmentionUrl.parse(params.url),
       photo: WebmentionUrl.parse(params.photo),
     });

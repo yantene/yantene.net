@@ -6,10 +6,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import { defaultLocale, localeCookieName } from "~/lib/i18n/locale";
-import {
-  resolveLocale,
-  resolveLocaleOrDefault,
-} from "~/lib/i18n/resolve-locale";
+import { resolveLocale, resolveLocaleOrDefault } from "~/lib/i18n/resolve-locale";
 
 function requestWith(headers: Record<string, string>): Request {
   return new Request("https://yantene.net/", { headers });
@@ -36,9 +33,7 @@ describe("resolveLocale", () => {
   });
 
   it("cookie が無ければ Accept-Language を見る", () => {
-    expect(
-      resolveLocale(requestWith({ "Accept-Language": "ja,en;q=0.9" })),
-    ).toBe("ja");
+    expect(resolveLocale(requestWith({ "Accept-Language": "ja,en;q=0.9" }))).toBe("ja");
   });
 
   /*
@@ -46,9 +41,7 @@ describe("resolveLocale", () => {
    * 順で決めていることをここで固定しないと、q を見る実装に変えても気づけない。
    */
   it("Accept-Language は q 値ではなく書かれた順で読む", () => {
-    expect(
-      resolveLocale(requestWith({ "Accept-Language": "en;q=0.1,ja;q=0.9" })),
-    ).toBe("en");
+    expect(resolveLocale(requestWith({ "Accept-Language": "en;q=0.1,ja;q=0.9" }))).toBe("en");
   });
 
   it("どちらも無ければ en", () => {
@@ -73,12 +66,9 @@ describe("resolveLocale", () => {
  * 500 になっていた (#309)。理由は resolve-locale.ts の readLocaleCookie を参照。
  */
 describe("resolveLocale: 読み手が壊した cookie", () => {
-  it.each(["%", "50%off", "%zz", "%e3%81", '"ja"', ""])(
-    "落ちずに既定へ倒す (%s)",
-    (value) => {
-      expect(resolveLocale(withCookie(value))).toBe("en");
-    },
-  );
+  it.each(["%", "50%off", "%zz", "%e3%81", '"ja"', ""])("落ちずに既定へ倒す (%s)", (value) => {
+    expect(resolveLocale(withCookie(value))).toBe("en");
+  });
 
   it("読めない値は Accept-Language に譲る", () => {
     const request = requestWith({

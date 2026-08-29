@@ -26,10 +26,7 @@ export interface IWebmentionBlocklist {
  * 判定をドメインに置いているのは、SQL の LIKE に散らすと「どこまで止まるのか」が
  * 保存の都合で決まってしまうため。
  */
-export function isBlockedHost(
-  host: string,
-  blockedHosts: readonly string[],
-): boolean {
+export function isBlockedHost(host: string, blockedHosts: readonly string[]): boolean {
   const target = host.toLowerCase();
   return blockedHosts.some((raw) => {
     const blocked = raw.toLowerCase();
@@ -39,9 +36,6 @@ export function isBlockedHost(
 }
 
 /** 送信元 URL が止められているか。 */
-export function isBlockedSource(
-  source: WebmentionUrl,
-  blockedHosts: readonly string[],
-): boolean {
+export function isBlockedSource(source: WebmentionUrl, blockedHosts: readonly string[]): boolean {
   return isBlockedHost(source.hostname, blockedHosts);
 }

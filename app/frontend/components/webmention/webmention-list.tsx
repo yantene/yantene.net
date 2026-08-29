@@ -77,11 +77,7 @@ function AuthorPhoto({
  *
  * 画像が無いときに空白を置くと、誰が居るのか分からないまま席だけが並ぶ。
  */
-function Face({
-  mention,
-}: {
-  readonly mention: WebmentionView;
-}): React.JSX.Element {
+function Face({ mention }: { readonly mention: WebmentionView }): React.JSX.Element {
   const name = displayName(mention);
   const initial = (
     <span className="webmention-face-initial" aria-hidden>
@@ -112,11 +108,7 @@ function Face({
 }
 
 /** 返信・言及ひとつ。誰が・何を・どこで言ったかを出す。 */
-function Reply({
-  mention,
-}: {
-  readonly mention: WebmentionView;
-}): React.JSX.Element {
+function Reply({ mention }: { readonly mention: WebmentionView }): React.JSX.Element {
   const { t } = useTranslation();
   const name = displayName(mention);
 
@@ -171,9 +163,7 @@ function Reply({
  * 1 件も無ければ何も描かない。「まだありません」を置くと、反応が無いことを記事の
  * 末尾で毎回宣言することになる。
  */
-export function WebmentionList({
-  webmentions,
-}: WebmentionListProps): React.JSX.Element | null {
+export function WebmentionList({ webmentions }: WebmentionListProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const { faces, replies } = webmentions;
   if (faces.length === 0 && replies.length === 0) return null;

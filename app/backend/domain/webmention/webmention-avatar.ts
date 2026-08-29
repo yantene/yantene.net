@@ -14,9 +14,7 @@ const ID_LENGTH = 32;
  *
  * 短いハッシュを使わないのは、衝突すると**別人の顔を出してしまう**ため。
  */
-export async function webmentionAvatarIdFor(
-  photo: WebmentionUrl,
-): Promise<string> {
+export async function webmentionAvatarIdFor(photo: WebmentionUrl): Promise<string> {
   const bytes = new TextEncoder().encode(photo.toString());
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)]

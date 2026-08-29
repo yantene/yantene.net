@@ -50,16 +50,12 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
 
     const site = readUrl(params.siteOrigin, "siteOrigin");
     if (target.origin !== site.origin) {
-      throw new TargetNotOnThisSiteError(
-        `target is not on this site: ${target.toString()}`,
-      );
+      throw new TargetNotOnThisSiteError(`target is not on this site: ${target.toString()}`);
     }
 
     const targetSlug = noteSlugFrom(target.pathname);
     if (targetSlug === undefined) {
-      throw new TargetNotOnThisSiteError(
-        `target is not a note URL: ${target.toString()}`,
-      );
+      throw new TargetNotOnThisSiteError(`target is not a note URL: ${target.toString()}`);
     }
 
     /*
@@ -81,9 +77,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
       targetSlug,
       // 送り手の書いた表記ではなく、スラグから組み直した正規の URL を持つ。
       // 末尾のスラッシュやクエリの有無で、リンクの照合が揺れないようにするため。
-      target: WebmentionUrl.create(
-        `${site.origin}${NOTE_PATH_PREFIX}${targetSlug.toString()}`,
-      ),
+      target: WebmentionUrl.create(`${site.origin}${NOTE_PATH_PREFIX}${targetSlug.toString()}`),
     });
   }
 

@@ -22,14 +22,10 @@ class MockContentStore implements IContentStore {
   /** readFile に渡されたパス。1 ノートを何度読んだかを見るために控える。 */
   readonly reads: string[] = [];
 
-  constructor(
-    private readonly files: Map<string, { hash: string; bytes: Uint8Array }>,
-  ) {}
+  constructor(private readonly files: Map<string, { hash: string; bytes: Uint8Array }>) {}
 
   listTree(): Promise<readonly ContentEntry[]> {
-    return Promise.resolve(
-      [...this.files].map(([path, { hash }]) => ({ path, hash })),
-    );
+    return Promise.resolve([...this.files].map(([path, { hash }]) => ({ path, hash })));
   }
 
   readFile(path: string): Promise<Uint8Array | undefined> {
@@ -156,13 +152,7 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   const cache = new InMemoryCache();
   const searchIndex = new D1NoteSearchIndex(d1);
   const content = new MockContentStore(files);
-  const service = new NotesRefreshService(
-    content,
-    command,
-    query,
-    cache,
-    searchIndex,
-  );
+  const service = new NotesRefreshService(content, command, query, cache, searchIndex);
   return { service, command, query, cache, content, d1 };
 }
 
@@ -185,9 +175,7 @@ describe("NotesRefreshService", () => {
 
     const note = await query.findBySlug(NoteSlug.create("hello"));
     expect(note?.title.toString()).toBe("Hello");
-    expect(note?.imageUrl?.toString()).toBe(
-      "/api/v1/notes/hello/assets/cover.png",
-    );
+    expect(note?.imageUrl?.toString()).toBe("/api/v1/notes/hello/assets/cover.png");
     // sourceHash は md + アセットの合成ハッシュ (生の blob ハッシュではない)。
     expect(note?.sourceHash).toMatch(/^[0-9a-f]{8}$/);
     expect(note?.summary).toContain("Body with an inline image");
@@ -287,9 +275,7 @@ lastModifiedOn: 2026-01-15
 [sum]: #summary
 [q]: ?v=2
 `;
-    const files = new Map([
-      ["notes/outer.md", { hash: "h1", bytes: bytes(outerMd) }],
-    ]);
+    const files = new Map([["notes/outer.md", { hash: "h1", bytes: bytes(outerMd) }]]);
     const { service, cache } = setup(files);
 
     await service.refresh();
@@ -318,9 +304,7 @@ lastModifiedOn: 2026-01-15
 
 [prev]: other-note
 `;
-    const files = new Map([
-      ["notes/bare.md", { hash: "h1", bytes: bytes(bareMd) }],
-    ]);
+    const files = new Map([["notes/bare.md", { hash: "h1", bytes: bytes(bareMd) }]]);
     const { service, cache } = setup(files);
 
     await service.refresh();
@@ -450,9 +434,7 @@ lastModifiedOn: 2026-01-15
 
     // 2 回目は MDAST の書き込みで落とす (force で読み直させる)。
     cache.failMdastFor = "hello";
-    await expect(service.refresh({ force: true })).rejects.toThrow(
-      "R2 is down",
-    );
+    await expect(service.refresh({ force: true })).rejects.toThrow("R2 is down");
 
     // 前回の写しが残っていること。記事ページが 500 にならない。
     expect(JSON.stringify(cache.mdasts.get("hello"))).toBe(before);
@@ -471,9 +453,7 @@ lastModifiedOn: 2026-01-15
     [
       "検索の索引",
       (harness: ReturnType<typeof setup>) => {
-        vi.spyOn(D1NoteSearchIndex.prototype, "index").mockRejectedValue(
-          new Error("step failed"),
-        );
+        vi.spyOn(D1NoteSearchIndex.prototype, "index").mockRejectedValue(new Error("step failed"));
         return harness;
       },
     ],
@@ -621,9 +601,7 @@ lastModifiedOn: 2026-01-15
 
 [先頭に戻る](#top) と [外](https://example.com/)。
 `;
-    const files = new Map([
-      ["notes/anchors.md", { hash: "h1", bytes: bytes(anchorMd) }],
-    ]);
+    const files = new Map([["notes/anchors.md", { hash: "h1", bytes: bytes(anchorMd) }]]);
     const { service, cache } = setup(files);
 
     await service.refresh();
@@ -726,9 +704,7 @@ lastModifiedOn: 2026-01-15
   });
 
   it("skips unchanged notes on a second refresh (hash match)", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service } = setup(files);
 
     await service.refresh();
@@ -737,9 +713,7 @@ lastModifiedOn: 2026-01-15
   });
 
   it("reprocesses a note when its hash changes", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service } = setup(files);
 
     await service.refresh();
@@ -767,10 +741,7 @@ lastModifiedOn: 2026-01-15
 
   it("skips notes with invalid frontmatter (missing publishedOn)", async () => {
     const files = new Map([
-      [
-        "notes/bad.md",
-        { hash: "b1", bytes: bytes("---\ntitle: Bad\n---\n\nBody.\n") },
-      ],
+      ["notes/bad.md", { hash: "b1", bytes: bytes("---\ntitle: Bad\n---\n\nBody.\n") }],
     ]);
     const { service, query } = setup(files);
 
@@ -813,9 +784,7 @@ lastModifiedOn: 2026-01-15
         "notes/hello.md",
         {
           hash: "h1",
-          bytes: bytes(
-            "---\ntitle: Math\npublishedOn: 2026-01-15\n---\n\n式 $a^2$ です。\n",
-          ),
+          bytes: bytes("---\ntitle: Math\npublishedOn: 2026-01-15\n---\n\n式 $a^2$ です。\n"),
         },
       ],
     ]);
@@ -862,9 +831,7 @@ lastModifiedOn: 2026-01-15
   });
 
   it("propagates infra errors (fail-loud) instead of skipping them", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, cache } = setup(files);
     // R2 書き込みが落ちる状況を再現する。
     cache.putMdast = () => Promise.reject(new Error("R2 down"));
@@ -879,10 +846,7 @@ describe("visibility", () => {
 
   it("private の記事は同期しない", async () => {
     const files = new Map([
-      [
-        "notes/secret.md",
-        { hash: "s1", bytes: bytes(withVisibility("private")) },
-      ],
+      ["notes/secret.md", { hash: "s1", bytes: bytes(withVisibility("private")) }],
       ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
     ]);
     const { service, query, cache } = setup(files);
@@ -902,9 +866,7 @@ describe("visibility", () => {
         "notes/secret.md",
         {
           hash: "s1",
-          bytes: bytes(
-            "---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n",
-          ),
+          bytes: bytes("---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n"),
         },
       ],
     ]);
@@ -928,9 +890,7 @@ describe("visibility", () => {
   });
 
   it("visibility を書かなければ公開する", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, query } = setup(files);
 
     const result = await service.refresh();
@@ -940,10 +900,7 @@ describe("visibility", () => {
 
   it("public を明示した記事は公開する", async () => {
     const files = new Map([
-      [
-        "notes/secret.md",
-        { hash: "s1", bytes: bytes(withVisibility("public")) },
-      ],
+      ["notes/secret.md", { hash: "s1", bytes: bytes(withVisibility("public")) }],
     ]);
     const { service, query } = setup(files);
 
@@ -954,10 +911,7 @@ describe("visibility", () => {
 
   it("読めない値は公開せず、綴りの誤りとして報告する", async () => {
     const files = new Map([
-      [
-        "notes/secret.md",
-        { hash: "s1", bytes: bytes(withVisibility("prvate")) },
-      ],
+      ["notes/secret.md", { hash: "s1", bytes: bytes(withVisibility("prvate")) }],
     ]);
     const { service, query } = setup(files);
 
@@ -980,9 +934,7 @@ describe("visibility", () => {
         "notes/secret.md",
         {
           hash: "s1",
-          bytes: bytes(
-            "---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n",
-          ),
+          bytes: bytes("---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n"),
         },
       ],
     ]);
@@ -1003,10 +955,7 @@ describe("visibility", () => {
 
   it("大文字や前後の空白を許す", async () => {
     const files = new Map([
-      [
-        "notes/secret.md",
-        { hash: "s1", bytes: bytes(withVisibility('"  PRIVATE  "')) },
-      ],
+      ["notes/secret.md", { hash: "s1", bytes: bytes(withVisibility('"  PRIVATE  "')) }],
     ]);
     const { service } = setup(files);
 
@@ -1024,9 +973,7 @@ describe("visibility", () => {
 
     await service.refresh();
 
-    expect(content.reads.filter((path) => path === "notes/hello.md")).toEqual([
-      "notes/hello.md",
-    ]);
+    expect(content.reads.filter((path) => path === "notes/hello.md")).toEqual(["notes/hello.md"]);
   });
 
   it("変更のない記事は原文を開かない", async () => {
@@ -1066,9 +1013,7 @@ publishedOn: 2026-01-15
 `;
 
   it("公開済みの本文を壊しても、D1 と R2 の旧版を残す", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, query, cache } = setup(files);
 
     await service.refresh();
@@ -1089,9 +1034,7 @@ publishedOn: 2026-01-15
   });
 
   it("公開済みの本文を壊しても、届いた Webmention を消さない", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, query, d1 } = setup(files);
 
     await service.refresh();
@@ -1113,9 +1056,7 @@ publishedOn: 2026-01-15
     await service.refresh();
 
     // ノートの行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
-    const stored = await new D1WebmentionQueryRepository(d1).listByNoteId(
-      note.id,
-    );
+    const stored = await new D1WebmentionQueryRepository(d1).listByNoteId(note.id);
     expect(stored).toHaveLength(1);
     expect(stored[0].source.toString()).toBe("https://example.com/post/1");
   });
@@ -1128,9 +1069,7 @@ publishedOn: 2026-01-15
  */
 describe("空のツリー", () => {
   it("1 件も見つからないときは全件削除せず送出する", async () => {
-    const files = new Map([
-      ["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-    ]);
+    const files = new Map([["notes/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, query, cache } = setup(files);
 
     await service.refresh();

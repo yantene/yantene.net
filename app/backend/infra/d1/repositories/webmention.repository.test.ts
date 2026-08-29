@@ -107,13 +107,9 @@ describe("D1WebmentionCommandRepository", () => {
     const { noteId, commands, queries } = await setup();
 
     const first = await commands.upsert(build(noteId));
-    const again = await commands.upsert(
-      build(noteId, { type: WebmentionType.like() }),
-    );
+    const again = await commands.upsert(build(noteId, { type: WebmentionType.like() }));
 
-    expect(again.receivedAt.epochMilliseconds).toBe(
-      first.receivedAt.epochMilliseconds,
-    );
+    expect(again.receivedAt.epochMilliseconds).toBe(first.receivedAt.epochMilliseconds);
     const rows = await queries.listByNoteId(noteId);
     expect(rows[0].id).toBe(first.id);
   });

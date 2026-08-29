@@ -12,10 +12,7 @@
  * 決める — セッションの鍵は最初のものを、ロケールは**読める最初のもの**を採る。
  * ここで先頭だけを返すと、後者で正しい値が黙って捨てられる。
  */
-export function readCookieValues(
-  cookieHeader: string | null,
-  name: string,
-): string[] {
+export function readCookieValues(cookieHeader: string | null, name: string): string[] {
   if (cookieHeader === null) return [];
 
   return (

@@ -7,11 +7,7 @@ interface ProblemDetails {
   detail?: string;
 }
 
-export function createProblemResponse(
-  status: number,
-  title: string,
-  detail?: string,
-): Response {
+export function createProblemResponse(status: number, title: string, detail?: string): Response {
   const body: ProblemDetails = {
     type: "about:blank",
     title,
@@ -29,9 +25,5 @@ export function notFoundResponse(detail?: string): Response {
 }
 
 export function internalServerErrorResponse(detail?: string): Response {
-  return createProblemResponse(
-    httpStatus.INTERNAL_SERVER_ERROR,
-    "Internal Server Error",
-    detail,
-  );
+  return createProblemResponse(httpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", detail);
 }

@@ -25,12 +25,8 @@ describe("HeroSection の microformats2", () => {
   it("h-card に名前・サイト・顔を持たせる", () => {
     const card = renderHero().querySelector(":scope .h-card");
     expect(card?.querySelector(":scope .p-name")?.textContent).toBe("やんてね");
-    expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe(
-      "/",
-    );
-    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(
-      "/icons/icon-192.png",
-    );
+    expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/");
+    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe("/icons/icon-192.png");
   });
 
   it("顔は読み上げに出さない", () => {
@@ -41,8 +37,8 @@ describe("HeroSection の microformats2", () => {
 
   it("相互リンクのある先にだけ rel=me を付ける", () => {
     const container = renderHero();
-    const me = [...container.querySelectorAll(':scope a[rel~="me"]')].map(
-      (link) => link.getAttribute("href"),
+    const me = [...container.querySelectorAll(':scope a[rel~="me"]')].map((link) =>
+      link.getAttribute("href"),
     );
     expect(me).toEqual([
       "https://github.com/yantene",

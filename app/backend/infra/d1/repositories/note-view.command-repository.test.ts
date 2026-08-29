@@ -106,10 +106,7 @@ describe("閲覧の記録", () => {
 
     await Promise.all([
       harness.views.addView(harness.noteId, viewWeightLog(VIEWED_ON)),
-      harness.reactions.addLogScore(
-        harness.noteId,
-        reactionWeightLog(VIEWED_ON),
-      ),
+      harness.reactions.addLogScore(harness.noteId, reactionWeightLog(VIEWED_ON)),
     ]);
 
     expect(await readViewLogScore(harness.d1, harness.noteId)).toBeCloseTo(

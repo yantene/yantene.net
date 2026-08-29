@@ -1,8 +1,4 @@
-import {
-  InvalidSessionIdError,
-  SESSION_LIFETIME_DAYS,
-  SessionId,
-} from "~/backend/domain/session";
+import { InvalidSessionIdError, SESSION_LIFETIME_DAYS, SessionId } from "~/backend/domain/session";
 import { readCookieValues } from "~/lib/cookie";
 
 /**
@@ -23,9 +19,7 @@ const SECONDS_PER_DAY = 86_400;
 const PATH = "/";
 
 /** Cookie ヘッダーからセッション識別子を読む。無い・読めないなら undefined。 */
-export function readSessionId(
-  cookieHeader: string | null,
-): SessionId | undefined {
+export function readSessionId(cookieHeader: string | null): SessionId | undefined {
   const raw = pickCookie(cookieHeader, SESSION_COOKIE);
   if (raw === undefined) return undefined;
 
@@ -46,10 +40,7 @@ export function readSessionId(
  *
  * @param options.secure development 以外では必ず true (secure by default)
  */
-export function buildSessionCookie(
-  id: SessionId,
-  options: { readonly secure: boolean },
-): string {
+export function buildSessionCookie(id: SessionId, options: { readonly secure: boolean }): string {
   return [
     `${SESSION_COOKIE}=${id.toString()}`,
     `Max-Age=${String(SESSION_LIFETIME_DAYS * SECONDS_PER_DAY)}`,
@@ -69,9 +60,6 @@ export function buildSessionCookie(
  * いて、ここで選び直す手掛かりが無い (ロケールのほうは「読める最初」を採る。
  * app/lib/cookie.ts を参照)。
  */
-function pickCookie(
-  cookieHeader: string | null,
-  name: string,
-): string | undefined {
+function pickCookie(cookieHeader: string | null, name: string): string | undefined {
   return readCookieValues(cookieHeader, name).at(0);
 }

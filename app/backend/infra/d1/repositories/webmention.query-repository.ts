@@ -2,10 +2,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToWebmention } from "./webmention-row";
 import type { NoteId } from "~/backend/domain/note";
-import type {
-  IWebmentionQueryRepository,
-  Webmention,
-} from "~/backend/domain/webmention";
+import type { IWebmentionQueryRepository, Webmention } from "~/backend/domain/webmention";
 import { webmentions } from "~/backend/infra/d1/schema";
 
 /**

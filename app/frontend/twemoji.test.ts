@@ -30,8 +30,8 @@ function read(file: string): string {
 
 /** frontend 以下の CSS をすべて挙げる。フォントの指定はどこにでも書けるため。 */
 function cssFiles(): string[] {
-  return readdirSync(frontendDir, { recursive: true, encoding: "utf8" }).filter(
-    (entry) => entry.endsWith(".css"),
+  return readdirSync(frontendDir, { recursive: true, encoding: "utf8" }).filter((entry) =>
+    entry.endsWith(".css"),
   );
 }
 
@@ -75,18 +75,14 @@ function twemojiTargets(): { file: string; target: string }[] {
         if (parts.length < 2) return [];
         const [selector, body] = parts;
         if (!body.includes("Twemoji")) return [];
-        return selector
-          .split(",")
-          .map((target) => ({ file, target: target.trim() }));
+        return selector.split(",").map((target) => ({ file, target: target.trim() }));
       }),
   );
 }
 
 describe("Twemoji の適用範囲", () => {
   it("ページ全体のフォントスタックには入れない", () => {
-    expect(htmlBlock(withoutComments(read("app.css")))).not.toContain(
-      "Twemoji",
-    );
+    expect(htmlBlock(withoutComments(read("app.css")))).not.toContain("Twemoji");
   });
 
   it("フォント自体は読み込む", () => {

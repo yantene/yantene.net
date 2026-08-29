@@ -15,9 +15,7 @@ function root(): Root {
       },
       {
         type: "blockquote",
-        children: [
-          { type: "paragraph", children: [{ type: "text", value: "う" }] },
-        ],
+        children: [{ type: "paragraph", children: [{ type: "text", value: "う" }] }],
       },
     ],
   };
@@ -74,9 +72,7 @@ describe("mapTree", () => {
     const original = root();
     const snapshot = structuredClone(original);
 
-    mapTree(original, (node) =>
-      node.type === "text" ? { ...node, value: "変" } : node,
-    );
+    mapTree(original, (node) => (node.type === "text" ? { ...node, value: "変" } : node));
 
     expect(original).toEqual(snapshot);
   });

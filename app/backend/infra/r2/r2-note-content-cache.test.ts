@@ -14,9 +14,7 @@ describe("R2NoteContentCache", () => {
     await cache.putSource(slug, markdown);
 
     expect(await cache.getSource(slug)).toBe(markdown);
-    expect(store.get("notes/my-note/source.md")?.contentType).toBe(
-      "text/markdown; charset=utf-8",
-    );
+    expect(store.get("notes/my-note/source.md")?.contentType).toBe("text/markdown; charset=utf-8");
   });
 
   it("returns undefined for a missing source", async () => {

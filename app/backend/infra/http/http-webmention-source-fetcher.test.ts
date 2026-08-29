@@ -41,9 +41,7 @@ function fetcherFor(
   return new HttpWebmentionSourceFetcher(silentLogger(), {
     ...options,
     fetchFn: () =>
-      response instanceof Error
-        ? Promise.reject(response)
-        : Promise.resolve(response),
+      response instanceof Error ? Promise.reject(response) : Promise.resolve(response),
   });
 }
 
@@ -60,21 +58,16 @@ describe("HttpWebmentionSourceFetcher", () => {
     expect(result.kind).toBe("gone");
   });
 
-  it.each([403, 500, 503])(
-    "その他の失敗は unavailable (%i)",
-    async (status) => {
-      const result = await fetcherFor(htmlResponse("", { status })).fetch(
-        SOURCE,
-      );
+  it.each([403, 500, 503])("その他の失敗は unavailable (%i)", async (status) => {
+    const result = await fetcherFor(htmlResponse("", { status })).fetch(SOURCE);
 
-      expect(result.kind).toBe("unavailable");
-    },
-  );
+    expect(result.kind).toBe("unavailable");
+  });
 
   it("HTML でなければ unavailable", async () => {
-    const result = await fetcherFor(
-      htmlResponse("{}", { contentType: "application/json" }),
-    ).fetch(SOURCE);
+    const result = await fetcherFor(htmlResponse("{}", { contentType: "application/json" })).fetch(
+      SOURCE,
+    );
 
     expect(result).toEqual({ kind: "unavailable", reason: "not html" });
   });
@@ -102,10 +95,8 @@ describe("HttpWebmentionSourceFetcher", () => {
 
   it("タイムアウトの signal を付け、転送を追って取りに行く", async () => {
     const fetchFn = vi.fn(
-      (
-        _input: Parameters<typeof fetch>[0],
-        _init?: Parameters<typeof fetch>[1],
-      ) => Promise.resolve(htmlResponse("<p>hi</p>")),
+      (_input: Parameters<typeof fetch>[0], _init?: Parameters<typeof fetch>[1]) =>
+        Promise.resolve(htmlResponse("<p>hi</p>")),
     );
     const fetcher = new HttpWebmentionSourceFetcher(silentLogger(), {
       fetchFn: fetchFn as unknown as typeof fetch,

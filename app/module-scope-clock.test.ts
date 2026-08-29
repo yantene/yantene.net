@@ -65,10 +65,7 @@ function accessPath(node: ts.Expression): string {
 /** 時計を読む式か。引数付きの `new Date("2026-01-15")` は決め打ちの日時なので含めない。 */
 function isClockRead(node: ts.Node): boolean {
   if (ts.isNewExpression(node)) {
-    return (
-      accessPath(node.expression) === "Date" &&
-      (node.arguments?.length ?? 0) === 0
-    );
+    return accessPath(node.expression) === "Date" && (node.arguments?.length ?? 0) === 0;
   }
   if (ts.isCallExpression(node)) {
     const path = accessPath(node.expression);
@@ -91,9 +88,7 @@ function moduleScopeClockReads(path: string, source: string): string[] {
   const visit = (node: ts.Node): void => {
     if (isDeferred(node)) return;
     if (isClockRead(node)) {
-      const { line } = sourceFile.getLineAndCharacterOfPosition(
-        node.getStart(sourceFile),
-      );
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
       reads.push(`${path}:${String(line + 1)}`);
     }
     ts.forEachChild(node, visit);
@@ -114,26 +109,19 @@ describe("モジュールスコープで時計を読まない", () => {
 
   it("見張る対象を実際に読み込めている", () => {
     // glob が空振りしていると上の検査が黙って素通りするため、代表的なソースを名指しで確かめる。
-    expect(Object.keys(sources)).toContain(
-      "./frontend/components/layout/footer.tsx",
-    );
+    expect(Object.keys(sources)).toContain("./frontend/components/layout/footer.tsx");
     expect(Object.keys(sources)).toContain("../workers/app.ts");
   });
 
   it("トップレベルの時計読みを見つけられる", () => {
     // 見張り自体が壊れたら上の検査は常に通ってしまうので、検出できることを固定する。
-    expect(
-      moduleScopeClockReads(
-        "sample.ts",
-        "const year = new Date().getFullYear();",
-      ),
-    ).toEqual(["sample.ts:1"]);
-    expect(
-      moduleScopeClockReads("sample.ts", "const now = Date.now();"),
-    ).toEqual(["sample.ts:1"]);
-    expect(
-      moduleScopeClockReads("sample.ts", "const d = Temporal.Now.instant();"),
-    ).toEqual(["sample.ts:1"]);
+    expect(moduleScopeClockReads("sample.ts", "const year = new Date().getFullYear();")).toEqual([
+      "sample.ts:1",
+    ]);
+    expect(moduleScopeClockReads("sample.ts", "const now = Date.now();")).toEqual(["sample.ts:1"]);
+    expect(moduleScopeClockReads("sample.ts", "const d = Temporal.Now.instant();")).toEqual([
+      "sample.ts:1",
+    ]);
   });
 
   it("関数の中と決め打ちの日時は見逃す", () => {
@@ -143,11 +131,6 @@ describe("モジュールスコープで時計を読まない", () => {
         "export function year(): number { return new Date().getFullYear(); }",
       ),
     ).toEqual([]);
-    expect(
-      moduleScopeClockReads(
-        "sample.ts",
-        'const epoch = new Date("1970-01-01");',
-      ),
-    ).toEqual([]);
+    expect(moduleScopeClockReads("sample.ts", 'const epoch = new Date("1970-01-01");')).toEqual([]);
   });
 });

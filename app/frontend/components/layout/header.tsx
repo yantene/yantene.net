@@ -15,10 +15,7 @@ type HeaderProps = {
   readonly showLogo?: boolean;
 };
 
-export function Header({
-  variant = "solid",
-  showLogo = true,
-}: HeaderProps): React.JSX.Element {
+export function Header({ variant = "solid", showLogo = true }: HeaderProps): React.JSX.Element {
   const { t } = useTranslation();
   const isTransparent = variant === "transparent";
 
@@ -30,11 +27,7 @@ export function Header({
 
   return (
     <header
-      className={
-        isTransparent
-          ? "absolute inset-x-0 top-0 z-50"
-          : "site-header sticky top-0 z-50"
-      }
+      className={isTransparent ? "absolute inset-x-0 top-0 z-50" : "site-header sticky top-0 z-50"}
     >
       <div className={isTransparent ? "" : "bg-white/60 backdrop-blur-sm"}>
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
@@ -51,10 +44,7 @@ export function Header({
               to="/"
               className={`site-header-wordmark press-control shrink-0 text-2xl font-bold leading-none tracking-tight text-foreground${isTransparent ? " text-halo" : ""}`}
             >
-              <Highlight
-                className="site-header-wordmark-highlight"
-                aria-hidden="true"
-              />
+              <Highlight className="site-header-wordmark-highlight" aria-hidden="true" />
               <span className="relative">やんてね</span>
             </Link>
           )}
@@ -95,12 +85,7 @@ export function Header({
               JS 不要で動く素の GET フォーム。Enter でも虫眼鏡でも /notes に飛ぶ。
               狭い画面では場所を取りすぎるので、上の Search リンクに譲る。
             */}
-            <form
-              method="get"
-              action="/notes"
-              role="search"
-              className="hidden sm:block"
-            >
+            <form method="get" action="/notes" role="search" className="hidden sm:block">
               {/* 透過ヘッダーでは夜の空が下に来る。地を薄くしすぎると入力文字が沈む。 */}
               <label className="input input-sm input-bordered flex items-center gap-2 rounded-full bg-base-100/90">
                 <input

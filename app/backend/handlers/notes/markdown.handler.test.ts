@@ -39,10 +39,7 @@ async function seedMeta(d1: D1Database): Promise<void> {
 /** メタデータ (D1) と原文 (R2) を揃える。 */
 async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
   await seedMeta(d1);
-  await new R2NoteContentCache(bucket).putSource(
-    NoteSlug.create("hello"),
-    helloMarkdown,
-  );
+  await new R2NoteContentCache(bucket).putSource(NoteSlug.create("hello"), helloMarkdown);
 }
 
 describe("createNoteMarkdownRouter GET /:slug.md", () => {
@@ -51,11 +48,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
-      "/hello.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(200);
     // 原文そのまま: フロントマターも画像の相対パスも書き換えない。
@@ -67,18 +60,10 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
-      "/hello.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
-    expect(res.headers.get("Content-Type")).toBe(
-      "text/markdown; charset=utf-8",
-    );
-    expect(res.headers.get("Content-Disposition")).toBe(
-      'inline; filename="hello.md"',
-    );
+    expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
+    expect(res.headers.get("Content-Disposition")).toBe('inline; filename="hello.md"');
   });
 
   it("uses public cache-control when BASIC auth is off", async () => {
@@ -86,11 +71,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
-      "/hello.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
     expect(res.headers.get("Cache-Control")).toContain("public");
   });
@@ -119,11 +100,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request(
-      "/missing.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/missing.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("application/problem");
@@ -133,11 +110,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request(
-      "/Invalid_Slug.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/Invalid_Slug.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(404);
   });
@@ -148,11 +121,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request(
-      "/.md",
-      {},
-      env(d1, bucket),
-    );
+    const res = await createNoteMarkdownRouter().request("/.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("application/problem");
@@ -182,8 +151,7 @@ const CHROME_ACCEPT =
   "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7";
 
 /** Firefox / Safari が送る Accept。 */
-const FIREFOX_ACCEPT =
-  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+const FIREFOX_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 
 const markdownAccept = { Accept: "text/markdown" };
 
@@ -207,12 +175,8 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
 
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(helloMarkdown);
-    expect(res.headers.get("Content-Type")).toBe(
-      "text/markdown; charset=utf-8",
-    );
-    expect(res.headers.get("Content-Disposition")).toBe(
-      'inline; filename="hello.md"',
-    );
+    expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
+    expect(res.headers.get("Content-Disposition")).toBe('inline; filename="hello.md"');
   });
 
   it("tells caches and clients that the URL has two representations", async () => {
@@ -236,22 +200,19 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
    * 共有キャッシュに載せた時点で表現の取り違えが起きるので、`.md` と違って環境
    * (BASIC 認証の有無) に関わらず private で固定する。
    */
-  it.each(basicAuthEnvs)(
-    "never allows shared caching (%s)",
-    async (_label, authEnv) => {
-      const d1 = createTestD1();
-      const { bucket } = createTestR2();
-      await seed(d1, bucket);
+  it.each(basicAuthEnvs)("never allows shared caching (%s)", async (_label, authEnv) => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seed(d1, bucket);
 
-      const res = await createNoteMarkdownRouter().request(
-        "/hello",
-        { headers: markdownAccept },
-        { ...env(d1, bucket), ...authEnv },
-      );
+    const res = await createNoteMarkdownRouter().request(
+      "/hello",
+      { headers: markdownAccept },
+      { ...env(d1, bucket), ...authEnv },
+    );
 
-      expect(res.headers.get("Cache-Control")).toBe("private, max-age=3600");
-    },
-  );
+    expect(res.headers.get("Cache-Control")).toBe("private, max-age=3600");
+  });
 
   it.each([
     ["an unknown slug", "/missing"],
@@ -278,23 +239,20 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
   it.each([
     ["Chrome", CHROME_ACCEPT],
     ["Firefox / Safari", FIREFOX_ACCEPT],
-  ])(
-    "passes a browser request (%s) through to the page",
-    async (_label, accept) => {
-      const d1 = createTestD1();
-      const { bucket } = createTestR2();
-      await seed(d1, bucket);
+  ])("passes a browser request (%s) through to the page", async (_label, accept) => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seed(d1, bucket);
 
-      const res = await createNoteMarkdownRouter().request(
-        "/hello",
-        { headers: { Accept: accept } },
-        env(d1, bucket),
-      );
+    const res = await createNoteMarkdownRouter().request(
+      "/hello",
+      { headers: { Accept: accept } },
+      env(d1, bucket),
+    );
 
-      expect(res.headers.get("Content-Type")).not.toContain("text/markdown");
-      expect(res.headers.get("Vary")).toContain("Accept");
-    },
-  );
+    expect(res.headers.get("Content-Type")).not.toContain("text/markdown");
+    expect(res.headers.get("Vary")).toContain("Accept");
+  });
 });
 
 /**
@@ -371,9 +329,7 @@ describe("note markdown routing (full app)", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toBe(
-      "text/markdown; charset=utf-8",
-    );
+    expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
   });
 
   it("leaves /notes/<slug> (no .md) to the page router", async () => {
@@ -381,12 +337,7 @@ describe("note markdown routing (full app)", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createTestApp().request(
-      "/notes/hello",
-      {},
-      env(d1, bucket),
-      executionCtx(),
-    );
+    const res = await createTestApp().request("/notes/hello", {}, env(d1, bucket), executionCtx());
 
     // test-app のページ委譲はダミー (404 "Not Found") なので、本文で「Hono が
     // 応答せずページ側に落ちた」ことを観測する。
@@ -397,12 +348,7 @@ describe("note markdown routing (full app)", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createTestApp().request(
-      "/notes",
-      {},
-      env(d1, bucket),
-      executionCtx(),
-    );
+    const res = await createTestApp().request("/notes", {}, env(d1, bucket), executionCtx());
 
     expect(await res.text()).toBe("Not Found");
   });
@@ -492,9 +438,7 @@ describe("note markdown negotiation (full app)", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toBe(
-      "text/markdown; charset=utf-8",
-    );
+    expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
     expect(await res.text()).toBe(helloMarkdown);
     // ページ描画を経ないので閲覧数は数えず、読み手のセッションも発行しない。
     expect(res.headers.get("Set-Cookie")).toBeNull();
@@ -513,9 +457,7 @@ describe("note markdown negotiation (full app)", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toBe(
-      "text/markdown; charset=utf-8",
-    );
+    expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
     expect(res.headers.get("Content-Location")).toBe("/notes/hello.md");
     expect(await res.text()).toBe("");
   });

@@ -83,14 +83,10 @@ describe("readImageDimensions", () => {
    */
   it("returns undefined for unknown or truncated data", () => {
     expect(readImageDimensions(new Uint8Array())).toBeUndefined();
-    expect(
-      readImageDimensions(new Uint8Array([0x00, 0x01, 0x02])),
-    ).toBeUndefined();
+    expect(readImageDimensions(new Uint8Array([0x00, 0x01, 0x02]))).toBeUndefined();
     // PNG シグネチャだけで IHDR が無い
     expect(
-      readImageDimensions(
-        new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-      ),
+      readImageDimensions(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
     ).toBeUndefined();
     // JPEG SOI のみ (SOF が現れない)
     expect(readImageDimensions(new Uint8Array([0xff, 0xd8]))).toBeUndefined();

@@ -19,14 +19,9 @@ function unpersistedNote(params: {
     slug: NoteSlug.create(params.slug),
     title: NoteTitle.create(params.title),
     summary: params.summary ?? "summary",
-    imageUrl:
-      params.imageUrl === undefined
-        ? undefined
-        : ImageUrl.create(params.imageUrl),
+    imageUrl: params.imageUrl === undefined ? undefined : ImageUrl.create(params.imageUrl),
     publishedOn: Temporal.PlainDate.from(params.publishedOn ?? "2026-01-15"),
-    lastModifiedOn: Temporal.PlainDate.from(
-      params.lastModifiedOn ?? "2026-01-20",
-    ),
+    lastModifiedOn: Temporal.PlainDate.from(params.lastModifiedOn ?? "2026-01-20"),
     sourceHash: params.sourceHash ?? "hash-0",
   });
 }
@@ -46,9 +41,7 @@ describe("D1NoteCommandRepository", () => {
     expect(saved.id).toBeTruthy();
     expect(saved.slug.toString()).toBe("hello");
     expect(saved.title.toString()).toBe("Hello");
-    expect(saved.imageUrl?.toString()).toBe(
-      "/api/v1/notes/hello/assets/cover.png",
-    );
+    expect(saved.imageUrl?.toString()).toBe("/api/v1/notes/hello/assets/cover.png");
     expect(saved.createdAt).toBeInstanceOf(Temporal.Instant);
     expect(saved.updatedAt).toBeInstanceOf(Temporal.Instant);
   });
@@ -64,9 +57,7 @@ describe("D1NoteCommandRepository", () => {
     const cmd = new D1NoteCommandRepository(d1);
     const query = new D1NoteQueryRepository(d1);
 
-    const first = await cmd.upsert(
-      unpersistedNote({ slug: "post", title: "Original" }),
-    );
+    const first = await cmd.upsert(unpersistedNote({ slug: "post", title: "Original" }));
     const second = await cmd.upsert(
       unpersistedNote({ slug: "post", title: "Updated", summary: "new" }),
     );
@@ -101,9 +92,7 @@ describe("D1NoteCommandRepository", () => {
     const cmd = new D1NoteCommandRepository(d1);
     const query = new D1NoteQueryRepository(d1);
 
-    const saved = await cmd.upsert(
-      unpersistedNote({ slug: "byid", title: "T" }),
-    );
+    const saved = await cmd.upsert(unpersistedNote({ slug: "byid", title: "T" }));
     await cmd.delete(saved.id);
 
     expect(await query.findBySlug(NoteSlug.create("byid"))).toBeUndefined();

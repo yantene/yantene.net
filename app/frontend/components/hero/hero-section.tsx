@@ -1,10 +1,4 @@
-import {
-  SiBluesky,
-  SiDiscord,
-  SiGithub,
-  SiMastodon,
-  SiX,
-} from "react-icons/si";
+import { SiBluesky, SiDiscord, SiGithub, SiMastodon, SiX } from "react-icons/si";
 import { Celestim } from "./celestim";
 import { Cityscape } from "./cityscape";
 import { clockOriginClassName } from "./clock-origin";
@@ -59,9 +53,7 @@ interface HeroSectionProps {
   readonly clockOrigin: ClockOrigin;
 }
 
-export function HeroSection({
-  clockOrigin,
-}: HeroSectionProps): React.JSX.Element {
+export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Element {
   return (
     /*
       開始位置は段階クラスで渡す。ここに載せたクラスは CSS 変数を差し替えるだけで、

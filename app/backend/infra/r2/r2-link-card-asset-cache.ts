@@ -1,7 +1,4 @@
-import type {
-  ILinkCardAssetCache,
-  LinkCardAsset,
-} from "~/backend/domain/link-card";
+import type { ILinkCardAssetCache, LinkCardAsset } from "~/backend/domain/link-card";
 
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
@@ -21,20 +18,13 @@ export class R2LinkCardAssetCache implements ILinkCardAssetCache {
     return `${this.prefix(id)}${kind}`;
   }
 
-  private async put(
-    id: string,
-    kind: "image" | "favicon",
-    asset: LinkCardAsset,
-  ): Promise<void> {
+  private async put(id: string, kind: "image" | "favicon", asset: LinkCardAsset): Promise<void> {
     await this.bucket.put(this.key(id, kind), asset.bytes as ArrayBufferView, {
       httpMetadata: { contentType: asset.contentType },
     });
   }
 
-  private async get(
-    id: string,
-    kind: "image" | "favicon",
-  ): Promise<LinkCardAsset | undefined> {
+  private async get(id: string, kind: "image" | "favicon"): Promise<LinkCardAsset | undefined> {
     const object = await this.bucket.get(this.key(id, kind));
     if (object === null) return undefined;
     return {

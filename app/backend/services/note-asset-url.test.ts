@@ -9,9 +9,7 @@ describe("resolveAssetUrl", () => {
   });
 
   it("resolves bare relative paths", () => {
-    expect(resolveAssetUrl("my-note", "img/a.png")).toBe(
-      "/api/v1/notes/my-note/assets/img/a.png",
-    );
+    expect(resolveAssetUrl("my-note", "img/a.png")).toBe("/api/v1/notes/my-note/assets/img/a.png");
   });
 
   it("collapses ./ segments instead of producing a malformed URL", () => {
@@ -21,12 +19,8 @@ describe("resolveAssetUrl", () => {
   });
 
   it("leaves absolute URLs and root-relative paths untouched", () => {
-    expect(resolveAssetUrl("n", "https://example.com/a.png")).toBe(
-      "https://example.com/a.png",
-    );
-    expect(resolveAssetUrl("n", "/already/resolved.png")).toBe(
-      "/already/resolved.png",
-    );
+    expect(resolveAssetUrl("n", "https://example.com/a.png")).toBe("https://example.com/a.png");
+    expect(resolveAssetUrl("n", "/already/resolved.png")).toBe("/already/resolved.png");
   });
 });
 
@@ -38,9 +32,7 @@ describe("resolveAssetUrl: 相対パスでないもの", () => {
   it("ページ内アンカーは触らない", () => {
     // 本文に書いた `[戻る](#top)` や手書きの目次。押すと 404 になっていた。
     expect(resolveAssetUrl("n", "#top")).toBe("#top");
-    expect(resolveAssetUrl("n", "#user-content-fn-1")).toBe(
-      "#user-content-fn-1",
-    );
+    expect(resolveAssetUrl("n", "#user-content-fn-1")).toBe("#user-content-fn-1");
   });
 
   it("空の行き先は触らない", () => {
@@ -64,15 +56,11 @@ describe("resolveAssetUrl: クエリと断片", () => {
   });
 
   it("クエリを残す", () => {
-    expect(resolveAssetUrl("n", "./a.png?v=2")).toBe(
-      "/api/v1/notes/n/assets/a.png?v=2",
-    );
+    expect(resolveAssetUrl("n", "./a.png?v=2")).toBe("/api/v1/notes/n/assets/a.png?v=2");
   });
 
   it("両方あれば両方残す", () => {
-    expect(resolveAssetUrl("n", "./a.png?v=2#top")).toBe(
-      "/api/v1/notes/n/assets/a.png?v=2#top",
-    );
+    expect(resolveAssetUrl("n", "./a.png?v=2#top")).toBe("/api/v1/notes/n/assets/a.png?v=2#top");
   });
 });
 
@@ -97,16 +85,11 @@ describe("resolveAssetUrl: 正本の名前と本文の書き方が同じ URL に
  * こちらが作り出すより、書いたまま返したほうが出どころが分かる (#297)。
  */
 describe("resolveAssetUrl: アセットの外へ出るもの", () => {
-  it.each(["../x.png", "../../../x.png", "./sub/../../x"])(
-    "%s は触らない",
-    (url) => {
-      expect(resolveAssetUrl("n", url)).toBe(url);
-    },
-  );
+  it.each(["../x.png", "../../../x.png", "./sub/../../x"])("%s は触らない", (url) => {
+    expect(resolveAssetUrl("n", url)).toBe(url);
+  });
 
   it("中で畳まれるだけなら解決する", () => {
-    expect(resolveAssetUrl("n", "./img/../a.png")).toBe(
-      `${assetPrefixOf("n")}a.png`,
-    );
+    expect(resolveAssetUrl("n", "./img/../a.png")).toBe(`${assetPrefixOf("n")}a.png`);
   });
 });

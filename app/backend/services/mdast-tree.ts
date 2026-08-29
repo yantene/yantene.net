@@ -16,10 +16,7 @@ import type { Nodes } from "mdast";
  * @param visit ノードを受け取り、**同じ種別の**ノードを返す。種別を変えると、親が
  *   持てない子を持つ木になる (mdast の型では表せない状態になる)
  */
-export function mapTree<T extends Nodes>(
-  node: T,
-  visit: (node: Nodes) => Nodes,
-): T {
+export function mapTree<T extends Nodes>(node: T, visit: (node: Nodes) => Nodes): T {
   return visit(withMappedChildren(node, visit)) as T;
 }
 
@@ -32,10 +29,7 @@ export function mapTree<T extends Nodes>(
  * 子の種別は写しても変わらない前提なので、親の型はそのまま保たれる。この前提が
  * 崩れる (別の種別の子を渡す) と、mdast の型では表せない木になる。
  */
-export function withChildren<T extends Nodes>(
-  node: T,
-  children: readonly Nodes[],
-): T {
+export function withChildren<T extends Nodes>(node: T, children: readonly Nodes[]): T {
   if (!("children" in node)) return node;
 
   /*
@@ -51,10 +45,7 @@ export function withChildren<T extends Nodes>(
 }
 
 /** 子だけを写したノード。 */
-function withMappedChildren<T extends Nodes>(
-  node: T,
-  visit: (node: Nodes) => Nodes,
-): T {
+function withMappedChildren<T extends Nodes>(node: T, visit: (node: Nodes) => Nodes): T {
   if (!("children" in node)) return node;
   return withChildren(
     node,

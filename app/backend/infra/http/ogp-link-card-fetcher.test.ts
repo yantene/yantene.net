@@ -53,16 +53,10 @@ type FetchStub = (url: string) => Promise<Response>;
  *
  * @param metaCharset 本文に置く `<meta charset>`。省略すると宣言を持たないページになる。
  */
-function pageWithTitleBytes(
-  titleBytes: Uint8Array,
-  metaCharset?: string,
-): Uint8Array<ArrayBuffer> {
+function pageWithTitleBytes(titleBytes: Uint8Array, metaCharset?: string): Uint8Array<ArrayBuffer> {
   const ascii = new TextEncoder();
-  const declaration =
-    metaCharset === undefined ? "" : `<meta charset="${metaCharset}">`;
-  const head = ascii.encode(
-    `<html><head>${declaration}<meta property="og:title" content="`,
-  );
+  const declaration = metaCharset === undefined ? "" : `<meta charset="${metaCharset}">`;
+  const head = ascii.encode(`<html><head>${declaration}<meta property="og:title" content="`);
   const tail = ascii.encode('"></head></html>');
   const bytes = new Uint8Array(head.length + titleBytes.length + tail.length);
   bytes.set(head, 0);
@@ -101,9 +95,7 @@ describe("OgpLinkCardFetcher", () => {
           }),
         );
       }
-      return Promise.resolve(
-        respond(pngBytes, { contentType: "image/png", url }),
-      );
+      return Promise.resolve(respond(pngBytes, { contentType: "image/png", url }));
     });
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
@@ -119,10 +111,7 @@ describe("OgpLinkCardFetcher", () => {
     });
     expect(fetched?.favicon?.contentType).toBe("image/png");
     // og:image の相対パスは最終 URL を基準に解決する。
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/og.png",
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("https://example.com/og.png", expect.anything());
   });
 
   it("リダイレクト後の URL を基準に相対 URL を解決する", async () => {
@@ -135,19 +124,12 @@ describe("OgpLinkCardFetcher", () => {
           }),
         );
       }
-      return Promise.resolve(
-        respond(pngBytes, { contentType: "image/png", url }),
-      );
+      return Promise.resolve(respond(pngBytes, { contentType: "image/png", url }));
     });
 
-    await new OgpLinkCardFetcher(silentLogger()).fetch(
-      LinkCardUrl.create("https://example.com/a"),
-    );
+    await new OgpLinkCardFetcher(silentLogger()).fetch(LinkCardUrl.create("https://example.com/a"));
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://moved.example.net/og.png",
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("https://moved.example.net/og.png", expect.anything());
   });
 
   it("rel=icon が無ければ慣例の /favicon.ico を試す", async () => {
@@ -160,26 +142,19 @@ describe("OgpLinkCardFetcher", () => {
           }),
         );
       }
-      return Promise.resolve(
-        respond(pngBytes, { contentType: "image/x-icon", url }),
-      );
+      return Promise.resolve(respond(pngBytes, { contentType: "image/x-icon", url }));
     });
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
     );
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.com/favicon.ico",
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("https://example.com/favicon.ico", expect.anything());
     expect(fetched?.favicon?.contentType).toBe("image/x-icon");
   });
 
   it("HTML でなければカードにしない", async () => {
-    fetchMock.mockResolvedValue(
-      respond("{}", { contentType: "application/json" }),
-    );
+    fetchMock.mockResolvedValue(respond("{}", { contentType: "application/json" }));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
@@ -203,9 +178,7 @@ describe("OgpLinkCardFetcher", () => {
   });
 
   it("応答が失敗ならカードにしない", async () => {
-    fetchMock.mockResolvedValue(
-      respond("not found", { contentType: "text/html", status: 404 }),
-    );
+    fetchMock.mockResolvedValue(respond("not found", { contentType: "text/html", status: 404 }));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
@@ -215,9 +188,7 @@ describe("OgpLinkCardFetcher", () => {
   });
 
   it("大きすぎる HTML は読まない", async () => {
-    fetchMock.mockResolvedValue(
-      respond("x".repeat(600 * 1024), { contentType: "text/html" }),
-    );
+    fetchMock.mockResolvedValue(respond("x".repeat(600 * 1024), { contentType: "text/html" }));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
@@ -236,9 +207,7 @@ describe("OgpLinkCardFetcher", () => {
           }),
         );
       }
-      return Promise.resolve(
-        respond("<svg/>", { contentType: "image/svg+xml", url }),
-      );
+      return Promise.resolve(respond("<svg/>", { contentType: "image/svg+xml", url }));
     });
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
@@ -345,9 +314,7 @@ describe("OgpLinkCardFetcher", () => {
         );
       }
       // 200 で content-type も画像だが、本文が空。
-      return Promise.resolve(
-        respond(emptyStream(), { contentType: "image/png", url }),
-      );
+      return Promise.resolve(respond(emptyStream(), { contentType: "image/png", url }));
     });
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
@@ -367,9 +334,7 @@ describe("OgpLinkCardFetcher", () => {
   it("Content-Type が名乗る文字コードで復号する", async () => {
     // "あ" (Shift_JIS) = 0x82 0xA0
     const body = pageWithTitleBytes(new Uint8Array([0x82, 0xa0]));
-    fetchMock.mockImplementation(
-      servePageOnly(body, "text/html; charset=Shift_JIS"),
-    );
+    fetchMock.mockImplementation(servePageOnly(body, "text/html; charset=Shift_JIS"));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),
@@ -424,9 +389,7 @@ describe("OgpLinkCardFetcher", () => {
 
   it("知らない文字コードなら UTF-8 に倒す", async () => {
     const body = pageWithTitleBytes(new TextEncoder().encode("あ"));
-    fetchMock.mockImplementation(
-      servePageOnly(body, "text/html; charset=x-nonexistent"),
-    );
+    fetchMock.mockImplementation(servePageOnly(body, "text/html; charset=x-nonexistent"));
 
     const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
       LinkCardUrl.create("https://example.com/a"),

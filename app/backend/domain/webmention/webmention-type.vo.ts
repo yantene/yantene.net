@@ -20,9 +20,7 @@ export class WebmentionType implements IValueObject<WebmentionType> {
   /** 文字列から作る。知らない種別なら throw (保存済みの行の破損検知を兼ねる)。 */
   static create(raw: string): WebmentionType {
     if (!known.has(raw)) {
-      throw new InvalidWebmentionTypeError(
-        `Unsupported webmention type: ${raw}`,
-      );
+      throw new InvalidWebmentionTypeError(`Unsupported webmention type: ${raw}`);
     }
     return new WebmentionType(raw as WebmentionTypeName);
   }

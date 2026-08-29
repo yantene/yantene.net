@@ -1,9 +1,5 @@
 import { recordToSession, sessionKey } from "./session-record";
-import type {
-  ISessionQueryRepository,
-  Session,
-  SessionId,
-} from "~/backend/domain/session";
+import type { ISessionQueryRepository, Session, SessionId } from "~/backend/domain/session";
 
 export class KvSessionQueryRepository implements ISessionQueryRepository {
   constructor(private readonly kv: KVNamespace) {}

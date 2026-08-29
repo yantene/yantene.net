@@ -29,29 +29,19 @@ describe("createLinkCardAssetsRouter", () => {
     const { bucket } = createTestR2();
     await seed(bucket);
 
-    const res = await createLinkCardAssetsRouter().request(
-      `/${ID}/image`,
-      {},
-      envWith(bucket),
-    );
+    const res = await createLinkCardAssetsRouter().request(`/${ID}/image`, {}, envWith(bucket));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");
     expect(res.headers.get("Cache-Control")).toContain("max-age");
-    expect(new Uint8Array(await res.arrayBuffer())).toEqual(
-      new Uint8Array([1, 2, 3]),
-    );
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
   });
 
   it("favicon も配る", async () => {
     const { bucket } = createTestR2();
     await seed(bucket);
 
-    const res = await createLinkCardAssetsRouter().request(
-      `/${ID}/favicon`,
-      {},
-      envWith(bucket),
-    );
+    const res = await createLinkCardAssetsRouter().request(`/${ID}/favicon`, {}, envWith(bucket));
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/x-icon");
@@ -60,11 +50,7 @@ describe("createLinkCardAssetsRouter", () => {
   it("無い画像は 404", async () => {
     const { bucket } = createTestR2();
 
-    const res = await createLinkCardAssetsRouter().request(
-      `/${ID}/image`,
-      {},
-      envWith(bucket),
-    );
+    const res = await createLinkCardAssetsRouter().request(`/${ID}/image`, {}, envWith(bucket));
 
     expect(res.status).toBe(404);
   });
@@ -75,11 +61,7 @@ describe("createLinkCardAssetsRouter", () => {
 
     // 16 進 32 文字でないものはルートに当たらない (R2 のキーに素の入力を混ぜない)。
     for (const id of ["../notes", "ABCDEF", `${ID}0`, "zzzz"]) {
-      const res = await createLinkCardAssetsRouter().request(
-        `/${id}/image`,
-        {},
-        envWith(bucket),
-      );
+      const res = await createLinkCardAssetsRouter().request(`/${id}/image`, {}, envWith(bucket));
       expect(res.status).toBe(404);
     }
   });
@@ -88,11 +70,7 @@ describe("createLinkCardAssetsRouter", () => {
     const { bucket } = createTestR2();
     await seed(bucket);
 
-    const res = await createLinkCardAssetsRouter().request(
-      `/${ID}/source`,
-      {},
-      envWith(bucket),
-    );
+    const res = await createLinkCardAssetsRouter().request(`/${ID}/source`, {}, envWith(bucket));
 
     expect(res.status).toBe(404);
   });
@@ -106,11 +84,7 @@ describe("createLinkCardAssetsRouter", () => {
       BASIC_AUTH_PASS: "p",
     } as unknown as Env;
 
-    const res = await createLinkCardAssetsRouter().request(
-      `/${ID}/image`,
-      {},
-      env,
-    );
+    const res = await createLinkCardAssetsRouter().request(`/${ID}/image`, {}, env);
 
     const cacheControl = res.headers.get("Cache-Control");
     expect(cacheControl).toContain("private");
@@ -124,11 +98,7 @@ describe("link card asset public routing (full app)", () => {
     await seed(bucket);
     const env = { R2: bucket, D1: createTestD1() } as unknown as Env;
 
-    const res = await createTestApp().request(
-      `/api/v1/link-cards/${ID}/image`,
-      {},
-      env,
-    );
+    const res = await createTestApp().request(`/api/v1/link-cards/${ID}/image`, {}, env);
 
     // React Router へ落ちず Hono 側が応答している (ダミー委譲は 404 を返す)。
     expect(res.status).toBe(200);

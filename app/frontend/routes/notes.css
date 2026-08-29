@@ -27,8 +27,7 @@
 
 .notes-search-field:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px
-    color-mix(in oklab, var(--color-primary) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 18%, transparent);
 }
 
 .notes-search-icon {

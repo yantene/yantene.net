@@ -41,9 +41,5 @@ export interface INoteReactionCommandRepository {
    * @param floorLogScore 下限。その記事の出発点 (投稿日の重み) を渡す。理由は
    *   domain/note-view の logScoreAfterReactionRemoved に書いてある。
    */
-  subtractLogScore(
-    noteId: string,
-    weightLog: number,
-    floorLogScore: number,
-  ): Promise<void>;
+  subtractLogScore(noteId: string, weightLog: number, floorLogScore: number): Promise<void>;
 }

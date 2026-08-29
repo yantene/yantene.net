@@ -12,9 +12,7 @@ export type PageItem =
  */
 export function buildPageItems(page: number, totalPages: number): PageItem[] {
   const wanted = new Set<number>([1, totalPages, page - 1, page, page + 1]);
-  const visible = [...wanted]
-    .filter((p) => p >= 1 && p <= totalPages)
-    .toSorted((a, b) => a - b);
+  const visible = [...wanted].filter((p) => p >= 1 && p <= totalPages).toSorted((a, b) => a - b);
 
   const items: PageItem[] = [];
   let previous = 0;

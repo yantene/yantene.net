@@ -41,9 +41,7 @@ export function charsetOf(contentType: string | null): string | undefined {
  * のどちらの書き方も拾う。
  */
 export function charsetFromMeta(bytes: Uint8Array): string | undefined {
-  const head = decoderFor(PRESCAN_CHARSET).decode(
-    bytes.subarray(0, PRESCAN_BYTES),
-  );
+  const head = decoderFor(PRESCAN_CHARSET).decode(bytes.subarray(0, PRESCAN_BYTES));
   // meta を 1 つずつ取り出してから属性を見る。1 本の式にまとめると後戻りが起きる。
   for (const [, attributes] of head.matchAll(metaTag)) {
     const charset = charsetAttribute.exec(attributes)?.[1];
@@ -58,10 +56,7 @@ export function charsetFromMeta(bytes: Uint8Array): string | undefined {
  * Content-Type を先に見るのは、HTML の仕様がその順で決めているため。ヘッダーで名乗る
  * 相手のほうが多いので、多くの場合は本文を覗かずに済む。
  */
-export function charsetFor(
-  contentType: string | null,
-  bytes: Uint8Array,
-): string | undefined {
+export function charsetFor(contentType: string | null, bytes: Uint8Array): string | undefined {
   return charsetOf(contentType) ?? charsetFromMeta(bytes);
 }
 

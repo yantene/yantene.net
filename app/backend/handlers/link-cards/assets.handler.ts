@@ -21,10 +21,8 @@ export function createLinkCardAssetsRouter(): Hono<{ Bindings: Env }> {
     const kind = c.req.param("kind");
     const cache = new R2LinkCardAssetCache(c.env.R2);
 
-    const asset =
-      kind === "image" ? await cache.getImage(id) : await cache.getFavicon(id);
-    if (asset === undefined)
-      return notFoundResponse("link card asset not found");
+    const asset = kind === "image" ? await cache.getImage(id) : await cache.getFavicon(id);
+    if (asset === undefined) return notFoundResponse("link card asset not found");
 
     // Uint8Array はランタイムでは有効な body。型上の齟齬だけをキャストで解消する。
     return new Response(asset.bytes as BodyInit, {

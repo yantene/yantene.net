@@ -2,15 +2,9 @@ import { Hono } from "hono";
 import { deleteReaction, putReaction } from "./reaction-recording";
 import type { Context } from "hono";
 import { NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
-import {
-  InvalidReactionEmojiError,
-  ReactionEmoji,
-} from "~/backend/domain/note-reaction";
+import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/note-reaction";
 import { SessionId } from "~/backend/domain/session";
-import {
-  buildSessionCookie,
-  readSessionId,
-} from "~/backend/handlers/session-cookie";
+import { buildSessionCookie, readSessionId } from "~/backend/handlers/session-cookie";
 import {
   D1NoteQueryRepository,
   D1NoteReactionQueryRepository,
@@ -169,12 +163,7 @@ async function apply(
   slugParam: string,
   emoji: ReactionEmoji | undefined,
 ): Promise<ReactionOutcome> {
-  const outcome = await applyReaction(
-    c.env,
-    slugParam,
-    emoji,
-    c.req.header("cookie") ?? null,
-  );
+  const outcome = await applyReaction(c.env, slugParam, emoji, c.req.header("cookie") ?? null);
   if (outcome === undefined) throw new NoteNotFoundError(slugParam);
   return outcome;
 }
@@ -185,10 +174,7 @@ async function apply(
  * cookie は応答のたびに出して期限を引き直す。押し続けている人のセッションが、ある日
  * 突然切れて別人にならないようにするため。
  */
-function respond(
-  c: Context<{ Bindings: Env }>,
-  outcome: ReactionOutcome,
-): Response {
+function respond(c: Context<{ Bindings: Env }>, outcome: ReactionOutcome): Response {
   const response = c.json(outcome.payload);
   if (outcome.setCookie !== "") {
     response.headers.set("set-cookie", outcome.setCookie);
@@ -202,9 +188,7 @@ export async function buildPayload(
   noteId: string,
   mine: ReactionEmoji | undefined,
 ): Promise<ReactionsPayload> {
-  const reactions = await new D1NoteReactionQueryRepository(
-    env.D1,
-  ).listByNoteId(noteId);
+  const reactions = await new D1NoteReactionQueryRepository(env.D1).listByNoteId(noteId);
   return {
     reactions: reactions.map((reaction) => ({
       emoji: reaction.emoji,

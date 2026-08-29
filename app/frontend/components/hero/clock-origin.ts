@@ -81,8 +81,7 @@ export interface ClockOriginData {
  * 呼ぶ場所を呼び出し側に選ばせるためでもある。
  */
 export function resolveClockOrigin(now: Date): ClockOrigin {
-  const rounded =
-    Math.round(minutesOfDayInSiteZone(now) / MINUTE_STEP) * MINUTE_STEP;
+  const rounded = Math.round(minutesOfDayInSiteZone(now) / MINUTE_STEP) * MINUTE_STEP;
 
   /*
    * 時計を南中から何日ぶん進めるか。clock-origin.css の `--clock-shift-days` と
@@ -150,12 +149,8 @@ function newMoonJde(k: number): number {
   // 地球の軌道離心率の永年変化。
   const eccentricity = 1 - 0.002516 * t;
   const sunAnomaly = toRadians(2.5534 + 29.1053567 * k);
-  const moonAnomaly = toRadians(
-    201.5643 + 385.81693528 * k + 0.0107582 * t * t,
-  );
-  const latitudeArgument = toRadians(
-    160.7108 + 390.67050284 * k - 0.0016118 * t * t,
-  );
+  const moonAnomaly = toRadians(201.5643 + 385.81693528 * k + 0.0107582 * t * t);
+  const latitudeArgument = toRadians(160.7108 + 390.67050284 * k - 0.0016118 * t * t);
 
   return (
     MEAN_NEW_MOON_JDE +

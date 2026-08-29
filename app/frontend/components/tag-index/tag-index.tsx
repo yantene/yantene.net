@@ -22,11 +22,7 @@ interface TagIndexProps {
  * 選んでいるタグをもう一度押すと外れる (トグル)。絞り込みを解くための別の導線を
  * 置かなくて済む。
  */
-export function TagIndex({
-  tags,
-  selected,
-  query = "",
-}: TagIndexProps): React.JSX.Element {
+export function TagIndex({ tags, selected, query = "" }: TagIndexProps): React.JSX.Element {
   const hrefFor = (tag: string): string => {
     const params = new URLSearchParams();
     if (query.length > 0) params.set("q", query);

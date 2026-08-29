@@ -38,9 +38,7 @@ describe("WebmentionUrl", () => {
   it.each(["", " ".repeat(3), "not a url", "/notes/hello", "example.com/post"])(
     "URL として読めない値は断る (%s)",
     (raw) => {
-      expect(() => WebmentionUrl.create(raw)).toThrow(
-        InvalidWebmentionUrlError,
-      );
+      expect(() => WebmentionUrl.create(raw)).toThrow(InvalidWebmentionUrlError);
     },
   );
 
@@ -97,9 +95,7 @@ describe("WebmentionUrl", () => {
       "https://yantene.net:8443/notes/hello",
       "https://example.com/notes/hello",
     ])("別の資源は別として扱う (%s)", (raw) => {
-      expect(WebmentionUrl.create(raw).pointsToSameDocument(target)).toBe(
-        false,
-      );
+      expect(WebmentionUrl.create(raw).pointsToSameDocument(target)).toBe(false);
     });
   });
 });

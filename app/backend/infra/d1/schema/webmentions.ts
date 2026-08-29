@@ -1,9 +1,4 @@
-import {
-  integer,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { notes } from "./notes";
 
 /**
@@ -50,10 +45,5 @@ export const webmentions = sqliteTable(
     receivedAt: integer("received_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (table) => [
-    uniqueIndex("webmentions_note_id_source_idx").on(
-      table.noteId,
-      table.source,
-    ),
-  ],
+  (table) => [uniqueIndex("webmentions_note_id_source_idx").on(table.noteId, table.source)],
 );

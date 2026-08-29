@@ -33,18 +33,14 @@ describe("MdastRenderer", () => {
   });
 
   it("renders paragraphs with emphasis, strong, and inline code", () => {
-    const { container } = render(
-      <MdastRenderer node={md("A **b** _c_ `d`")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("A **b** _c_ `d`")} />);
     expect(container.querySelector("strong")?.textContent).toBe("b");
     expect(container.querySelector("em")?.textContent).toBe("c");
     expect(container.querySelector("code")?.textContent).toBe("d");
   });
 
   it("highlights fenced code blocks with hljs token classes", () => {
-    const { container } = render(
-      <MdastRenderer node={md("```ts\nconst x = 1;\n```")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("```ts\nconst x = 1;\n```")} />);
     const code = container.querySelector(":scope pre code");
     expect(code?.className).toContain("hljs");
     // rehype-highlight がキーワードをトークン span に分解する。
@@ -52,18 +48,12 @@ describe("MdastRenderer", () => {
   });
 
   it("does not throw on an unknown code language and still renders the text", () => {
-    const { container } = render(
-      <MdastRenderer node={md("```made-up-lang\nhello\n```")} />,
-    );
-    expect(container.querySelector(":scope pre code")?.textContent).toContain(
-      "hello",
-    );
+    const { container } = render(<MdastRenderer node={md("```made-up-lang\nhello\n```")} />);
+    expect(container.querySelector(":scope pre code")?.textContent).toContain("hello");
   });
 
   it("opens external links in a new tab with a safe rel", () => {
-    const { container } = render(
-      <MdastRenderer node={md("[x](https://example.com)")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("[x](https://example.com)")} />);
     const a = container.querySelector("a");
     expect(a?.getAttribute("href")).toBe("https://example.com");
     expect(a?.getAttribute("target")).toBe("_blank");
@@ -91,13 +81,9 @@ describe("MdastRenderer", () => {
   );
 
   it("スキームが大文字でも画像として残す", () => {
-    const { container } = render(
-      <MdastRenderer node={md("![a](HTTPS://example.com/a.png)")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("![a](HTTPS://example.com/a.png)")} />);
 
-    expect(container.querySelector("img")?.getAttribute("src")).toBe(
-      "https://example.com/a.png",
-    );
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("https://example.com/a.png");
   });
 
   /*
@@ -142,18 +128,14 @@ describe("MdastRenderer", () => {
   });
 
   it("keeps internal links as plain same-tab anchors", () => {
-    const { container } = render(
-      <MdastRenderer node={md("[x](/notes/other)")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("[x](/notes/other)")} />);
     const a = container.querySelector("a");
     expect(a?.getAttribute("href")).toBe("/notes/other");
     expect(a?.getAttribute("target")).toBeNull();
   });
 
   it("strips dangerous URL schemes (javascript:) from links", () => {
-    const { container } = render(
-      <MdastRenderer node={md("[x](javascript:alert(1))")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("[x](javascript:alert(1))")} />);
     const a = container.querySelector("a");
     // rehype-sanitize が危険な href を除去する (クリックしても JS が走らない)。
     expect(a?.getAttribute("href")).toBeNull();
@@ -177,10 +159,7 @@ describe("MdastRenderer", () => {
 
   it("still marks other origins as external when siteOrigin is given", () => {
     const { container } = render(
-      <MdastRenderer
-        node={md("[x](https://example.com/page)")}
-        siteOrigin="https://yantene.net"
-      />,
+      <MdastRenderer node={md("[x](https://example.com/page)")} siteOrigin="https://yantene.net" />,
     );
     const a = container.querySelector("a");
     expect(a?.getAttribute("target")).toBe("_blank");
@@ -197,9 +176,7 @@ describe("MdastRenderer", () => {
   });
 
   it("treats protocol-relative links as external (new tab + rel)", () => {
-    const { container } = render(
-      <MdastRenderer node={md("[x](//example.com/page)")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("[x](//example.com/page)")} />);
     const a = container.querySelector("a");
     expect(a?.getAttribute("target")).toBe("_blank");
     expect(a?.getAttribute("rel")).toContain("noopener");
@@ -209,9 +186,7 @@ describe("MdastRenderer", () => {
     const { container } = render(
       <MdastRenderer
         node={md("![alt](./cover.png)")}
-        transformImageUrl={(src) =>
-          src.replace(/^\.\//, "/api/v1/notes/x/assets/")
-        }
+        transformImageUrl={(src) => src.replace(/^\.\//, "/api/v1/notes/x/assets/")}
       />,
     );
     const img = container.querySelector("img");
@@ -221,9 +196,7 @@ describe("MdastRenderer", () => {
   });
 
   it("renders GFM tables", () => {
-    const { container } = render(
-      <MdastRenderer node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />);
     expect(container.querySelectorAll("th")).toHaveLength(2);
     expect(container.querySelectorAll(":scope tbody td")).toHaveLength(2);
   });
@@ -255,9 +228,7 @@ describe("MdastRenderer", () => {
   });
 
   it("still discards raw HTML that is not an embed", () => {
-    const html = ssr(
-      "<blockquote class='twitter-tweet'><p>tweet</p></blockquote>",
-    );
+    const html = ssr("<blockquote class='twitter-tweet'><p>tweet</p></blockquote>");
     expect(html).not.toContain("blockquote");
     expect(html).not.toContain("tweet");
   });
@@ -310,12 +281,8 @@ describe("MdastRenderer: ページ内アンカー", () => {
 
     // 落ちたときに「どの行き先が無いか」が出るよう、まとめてから比べる。
     const dangling = anchors
-      .map(
-        (anchor) => (anchor.getAttribute("href") ?? "").split("#", 2)[1] ?? "",
-      )
-      .filter(
-        (id) => container.querySelector(`[id="${CSS.escape(id)}"]`) === null,
-      );
+      .map((anchor) => (anchor.getAttribute("href") ?? "").split("#", 2)[1] ?? "")
+      .filter((id) => container.querySelector(`[id="${CSS.escape(id)}"]`) === null);
     expect(dangling).toEqual([]);
   });
 
@@ -344,13 +311,9 @@ describe("MdastRenderer: ページ内アンカー", () => {
     const ids = [...container.querySelectorAll("[id]")].map((el) => el.id);
     const footnoteIds = ids.filter((id) => /fn(ref)?-/.test(id));
     expect(footnoteIds).not.toHaveLength(0);
-    expect(footnoteIds.filter((id) => !id.startsWith("user-content-"))).toEqual(
-      [],
-    );
+    expect(footnoteIds.filter((id) => !id.startsWith("user-content-"))).toEqual([]);
     // 二重に乗っていないこと。
-    expect(
-      footnoteIds.filter((id) => id.startsWith("user-content-user-content-")),
-    ).toEqual([]);
+    expect(footnoteIds.filter((id) => id.startsWith("user-content-user-content-"))).toEqual([]);
   });
 
   it("routes an in-page anchor through the router instead of a bare hash jump", async () => {
@@ -367,16 +330,12 @@ describe("MdastRenderer: ページ内アンカー", () => {
     const container = renderWithFootnote(<Probe />);
     expect(container.querySelector("output")?.textContent).toBe("");
 
-    const reference = container.querySelector<HTMLAnchorElement>(
-      'a[data-footnote-ref="true"]',
-    );
+    const reference = container.querySelector<HTMLAnchorElement>('a[data-footnote-ref="true"]');
     if (reference === null) throw new Error("脚注のリンクが描かれていない");
     await userEvent.click(reference);
 
     const href = reference.getAttribute("href") ?? "";
-    expect(container.querySelector("output")?.textContent).toBe(
-      href.slice(href.indexOf("#")),
-    );
+    expect(container.querySelector("output")?.textContent).toBe(href.slice(href.indexOf("#")));
   });
 
   it("leaves links that are not in-page anchors as plain anchors", () => {
@@ -394,10 +353,7 @@ describe("MdastRenderer: ページ内アンカー", () => {
  */
 describe("MdastRenderer: MathML", () => {
   /** refresh が埋める形の数式ノードを組む。 */
-  function mathNode(
-    children: readonly ElementContent[],
-    properties: Properties = {},
-  ): MdastRoot {
+  function mathNode(children: readonly ElementContent[], properties: Properties = {}): MdastRoot {
     return {
       type: "root",
       children: [
@@ -444,15 +400,11 @@ describe("MdastRenderer: MathML", () => {
   ];
 
   it("renders the embedded MathML as a <math> element", () => {
-    const { container } = render(
-      <MdastRenderer node={mathNode(superscript)} />,
-    );
+    const { container } = render(<MdastRenderer node={mathNode(superscript)} />);
     const math = container.querySelector("math");
     expect(math).not.toBeNull();
     expect(math?.querySelector(":scope msup mi")?.textContent).toBe("a");
-    expect(math?.getAttribute("xmlns")).toBe(
-      "http://www.w3.org/1998/Math/MathML",
-    );
+    expect(math?.getAttribute("xmlns")).toBe("http://www.w3.org/1998/Math/MathML");
   });
 
   it("keeps the typesetting attributes the allow list names", () => {
@@ -572,50 +524,34 @@ describe("GFM alerts", () => {
 
     const alert = container.querySelector(".markdown-alert");
     expect(alert?.className).toContain("markdown-alert-warning");
-    expect(
-      alert?.querySelector(".markdown-alert-title")?.textContent,
-    ).toContain("注意");
+    expect(alert?.querySelector(".markdown-alert-title")?.textContent).toContain("注意");
     expect(alert?.querySelector("svg")).not.toBeNull();
     expect(alert?.textContent).toContain("リンク先は消えました。");
   });
 
   it("ラベル行を本文として描かない", () => {
-    const { container } = render(
-      <MdastRenderer node={note("> [!NOTE]\n> 補足。\n")} />,
-    );
+    const { container } = render(<MdastRenderer node={note("> [!NOTE]\n> 補足。\n")} />);
     expect(container.textContent).not.toContain("[!NOTE]");
   });
 
   it("Alert でない引用は blockquote のまま描く", () => {
-    const { container } = render(
-      <MdastRenderer node={note("> ただの引用。\n")} />,
-    );
-    expect(container.querySelector("blockquote")?.textContent).toContain(
-      "ただの引用。",
-    );
+    const { container } = render(<MdastRenderer node={note("> ただの引用。\n")} />);
+    expect(container.querySelector("blockquote")?.textContent).toContain("ただの引用。");
     expect(container.querySelector(".markdown-alert")).toBeNull();
   });
 
   it("Alert の中のリンクや強調を保つ", () => {
     const { container } = render(
-      <MdastRenderer
-        node={note(
-          "> [!CAUTION]\n> **危険**な [リンク](https://example.com)。\n",
-        )}
-      />,
+      <MdastRenderer node={note("> [!CAUTION]\n> **危険**な [リンク](https://example.com)。\n")} />,
     );
 
     const alert = container.querySelector(".markdown-alert-caution");
     expect(alert?.querySelector("strong")?.textContent).toBe("危険");
-    expect(alert?.querySelector("a")?.getAttribute("href")).toBe(
-      "https://example.com",
-    );
+    expect(alert?.querySelector("a")?.getAttribute("href")).toBe("https://example.com");
   });
 
   it("sanitize が Alert の要素と種別を落とさない", () => {
-    const html = renderToStaticMarkup(
-      <MdastRenderer node={note("> [!TIP]\n> 助言。\n")} />,
-    );
+    const html = renderToStaticMarkup(<MdastRenderer node={note("> [!TIP]\n> 助言。\n")} />);
     expect(html).toContain("markdown-alert-tip");
     expect(html).toContain("ヒント");
   });
@@ -649,9 +585,7 @@ describe("MdastRenderer: audio", () => {
   });
 
   it("解決されていない相対パスは通さない", () => {
-    const html = ssr(
-      '<audio controls>\n<source src="./song.opus" type="audio/ogg">\n</audio>',
-    );
+    const html = ssr('<audio controls>\n<source src="./song.opus" type="audio/ogg">\n</audio>');
     expect(html).not.toContain("<audio");
   });
 

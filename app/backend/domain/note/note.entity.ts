@@ -3,11 +3,7 @@ import type { NoteSlug } from "./note-slug.vo";
 import type { NoteTag } from "./note-tag.vo";
 import type { NoteTitle } from "./note-title.vo";
 import type { Temporal } from "@js-temporal/polyfill";
-import type {
-  EntityId,
-  IPersisted,
-  IUnpersisted,
-} from "~/backend/domain/shared";
+import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type NoteId = EntityId<"Note">;
 

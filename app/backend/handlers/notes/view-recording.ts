@@ -2,10 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { NoteSlug } from "~/backend/domain/note";
 import { viewWeightLog } from "~/backend/domain/note-view";
 import { Session, SessionId } from "~/backend/domain/session";
-import {
-  buildSessionCookie,
-  readSessionId,
-} from "~/backend/handlers/session-cookie";
+import { buildSessionCookie, readSessionId } from "~/backend/handlers/session-cookie";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1NoteViewCommandRepository } from "~/backend/infra/d1/repositories";
 import {
@@ -68,11 +65,7 @@ export function isLikelyBot(userAgent: string | null): boolean {
  *
  * セッションを起こすのは人が読んだときだけ。クローラーに識別子を配っても意味がない。
  */
-export function recordNoteView(
-  env: Env,
-  note: ViewedNoteRef,
-  recording: NoteViewRecording,
-): void {
+export function recordNoteView(env: Env, note: ViewedNoteRef, recording: NoteViewRecording): void {
   if (isLikelyBot(recording.userAgent)) return;
 
   // 持っていれば引き継ぐ。読めない値なら発行し直す (なりすましは形の検証では防げず、
@@ -116,9 +109,7 @@ async function applyView(
       Session.start(sessionId, viewedOn);
     if (session.hasViewed(slug, viewedOn)) return;
 
-    await new KvSessionCommandRepository(env.SESSIONS).save(
-      session.withView(slug, viewedOn),
-    );
+    await new KvSessionCommandRepository(env.SESSIONS).save(session.withView(slug, viewedOn));
 
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
     await new D1NoteViewCommandRepository(env.D1).addView(

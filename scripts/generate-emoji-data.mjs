@@ -24,9 +24,7 @@ import enMessages from "emojibase-data/en/messages.json" with { type: "json" };
 import jaCompact from "emojibase-data/ja/compact.json" with { type: "json" };
 import jaMessages from "emojibase-data/ja/messages.json" with { type: "json" };
 
-const OUTPUT = fileURLToPath(
-  new URL("../app/lib/emoji/allowed-emoji.ts", import.meta.url),
-);
+const OUTPUT = fileURLToPath(new URL("../app/lib/emoji/allowed-emoji.ts", import.meta.url));
 
 const PALETTE_DIR = fileURLToPath(new URL("../public/emoji", import.meta.url));
 
@@ -64,9 +62,7 @@ function isReactable(emoji) {
   return !HAIR_COMPONENT.test(emoji.unicode);
 }
 
-const emojis = enCompact
-  .filter((emoji) => isReactable(emoji))
-  .map((emoji) => emoji.unicode);
+const emojis = enCompact.filter((emoji) => isReactable(emoji)).map((emoji) => emoji.unicode);
 
 const unique = [...new Set(emojis)];
 if (unique.length !== emojis.length) {
@@ -85,7 +81,6 @@ const source = `// このファイルは自動生成される。手で編集し�
 export const allowedEmoji: readonly string[] = ${JSON.stringify(unique, null, 2)};
 `;
 
- 
 // eslint-disable-next-line security/detect-non-literal-fs-filename -- 出力先はこのファイルが決め打ちしている
 writeFileSync(OUTPUT, source);
 console.log(`wrote ${String(unique.length)} emoji to ${OUTPUT}`);

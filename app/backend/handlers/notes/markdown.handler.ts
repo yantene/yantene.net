@@ -1,8 +1,5 @@
 import { Hono } from "hono";
-import {
-  contentCacheControlFor,
-  NEGOTIATED_CONTENT_CACHE_CONTROL,
-} from "./content-cache-control";
+import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
 import { NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
@@ -46,9 +43,7 @@ async function noteSourceResponse(
   // D1 に在るのに原文が無い = キャッシュ不整合。静かに 404 で隠さず throw する
   // (fail-loud)。実装追加の直後は force refresh で原文を流し込む必要がある。
   if (markdown === undefined) {
-    throw new Error(
-      `Markdown source cache is missing for an indexed note: ${slug.toString()}`,
-    );
+    throw new Error(`Markdown source cache is missing for an indexed note: ${slug.toString()}`);
   }
 
   return new Response(markdown, {
@@ -72,20 +67,14 @@ async function noteSourceResponse(
  * `#preparedHeaders` を引き継がないため、Response を返す経路で `c.header()` を使うと
  * 何も言わずに消える。
  */
-async function negotiatedSourceResponse(
-  env: Env,
-  slug: NoteSlug | undefined,
-): Promise<Response> {
+async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): Promise<Response> {
   const response = await noteSourceResponse(env, slug, {
     cacheControl: NEGOTIATED_CONTENT_CACHE_CONTROL,
   });
 
   response.headers.set("Vary", "Accept");
   if (response.status === httpStatus.OK && slug !== undefined) {
-    response.headers.set(
-      "Content-Location",
-      `/notes/${slug.toString()}${MARKDOWN_SUFFIX}`,
-    );
+    response.headers.set("Content-Location", `/notes/${slug.toString()}${MARKDOWN_SUFFIX}`);
   }
   return response;
 }
@@ -122,11 +111,9 @@ export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
     const file = c.req.param("file");
 
     if (file.endsWith(MARKDOWN_SUFFIX)) {
-      return noteSourceResponse(
-        c.env,
-        NoteSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)),
-        { cacheControl: contentCacheControlFor(c.env) },
-      );
+      return noteSourceResponse(c.env, NoteSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)), {
+        cacheControl: contentCacheControlFor(c.env),
+      });
     }
 
     if (!isMarkdownPreferred(c.req.header("Accept"))) {

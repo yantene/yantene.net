@@ -14,12 +14,8 @@ import {
  * 先頭だけを見ると後ろにある正しい値が黙って捨てられる。符号化を解かない理由は
  * {@link readCookieValues} を参照。
  */
-function readLocaleCookie(
-  cookieHeader: string | null,
-): SupportedLocale | undefined {
-  return readCookieValues(cookieHeader, localeCookieName).find((value) =>
-    isSupportedLocale(value),
-  );
+function readLocaleCookie(cookieHeader: string | null): SupportedLocale | undefined {
+  return readCookieValues(cookieHeader, localeCookieName).find((value) => isSupportedLocale(value));
 }
 
 /**

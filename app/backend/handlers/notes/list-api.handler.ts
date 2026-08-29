@@ -21,10 +21,7 @@ export function createNotesApiRouter(): Hono<{ Bindings: Env }> {
       c.req.query("page"),
       c.req.query("per-page"),
     );
-    const { sortBy, direction } = parseNoteSort(
-      c.req.query("sort-by"),
-      c.req.query("order"),
-    );
+    const { sortBy, direction } = parseNoteSort(c.req.query("sort-by"), c.req.query("order"));
 
     const tag = parseTag(c.req.query("tag"));
 

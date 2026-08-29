@@ -60,11 +60,7 @@ export function LightboxImage(
         createPortal(
           // 包みは名前と「今はこれだけ」を支援技術へ伝えるためだけに置く。位置は
           // 暗幕が fixed で決めるので、この div は見た目に関わらない。
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={alt === "" ? "拡大画像" : alt}
-          >
+          <div role="dialog" aria-modal="true" aria-label={alt === "" ? "拡大画像" : alt}>
             {/*
              * オーバーレイ自体を button にして、背景クリック・Enter/Space・Esc
              * (グローバル keydown) のいずれでも閉じられるようにする。

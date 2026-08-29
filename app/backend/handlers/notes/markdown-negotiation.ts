@@ -71,10 +71,7 @@ function parseAcceptHeader(header: string): readonly MediaRange[] {
 }
 
 /** `patterns` を書いた順 (具体性の高い順) に探し、最初に見つけた媒体範囲の q を返す。 */
-function qualityOf(
-  ranges: readonly MediaRange[],
-  patterns: readonly string[],
-): number {
+function qualityOf(ranges: readonly MediaRange[], patterns: readonly string[]): number {
   for (const pattern of patterns) {
     // 同じ範囲が重複していたら先勝ち (`text/markdown;q=0, text/markdown` は 0)。
     const matched = ranges.find((range) => range.essence === pattern);
@@ -84,18 +81,12 @@ function qualityOf(
 }
 
 /** 完全一致する媒体範囲の q。ワイルドカードは数えない。 */
-function exactQuality(
-  ranges: readonly MediaRange[],
-  mediaType: string,
-): number {
+function exactQuality(ranges: readonly MediaRange[], mediaType: string): number {
   return qualityOf(ranges, [mediaType]);
 }
 
 /** ワイルドカードも含めた q。`type/subtype` → `type/*` → 全体一致 の順に探す。 */
-function negotiatedQuality(
-  ranges: readonly MediaRange[],
-  mediaType: string,
-): number {
+function negotiatedQuality(ranges: readonly MediaRange[], mediaType: string): number {
   const [type] = mediaType.split("/");
   return qualityOf(ranges, [mediaType, `${type}/*`, "*/*"]);
 }

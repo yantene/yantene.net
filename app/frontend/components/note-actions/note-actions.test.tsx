@@ -1,15 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteActions } from "./note-actions";
 import type { NoteActionsPlacement } from "./note-actions";
 import type { i18n } from "i18next";
@@ -21,10 +13,7 @@ import { createI18nInstance } from "~/lib/i18n/init";
  */
 const i18nRef: { current: i18n | undefined } = { current: undefined };
 
-function renderActions(
-  placement: NoteActionsPlacement,
-  mine: string | null = null,
-): void {
+function renderActions(placement: NoteActionsPlacement, mine: string | null = null): void {
   const instance = i18nRef.current;
   if (instance === undefined) throw new Error("i18n is not ready");
 
@@ -114,9 +103,7 @@ describe("NoteActions", () => {
   it("まだ押していない人には記事の下で促しを出す", () => {
     renderActions("bottom", null);
 
-    expect(screen.getByRole("note")).toHaveTextContent(
-      "匿名でリアクションしてみよう",
-    );
+    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
   });
 
   it("記事の上では促さない", () => {

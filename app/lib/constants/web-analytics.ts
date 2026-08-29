@@ -12,8 +12,7 @@
  * CSP の `script-src` にはこの URL を**パスまで**そのまま並べる。ホストだけを許すと
  * static.cloudflareinsights.com に置かれた別のファイルまで通ってしまう。
  */
-export const WEB_ANALYTICS_BEACON_SRC =
-  "https://static.cloudflareinsights.com/beacon.min.js";
+export const WEB_ANALYTICS_BEACON_SRC = "https://static.cloudflareinsights.com/beacon.min.js";
 
 /**
  * ビーコンの送り先。CSP の `connect-src` に要る。

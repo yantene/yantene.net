@@ -32,9 +32,7 @@ const pngAsset: LinkCardAsset = {
   contentType: "image/png",
 };
 
-function fetchedCard(
-  overrides: Partial<FetchedLinkCard> = {},
-): FetchedLinkCard {
+function fetchedCard(overrides: Partial<FetchedLinkCard> = {}): FetchedLinkCard {
   return {
     title: "題",
     description: "説明",
@@ -46,9 +44,7 @@ function fetchedCard(
 }
 
 /** 保存されたカードを覚えておくだけのリポジトリ。 */
-class FakeRepository
-  implements ILinkCardCommandRepository, ILinkCardQueryRepository
-{
+class FakeRepository implements ILinkCardCommandRepository, ILinkCardQueryRepository {
   readonly stored = new Map<string, LinkCard>();
   stale: LinkCard[] = [];
   readonly staleQueries: StaleLinkCardQuery[] = [];
@@ -112,13 +108,7 @@ describe("LinkCardsRefreshService", () => {
     repository = new FakeRepository();
     assets = new FakeAssetCache();
     fetcher = { fetch: vi.fn().mockResolvedValue(fetchedCard()) };
-    service = new LinkCardsRefreshService(
-      fetcher,
-      repository,
-      repository,
-      assets,
-      silentLogger(),
-    );
+    service = new LinkCardsRefreshService(fetcher, repository, repository, assets, silentLogger());
   });
 
   it("未取得の URL を取りに行って保存する", async () => {
@@ -149,9 +139,7 @@ describe("LinkCardsRefreshService", () => {
 
     expect(result.fetched).toEqual([]);
     expect(result.failed).toEqual(["https://example.com/a"]);
-    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(
-      false,
-    );
+    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(false);
   });
 
   it("取れなくても前回写した画像は残す", async () => {
@@ -200,9 +188,7 @@ describe("LinkCardsRefreshService", () => {
 
     // 1 回目の失敗。ここが起点になる。
     await service.sync(["https://example.com/a"], now, { force: true });
-    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(
-      true,
-    );
+    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(true);
 
     // 起点から 3 日。もう「一時的」ではない。
     const later = now.add({ hours: 24 * 3 });
@@ -228,23 +214,15 @@ describe("LinkCardsRefreshService", () => {
     fetcher.fetch.mockResolvedValue(fetchedCard());
     const recovered = now.add({ hours: 48 });
     await service.sync(["https://example.com/a"], recovered, { force: true });
-    expect(
-      repository.stored.get("https://example.com/a")?.fetchFailedSince,
-    ).toBeUndefined();
+    expect(repository.stored.get("https://example.com/a")?.fetchFailedSince).toBeUndefined();
 
     // さらに 2 日後にまた落ちた。最初の失敗から通算 4 日だが、起点は復帰後に移っている。
     fetcher.fetch.mockResolvedValue(undefined);
-    await service.sync(
-      ["https://example.com/a"],
-      recovered.add({ hours: 48 }),
-      {
-        force: true,
-      },
-    );
+    await service.sync(["https://example.com/a"], recovered.add({ hours: 48 }), {
+      force: true,
+    });
 
-    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(
-      true,
-    );
+    expect(repository.stored.get("https://example.com/a")?.isAvailable).toBe(true);
   });
 
   /*
@@ -268,10 +246,7 @@ describe("LinkCardsRefreshService", () => {
     await service.sync(["https://example.com/a"], now);
     fetcher.fetch.mockClear();
 
-    const result = await service.sync(
-      ["https://example.com/a"],
-      now.add({ hours: 24 }),
-    );
+    const result = await service.sync(["https://example.com/a"], now.add({ hours: 24 }));
 
     expect(fetcher.fetch).not.toHaveBeenCalled();
     expect(result.fetched).toEqual([]);
@@ -342,57 +317,38 @@ describe("LinkCardsRefreshService", () => {
   it("期限の境目はドメインの決めたものを渡す", async () => {
     await service.sync([], now);
 
-    expect(repository.staleQueries[0]?.available.toString()).toBe(
-      "2026-01-18T00:00:00Z",
-    );
-    expect(repository.staleQueries[0]?.unavailable.toString()).toBe(
-      "2026-01-31T00:00:00Z",
-    );
-    expect(repository.staleQueries[0]?.imageMissed.toString()).toBe(
-      "2026-01-31T00:00:00Z",
-    );
-    expect(repository.staleQueries[0]?.keptAfterFailure.toString()).toBe(
-      "2026-01-31T00:00:00Z",
-    );
+    expect(repository.staleQueries[0]?.available.toString()).toBe("2026-01-18T00:00:00Z");
+    expect(repository.staleQueries[0]?.unavailable.toString()).toBe("2026-01-31T00:00:00Z");
+    expect(repository.staleQueries[0]?.imageMissed.toString()).toBe("2026-01-31T00:00:00Z");
+    expect(repository.staleQueries[0]?.keptAfterFailure.toString()).toBe("2026-01-31T00:00:00Z");
   });
 
   it("取り直す前に前回の画像を捨てる", async () => {
     await service.sync(["https://example.com/a"], now);
     const id = repository.stored.get("https://example.com/a")?.id ?? "";
 
-    fetcher.fetch.mockResolvedValue(
-      fetchedCard({ image: { state: "absent" } }),
-    );
+    fetcher.fetch.mockResolvedValue(fetchedCard({ image: { state: "absent" } }));
     await service.sync(["https://example.com/a"], now, { force: true });
 
     expect(assets.deleted).toContain(id);
     expect(assets.images.has(id)).toBe(false);
-    expect(
-      repository.stored.get("https://example.com/a")?.metadata?.image,
-    ).toBe("absent");
+    expect(repository.stored.get("https://example.com/a")?.metadata?.image).toBe("absent");
   });
 
   it("絵を取り逃したカードは短い期限で取り直す", async () => {
-    fetcher.fetch.mockResolvedValue(
-      fetchedCard({ image: { state: "missed" } }),
-    );
+    fetcher.fetch.mockResolvedValue(fetchedCard({ image: { state: "missed" } }));
     await service.sync(["https://example.com/a"], now);
     fetcher.fetch.mockClear();
 
     // 題が取れているので「取得できた」の側だが、14 日は待たない。
-    const result = await service.sync(
-      ["https://example.com/a"],
-      now.add({ hours: 24 }),
-    );
+    const result = await service.sync(["https://example.com/a"], now.add({ hours: 24 }));
 
     expect(fetcher.fetch).toHaveBeenCalledTimes(1);
     expect(result.fetched).toEqual(["https://example.com/a"]);
   });
 
   it("絵を持たない相手のカードは期限内なら取りに行かない", async () => {
-    fetcher.fetch.mockResolvedValue(
-      fetchedCard({ image: { state: "absent" } }),
-    );
+    fetcher.fetch.mockResolvedValue(fetchedCard({ image: { state: "absent" } }));
     await service.sync(["https://example.com/a"], now);
     fetcher.fetch.mockClear();
 
@@ -408,10 +364,7 @@ describe("LinkCardsRefreshService", () => {
   });
 
   it("カードにできない URL は黙って飛ばす", async () => {
-    const result = await service.sync(
-      ["not a url", "mailto:a@example.com"],
-      now,
-    );
+    const result = await service.sync(["not a url", "mailto:a@example.com"], now);
 
     expect(fetcher.fetch).not.toHaveBeenCalled();
     expect(result.fetched).toEqual([]);
@@ -419,10 +372,7 @@ describe("LinkCardsRefreshService", () => {
   });
 
   it("1 回の上限を超えた分は見送り、件数を報告する", async () => {
-    const urls = Array.from(
-      { length: 45 },
-      (_, index) => `https://example.com/${String(index)}`,
-    );
+    const urls = Array.from({ length: 45 }, (_, index) => `https://example.com/${String(index)}`);
 
     const result = await service.sync(urls, now);
 

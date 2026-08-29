@@ -12,11 +12,7 @@
     "composite": true,
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     // vite-plugin-svgr/client は `import X from "./x.svg?react"` の型を与える。
-    "types": [
-      "vite/client",
-      "vite-plugin-svgr/client",
-      "@testing-library/jest-dom"
-    ],
+    "types": ["vite/client", "vite-plugin-svgr/client", "@testing-library/jest-dom"],
     "target": "ES2023",
     "module": "ES2022",
     "moduleResolution": "bundler",

@@ -4,12 +4,8 @@ import { LinkCardUrl } from "./link-card-url.vo";
 
 describe("LinkCardUrl", () => {
   it("http / https を受け入れる", () => {
-    expect(LinkCardUrl.create("https://example.com/a").toString()).toBe(
-      "https://example.com/a",
-    );
-    expect(LinkCardUrl.create("https://example.com/a").toString()).toBe(
-      "https://example.com/a",
-    );
+    expect(LinkCardUrl.create("https://example.com/a").toString()).toBe("https://example.com/a");
+    expect(LinkCardUrl.create("https://example.com/a").toString()).toBe("https://example.com/a");
   });
 
   it("書かれたままの文字列を保つ (正規化しない)", () => {
@@ -19,18 +15,12 @@ describe("LinkCardUrl", () => {
   });
 
   it("URL でない文字列を拒む", () => {
-    expect(() => LinkCardUrl.create("not a url")).toThrow(
-      InvalidLinkCardUrlError,
-    );
+    expect(() => LinkCardUrl.create("not a url")).toThrow(InvalidLinkCardUrlError);
   });
 
   it("http / https 以外のスキームを拒む", () => {
-    expect(() => LinkCardUrl.create("mailto:foo@example.com")).toThrow(
-      InvalidLinkCardUrlError,
-    );
-    expect(() => LinkCardUrl.create("javascript:alert(1)")).toThrow(
-      InvalidLinkCardUrlError,
-    );
+    expect(() => LinkCardUrl.create("mailto:foo@example.com")).toThrow(InvalidLinkCardUrlError);
+    expect(() => LinkCardUrl.create("javascript:alert(1)")).toThrow(InvalidLinkCardUrlError);
   });
 
   it("同じ文字列どうしを等しいとみなす", () => {

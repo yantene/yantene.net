@@ -17,8 +17,7 @@ import {
 const tagPattern = /<[a-zA-Z][^>]*>/g;
 
 /** タグの中の `href` / `src` の値。引用符あり・なしの両方を拾う。 */
-const urlAttributePattern =
-  /\b(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
+const urlAttributePattern = /\b(?:href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
 
 /** microformats2 のプロパティと、そこから決まる種別。上にあるものを優先する。 */
 const typeByProperty = [
@@ -53,9 +52,7 @@ export function hasLinkToTarget(
   baseUrl: WebmentionUrl,
   target: WebmentionUrl,
 ): boolean {
-  return extractLinkedUrls(html, baseUrl).some((url) =>
-    url.pointsToSameDocument(target),
-  );
+  return extractLinkedUrls(html, baseUrl).some((url) => url.pointsToSameDocument(target));
 }
 
 /**
@@ -139,33 +136,22 @@ function pickEntry(
 }
 
 /** target を名指ししているプロパティから種別を決める。名指しが無ければ undefined。 */
-function typeOf(
-  entry: Mf2Root,
-  target: WebmentionUrl,
-): WebmentionType | undefined {
+function typeOf(entry: Mf2Root, target: WebmentionUrl): WebmentionType | undefined {
   const hit = typeByProperty.find(([property]) =>
-    propertyUrls(entry, property).some((url) =>
-      url.pointsToSameDocument(target),
-    ),
+    propertyUrls(entry, property).some((url) => url.pointsToSameDocument(target)),
   );
   return hit?.[1]();
 }
 
 /** 著者。h-entry に無ければ、ページ全体を代表する h-card に頼る。 */
-function authorOf(
-  entry: Mf2Root | undefined,
-  document: Mf2Document,
-): WebmentionAuthor {
+function authorOf(entry: Mf2Root | undefined, document: Mf2Document): WebmentionAuthor {
   const card =
-    (entry === undefined
-      ? undefined
-      : rootOf(firstProperty(entry, "author"))) ??
+    (entry === undefined ? undefined : rootOf(firstProperty(entry, "author"))) ??
     document.items.find((item) => item.type?.includes("h-card") === true);
 
   if (card === undefined) {
     // h-card が無くても、文字列で名乗っていることはある。
-    const raw =
-      entry === undefined ? undefined : firstProperty(entry, "author");
+    const raw = entry === undefined ? undefined : firstProperty(entry, "author");
     return typeof raw === "string"
       ? WebmentionAuthor.create({ name: raw })
       : WebmentionAuthor.anonymous();
@@ -275,10 +261,7 @@ function textOf(value: Mf2Property | undefined): string | undefined {
 }
 
 /** タグの中の href / src を集め、絶対 URL に直す。 */
-function extractLinkedUrls(
-  html: string,
-  baseUrl: WebmentionUrl,
-): WebmentionUrl[] {
+function extractLinkedUrls(html: string, baseUrl: WebmentionUrl): WebmentionUrl[] {
   const urls: WebmentionUrl[] = [];
   for (const tag of html.matchAll(tagPattern)) {
     const attributes = tag[0].matchAll(urlAttributePattern);
@@ -293,10 +276,7 @@ function extractLinkedUrls(
 }
 
 /** 属性の値を絶対 URL に直す。相対でも絶対でも受ける。 */
-function resolveUrl(
-  raw: string,
-  baseUrl: WebmentionUrl,
-): WebmentionUrl | undefined {
+function resolveUrl(raw: string, baseUrl: WebmentionUrl): WebmentionUrl | undefined {
   // 属性値の中で実体参照として書かれるのは、実質 `&` だけ。
   const candidate = raw.trim().replaceAll("&amp;", "&");
   if (candidate.length === 0) return undefined;

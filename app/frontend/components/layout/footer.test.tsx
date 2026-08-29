@@ -47,9 +47,7 @@ describe("Footer", () => {
     renderFooter(2026, 2026);
 
     const footer = screen.getByRole("contentinfo");
-    expect(footer).toHaveTextContent(
-      "Copyright © 2026 やんてね All rights reserved.",
-    );
+    expect(footer).toHaveTextContent("Copyright © 2026 やんてね All rights reserved.");
     expect(footer).not.toHaveTextContent("2026 – 2026");
   });
 
@@ -74,8 +72,9 @@ describe("Footer", () => {
   it("ライセンスのページへ繋ぐ", () => {
     renderFooter(2019, 2026);
 
-    expect(
-      screen.getByRole("link", { name: "Open source licenses" }),
-    ).toHaveAttribute("href", "/licenses");
+    expect(screen.getByRole("link", { name: "Open source licenses" })).toHaveAttribute(
+      "href",
+      "/licenses",
+    );
   });
 });

@@ -9,18 +9,14 @@ import { WebmentionUrl } from "./webmention-url.vo";
  */
 describe("WebmentionContent", () => {
   it("タグを落としてテキストにする", () => {
-    expect(
-      WebmentionContent.fromText("<p>Nice <b>post</b>!</p>")?.toString(),
-    ).toBe("Nice post !");
+    expect(WebmentionContent.fromText("<p>Nice <b>post</b>!</p>")?.toString()).toBe("Nice post !");
   });
 
   it("タグを落としたあとで実体参照を戻す", () => {
     // 順序が逆だと `&lt;script&gt;` が本物のタグに化ける。
-    expect(
-      WebmentionContent.fromText(
-        "&lt;script&gt;alert(1)&lt;/script&gt;",
-      )?.toString(),
-    ).toBe("<script>alert(1)</script>");
+    expect(WebmentionContent.fromText("&lt;script&gt;alert(1)&lt;/script&gt;")?.toString()).toBe(
+      "<script>alert(1)</script>",
+    );
   });
 
   it("改行と連続する空白は詰める", () => {
@@ -68,9 +64,7 @@ describe("WebmentionAuthor", () => {
   });
 
   it("名前が長すぎれば切り詰める", () => {
-    expect(
-      WebmentionAuthor.create({ name: "x".repeat(500) }).name,
-    ).toHaveLength(100);
+    expect(WebmentionAuthor.create({ name: "x".repeat(500) }).name).toHaveLength(100);
   });
 
   it("復元時に名前を均し直さない", () => {

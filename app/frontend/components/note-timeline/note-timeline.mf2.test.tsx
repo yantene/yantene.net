@@ -38,16 +38,12 @@ function renderTimeline(isGroupedByYear: boolean): HTMLElement {
 
 describe("NoteTimeline の microformats2", () => {
   it("平らな並びでは h-feed が 1 つ", () => {
-    expect(
-      renderTimeline(false).querySelectorAll(":scope .h-feed"),
-    ).toHaveLength(1);
+    expect(renderTimeline(false).querySelectorAll(":scope .h-feed")).toHaveLength(1);
   });
 
   it("年で束ねても h-feed は 1 つ", () => {
     // 年ごとに feed ができると、どれが記事の並びなのか読み取れなくなる。
-    expect(
-      renderTimeline(true).querySelectorAll(":scope .h-feed"),
-    ).toHaveLength(1);
+    expect(renderTimeline(true).querySelectorAll(":scope .h-feed")).toHaveLength(1);
   });
 
   it("各項目が h-entry として URL と題と日付を持つ", () => {
@@ -56,14 +52,10 @@ describe("NoteTimeline の microformats2", () => {
     expect(entries).toHaveLength(notes.length);
 
     const [first] = entries;
-    expect(first.querySelector(":scope .u-url")?.getAttribute("href")).toBe(
-      "/notes/hello",
+    expect(first.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/notes/hello");
+    expect(first.querySelector(":scope .p-name")?.textContent).toBe("こんにちは");
+    expect(first.querySelector(":scope .dt-published")?.getAttribute("datetime")).toBe(
+      "2026-08-01",
     );
-    expect(first.querySelector(":scope .p-name")?.textContent).toBe(
-      "こんにちは",
-    );
-    expect(
-      first.querySelector(":scope .dt-published")?.getAttribute("datetime"),
-    ).toBe("2026-08-01");
   });
 });

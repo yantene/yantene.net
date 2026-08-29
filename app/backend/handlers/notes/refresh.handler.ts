@@ -43,8 +43,7 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.post("/refresh", async (c) => {
-    const secret = (c.env as unknown as { REFRESH_SECRET?: unknown })
-      .REFRESH_SECRET;
+    const secret = (c.env as unknown as { REFRESH_SECRET?: unknown }).REFRESH_SECRET;
     if (typeof secret !== "string" || secret.length === 0) {
       throw new Error("REFRESH_SECRET is required to trigger a refresh.");
     }

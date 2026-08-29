@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { loadMermaid } from "./mermaid-loader.client";
 
 /*
@@ -70,20 +64,13 @@ export interface MermaidDiagramProps {
  * 本体を取り寄せるのは `useEffect` の中だけ。`loadMermaid` はサーバー側のビルドでは
  * `undefined` になる (mermaid-loader.client.ts)。
  */
-export function MermaidDiagram({
-  source,
-  children,
-}: MermaidDiagramProps): React.JSX.Element {
+export function MermaidDiagram({ source, children }: MermaidDiagramProps): React.JSX.Element {
   const [rendered, setRendered] = useState<Rendered | null>(null);
   const diagramId = toDiagramId(useId());
   const attempt = useRef(0);
   const stage = useRef<HTMLDivElement>(null);
   const hasSource = source !== undefined && source.trim() !== "";
-  const hasScript = useSyncExternalStore(
-    subscribeToNothing,
-    hasScriptHere,
-    hasScriptOnServer,
-  );
+  const hasScript = useSyncExternalStore(subscribeToNothing, hasScriptHere, hasScriptOnServer);
 
   useEffect(() => {
     if (source === undefined || source.trim() === "") return;
@@ -146,10 +133,7 @@ export function MermaidDiagram({
        * 図の中のラベルが読み上げから消える。図に題と説明を足したいときは、本文側で
        * Mermaid の accTitle と accDescr を書く。
        */
-      <div
-        className="mermaid-diagram"
-        dangerouslySetInnerHTML={{ __html: rendered.svg }}
-      />
+      <div className="mermaid-diagram" dangerouslySetInnerHTML={{ __html: rendered.svg }} />
     );
   }
 
@@ -161,10 +145,7 @@ export function MermaidDiagram({
    * 残る (hasScript の宣言に付けた説明を参照)。
    */
   return (
-    <div
-      className="mermaid-source"
-      aria-busy={hasScript && hasSource && !isSettled}
-    >
+    <div className="mermaid-source" aria-busy={hasScript && hasSource && !isSettled}>
       {children}
       {/*
        * Mermaid が字の寸法を測る場所。**本文の中に置くことに意味がある。**

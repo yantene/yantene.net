@@ -37,18 +37,12 @@ describe("viewWeightLog", () => {
   });
 
   it("半減期ぶん経つと重みが 2 倍になる", () => {
-    expect(
-      plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS))),
-    ).toBeCloseTo(2, 9);
-    expect(
-      plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2))),
-    ).toBeCloseTo(4, 9);
+    expect(plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS)))).toBeCloseTo(2, 9);
+    expect(plain(viewWeightLog(dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2)))).toBeCloseTo(4, 9);
   });
 
   it("基準日より前は 1 より軽くなる", () => {
-    expect(
-      plain(viewWeightLog(dayAfterEpoch(-VIEW_SCORE_HALF_LIFE_DAYS))),
-    ).toBeCloseTo(0.5, 9);
+    expect(plain(viewWeightLog(dayAfterEpoch(-VIEW_SCORE_HALF_LIFE_DAYS)))).toBeCloseTo(0.5, 9);
   });
 });
 
@@ -89,21 +83,14 @@ describe("logScoreAfterView", () => {
 
   it("後から読まれた 1 回は、半減期ぶん前の 1 回の 2 倍の重みを持つ", () => {
     const older = plain(logScoreAfterView(UNREAD, dayAfterEpoch(0))) - 1;
-    const newer =
-      plain(
-        logScoreAfterView(UNREAD, dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS)),
-      ) - 1;
+    const newer = plain(logScoreAfterView(UNREAD, dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS))) - 1;
     expect(newer / older).toBeCloseTo(2, 6);
   });
 
   it("古い記事が読まれ続けても、新しい少数に抜かれることがある", () => {
     // 基準日に 10 回 (重み 1 × 10) と、半減期 2 つ後に 3 回 (重み 4 × 3)。
     const old = viewedTimes(UNREAD, 10, dayAfterEpoch(0));
-    const fresh = viewedTimes(
-      UNREAD,
-      3,
-      dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2),
-    );
+    const fresh = viewedTimes(UNREAD, 3, dayAfterEpoch(VIEW_SCORE_HALF_LIFE_DAYS * 2));
     expect(fresh).toBeGreaterThan(old);
     // 下駄のぶん 1 が乗る。
     expect(plain(old)).toBeCloseTo(11, 6);
@@ -159,11 +146,7 @@ describe("リアクションのスコア", () => {
     const day = dayAfterEpoch(120);
     const before = viewedTimes(UNREAD, 30, day);
 
-    const after = logScoreAfterReactionRemoved(
-      logScoreAfterReaction(before, day),
-      day,
-      UNREAD,
-    );
+    const after = logScoreAfterReactionRemoved(logScoreAfterReaction(before, day), day, UNREAD);
 
     expect(after).toBeCloseTo(before, 10);
   });

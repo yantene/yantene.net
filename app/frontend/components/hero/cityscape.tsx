@@ -17,10 +17,7 @@ export function Cityscape(): React.JSX.Element {
         切れて街の中ほどだけが見えるが、全体を収めようとすると街だけが縮んで、
         歩行者より低くなってしまう。
       */}
-      <CityscapeSvg
-        className="cityscape-svg"
-        preserveAspectRatio="xMidYMax slice"
-      />
+      <CityscapeSvg className="cityscape-svg" preserveAspectRatio="xMidYMax slice" />
     </div>
   );
 }

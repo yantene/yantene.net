@@ -25,9 +25,7 @@ describe("buildShareTargets", () => {
 
     // Bluesky は url を別に受け取らないので、本文に混ぜて渡す。
     const bluesky = composeUrlOf(targets, "bluesky");
-    expect(`${bluesky.origin}${bluesky.pathname}`).toBe(
-      "https://bsky.app/intent/compose",
-    );
+    expect(`${bluesky.origin}${bluesky.pathname}`).toBe("https://bsky.app/intent/compose");
     expect(bluesky.searchParams.get("text")).toBe(`記事の題 ${url}`);
 
     const facebook = composeUrlOf(targets, "facebook");
@@ -41,9 +39,7 @@ describe("buildShareTargets", () => {
     const targets = buildShareTargets(url, 'a&b=c "d"');
 
     // & や = をそのまま置くと、ここで別のパラメータに割れてしまう。
-    expect(composeUrlOf(targets, "x").searchParams.get("text")).toBe(
-      'a&b=c "d"',
-    );
+    expect(composeUrlOf(targets, "x").searchParams.get("text")).toBe('a&b=c "d"');
   });
 });
 
@@ -62,9 +58,7 @@ describe("buildClipboardPayload", () => {
   it("keeps a title with markup characters from breaking either form", () => {
     const payload = buildClipboardPayload(url, '<script>& [注] "引用"');
 
-    expect(payload.html).toBe(
-      `<a href="${url}">&lt;script&gt;&amp; [注] &quot;引用&quot;</a>`,
-    );
+    expect(payload.html).toBe(`<a href="${url}">&lt;script&gt;&amp; [注] &quot;引用&quot;</a>`);
     expect(payload.plain).toBe(String.raw`[<script>& \[注\] "引用"](${url})`);
   });
 });

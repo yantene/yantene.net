@@ -93,10 +93,7 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
     const [image, favicon] = await Promise.all([
       this.loadAsset(imageUrl, IMAGE_MAX_BYTES),
       // rel=icon が書かれていなくても、慣例の位置に置かれていることが多い。
-      this.loadAsset(
-        toAbsolute(ogp.faviconUrl ?? "/favicon.ico", page.url),
-        FAVICON_MAX_BYTES,
-      ),
+      this.loadAsset(toAbsolute(ogp.faviconUrl ?? "/favicon.ico", page.url), FAVICON_MAX_BYTES),
     ]);
 
     // 絵だけ取り逃したことを残す。カードは題と説明で成立するので先へ進むが、無音だと

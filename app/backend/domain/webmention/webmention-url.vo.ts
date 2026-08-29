@@ -36,9 +36,7 @@ export class WebmentionUrl implements IValueObject<WebmentionUrl> {
       throw new InvalidWebmentionUrlError(`Not an absolute URL: ${trimmed}`);
     }
     if (!allowedProtocols.has(parsed.protocol)) {
-      throw new InvalidWebmentionUrlError(
-        `Webmention URL must be http or https: ${trimmed}`,
-      );
+      throw new InvalidWebmentionUrlError(`Webmention URL must be http or https: ${trimmed}`);
     }
 
     /*
@@ -120,7 +118,5 @@ function parseAbsolute(raw: string): URL | undefined {
 
 /** 末尾のスラッシュを 1 つだけ落とす。ルート (`/`) はそのまま。 */
 function trimTrailingSlash(pathname: string): string {
-  return pathname.length > 1 && pathname.endsWith("/")
-    ? pathname.slice(0, -1)
-    : pathname;
+  return pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 }

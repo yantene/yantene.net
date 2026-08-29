@@ -13,9 +13,7 @@ import { GitHubContentStore } from "~/backend/infra/github/github-content-store"
 export function resolveContentStore(env: Env): IContentStore {
   const token = (env as unknown as { GITHUB_TOKEN?: unknown }).GITHUB_TOKEN;
   if (typeof token !== "string" || token.length === 0) {
-    throw new Error(
-      "GITHUB_TOKEN is required to read content from the GitHub repository.",
-    );
+    throw new Error("GITHUB_TOKEN is required to read content from the GitHub repository.");
   }
 
   return new GitHubContentStore({

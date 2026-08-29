@@ -11,10 +11,7 @@ import type { Nodes, Root, RootContent } from "mdast";
 
 const SUMMARY_MAX_CHARS = 160;
 
-const markdownProcessor = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkMath);
+const markdownProcessor = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 
 /**
  * 記事の公開範囲。フロントマターの `visibility` で指定する。
@@ -126,17 +123,11 @@ function firstCharacterOf(text: string): string {
  * 判定は「改行を挟む 2 文字」で行う。value の端にある改行は、前後の兄弟ノードの端の文字を
  * 渡してもらう。
  */
-function collapseSoftBreaks(
-  value: string,
-  before: string,
-  after: string,
-): string {
+function collapseSoftBreaks(value: string, before: string, after: string): string {
   return value.replaceAll("\n", (_match, offset: number) => {
     const previous = lastCharacterOf(value.slice(0, offset)) || before;
     const next = firstCharacterOf(value.slice(offset + 1)) || after;
-    return isCollapsibleAcrossBreak(previous) && isCollapsibleAcrossBreak(next)
-      ? ""
-      : " ";
+    return isCollapsibleAcrossBreak(previous) && isCollapsibleAcrossBreak(next) ? "" : " ";
   });
 }
 
@@ -147,19 +138,14 @@ function collapseSoftBreaks(
  * text("\n以来…")`)。text ノード単体では改行の向こう側の文字が分からないため、
  * 隣のノードを文字列化して端の 1 文字を渡す。
  */
-function collapseAcrossSiblings(
-  children: readonly RootContent[],
-): RootContent[] {
+function collapseAcrossSiblings(children: readonly RootContent[]): RootContent[] {
   return children.map((child, index) => {
     if (child.type !== "text") return child;
 
     // 端では隣が居ない。index で判ずる (添字アクセスの型は undefined を含まない)。
-    const before =
-      index === 0 ? "" : lastCharacterOf(mdastToString(children[index - 1]));
+    const before = index === 0 ? "" : lastCharacterOf(mdastToString(children[index - 1]));
     const after =
-      index === children.length - 1
-        ? ""
-        : firstCharacterOf(mdastToString(children[index + 1]));
+      index === children.length - 1 ? "" : firstCharacterOf(mdastToString(children[index + 1]));
 
     return { ...child, value: collapseSoftBreaks(child.value, before, after) };
   });
@@ -173,9 +159,7 @@ function collapseAcrossSiblings(
  */
 function withCollapsedSoftBreaks<T extends Nodes>(node: T): T {
   return mapTree(node, (child) =>
-    "children" in child
-      ? withChildren(child, collapseAcrossSiblings(child.children))
-      : child,
+    "children" in child ? withChildren(child, collapseAcrossSiblings(child.children)) : child,
   );
 }
 
@@ -210,19 +194,12 @@ function withMathMl<T extends Nodes>(node: T): T {
 }
 
 /** GFM の Alert 種別。GitHub が定める 5 つに揃える。 */
-export const alertKinds = [
-  "note",
-  "tip",
-  "important",
-  "warning",
-  "caution",
-] as const;
+export const alertKinds = ["note", "tip", "important", "warning", "caution"] as const;
 
 export type AlertKind = (typeof alertKinds)[number];
 
 /** 引用の冒頭に置くラベル行。`> [!NOTE]` の形で、行末に他の文字を許さない。 */
-const alertLabelPattern =
-  /^\[!(note|tip|important|warning|caution)\][^\S\n]*(?:\n|$)/i;
+const alertLabelPattern = /^\[!(note|tip|important|warning|caution)\][^\S\n]*(?:\n|$)/i;
 
 function toAlertKind(label: string): AlertKind | undefined {
   const lowered = label.toLowerCase();
@@ -262,10 +239,7 @@ function readAlertLabel(
       : [
           {
             ...first,
-            children:
-              remainder.length === 0
-                ? tail
-                : [{ ...lead, value: remainder }, ...tail],
+            children: remainder.length === 0 ? tail : [{ ...lead, value: remainder }, ...tail],
           },
         ];
 
@@ -326,11 +300,7 @@ export function extractSummary(root: Root): string {
     length += text.length + 1; // 連結時の区切りスペース分
     if (length >= SUMMARY_MAX_CHARS) break;
   }
-  return parts
-    .join(" ")
-    .replaceAll(/\s+/g, " ")
-    .trim()
-    .slice(0, SUMMARY_MAX_CHARS);
+  return parts.join(" ").replaceAll(/\s+/g, " ").trim().slice(0, SUMMARY_MAX_CHARS);
 }
 
 /*
@@ -396,9 +366,7 @@ function asVisibility(value: unknown): NoteVisibility {
     if (normalized === "public") return "public";
     if (normalized === "private") return "private";
   }
-  throw new VisibilityValueError(
-    `frontmatter has unreadable visibility: ${JSON.stringify(value)}`,
-  );
+  throw new VisibilityValueError(`frontmatter has unreadable visibility: ${JSON.stringify(value)}`);
 }
 
 /**

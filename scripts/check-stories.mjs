@@ -54,7 +54,5 @@ if (componentFiles.length === 0) {
     );
   }
 
-  console.log(
-    `✓ All ${componentFiles.length} component(s) in ${COMPONENTS_DIR} have stories`,
-  );
+  console.log(`✓ All ${componentFiles.length} component(s) in ${COMPONENTS_DIR} have stories`);
 }

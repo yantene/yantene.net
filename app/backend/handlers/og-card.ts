@@ -237,14 +237,8 @@ function escapeHtml(value: string): string {
  * 外して底に貼ってあるので、ここで場所を空けておく必要がない。線画に重なるが、線が薄い
  * ぶん字は読める (画面のヒーローも同じ扱いにしてある)。
  */
-export function cardHtml(params: {
-  title: string;
-  date: string;
-  tags: readonly string[];
-}): string {
-  const title = escapeHtml(
-    truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }),
-  );
+export function cardHtml(params: { title: string; date: string; tags: readonly string[] }): string {
+  const title = escapeHtml(truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }));
   /*
    * タグは中黒で繋ぐ。囲みを付けない理由は note-timeline.css に書いてあるとおりで、
    * 表題と主張が競るため。

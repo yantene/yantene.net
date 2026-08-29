@@ -4,11 +4,7 @@ import { KvSessionCommandRepository } from "./session.command-repository";
 import { KvSessionQueryRepository } from "./session.query-repository";
 import { NoteSlug } from "~/backend/domain/note";
 import { ReactionEmoji } from "~/backend/domain/note-reaction";
-import {
-  SESSION_LIFETIME_DAYS,
-  Session,
-  SessionId,
-} from "~/backend/domain/session";
+import { SESSION_LIFETIME_DAYS, Session, SessionId } from "~/backend/domain/session";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
 
 const today = Temporal.PlainDate.from("2026-08-12");
@@ -36,10 +32,7 @@ describe("KvSessionQueryRepository#findById", () => {
 
   it("保存したセッションを読み戻せる", async () => {
     const { commands, queries } = setup();
-    const saved = Session.start(SessionId.issue(), today).withView(
-      alpha,
-      today,
-    );
+    const saved = Session.start(SessionId.issue(), today).withView(alpha, today);
     await commands.save(saved);
 
     const found = await queries.findById(saved.id);
@@ -114,9 +107,7 @@ describe("KvSessionCommandRepository#save", () => {
     await commands.save(session);
 
     // 記録に残るのは今日の分だけ。閲覧履歴を溜め込まない。
-    const stored: unknown = JSON.parse(
-      store.get(`session:${session.id.toString()}`)?.value ?? "",
-    );
+    const stored: unknown = JSON.parse(store.get(`session:${session.id.toString()}`)?.value ?? "");
     expect(stored).toStrictEqual({
       startedOn: "2026-08-11",
       viewedOn: "2026-08-12",
@@ -137,9 +128,7 @@ describe("KvSessionCommandRepository#save", () => {
       .withView(NoteSlug.create("beta"), today);
     await commands.save(session);
 
-    const stored: unknown = JSON.parse(
-      store.get(`session:${session.id.toString()}`)?.value ?? "",
-    );
+    const stored: unknown = JSON.parse(store.get(`session:${session.id.toString()}`)?.value ?? "");
     expect(stored).toStrictEqual({
       startedOn: "2026-08-11",
       viewedOn: "2026-08-12",
@@ -160,8 +149,6 @@ describe("KvSessionCommandRepository#save", () => {
     const restored = await queries.findById(session.id);
 
     expect(restored?.reactionFor(alpha)?.emoji.toString()).toBe("🎉");
-    expect(restored?.reactionFor(alpha)?.reactedOn.toString()).toBe(
-      "2026-08-12",
-    );
+    expect(restored?.reactionFor(alpha)?.reactedOn.toString()).toBe("2026-08-12");
   });
 });

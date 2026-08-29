@@ -13,9 +13,7 @@ const options = { accept: "text/html", maxBytes: 1024 };
 /** その応答を返すだけの fetch を差し込む。 */
 function stubFetch(response: Response | Error): void {
   vi.stubGlobal("fetch", () =>
-    response instanceof Error
-      ? Promise.reject(response)
-      : Promise.resolve(response),
+    response instanceof Error ? Promise.reject(response) : Promise.resolve(response),
   );
 }
 
@@ -40,9 +38,7 @@ describe("fetchCapped", () => {
   it("失敗した応答は undefined", async () => {
     stubFetch(new Response("", { status: 500 }));
 
-    await expect(
-      fetchCapped("https://example.com/", options),
-    ).resolves.toBeUndefined();
+    await expect(fetchCapped("https://example.com/", options)).resolves.toBeUndefined();
   });
 
   /*
@@ -52,9 +48,7 @@ describe("fetchCapped", () => {
   it("本文の無い応答は undefined", async () => {
     stubFetch(new Response(null, { status: 200 }));
 
-    await expect(
-      fetchCapped("https://example.com/", options),
-    ).resolves.toBeUndefined();
+    await expect(fetchCapped("https://example.com/", options)).resolves.toBeUndefined();
   });
 
   /*

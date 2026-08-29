@@ -15,8 +15,7 @@ function escapeXml(value: string): string {
 }
 
 function urlEntry(loc: string, lastmod?: string): string {
-  const lastmodTag =
-    lastmod === undefined ? "" : `<lastmod>${lastmod}</lastmod>`;
+  const lastmodTag = lastmod === undefined ? "" : `<lastmod>${lastmod}</lastmod>`;
   return `  <url><loc>${escapeXml(loc)}</loc>${lastmodTag}</url>`;
 }
 

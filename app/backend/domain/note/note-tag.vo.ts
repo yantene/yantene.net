@@ -15,9 +15,7 @@ export class NoteTag implements IValueObject<NoteTag> {
   static create(raw: string): NoteTag {
     const trimmed = raw.trim();
     if (trimmed.length === 0 || trimmed.length > MAX_LENGTH) {
-      throw new InvalidNoteTagError(
-        `Note tag must be 1..${String(MAX_LENGTH)} characters long`,
-      );
+      throw new InvalidNoteTagError(`Note tag must be 1..${String(MAX_LENGTH)} characters long`);
     }
     return new NoteTag(trimmed);
   }

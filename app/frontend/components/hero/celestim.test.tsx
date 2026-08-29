@@ -4,10 +4,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Celestim } from "./celestim";
 
-const css = fs.readFileSync(
-  path.join(import.meta.dirname, "celestim.css"),
-  "utf8",
-);
+const css = fs.readFileSync(path.join(import.meta.dirname, "celestim.css"), "utf8");
 
 type Rgba = {
   readonly red: number;
@@ -63,10 +60,7 @@ function parseStops(name: string): readonly ColorStop[] {
       ];
     });
 
-  expect(
-    stops.length,
-    `no stops parsed from @keyframes ${name}`,
-  ).toBeGreaterThan(1);
+  expect(stops.length, `no stops parsed from @keyframes ${name}`).toBeGreaterThan(1);
 
   return stops.toSorted((a, b) => a.offset - b.offset);
 }
@@ -75,13 +69,11 @@ function parseStops(name: string): readonly ColorStop[] {
 function sampleAt(stops: readonly ColorStop[], offset: number): Rgba {
   const before = stops.findLast((stop) => stop.offset <= offset);
   const after = stops.find((stop) => stop.offset >= offset);
-  if (!before || !after)
-    throw new Error(`offset ${String(offset)} is uncovered`);
+  if (!before || !after) throw new Error(`offset ${String(offset)} is uncovered`);
 
   const span = after.offset - before.offset;
   const progress = span === 0 ? 0 : (offset - before.offset) / span;
-  const mix = (from: number, to: number): number =>
-    from + (to - from) * progress;
+  const mix = (from: number, to: number): number => from + (to - from) * progress;
 
   return {
     red: mix(before.color.red, after.color.red),
@@ -97,15 +89,12 @@ function toLinear(channel: number): number {
 }
 
 function luminance({ red, green, blue }: Rgba): number {
-  return (
-    0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue)
-  );
+  return 0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue);
 }
 
 /** over 演算 (source-over)。結果は不透明。 */
 function composite(over: Rgba, under: Rgba): Rgba {
-  const mix = (top: number, bottom: number): number =>
-    over.alpha * top + (1 - over.alpha) * bottom;
+  const mix = (top: number, bottom: number): number => over.alpha * top + (1 - over.alpha) * bottom;
 
   return {
     red: mix(over.red, under.red),
@@ -135,17 +124,14 @@ describe("Celestim", () => {
 
   it("paints the moon in front of the sun so that new moons eclipse it", () => {
     const { container } = render(<Celestim />);
-    const order = [
-      ...(container.querySelector(".celestim-sky")?.children ?? []),
-    ].map((element) => element.className);
-    const indexOf = (needle: string): number =>
-      order.findIndex((name) => name.includes(needle));
+    const order = [...(container.querySelector(".celestim-sky")?.children ?? [])].map(
+      (element) => element.className,
+    );
+    const indexOf = (needle: string): number => order.findIndex((name) => name.includes(needle));
 
     // 新月は太陽と同じ位置に来る。空と同色で塗られた月の影が太陽を覆うことで
     // 日食になる。太陽を手前にすると新月でも太陽が見えたままになり日食が消える。
-    expect(indexOf("celestim-solar-turntable")).toBeLessThan(
-      indexOf("celestim-lunar-turntable"),
-    );
+    expect(indexOf("celestim-solar-turntable")).toBeLessThan(indexOf("celestim-lunar-turntable"));
   });
 
   it("repaints the moon shade with whatever cycle the sky uses", () => {
@@ -156,13 +142,8 @@ describe("Celestim", () => {
       const selector = `.celestim-sky-veiled .celestim-moon-shade-${side} {`;
       const start = css.indexOf(selector);
 
-      expect(
-        start,
-        `no veiled override for moon-shade-${side}`,
-      ).toBeGreaterThanOrEqual(0);
-      expect(css.slice(start, css.indexOf("}", start))).toContain(
-        "celestim-veiled-sky-cycle",
-      );
+      expect(start, `no veiled override for moon-shade-${side}`).toBeGreaterThanOrEqual(0);
+      expect(css.slice(start, css.indexOf("}", start))).toContain("celestim-veiled-sky-cycle");
     }
   });
 

@@ -20,9 +20,7 @@ export function createTestKv(): {
     get: (key: string, type?: string) => {
       const found = store.get(key);
       if (found === undefined) return Promise.resolve(null);
-      return Promise.resolve(
-        type === "json" ? JSON.parse(found.value) : found.value,
-      );
+      return Promise.resolve(type === "json" ? JSON.parse(found.value) : found.value);
     },
     put: (key: string, value: string, options?: { expirationTtl?: number }) => {
       store.set(key, { value, expirationTtl: options?.expirationTtl });

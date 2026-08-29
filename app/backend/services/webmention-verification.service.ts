@@ -103,8 +103,7 @@ export class WebmentionVerificationService {
      * 誰が何を言ったかは残る。
      */
     const photo = parsed.author.photo;
-    const authorAvatar =
-      photo === undefined ? undefined : await this.avatars.mirror(photo);
+    const authorAvatar = photo === undefined ? undefined : await this.avatars.mirror(photo);
 
     await this.commands.upsert(
       Webmention.create({

@@ -10,8 +10,7 @@ const MAX_AGE_SECONDS = 3600;
  * refresh で内容が更新され得るため immutable にはしない。
  */
 export function contentCacheControlFor(env: Env): string {
-  const isBasicAuthEnabled =
-    env.BASIC_AUTH_USER !== undefined && env.BASIC_AUTH_PASS !== undefined;
+  const isBasicAuthEnabled = env.BASIC_AUTH_USER !== undefined && env.BASIC_AUTH_PASS !== undefined;
   const scope = isBasicAuthEnabled ? "private" : "public";
   return `${scope}, max-age=${String(MAX_AGE_SECONDS)}`;
 }

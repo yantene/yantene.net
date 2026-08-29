@@ -20,9 +20,7 @@ type EmojiPaletteProps = {
  */
 export function EmojiPalette({ onPick }: EmojiPaletteProps): React.JSX.Element {
   const { t, i18n } = useTranslation();
-  const [groups, setGroups] = useState<readonly PaletteGroup[] | undefined>(
-    undefined,
-  );
+  const [groups, setGroups] = useState<readonly PaletteGroup[] | undefined>(undefined);
   const [hasFailed, setFailed] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -49,9 +47,7 @@ export function EmojiPalette({ onPick }: EmojiPaletteProps): React.JSX.Element {
   }, [i18n.language]);
 
   if (hasFailed) {
-    return (
-      <p className="emoji-palette-status">{t("reaction.paletteFailed")}</p>
-    );
+    return <p className="emoji-palette-status">{t("reaction.paletteFailed")}</p>;
   }
   if (groups === undefined) {
     return <p className="emoji-palette-status">{t("reaction.loading")}</p>;

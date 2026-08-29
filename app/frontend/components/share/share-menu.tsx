@@ -64,10 +64,7 @@ async function copyLink(url: string, title: string): Promise<void> {
  * 翻訳のキーは組み立てず、そのまま書く。`share.${state}` のように綴ると、キーを grep しても
  * 見つからない場所ができる (実際、ここで share.failed という無い鍵を引いていた)。
  */
-function feedbackText(
-  state: CopyState,
-  t: (key: string) => string,
-): string | undefined {
+function feedbackText(state: CopyState, t: (key: string) => string): string | undefined {
   if (state === "copied") return t("share.copied");
   if (state === "failed") return t("share.copyFailed");
   return undefined;
@@ -133,10 +130,7 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
 
   return (
     <details className="share-menu">
-      <summary
-        className="share-menu-trigger press-control"
-        onClick={handleTriggerClick}
-      >
+      <summary className="share-menu-trigger press-control" onClick={handleTriggerClick}>
         <HiOutlineShare aria-hidden />
         {t("share.title")}
       </summary>
@@ -159,11 +153,7 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
           );
         })}
 
-        <button
-          type="button"
-          onClick={handleCopyClick}
-          className="share-menu-item press-control"
-        >
+        <button type="button" onClick={handleCopyClick} className="share-menu-item press-control">
           <HiOutlineLink aria-hidden />
           {t("share.copyLink")}
         </button>

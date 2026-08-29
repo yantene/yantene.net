@@ -19,13 +19,7 @@ import type {
   INoteSearchIndex,
 } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import {
-  ImageUrl,
-  Note,
-  NoteSlug,
-  NoteTag,
-  NoteTitle,
-} from "~/backend/domain/note";
+import { ImageUrl, Note, NoteSlug, NoteTag, NoteTitle } from "~/backend/domain/note";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 const noteSourcePattern = /^notes\/[^/]+\.md$/;
@@ -179,9 +173,7 @@ export class NotesRefreshService {
       }
 
       seen.add(slug);
-      const synced = await attempt(group, () =>
-        this.syncNote(group, source.value),
-      );
+      const synced = await attempt(group, () => this.syncNote(group, source.value));
       if (!synced.ok) continue;
       for (const url of synced.value) linkedUrls.add(url);
       processed.push(slug);
@@ -225,10 +217,7 @@ export class NotesRefreshService {
    *
    * 併せて、本文がカード化対象として参照している URL を返す。
    */
-  private async syncNote(
-    group: NoteGroup,
-    source: NoteSource,
-  ): Promise<readonly string[]> {
+  private async syncNote(group: NoteGroup, source: NoteSource): Promise<readonly string[]> {
     // 検証込みでエンティティと MDAST を組み立てる (不正なら NoteContentError)。
     const { note, mdast } = buildNoteContent(group, source.parsed);
 
@@ -242,11 +231,7 @@ export class NotesRefreshService {
      */
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
-    const sized = withImageDimensions(
-      mdast,
-      dimensions,
-      definitionUrlsOf(mdast),
-    );
+    const sized = withImageDimensions(mdast, dimensions, definitionUrlsOf(mdast));
     /*
      * 本文の 2 つの姿 (MDAST と原文) は隣り合わせに書く。同じ URL の 2 表現なので
      * (ADR 0020)、間に他の書き込みを挟むと、途中で落ちたときに**記事ページと
@@ -282,9 +267,7 @@ export class NotesRefreshService {
    * アセットを R2 に書き込みつつ、画像の寸法を集めて返す。
    * 読めなかった・寸法を判別できなかったものは表に載せない。
    */
-  private async cacheAssets(
-    group: NoteGroup,
-  ): Promise<ReadonlyMap<string, ImageDimensions>> {
+  private async cacheAssets(group: NoteGroup): Promise<ReadonlyMap<string, ImageDimensions>> {
     const dimensions = new Map<string, ImageDimensions>();
     for (const asset of group.assets) {
       const bytes = await this.content.readFile(asset.path);
@@ -372,16 +355,11 @@ function groupNotes(tree: readonly ContentEntry[]): NoteGroup[] {
 
 /** そのノートが正本に持っているアセットの相対パス。 */
 function assetPathsOf(group: NoteGroup): ReadonlySet<string> {
-  return new Set(
-    group.assets.map((asset) => asset.path.slice(group.assetPrefix.length)),
-  );
+  return new Set(group.assets.map((asset) => asset.path.slice(group.assetPrefix.length)));
 }
 
 /** md + アセットの (path, hash) を合成した変更検出用ハッシュ。 */
-function computeContentHash(
-  source: ContentEntry,
-  assets: readonly ContentEntry[],
-): string {
+function computeContentHash(source: ContentEntry, assets: readonly ContentEntry[]): string {
   const sortedAssets = assets.toSorted((a, b) => a.path.localeCompare(b.path));
   const parts = [`${source.path}:${source.hash}`];
   for (const asset of sortedAssets) {
@@ -409,10 +387,7 @@ function parseContent(markdown: string): ParsedNoteContent {
   try {
     return parseNoteContent(markdown);
   } catch (error) {
-    if (
-      error instanceof MathSyntaxError ||
-      error instanceof VisibilityValueError
-    ) {
+    if (error instanceof MathSyntaxError || error instanceof VisibilityValueError) {
       throw new NoteContentError(error.message);
     }
     throw error;
@@ -459,18 +434,12 @@ function buildNoteContent(
   } catch (error) {
     if (error instanceof NoteContentError) throw error;
     // VO 検証・日付パース失敗はコンテンツ不正として扱う。
-    throw new NoteContentError(
-      error instanceof Error ? error.message : String(error),
-    );
+    throw new NoteContentError(error instanceof Error ? error.message : String(error));
   }
 }
 
 /** URL を持ち、アセットを指しうるノードの種別。 */
-const assetUrlTypes: ReadonlySet<Nodes["type"]> = new Set([
-  "image",
-  "link",
-  "definition",
-]);
+const assetUrlTypes: ReadonlySet<Nodes["type"]> = new Set(["image", "link", "definition"]);
 
 /**
  * アセットの相対 URL を持ちうるノードか。
@@ -535,8 +504,7 @@ function definitionUrlsOf(node: Nodes): ReadonlyMap<string, string> {
 }
 
 function collectDefinitionUrls(node: Nodes, urls: Map<string, string>): void {
-  if (node.type === "definition" && !urls.has(node.identifier))
-    urls.set(node.identifier, node.url);
+  if (node.type === "definition" && !urls.has(node.identifier)) urls.set(node.identifier, node.url);
   if (!("children" in node)) return;
   for (const child of node.children) collectDefinitionUrls(child, urls);
 }
@@ -546,10 +514,7 @@ function collectDefinitionUrls(node: Nodes, urls: Map<string, string>): void {
  *
  * 直書き (`image`) は自分の URL、参照記法 (`imageReference`) は定義の URL を見る。
  */
-function sizedUrlOf(
-  node: Nodes,
-  definitionUrls: ReadonlyMap<string, string>,
-): string | undefined {
+function sizedUrlOf(node: Nodes, definitionUrls: ReadonlyMap<string, string>): string | undefined {
   if (node.type === "image") return node.url;
   if (node.type === "imageReference") {
     return definitionUrls.get(node.identifier);

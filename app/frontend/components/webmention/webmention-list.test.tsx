@@ -41,9 +41,7 @@ describe("WebmentionList", () => {
   });
 
   it("1 件も無ければ何も描かない", () => {
-    const { container } = render(
-      <WebmentionList webmentions={{ faces: [], replies: [] }} />,
-    );
+    const { container } = render(<WebmentionList webmentions={{ faces: [], replies: [] }} />);
     expect(container.innerHTML).toBe("");
   });
 
@@ -152,12 +150,10 @@ describe("WebmentionList", () => {
     // h-cite / h-card / p-content / dt-published が揃っていれば、誰の何への言及かを辿れる。
     expect(document.querySelector(":scope .h-cite")).toBeTruthy();
     expect(document.querySelector(":scope .h-card.p-author")).toBeTruthy();
-    expect(document.querySelector(":scope .p-content")?.textContent).toBe(
-      "なるほど",
+    expect(document.querySelector(":scope .p-content")?.textContent).toBe("なるほど");
+    expect(document.querySelector(":scope .dt-published")?.getAttribute("datetime")).toBe(
+      "2026-08-01T00:00:00Z",
     );
-    expect(
-      document.querySelector(":scope .dt-published")?.getAttribute("datetime"),
-    ).toBe("2026-08-01T00:00:00Z");
   });
 
   it("外部リンクは別タブで開き、安全な rel を付ける", () => {

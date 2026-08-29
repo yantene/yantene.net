@@ -112,6 +112,4 @@ export const mathMlAttributes = [
 ] as const;
 
 /** `<math>` の中でしか許さない要素 (裸の `<mi>` などが本文に紛れ込むのを防ぐ)。 */
-export const mathMlDescendants = mathMlTagNames.filter(
-  (tagName) => tagName !== "math",
-);
+export const mathMlDescendants = mathMlTagNames.filter((tagName) => tagName !== "math");

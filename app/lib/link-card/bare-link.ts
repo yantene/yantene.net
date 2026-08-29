@@ -67,9 +67,7 @@ export interface BareLinkParagraph {
  * 段落そのもの (ノードの同一性) を返すのは、描画側が「この段落をカードに差し替える」を
  * 位置ではなく参照で決められるようにするため。
  */
-export function collectBareLinkParagraphs(
-  root: Root,
-): readonly BareLinkParagraph[] {
+export function collectBareLinkParagraphs(root: Root): readonly BareLinkParagraph[] {
   const found: BareLinkParagraph[] = [];
 
   function walk(node: Nodes, isBlocked: boolean): void {

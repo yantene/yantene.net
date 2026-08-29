@@ -34,9 +34,7 @@ describe("charsetFromMeta", () => {
   });
 
   it("引用符が無くても読む", () => {
-    expect(charsetFromMeta(utf8.encode("<meta charset=euc-jp>"))).toBe(
-      "euc-jp",
-    );
+    expect(charsetFromMeta(utf8.encode("<meta charset=euc-jp>"))).toBe("euc-jp");
   });
 
   it("http-equiv の書き方も読む", () => {
@@ -49,17 +47,14 @@ describe("charsetFromMeta", () => {
 
   it("charset を名乗らない meta は読み飛ばす", () => {
     const html = utf8.encode(
-      '<meta name="viewport" content="width=device-width">' +
-        '<meta charset="Shift_JIS">',
+      '<meta name="viewport" content="width=device-width"><meta charset="Shift_JIS">',
     );
 
     expect(charsetFromMeta(html)).toBe("Shift_JIS");
   });
 
   it("宣言が無ければ undefined", () => {
-    expect(
-      charsetFromMeta(utf8.encode("<html><head><title>x")),
-    ).toBeUndefined();
+    expect(charsetFromMeta(utf8.encode("<html><head><title>x"))).toBeUndefined();
   });
 
   /*
@@ -67,9 +62,7 @@ describe("charsetFromMeta", () => {
    * 全体を走査すると、本文に書かれた文字列を宣言と読み違える。
    */
   it("先頭 1024 バイトより後ろの宣言は見ない", () => {
-    const html = utf8.encode(
-      `<html><head>${" ".repeat(1024)}<meta charset="Shift_JIS">`,
-    );
+    const html = utf8.encode(`<html><head>${" ".repeat(1024)}<meta charset="Shift_JIS">`);
 
     expect(charsetFromMeta(html)).toBeUndefined();
   });
@@ -116,9 +109,7 @@ describe("decoderFor", () => {
    */
   it("Shift_JIS のバイト列を復号する", () => {
     // "あ" (Shift_JIS) = 0x82 0xA0
-    expect(decoderFor("Shift_JIS").decode(new Uint8Array([0x82, 0xa0]))).toBe(
-      "あ",
-    );
+    expect(decoderFor("Shift_JIS").decode(new Uint8Array([0x82, 0xa0]))).toBe("あ");
   });
 
   it("知らない文字コードなら UTF-8 に倒す", () => {

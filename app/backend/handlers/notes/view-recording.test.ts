@@ -5,8 +5,7 @@ const chrome =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const safariIos =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
-const firefox =
-  "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0";
+const firefox = "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0";
 
 describe("isLikelyBot", () => {
   it("ふつうのブラウザは人として数える", () => {
@@ -17,14 +16,10 @@ describe("isLikelyBot", () => {
 
   it("検索エンジンのクローラーを弾く", () => {
     expect(
-      isLikelyBot(
-        "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-      ),
+      isLikelyBot("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"),
     ).toBe(true);
     expect(
-      isLikelyBot(
-        "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
-      ),
+      isLikelyBot("Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"),
     ).toBe(true);
     expect(isLikelyBot("Mozilla/5.0 (compatible; Yahoo! Slurp)")).toBe(true);
   });
@@ -43,9 +38,7 @@ describe("isLikelyBot", () => {
 
   it("計測・監視の類を弾く", () => {
     expect(
-      isLikelyBot(
-        "Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/120.0.0.0 Safari/537.36",
-      ),
+      isLikelyBot("Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/120.0.0.0 Safari/537.36"),
     ).toBe(true);
     expect(isLikelyBot("Chrome-Lighthouse")).toBe(true);
   });

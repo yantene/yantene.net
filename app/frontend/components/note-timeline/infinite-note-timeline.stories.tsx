@@ -15,10 +15,7 @@ function notesFor(page: number): NoteTimelineItemProps[] {
       title: `${String(nth)} 件目のノート`,
       summary:
         "下端に近づくと次のページを取りに行く。ここでは取得の手を差し替えて応答を作っている。",
-      imageUrl:
-        nth % 3 === 0
-          ? null
-          : `https://picsum.photos/seed/${String(nth)}/640/400`,
+      imageUrl: nth % 3 === 0 ? null : `https://picsum.photos/seed/${String(nth)}/640/400`,
       tags: nth % 2 === 0 ? ["日記"] : ["プログラミング", "備忘録"],
       publishedOn: `2026-${month}-15`,
     };

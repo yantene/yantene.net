@@ -19,12 +19,7 @@ import { LINK_CARD_TAG, LinkCardsContext } from "./link-card-context";
 import { LinkCardSlot } from "./link-card-slot";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import { MermaidDiagram } from "./mermaid-diagram";
-import type {
-  Element,
-  ElementContent,
-  Root as HastRoot,
-  RootContent,
-} from "hast";
+import type { Element, ElementContent, Root as HastRoot, RootContent } from "hast";
 import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
@@ -95,15 +90,11 @@ const sanitizeSchema = {
     // Alert も link-card と同じくこちらが組み立てた印で、同じ経路なら本文からも書ける。
     // 運ぶのは種別 1 つだけ (note-content-parser.ts が引用から起こす)。
     [ALERT_TAG_NAME]: ["kind"],
-    ...Object.fromEntries(
-      mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]]),
-    ),
+    ...Object.fromEntries(mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]])),
   },
   ancestors: {
     ...defaultSchema.ancestors,
-    ...Object.fromEntries(
-      mathMlDescendants.map((tagName) => [tagName, ["math"]]),
-    ),
+    ...Object.fromEntries(mathMlDescendants.map((tagName) => [tagName, ["math"]])),
   },
 };
 
@@ -210,10 +201,7 @@ const hastProcessor = unified()
   .use(rehypeHighlight);
 
 /** img 要素: 相対 URL を解決し、遅延読み込み・非同期デコードを既定にする。 */
-function transformImage(
-  element: Element,
-  resolve: ((src: string) => string) | undefined,
-): void {
+function transformImage(element: Element, resolve: ((src: string) => string) | undefined): void {
   const src = element.properties.src;
   if (typeof src === "string" && resolve !== undefined) {
     element.properties.src = resolve(src);
@@ -236,14 +224,8 @@ function toClassList(value: unknown): readonly string[] {
  * 押下の反応 (press-control) もここで足す。本文中のリンクは MDAST から起こすので
  * 書き手がクラスを付けられず、ここで足さないと本文の中だけ手応えが無くなる。
  */
-function transformAnchor(
-  element: Element,
-  siteOrigin: string | undefined,
-): void {
-  element.properties.className = [
-    ...toClassList(element.properties.className),
-    "press-control",
-  ];
+function transformAnchor(element: Element, siteOrigin: string | undefined): void {
+  element.properties.className = [...toClassList(element.properties.className), "press-control"];
 
   const href = element.properties.href;
   if (typeof href === "string" && isExternalHref(href, siteOrigin)) {
@@ -269,8 +251,7 @@ function toEmbed(element: Element): Element | null {
     ...element,
     properties: {
       src: normalized,
-      title:
-        typeof title === "string" && title !== "" ? title : DEFAULT_EMBED_TITLE,
+      title: typeof title === "string" && title !== "" ? title : DEFAULT_EMBED_TITLE,
       loading: "lazy",
       // 出どころは伝える必要がある。YouTube は埋め込み元を見て可否を決めており、
       // no-referrer にすると再生を断られる (プレーヤーの設定エラー)。読んでいる
@@ -336,8 +317,7 @@ function applyElementTransforms(
   if ("children" in node) {
     // 埋め込みは形を整えたものに差し替え、通せないものはここで落とす。
     node.children = node.children.flatMap((child) => {
-      if (child.type !== "element" || child.tagName !== "iframe")
-        return [child];
+      if (child.type !== "element" || child.tagName !== "iframe") return [child];
       const embed = toEmbed(child);
       return embed === null ? [] : [embed];
     });
@@ -357,8 +337,7 @@ function applyElementTransforms(
 /** 要素の下にあるテキストを連結する。コードブロックの中身を取り出すのに使う。 */
 function textOf(node: ElementContent): string {
   if (node.type === "text") return node.value;
-  if (node.type === "element")
-    return node.children.map((child) => textOf(child)).join("");
+  if (node.type === "element") return node.children.map((child) => textOf(child)).join("");
   return "";
 }
 
@@ -375,8 +354,7 @@ function mermaidSource(element: Element): string | null {
 
   const [code] = element.children;
   if (code.type !== "element" || code.tagName !== "code") return null;
-  if (!toClassList(code.properties.className).includes(MERMAID_CLASS))
-    return null;
+  if (!toClassList(code.properties.className).includes(MERMAID_CLASS)) return null;
 
   return textOf(code);
 }
@@ -450,10 +428,7 @@ export function MdastRenderer({
   linkCards,
   siteOrigin,
 }: MdastRendererProps): React.JSX.Element {
-  const cardsByUrl = useMemo(
-    () => new Map(Object.entries(linkCards ?? {})),
-    [linkCards],
-  );
+  const cardsByUrl = useMemo(() => new Map(Object.entries(linkCards ?? {})), [linkCards]);
 
   const content = useMemo(() => {
     // カードにするのは、中身が揃っている URL の段落だけ。表に無ければ素のリンクのまま
@@ -493,9 +468,7 @@ export function MdastRenderer({
   }, [node, transformImageUrl, cardsByUrl, siteOrigin]);
 
   return (
-    <article
-      className={`note-prose prose max-w-none ${className ?? ""}`.trim()}
-    >
+    <article className={`note-prose prose max-w-none ${className ?? ""}`.trim()}>
       <LinkCardsContext value={cardsByUrl}>{content}</LinkCardsContext>
     </article>
   );

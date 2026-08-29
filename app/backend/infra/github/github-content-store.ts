@@ -53,10 +53,8 @@ export class GitHubContentStore implements IContentStore {
     // メソッド呼び出しだと this が instance になり Workers が Illegal invocation を投げる。
     this.fetchFn =
       config.fetchFn ??
-      ((
-        input: Parameters<typeof fetch>[0],
-        init?: Parameters<typeof fetch>[1],
-      ) => fetch(input, init));
+      ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) =>
+        fetch(input, init));
   }
 
   private repoPath(): string {
@@ -93,9 +91,7 @@ export class GitHubContentStore implements IContentStore {
       .split("/")
       .map((segment) => encodeURIComponent(segment))
       .join("/");
-    const url =
-      `${this.repoPath()}/contents/${encodedPath}` +
-      `?ref=${encodeURIComponent(this.branch)}`;
+    const url = `${this.repoPath()}/contents/${encodedPath}?ref=${encodeURIComponent(this.branch)}`;
     const response = await this.fetchFn(url, {
       headers: {
         ...(await this.headers()),

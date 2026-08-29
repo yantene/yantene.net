@@ -95,11 +95,7 @@
  * border-border を有効化する (未定義だと色が効かなかった)。 */
 @theme {
   --color-foreground: var(--color-base-content);
-  --color-muted-foreground: color-mix(
-    in oklch,
-    var(--color-base-content) 62%,
-    transparent
-  );
+  --color-muted-foreground: color-mix(in oklch, var(--color-base-content) 62%, transparent);
   --color-border: var(--color-base-300);
 }
 
@@ -125,8 +121,8 @@
 @layer base {
   html {
     --body-font-stack:
-      "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic",
-      YuGothic, Meiryo, system-ui, sans-serif;
+      "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", YuGothic, Meiryo,
+      system-ui, sans-serif;
     font-family: var(--body-font-stack);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;

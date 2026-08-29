@@ -16,9 +16,7 @@ export class NoteSlug implements IValueObject<NoteSlug> {
   static create(raw: string): NoteSlug {
     const trimmed = raw.trim().toLowerCase();
     if (trimmed.length === 0 || trimmed.length > MAX_LENGTH) {
-      throw new InvalidNoteSlugError(
-        `Note slug must be 1..${String(MAX_LENGTH)} characters long`,
-      );
+      throw new InvalidNoteSlugError(`Note slug must be 1..${String(MAX_LENGTH)} characters long`);
     }
     if (
       !slugCharsPattern.test(trimmed) ||

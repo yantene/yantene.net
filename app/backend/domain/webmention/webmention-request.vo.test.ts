@@ -15,10 +15,7 @@ function create(source: unknown, target: unknown): WebmentionRequest {
 
 describe("WebmentionRequest", () => {
   it("ノート宛の mention を受け入れ、スラグを取り出す", () => {
-    const request = create(
-      "https://example.com/post",
-      "https://yantene.net/notes/hello",
-    );
+    const request = create("https://example.com/post", "https://yantene.net/notes/hello");
 
     expect(request.source.toString()).toBe("https://example.com/post");
     expect(request.targetSlug.toString()).toBe("hello");
@@ -51,10 +48,7 @@ describe("WebmentionRequest", () => {
 
   it("source と target が同じなら断る", () => {
     expect(() =>
-      create(
-        "https://yantene.net/notes/hello",
-        "https://yantene.net/notes/hello",
-      ),
+      create("https://yantene.net/notes/hello", "https://yantene.net/notes/hello"),
     ).toThrow(SameSourceAndTargetError);
   });
 
@@ -65,18 +59,13 @@ describe("WebmentionRequest", () => {
     "https://yantene.net/notes/hello/extra",
     "https://yantene.net/notes/Invalid_Slug",
   ])("このサイトのノート URL でない target は断る (%s)", (target) => {
-    expect(() => create("https://example.com/post", target)).toThrow(
-      TargetNotOnThisSiteError,
-    );
+    expect(() => create("https://example.com/post", target)).toThrow(TargetNotOnThisSiteError);
   });
 
   /* 自分の記事どうしのリンクで勝手に増えても、読み手にとっての意味が無い。 */
   it("自サイトからの mention は断る", () => {
     expect(() =>
-      create(
-        "https://yantene.net/notes/other",
-        "https://yantene.net/notes/hello",
-      ),
+      create("https://yantene.net/notes/other", "https://yantene.net/notes/hello"),
     ).toThrow(SelfMentionNotAcceptedError);
   });
 
@@ -93,21 +82,15 @@ describe("WebmentionRequest", () => {
     ["別の記事", "http://yantene.net/notes/other"],
     ["クエリ違い", "http://yantene.net/notes/hello?x=1"],
     ["港違い", "https://yantene.net:8443/notes/other"],
-  ])(
-    "スキームや港を変えた自サイトからの mention も断る (%s)",
-    (_case, source) => {
-      expect(() => create(source, "https://yantene.net/notes/hello")).toThrow(
-        SelfMentionNotAcceptedError,
-      );
-    },
-  );
+  ])("スキームや港を変えた自サイトからの mention も断る (%s)", (_case, source) => {
+    expect(() => create(source, "https://yantene.net/notes/hello")).toThrow(
+      SelfMentionNotAcceptedError,
+    );
+  });
 
   /* 断るのはホスト名が一致するときだけ。他所からの mention は http でも受け取る。 */
   it("他所のサイトからの mention は http でも受け入れる", () => {
-    const request = create(
-      "http://example.com/post",
-      "https://yantene.net/notes/hello",
-    );
+    const request = create("http://example.com/post", "https://yantene.net/notes/hello");
 
     expect(request.source.toString()).toBe("http://example.com/post");
     expect(request.targetSlug.toString()).toBe("hello");

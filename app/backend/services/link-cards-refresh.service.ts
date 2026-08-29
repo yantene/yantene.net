@@ -6,12 +6,7 @@ import type {
   ILinkCardQueryRepository,
 } from "~/backend/domain/link-card";
 import type { ILogger } from "~/backend/domain/shared";
-import {
-  LinkCard,
-  LinkCardUrl,
-  linkCardIdFor,
-  staleCutoffs,
-} from "~/backend/domain/link-card";
+import { LinkCard, LinkCardUrl, linkCardIdFor, staleCutoffs } from "~/backend/domain/link-card";
 
 /**
  * 1 回の refresh で取りに行くカードの上限。
@@ -76,9 +71,7 @@ export class LinkCardsRefreshService {
   ): Promise<LinkCardsSyncResult> {
     const referenced = toLinkCardUrls(referencedUrls);
     const existing = await this.query.findByUrls(referenced);
-    const known = new Map(
-      existing.map((card) => [card.url.toString(), card] as const),
-    );
+    const known = new Map(existing.map((card) => [card.url.toString(), card] as const));
 
     // 未取得・期限切れ・force のものだけ取りに行く。
     const fresh = referenced.filter((url) => {
@@ -109,14 +102,10 @@ export class LinkCardsRefreshService {
       });
     }
 
-    const results = await mapWithConcurrency(
-      planned,
-      CONCURRENCY,
-      async (url) => ({
-        url: url.toString(),
-        outcome: await this.syncOne(url, now, previous.get(url.toString())),
-      }),
-    );
+    const results = await mapWithConcurrency(planned, CONCURRENCY, async (url) => ({
+      url: url.toString(),
+      outcome: await this.syncOne(url, now, previous.get(url.toString())),
+    }));
 
     const urlsWhere = (outcome: SyncOutcome): string[] =>
       results.filter((r) => r.outcome === outcome).map((r) => r.url);

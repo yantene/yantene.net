@@ -105,13 +105,7 @@ const paths = targets.map((target) =>
 
 let failed = 0;
 let blockedByAuth = 0;
-for (const {
-  label,
-  path,
-  headers,
-  expectContentType,
-  expectBodyIncludes,
-} of paths) {
+for (const { label, path, headers, expectContentType, expectBodyIncludes } of paths) {
   let status = 0;
   let contentType = "";
   let body = "";
@@ -132,19 +126,14 @@ for (const {
   // 401/403 はアプリのハンドラまで到達していないということ。500 未満だからと
   // 成功に数えると、BASIC 認証の壁で止まったまま「全部 ok」になってしまう。
   const isBlocked = status === 401 || status === 403;
-  const isWrongType =
-    expectContentType !== undefined &&
-    !contentType.startsWith(expectContentType);
-  const isMissingBody =
-    expectBodyIncludes !== undefined && !body.includes(expectBodyIncludes);
+  const isWrongType = expectContentType !== undefined && !contentType.startsWith(expectContentType);
+  const isMissingBody = expectBodyIncludes !== undefined && !body.includes(expectBodyIncludes);
   const isOk = status < 500 && !isBlocked && !isWrongType && !isMissingBody;
   if (!isOk) failed += 1;
   if (isBlocked) blockedByAuth += 1;
   console.log(`${isOk ? "ok" : "x "} ${status} ${label}`);
   if (isWrongType) {
-    console.log(
-      `     expected content-type ${expectContentType}, got ${contentType}`,
-    );
+    console.log(`     expected content-type ${expectContentType}, got ${contentType}`);
   }
   if (isMissingBody) {
     console.log(`     expected the body to include ${expectBodyIncludes}`);
@@ -152,9 +141,7 @@ for (const {
 }
 
 if (blockedByAuth > 0) {
-  console.error(
-    `\nx ${blockedByAuth} path(s) were blocked before reaching the app (401/403).`,
-  );
+  console.error(`\nx ${blockedByAuth} path(s) were blocked before reaching the app (401/403).`);
   console.error(
     authHeader.Authorization === undefined
       ? "  BASIC 認証のある環境には SMOKE_USER / SMOKE_PASS を渡すこと。"
@@ -165,6 +152,4 @@ if (failed > 0) {
   console.error(`\nx ${failed} path(s) failed`);
   process.exit(1);
 }
-console.log(
-  `\nok all ${paths.length} checks reached the app and responded as expected`,
-);
+console.log(`\nok all ${paths.length} checks reached the app and responded as expected`);

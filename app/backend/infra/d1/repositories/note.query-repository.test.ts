@@ -33,9 +33,7 @@ function seed(params: {
     title: NoteTitle.create(params.slug),
     summary: "s",
     publishedOn: Temporal.PlainDate.from(params.publishedOn),
-    lastModifiedOn: Temporal.PlainDate.from(
-      params.lastModifiedOn ?? params.publishedOn,
-    ),
+    lastModifiedOn: Temporal.PlainDate.from(params.lastModifiedOn ?? params.publishedOn),
     sourceHash: `hash-${params.slug}`,
   });
 }
@@ -57,9 +55,7 @@ describe("D1NoteQueryRepository", () => {
     await new D1NoteCommandRepository(d1).upsert(
       seed({ slug: "found", publishedOn: "2026-01-01" }),
     );
-    const found = await new D1NoteQueryRepository(d1).findBySlug(
-      NoteSlug.create("found"),
-    );
+    const found = await new D1NoteQueryRepository(d1).findBySlug(NoteSlug.create("found"));
     expect(found?.slug.toString()).toBe("found");
   });
 
@@ -149,14 +145,10 @@ describe("D1NoteQueryRepository", () => {
     await new D1NoteCommandRepository(d1).upsert(
       seedTagged("t", "2026-01-01", ["日記", "プログラミング"]),
     );
-    const found = await new D1NoteQueryRepository(d1).findBySlug(
-      NoteSlug.create("t"),
+    const found = await new D1NoteQueryRepository(d1).findBySlug(NoteSlug.create("t"));
+    expect(found?.tags.map((tag) => tag.toString()).toSorted((a, b) => a.localeCompare(b))).toEqual(
+      ["プログラミング", "日記"],
     );
-    expect(
-      found?.tags
-        .map((tag) => tag.toString())
-        .toSorted((a, b) => a.localeCompare(b)),
-    ).toEqual(["プログラミング", "日記"]);
   });
 
   it("filters the list by tag (total = filtered count)", async () => {
@@ -197,9 +189,7 @@ describe("D1NoteQueryRepository", () => {
     await cmd.upsert(seedTagged("x", "2026-01-01", ["古い"]));
     await cmd.upsert(seedTagged("x", "2026-01-01", ["新しい"]));
 
-    const found = await new D1NoteQueryRepository(d1).findBySlug(
-      NoteSlug.create("x"),
-    );
+    const found = await new D1NoteQueryRepository(d1).findBySlug(NoteSlug.create("x"));
     expect(found?.tags.map((tag) => tag.toString())).toEqual(["新しい"]);
   });
 
@@ -218,22 +208,13 @@ describe("D1NoteQueryRepository", () => {
     );
 
     // 重複数の降順: both(2) → one(1)。none(0) と自分自身は除外。
-    expect(related.map((note) => note.slug.toString())).toEqual([
-      "both",
-      "one",
-    ]);
+    expect(related.map((note) => note.slug.toString())).toEqual(["both", "one"]);
   });
 
   it("returns no related notes when the note has no tags", async () => {
     const d1 = createTestD1();
-    await new D1NoteCommandRepository(d1).upsert(
-      seedTagged("solo", "2026-01-01", ["x"]),
-    );
-    const related = await new D1NoteQueryRepository(d1).findRelated(
-      NoteSlug.create("solo"),
-      [],
-      6,
-    );
+    await new D1NoteCommandRepository(d1).upsert(seedTagged("solo", "2026-01-01", ["x"]));
+    const related = await new D1NoteQueryRepository(d1).findRelated(NoteSlug.create("solo"), [], 6);
     expect(related).toEqual([]);
   });
 
@@ -287,9 +268,10 @@ describe("D1NoteQueryRepository", () => {
     await cmd.upsert(seed({ slug: "newest", publishedOn: "2026-02-01" }));
     await cmd.upsert(seed({ slug: "oldest", publishedOn: "2019-12-31" }));
 
-    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual(
-      { from: 2019, to: 2026 },
-    );
+    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual({
+      from: 2019,
+      to: 2026,
+    });
   });
 
   it("spans a single year when every note was published in it", async () => {
@@ -298,9 +280,10 @@ describe("D1NoteQueryRepository", () => {
     await cmd.upsert(seed({ slug: "a", publishedOn: "2026-01-10" }));
     await cmd.upsert(seed({ slug: "b", publishedOn: "2026-11-30" }));
 
-    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual(
-      { from: 2026, to: 2026 },
-    );
+    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual({
+      from: 2026,
+      to: 2026,
+    });
   });
 
   it("returns undefined when there is no note at all", async () => {

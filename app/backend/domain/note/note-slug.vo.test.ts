@@ -3,9 +3,7 @@ import { InvalidNoteSlugError, NoteSlug } from "./note-slug.vo";
 
 describe("NoteSlug", () => {
   it("accepts lowercase alphanumerics with single hyphens", () => {
-    expect(NoteSlug.create("hello-world-2026").toString()).toBe(
-      "hello-world-2026",
-    );
+    expect(NoteSlug.create("hello-world-2026").toString()).toBe("hello-world-2026");
   });
 
   it("trims and lowercases input", () => {
@@ -29,9 +27,7 @@ describe("NoteSlug", () => {
   });
 
   it("rejects slugs longer than 200 characters", () => {
-    expect(() => NoteSlug.create("a".repeat(201))).toThrow(
-      InvalidNoteSlugError,
-    );
+    expect(() => NoteSlug.create("a".repeat(201))).toThrow(InvalidNoteSlugError);
   });
 
   it("compares by value with equals", () => {

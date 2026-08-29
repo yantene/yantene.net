@@ -43,11 +43,7 @@ export function FeedLink({
   const { t } = useTranslation();
 
   return (
-    <a
-      href={href}
-      type="application/atom+xml"
-      className={`${INLINE_ICON_LINK} ${className}`}
-    >
+    <a href={href} type="application/atom+xml" className={`${INLINE_ICON_LINK} ${className}`}>
       <HiOutlineRss aria-hidden="true" />
       {label ?? t("feed.label")}
     </a>

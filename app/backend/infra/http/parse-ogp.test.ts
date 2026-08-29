@@ -3,9 +3,7 @@ import { decodeHtmlEntities, parseOgp } from "./parse-ogp";
 
 describe("decodeHtmlEntities", () => {
   it("名前付き実体を戻す", () => {
-    expect(decodeHtmlEntities("a &amp; b &lt;c&gt; &quot;d&quot;")).toBe(
-      'a & b <c> "d"',
-    );
+    expect(decodeHtmlEntities("a &amp; b &lt;c&gt; &quot;d&quot;")).toBe('a & b <c> "d"');
   });
 
   it("数値文字参照を戻す (10 進・16 進)", () => {
@@ -58,9 +56,7 @@ describe("parseOgp", () => {
   });
 
   it("実体参照を戻す", () => {
-    const ogp = parseOgp(
-      `<meta property="og:title" content="Q&amp;A &quot;入門&quot;">`,
-    );
+    const ogp = parseOgp(`<meta property="og:title" content="Q&amp;A &quot;入門&quot;">`);
     expect(ogp.title).toBe('Q&A "入門"');
   });
 
@@ -70,9 +66,7 @@ describe("parseOgp", () => {
   });
 
   it('rel="shortcut icon" も favicon として拾う', () => {
-    const ogp = parseOgp(
-      `<link rel="shortcut icon" href="/favicon.ico"><title>題</title>`,
-    );
+    const ogp = parseOgp(`<link rel="shortcut icon" href="/favicon.ico"><title>題</title>`);
     expect(ogp.faviconUrl).toBe("/favicon.ico");
   });
 
@@ -86,9 +80,7 @@ describe("parseOgp", () => {
   });
 
   it("rel=stylesheet は favicon にしない", () => {
-    const ogp = parseOgp(
-      `<link rel="stylesheet" href="/style.css"><title>題</title>`,
-    );
+    const ogp = parseOgp(`<link rel="stylesheet" href="/style.css"><title>題</title>`);
     expect(ogp.faviconUrl).toBeUndefined();
   });
 
@@ -99,9 +91,7 @@ describe("parseOgp", () => {
   });
 
   it("空文字の content は無かったことにする", () => {
-    const ogp = parseOgp(
-      `<meta property="og:title" content="   "><title>題</title>`,
-    );
+    const ogp = parseOgp(`<meta property="og:title" content="   "><title>題</title>`);
     expect(ogp.title).toBe("題");
   });
 });

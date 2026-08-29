@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildSessionCookie,
-  readSessionId,
-  SESSION_COOKIE,
-} from "./session-cookie";
+import { buildSessionCookie, readSessionId, SESSION_COOKIE } from "./session-cookie";
 import { SessionId } from "~/backend/domain/session";
 
 const id = SessionId.issue();
@@ -39,17 +35,13 @@ describe("readSessionId", () => {
     // 読み手が書き換えられる値なので、読めなければ発行し直すだけにする。
     expect(readSessionId(`${SESSION_COOKIE}=`)).toBeUndefined();
     expect(readSessionId(`${SESSION_COOKIE}=../../etc/passwd`)).toBeUndefined();
-    expect(
-      readSessionId(`${SESSION_COOKIE}=${"a".repeat(500)}`),
-    ).toBeUndefined();
+    expect(readSessionId(`${SESSION_COOKIE}=${"a".repeat(500)}`)).toBeUndefined();
   });
 });
 
 describe("buildSessionCookie", () => {
   it("識別子だけを載せる", () => {
-    expect(buildSessionCookie(id, secure)).toContain(
-      `${SESSION_COOKIE}=${id.toString()}`,
-    );
+    expect(buildSessionCookie(id, secure)).toContain(`${SESSION_COOKIE}=${id.toString()}`);
   });
 
   it("鍵として守る属性を付ける", () => {
@@ -66,8 +58,6 @@ describe("buildSessionCookie", () => {
   });
 
   it("ブラウザが許す上限 (400 日) まで持たせる", () => {
-    expect(buildSessionCookie(id, secure)).toContain(
-      `Max-Age=${String(400 * 86_400)}`,
-    );
+    expect(buildSessionCookie(id, secure)).toContain(`Max-Age=${String(400 * 86_400)}`);
   });
 });

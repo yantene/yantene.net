@@ -1,9 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import {
-  advanceDayClock,
-  readDayClockPhase,
-  readDayDurationMs,
-} from "./day-clock";
+import { advanceDayClock, readDayClockPhase, readDayDurationMs } from "./day-clock";
 import { Daywalker } from "./daywalker";
 import {
   dayTickMinutes,
@@ -43,9 +39,7 @@ interface TimeScrubberProps {
  * 操作しないあいだも目盛りは流れ続ける (CSS アニメーション)。JS が無い環境では
  * 掴めなくなるだけで、時計は止まらない。
  */
-export function TimeScrubber({
-  initialMinutes,
-}: TimeScrubberProps): React.JSX.Element {
+export function TimeScrubber({ initialMinutes }: TimeScrubberProps): React.JSX.Element {
   const [minutes, setMinutes] = useState(initialMinutes);
   const dayRef = useRef<HTMLDivElement>(null);
   const walkerRef = useRef<HTMLDivElement>(null);
@@ -85,23 +79,20 @@ export function TimeScrubber({
     walkerRef.current?.classList.toggle("daywalker-backward", isBackward);
   }, []);
 
-  const handlePointerDown = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>): void => {
-      /*
-       * 換算に要る 2 つの値を掴んだ時点で測っておく。どちらも動いているあいだは
-       * 変わらないうえ、1 日の長さを読むには全アニメーションを走査するので、
-       * pointermove のたびに読み直すと指を動かしている間ずっと走査し続けることになる。
-       */
-      dayWidthRef.current = dayRef.current?.getBoundingClientRect().width ?? 0;
-      dayMsRef.current = readDayDurationMs();
-      if (dayWidthRef.current <= 0) return;
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+    /*
+     * 換算に要る 2 つの値を掴んだ時点で測っておく。どちらも動いているあいだは
+     * 変わらないうえ、1 日の長さを読むには全アニメーションを走査するので、
+     * pointermove のたびに読み直すと指を動かしている間ずっと走査し続けることになる。
+     */
+    dayWidthRef.current = dayRef.current?.getBoundingClientRect().width ?? 0;
+    dayMsRef.current = readDayDurationMs();
+    if (dayWidthRef.current <= 0) return;
 
-      draggingRef.current = true;
-      lastXRef.current = event.clientX;
-      event.currentTarget.setPointerCapture(event.pointerId);
-    },
-    [],
-  );
+    draggingRef.current = true;
+    lastXRef.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, []);
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLDivElement>): void => {
@@ -109,11 +100,7 @@ export function TimeScrubber({
 
       const distance = event.clientX - lastXRef.current;
       lastXRef.current = event.clientX;
-      const elapsed = dragDistanceToElapsed(
-        distance,
-        dayWidthRef.current,
-        dayMsRef.current,
-      );
+      const elapsed = dragDistanceToElapsed(distance, dayWidthRef.current, dayMsRef.current);
       if (elapsed !== 0) faceDirection(elapsed < 0);
       scrub(elapsed);
     },
@@ -167,16 +154,10 @@ export function TimeScrubber({
       >
         <div className="time-axis-track">
           {Array.from({ length: DAYS_IN_TRACK }, (_, day) => (
-            <div
-              className="time-axis-day"
-              key={day}
-              ref={day === 0 ? dayRef : undefined}
-            >
+            <div className="time-axis-day" key={day} ref={day === 0 ? dayRef : undefined}>
               {TICKS.map((tick) => (
                 <span className="time-axis-tick" key={tick}>
-                  <span className="time-axis-tick-label">
-                    {formatClock(tick)}
-                  </span>
+                  <span className="time-axis-tick-label">{formatClock(tick)}</span>
                 </span>
               ))}
             </div>

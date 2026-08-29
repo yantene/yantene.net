@@ -28,8 +28,5 @@ export function truncateByGrapheme(
 }
 
 function toGraphemes(value: string): readonly string[] {
-  return Array.from(
-    new Intl.Segmenter("ja").segment(value),
-    (segment) => segment.segment,
-  );
+  return Array.from(new Intl.Segmenter("ja").segment(value), (segment) => segment.segment);
 }

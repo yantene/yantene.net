@@ -5,8 +5,7 @@ const notes = [
   {
     slug: "cloudflare-workers-blog",
     title: "Cloudflare Workers + Hono + React でつくる個人ブログの現在地",
-    summary:
-      "なぜまたブログを自作しているのか。アーキテクチャと設計思想のメモ。",
+    summary: "なぜまたブログを自作しているのか。アーキテクチャと設計思想のメモ。",
     imageUrl: "https://picsum.photos/seed/note-a/640/400",
     tags: ["Web", "プログラミング"],
     publishedOn: "2026-05-08",

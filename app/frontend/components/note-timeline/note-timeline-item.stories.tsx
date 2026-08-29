@@ -7,8 +7,7 @@ const meta: Meta<typeof NoteTimelineItem> = {
   args: {
     slug: "hello-world",
     title: "はじめてのノート",
-    summary:
-      "これはノートの要約です。一覧やホームの新着に、先頭 160 文字ほどが表示されます。",
+    summary: "これはノートの要約です。一覧やホームの新着に、先頭 160 文字ほどが表示されます。",
     imageUrl: "https://picsum.photos/seed/yantene/640/400",
     publishedOn: "2026-05-08",
   },

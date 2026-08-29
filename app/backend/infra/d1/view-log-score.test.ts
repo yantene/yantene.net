@@ -104,17 +104,14 @@ describe("scoreWithWeightAdded", () => {
       seeded: viewWeightLog(dayAfterEpoch(0)),
       day: dayAfterEpoch(9000),
     },
-  ])(
-    "$name とき、ドメインの logScoreAfterView と一致する",
-    async ({ seeded, day }) => {
-      const harness = await setup();
-      await harness.seed(seeded);
+  ])("$name とき、ドメインの logScoreAfterView と一致する", async ({ seeded, day }) => {
+    const harness = await setup();
+    await harness.seed(seeded);
 
-      await harness.add(viewWeightLog(day));
+    await harness.add(viewWeightLog(day));
 
-      expect(await harness.score()).toBe(logScoreAfterView(seeded, day));
-    },
-  );
+    expect(await harness.score()).toBe(logScoreAfterView(seeded, day));
+  });
 
   it("リアクションの重みでも一致する", async () => {
     const harness = await setup();
@@ -164,9 +161,7 @@ describe("scoreWithWeightRemoved", () => {
 
       await harness.remove(reactionWeightLog(day), floor);
 
-      expect(await harness.score()).toBe(
-        logScoreAfterReactionRemoved(seeded, day, floor),
-      );
+      expect(await harness.score()).toBe(logScoreAfterReactionRemoved(seeded, day, floor));
     },
   );
 

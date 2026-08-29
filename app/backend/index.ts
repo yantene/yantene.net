@@ -1,11 +1,7 @@
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
-import {
-  NONCE,
-  secureHeaders,
-  type SecureHeadersVariables,
-} from "hono/secure-headers";
+import { NONCE, secureHeaders, type SecureHeadersVariables } from "hono/secure-headers";
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
 import { createLinkCardAssetsRouter } from "./handlers/link-cards/assets.handler";
@@ -106,9 +102,8 @@ const secureHeadersWithCsp: MiddlewareHandler<RootBindings> = secureHeaders({
 });
 
 /** development 用。CSP のみ外す。 */
-const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> = secureHeaders(
-  baseSecureHeaderOptions,
-);
+const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> =
+  secureHeaders(baseSecureHeaderOptions);
 
 /**
  * CSP は development でのみ外す (ADR 0007)。
@@ -117,15 +112,11 @@ const secureHeadersWithoutCsp: MiddlewareHandler<RootBindings> = secureHeaders(
  * `style-src 'self'` 下では CSS が丸ごと落ちて見た目の確認ができない。
  * development 以外 (想定外の APP_ENV を含む) では必ず CSP を付ける (secure by default)。
  */
-const environmentAwareSecureHeaders = createMiddleware<RootBindings>(
-  async (c, next) => {
-    const middleware =
-      c.env.APP_ENV === "development"
-        ? secureHeadersWithoutCsp
-        : secureHeadersWithCsp;
-    await middleware(c, next);
-  },
-);
+const environmentAwareSecureHeaders = createMiddleware<RootBindings>(async (c, next) => {
+  const middleware =
+    c.env.APP_ENV === "development" ? secureHeadersWithoutCsp : secureHeadersWithCsp;
+  await middleware(c, next);
+});
 
 /**
  * Hono アプリを組み立てる。ページ描画は React Router に委譲する。
@@ -139,12 +130,7 @@ const environmentAwareSecureHeaders = createMiddleware<RootBindings>(
  *   `<Scripts nonce>` / `<ScrollRestoration nonce>` から参照できるようにする。
  */
 export const getApp = (
-  handler: (
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext,
-    nonce: string,
-  ) => Promise<Response>,
+  handler: (request: Request, env: Env, ctx: ExecutionContext, nonce: string) => Promise<Response>,
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Hono の戻り値型を明示すると型推論を阻害するため、ここだけ推論に任せる
 ) => {
   const app = new Hono<RootBindings>();

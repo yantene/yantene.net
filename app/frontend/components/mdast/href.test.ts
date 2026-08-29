@@ -3,12 +3,9 @@ import { isExternalHref } from "./href";
 
 describe("isExternalHref", () => {
   // eslint-disable-next-line unicorn/prefer-https -- http と https の両方を外部として扱うことが眼目
-  it.each(["http://example.com/", "https://example.com/"])(
-    "http(s) は外部 (%s)",
-    (href) => {
-      expect(isExternalHref(href)).toBe(true);
-    },
-  );
+  it.each(["http://example.com/", "https://example.com/"])("http(s) は外部 (%s)", (href) => {
+    expect(isExternalHref(href)).toBe(true);
+  });
 
   /* ブラウザが普通に開く書き方。rel と target を付け損なっていた (#306)。 */
   it.each(["HTTPS://example.com/", "HtTp://example.com/"])(
@@ -50,9 +47,7 @@ describe("isExternalHref", () => {
     });
 
     it("ポートまで含めて見る", () => {
-      expect(isExternalHref("https://yantene.net:8443/notes/x", origin)).toBe(
-        true,
-      );
+      expect(isExternalHref("https://yantene.net:8443/notes/x", origin)).toBe(true);
     });
 
     it("スキームが違えば外部", () => {
@@ -64,12 +59,8 @@ describe("isExternalHref", () => {
      * 文字列の前方一致で見ると通ってしまう。origin どうしで比べること。
      */
     it("出どころを名前に含めるだけの別ホストは外部", () => {
-      expect(isExternalHref("https://yantene.net.evil.example/x", origin)).toBe(
-        true,
-      );
-      expect(
-        isExternalHref("https://evil.example/?u=https://yantene.net", origin),
-      ).toBe(true);
+      expect(isExternalHref("https://yantene.net.evil.example/x", origin)).toBe(true);
+      expect(isExternalHref("https://evil.example/?u=https://yantene.net", origin)).toBe(true);
     });
 
     it("よそのサイトは外部のまま", () => {

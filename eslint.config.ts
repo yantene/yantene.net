@@ -144,10 +144,7 @@ const config = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/no-confusing-void-expression": [
-        "error",
-        { ignoreArrowShorthand: true },
-      ],
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
       "@typescript-eslint/prefer-readonly": "error",
     },
   },
@@ -169,10 +166,7 @@ const config = [
       ...react.configs.recommended.rules,
       ...react.configs["jsx-runtime"].rules,
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       ...jsxA11y.flatConfigs.recommended.rules,
       "react/prop-types": "off",
       "react/react-in-jsx-scope": "off",
@@ -332,10 +326,7 @@ const config = [
   // ルートモジュール (app/frontend/routes/) は動的セグメントをドットで区切る
   // (notes.$slug.tsx) ため対象外にしてある。
   {
-    files: [
-      "app/frontend/components/**/*.{ts,tsx}",
-      "app/frontend/layouts/**/*.{ts,tsx}",
-    ],
+    files: ["app/frontend/components/**/*.{ts,tsx}", "app/frontend/layouts/**/*.{ts,tsx}"],
     rules: {
       "unicorn/filename-case": [
         "error",

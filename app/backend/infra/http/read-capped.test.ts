@@ -10,9 +10,7 @@ import { readCapped } from "./read-capped";
 const utf8 = new TextEncoder();
 
 /** 与えた塊を順に流すストリーム。上限の判定は塊の切れ目で起きる。 */
-function streamOf(
-  ...chunks: readonly Uint8Array[]
-): ReadableStream<Uint8Array> {
+function streamOf(...chunks: readonly Uint8Array[]): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
     start(controller) {
       for (const chunk of chunks) controller.enqueue(chunk);
@@ -23,18 +21,13 @@ function streamOf(
 
 describe("readCapped", () => {
   it("上限に収まる本文を 1 本に繋いで返す", async () => {
-    const bytes = await readCapped(
-      streamOf(utf8.encode("あい"), utf8.encode("うえお")),
-      1024,
-    );
+    const bytes = await readCapped(streamOf(utf8.encode("あい"), utf8.encode("うえお")), 1024);
 
     expect(bytes).toEqual(utf8.encode("あいうえお"));
   });
 
   it("空の本文は空のバイト列になる", async () => {
-    await expect(readCapped(streamOf(), 1024)).resolves.toEqual(
-      new Uint8Array(0),
-    );
+    await expect(readCapped(streamOf(), 1024)).resolves.toEqual(new Uint8Array(0));
   });
 
   /*
@@ -56,10 +49,7 @@ describe("readCapped", () => {
 
   it("塊をまたいで数える", async () => {
     // 1 塊ずつは上限に収まるが、合わせると超える。
-    const bytes = await readCapped(
-      streamOf(new Uint8Array(6), new Uint8Array(6)),
-      10,
-    );
+    const bytes = await readCapped(streamOf(new Uint8Array(6), new Uint8Array(6)), 10);
 
     expect(bytes).toBeUndefined();
   });
@@ -128,12 +118,7 @@ describe("readCapped", () => {
    * 上限が数として読めないときは黙って通さない。`total > NaN` は常に偽なので、
    * 通すと枷が外れたことに誰も気づかないまま際限なく読むことになる。
    */
-  it.each([NaN, 0, -1, Infinity])(
-    "読めない上限 (%s) は投げて知らせる",
-    async (maxBytes) => {
-      await expect(readCapped(streamOf(), maxBytes)).rejects.toThrow(
-        RangeError,
-      );
-    },
-  );
+  it.each([NaN, 0, -1, Infinity])("読めない上限 (%s) は投げて知らせる", async (maxBytes) => {
+    await expect(readCapped(streamOf(), maxBytes)).rejects.toThrow(RangeError);
+  });
 });

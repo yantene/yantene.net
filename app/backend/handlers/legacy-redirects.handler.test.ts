@@ -41,15 +41,9 @@ const noteRedirects: readonly (readonly [string, string])[] = [
   ["/amidakuji_by_cobol.html", "/notes/amidakuji-in-cobol"],
   ["/joi2009_yosen_q5_succeed.html", "/notes/joi-2009-qual-q5-solved"],
   ["/passed_ap_exam.html", "/notes/passed-ap-exam"],
-  [
-    "/svt1311aj_linux_brightness_adjustment.html",
-    "/notes/vaio-svt1311aj-brightness-on-linux",
-  ],
+  ["/svt1311aj_linux_brightness_adjustment.html", "/notes/vaio-svt1311aj-brightness-on-linux"],
   ["/code_thanks_festival_2014.html", "/notes/code-thanks-festival-2014"],
-  [
-    "/install_arch_linux_on_uefi_machine.html",
-    "/notes/install-arch-linux-on-vaio-pro",
-  ],
+  ["/install_arch_linux_on_uefi_machine.html", "/notes/install-arch-linux-on-vaio-pro"],
   ["/tut_tani_checker.html", "/notes/tut-credit-checker"],
   ["/tut_photographs.html", "/notes/tut-in-photos"],
   ["/install_arch_on_kvi-70b.html", "/notes/install-arch-linux-on-kvi-70b"],
@@ -75,23 +69,14 @@ describe("legacy note URLs", () => {
   });
 
   it("lets an unknown .html fall through to the page router", async () => {
-    const res = await createTestApp().request(
-      "/never_published.html",
-      {},
-      env(),
-      executionCtx(),
-    );
+    const res = await createTestApp().request("/never_published.html", {}, env(), executionCtx());
 
     expect(res.status).toBe(404);
   });
 
   // Hono は HEAD を GET として dispatch するので、GET だけの登録で HEAD にも応える。
   it("answers a HEAD request the same way", async () => {
-    const res = await createTestApp().request(
-      "/combsort.html",
-      { method: "HEAD" },
-      env(),
-    );
+    const res = await createTestApp().request("/combsort.html", { method: "HEAD" }, env());
 
     expect(res.status).toBe(308);
     expect(res.headers.get("location")).toBe("/notes/comb-sort-in-java");
@@ -130,11 +115,7 @@ describe("legacy pages other than articles", () => {
   });
 
   it("carries the tag of the old article list over to the note list", async () => {
-    const res = await createTestApp().request(
-      "/list.html?tag=%E6%97%A5%E8%A8%98",
-      {},
-      env(),
-    );
+    const res = await createTestApp().request("/list.html?tag=%E6%97%A5%E8%A8%98", {}, env());
 
     expect(res.status).toBe(308);
     expect(res.headers.get("location")).toBe("/notes?tag=%E6%97%A5%E8%A8%98");
@@ -143,11 +124,7 @@ describe("legacy pages other than articles", () => {
   // 旧サイトのタグには `GNU/Linux` のようにスラッシュを含むものがある。
   /* eslint-disable no-secrets/no-secrets -- 符号化したタグ名を高エントロピーの秘匿情報と誤検知するため (秘密は含まない)。 */
   it("escapes a slash inside a tag", async () => {
-    const res = await createTestApp().request(
-      "/list.html?tag=GNU%2FLinux",
-      {},
-      env(),
-    );
+    const res = await createTestApp().request("/list.html?tag=GNU%2FLinux", {}, env());
 
     expect(res.headers.get("location")).toBe("/notes?tag=GNU%2FLinux");
   });
@@ -163,9 +140,7 @@ describe("legacy image URLs", () => {
     );
 
     expect(res.status).toBe(308);
-    expect(res.headers.get("location")).toBe(
-      "/api/v1/notes/hacku-2016/assets/scream2.png",
-    );
+    expect(res.headers.get("location")).toBe("/api/v1/notes/hacku-2016/assets/scream2.png");
   });
 
   /*
@@ -173,24 +148,13 @@ describe("legacy image URLs", () => {
    * 別のリソースを指し、その 404 がキャッシュされてしまう。
    */
   it("re-encodes characters that would change the target", async () => {
-    const res = await createTestApp().request(
-      "/images/2016-09-26-hacku_2016/a%23b.png",
-      {},
-      env(),
-    );
+    const res = await createTestApp().request("/images/2016-09-26-hacku_2016/a%23b.png", {}, env());
 
-    expect(res.headers.get("location")).toBe(
-      "/api/v1/notes/hacku-2016/assets/a%23b.png",
-    );
+    expect(res.headers.get("location")).toBe("/api/v1/notes/hacku-2016/assets/a%23b.png");
   });
 
   it("lets a directory without a date prefix fall through", async () => {
-    const res = await createTestApp().request(
-      "/images/icons/logo.svg",
-      {},
-      env(),
-      executionCtx(),
-    );
+    const res = await createTestApp().request("/images/icons/logo.svg", {}, env(), executionCtx());
 
     expect(res.status).toBe(404);
   });

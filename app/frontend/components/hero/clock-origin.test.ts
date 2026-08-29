@@ -2,11 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import {
-  clockOriginClassName,
-  moonAgeDays,
-  resolveClockOrigin,
-} from "./clock-origin";
+import { clockOriginClassName, moonAgeDays, resolveClockOrigin } from "./clock-origin";
 
 /** 平均朔望月 (日)。clock-origin.ts と同じ値。 */
 const SYNODIC_MONTH_DAYS = 29.530588861;
@@ -161,10 +157,7 @@ describe("clock-origin.css との噛み合わせ", () => {
 
   it("朔望月ぶんのどの日でも、載せるクラスが CSS にある", () => {
     const start = Date.UTC(2026, 7, 1);
-    const everyDay = Array.from(
-      { length: 30 },
-      (_, day) => new Date(start + day * 86_400_000),
-    );
+    const everyDay = Array.from({ length: 30 }, (_, day) => new Date(start + day * 86_400_000));
 
     expect(missingClassNames(everyDay)).toEqual([]);
   });

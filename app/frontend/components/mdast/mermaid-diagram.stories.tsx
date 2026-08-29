@@ -5,11 +5,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
  * 組み上がるまでと、組めなかったときに出るもの。本番では mdast-renderer が包んだ
  * 元のコードブロックがここに来るので、ストーリーでも同じ形のものを渡す。
  */
-function SourceBlock({
-  source,
-}: {
-  readonly source: string;
-}): React.JSX.Element {
+function SourceBlock({ source }: { readonly source: string }): React.JSX.Element {
   return (
     <div className="code-block">
       <pre>

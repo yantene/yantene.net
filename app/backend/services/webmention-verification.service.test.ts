@@ -47,9 +47,7 @@ function harness(
   const fetcher: IWebmentionSourceFetcher = {
     fetch: () => Promise.resolve(result),
   };
-  const upsert = vi.fn(() =>
-    Promise.resolve(undefined as unknown as Webmention),
-  );
+  const upsert = vi.fn(() => Promise.resolve(undefined as unknown as Webmention));
   const deleteBySource = vi.fn(() => Promise.resolve());
   const commands: IWebmentionCommandRepository = {
     upsert,
@@ -76,8 +74,7 @@ function fetched(html: string, resolvedUrl = SOURCE): SourceFetchResult {
 }
 
 /** どこへ転送されても、こちらの記事を指すリンクを持つ文書。 */
-const SELF_CANONICAL_HTML =
-  '<link rel="canonical" href="https://yantene.net/notes/hello">';
+const SELF_CANONICAL_HTML = '<link rel="canonical" href="https://yantene.net/notes/hello">';
 
 describe("WebmentionVerificationService", () => {
   it("target をリンクしていれば保存する", async () => {
@@ -96,9 +93,7 @@ describe("WebmentionVerificationService", () => {
    * ここが検証の肝。source が target を指していなければ、送り手が何と言おうと保存しない。
    */
   it("リンクしていなければ保存しない", async () => {
-    const { service, upsert, deleteBySource } = harness(
-      fetched("<p>関係のない記事</p>"),
-    );
+    const { service, upsert, deleteBySource } = harness(fetched("<p>関係のない記事</p>"));
 
     await service.verify(noteId, request);
 
@@ -152,9 +147,7 @@ describe("WebmentionVerificationService", () => {
 
   /* 他人の本物の返信ページへ転送して、その人の名前と本文を横取りさせない。 */
   it("別のホストへ転送されたら保存しない", async () => {
-    const { service, upsert } = harness(
-      fetched(LINKING_HTML, "https://elsewhere.example/reply"),
-    );
+    const { service, upsert } = harness(fetched(LINKING_HTML, "https://elsewhere.example/reply"));
 
     await service.verify(noteId, request);
 
@@ -163,9 +156,7 @@ describe("WebmentionVerificationService", () => {
 
   /* スキームだけの転送 (http → https) は素通しさせる。 */
   it("同じホストの中での転送は通す", async () => {
-    const { service, upsert } = harness(
-      fetched(LINKING_HTML, "https://example.com/post/1/amp"),
-    );
+    const { service, upsert } = harness(fetched(LINKING_HTML, "https://example.com/post/1/amp"));
 
     await service.verify(noteId, request);
 
@@ -185,10 +176,7 @@ describe("WebmentionVerificationService", () => {
 
   describe("ブロックリスト", () => {
     it("止めている送信元は取りに行かず、保存もしない", async () => {
-      const { service, upsert, deleteBySource } = harness(
-        fetched(LINKING_HTML),
-        ["example.com"],
-      );
+      const { service, upsert, deleteBySource } = harness(fetched(LINKING_HTML), ["example.com"]);
 
       await service.verify(noteId, request);
 
@@ -206,9 +194,7 @@ describe("WebmentionVerificationService", () => {
     });
 
     it("止めていない送信元はこれまでどおり保存する", async () => {
-      const { service, upsert } = harness(fetched(LINKING_HTML), [
-        "other.example",
-      ]);
+      const { service, upsert } = harness(fetched(LINKING_HTML), ["other.example"]);
 
       await service.verify(noteId, request);
 

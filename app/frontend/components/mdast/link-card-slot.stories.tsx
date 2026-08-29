@@ -19,8 +19,7 @@ const cardUrl = "https://example.com/article";
 const card: LinkCardView = {
   url: cardUrl,
   title: "むき出しの URL を OGP のリンクカードにする",
-  description:
-    "段落がリンク 1 つだけでできているとき、リンク先の OGP を読んでカードとして描く。",
+  description: "段落がリンク 1 つだけでできているとき、リンク先の OGP を読んでカードとして描く。",
   siteName: "example",
   imageUrl: thumbnail,
   faviconUrl: favicon,

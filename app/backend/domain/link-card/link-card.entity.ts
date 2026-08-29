@@ -220,9 +220,7 @@ export class LinkCard {
     if (this.fields.fetchFailedSince !== undefined) {
       return KEPT_AFTER_FAILURE_TTL_HOURS;
     }
-    return metadata.image === "missed"
-      ? IMAGE_MISSED_TTL_HOURS
-      : AVAILABLE_TTL_HOURS;
+    return metadata.image === "missed" ? IMAGE_MISSED_TTL_HOURS : AVAILABLE_TTL_HOURS;
   }
 }
 

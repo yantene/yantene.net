@@ -36,9 +36,7 @@ describe("ReactionEmoji", () => {
   });
 
   it("同じ絵文字どうしは等しい", () => {
-    expect(ReactionEmoji.create("🎉").equals(ReactionEmoji.create("🎉"))).toBe(
-      true,
-    );
+    expect(ReactionEmoji.create("🎉").equals(ReactionEmoji.create("🎉"))).toBe(true);
     expect(ReactionEmoji.create("🎉").equals(ReactionEmoji.like())).toBe(false);
   });
 });

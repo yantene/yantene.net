@@ -1,7 +1,4 @@
-import {
-  alertKinds,
-  type AlertKind,
-} from "~/backend/services/note-content-parser";
+import { alertKinds, type AlertKind } from "~/backend/services/note-content-parser";
 
 /**
  * 種別ごとの見出し。本文が日本語なので、GFM の英語ラベルではなく日本語を出す。
@@ -38,10 +35,7 @@ const alertIcons: Record<AlertKind, React.JSX.Element> = {
 };
 
 function isAlertKind(value: unknown): value is AlertKind {
-  return (
-    typeof value === "string" &&
-    (alertKinds as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (alertKinds as readonly string[]).includes(value);
 }
 
 export interface AlertProps {

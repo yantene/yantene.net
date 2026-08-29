@@ -6,8 +6,7 @@ const CHROME_ACCEPT =
   "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7";
 
 /** Firefox / Safari が送る Accept。 */
-const FIREFOX_ACCEPT =
-  "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+const FIREFOX_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 
 /*
  * ワイルドカードを Markdown 側に数えると全訪問者に原文が配られる。ここが落ちる変更は
