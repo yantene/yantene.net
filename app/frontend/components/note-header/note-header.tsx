@@ -62,11 +62,25 @@ export function NoteHeader({
         <span className="note-header-kind">NOTE</span>
       </p>
       <h1 className="note-header-title p-name">{title}</h1>
-      {/* 理由は上の JSDoc に書いた。`u-url` は相手のサイトで解決されるので絶対 URL にする。 */}
-      <a className="sr-only u-url" href={`${origin}/notes/${slug}`}>
+      {/*
+        理由は上の JSDoc に書いた。`u-url` は相手のサイトで解決されるので絶対 URL にする。
+
+        機械に読ませるためだけの印なので、人には渡さない。`sr-only` は目に見えなくする
+        だけで、タブ順にもアクセシビリティツリーにも残る。放っておくと、表題が二重に
+        読まれたうえ、いまのページを指すだけのリンクにフォーカスが止まる (#287)。
+
+        `aria-hidden` と `tabIndex={-1}` は必ず対で置くこと。読み上げから消しただけの
+        到達できる要素は、焦点が当たっても何も読まれない状態になる。
+      */}
+      <a
+        className="sr-only u-url"
+        href={`${origin}/notes/${slug}`}
+        aria-hidden="true"
+        tabIndex={-1}
+      >
         {title}
       </a>
-      <a className="sr-only p-author h-card" href={`${origin}/`}>
+      <a className="sr-only p-author h-card" href={`${origin}/`} aria-hidden="true" tabIndex={-1}>
         yantene
       </a>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
