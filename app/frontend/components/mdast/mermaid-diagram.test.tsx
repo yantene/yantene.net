@@ -39,10 +39,35 @@ function fence(language: string, body: string): MdastRoot {
   return md(`\`\`\`${language}\n${body}\n\`\`\``);
 }
 
+/*
+ * happy-dom は `document.fonts` を持たない。
+ *
+ * 継ぎ目を本番のコードに置かない (「無ければ素通し」は fail-loud に反する。ブラウザは
+ * どれも FontFaceSet を持っており、無いのはテストの環境だけ)。ここで代役を立てる。
+ *
+ * 何字要求されたかを覚えるので、「図のソースを名指しして読ませているか」も見張れる。
+ */
+const fontLoads: string[] = [];
+
+function stubFontFaceSet(): void {
+  vi.stubGlobal("document", document);
+  Object.defineProperty(document, "fonts", {
+    configurable: true,
+    value: {
+      load: (font: string, text: string) => {
+        fontLoads.push(text);
+        return Promise.resolve([]);
+      },
+    },
+  });
+}
+
 describe("MermaidDiagram", () => {
   beforeEach(() => {
     mermaid.initialize.mockReset();
     mermaid.render.mockReset();
+    fontLoads.length = 0;
+    stubFontFaceSet();
   });
 
   it("mermaid のコードフェンスを、組み上がった SVG に差し替える", async () => {
@@ -202,5 +227,45 @@ describe("MermaidDiagram", () => {
 
     expect(html).toContain('class="mermaid-source"');
     expect(html).not.toContain('aria-busy="true"');
+  });
+});
+
+/*
+ * 字が届く前に組むと、システムの書体の字幅で寸法が決まり、あとで入れ替わったときに
+ * ラベルが枠から欠ける (#284)。document.fonts.ready では足りない — Noto Sans JP は
+ * unicode-range で細かく分かれており、図のラベルにしか出てこない漢字のサブセットは、
+ * 組む時点でまだ要求されていないため。ソースを名指しして読ませていることを見張る。
+ */
+describe("字の到着待ち", () => {
+  it("図のソースを名指しして読ませてから組む", async () => {
+    mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
+
+    render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+
+    await waitFor(() => {
+      expect(mermaid.render).toHaveBeenCalled();
+    });
+    // 渡るのはフェンスの中身そのもの (末尾の改行が付く)。
+    expect(fontLoads).toHaveLength(1);
+    expect(fontLoads[0]).toContain(DIAGRAM.trim());
+  });
+
+  it("字が届かなくても、待ち切って図を出す", async () => {
+    vi.useFakeTimers();
+    // 永遠に解決しない要求。応答の返らないネットワークに当たる。
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: { load: () => new Promise(() => undefined) },
+    });
+    mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
+
+    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+
+    await vi.advanceTimersByTimeAsync(3000);
+    vi.useRealTimers();
+
+    await waitFor(() => {
+      expect(container.querySelector(":scope svg")).not.toBeNull();
+    });
   });
 });
