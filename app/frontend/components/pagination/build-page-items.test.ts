@@ -34,9 +34,7 @@ describe("buildPageItems", () => {
   });
 
   it("gives ellipses distinct keys via their `after` page", () => {
-    const items = buildPageItems(6, 12).filter(
-      (item) => item.type === "ellipsis",
-    );
+    const items = buildPageItems(6, 12).filter((item) => item.type === "ellipsis");
     const keys = items.map((item) => item.after);
     expect(new Set(keys).size).toBe(keys.length);
   });

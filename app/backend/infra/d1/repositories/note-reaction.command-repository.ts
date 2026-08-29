@@ -1,14 +1,8 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type {
-  INoteReactionCommandRepository,
-  ReactionEmoji,
-} from "~/backend/domain/note-reaction";
+import type { INoteReactionCommandRepository, ReactionEmoji } from "~/backend/domain/note-reaction";
 import { noteReactions, notes } from "~/backend/infra/d1/schema";
-import {
-  scoreWithWeightAdded,
-  scoreWithWeightRemoved,
-} from "~/backend/infra/d1/view-log-score";
+import { scoreWithWeightAdded, scoreWithWeightRemoved } from "~/backend/infra/d1/view-log-score";
 
 export class D1NoteReactionCommandRepository implements INoteReactionCommandRepository {
   private readonly db;
@@ -40,10 +34,7 @@ export class D1NoteReactionCommandRepository implements INoteReactionCommandRepo
    * 何も起きない (作らない)。
    */
   async decrement(noteId: string, emoji: ReactionEmoji): Promise<void> {
-    const row = and(
-      eq(noteReactions.noteId, noteId),
-      eq(noteReactions.emoji, emoji.toString()),
-    );
+    const row = and(eq(noteReactions.noteId, noteId), eq(noteReactions.emoji, emoji.toString()));
 
     await this.db
       .update(noteReactions)
@@ -87,11 +78,7 @@ export class D1NoteReactionCommandRepository implements INoteReactionCommandRepo
    *
    * 引ききって順位に戻ってこなくならないよう、下限には出発点 (投稿日の重み) を渡す。
    */
-  async subtractLogScore(
-    noteId: string,
-    weightLog: number,
-    floorLogScore: number,
-  ): Promise<void> {
+  async subtractLogScore(noteId: string, weightLog: number, floorLogScore: number): Promise<void> {
     await this.db
       .update(notes)
       .set({ viewLogScore: scoreWithWeightRemoved(weightLog, floorLogScore) })

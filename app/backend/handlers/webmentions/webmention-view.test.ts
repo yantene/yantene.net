@@ -33,9 +33,7 @@ function mention(params: {
     }),
     authorAvatar: params.avatar,
     content:
-      params.content === undefined
-        ? undefined
-        : WebmentionContent.reconstruct(params.content),
+      params.content === undefined ? undefined : WebmentionContent.reconstruct(params.content),
     publishedAt: params.publishedAt,
     receivedAt,
     updatedAt: receivedAt,
@@ -44,12 +42,8 @@ function mention(params: {
 
 describe("toWebmentionView", () => {
   it("アイコンは自分の配信 URL を指す", () => {
-    const view = toWebmentionView(
-      mention({ id: "a", type: "like", avatar: "a".repeat(32) }),
-    );
-    expect(view.authorAvatarUrl).toBe(
-      `/api/v1/webmentions/avatars/${"a".repeat(32)}`,
-    );
+    const view = toWebmentionView(mention({ id: "a", type: "like", avatar: "a".repeat(32) }));
+    expect(view.authorAvatarUrl).toBe(`/api/v1/webmentions/avatars/${"a".repeat(32)}`);
   });
 
   it("写せていなければアイコンは null (相手の URL は出さない)", () => {
@@ -64,9 +58,7 @@ describe("toWebmentionView", () => {
 
   it("公開日時が読めていればそれを使う", () => {
     const published = Temporal.Instant.from("2026-08-01T12:00:00Z");
-    const view = toWebmentionView(
-      mention({ id: "a", type: "reply", publishedAt: published }),
-    );
+    const view = toWebmentionView(mention({ id: "a", type: "reply", publishedAt: published }));
     expect(view.publishedAt).toBe(published.toString());
   });
 });
@@ -81,10 +73,7 @@ describe("toWebmentionGroups", () => {
     ]);
 
     expect(groups.faces.map((view) => view.type)).toEqual(["like", "repost"]);
-    expect(groups.replies.map((view) => view.type)).toEqual([
-      "reply",
-      "mention",
-    ]);
+    expect(groups.replies.map((view) => view.type)).toEqual(["reply", "mention"]);
   });
 
   it("1 件も無ければどちらも空", () => {

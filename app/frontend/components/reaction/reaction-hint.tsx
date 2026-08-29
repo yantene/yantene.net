@@ -71,11 +71,7 @@ export function ReactionHint(): React.JSX.Element | null {
    * 読み書きだけに頼ると**押しても何も起きない**。
    */
   const [hasClosedHere, setClosedHere] = useState(false);
-  const hasDismissedBefore = useSyncExternalStore(
-    subscribe,
-    wasDismissed,
-    wasDismissedOnServer,
-  );
+  const hasDismissedBefore = useSyncExternalStore(subscribe, wasDismissed, wasDismissedOnServer);
 
   if (hasClosedHere || hasDismissedBefore) return null;
 

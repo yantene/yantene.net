@@ -43,10 +43,7 @@ export function scoreWithWeightAdded(weightLog: number): SQL<number> {
  *
  * @param floorLogScore 下限。この記事の出発点 (投稿日の重み) を渡す。
  */
-export function scoreWithWeightRemoved(
-  weightLog: number,
-  floorLogScore: number,
-): SQL<number> {
+export function scoreWithWeightRemoved(weightLog: number, floorLogScore: number): SQL<number> {
   const score = notes.viewLogScore;
   const removed = sql`${score} + ln(1 - exp(${weightLog} - ${score}))`;
 

@@ -72,16 +72,12 @@
  * 続いて見えなくなる。そのため最初の年の先頭と最後の年の末尾だけを端として扱う。
  */
 .note-timeline-flat > .note-timeline-item:first-child::before,
-.note-timeline-group:first-child
-  > .note-timeline-list
-  > .note-timeline-item:first-child::before {
+.note-timeline-group:first-child > .note-timeline-list > .note-timeline-item:first-child::before {
   top: var(--note-dot-top);
 }
 
 .note-timeline-flat > .note-timeline-item:last-child::before,
-.note-timeline-group:last-child
-  > .note-timeline-list
-  > .note-timeline-item:last-child::before {
+.note-timeline-group:last-child > .note-timeline-list > .note-timeline-item:last-child::before {
   top: 0;
   bottom: auto;
   height: var(--note-dot-top);
@@ -137,9 +133,7 @@
    * 縦線の分岐位置とドット中心を揃える。ドットは余白の内側から積まれるので、
    * 項目上端からの距離 (--note-dot-top) から余白の分を引く。
    */
-  margin-top: calc(
-    var(--note-dot-top) - var(--note-item-padding-y) - var(--note-dot-size) / 2
-  );
+  margin-top: calc(var(--note-dot-top) - var(--note-item-padding-y) - var(--note-dot-size) / 2);
   margin-left: calc((var(--note-dot-column) - var(--note-dot-size)) / 2);
   /* 縦線の上に載せて、線を跨ぐ点に見せる。 */
   position: relative;

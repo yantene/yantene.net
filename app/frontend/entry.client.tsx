@@ -9,13 +9,9 @@ import { initI18nGlobal } from "~/lib/i18n/init";
 import { defaultLocale } from "~/lib/i18n/locale";
 
 const locale =
-  document.documentElement.lang.length > 0
-    ? document.documentElement.lang
-    : defaultLocale;
+  document.documentElement.lang.length > 0 ? document.documentElement.lang : defaultLocale;
 
-const nonce =
-  document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") ??
-  "";
+const nonce = document.querySelector('meta[name="csp-nonce"]')?.getAttribute("content") ?? "";
 
 const i18n = await initI18nGlobal(locale);
 

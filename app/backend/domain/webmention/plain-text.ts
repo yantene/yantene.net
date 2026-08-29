@@ -31,15 +31,10 @@ const entityPattern = /&(?:amp|lt|gt|quot|apos|nbsp|#39);/g;
  */
 export function toPlainText(raw: string, maxLength: number): string {
   const stripped = stripTags(raw);
-  const decoded = stripped.replaceAll(
-    entityPattern,
-    (entity) => entities.get(entity) ?? entity,
-  );
+  const decoded = stripped.replaceAll(entityPattern, (entity) => entities.get(entity) ?? entity);
   const collapsed = decoded.replaceAll(whitespacePattern, " ").trim();
 
-  return collapsed.length > maxLength
-    ? collapsed.slice(0, maxLength)
-    : collapsed;
+  return collapsed.length > maxLength ? collapsed.slice(0, maxLength) : collapsed;
 }
 
 /**

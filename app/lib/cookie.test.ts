@@ -29,10 +29,7 @@ describe("readCookieValues", () => {
    * 呼ぶ側が決めるので、ここでは書かれた順に全部返す (#313)。
    */
   it("同じ名前が並んでいたら書かれた順に全部返す", () => {
-    expect(readCookieValues("locale=%; locale=ja", "locale")).toEqual([
-      "%",
-      "ja",
-    ]);
+    expect(readCookieValues("locale=%; locale=ja", "locale")).toEqual(["%", "ja"]);
   });
 
   /*
@@ -41,9 +38,7 @@ describe("readCookieValues", () => {
    */
   it("百分率符号化を解かない", () => {
     expect(readCookieValues("locale=%", "locale")).toEqual(["%"]);
-    expect(readCookieValues("locale=%E3%81%82", "locale")).toEqual([
-      "%E3%81%82",
-    ]);
+    expect(readCookieValues("locale=%E3%81%82", "locale")).toEqual(["%E3%81%82"]);
   });
 
   it("値に = が入っていても切らない", () => {

@@ -48,19 +48,13 @@ describe("MermaidDiagram", () => {
   it("mermaid のコードフェンスを、組み上がった SVG に差し替える", async () => {
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    const { container } = render(
-      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
-    );
+    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
 
     // 差し替わる前 (= サーバーが返す形) はソースがそのまま出ている。
-    expect(container.querySelector(":scope pre code")?.textContent).toContain(
-      "graph TD;",
-    );
+    expect(container.querySelector(":scope pre code")?.textContent).toContain("graph TD;");
 
     await waitFor(() => {
-      expect(
-        container.querySelector(":scope .mermaid-diagram svg"),
-      ).not.toBeNull();
+      expect(container.querySelector(":scope .mermaid-diagram svg")).not.toBeNull();
     });
     // 図になったらコードブロックは残さない。
     expect(container.querySelector("pre")).toBeNull();
@@ -89,21 +83,15 @@ describe("MermaidDiagram", () => {
      * 見るのは呼ばれた瞬間の在り処。決着が付くと図に差し替わり、測った場所は本文から
      * 外れるので、後から引数を辿っても祖先を持たない。
      */
-    mermaid.render.mockImplementation(
-      (_id: string, _source: string, element?: Element) => {
-        didMeasureInProse = element?.closest(".note-prose") != null;
-        return Promise.resolve({ svg: SVG, diagramType: "flowchart" });
-      },
-    );
+    mermaid.render.mockImplementation((_id: string, _source: string, element?: Element) => {
+      didMeasureInProse = element?.closest(".note-prose") != null;
+      return Promise.resolve({ svg: SVG, diagramType: "flowchart" });
+    });
 
-    const { container } = render(
-      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
-    );
+    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
 
     await waitFor(() => {
-      expect(
-        container.querySelector(":scope .mermaid-diagram svg"),
-      ).not.toBeNull();
+      expect(container.querySelector(":scope .mermaid-diagram svg")).not.toBeNull();
     });
     expect(didMeasureInProse).toBe(true);
   });
@@ -128,20 +116,13 @@ describe("MermaidDiagram", () => {
   it("図に組めなければ、元のコードブロックをそのまま残す", async () => {
     mermaid.render.mockRejectedValue(new Error("Parse error on line 1"));
 
-    const { container } = render(
-      <MdastRenderer node={fence("mermaid", "graph TD; A-->")} />,
-    );
+    const { container } = render(<MdastRenderer node={fence("mermaid", "graph TD; A-->")} />);
 
     // 読み込み中の印が下りたら決着が付いている。
     await waitFor(() => {
-      expect(container.querySelector(".mermaid-source")).toHaveAttribute(
-        "aria-busy",
-        "false",
-      );
+      expect(container.querySelector(".mermaid-source")).toHaveAttribute("aria-busy", "false");
     });
-    expect(container.querySelector(":scope pre code")?.textContent).toContain(
-      "graph TD;",
-    );
+    expect(container.querySelector(":scope pre code")?.textContent).toContain("graph TD;");
     expect(container.querySelector("svg")).toBeNull();
   });
 
@@ -184,24 +165,18 @@ describe("MermaidDiagram", () => {
     const retried = render(diagram);
 
     await waitFor(() => {
-      expect(
-        retried.container.querySelector(":scope .mermaid-diagram svg"),
-      ).not.toBeNull();
+      expect(retried.container.querySelector(":scope .mermaid-diagram svg")).not.toBeNull();
     });
     // 拒否済みの Promise を握っていれば、2 度目の取り寄せは始まらない。
     expect(mermaid.initialize).toHaveBeenCalledTimes(2);
   });
 
   it("mermaid 以外の言語のコードブロックには手を触れない", () => {
-    const { container } = render(
-      <MdastRenderer node={fence("ts", "const x = 1;")} />,
-    );
+    const { container } = render(<MdastRenderer node={fence("ts", "const x = 1;")} />);
 
     expect(container.querySelector(".mermaid-source")).toBeNull();
     expect(container.querySelector(".mermaid-diagram")).toBeNull();
-    expect(container.querySelector(":scope pre code")?.className).toContain(
-      "language-ts",
-    );
+    expect(container.querySelector(":scope pre code")?.className).toContain("language-ts");
     expect(mermaid.render).not.toHaveBeenCalled();
   });
 
@@ -210,9 +185,7 @@ describe("MermaidDiagram", () => {
    * 動いたとしても読者に届く前に図を作る意味がない (ADR 0023)。
    */
   it("SSR ではソースをそのまま返し、Mermaid を呼ばない", () => {
-    const html = renderToStaticMarkup(
-      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
-    );
+    const html = renderToStaticMarkup(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
 
     expect(html).toContain('class="mermaid-source"');
     expect(html).toContain("graph TD;");
@@ -225,9 +198,7 @@ describe("MermaidDiagram", () => {
    * 無く、図に差し替わることも無いのに「永遠に読み込み中」と支援技術に伝わるため。
    */
   it("SSR では読み込み中の印を立てない", () => {
-    const html = renderToStaticMarkup(
-      <MdastRenderer node={fence("mermaid", DIAGRAM)} />,
-    );
+    const html = renderToStaticMarkup(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
 
     expect(html).toContain('class="mermaid-source"');
     expect(html).not.toContain('aria-busy="true"');

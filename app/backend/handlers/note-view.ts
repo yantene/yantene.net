@@ -1,9 +1,4 @@
-import type {
-  Note,
-  NoteListResult,
-  NoteSortField,
-  SortDirection,
-} from "~/backend/domain/note";
+import type { Note, NoteListResult, NoteSortField, SortDirection } from "~/backend/domain/note";
 
 /**
  * 外部 (JSON API / ページ props) に公開してよい Note の表現。
@@ -86,12 +81,7 @@ export function parsePagination(
   return { page, perPage, limit: perPage, offset: (page - 1) * perPage };
 }
 
-function clampInt(
-  raw: string | undefined,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
+function clampInt(raw: string | undefined, fallback: number, min: number, max: number): number {
   // 未指定・空文字は「未指定」として既定値に落とす (Number("") === 0 の罠を避ける)。
   const trimmed = raw?.trim();
   if (trimmed === undefined || trimmed.length === 0) return fallback;
@@ -105,8 +95,7 @@ export function parseNoteSort(
   sortByParam: string | undefined,
   orderParam: string | undefined,
 ): { sortBy: NoteSortField; direction: SortDirection } {
-  const sortBy: NoteSortField =
-    sortByParam === "modified" ? "lastModifiedOn" : "publishedOn";
+  const sortBy: NoteSortField = sortByParam === "modified" ? "lastModifiedOn" : "publishedOn";
   const direction: SortDirection = orderParam === "asc" ? "asc" : "desc";
   return { sortBy, direction };
 }

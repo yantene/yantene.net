@@ -6,9 +6,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 
-const journal = JSON.parse(
-  readFileSync("./migrations/meta/_journal.json", "utf8"),
-);
+const journal = JSON.parse(readFileSync("./migrations/meta/_journal.json", "utf8"));
 
 const db = new DatabaseSync(":memory:");
 

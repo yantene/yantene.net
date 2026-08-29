@@ -47,8 +47,7 @@
    * color / background-color / border-color も並べておく。hover で色が変わる操作子が
    * 多く、ここで transition-property を置き換えると、その色変化まで止まってしまう。
    */
-  transition-property:
-    opacity, transform, color, background-color, border-color;
+  transition-property: opacity, transform, color, background-color, border-color;
   transition-duration: 160ms;
   transition-timing-function: ease;
 }

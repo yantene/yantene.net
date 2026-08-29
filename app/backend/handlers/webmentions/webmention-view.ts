@@ -1,7 +1,4 @@
-import type {
-  Webmention,
-  WebmentionTypeName,
-} from "~/backend/domain/webmention";
+import type { Webmention, WebmentionTypeName } from "~/backend/domain/webmention";
 
 /**
  * 画面に出す 1 通ぶん。
@@ -29,8 +26,7 @@ export function toWebmentionView(webmention: Webmention): WebmentionView {
     source: webmention.source.toString(),
     authorName: webmention.author.name ?? null,
     authorUrl: webmention.author.url?.toString() ?? null,
-    authorAvatarUrl:
-      avatar === undefined ? null : `/api/v1/webmentions/avatars/${avatar}`,
+    authorAvatarUrl: avatar === undefined ? null : `/api/v1/webmentions/avatars/${avatar}`,
     content: webmention.content?.toString() ?? null,
     // 相手が公開日時を書いていないことは珍しくない。並べる軸を欠かさないよう受信時刻で代える。
     publishedAt: (webmention.publishedAt ?? webmention.receivedAt).toString(),
@@ -47,9 +43,7 @@ export interface WebmentionGroups {
 
 const faceTypes: ReadonlySet<WebmentionTypeName> = new Set(["like", "repost"]);
 
-export function toWebmentionGroups(
-  webmentions: readonly Webmention[],
-): WebmentionGroups {
+export function toWebmentionGroups(webmentions: readonly Webmention[]): WebmentionGroups {
   const views = webmentions.map((webmention) => toWebmentionView(webmention));
   return {
     faces: views.filter((view) => faceTypes.has(view.type)),

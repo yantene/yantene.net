@@ -51,8 +51,5 @@ export class SessionId implements IValueObject<SessionId> {
 /** 乱数を cookie にも KV のキーにもそのまま載せられる形にする。 */
 function toBase64Url(bytes: Uint8Array): string {
   const binary = String.fromCodePoint(...bytes);
-  return btoa(binary)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }

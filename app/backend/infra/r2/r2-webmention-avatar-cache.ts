@@ -1,7 +1,4 @@
-import type {
-  IWebmentionAvatarCache,
-  WebmentionAvatar,
-} from "~/backend/domain/webmention";
+import type { IWebmentionAvatarCache, WebmentionAvatar } from "~/backend/domain/webmention";
 
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
 

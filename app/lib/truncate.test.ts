@@ -53,17 +53,13 @@ describe("truncateByGrapheme", () => {
 
   describe("ellipsis", () => {
     it("切り詰めたときだけ足す", () => {
-      expect(truncateByGrapheme("あいうえお", 3, { ellipsis: "…" })).toBe(
-        "あい…",
-      );
+      expect(truncateByGrapheme("あいうえお", 3, { ellipsis: "…" })).toBe("あい…");
       expect(truncateByGrapheme("あいう", 3, { ellipsis: "…" })).toBe("あいう");
     });
 
     it("足すものを含めて上限を守る", () => {
       // 3 文字の記号を足しても、返るのは上限の 4 書記素まで。
-      expect(truncateByGrapheme("あいうえお", 4, { ellipsis: "..." })).toBe(
-        "あ...",
-      );
+      expect(truncateByGrapheme("あいうえお", 4, { ellipsis: "..." })).toBe("あ...");
     });
 
     it("足すものだけで上限に届くなら本文は残らない", () => {

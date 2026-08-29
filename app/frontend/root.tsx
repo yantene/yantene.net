@@ -14,10 +14,7 @@ import type { WebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
 import { resolveWebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
 import { NonceContext } from "~/frontend/lib/nonce-context";
 import { buildPageMeta } from "~/frontend/lib/page-meta";
-import {
-  cloudflareContext,
-  localeRouteContext,
-} from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
 import { defaultLocale } from "~/lib/i18n/locale";
 import "./app.css";
@@ -78,9 +75,7 @@ export const googleFontFamilies = [
 const GOOGLE_FONTS_HREF = `https://fonts.googleapis.com/css2?${googleFontFamilies
   .map(({ name, weights }) => {
     const family = `family=${name.replaceAll(" ", "+")}`;
-    return weights.length === 0
-      ? family
-      : `${family}:wght@${weights.join(";")}`;
+    return weights.length === 0 ? family : `${family}:wght@${weights.join(";")}`;
   })
   .join("&")}&display=swap`;
 
@@ -109,17 +104,14 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export function Layout({
-  children,
-}: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
+export function Layout({ children }: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
   const { i18n } = useTranslation();
   const nonce = useContext(NonceContext);
   /*
    * Layout は ErrorBoundary の描画にも使われ、そのとき root の loader は走り終えて
    * いないことがある。読めなければ載せないだけにして、エラーページで更に転ばせない。
    */
-  const webAnalytics =
-    useRouteLoaderData<typeof loader>("root")?.webAnalytics ?? null;
+  const webAnalytics = useRouteLoaderData<typeof loader>("root")?.webAnalytics ?? null;
 
   // テーマは light 固定 (ダークモード不採用)。
   return (
@@ -144,11 +136,7 @@ export function Layout({
          * 素の `defer` なら最初の経路で読める。
          */}
         {webAnalytics !== null && (
-          <script
-            defer
-            src={webAnalytics.src}
-            data-cf-beacon={webAnalytics.config}
-          />
+          <script defer src={webAnalytics.src} data-cf-beacon={webAnalytics.config} />
         )}
       </head>
       <body>
@@ -165,9 +153,7 @@ export default function App(): React.JSX.Element {
   return <Outlet />;
 }
 
-export function ErrorBoundary({
-  error,
-}: Route.ErrorBoundaryProps): React.JSX.Element {
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps): React.JSX.Element {
   const isNotFound = isRouteErrorResponse(error) && error.status === 404;
   const heading = isNotFound ? "404" : "Error";
   const detail = isNotFound

@@ -20,9 +20,7 @@ import { unixToInstant } from "~/backend/infra/d1/temporal";
  * 著者名と本文は `reconstruct` で**均し直さずに**包む。保存の時点で均してあり、掛け直すと
  * 読んだ値が保存した値と変わってしまう。
  */
-export function rowToWebmention(
-  row: typeof webmentions.$inferSelect,
-): Webmention {
+export function rowToWebmention(row: typeof webmentions.$inferSelect): Webmention {
   return Webmention.reconstruct({
     id: entityId<"Webmention">(row.id),
     noteId: entityId<"Note">(row.noteId),
@@ -35,12 +33,8 @@ export function rowToWebmention(
       photo: row.authorPhoto,
     }),
     authorAvatar: row.authorAvatar ?? undefined,
-    content:
-      row.content === null
-        ? undefined
-        : WebmentionContent.reconstruct(row.content),
-    publishedAt:
-      row.publishedAt === null ? undefined : unixToInstant(row.publishedAt),
+    content: row.content === null ? undefined : WebmentionContent.reconstruct(row.content),
+    publishedAt: row.publishedAt === null ? undefined : unixToInstant(row.publishedAt),
     receivedAt: unixToInstant(row.receivedAt),
     updatedAt: unixToInstant(row.updatedAt),
   });

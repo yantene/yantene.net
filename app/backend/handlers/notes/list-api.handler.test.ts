@@ -34,11 +34,7 @@ function envWith(d1: D1Database): Env {
  * ここでは解決できないため、text() → JSON.parse で明示的に読み取る。
  */
 async function fetchList(d1: D1Database, query = ""): Promise<PublicNoteList> {
-  const res = await createNotesApiRouter().request(
-    `/${query}`,
-    {},
-    envWith(d1),
-  );
+  const res = await createNotesApiRouter().request(`/${query}`, {}, envWith(d1));
   expect(res.status).toBe(200);
   const text = await res.text();
   return JSON.parse(text) as PublicNoteList;

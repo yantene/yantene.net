@@ -26,9 +26,7 @@ export async function readCapped(
    * **枷が外れたことに誰も気づかないまま際限なく読む**ことになる (fail-loud)。
    */
   if (!Number.isFinite(maxBytes) || maxBytes <= 0) {
-    throw new RangeError(
-      `maxBytes must be a positive number: ${String(maxBytes)}`,
-    );
+    throw new RangeError(`maxBytes must be a positive number: ${String(maxBytes)}`);
   }
 
   const reader = body.getReader();
@@ -57,9 +55,7 @@ export async function readCapped(
  * 素通しにすると「大きすぎた」という**こちらが下した結論**が、通信の失敗に化けて
  * 呼び出し側へ届く (送り元フェッチャなら "body too large" が "fetch failed" になる)。
  */
-async function stopReading(
-  reader: ReadableStreamDefaultReader<Uint8Array>,
-): Promise<void> {
+async function stopReading(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<void> {
   try {
     await reader.cancel();
   } catch {

@@ -25,11 +25,7 @@ export interface NoteDetail {
   readonly linkCards: LinkCardMap;
 }
 
-export function toNoteDetail(
-  note: Note,
-  mdast: unknown,
-  linkCards: LinkCardMap,
-): NoteDetail {
+export function toNoteDetail(note: Note, mdast: unknown, linkCards: LinkCardMap): NoteDetail {
   return {
     note: {
       slug: note.slug.toJSON(),

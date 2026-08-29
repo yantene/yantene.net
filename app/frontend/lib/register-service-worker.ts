@@ -26,9 +26,7 @@ export function registerServiceWorker(): void {
 }
 
 function register(): void {
-  void globalThis.navigator.serviceWorker
-    .register("/sw.js")
-    .catch((error: unknown) => {
-      console.error("failed to register the service worker", error);
-    });
+  void globalThis.navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+    console.error("failed to register the service worker", error);
+  });
 }

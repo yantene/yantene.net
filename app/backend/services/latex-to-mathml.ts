@@ -1,12 +1,6 @@
 import { fromHtml } from "hast-util-from-html";
 import temml from "temml";
-import type {
-  Element,
-  ElementContent,
-  Properties,
-  Root as HastRoot,
-  RootContent,
-} from "hast";
+import type { Element, ElementContent, Properties, Root as HastRoot, RootContent } from "hast";
 
 /**
  * LaTeX を MathML に組む。

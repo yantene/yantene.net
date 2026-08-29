@@ -25,9 +25,7 @@ function makeBucket(): R2Bucket {
 
 const sampleMdast = {
   type: "root",
-  children: [
-    { type: "paragraph", children: [{ type: "text", value: "Body." }] },
-  ],
+  children: [{ type: "paragraph", children: [{ type: "text", value: "Body." }] }],
 };
 
 async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
@@ -42,10 +40,7 @@ async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
       sourceHash: "h1",
     }),
   );
-  await new R2NoteContentCache(bucket).putMdast(
-    NoteSlug.create("hello"),
-    sampleMdast,
-  );
+  await new R2NoteContentCache(bucket).putMdast(NoteSlug.create("hello"), sampleMdast);
 }
 
 function env(d1: D1Database, bucket: R2Bucket): Env {
@@ -57,11 +52,7 @@ async function fetchDetail(
   bucket: R2Bucket,
   slug: string,
 ): Promise<{ status: number; body: NoteDetail | undefined }> {
-  const res = await createTestApp().request(
-    `/api/v1/notes/${slug}`,
-    {},
-    env(d1, bucket),
-  );
+  const res = await createTestApp().request(`/api/v1/notes/${slug}`, {}, env(d1, bucket));
   const text = await res.text();
   return {
     status: res.status,

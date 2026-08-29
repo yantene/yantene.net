@@ -53,16 +53,11 @@ function withCount(
  *
  * @param pending 押そうとしている絵文字。null なら取り消し。
  */
-export function withPendingReaction(
-  current: ReactionState,
-  pending: string | null,
-): ReactionState {
+export function withPendingReaction(current: ReactionState, pending: string | null): ReactionState {
   if (current.mine === pending) return current;
 
   const removed =
-    current.mine === null
-      ? current.reactions
-      : withCount(current.reactions, current.mine, -1);
+    current.mine === null ? current.reactions : withCount(current.reactions, current.mine, -1);
   const added = pending === null ? removed : withCount(removed, pending, 1);
 
   return { reactions: sorted(added), mine: pending };

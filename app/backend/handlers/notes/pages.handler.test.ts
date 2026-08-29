@@ -4,17 +4,10 @@ import { loadNotesListPage } from "./pages.handler";
 import type { NotesListPageData } from "./pages.handler";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Note, NoteSlug, NoteTag, NoteTitle } from "~/backend/domain/note";
-import {
-  D1NoteCommandRepository,
-  D1NoteSearchIndex,
-} from "~/backend/infra/d1/repositories";
+import { D1NoteCommandRepository, D1NoteSearchIndex } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
-function note(
-  slug: string,
-  publishedOn: string,
-  tags: readonly string[],
-): Note<IUnpersisted> {
+function note(slug: string, publishedOn: string, tags: readonly string[]): Note<IUnpersisted> {
   return Note.create({
     slug: NoteSlug.create(slug),
     title: NoteTitle.create(slug),
@@ -55,11 +48,7 @@ describe("loadNotesListPage", () => {
     await seed(d1);
 
     const page = await load(d1, "");
-    expect(page.notes.map((n) => n.slug)).toEqual([
-      "alpha",
-      "bravo",
-      "charlie",
-    ]);
+    expect(page.notes.map((n) => n.slug)).toEqual(["alpha", "bravo", "charlie"]);
     expect(page.query).toBe("");
     expect(page.tag).toBeNull();
   });
@@ -103,9 +92,10 @@ describe("loadNotesListPage", () => {
     await seed(d1);
 
     const hit = await load(d1, "?q=summary&tag=日記");
-    expect(
-      hit.notes.map((n) => n.slug).toSorted((a, b) => a.localeCompare(b)),
-    ).toEqual(["alpha", "charlie"]);
+    expect(hit.notes.map((n) => n.slug).toSorted((a, b) => a.localeCompare(b))).toEqual([
+      "alpha",
+      "charlie",
+    ]);
     expect(hit.query).toBe("summary");
     expect(hit.tag).toBe("日記");
   });

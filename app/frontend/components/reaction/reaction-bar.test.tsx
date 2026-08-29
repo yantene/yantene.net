@@ -2,15 +2,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReactionBar } from "./reaction-bar";
 import type { ReactionState } from "./reaction-state";
 import type { i18n } from "i18next";
@@ -36,10 +28,7 @@ function renderBar(
         path: "/",
         element: (
           <I18nextProvider i18n={instance}>
-            <ReactionBar
-              {...state}
-              shouldPromptReaction={shouldPromptReaction}
-            />
+            <ReactionBar {...state} shouldPromptReaction={shouldPromptReaction} />
           </I18nextProvider>
         ),
         action,
@@ -118,9 +107,7 @@ describe("ReactionBar", () => {
   it("ハートは常に先頭に置く (数で動かさない)", () => {
     renderBar({ reactions: [{ emoji: "🎉", count: 9 }], mine: null });
 
-    const [likeChip, otherChip] = [
-      ...document.querySelectorAll(":scope .reaction-chip"),
-    ];
+    const [likeChip, otherChip] = [...document.querySelectorAll(":scope .reaction-chip")];
     expect(likeChip.textContent).toContain("❤️");
     expect(otherChip.textContent).toContain("🎉");
   });
@@ -129,17 +116,13 @@ describe("ReactionBar", () => {
     renderBar({ reactions, mine: null });
 
     // ハートだけ別の姿だと、独立したトグルに見えて排他が伝わらない。
-    expect(document.querySelectorAll(":scope .reaction-chip")).toHaveLength(
-      reactions.length,
-    );
+    expect(document.querySelectorAll(":scope .reaction-chip")).toHaveLength(reactions.length);
   });
 
   it("押しているものだけが光る", () => {
     renderBar({ reactions, mine: "🎉" });
 
-    const active = [
-      ...document.querySelectorAll(":scope .reaction-chip.is-active"),
-    ];
+    const active = [...document.querySelectorAll(":scope .reaction-chip.is-active")];
     expect(active).toHaveLength(1);
     expect(active[0].textContent).toContain("🎉");
   });
@@ -235,9 +218,7 @@ describe("ReactionBar", () => {
     it("shows the hint to someone who has not reacted", () => {
       renderBar({ reactions, mine: null }, true);
 
-      expect(screen.getByRole("note")).toHaveTextContent(
-        "匿名でリアクションしてみよう",
-      );
+      expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
     });
 
     it("stays quiet for someone who already reacted", () => {

@@ -1,8 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import type {
-  ILinkCardCommandRepository,
-  LinkCard,
-} from "~/backend/domain/link-card";
+import type { ILinkCardCommandRepository, LinkCard } from "~/backend/domain/link-card";
 import { linkCards } from "~/backend/infra/d1/schema";
 import { instantToUnix } from "~/backend/infra/d1/temporal";
 
@@ -33,9 +30,7 @@ export class D1LinkCardCommandRepository implements ILinkCardCommandRepository {
       hasFavicon: metadata?.hasFavicon === true ? 1 : 0,
       // 失敗が続く間だけ入る。取れたら NULL に戻り、期限は 14 日側へ帰る。
       fetchFailedSince:
-        card.fetchFailedSince === undefined
-          ? null
-          : instantToUnix(card.fetchFailedSince),
+        card.fetchFailedSince === undefined ? null : instantToUnix(card.fetchFailedSince),
       fetchedAt: instantToUnix(card.fetchedAt),
     };
 

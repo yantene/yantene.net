@@ -43,8 +43,6 @@ export async function loadSearchPage(
 ): Promise<SearchPageData> {
   const query = parseQuery(rawQuery);
   const results =
-    query.length === 0
-      ? []
-      : await new D1NoteQueryRepository(env.D1).search(query, SEARCH_LIMIT);
+    query.length === 0 ? [] : await new D1NoteQueryRepository(env.D1).search(query, SEARCH_LIMIT);
   return { query, notes: results.map((note) => toPublicNote(note)) };
 }

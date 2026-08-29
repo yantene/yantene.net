@@ -82,9 +82,7 @@ describe("D1LinkCard リポジトリ", () => {
   });
 
   it("書いたカードを URL で引ける", async () => {
-    await command.upsert(
-      availableCard({ id: "a1", raw: "https://example.com/a" }),
-    );
+    await command.upsert(availableCard({ id: "a1", raw: "https://example.com/a" }));
 
     const [found] = await query.findByUrls([url("https://example.com/a")]);
     expect(found.id).toBe("a1");
@@ -114,9 +112,7 @@ describe("D1LinkCard リポジトリ", () => {
   });
 
   it("同じ URL を書き直すと置き換わる", async () => {
-    await command.upsert(
-      availableCard({ id: "a1", raw: "https://example.com/a" }),
-    );
+    await command.upsert(availableCard({ id: "a1", raw: "https://example.com/a" }));
     await command.upsert(
       LinkCard.unavailable({
         id: "a1",
@@ -165,17 +161,13 @@ describe("D1LinkCard リポジトリ", () => {
   });
 
   it("見つからない URL は結果に現れない", async () => {
-    await command.upsert(
-      availableCard({ id: "a1", raw: "https://example.com/a" }),
-    );
+    await command.upsert(availableCard({ id: "a1", raw: "https://example.com/a" }));
 
     const found = await query.findByUrls([
       url("https://example.com/a"),
       url("https://example.com/missing"),
     ]);
-    expect(found.map((card) => card.url.toString())).toEqual([
-      "https://example.com/a",
-    ]);
+    expect(found.map((card) => card.url.toString())).toEqual(["https://example.com/a"]);
   });
 
   it("URL を 1 つも渡さなければ問い合わせない", async () => {
@@ -360,9 +352,7 @@ describe("D1LinkCard リポジトリ", () => {
       }),
     );
     // 相手が戻ってきた。ここで起点が残ると、以後ずっと短い期限で回り続ける。
-    await command.upsert(
-      availableCard({ id: "k2", raw: "https://example.com/k2" }),
-    );
+    await command.upsert(availableCard({ id: "k2", raw: "https://example.com/k2" }));
 
     const [found] = await query.findByUrls([url("https://example.com/k2")]);
     expect(found.fetchFailedSince).toBeUndefined();

@@ -69,18 +69,14 @@
    * 月の位置が離角と食い違う (clock-origin.css に書いてある)。
    */
   --celestim-moon-age: var(--moon-age-day, 14);
-  --celestim-moon-age-delay: calc(
-    var(--celestim-one-day) * var(--celestim-moon-age) * -1
-  );
+  --celestim-moon-age-delay: calc(var(--celestim-one-day) * var(--celestim-moon-age) * -1);
 
   /*
    * 読み込み直後の時刻ぶんのずらし。月齢と違い 1 日に満たない量なので、空も太陽も
    * 動く。時計に属するアニメーションすべてに、この同じ値を足すこと。1 本でも
    * 足し忘れると、そこだけ時刻がずれる (型検査では捕まらない)。
    */
-  --celestim-clock-delay: calc(
-    var(--celestim-one-day) * var(--clock-shift-days)
-  );
+  --celestim-clock-delay: calc(var(--celestim-one-day) * var(--clock-shift-days));
 
   position: absolute;
   inset: 0;
@@ -157,9 +153,7 @@
 
   position: absolute;
   left: 50%;
-  bottom: calc(
-    var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px)
-  );
+  bottom: calc(var(--celestim-orbit-diameter) / -2 - var(--celestim-horizon-drop, 0px));
   translate: -50% 0;
 }
 
@@ -173,15 +167,13 @@
 }
 
 .celestim-solar-turntable {
-  animation: celestim-revolution var(--celestim-one-day)
-    var(--celestim-clock-delay) linear infinite;
+  animation: celestim-revolution var(--celestim-one-day) var(--celestim-clock-delay) linear infinite;
 }
 
 .celestim-lunar-turntable {
   animation: celestim-revolution
     calc(var(--celestim-one-day) / (1 - (1 / var(--celestim-sidereal-month))))
-    calc(var(--celestim-moon-age-delay) + var(--celestim-clock-delay)) linear
-    infinite;
+    calc(var(--celestim-moon-age-delay) + var(--celestim-clock-delay)) linear infinite;
 }
 
 /* Celestial bodies: positioned at top-center of the turntable */
@@ -268,15 +260,13 @@
 .celestim-moon-shade-right {
   clip-path: xywh(50% 0 50% 100%);
   animation:
-    celestim-moon-shade-right-phases
-      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    celestim-moon-shade-right-phases calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
       calc(
         var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -1 +
           var(--celestim-moon-age-delay) + var(--celestim-clock-delay)
       )
       linear infinite,
-    sky-color-cycle var(--celestim-one-day) var(--celestim-clock-delay) linear
-      infinite;
+    sky-color-cycle var(--celestim-one-day) var(--celestim-clock-delay) linear infinite;
 }
 
 @keyframes celestim-moon-shade-right-phases {
@@ -294,15 +284,13 @@
 .celestim-moon-shade-left {
   clip-path: xywh(0 0 50% 100%);
   animation:
-    celestim-moon-shade-left-phases
-      calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
+    celestim-moon-shade-left-phases calc(var(--celestim-one-day) * var(--celestim-sidereal-month))
       calc(
         var(--celestim-one-day) * var(--celestim-sidereal-month) / 4 * -3 +
           var(--celestim-moon-age-delay) + var(--celestim-clock-delay)
       )
       linear infinite,
-    sky-color-cycle var(--celestim-one-day) var(--celestim-clock-delay) linear
-      infinite;
+    sky-color-cycle var(--celestim-one-day) var(--celestim-clock-delay) linear infinite;
 }
 
 @keyframes celestim-moon-shade-left-phases {

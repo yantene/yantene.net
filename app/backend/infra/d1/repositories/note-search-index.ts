@@ -1,8 +1,4 @@
-import type {
-  INoteSearchIndex,
-  NoteSearchDocument,
-  NoteSlug,
-} from "~/backend/domain/note";
+import type { INoteSearchIndex, NoteSearchDocument, NoteSlug } from "~/backend/domain/note";
 
 /**
  * FTS5 (trigram) の検索インデックス。日本語の substring 検索に対応する。
@@ -33,9 +29,6 @@ export class D1NoteSearchIndex implements INoteSearchIndex {
 
   async remove(slug: NoteSlug): Promise<void> {
     await this.ensureTable();
-    await this.d1
-      .prepare("DELETE FROM notes_fts WHERE slug = ?")
-      .bind(slug.toString())
-      .run();
+    await this.d1.prepare("DELETE FROM notes_fts WHERE slug = ?").bind(slug.toString()).run();
   }
 }

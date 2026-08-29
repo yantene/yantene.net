@@ -47,26 +47,17 @@ export function sessionToRecord(session: Session): SessionRecord {
  * なるまで (400 日) 何も数えられなくなる。undefined を返して呼び出し側に
  * 「起こし直し」をさせれば、次の保存で同じ識別子のまま上書きされて直る。
  */
-export function recordToSession(
-  id: SessionId,
-  value: unknown,
-): Session | undefined {
+export function recordToSession(id: SessionId, value: unknown): Session | undefined {
   if (typeof value !== "object" || value === null) return undefined;
 
-  const { startedOn, viewedOn, viewedNotes, reactions } = value as Record<
-    string,
-    unknown
-  >;
+  const { startedOn, viewedOn, viewedNotes, reactions } = value as Record<string, unknown>;
   if (typeof startedOn !== "string") return undefined;
 
   try {
     return Session.reconstruct({
       id,
       startedOn: Temporal.PlainDate.from(startedOn),
-      viewedOn:
-        typeof viewedOn === "string"
-          ? Temporal.PlainDate.from(viewedOn)
-          : undefined,
+      viewedOn: typeof viewedOn === "string" ? Temporal.PlainDate.from(viewedOn) : undefined,
       viewedNotes: toSlugs(viewedNotes),
       reactions: toReactions(reactions),
     });
@@ -93,11 +84,7 @@ function toReactions(value: unknown): readonly SessionReaction[] {
       throw new TypeError("reactions must contain objects");
     }
     const { slug, emoji, reactedOn } = entry as Record<string, unknown>;
-    if (
-      typeof slug !== "string" ||
-      typeof emoji !== "string" ||
-      typeof reactedOn !== "string"
-    ) {
+    if (typeof slug !== "string" || typeof emoji !== "string" || typeof reactedOn !== "string") {
       throw new TypeError("reaction fields must be strings");
     }
 

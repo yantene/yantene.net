@@ -24,9 +24,7 @@ function toRfc3339(date: string): string {
 
 function entryXml(origin: string, note: PublicNote): string {
   const url = `${origin}/notes/${note.slug}`;
-  const categories = note.tags
-    .map((tag) => `    <category term="${escapeXml(tag)}"/>`)
-    .join("\n");
+  const categories = note.tags.map((tag) => `    <category term="${escapeXml(tag)}"/>`).join("\n");
   return `  <entry>
     <title>${escapeXml(note.title)}</title>
     <link href="${url}"/>
@@ -38,11 +36,7 @@ ${categories}
   </entry>`;
 }
 
-function buildAtom(
-  origin: string,
-  notes: readonly PublicNote[],
-  identity: FeedIdentity,
-): string {
+function buildAtom(origin: string, notes: readonly PublicNote[], identity: FeedIdentity): string {
   // feed 全体の updated は最新の更新日時 (エントリの lastModifiedOn の最大)。
   const updated =
     notes

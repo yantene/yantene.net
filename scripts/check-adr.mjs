@@ -20,9 +20,7 @@ if (!existsSync(ADR_DIR)) {
 const EXCLUDED = new Set(["README.md", "template.md"]);
 const PATTERN = /^(\d{4})-[\da-z-]+\.md$/;
 
-const files = readdirSync(ADR_DIR).filter(
-  (f) => !EXCLUDED.has(f) && f.endsWith(".md"),
-);
+const files = readdirSync(ADR_DIR).filter((f) => !EXCLUDED.has(f) && f.endsWith(".md"));
 
 if (files.length === 0) {
   console.log(`✓ No ADR files found in ${ADR_DIR}`);
@@ -39,9 +37,7 @@ if (files.length === 0) {
 
     const num = match[1];
     if (numbers.has(num)) {
-      errors.push(
-        `Duplicate ADR number ${num}: ${numbers.get(num)} and ${file}`,
-      );
+      errors.push(`Duplicate ADR number ${num}: ${numbers.get(num)} and ${file}`);
     } else {
       numbers.set(num, file);
     }
@@ -52,7 +48,5 @@ if (files.length === 0) {
     throw new Error(`ADR validation failed:\n\n${detail}`);
   }
 
-  console.log(
-    `✓ All ${files.length} ADR(s) in ${ADR_DIR} have valid unique numbers`,
-  );
+  console.log(`✓ All ${files.length} ADR(s) in ${ADR_DIR} have valid unique numbers`);
 }

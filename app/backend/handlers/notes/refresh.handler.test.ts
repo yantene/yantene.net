@@ -1,23 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createRefreshRouter } from "./refresh.handler";
 
-function post(
-  headers: Record<string, string>,
-  env: Env,
-): Response | Promise<Response> {
-  return createRefreshRouter().request(
-    "/refresh",
-    { method: "POST", headers },
-    env,
-  );
+function post(headers: Record<string, string>, env: Env): Response | Promise<Response> {
+  return createRefreshRouter().request("/refresh", { method: "POST", headers }, env);
 }
 
 describe("createRefreshRouter POST /refresh", () => {
   it("fails loud (500) when REFRESH_SECRET is not configured", async () => {
-    const res = await post(
-      { "X-Refresh-Token": "anything" },
-      {} as unknown as Env,
-    );
+    const res = await post({ "X-Refresh-Token": "anything" }, {} as unknown as Env);
     expect(res.status).toBe(500);
   });
 

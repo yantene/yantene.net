@@ -51,9 +51,7 @@ describe("toLinkCardView", () => {
   });
 
   it("画像が無ければ null にする", () => {
-    const view = toLinkCardView(
-      card({ id: "abc", raw: "https://example.com/a" }),
-    );
+    const view = toLinkCardView(card({ id: "abc", raw: "https://example.com/a" }));
 
     expect(view?.imageUrl).toBeNull();
     expect(view?.faviconUrl).toBeNull();
@@ -61,9 +59,7 @@ describe("toLinkCardView", () => {
 
   it("取り逃した画像は配信 URL を出さない", () => {
     // 写しが無いのに URL を出すと、カードに壊れた画像が出る。
-    const view = toLinkCardView(
-      card({ id: ID, raw: "https://example.com/a", image: "missed" }),
-    );
+    const view = toLinkCardView(card({ id: ID, raw: "https://example.com/a", image: "missed" }));
 
     expect(view?.imageUrl).toBeNull();
     expect(view?.title).toBe("題");
@@ -89,10 +85,7 @@ describe("toLinkCardMap", () => {
       card({ id: "b", raw: "https://example.com/b" }),
     ]);
 
-    expect(Object.keys(map)).toEqual([
-      "https://example.com/a",
-      "https://example.com/b",
-    ]);
+    expect(Object.keys(map)).toEqual(["https://example.com/a", "https://example.com/b"]);
   });
 
   it("取得できなかったカードは表に載せない", () => {

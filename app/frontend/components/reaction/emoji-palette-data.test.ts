@@ -42,9 +42,7 @@ describe("filterPalette", () => {
   });
 
   it("大文字と小文字を区別しない", () => {
-    const latin = [
-      { name: "Smileys", emojis: [{ u: "😀", l: "Grinning", t: [] }] },
-    ];
+    const latin = [{ name: "Smileys", emojis: [{ u: "😀", l: "Grinning", t: [] }] }];
 
     expect(filterPalette(latin, "GRIN")[0]?.emojis).toHaveLength(1);
   });

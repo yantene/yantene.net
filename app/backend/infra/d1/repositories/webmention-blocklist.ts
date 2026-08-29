@@ -11,9 +11,7 @@ export class D1WebmentionBlocklist implements IWebmentionBlocklist {
   }
 
   async listBlockedHosts(): Promise<readonly string[]> {
-    const rows = await this.db
-      .select({ host: webmentionBlocks.host })
-      .from(webmentionBlocks);
+    const rows = await this.db.select({ host: webmentionBlocks.host }).from(webmentionBlocks);
     return rows.map((row) => row.host);
   }
 }

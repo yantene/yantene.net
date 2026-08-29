@@ -21,17 +21,15 @@ describe("normalizeEmbedSrc", () => {
   });
 
   it("すでに nocookie でもそのまま通る", () => {
-    expect(
-      normalizeEmbedSrc("https://www.youtube-nocookie.com/embed/abc123"),
-    ).toBe("https://www.youtube-nocookie.com/embed/abc123");
+    expect(normalizeEmbedSrc("https://www.youtube-nocookie.com/embed/abc123")).toBe(
+      "https://www.youtube-nocookie.com/embed/abc123",
+    );
   });
 
   it("知らない相手は通さない", () => {
     expect(normalizeEmbedSrc("https://evil.example/embed/x")).toBeNull();
     // ホスト名に youtube を含むだけの別ドメイン。
-    expect(
-      normalizeEmbedSrc("https://youtube.com.evil.example/embed/x"),
-    ).toBeNull();
+    expect(normalizeEmbedSrc("https://youtube.com.evil.example/embed/x")).toBeNull();
   });
 
   it("埋め込み以外のパスは通さない", () => {

@@ -13,6 +13,4 @@ export const LINK_CARD_TAG = "link-card";
  * 描画するコンポーネント (link-card-slot.tsx) と別のファイルに置いてあるのは、
  * 1 つのファイルがコンポーネント以外も export すると HMR が効かなくなるため。
  */
-export const LinkCardsContext = createContext<
-  ReadonlyMap<string, LinkCardView>
->(new Map());
+export const LinkCardsContext = createContext<ReadonlyMap<string, LinkCardView>>(new Map());

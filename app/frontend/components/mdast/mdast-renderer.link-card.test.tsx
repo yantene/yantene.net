@@ -32,14 +32,12 @@ describe("MdastRenderer のリンクカード", () => {
     expect(card?.getAttribute("href")).toBe("https://example.com/a");
     expect(card?.textContent).toContain("カードの題");
     expect(card?.textContent).toContain("サイト名");
-    expect(
-      card
-        ?.querySelector(":scope .link-card-thumbnail img")
-        ?.getAttribute("src"),
-    ).toBe("/api/v1/link-cards/abc/image");
-    expect(
-      card?.querySelector(":scope .link-card-favicon")?.getAttribute("src"),
-    ).toBe("/api/v1/link-cards/abc/favicon");
+    expect(card?.querySelector(":scope .link-card-thumbnail img")?.getAttribute("src")).toBe(
+      "/api/v1/link-cards/abc/image",
+    );
+    expect(card?.querySelector(":scope .link-card-favicon")?.getAttribute("src")).toBe(
+      "/api/v1/link-cards/abc/favicon",
+    );
   });
 
   it("カードにした段落は素の段落として残さない", () => {
@@ -52,10 +50,7 @@ describe("MdastRenderer のリンクカード", () => {
 
   it("カードが無い URL は素のリンクのまま描く", () => {
     const { container } = render(
-      <MdastRenderer
-        node={md("https://example.com/unknown\n")}
-        linkCards={cards}
-      />,
+      <MdastRenderer node={md("https://example.com/unknown\n")} linkCards={cards} />,
     );
 
     expect(container.querySelector(":scope a.link-card")).toBeNull();
@@ -65,9 +60,7 @@ describe("MdastRenderer のリンクカード", () => {
   });
 
   it("linkCards を渡さなければ何も差し替えない", () => {
-    const { container } = render(
-      <MdastRenderer node={md("https://example.com/a\n")} />,
-    );
+    const { container } = render(<MdastRenderer node={md("https://example.com/a\n")} />);
 
     expect(container.querySelector(":scope a.link-card")).toBeNull();
     expect(container.querySelector(":scope p a")?.getAttribute("href")).toBe(
@@ -77,10 +70,7 @@ describe("MdastRenderer のリンクカード", () => {
 
   it("リスト項目の中はカードにしない", () => {
     const { container } = render(
-      <MdastRenderer
-        node={md("- https://example.com/a\n")}
-        linkCards={cards}
-      />,
+      <MdastRenderer node={md("- https://example.com/a\n")} linkCards={cards} />,
     );
 
     expect(container.querySelector(":scope a.link-card")).toBeNull();
@@ -91,16 +81,11 @@ describe("MdastRenderer のリンクカード", () => {
 
   it("文章に混ざった URL はカードにしない", () => {
     const { container } = render(
-      <MdastRenderer
-        node={md("詳しくは https://example.com/a を見よ。\n")}
-        linkCards={cards}
-      />,
+      <MdastRenderer node={md("詳しくは https://example.com/a を見よ。\n")} linkCards={cards} />,
     );
 
     expect(container.querySelector(":scope a.link-card")).toBeNull();
-    expect(container.querySelector(":scope p")?.textContent).toContain(
-      "詳しくは",
-    );
+    expect(container.querySelector(":scope p")?.textContent).toContain("詳しくは");
   });
 
   it("カードと通常の段落が混ざっても順序を保つ", () => {
@@ -111,9 +96,9 @@ describe("MdastRenderer のリンクカード", () => {
       />,
     );
 
-    const texts = [
-      ...container.querySelectorAll(":scope p, :scope a.link-card"),
-    ].map((element) => element.textContent);
+    const texts = [...container.querySelectorAll(":scope p, :scope a.link-card")].map(
+      (element) => element.textContent,
+    );
     expect(texts[0]).toBe("まえがき");
     expect(texts[1]).toContain("カードの題");
     expect(texts[2]).toBe("あとがき");
@@ -132,12 +117,8 @@ describe("MdastRenderer のリンクカード", () => {
       <MdastRenderer node={md("https://example.com/a\n")} linkCards={bare} />,
     );
 
-    expect(container.querySelectorAll(":scope a.link-card img")).toHaveLength(
-      0,
-    );
-    expect(
-      container.querySelector(":scope a.link-card")?.textContent,
-    ).toContain("カードの題");
+    expect(container.querySelectorAll(":scope a.link-card img")).toHaveLength(0);
+    expect(container.querySelector(":scope a.link-card")?.textContent).toContain("カードの題");
   });
 
   it("本文に link-card と書かれても要素にはならない", () => {

@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  GitHubContentStore,
-  GitHubRequestError,
-  parseTreeResponse,
-} from "./github-content-store";
+import { GitHubContentStore, GitHubRequestError, parseTreeResponse } from "./github-content-store";
 
 function store(fetchFn: typeof fetch): GitHubContentStore {
   return new GitHubContentStore({
@@ -33,9 +29,7 @@ describe("parseTreeResponse", () => {
   });
 
   it("throws (fail-loud) when the tree is truncated", () => {
-    expect(() => parseTreeResponse({ tree: [], truncated: true })).toThrow(
-      GitHubRequestError,
-    );
+    expect(() => parseTreeResponse({ tree: [], truncated: true })).toThrow(GitHubRequestError);
   });
 
   it("throws on unrecognized shapes", () => {
@@ -58,11 +52,8 @@ describe("GitHubContentStore", () => {
     const entries = await store(fetchFn).listTree();
     expect(entries).toEqual([{ path: "notes/a.md", hash: "s1" }]);
 
-    const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0];
-    expect(url).toBe(
-      "https://api.test/repos/yantene/notes/git/trees/main?recursive=1",
-    );
+    const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe("https://api.test/repos/yantene/notes/git/trees/main?recursive=1");
     expect((init as RequestInit).headers).toMatchObject({
       Authorization: "Bearer ghp_test",
     });
@@ -70,18 +61,13 @@ describe("GitHubContentStore", () => {
 
   it("reads a file's raw bytes by path", async () => {
     const bytes = new Uint8Array([1, 2, 3]);
-    const fetchFn = vi.fn(() =>
-      Promise.resolve(new Response(bytes)),
-    ) as unknown as typeof fetch;
+    const fetchFn = vi.fn(() => Promise.resolve(new Response(bytes))) as unknown as typeof fetch;
 
     const result = await store(fetchFn).readFile("notes/a.md");
     expect(result).toEqual(bytes);
 
-    const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock
-      .calls[0];
-    expect(url).toBe(
-      "https://api.test/repos/yantene/notes/contents/notes/a.md?ref=main",
-    );
+    const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe("https://api.test/repos/yantene/notes/contents/notes/a.md?ref=main");
     /*
      * raw メディアタイプで頼むこと。既定 (`application/vnd.github+json`) に戻ると、
      * contents API は中身を base64 に包んだ JSON を返す。こちらはその生バイト列を
@@ -104,9 +90,7 @@ describe("GitHubContentStore", () => {
     const fetchFn = vi.fn(() =>
       Promise.resolve(new Response("boom", { status: 500 })),
     ) as unknown as typeof fetch;
-    await expect(store(fetchFn).listTree()).rejects.toBeInstanceOf(
-      GitHubRequestError,
-    );
+    await expect(store(fetchFn).listTree()).rejects.toBeInstanceOf(GitHubRequestError);
   });
 
   it("mints the auth token once across operations", async () => {

@@ -18,26 +18,20 @@ describe("buildPageMeta", () => {
       const record = d as Record<string, unknown>;
       return (key === "property" ? record.property : record.name) === value;
     });
-    return hit === undefined
-      ? undefined
-      : ((hit as Record<string, unknown>).content as string);
+    return hit === undefined ? undefined : ((hit as Record<string, unknown>).content as string);
   }
 
   it("omits the ld+json descriptor when jsonLd is not given", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-    expect(
-      meta.some((d) => "script:ld+json" in (d as Record<string, unknown>)),
-    ).toBe(false);
+    expect(meta.some((d) => "script:ld+json" in (d as Record<string, unknown>))).toBe(false);
   });
 
   it("emits the ld+json descriptor when jsonLd is given", () => {
     const jsonLd = { "@type": "BlogPosting", headline: "テスト記事" };
     const meta = buildPageMeta({ locale: "ja", origin, pathname, jsonLd });
 
-    const ld = meta.find(
-      (d) => "script:ld+json" in (d as Record<string, unknown>),
-    );
+    const ld = meta.find((d) => "script:ld+json" in (d as Record<string, unknown>));
     expect(ld).toEqual({ "script:ld+json": jsonLd });
   });
 
@@ -59,9 +53,7 @@ describe("buildPageMeta", () => {
     const site = translationsFor("ja").meta;
 
     expect(meta[0]).toEqual({ title: `記事タイトル - ${site.title}` });
-    expect(find(meta, "property", "og:title")).toBe(
-      `記事タイトル - ${site.title}`,
-    );
+    expect(find(meta, "property", "og:title")).toBe(`記事タイトル - ${site.title}`);
   });
 
   // トップは見出しがサイト名そのものなので、機械的に繋ぐと二重になる。
@@ -86,20 +78,14 @@ describe("buildPageMeta", () => {
       imagePath: "/og/notes/foo",
     });
 
-    expect(find(meta, "property", "og:image")).toBe(
-      "https://yantene.net/og/notes/foo",
-    );
-    expect(find(meta, "name", "twitter:image")).toBe(
-      "https://yantene.net/og/notes/foo",
-    );
+    expect(find(meta, "property", "og:image")).toBe("https://yantene.net/og/notes/foo");
+    expect(find(meta, "name", "twitter:image")).toBe("https://yantene.net/og/notes/foo");
   });
 
   it("defaults the OG image to the site-wide one", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-    expect(find(meta, "property", "og:image")).toBe(
-      "https://yantene.net/og/default",
-    );
+    expect(find(meta, "property", "og:image")).toBe("https://yantene.net/og/default");
   });
 
   /*
@@ -109,13 +95,9 @@ describe("buildPageMeta", () => {
    */
   it("always reports ja_JP as the OG locale", () => {
     for (const locale of ["ja", "en"]) {
-      expect(
-        find(
-          buildPageMeta({ locale, origin, pathname }),
-          "property",
-          "og:locale",
-        ),
-      ).toBe("ja_JP");
+      expect(find(buildPageMeta({ locale, origin, pathname }), "property", "og:locale")).toBe(
+        "ja_JP",
+      );
     }
   });
 
@@ -133,9 +115,7 @@ describe("buildPageMeta", () => {
   it("emits og:url built from origin and pathname", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-    expect(find(meta, "property", "og:url")).toBe(
-      "https://yantene.net/notes/foo",
-    );
+    expect(find(meta, "property", "og:url")).toBe("https://yantene.net/notes/foo");
   });
 
   /*
@@ -145,9 +125,7 @@ describe("buildPageMeta", () => {
   it("omits the alternate feed link when no page feed is given", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-    expect(
-      meta.some((d) => (d as Record<string, unknown>).rel === "alternate"),
-    ).toBe(false);
+    expect(meta.some((d) => (d as Record<string, unknown>).rel === "alternate")).toBe(false);
   });
 
   it("emits an alternate feed link built from origin and feed path", () => {
@@ -176,9 +154,7 @@ describe("buildPageMeta", () => {
     for (const pathname of ["/", "/notes", "/notes?tag=Web", "/notes/foo"]) {
       const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-      expect(
-        meta.some((d) => (d as Record<string, unknown>).rel === "webmention"),
-      ).toBe(false);
+      expect(meta.some((d) => (d as Record<string, unknown>).rel === "webmention")).toBe(false);
     }
   });
 
@@ -205,13 +181,9 @@ describe("buildPageMeta", () => {
         "og:type",
       ),
     ).toBe("article");
-    expect(
-      find(
-        buildPageMeta({ locale: "ja", origin, pathname }),
-        "property",
-        "og:type",
-      ),
-    ).toBe("website");
+    expect(find(buildPageMeta({ locale: "ja", origin, pathname }), "property", "og:type")).toBe(
+      "website",
+    );
   });
 });
 

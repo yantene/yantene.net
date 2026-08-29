@@ -11,10 +11,7 @@ import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
  *
  * タグは別テーブル (note_tags) にあるため、呼び出し側が読み込んで渡す。
  */
-export function rowToNote(
-  row: typeof notes.$inferSelect,
-  tags: readonly NoteTag[] = [],
-): Note {
+export function rowToNote(row: typeof notes.$inferSelect, tags: readonly NoteTag[] = []): Note {
   return Note.reconstruct({
     id: entityId<"Note">(row.id),
     slug: NoteSlug.create(row.slug),

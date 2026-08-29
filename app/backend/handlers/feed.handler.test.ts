@@ -21,9 +21,7 @@ function unpersistedNote(params: {
     imageUrl: undefined,
     tags: (params.tags ?? []).map((tag) => NoteTag.create(tag)),
     publishedOn: Temporal.PlainDate.from(params.publishedOn ?? "2026-01-15"),
-    lastModifiedOn: Temporal.PlainDate.from(
-      params.lastModifiedOn ?? "2026-01-20",
-    ),
+    lastModifiedOn: Temporal.PlainDate.from(params.lastModifiedOn ?? "2026-01-20"),
     sourceHash: "hash-0",
   });
 }
@@ -51,16 +49,10 @@ describe("GET /feed.xml", () => {
    */
   it("keeps naming the site-wide feed after the site root", async () => {
     const d1 = createTestD1();
-    const res = await createTestApp().request(
-      "https://example.test/feed.xml",
-      {},
-      env(d1),
-    );
+    const res = await createTestApp().request("https://example.test/feed.xml", {}, env(d1));
     const body = await res.text();
 
-    expect(body).toContain(
-      '<link href="https://example.test/feed.xml" rel="self"',
-    );
+    expect(body).toContain('<link href="https://example.test/feed.xml" rel="self"');
     expect(body).toContain("<id>https://example.test/</id>");
   });
 
@@ -70,11 +62,7 @@ describe("GET /feed.xml", () => {
       unpersistedNote({ slug: "hello-world", title: "Hello & World" }),
     );
 
-    const res = await createTestApp().request(
-      "https://example.test/feed.xml",
-      {},
-      env(d1),
-    );
+    const res = await createTestApp().request("https://example.test/feed.xml", {}, env(d1));
     const body = await res.text();
 
     expect(body).toContain("<entry>");
@@ -88,23 +76,15 @@ describe("GET /feed.xml", () => {
 describe("GET /feed.xml?tag=...", () => {
   async function seedTaggedNotes(d1: D1Database): Promise<void> {
     const command = new D1NoteCommandRepository(d1);
-    await command.upsert(
-      unpersistedNote({ slug: "tagged", title: "Tagged", tags: ["Web"] }),
-    );
-    await command.upsert(
-      unpersistedNote({ slug: "other", title: "Other", tags: ["日記"] }),
-    );
+    await command.upsert(unpersistedNote({ slug: "tagged", title: "Tagged", tags: ["Web"] }));
+    await command.upsert(unpersistedNote({ slug: "other", title: "Other", tags: ["日記"] }));
   }
 
   it("returns only the notes carrying the tag", async () => {
     const d1 = createTestD1();
     await seedTaggedNotes(d1);
 
-    const res = await createTestApp().request(
-      "https://example.test/feed.xml?tag=Web",
-      {},
-      env(d1),
-    );
+    const res = await createTestApp().request("https://example.test/feed.xml?tag=Web", {}, env(d1));
     const body = await res.text();
 
     expect(res.status).toBe(200);
@@ -127,12 +107,8 @@ describe("GET /feed.xml?tag=...", () => {
     const body = await res.text();
 
     expect(body).toContain("<title>やんてね - 日記</title>");
-    expect(body).toContain(
-      `<link href="https://example.test/feed.xml?tag=${encoded}" rel="self"`,
-    );
-    expect(body).toContain(
-      `<id>https://example.test/notes?tag=${encoded}</id>`,
-    );
+    expect(body).toContain(`<link href="https://example.test/feed.xml?tag=${encoded}" rel="self"`);
+    expect(body).toContain(`<id>https://example.test/notes?tag=${encoded}</id>`);
   });
 
   /* タグ名は XML にも URL にも載る。両方の逃がし方が同時に効くこと。 */
@@ -179,11 +155,7 @@ describe("GET /feed.xml?tag=...", () => {
     const d1 = createTestD1();
     await seedTaggedNotes(d1);
 
-    const res = await createTestApp().request(
-      "https://example.test/feed.xml?tag=%20",
-      {},
-      env(d1),
-    );
+    const res = await createTestApp().request("https://example.test/feed.xml?tag=%20", {}, env(d1));
     const body = await res.text();
 
     expect(res.status).toBe(200);

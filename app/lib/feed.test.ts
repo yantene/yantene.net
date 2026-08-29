@@ -41,11 +41,7 @@ describe("feedIdentity", () => {
 
   /* id は購読の同一性を決める鍵なので、タグごとに別の URI になること。 */
   it("gives each tag a distinct alternate path", () => {
-    expect(feedIdentity("Web").alternatePath).not.toBe(
-      feedIdentity("日記").alternatePath,
-    );
-    expect(feedIdentity("Web").alternatePath).not.toBe(
-      feedIdentity().alternatePath,
-    );
+    expect(feedIdentity("Web").alternatePath).not.toBe(feedIdentity("日記").alternatePath);
+    expect(feedIdentity("Web").alternatePath).not.toBe(feedIdentity().alternatePath);
   });
 });

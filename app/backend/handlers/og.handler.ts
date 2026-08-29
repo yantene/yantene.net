@@ -35,11 +35,7 @@ const imageHeaders = {
 };
 
 /** HTML を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。 */
-async function renderAndCache(
-  env: Env,
-  cacheKey: string,
-  html: string,
-): Promise<Response> {
+async function renderAndCache(env: Env, cacheKey: string, html: string): Promise<Response> {
   const cached = await env.R2.get(cacheKey);
   if (cached !== null) {
     return new Response(cached.body, { headers: imageHeaders });
@@ -74,11 +70,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/default", (c) =>
-    renderAndCache(
-      c.env,
-      `og/default-${OG_TEMPLATE_VERSION}.png`,
-      defaultCardHtml(),
-    ),
+    renderAndCache(c.env, `og/default-${OG_TEMPLATE_VERSION}.png`, defaultCardHtml()),
   );
 
   router.get("/notes/:slug", async (c) => {

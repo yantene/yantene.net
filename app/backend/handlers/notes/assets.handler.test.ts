@@ -27,11 +27,10 @@ async function seedNote(d1: D1Database): Promise<void> {
 }
 
 async function seedAsset(bucket: R2Bucket): Promise<void> {
-  await new R2NoteContentCache(bucket).putAsset(
-    NoteSlug.create("hello"),
-    "cover.png",
-    { bytes: new Uint8Array([1, 2, 3]), contentType: "image/png" },
-  );
+  await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "cover.png", {
+    bytes: new Uint8Array([1, 2, 3]),
+    contentType: "image/png",
+  });
 }
 
 describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
@@ -40,11 +39,10 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
     const { bucket } = createTestR2();
     await seedNote(d1);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    await new R2NoteContentCache(bucket).putAsset(
-      NoteSlug.create("hello"),
-      "cover.png",
-      { bytes, contentType: "image/png" },
-    );
+    await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "cover.png", {
+      bytes,
+      contentType: "image/png",
+    });
 
     const res = await createNoteAssetsRouter().request(
       "/hello/assets/cover.png",
@@ -62,11 +60,10 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedNote(d1);
-    await new R2NoteContentCache(bucket).putAsset(
-      NoteSlug.create("hello"),
-      "img/a.png",
-      { bytes: new Uint8Array([9]), contentType: "image/png" },
-    );
+    await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "img/a.png", {
+      bytes: new Uint8Array([9]),
+      contentType: "image/png",
+    });
 
     const res = await createNoteAssetsRouter().request(
       "/hello/assets/img/a.png",
@@ -142,11 +139,7 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
       BASIC_AUTH_USER: "u",
       BASIC_AUTH_PASS: "p",
     } as unknown as Env;
-    const res = await createNoteAssetsRouter().request(
-      "/hello/assets/cover.png",
-      {},
-      env,
-    );
+    const res = await createNoteAssetsRouter().request("/hello/assets/cover.png", {}, env);
     const cacheControl = res.headers.get("Cache-Control");
     expect(cacheControl).toContain("private");
     expect(cacheControl).not.toContain("public");
@@ -161,11 +154,7 @@ describe("note asset public routing (full app)", () => {
     await seedAsset(bucket);
     const env = { R2: bucket, D1: d1 } as unknown as Env;
 
-    const res = await createTestApp().request(
-      "/api/v1/notes/hello/assets/cover.png",
-      {},
-      env,
-    );
+    const res = await createTestApp().request("/api/v1/notes/hello/assets/cover.png", {}, env);
     // React Router へ落ちず Hono 側が応答している (ダミー委譲は 404 を返す)。
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");

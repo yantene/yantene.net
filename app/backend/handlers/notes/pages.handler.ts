@@ -7,10 +7,7 @@ import {
   toPublicNoteList,
   type PublicNoteList,
 } from "~/backend/handlers/note-view";
-import {
-  D1NoteQueryRepository,
-  D1NoteViewQueryRepository,
-} from "~/backend/infra/d1/repositories";
+import { D1NoteQueryRepository, D1NoteViewQueryRepository } from "~/backend/infra/d1/repositories";
 
 /**
  * ホームに出す「最近」の件数。
@@ -52,10 +49,7 @@ export interface NotesListPageData extends PublicNoteList {
  * 検索の入口と結果を兼ねるので、絞り込みの状態は URL にだけ持たせる (共有できて、
  * 戻るが効く)。
  */
-export async function loadNotesListPage(
-  env: Env,
-  url: URL,
-): Promise<NotesListPageData> {
+export async function loadNotesListPage(env: Env, url: URL): Promise<NotesListPageData> {
   const { page, perPage, limit, offset } = parsePagination(
     url.searchParams.get("page") ?? undefined,
     url.searchParams.get("per-page") ?? undefined,
@@ -112,9 +106,7 @@ async function searchNotes(
   const notes =
     tag === undefined
       ? found
-      : found.filter((note) =>
-          note.tags.some((item) => item.toString() === tag),
-        );
+      : found.filter((note) => note.tags.some((item) => item.toString() === tag));
 
   // 検索は関連度順にすべて返すので、ページ送りの母数は絞り込み後の件数そのものになる。
   return { notes, total: notes.length };
@@ -164,9 +156,7 @@ async function loadPopularNotes(
   env: Env,
   query: D1NoteQueryRepository,
 ): Promise<PublicNoteList["notes"]> {
-  const rankedIds = await new D1NoteViewQueryRepository(
-    env.D1,
-  ).listPopularNoteIds(POPULAR_COUNT);
+  const rankedIds = await new D1NoteViewQueryRepository(env.D1).listPopularNoteIds(POPULAR_COUNT);
   if (rankedIds.length === 0) return [];
 
   // 引き直した行を、順位の並びに戻す。

@@ -22,11 +22,7 @@ export interface UseDismissParams {
  * 範囲の中かどうかは `contains` で見る。パネルの中の要素を押しただけで閉じると、
  * 絞り込みの入力に触れることすらできない。
  */
-export function useDismiss({
-  isOpen,
-  containerRef,
-  onDismiss,
-}: UseDismissParams): void {
+export function useDismiss({ isOpen, containerRef, onDismiss }: UseDismissParams): void {
   useEffect(() => {
     if (!isOpen) return;
 

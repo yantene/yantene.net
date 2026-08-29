@@ -58,11 +58,7 @@ async function setup(): Promise<Harness> {
 }
 
 /** リアクションの行から押下を 1 つ送る。空文字は取り消し。 */
-async function submit(
-  harness: Harness,
-  emoji: string,
-  slug: string = SLUG,
-): Promise<Response> {
+async function submit(harness: Harness, emoji: string, slug: string = SLUG): Promise<Response> {
   const body = new FormData();
   body.set("emoji", emoji);
   const request = new Request(`https://example.test/notes/${slug}`, {
@@ -85,12 +81,8 @@ async function submit(
   return response;
 }
 
-function listReactions(
-  harness: Harness,
-): Promise<readonly { emoji: string; count: number }[]> {
-  return new D1NoteReactionQueryRepository(harness.env.D1).listByNoteId(
-    harness.noteId,
-  );
+function listReactions(harness: Harness): Promise<readonly { emoji: string; count: number }[]> {
+  return new D1NoteReactionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
 }
 
 describe("記事ページの action", () => {

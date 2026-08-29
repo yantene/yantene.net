@@ -23,9 +23,7 @@ export interface PaletteGroup {
 
 /** ロケールごとの取得先。無い言語は英語に倒す。 */
 function paletteUrl(locale: string): string {
-  return locale.startsWith("ja")
-    ? "/emoji/palette-ja.json"
-    : "/emoji/palette-en.json";
+  return locale.startsWith("ja") ? "/emoji/palette-ja.json" : "/emoji/palette-en.json";
 }
 
 /**
@@ -64,9 +62,7 @@ async function fetchPalette(url: string): Promise<readonly PaletteGroup[]> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(
-        `failed to load the emoji palette: ${String(response.status)}`,
-      );
+      throw new Error(`failed to load the emoji palette: ${String(response.status)}`);
     }
     return await response.json();
   } catch (error) {

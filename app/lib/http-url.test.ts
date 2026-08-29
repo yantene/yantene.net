@@ -3,12 +3,9 @@ import { isHttpUrl, withLowercaseScheme } from "~/lib/http-url";
 
 describe("isHttpUrl", () => {
   // eslint-disable-next-line unicorn/prefer-https -- http と https の両方を通すことが眼目
-  it.each(["http://example.com/", "https://example.com/a?b=1#c"])(
-    "http(s) は通す (%s)",
-    (url) => {
-      expect(isHttpUrl(url)).toBe(true);
-    },
-  );
+  it.each(["http://example.com/", "https://example.com/a?b=1#c"])("http(s) は通す (%s)", (url) => {
+    expect(isHttpUrl(url)).toBe(true);
+  });
 
   /*
    * ブラウザはこれを普通に開く。startsWith で書いていたときは取り逃していて、
@@ -61,9 +58,7 @@ describe("withLowercaseScheme", () => {
 
   /* スキームより後ろは触らない。パスは大小を区別する。 */
   it("スキームだけを小文字にする", () => {
-    expect(withLowercaseScheme("HTTPS://example.com/A/B.PNG")).toBe(
-      "https://example.com/A/B.PNG",
-    );
+    expect(withLowercaseScheme("HTTPS://example.com/A/B.PNG")).toBe("https://example.com/A/B.PNG");
   });
 
   it.each(["/notes/X", "#Top", "./A.png", "//Example.com/", ""])(

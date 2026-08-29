@@ -52,9 +52,7 @@ describe("D1NoteReactionCommandRepository", () => {
     await commands.increment(noteId, LIKE);
     await commands.increment(noteId, LIKE);
 
-    expect(await queries.listByNoteId(noteId)).toEqual([
-      { emoji: "❤️", count: 2 },
-    ]);
+    expect(await queries.listByNoteId(noteId)).toEqual([{ emoji: "❤️", count: 2 }]);
   });
 
   it("絵文字ごとに別の行として数える", async () => {
@@ -99,15 +97,9 @@ describe("D1NoteReactionCommandRepository", () => {
 
     await commands.addLogScore(noteId, reactionWeightLog(REACTED_ON));
 
-    expect(await readViewLogScore(d1, noteId)).toBe(
-      logScoreAfterReaction(start, REACTED_ON),
-    );
+    expect(await readViewLogScore(d1, noteId)).toBe(logScoreAfterReaction(start, REACTED_ON));
 
-    await commands.subtractLogScore(
-      noteId,
-      reactionWeightLog(REACTED_ON),
-      start,
-    );
+    await commands.subtractLogScore(noteId, reactionWeightLog(REACTED_ON), start);
 
     expect(await readViewLogScore(d1, noteId)).toBeCloseTo(start, 10);
   });
@@ -121,16 +113,10 @@ describe("D1NoteReactionCommandRepository", () => {
     const start = viewWeightLog(PUBLISHED_ON);
     const weight = reactionWeightLog(REACTED_ON);
 
-    await Promise.all([
-      commands.addLogScore(noteId, weight),
-      commands.addLogScore(noteId, weight),
-    ]);
+    await Promise.all([commands.addLogScore(noteId, weight), commands.addLogScore(noteId, weight)]);
 
     expect(await readViewLogScore(d1, noteId)).toBeCloseTo(
-      logScoreAfterReaction(
-        logScoreAfterReaction(start, REACTED_ON),
-        REACTED_ON,
-      ),
+      logScoreAfterReaction(logScoreAfterReaction(start, REACTED_ON), REACTED_ON),
       12,
     );
   });

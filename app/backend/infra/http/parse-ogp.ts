@@ -58,12 +58,7 @@ function isSpace(character: string): boolean {
 
 /** 属性名の終わりになる文字。HTML の字句規則のうち、必要なぶんだけを見る。 */
 function isNameBoundary(character: string): boolean {
-  return (
-    character === "=" ||
-    character === "/" ||
-    character === ">" ||
-    isSpace(character)
-  );
+  return character === "=" || character === "/" || character === ">" || isSpace(character);
 }
 
 function skipSpaces(raw: string, from: number): number {
@@ -91,11 +86,7 @@ function readValue(raw: string, from: number): Scanned {
   }
 
   let index = start;
-  while (
-    index < raw.length &&
-    !isSpace(raw.charAt(index)) &&
-    raw.charAt(index) !== ">"
-  ) {
+  while (index < raw.length && !isSpace(raw.charAt(index)) && raw.charAt(index) !== ">") {
     index += 1;
   }
   return { text: raw.slice(start, index), next: index };
@@ -123,9 +114,7 @@ function parseAttributes(raw: string): ReadonlyMap<string, string> {
 
     const afterName = skipSpaces(raw, name.next);
     const value =
-      raw.charAt(afterName) === "="
-        ? readValue(raw, afterName + 1)
-        : { text: "", next: afterName };
+      raw.charAt(afterName) === "=" ? readValue(raw, afterName + 1) : { text: "", next: afterName };
     index = value.next;
 
     // 同じ属性が 2 度書かれていたら先に出たほうを採る (HTML の解釈に合わせる)。
@@ -189,15 +178,11 @@ export function parseOgp(html: string): OgpMetadata {
   }
 
   const rawTitle = titlePattern.exec(html)?.[1];
-  const fallbackTitle =
-    rawTitle === undefined ? undefined : decodeHtmlEntities(rawTitle);
+  const fallbackTitle = rawTitle === undefined ? undefined : decodeHtmlEntities(rawTitle);
 
   return {
     title: firstNonEmpty(meta.get("og:title"), fallbackTitle),
-    description: firstNonEmpty(
-      meta.get("og:description"),
-      meta.get("description"),
-    ),
+    description: firstNonEmpty(meta.get("og:description"), meta.get("description")),
     siteName: firstNonEmpty(meta.get("og:site_name")),
     imageUrl: firstNonEmpty(meta.get("og:image"), meta.get("og:image:url")),
     faviconUrl: firstNonEmpty(faviconUrl),

@@ -17,10 +17,7 @@ import { Pagination } from "~/frontend/components/pagination/pagination";
 import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import {
-  cloudflareContext,
-  localeRouteContext,
-} from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
 
 const DEFAULT_PER_PAGE = 20;
@@ -28,9 +25,7 @@ const DEFAULT_PER_PAGE = 20;
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<
-  PageMetaBase & CopyrightData & NotesListPageData
-> {
+}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & NotesListPageData> {
   const url = new URL(request.url);
   const env = context.get(cloudflareContext).env;
   // 互いに独立した読み出しなので、往復を直列に積まない。
@@ -56,10 +51,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
    * 画面の見出しと同じ表現 (filteredByTag) を使って言い回しを揃える。
    * 置換先は関数で渡す ($& などの特殊な並びをタグ名がそのまま含み得るため)。
    */
-  const pageTitle =
-    tag === null
-      ? notes.title
-      : notes.filteredByTag.replace("{{tag}}", () => tag);
+  const pageTitle = tag === null ? notes.title : notes.filteredByTag.replace("{{tag}}", () => tag);
   return buildPageMeta({
     locale,
     origin,
@@ -143,9 +135,7 @@ function resultHeading(
   return t("notes.heading");
 }
 
-export default function NotesIndex({
-  loaderData,
-}: Route.ComponentProps): React.JSX.Element {
+export default function NotesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { notes, pagination, query, tag, tags, sort, copyright } = loaderData;
   const hrefForPage = (page: number): string =>
@@ -158,18 +148,14 @@ export default function NotesIndex({
    * 続きが永久に読まれない。中身のプリミティブに依存させる。
    */
   const { sortBy, order } = sort;
-  const loadPage = useMemo(
-    () => buildLoadPage({ sortBy, order }, tag),
-    [sortBy, order, tag],
-  );
+  const loadPage = useMemo(() => buildLoadPage({ sortBy, order }, tag), [sortBy, order, tag]);
   /*
    * 年で束ねられるのは公開日で並んでいるときだけ。
    *
    * 検索結果は関連度順なので公開年が前後し、束ねると同じ年が飛び飛びに現れて時間軸に
    * 見えなくなる。更新日順も同じ理由で束ねない。
    */
-  const isGroupByYear =
-    query.length === 0 && (sort.sortBy === null || sort.sortBy === "published");
+  const isGroupByYear = query.length === 0 && (sort.sortBy === null || sort.sortBy === "published");
 
   return (
     <AppLayout>
@@ -196,9 +182,7 @@ export default function NotesIndex({
             </label>
           </form>
 
-          {tags.length > 0 && (
-            <TagIndex tags={tags} selected={tag} query={query} />
-          )}
+          {tags.length > 0 && <TagIndex tags={tags} selected={tag} query={query} />}
         </search>
 
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">

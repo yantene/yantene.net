@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveWebAnalyticsBeacon } from "~/backend/handlers/web-analytics";
-import {
-  WEB_ANALYTICS_BEACON_SRC,
-  WEB_ANALYTICS_SITE_TOKEN,
-} from "~/lib/constants/web-analytics";
+import { WEB_ANALYTICS_BEACON_SRC, WEB_ANALYTICS_SITE_TOKEN } from "~/lib/constants/web-analytics";
 
 /**
  * 閲覧の計測 (ADR 0021)。
@@ -35,9 +32,7 @@ describe("resolveWebAnalyticsBeacon", () => {
 
   it("loads the beacon from the URL that the CSP allows", () => {
     // CSP (app/backend/index.ts) と同じ定数から引いていること。ずれるとブラウザが止める。
-    expect(resolveWebAnalyticsBeacon(env("production"))?.src).toBe(
-      WEB_ANALYTICS_BEACON_SRC,
-    );
+    expect(resolveWebAnalyticsBeacon(env("production"))?.src).toBe(WEB_ANALYTICS_BEACON_SRC);
   });
 
   it("passes the site token through data-cf-beacon", () => {

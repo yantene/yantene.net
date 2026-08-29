@@ -9,7 +9,5 @@ import { getApp } from "~/backend/index";
  * 「Hono が応答せず React Router へ落ちた」場合は 404 として観測できる。
  */
 export function createTestApp(): ReturnType<typeof getApp> {
-  return getApp(() =>
-    Promise.resolve(new Response("Not Found", { status: 404 })),
-  );
+  return getApp(() => Promise.resolve(new Response("Not Found", { status: 404 })));
 }

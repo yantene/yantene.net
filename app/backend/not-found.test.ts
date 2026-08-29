@@ -48,12 +48,7 @@ describe("路の見つからない要求", () => {
     ["/og/nope", "GET"],
     ["/notes/x", "PATCH"],
   ])("%s (%s) はページ委譲へ落ちる", async (path, method) => {
-    const res = await appWithMarkedDelegate().request(
-      path,
-      { method },
-      env(),
-      executionCtx(),
-    );
+    const res = await appWithMarkedDelegate().request(path, { method }, env(), executionCtx());
 
     expect(res.headers.get("X-Delegated")).toBe("1");
   });
@@ -79,9 +74,7 @@ describe("c.notFound() の応答", () => {
     const res = await app.request("/probe");
 
     expect(res.status).toBe(404);
-    expect(res.headers.get("Content-Type")).toContain(
-      "application/problem+json",
-    );
+    expect(res.headers.get("Content-Type")).toContain("application/problem+json");
     expect(await res.json()).toMatchObject({ status: 404 });
   });
 

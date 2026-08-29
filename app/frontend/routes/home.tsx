@@ -14,23 +14,15 @@ import { Header } from "~/frontend/components/layout/header";
 import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import {
-  cloudflareContext,
-  localeRouteContext,
-} from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<
-  PageMetaBase & CopyrightData & ClockOriginData & HomePageData
-> {
+}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & ClockOriginData & HomePageData> {
   const env = context.get(cloudflareContext).env;
   // 互いに独立した読み出しなので、往復を直列に積まない。
-  const [home, copyright] = await Promise.all([
-    loadHomePage(env),
-    loadCopyrightYears(env),
-  ]);
+  const [home, copyright] = await Promise.all([loadHomePage(env), loadCopyrightYears(env)]);
   return {
     ...home,
     locale: context.get(localeRouteContext),
@@ -56,9 +48,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   });
 };
 
-export default function Home({
-  loaderData,
-}: Route.ComponentProps): React.JSX.Element {
+export default function Home({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { recent, popular, copyright, clockOrigin } = loaderData;
 
@@ -100,10 +90,7 @@ export default function Home({
               絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
             */}
             <p className="home-view-all">
-              <Link
-                to="/notes"
-                className="link link-primary press-control text-sm"
-              >
+              <Link to="/notes" className="link link-primary press-control text-sm">
                 {t("home.viewAll")}
               </Link>
             </p>

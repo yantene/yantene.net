@@ -31,12 +31,7 @@
   height: 100%;
   /* 帯の幅。流れる距離 (translateX の終点) はこの値から決まる。 */
   width: 40%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-primary),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
   animation: navigation-progress-sweep 1.1s ease-in-out infinite;
 }
 

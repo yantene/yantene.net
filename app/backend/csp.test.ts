@@ -69,9 +69,7 @@ describe("content security policy", () => {
   it("opens style-src and font-src to Google Fonts, and nothing else", async () => {
     const directives = await directivesOf("production");
 
-    expect(directives).toContain(
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    );
+    expect(directives).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com");
     expect(directives).toContain("font-src 'self' https://fonts.gstatic.com");
     // フォントを読むのに要らない口は 'self' のままであること (増えたらここで落ちる)。
     expect(directives).toContain("default-src 'self'");
@@ -93,9 +91,7 @@ describe("content security policy", () => {
     expect(scriptSrc).toMatch(
       /^script-src 'nonce-[^']+' 'self' https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js$/,
     );
-    expect(directives).toContain(
-      "connect-src 'self' https://cloudflareinsights.com",
-    );
+    expect(directives).toContain("connect-src 'self' https://cloudflareinsights.com");
   });
 
   /*
@@ -119,12 +115,8 @@ describe("content security policy", () => {
     for (const appEnv of ["development", "staging", "production"]) {
       const res = await createTestApp().request("/health", {}, env(appEnv));
       expect(res.headers.get("X-Frame-Options")).toBe("DENY");
-      expect(res.headers.get("Referrer-Policy")).toBe(
-        "strict-origin-when-cross-origin",
-      );
-      expect(res.headers.get("Strict-Transport-Security")).toContain(
-        "max-age=31536000",
-      );
+      expect(res.headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+      expect(res.headers.get("Strict-Transport-Security")).toContain("max-age=31536000");
     }
   });
 });

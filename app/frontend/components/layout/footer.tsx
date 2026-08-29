@@ -2,10 +2,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineScale } from "react-icons/hi2";
 import { Link } from "react-router";
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
-import {
-  FeedLink,
-  INLINE_ICON_LINK,
-} from "~/frontend/components/feed/feed-link";
+import { FeedLink, INLINE_ICON_LINK } from "~/frontend/components/feed/feed-link";
 
 interface FooterProps {
   /**
@@ -47,8 +44,7 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
           誰の著作物で、いつからいつまでのものかを読み手に示す表示として出す。
         */}
         <p className="text-xs text-foreground/80">
-          Copyright &copy; {formatCopyrightYears(copyright)} やんてね All rights
-          reserved.
+          Copyright &copy; {formatCopyrightYears(copyright)} やんてね All rights reserved.
         </p>
         {/*
           全ページの足元に置く常設の導線。読み終えて出ていく場所が、この先も
@@ -71,10 +67,7 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
             揃っていることをコメントではなく共有で担保する。
             絵の意味は文字が持つので、読み上げには渡さない。
           */}
-          <Link
-            to="/licenses"
-            className={`${INLINE_ICON_LINK} text-xs text-foreground/80`}
-          >
+          <Link to="/licenses" className={`${INLINE_ICON_LINK} text-xs text-foreground/80`}>
             <HiOutlineScale aria-hidden="true" />
             {t("footer.licenses")}
           </Link>

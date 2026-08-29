@@ -58,10 +58,7 @@ export const VIEW_SCORE_HALF_LIFE_DAYS = 30;
  * 負は「1 より軽い」を意味するだけで、順序は保たれる。
  */
 export function viewWeightLog(viewedOn: string): number {
-  return (
-    (daysBetween(VIEW_SCORE_EPOCH, viewedOn) / VIEW_SCORE_HALF_LIFE_DAYS) *
-    Math.LN2
-  );
+  return (daysBetween(VIEW_SCORE_EPOCH, viewedOn) / VIEW_SCORE_HALF_LIFE_DAYS) * Math.LN2;
 }
 
 /**
@@ -112,18 +109,12 @@ function logSubExp(a: number, b: number): number {
  *
  * @param currentLogScore いまのスコア (まだ読まれていなければ 0)
  */
-export function logScoreAfterView(
-  currentLogScore: number,
-  viewedOn: string,
-): number {
+export function logScoreAfterView(currentLogScore: number, viewedOn: string): number {
   return logAddExp(currentLogScore, viewWeightLog(viewedOn));
 }
 
 /** リアクションが付いたあとのスコア (対数)。 */
-export function logScoreAfterReaction(
-  currentLogScore: number,
-  reactedOn: string,
-): number {
+export function logScoreAfterReaction(currentLogScore: number, reactedOn: string): number {
   return logAddExp(currentLogScore, reactionWeightLog(reactedOn));
 }
 

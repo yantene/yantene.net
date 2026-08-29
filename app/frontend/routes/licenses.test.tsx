@@ -56,9 +56,7 @@ describe("ライセンスのページ", () => {
       "href",
       "https://github.com/jdecked/twemoji",
     );
-    expect(screen.getAllByRole("link", { name: "CC BY 4.0" })).not.toHaveLength(
-      0,
-    );
+    expect(screen.getAllByRole("link", { name: "CC BY 4.0" })).not.toHaveLength(0);
   });
 
   it("書体の帰属を出す", async () => {
@@ -66,9 +64,7 @@ describe("ライセンスのページ", () => {
 
     expect(screen.getByRole("link", { name: "Noto Sans JP" })).toBeVisible();
     expect(screen.getByRole("link", { name: "STIX Two Math" })).toBeVisible();
-    expect(
-      screen.getAllByRole("link", { name: "SIL Open Font License 1.1" }),
-    ).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "SIL Open Font License 1.1" })).toHaveLength(2);
   });
 });
 
@@ -78,9 +74,7 @@ describe("ライセンスのページ", () => {
  */
 describe("ライセンスのページの登録", () => {
   it("routes.ts に /licenses がある", () => {
-    expect(
-      routes.some((route) => "path" in route && route.path === "licenses"),
-    ).toBe(true);
+    expect(routes.some((route) => "path" in route && route.path === "licenses")).toBe(true);
   });
 });
 
@@ -90,12 +84,7 @@ describe("ライセンスのページの登録", () => {
  * 読んでいる書体の側を正として突き合わせる。
  */
 describe("読み込んでいる書体の帰属", () => {
-  it.each(googleFontFamilies.map(({ name }) => name))(
-    "%s の帰属が /licenses にある",
-    (name) => {
-      expect(
-        ATTRIBUTIONS.some((attribution) => attribution.name === name),
-      ).toBe(true);
-    },
-  );
+  it.each(googleFontFamilies.map(({ name }) => name))("%s の帰属が /licenses にある", (name) => {
+    expect(ATTRIBUTIONS.some((attribution) => attribution.name === name)).toBe(true);
+  });
 });

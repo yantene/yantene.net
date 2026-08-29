@@ -1,8 +1,4 @@
-import type {
-  CachedAsset,
-  INoteContentCache,
-  NoteSlug,
-} from "~/backend/domain/note";
+import type { CachedAsset, INoteContentCache, NoteSlug } from "~/backend/domain/note";
 
 const JSON_CONTENT_TYPE = "application/json";
 const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -56,26 +52,18 @@ export class R2NoteContentCache implements INoteContentCache {
     return JSON.parse(await object.text());
   }
 
-  async putAsset(
-    slug: NoteSlug,
-    path: string,
-    asset: CachedAsset,
-  ): Promise<void> {
+  async putAsset(slug: NoteSlug, path: string, asset: CachedAsset): Promise<void> {
     await this.bucket.put(this.assetKey(slug, path), asset.bytes, {
       httpMetadata: { contentType: asset.contentType },
     });
   }
 
-  async getAsset(
-    slug: NoteSlug,
-    path: string,
-  ): Promise<CachedAsset | undefined> {
+  async getAsset(slug: NoteSlug, path: string): Promise<CachedAsset | undefined> {
     const object = await this.bucket.get(this.assetKey(slug, path));
     if (object === null) return undefined;
     return {
       bytes: new Uint8Array(await object.arrayBuffer()),
-      contentType:
-        object.httpMetadata?.contentType ?? DEFAULT_ASSET_CONTENT_TYPE,
+      contentType: object.httpMetadata?.contentType ?? DEFAULT_ASSET_CONTENT_TYPE,
     };
   }
 
@@ -94,10 +82,7 @@ export class R2NoteContentCache implements INoteContentCache {
    * (cursor は列挙の位置であって、消した件数ではない) ので、辿り方は消す・残すに
    * よらず同じでよい。
    */
-  private async deleteUnder(
-    prefix: string,
-    keep: ReadonlySet<string> = new Set(),
-  ): Promise<void> {
+  private async deleteUnder(prefix: string, keep: ReadonlySet<string> = new Set()): Promise<void> {
     let cursor: string | undefined;
     do {
       const listing = await this.bucket.list({ prefix, cursor });

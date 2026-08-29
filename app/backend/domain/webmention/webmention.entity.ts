@@ -4,11 +4,7 @@ import type { WebmentionType } from "./webmention-type.vo";
 import type { WebmentionUrl } from "./webmention-url.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { NoteId, NoteSlug } from "~/backend/domain/note";
-import type {
-  EntityId,
-  IPersisted,
-  IUnpersisted,
-} from "~/backend/domain/shared";
+import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type WebmentionId = EntityId<"Webmention">;
 

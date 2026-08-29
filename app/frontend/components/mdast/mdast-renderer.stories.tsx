@@ -64,17 +64,14 @@ export const Default: Story = {
 export const WithImageResolution: Story = {
   args: {
     node: markdownToMdast("![cover](./cover.png)"),
-    transformImageUrl: (src) =>
-      src.replace(/^\.\//, "/api/v1/notes/example/assets/"),
+    transformImageUrl: (src) => src.replace(/^\.\//, "/api/v1/notes/example/assets/"),
   },
 };
 
 export const Headings: Story = {
   args: {
     node: markdownToMdast(
-      ["# H1", "## H2", "### H3", "#### H4", "##### H5", "###### H6"].join(
-        "\n\n",
-      ),
+      ["# H1", "## H2", "### H3", "#### H4", "##### H5", "###### H6"].join("\n\n"),
     ),
   },
 };

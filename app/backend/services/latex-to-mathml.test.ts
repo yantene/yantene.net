@@ -52,18 +52,12 @@ describe("latexToMathMl", () => {
     const { properties, children } = latexToMathMl("a^2", { display: false });
     expect(properties.xmlns).toBe("http://www.w3.org/1998/Math/MathML");
     // KaTeX は <semantics> に組版と LaTeX 原文 (annotation) を並べて返す。
-    expect(elementsOf(children).map((element) => element.tagName)).toContain(
-      "msup",
-    );
+    expect(elementsOf(children).map((element) => element.tagName)).toContain("msup");
   });
 
   it("marks display math with display=block and leaves inline math bare", () => {
-    expect(latexToMathMl("a", { display: true }).properties.display).toBe(
-      "block",
-    );
-    expect(
-      latexToMathMl("a", { display: false }).properties.display,
-    ).toBeUndefined();
+    expect(latexToMathMl("a", { display: true }).properties.display).toBe("block");
+    expect(latexToMathMl("a", { display: false }).properties.display).toBeUndefined();
   });
 
   /*
@@ -72,10 +66,9 @@ describe("latexToMathMl", () => {
    * `style-src` に `'unsafe-inline'` を置いたので、素通しでよくなった。
    */
   it("passes Temml's inline style through (style-src allows it now)", () => {
-    const { children } = latexToMathMl(
-      String.raw`\begin{pmatrix} a & b \\ c & d \end{pmatrix}`,
-      { display: true },
-    );
+    const { children } = latexToMathMl(String.raw`\begin{pmatrix} a & b \\ c & d \end{pmatrix}`, {
+      display: true,
+    });
 
     // 桁の空きは Temml が style で渡してくる。落とすと行列の桁が揃わない。
     const styles = elementsOf(children)
@@ -120,9 +113,7 @@ describe("latexToMathMl", () => {
 
   it("keeps the LaTeX source as an annotation", () => {
     const { children } = latexToMathMl("a^2", { display: false });
-    const annotation = elementsOf(children).find(
-      (element) => element.tagName === "annotation",
-    );
+    const annotation = elementsOf(children).find((element) => element.tagName === "annotation");
     expect(annotation?.properties.encoding).toBe("application/x-tex");
   });
 
@@ -136,14 +127,12 @@ describe("latexToMathMl", () => {
   });
 
   it("throws MathSyntaxError on LaTeX it cannot parse", () => {
-    expect(() => latexToMathMl(String.raw`\frac{`, { display: false })).toThrow(
-      MathSyntaxError,
-    );
+    expect(() => latexToMathMl(String.raw`\frac{`, { display: false })).toThrow(MathSyntaxError);
   });
 
   it("reports the offending source in the error message", () => {
-    expect(() =>
-      latexToMathMl(String.raw`\nosuchcommand`, { display: true }),
-    ).toThrow(/nosuchcommand/);
+    expect(() => latexToMathMl(String.raw`\nosuchcommand`, { display: true })).toThrow(
+      /nosuchcommand/,
+    );
   });
 });

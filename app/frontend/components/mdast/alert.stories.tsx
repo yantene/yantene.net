@@ -52,11 +52,7 @@ export const Important: Story = {
 export const Warning: Story = {
   args: {
     kind: "warning",
-    children: (
-      <p>
-        リンク先はサービスを終えており、ドメインは第三者に再取得されていました。
-      </p>
-    ),
+    children: <p>リンク先はサービスを終えており、ドメインは第三者に再取得されていました。</p>,
   },
 };
 

@@ -53,10 +53,7 @@ describe("HttpWebmentionAvatarMirror", () => {
     );
     const cache = recordingCache();
 
-    const id = await new HttpWebmentionAvatarMirror(
-      cache,
-      silentLogger(),
-    ).mirror(photo);
+    const id = await new HttpWebmentionAvatarMirror(cache, silentLogger()).mirror(photo);
 
     expect(id).toBeDefined();
     expect(cache.puts).toHaveLength(1);
@@ -75,9 +72,7 @@ describe("HttpWebmentionAvatarMirror", () => {
     const cache = recordingCache();
     const logger = silentLogger();
 
-    const id = await new HttpWebmentionAvatarMirror(cache, logger).mirror(
-      photo,
-    );
+    const id = await new HttpWebmentionAvatarMirror(cache, logger).mirror(photo);
 
     expect(id).toBeUndefined();
     expect(cache.puts).toEqual([]);

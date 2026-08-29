@@ -10,9 +10,7 @@ const journalPath = path.join(migrationsDir, "meta/_journal.json");
 const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
   entries: Array<{ tag: string }>;
 };
-const migrationFiles = journal.entries.map(({ tag }) =>
-  path.join(migrationsDir, `${tag}.sql`),
-);
+const migrationFiles = journal.entries.map(({ tag }) => path.join(migrationsDir, `${tag}.sql`));
 
 function createMockStatement(
   nodeSqlStmt: StatementSync,
@@ -21,9 +19,7 @@ function createMockStatement(
   const stmt: D1PreparedStatement = {
     bind: (...values: unknown[]) => createMockStatement(nodeSqlStmt, values),
     run: () => {
-      const result = nodeSqlStmt.run(
-        ...(boundValues as Parameters<StatementSync["run"]>),
-      );
+      const result = nodeSqlStmt.run(...(boundValues as Parameters<StatementSync["run"]>));
       return Promise.resolve({
         results: [],
         meta: {
@@ -39,9 +35,7 @@ function createMockStatement(
       } as D1Result);
     },
     all: <T = Record<string, unknown>>() => {
-      const rows = nodeSqlStmt.all(
-        ...(boundValues as Parameters<StatementSync["all"]>),
-      ) as T[];
+      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as T[];
       return Promise.resolve({
         results: rows,
         meta: {
@@ -57,9 +51,10 @@ function createMockStatement(
       } as D1Result<T>);
     },
     raw: <T = unknown[]>(options?: { columnNames?: boolean }) => {
-      const rows = nodeSqlStmt.all(
-        ...(boundValues as Parameters<StatementSync["all"]>),
-      ) as Record<string, unknown>[];
+      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
+        string,
+        unknown
+      >[];
       const values = rows.map((row) => Object.values(row) as T);
       if (options?.columnNames === true) {
         const first = rows.at(0);
@@ -69,9 +64,10 @@ function createMockStatement(
       return Promise.resolve(values);
     },
     first: <T = Record<string, unknown>>(colName?: string) => {
-      const rows = nodeSqlStmt.all(
-        ...(boundValues as Parameters<StatementSync["all"]>),
-      ) as Record<string, unknown>[];
+      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
+        string,
+        unknown
+      >[];
       const first = rows.at(0);
       if (first === undefined) return Promise.resolve(null);
       if (colName !== undefined)

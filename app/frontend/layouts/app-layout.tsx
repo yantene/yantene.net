@@ -22,14 +22,8 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
    * だけでよい (NavigationProgress が持つ)。
    */
   return (
-    <div
-      className="flex min-h-screen flex-col bg-base-100"
-      aria-busy={isPending}
-    >
-      <NavigationProgress
-        isPending={isPending}
-        label={t("navigation.loading")}
-      />
+    <div className="flex min-h-screen flex-col bg-base-100" aria-busy={isPending}>
+      <NavigationProgress isPending={isPending} label={t("navigation.loading")} />
       {children}
     </div>
   );

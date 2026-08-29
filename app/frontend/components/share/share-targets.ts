@@ -22,10 +22,7 @@ function blueskyQuery(url: string, title: string): string {
  * 公式のボタン (widget.js など) は CSP の `script-src 'self'` で読めないので使わない。
  * どのサービスも素のリンクで共有画面を開けるため、それで足りる。
  */
-export function buildShareTargets(
-  url: string,
-  title: string,
-): readonly ShareTarget[] {
+export function buildShareTargets(url: string, title: string): readonly ShareTarget[] {
   return [
     {
       key: "x",

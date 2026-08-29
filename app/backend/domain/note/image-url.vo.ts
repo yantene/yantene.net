@@ -21,9 +21,7 @@ export class ImageUrl implements IValueObject<ImageUrl> {
   static create(raw: string): ImageUrl {
     const trimmed = raw.trim();
     if (trimmed.length === 0 || trimmed.length > MAX_LENGTH) {
-      throw new InvalidImageUrlError(
-        `Image URL must be 1..${String(MAX_LENGTH)} characters long`,
-      );
+      throw new InvalidImageUrlError(`Image URL must be 1..${String(MAX_LENGTH)} characters long`);
     }
     // ルート相対パスのみ。"//" 始まり (プロトコル相対 = 絶対 URL 相当) は弾く。
     if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {

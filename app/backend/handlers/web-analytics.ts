@@ -1,7 +1,4 @@
-import {
-  WEB_ANALYTICS_BEACON_SRC,
-  WEB_ANALYTICS_SITE_TOKEN,
-} from "~/lib/constants/web-analytics";
+import { WEB_ANALYTICS_BEACON_SRC, WEB_ANALYTICS_SITE_TOKEN } from "~/lib/constants/web-analytics";
 
 /** ページの `<head>` に置くビーコンの指定。 */
 export interface WebAnalyticsBeacon {

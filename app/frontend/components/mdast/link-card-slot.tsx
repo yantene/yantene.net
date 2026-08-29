@@ -14,11 +14,7 @@ import { isHttpUrl } from "~/lib/http-url";
  * 並べれば要素として残る。mdast-renderer.tsx の sanitizeSchema を参照)、href に値を渡す
  * この場所が実質の関門になる。
  */
-export function LinkCardSlot({
-  url,
-}: {
-  readonly url?: string;
-}): React.JSX.Element {
+export function LinkCardSlot({ url }: { readonly url?: string }): React.JSX.Element {
   const cards = useContext(LinkCardsContext);
   const card = url === undefined ? undefined : cards.get(url);
 
@@ -37,12 +33,7 @@ export function LinkCardSlot({
     }
     return (
       <p>
-        <a
-          className="press-control"
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-        >
+        <a className="press-control" href={url} target="_blank" rel="noopener noreferrer nofollow">
           {url}
         </a>
       </p>

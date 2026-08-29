@@ -90,10 +90,7 @@ function stubSilentSource(): void {
   );
 }
 
-async function post(
-  harness: Harness,
-  form: Record<string, string>,
-): Promise<Response> {
+async function post(harness: Harness, form: Record<string, string>): Promise<Response> {
   return await createTestApp().request(
     `${SITE}/webmention`,
     {
@@ -107,9 +104,7 @@ async function post(
 }
 
 function stored(harness: Harness): Promise<readonly unknown[]> {
-  return new D1WebmentionQueryRepository(harness.env.D1).listByNoteId(
-    harness.noteId,
-  );
+  return new D1WebmentionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
 }
 
 afterEach(() => {
@@ -145,9 +140,7 @@ describe("POST /webmention", () => {
     await post(harness, { source: SOURCE, target: TARGET });
     await harness.settle();
 
-    const rows = await new D1WebmentionQueryRepository(
-      harness.env.D1,
-    ).listByNoteId(harness.noteId);
+    const rows = await new D1WebmentionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
     expect(rows).toHaveLength(1);
     expect(rows[0].source.toString()).toBe(SOURCE);
     expect(rows[0].type.toString()).toBe("reply");
@@ -207,24 +200,12 @@ describe("POST /webmention", () => {
       ["source が無い", { target: TARGET }],
       ["target が無い", { source: SOURCE }],
       ["source が URL でない", { source: "nope", target: TARGET }],
-      [
-        "source が http/https でない",
-        { source: "ftp://example.com/x", target: TARGET },
-      ],
+      ["source が http/https でない", { source: "ftp://example.com/x", target: TARGET }],
       ["target が URL でない", { source: SOURCE, target: "nope" }],
       ["source と target が同じ", { source: TARGET, target: TARGET }],
-      [
-        "target が他所のサイト",
-        { source: SOURCE, target: "https://example.org/notes/alpha" },
-      ],
-      [
-        "target がノートの URL でない",
-        { source: SOURCE, target: `${SITE}/notes` },
-      ],
-      [
-        "target のノートが存在しない",
-        { source: SOURCE, target: `${SITE}/notes/missing` },
-      ],
+      ["target が他所のサイト", { source: SOURCE, target: "https://example.org/notes/alpha" }],
+      ["target がノートの URL でない", { source: SOURCE, target: `${SITE}/notes` }],
+      ["target のノートが存在しない", { source: SOURCE, target: `${SITE}/notes/missing` }],
       ["source が自サイト", { source: `${SITE}/notes/other`, target: TARGET }],
     ])("%s なら 400", async (_name, form) => {
       const harness = await setup();
@@ -233,9 +214,7 @@ describe("POST /webmention", () => {
       const response = await post(harness, form);
 
       expect(response.status).toBe(400);
-      expect(response.headers.get("content-type")).toContain(
-        "application/problem+json",
-      );
+      expect(response.headers.get("content-type")).toContain("application/problem+json");
     });
 
     /* 誰でも叩ける口なので、読み込む前に本文の大きさで頭を押さえる。 */

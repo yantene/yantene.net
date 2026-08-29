@@ -13,8 +13,7 @@
   position: relative;
   background-color: var(--color-base-200);
   /* 地平線。街の輪郭と同じ色にして、空と街の境目がここまで伸びてきた形にする。 */
-  border-top: 1px solid
-    color-mix(in oklab, var(--footer-ink, #9488d3) 40%, transparent);
+  border-top: 1px solid color-mix(in oklab, var(--footer-ink, #9488d3) 40%, transparent);
 }
 
 .site-footer-inner {

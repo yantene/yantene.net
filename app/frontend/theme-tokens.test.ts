@@ -50,10 +50,7 @@ function collectDefinitions(css: string): Map<string, string> {
 function collectCopies(source: string): { token: string; value: string }[] {
   // 色の後ろは CSS なら `;`、TypeScript なら `";` と続く。どちらも同じ印で追える。
   // eslint-disable-next-line security/detect-non-literal-regexp -- 組み立てるのは上の 2 つの定数だけで、読んだファイルの中身は混ぜない。
-  const copy = new RegExp(
-    String.raw`(${COLOR})["']?;? ?/\* ?= ?(${TOKEN}) ?\*/`,
-    "gi",
-  );
+  const copy = new RegExp(String.raw`(${COLOR})["']?;? ?/\* ?= ?(${TOKEN}) ?\*/`, "gi");
   return Array.from(source.matchAll(copy), (match) => ({
     token: match[2],
     value: match[1].toLowerCase(),

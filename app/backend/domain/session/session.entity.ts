@@ -134,11 +134,7 @@ export class Session {
    * 引き継ぐ。取り消すときに引く重みは最初に押した日で決まっており、押し直しで
    * 今日の日付に更新すると、押し直すだけでスコアを積める抜け道になる。
    */
-  withReaction(
-    slug: NoteSlug,
-    emoji: ReactionEmoji,
-    on: Temporal.PlainDate,
-  ): Session {
+  withReaction(slug: NoteSlug, emoji: ReactionEmoji, on: Temporal.PlainDate): Session {
     const existing = this.reactionFor(slug);
     const reaction: SessionReaction = {
       slug,
@@ -149,9 +145,7 @@ export class Session {
     return new Session({
       ...this.fields,
       reactions: [
-        ...this.fields.reactions.filter(
-          (current) => !current.slug.equals(slug),
-        ),
+        ...this.fields.reactions.filter((current) => !current.slug.equals(slug)),
         reaction,
       ],
     });
@@ -161,9 +155,7 @@ export class Session {
   withoutReaction(slug: NoteSlug): Session {
     return new Session({
       ...this.fields,
-      reactions: this.fields.reactions.filter(
-        (reaction) => !reaction.slug.equals(slug),
-      ),
+      reactions: this.fields.reactions.filter((reaction) => !reaction.slug.equals(slug)),
     });
   }
 }

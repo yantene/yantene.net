@@ -41,11 +41,7 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
   }
 
   async findBySlug(slug: NoteSlug): Promise<Note | undefined> {
-    const rows = await this.db
-      .select()
-      .from(notes)
-      .where(eq(notes.slug, slug.toString()))
-      .limit(1);
+    const rows = await this.db.select().from(notes).where(eq(notes.slug, slug.toString())).limit(1);
     const row = rows.at(0);
     if (row === undefined) return undefined;
     const tags = await this.loadTags([row.id]);
@@ -123,10 +119,7 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       if (trimmed.length < 3) {
         // trigram は 3-gram なので 2 文字以下は MATCH で拾えない。LIKE 部分一致で
         // 補う (小規模コーパスなので全走査で十分)。エスケープ文字は ~ を使う。
-        const escaped = trimmed.replaceAll(
-          /[~%_]/g,
-          (character) => `~${character}`,
-        );
+        const escaped = trimmed.replaceAll(/[~%_]/g, (character) => `~${character}`);
         const like = `%${escaped}%`;
         ranked = await this.db.all<{ slug: string }>(
           sql`SELECT slug FROM notes_fts WHERE title LIKE ${like} ESCAPE '~' OR body LIKE ${like} ESCAPE '~' LIMIT ${limit}`,
@@ -144,21 +137,13 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
     const slugs = ranked.map((row) => row.slug);
     if (slugs.length === 0) return [];
 
-    const rows = await this.db
-      .select()
-      .from(notes)
-      .where(inArray(notes.slug, slugs));
+    const rows = await this.db.select().from(notes).where(inArray(notes.slug, slugs));
     const tagsByNote = await this.loadTags(rows.map((row) => row.id));
     const bySlug = new Map(
-      rows.map((row) => [
-        row.slug,
-        rowToNote(row, tagsByNote.get(row.id) ?? []),
-      ]),
+      rows.map((row) => [row.slug, rowToNote(row, tagsByNote.get(row.id) ?? [])]),
     );
     // bm25 の並び順を保って返す。
-    return slugs
-      .map((slug) => bySlug.get(slug))
-      .filter((note): note is Note => note !== undefined);
+    return slugs.map((slug) => bySlug.get(slug)).filter((note): note is Note => note !== undefined);
   }
 
   /**
@@ -216,9 +201,7 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
   }
 
   /** 指定ノート群のタグを id → NoteTag[] にまとめて読み込む。 */
-  private async loadTags(
-    noteIds: readonly string[],
-  ): Promise<Map<string, NoteTag[]>> {
+  private async loadTags(noteIds: readonly string[]): Promise<Map<string, NoteTag[]>> {
     const map = new Map<string, NoteTag[]>();
     if (noteIds.length === 0) return map;
     const rows = await this.db

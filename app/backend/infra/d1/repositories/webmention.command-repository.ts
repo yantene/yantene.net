@@ -36,9 +36,7 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
       authorAvatar: webmention.authorAvatar ?? null,
       content: webmention.content?.toString() ?? null,
       publishedAt:
-        webmention.publishedAt === undefined
-          ? null
-          : instantToUnix(webmention.publishedAt),
+        webmention.publishedAt === undefined ? null : instantToUnix(webmention.publishedAt),
       updatedAt: nowUnix,
     };
 
@@ -67,10 +65,7 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
   }
 
   async deleteBySource(noteId: NoteId, source: WebmentionUrl): Promise<void> {
-    const row = and(
-      eq(webmentions.noteId, noteId),
-      eq(webmentions.source, source.toString()),
-    );
+    const row = and(eq(webmentions.noteId, noteId), eq(webmentions.source, source.toString()));
 
     await this.db.delete(webmentions).where(row);
   }

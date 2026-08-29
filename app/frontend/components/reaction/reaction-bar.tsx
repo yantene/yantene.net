@@ -33,9 +33,7 @@ interface ReactionBarProps extends ReactionState {
  *
  * 位置を固定するのは、数で並び替えると押した瞬間にハートが動いて見失うため。
  */
-function toChips(
-  reactions: readonly ReactionCount[],
-): readonly ReactionCount[] {
+function toChips(reactions: readonly ReactionCount[]): readonly ReactionCount[] {
   const like = reactions.find((reaction) => reaction.emoji === LIKE);
   const others = reactions.filter((reaction) => reaction.emoji !== LIKE);
   return [like ?? { emoji: LIKE, count: 0 }, ...others];
@@ -46,10 +44,7 @@ function toChips(
  *
  * 押す意図は値の有無で決まる。空文字は取り消し。
  */
-function pendingView(
-  current: ReactionState,
-  formData: FormData | undefined,
-): ReactionState {
+function pendingView(current: ReactionState, formData: FormData | undefined): ReactionState {
   const pending = formData?.get("emoji");
   if (pending === undefined || pending === null) return current;
 
@@ -167,9 +162,7 @@ export function ReactionBar({
              * 残し、受け付けないことだけを伝える。
              */
             aria-disabled={isSending}
-            aria-label={
-              reaction.emoji === LIKE ? t("reaction.like") : undefined
-            }
+            aria-label={reaction.emoji === LIKE ? t("reaction.like") : undefined}
             className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
           >
             <span className="reaction-chip-emoji">{reaction.emoji}</span>

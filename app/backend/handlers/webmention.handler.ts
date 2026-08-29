@@ -62,9 +62,7 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
         siteOrigin: new URL(c.req.url).origin,
       });
 
-      const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(
-        request.targetSlug,
-      );
+      const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(request.targetSlug);
       if (note === undefined) {
         throw new TargetNoteNotFoundError(
           `target note does not exist: ${request.targetSlug.toString()}`,
@@ -74,21 +72,14 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
       const service = new WebmentionVerificationService(
         new HttpWebmentionSourceFetcher(logger),
         new D1WebmentionCommandRepository(c.env.D1),
-        new HttpWebmentionAvatarMirror(
-          new R2WebmentionAvatarCache(c.env.R2),
-          logger,
-        ),
+        new HttpWebmentionAvatarMirror(new R2WebmentionAvatarCache(c.env.R2), logger),
         new D1WebmentionBlocklist(c.env.D1),
         logger,
       );
       c.executionCtx.waitUntil(verifyAndLog(service, note.id, request, logger));
     } catch (error) {
       if (error instanceof WebmentionRejectedError) {
-        return createProblemResponse(
-          httpStatus.BAD_REQUEST,
-          "Bad Request",
-          error.message,
-        );
+        return createProblemResponse(httpStatus.BAD_REQUEST, "Bad Request", error.message);
       }
       throw error;
     }

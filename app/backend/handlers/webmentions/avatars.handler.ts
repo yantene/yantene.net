@@ -17,9 +17,7 @@ export function createWebmentionAvatarsRouter(): Hono<{ Bindings: Env }> {
 
   // id の形をルーティングで縛る。R2 のキーに素の入力を混ぜないための一段目。
   router.get("/avatars/:id{[0-9a-f]{32}}", async (c) => {
-    const avatar = await new R2WebmentionAvatarCache(c.env.R2).get(
-      c.req.param("id"),
-    );
+    const avatar = await new R2WebmentionAvatarCache(c.env.R2).get(c.req.param("id"));
     /*
      * 中身の無い写しを「在る」と答えない。
      *

@@ -59,9 +59,7 @@ describe("extractSummary", () => {
   });
 
   it("skips code blocks and footnote definitions", () => {
-    const { mdast } = parseNoteContent(
-      "```ts\nconst x = 1;\n```\n\nProse text here.\n",
-    );
+    const { mdast } = parseNoteContent("```ts\nconst x = 1;\n```\n\nProse text here.\n");
     expect(extractSummary(mdast)).toBe("Prose text here.");
   });
 
@@ -86,9 +84,7 @@ describe("extractSummary", () => {
   });
 
   it("drops HTML comments", () => {
-    const { mdast } = parseNoteContent(
-      "<!-- 下書きメモ -->\n\n公開する本文。\n",
-    );
+    const { mdast } = parseNoteContent("<!-- 下書きメモ -->\n\n公開する本文。\n");
     expect(extractSummary(mdast)).toBe("公開する本文。");
   });
 
@@ -118,9 +114,7 @@ describe("math", () => {
         ? paragraph.children.find((child) => child.type === "inlineMath")
         : undefined;
     expect(math?.data?.hName).toBe("math");
-    expect(math?.data?.hProperties?.xmlns).toBe(
-      "http://www.w3.org/1998/Math/MathML",
-    );
+    expect(math?.data?.hProperties?.xmlns).toBe("http://www.w3.org/1998/Math/MathML");
     expect(math?.data?.hChildren?.at(0)).toMatchObject({
       type: "element",
       tagName: "semantics",
@@ -138,25 +132,19 @@ describe("math", () => {
   /* 既定の hName は code / pre。上書きし損ねると数式が LaTeX のまま出る。 */
   it("replaces the code fallback that remark-math sets by default", () => {
     const { mdast } = parseNoteContent("$$\na^2\n$$\n");
-    expect(mdast.children.at(0)?.data?.hChildren).not.toMatchObject([
-      { tagName: "code" },
-    ]);
+    expect(mdast.children.at(0)?.data?.hChildren).not.toMatchObject([{ tagName: "code" }]);
   });
 
   it("leaves math inside inline code alone", () => {
     const { mdast } = parseNoteContent("記法は `$a$` と書く。\n");
     const paragraph = mdast.children.at(0);
     const kinds =
-      paragraph?.type === "paragraph"
-        ? paragraph.children.map((child) => child.type)
-        : [];
+      paragraph?.type === "paragraph" ? paragraph.children.map((child) => child.type) : [];
     expect(kinds).not.toContain("inlineMath");
   });
 
   it("throws MathSyntaxError so refresh can skip the note", () => {
-    expect(() => parseNoteContent("壊れた式 $\\frac{$ です。\n")).toThrow(
-      MathSyntaxError,
-    );
+    expect(() => parseNoteContent("壊れた式 $\\frac{$ です。\n")).toThrow(MathSyntaxError);
   });
 });
 
@@ -169,16 +157,16 @@ describe("collapsing soft line breaks", () => {
     mdastToString(parseNoteContent(markdown).mdast);
 
   it("joins a break between two full-width characters", () => {
-    expect(
-      paragraphText("このブログに記事を書くのも、\n以来 1 年ぶりだ。\n"),
-    ).toBe("このブログに記事を書くのも、以来 1 年ぶりだ。");
+    expect(paragraphText("このブログに記事を書くのも、\n以来 1 年ぶりだ。\n")).toBe(
+      "このブログに記事を書くのも、以来 1 年ぶりだ。",
+    );
   });
 
   /* 和欧の境目の空白は表記として要るので、残す。 */
   it("keeps a break next to a latin word as a space", () => {
-    expect(
-      paragraphText("使っているのは\nCloudflare Workers\nである。\n"),
-    ).toBe("使っているのは Cloudflare Workers である。");
+    expect(paragraphText("使っているのは\nCloudflare Workers\nである。\n")).toBe(
+      "使っているのは Cloudflare Workers である。",
+    );
   });
 
   /*
@@ -187,17 +175,13 @@ describe("collapsing soft line breaks", () => {
    */
   it("looks across node boundaries to decide", () => {
     expect(
-      paragraphText(
-        "このブログに記事を書くのも、\n[昨年の記事](/notes/foo)\n以来だ。\n",
-      ),
+      paragraphText("このブログに記事を書くのも、\n[昨年の記事](/notes/foo)\n以来だ。\n"),
     ).toBe("このブログに記事を書くのも、昨年の記事以来だ。");
   });
 
   /* 畳んだ結果は要約にも効く (D1 のメタデータと OGP がこれを使う)。 */
   it("reaches the summary as well", () => {
-    const { summary } = parseNoteContent(
-      "日本語の文を\n文節ごとに\n改行して書く。\n",
-    );
+    const { summary } = parseNoteContent("日本語の文を\n文節ごとに\n改行して書く。\n");
     expect(summary).toBe("日本語の文を文節ごとに改行して書く。");
   });
 

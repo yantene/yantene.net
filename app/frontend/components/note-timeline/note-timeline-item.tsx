@@ -57,10 +57,7 @@ export function NoteTimelineItem({
         {rank === undefined ? (
           // ドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため
           // 読み上げからは外す (日付は隣の time 要素が持つ)。
-          <span
-            className={`note-timeline-dot ${seasonDotClass(publishedOn)}`}
-            aria-hidden="true"
-          />
+          <span className={`note-timeline-dot ${seasonDotClass(publishedOn)}`} aria-hidden="true" />
         ) : (
           <span className="note-timeline-rank" aria-hidden="true">
             {rank}
@@ -78,9 +75,7 @@ export function NoteTimelineItem({
           <h3 className="p-name font-bold leading-snug transition-colors group-hover:text-primary">
             {title}
           </h3>
-          <p className="p-summary line-clamp-2 text-sm text-base-content/70">
-            {summary}
-          </p>
+          <p className="p-summary line-clamp-2 text-sm text-base-content/70">{summary}</p>
           {tags.length > 0 && (
             <p className="note-timeline-tags">
               {tags.slice(0, SHOWN_TAG_COUNT).map((tag) => (

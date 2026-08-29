@@ -5,30 +5,12 @@
       {
         "u": "😀",
         "l": "grinning face",
-        "t": [
-          "cheerful",
-          "cheery",
-          "happy",
-          "laugh",
-          "nice",
-          "smile",
-          "smiling",
-          "teeth"
-        ]
+        "t": ["cheerful", "cheery", "happy", "laugh", "nice", "smile", "smiling", "teeth"]
       },
       {
         "u": "😃",
         "l": "grinning face with big eyes",
-        "t": [
-          "awesome",
-          "happy",
-          "mouth",
-          "open",
-          "smile",
-          "smiling",
-          "teeth",
-          "yay"
-        ]
+        "t": ["awesome", "happy", "mouth", "open", "smile", "smiling", "teeth", "yay"]
       },
       {
         "u": "😄",
@@ -183,15 +165,7 @@
       {
         "u": "🤩",
         "l": "star-struck",
-        "t": [
-          "excited",
-          "eyes",
-          "face",
-          "grinning",
-          "smile",
-          "starry-eyed",
-          "wow"
-        ]
+        "t": ["excited", "eyes", "face", "grinning", "smile", "starry-eyed", "wow"]
       },
       {
         "u": "😘",
@@ -215,18 +189,7 @@
       {
         "u": "😗",
         "l": "kissing face",
-        "t": [
-          "143",
-          "date",
-          "dating",
-          "flirt",
-          "ily",
-          "love",
-          "smooch",
-          "smooches",
-          "xoxo",
-          "you"
-        ]
+        "t": ["143", "date", "dating", "flirt", "ily", "love", "smooch", "smooches", "xoxo", "you"]
       },
       {
         "u": "☺️",
@@ -236,34 +199,12 @@
       {
         "u": "😚",
         "l": "kissing face with closed eyes",
-        "t": [
-          "143",
-          "bae",
-          "blush",
-          "date",
-          "dating",
-          "flirt",
-          "ily",
-          "kisses",
-          "smooches",
-          "xoxo"
-        ]
+        "t": ["143", "bae", "blush", "date", "dating", "flirt", "ily", "kisses", "smooches", "xoxo"]
       },
       {
         "u": "😙",
         "l": "kissing face with smiling eyes",
-        "t": [
-          "143",
-          "closed",
-          "date",
-          "dating",
-          "flirt",
-          "ily",
-          "kisses",
-          "love",
-          "night",
-          "smile"
-        ]
+        "t": ["143", "closed", "date", "dating", "flirt", "ily", "kisses", "love", "night", "smile"]
       },
       {
         "u": "🥲",
@@ -381,16 +322,7 @@
       {
         "u": "🫣",
         "l": "face with peeking eye",
-        "t": [
-          "captivated",
-          "embarrass",
-          "hide",
-          "hiding",
-          "peep",
-          "scared",
-          "shy",
-          "stare"
-        ]
+        "t": ["captivated", "embarrass", "hide", "hiding", "peep", "scared", "shy", "stare"]
       },
       { "u": "🤫", "l": "shushing face", "t": ["quiet", "shh"] },
       {
@@ -401,17 +333,7 @@
       {
         "u": "🫡",
         "l": "saluting face",
-        "t": [
-          "good",
-          "luck",
-          "ma’am",
-          "ok",
-          "respect",
-          "salute",
-          "sir",
-          "troops",
-          "yes"
-        ]
+        "t": ["good", "luck", "ma’am", "ok", "respect", "salute", "sir", "troops", "yes"]
       },
       {
         "u": "🤐",
@@ -558,15 +480,7 @@
       {
         "u": "😬",
         "l": "grimacing face",
-        "t": [
-          "awk",
-          "awkward",
-          "dentist",
-          "grimace",
-          "grinning",
-          "smile",
-          "smiling"
-        ]
+        "t": ["awk", "awkward", "dentist", "grimace", "grinning", "smile", "smiling"]
       },
       {
         "u": "😮‍💨",
@@ -650,29 +564,12 @@
       {
         "u": "🫩",
         "l": "face with bags under eyes",
-        "t": [
-          "bored",
-          "exhausted",
-          "fatigued",
-          "late",
-          "sleepy",
-          "tired",
-          "weary"
-        ]
+        "t": ["bored", "exhausted", "fatigued", "late", "sleepy", "tired", "weary"]
       },
       {
         "u": "😷",
         "l": "face with medical mask",
-        "t": [
-          "cold",
-          "dentist",
-          "dermatologist",
-          "doctor",
-          "dr",
-          "germs",
-          "medicine",
-          "sick"
-        ]
+        "t": ["cold", "dentist", "dermatologist", "doctor", "dr", "germs", "medicine", "sick"]
       },
       { "u": "🤒", "l": "face with thermometer", "t": ["ill", "sick"] },
       {
@@ -698,43 +595,17 @@
       {
         "u": "🥵",
         "l": "hot face",
-        "t": [
-          "dying",
-          "feverish",
-          "heat",
-          "panting",
-          "red-faced",
-          "stroke",
-          "sweating",
-          "tongue"
-        ]
+        "t": ["dying", "feverish", "heat", "panting", "red-faced", "stroke", "sweating", "tongue"]
       },
       {
         "u": "🥶",
         "l": "cold face",
-        "t": [
-          "blue",
-          "blue-faced",
-          "freezing",
-          "frostbite",
-          "icicles",
-          "subzero",
-          "teeth"
-        ]
+        "t": ["blue", "blue-faced", "freezing", "frostbite", "icicles", "subzero", "teeth"]
       },
       {
         "u": "🥴",
         "l": "woozy face",
-        "t": [
-          "dizzy",
-          "drunk",
-          "eyes",
-          "intoxicated",
-          "mouth",
-          "tipsy",
-          "uneven",
-          "wavy"
-        ]
+        "t": ["dizzy", "drunk", "eyes", "intoxicated", "mouth", "tipsy", "uneven", "wavy"]
       },
       {
         "u": "😵",
@@ -816,16 +687,7 @@
       {
         "u": "🤓",
         "l": "nerd face",
-        "t": [
-          "brainy",
-          "clever",
-          "expert",
-          "geek",
-          "gifted",
-          "glasses",
-          "intelligent",
-          "smart"
-        ]
+        "t": ["brainy", "clever", "expert", "geek", "gifted", "glasses", "intelligent", "smart"]
       },
       {
         "u": "🧐",
@@ -933,30 +795,12 @@
       {
         "u": "🫪",
         "l": "distorted face",
-        "t": [
-          "anxiety",
-          "bloated",
-          "panic",
-          "shocked",
-          "surprised",
-          "vulnerable"
-        ]
+        "t": ["anxiety", "bloated", "panic", "shocked", "surprised", "vulnerable"]
       },
       {
         "u": "🥺",
         "l": "pleading face",
-        "t": [
-          "begging",
-          "big",
-          "eyes",
-          "mercy",
-          "not",
-          "please",
-          "pretty",
-          "puppy",
-          "sad",
-          "why"
-        ]
+        "t": ["begging", "big", "eyes", "mercy", "not", "please", "pretty", "puppy", "sad", "why"]
       },
       {
         "u": "🥹",
@@ -984,16 +828,7 @@
       {
         "u": "😧",
         "l": "anguished face",
-        "t": [
-          "forgot",
-          "scared",
-          "scary",
-          "stressed",
-          "surprise",
-          "unhappy",
-          "what",
-          "wow"
-        ]
+        "t": ["forgot", "scared", "scary", "stressed", "surprise", "unhappy", "what", "wow"]
       },
       {
         "u": "😨",
@@ -1003,17 +838,7 @@
       {
         "u": "😰",
         "l": "anxious face with sweat",
-        "t": [
-          "blue",
-          "cold",
-          "eek",
-          "mouth",
-          "nervous",
-          "open",
-          "rushed",
-          "scared",
-          "yikes"
-        ]
+        "t": ["blue", "cold", "eek", "mouth", "nervous", "open", "rushed", "scared", "yikes"]
       },
       {
         "u": "😥",
@@ -1043,30 +868,12 @@
       {
         "u": "😱",
         "l": "face screaming in fear",
-        "t": [
-          "epic",
-          "fearful",
-          "munch",
-          "scared",
-          "screamer",
-          "shocked",
-          "surprised",
-          "woah"
-        ]
+        "t": ["epic", "fearful", "munch", "scared", "screamer", "shocked", "surprised", "woah"]
       },
       {
         "u": "😖",
         "l": "confounded face",
-        "t": [
-          "annoyed",
-          "confused",
-          "cringe",
-          "distraught",
-          "feels",
-          "frustrated",
-          "mad",
-          "sad"
-        ]
+        "t": ["annoyed", "confused", "cringe", "distraught", "feels", "frustrated", "mad", "sad"]
       },
       {
         "u": "😣",
@@ -1081,16 +888,7 @@
       {
         "u": "😓",
         "l": "downcast face with sweat",
-        "t": [
-          "close",
-          "cold",
-          "feels",
-          "headache",
-          "nervous",
-          "sad",
-          "scared",
-          "yikes"
-        ]
+        "t": ["close", "cold", "feels", "headache", "nervous", "sad", "scared", "yikes"]
       },
       {
         "u": "😩",
@@ -1442,30 +1240,12 @@
       {
         "u": "💘",
         "l": "heart with arrow",
-        "t": [
-          "143",
-          "adorbs",
-          "cupid",
-          "date",
-          "emotion",
-          "ily",
-          "love",
-          "romance",
-          "valentine"
-        ]
+        "t": ["143", "adorbs", "cupid", "date", "emotion", "ily", "love", "romance", "valentine"]
       },
       {
         "u": "💝",
         "l": "heart with ribbon",
-        "t": [
-          "143",
-          "anniversary",
-          "emotion",
-          "ily",
-          "kisses",
-          "valentine",
-          "xoxo"
-        ]
+        "t": ["143", "anniversary", "emotion", "ily", "kisses", "valentine", "xoxo"]
       },
       {
         "u": "💖",
@@ -1502,16 +1282,7 @@
       {
         "u": "💓",
         "l": "beating heart",
-        "t": [
-          "143",
-          "cardio",
-          "emotion",
-          "heartbeat",
-          "ily",
-          "love",
-          "pulsating",
-          "pulse"
-        ]
+        "t": ["143", "cardio", "emotion", "heartbeat", "ily", "love", "pulsating", "pulse"]
       },
       {
         "u": "💞",
@@ -1563,17 +1334,7 @@
       {
         "u": "🩷",
         "l": "pink heart",
-        "t": [
-          "143",
-          "adorable",
-          "cute",
-          "emotion",
-          "ily",
-          "like",
-          "love",
-          "special",
-          "sweet"
-        ]
+        "t": ["143", "adorable", "cute", "emotion", "ily", "like", "love", "special", "sweet"]
       },
       { "u": "🧡", "l": "orange heart", "t": ["143"] },
       {
@@ -1594,18 +1355,7 @@
       {
         "u": "🩵",
         "l": "light blue heart",
-        "t": [
-          "143",
-          "cute",
-          "cyan",
-          "emotion",
-          "ily",
-          "like",
-          "love",
-          "sky",
-          "special",
-          "teal"
-        ]
+        "t": ["143", "cute", "cyan", "emotion", "ily", "like", "love", "sky", "special", "teal"]
       },
       {
         "u": "💜",
@@ -1617,30 +1367,13 @@
       {
         "u": "🩶",
         "l": "grey heart",
-        "t": [
-          "143",
-          "emotion",
-          "gray",
-          "ily",
-          "love",
-          "silver",
-          "slate",
-          "special"
-        ]
+        "t": ["143", "emotion", "gray", "ily", "love", "silver", "slate", "special"]
       },
       { "u": "🤍", "l": "white heart", "t": ["143"] },
       {
         "u": "💋",
         "l": "kiss mark",
-        "t": [
-          "dating",
-          "emotion",
-          "heart",
-          "kissing",
-          "lips",
-          "romance",
-          "sexy"
-        ]
+        "t": ["dating", "emotion", "heart", "kissing", "lips", "romance", "sexy"]
       },
       {
         "u": "💯",
@@ -1670,14 +1403,7 @@
       {
         "u": "🫯",
         "l": "fight cloud",
-        "t": [
-          "argument",
-          "brawl",
-          "debate",
-          "disagreement",
-          "ruckus",
-          "wrestle"
-        ]
+        "t": ["argument", "brawl", "debate", "disagreement", "ruckus", "wrestle"]
       },
       {
         "u": "💥",
@@ -1692,47 +1418,18 @@
       {
         "u": "💦",
         "l": "sweat droplets",
-        "t": [
-          "comic",
-          "drip",
-          "drops",
-          "splashing",
-          "squirt",
-          "water",
-          "wet",
-          "work",
-          "workout"
-        ]
+        "t": ["comic", "drip", "drops", "splashing", "squirt", "water", "wet", "work", "workout"]
       },
       {
         "u": "💨",
         "l": "dashing away",
-        "t": [
-          "cloud",
-          "comic",
-          "fart",
-          "fast",
-          "go",
-          "gone",
-          "gotta",
-          "running",
-          "smoke"
-        ]
+        "t": ["cloud", "comic", "fart", "fast", "go", "gone", "gotta", "running", "smoke"]
       },
       { "u": "🕳️", "l": "hole", "t": [] },
       {
         "u": "💬",
         "l": "speech balloon",
-        "t": [
-          "bubble",
-          "comic",
-          "dialog",
-          "message",
-          "sms",
-          "talk",
-          "text",
-          "typing"
-        ]
+        "t": ["bubble", "comic", "dialog", "message", "sms", "talk", "text", "typing"]
       },
       { "u": "👁️‍🗨️", "l": "eye in speech bubble", "t": ["balloon", "witness"] },
       { "u": "🗨️", "l": "left speech bubble", "t": ["balloon", "dialog"] },
@@ -1764,17 +1461,7 @@
       {
         "u": "💤",
         "l": "ZZZ",
-        "t": [
-          "comic",
-          "good",
-          "goodnight",
-          "night",
-          "sleep",
-          "sleeping",
-          "sleepy",
-          "tired",
-          "zzz"
-        ]
+        "t": ["comic", "good", "goodnight", "night", "sleep", "sleeping", "sleepy", "tired", "zzz"]
       }
     ]
   },
@@ -1824,49 +1511,17 @@
       {
         "u": "🫴",
         "l": "palm up hand",
-        "t": [
-          "beckon",
-          "catch",
-          "come",
-          "hold",
-          "know",
-          "lift",
-          "me",
-          "offer",
-          "tell"
-        ]
+        "t": ["beckon", "catch", "come", "hold", "know", "lift", "me", "offer", "tell"]
       },
       {
         "u": "🫷",
         "l": "leftwards pushing hand",
-        "t": [
-          "block",
-          "five",
-          "halt",
-          "high",
-          "hold",
-          "pause",
-          "refuse",
-          "slap",
-          "stop",
-          "wait"
-        ]
+        "t": ["block", "five", "halt", "high", "hold", "pause", "refuse", "slap", "stop", "wait"]
       },
       {
         "u": "🫸",
         "l": "rightwards pushing hand",
-        "t": [
-          "block",
-          "five",
-          "halt",
-          "high",
-          "hold",
-          "pause",
-          "refuse",
-          "slap",
-          "stop",
-          "wait"
-        ]
+        "t": ["block", "five", "halt", "high", "hold", "pause", "refuse", "slap", "stop", "wait"]
       },
       {
         "u": "👌",
@@ -2033,15 +1688,7 @@
       {
         "u": "💅",
         "l": "nail polish",
-        "t": [
-          "bored",
-          "care",
-          "cosmetics",
-          "done",
-          "makeup",
-          "manicure",
-          "whatever"
-        ]
+        "t": ["bored", "care", "cosmetics", "done", "makeup", "manicure", "whatever"]
       },
       { "u": "🤳", "l": "selfie", "t": ["camera", "phone"] },
       {
@@ -2095,44 +1742,19 @@
       {
         "u": "🫀",
         "l": "anatomical heart",
-        "t": [
-          "beat",
-          "cardiology",
-          "heartbeat",
-          "organ",
-          "pulse",
-          "real",
-          "red"
-        ]
+        "t": ["beat", "cardiology", "heartbeat", "organ", "pulse", "real", "red"]
       },
       {
         "u": "🫁",
         "l": "lungs",
-        "t": [
-          "breath",
-          "breathe",
-          "exhalation",
-          "inhalation",
-          "organ",
-          "respiration"
-        ]
+        "t": ["breath", "breathe", "exhalation", "inhalation", "organ", "respiration"]
       },
       { "u": "🦷", "l": "tooth", "t": ["dentist", "pearly", "teeth", "white"] },
       { "u": "🦴", "l": "bone", "t": ["bones", "dog", "skeleton", "wishbone"] },
       {
         "u": "👀",
         "l": "eyes",
-        "t": [
-          "body",
-          "face",
-          "googly",
-          "look",
-          "looking",
-          "omg",
-          "peep",
-          "see",
-          "seeing"
-        ]
+        "t": ["body", "face", "googly", "look", "looking", "omg", "peep", "see", "seeing"]
       },
       { "u": "👁️", "l": "eye", "t": ["1", "body", "one"] },
       { "u": "👅", "l": "tongue", "t": ["body", "lick", "slurp"] },
@@ -2162,15 +1784,7 @@
       {
         "u": "👶",
         "l": "baby",
-        "t": [
-          "babies",
-          "children",
-          "goo",
-          "infant",
-          "newborn",
-          "pregnant",
-          "young"
-        ]
+        "t": ["babies", "children", "goo", "infant", "newborn", "pregnant", "young"]
       },
       {
         "u": "🧒",
@@ -2180,15 +1794,7 @@
       {
         "u": "👦",
         "l": "boy",
-        "t": [
-          "bright-eyed",
-          "child",
-          "grandson",
-          "kid",
-          "son",
-          "young",
-          "younger"
-        ]
+        "t": ["bright-eyed", "child", "grandson", "kid", "son", "young", "younger"]
       },
       {
         "u": "👧",
@@ -2222,28 +1828,12 @@
       {
         "u": "👴",
         "l": "old man",
-        "t": [
-          "adult",
-          "bald",
-          "elderly",
-          "gramps",
-          "grandfather",
-          "grandpa",
-          "wise"
-        ]
+        "t": ["adult", "bald", "elderly", "gramps", "grandfather", "grandpa", "wise"]
       },
       {
         "u": "👵",
         "l": "old woman",
-        "t": [
-          "adult",
-          "elderly",
-          "grandma",
-          "grandmother",
-          "granny",
-          "lady",
-          "wise"
-        ]
+        "t": ["adult", "elderly", "grandma", "grandmother", "granny", "lady", "wise"]
       },
       {
         "u": "🙍",
@@ -2290,44 +1880,17 @@
       {
         "u": "🙎",
         "l": "person pouting",
-        "t": [
-          "disappointed",
-          "downtrodden",
-          "frown",
-          "grimace",
-          "scowl",
-          "sulk",
-          "upset",
-          "whine"
-        ]
+        "t": ["disappointed", "downtrodden", "frown", "grimace", "scowl", "sulk", "upset", "whine"]
       },
       {
         "u": "🙎‍♂️",
         "l": "man pouting",
-        "t": [
-          "disappointed",
-          "downtrodden",
-          "frown",
-          "grimace",
-          "scowl",
-          "sulk",
-          "upset",
-          "whine"
-        ]
+        "t": ["disappointed", "downtrodden", "frown", "grimace", "scowl", "sulk", "upset", "whine"]
       },
       {
         "u": "🙎‍♀️",
         "l": "woman pouting",
-        "t": [
-          "disappointed",
-          "downtrodden",
-          "frown",
-          "grimace",
-          "scowl",
-          "sulk",
-          "upset",
-          "whine"
-        ]
+        "t": ["disappointed", "downtrodden", "frown", "grimace", "scowl", "sulk", "upset", "whine"]
       },
       {
         "u": "🙅",
@@ -2720,44 +2283,17 @@
       {
         "u": "👮",
         "l": "police officer",
-        "t": [
-          "apprehend",
-          "arrest",
-          "citation",
-          "cop",
-          "law",
-          "over",
-          "pulled",
-          "undercover"
-        ]
+        "t": ["apprehend", "arrest", "citation", "cop", "law", "over", "pulled", "undercover"]
       },
       {
         "u": "👮‍♂️",
         "l": "man police officer",
-        "t": [
-          "apprehend",
-          "arrest",
-          "citation",
-          "cop",
-          "law",
-          "over",
-          "pulled",
-          "undercover"
-        ]
+        "t": ["apprehend", "arrest", "citation", "cop", "law", "over", "pulled", "undercover"]
       },
       {
         "u": "👮‍♀️",
         "l": "woman police officer",
-        "t": [
-          "apprehend",
-          "arrest",
-          "citation",
-          "cop",
-          "law",
-          "over",
-          "pulled",
-          "undercover"
-        ]
+        "t": ["apprehend", "arrest", "citation", "cop", "law", "over", "pulled", "undercover"]
       },
       { "u": "🕵️", "l": "detective", "t": ["sleuth", "spy"] },
       { "u": "🕵️‍♂️", "l": "man detective", "t": ["sleuth", "spy"] },
@@ -2797,17 +2333,7 @@
       {
         "u": "👷",
         "l": "construction worker",
-        "t": [
-          "build",
-          "fix",
-          "hardhat",
-          "hat",
-          "man",
-          "person",
-          "rebuild",
-          "remodel",
-          "repair"
-        ]
+        "t": ["build", "fix", "hardhat", "hat", "man", "person", "rebuild", "remodel", "repair"]
       },
       {
         "u": "👷‍♂️",
@@ -2827,30 +2353,12 @@
       {
         "u": "🤴",
         "l": "prince",
-        "t": [
-          "crown",
-          "fairy",
-          "fairytale",
-          "fantasy",
-          "king",
-          "royal",
-          "royalty",
-          "tale"
-        ]
+        "t": ["crown", "fairy", "fairytale", "fantasy", "king", "royal", "royalty", "tale"]
       },
       {
         "u": "👸",
         "l": "princess",
-        "t": [
-          "crown",
-          "fairy",
-          "fairytale",
-          "fantasy",
-          "queen",
-          "royal",
-          "royalty",
-          "tale"
-        ]
+        "t": ["crown", "fairy", "fairytale", "fantasy", "queen", "royal", "royalty", "tale"]
       },
       { "u": "👳", "l": "person wearing turban", "t": [] },
       { "u": "👳‍♂️", "l": "man wearing turban", "t": [] },
@@ -3032,97 +2540,37 @@
       {
         "u": "🧚",
         "l": "fairy",
-        "t": [
-          "fairytale",
-          "fantasy",
-          "myth",
-          "person",
-          "pixie",
-          "tale",
-          "wings"
-        ]
+        "t": ["fairytale", "fantasy", "myth", "person", "pixie", "tale", "wings"]
       },
       {
         "u": "🧚‍♂️",
         "l": "man fairy",
-        "t": [
-          "fairytale",
-          "fantasy",
-          "myth",
-          "oberon",
-          "person",
-          "pixie",
-          "puck",
-          "tale",
-          "wings"
-        ]
+        "t": ["fairytale", "fantasy", "myth", "oberon", "person", "pixie", "puck", "tale", "wings"]
       },
       {
         "u": "🧚‍♀️",
         "l": "woman fairy",
-        "t": [
-          "fairytale",
-          "fantasy",
-          "myth",
-          "person",
-          "pixie",
-          "tale",
-          "titania",
-          "wings"
-        ]
+        "t": ["fairytale", "fantasy", "myth", "person", "pixie", "tale", "titania", "wings"]
       },
       {
         "u": "🧛",
         "l": "vampire",
-        "t": [
-          "blood",
-          "dracula",
-          "fangs",
-          "halloween",
-          "scary",
-          "supernatural",
-          "teeth",
-          "undead"
-        ]
+        "t": ["blood", "dracula", "fangs", "halloween", "scary", "supernatural", "teeth", "undead"]
       },
       {
         "u": "🧛‍♂️",
         "l": "man vampire",
-        "t": [
-          "blood",
-          "fangs",
-          "halloween",
-          "scary",
-          "supernatural",
-          "teeth",
-          "undead"
-        ]
+        "t": ["blood", "fangs", "halloween", "scary", "supernatural", "teeth", "undead"]
       },
       {
         "u": "🧛‍♀️",
         "l": "woman vampire",
-        "t": [
-          "blood",
-          "fangs",
-          "halloween",
-          "scary",
-          "supernatural",
-          "teeth",
-          "undead"
-        ]
+        "t": ["blood", "fangs", "halloween", "scary", "supernatural", "teeth", "undead"]
       },
       {
         "u": "🧜",
         "l": "merperson",
-        "t": [
-          "creature",
-          "fairytale",
-          "folklore",
-          "ocean",
-          "sea",
-          "siren",
-          "trident"
-        ]
+        "t": ["creature", "fairytale", "folklore", "ocean", "sea", "siren", "trident"]
       },
       {
         "u": "🧜‍♂️",
@@ -3143,55 +2591,22 @@
       {
         "u": "🧜‍♀️",
         "l": "mermaid",
-        "t": [
-          "creature",
-          "fairytale",
-          "folklore",
-          "merwoman",
-          "ocean",
-          "sea",
-          "siren",
-          "trident"
-        ]
+        "t": ["creature", "fairytale", "folklore", "merwoman", "ocean", "sea", "siren", "trident"]
       },
       {
         "u": "🧝",
         "l": "elf",
-        "t": [
-          "elves",
-          "enchantment",
-          "fantasy",
-          "folklore",
-          "magic",
-          "magical",
-          "myth"
-        ]
+        "t": ["elves", "enchantment", "fantasy", "folklore", "magic", "magical", "myth"]
       },
       {
         "u": "🧝‍♂️",
         "l": "man elf",
-        "t": [
-          "elves",
-          "enchantment",
-          "fantasy",
-          "folklore",
-          "magic",
-          "magical",
-          "myth"
-        ]
+        "t": ["elves", "enchantment", "fantasy", "folklore", "magic", "magical", "myth"]
       },
       {
         "u": "🧝‍♀️",
         "l": "woman elf",
-        "t": [
-          "elves",
-          "enchantment",
-          "fantasy",
-          "folklore",
-          "magic",
-          "magical",
-          "myth"
-        ]
+        "t": ["elves", "enchantment", "fantasy", "folklore", "magic", "magical", "myth"]
       },
       {
         "u": "🧞",
@@ -3211,41 +2626,17 @@
       {
         "u": "🧟",
         "l": "zombie",
-        "t": [
-          "apocalypse",
-          "dead",
-          "halloween",
-          "horror",
-          "scary",
-          "undead",
-          "walking"
-        ]
+        "t": ["apocalypse", "dead", "halloween", "horror", "scary", "undead", "walking"]
       },
       {
         "u": "🧟‍♂️",
         "l": "man zombie",
-        "t": [
-          "apocalypse",
-          "dead",
-          "halloween",
-          "horror",
-          "scary",
-          "undead",
-          "walking"
-        ]
+        "t": ["apocalypse", "dead", "halloween", "horror", "scary", "undead", "walking"]
       },
       {
         "u": "🧟‍♀️",
         "l": "woman zombie",
-        "t": [
-          "apocalypse",
-          "dead",
-          "halloween",
-          "horror",
-          "scary",
-          "undead",
-          "walking"
-        ]
+        "t": ["apocalypse", "dead", "halloween", "horror", "scary", "undead", "walking"]
       },
       {
         "u": "🧌",
@@ -3255,15 +2646,7 @@
       {
         "u": "🫈",
         "l": "hairy creature",
-        "t": [
-          "bigfoot",
-          "cryptid",
-          "forest",
-          "giant",
-          "sasquatch",
-          "woodwose",
-          "yeti"
-        ]
+        "t": ["bigfoot", "cryptid", "forest", "giant", "sasquatch", "woodwose", "yeti"]
       },
       {
         "u": "💆",
@@ -3316,16 +2699,7 @@
       {
         "u": "💇",
         "l": "person getting haircut",
-        "t": [
-          "barber",
-          "beauty",
-          "chop",
-          "cosmetology",
-          "groom",
-          "parlor",
-          "shears",
-          "style"
-        ]
+        "t": ["barber", "beauty", "chop", "cosmetology", "groom", "parlor", "shears", "style"]
       },
       {
         "u": "💇‍♂️",
@@ -3360,16 +2734,7 @@
       {
         "u": "🚶",
         "l": "person walking",
-        "t": [
-          "amble",
-          "gait",
-          "hike",
-          "man",
-          "pace",
-          "pedestrian",
-          "stride",
-          "stroll"
-        ]
+        "t": ["amble", "gait", "hike", "man", "pace", "pedestrian", "stride", "stroll"]
       },
       {
         "u": "🚶‍♂️",
@@ -3384,16 +2749,7 @@
       {
         "u": "🚶‍➡️",
         "l": "person walking: facing right",
-        "t": [
-          "amble",
-          "gait",
-          "hike",
-          "man",
-          "pace",
-          "pedestrian",
-          "stride",
-          "stroll"
-        ]
+        "t": ["amble", "gait", "hike", "man", "pace", "pedestrian", "stride", "stroll"]
       },
       {
         "u": "🚶‍♀️‍➡️",
@@ -3491,92 +2847,32 @@
       {
         "u": "🏃",
         "l": "person running",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       {
         "u": "🏃‍♂️",
         "l": "man running",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       {
         "u": "🏃‍♀️",
         "l": "woman running",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       {
         "u": "🏃‍➡️",
         "l": "person running: facing right",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       {
         "u": "🏃‍♀️‍➡️",
         "l": "woman running: facing right",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       {
         "u": "🏃‍♂️‍➡️",
         "l": "man running: facing right",
-        "t": [
-          "fast",
-          "hurry",
-          "marathon",
-          "move",
-          "quick",
-          "race",
-          "racing",
-          "rush",
-          "speed"
-        ]
+        "t": ["fast", "hurry", "marathon", "move", "quick", "race", "racing", "rush", "speed"]
       },
       { "u": "🧑‍🩰", "l": "ballet dancer", "t": [] },
       {
@@ -3671,44 +2967,17 @@
       {
         "u": "🧖",
         "l": "person in steamy room",
-        "t": [
-          "day",
-          "luxurious",
-          "pamper",
-          "relax",
-          "sauna",
-          "spa",
-          "steambath",
-          "unwind"
-        ]
+        "t": ["day", "luxurious", "pamper", "relax", "sauna", "spa", "steambath", "unwind"]
       },
       {
         "u": "🧖‍♂️",
         "l": "man in steamy room",
-        "t": [
-          "day",
-          "luxurious",
-          "pamper",
-          "relax",
-          "sauna",
-          "spa",
-          "steambath",
-          "unwind"
-        ]
+        "t": ["day", "luxurious", "pamper", "relax", "sauna", "spa", "steambath", "unwind"]
       },
       {
         "u": "🧖‍♀️",
         "l": "woman in steamy room",
-        "t": [
-          "day",
-          "luxurious",
-          "pamper",
-          "relax",
-          "sauna",
-          "spa",
-          "steambath",
-          "unwind"
-        ]
+        "t": ["day", "luxurious", "pamper", "relax", "sauna", "spa", "steambath", "unwind"]
       },
       {
         "u": "🧗",
@@ -3736,47 +3005,17 @@
       {
         "u": "🏌️",
         "l": "person golfing",
-        "t": [
-          "ball",
-          "birdie",
-          "caddy",
-          "driving",
-          "green",
-          "pga",
-          "putt",
-          "range",
-          "tee"
-        ]
+        "t": ["ball", "birdie", "caddy", "driving", "green", "pga", "putt", "range", "tee"]
       },
       {
         "u": "🏌️‍♂️",
         "l": "man golfing",
-        "t": [
-          "ball",
-          "birdie",
-          "caddy",
-          "driving",
-          "green",
-          "pga",
-          "putt",
-          "range",
-          "tee"
-        ]
+        "t": ["ball", "birdie", "caddy", "driving", "green", "pga", "putt", "range", "tee"]
       },
       {
         "u": "🏌️‍♀️",
         "l": "woman golfing",
-        "t": [
-          "ball",
-          "birdie",
-          "caddy",
-          "driving",
-          "green",
-          "pga",
-          "putt",
-          "range",
-          "tee"
-        ]
+        "t": ["ball", "birdie", "caddy", "driving", "green", "pga", "putt", "range", "tee"]
       },
       {
         "u": "🏄️",
@@ -3796,47 +3035,17 @@
       {
         "u": "🚣",
         "l": "person rowing boat",
-        "t": [
-          "canoe",
-          "cruise",
-          "fishing",
-          "lake",
-          "oar",
-          "paddle",
-          "raft",
-          "river",
-          "rowboat"
-        ]
+        "t": ["canoe", "cruise", "fishing", "lake", "oar", "paddle", "raft", "river", "rowboat"]
       },
       {
         "u": "🚣‍♂️",
         "l": "man rowing boat",
-        "t": [
-          "canoe",
-          "cruise",
-          "fishing",
-          "lake",
-          "oar",
-          "paddle",
-          "raft",
-          "river",
-          "rowboat"
-        ]
+        "t": ["canoe", "cruise", "fishing", "lake", "oar", "paddle", "raft", "river", "rowboat"]
       },
       {
         "u": "🚣‍♀️",
         "l": "woman rowing boat",
-        "t": [
-          "canoe",
-          "cruise",
-          "fishing",
-          "lake",
-          "oar",
-          "paddle",
-          "raft",
-          "river",
-          "rowboat"
-        ]
+        "t": ["canoe", "cruise", "fishing", "lake", "oar", "paddle", "raft", "river", "rowboat"]
       },
       {
         "u": "🏊️",
@@ -3856,41 +3065,17 @@
       {
         "u": "⛹️",
         "l": "person bouncing ball",
-        "t": [
-          "athletic",
-          "basketball",
-          "championship",
-          "dribble",
-          "net",
-          "player",
-          "throw"
-        ]
+        "t": ["athletic", "basketball", "championship", "dribble", "net", "player", "throw"]
       },
       {
         "u": "⛹️‍♂️",
         "l": "man bouncing ball",
-        "t": [
-          "athletic",
-          "basketball",
-          "championship",
-          "dribble",
-          "net",
-          "player",
-          "throw"
-        ]
+        "t": ["athletic", "basketball", "championship", "dribble", "net", "player", "throw"]
       },
       {
         "u": "⛹️‍♀️",
         "l": "woman bouncing ball",
-        "t": [
-          "athletic",
-          "basketball",
-          "championship",
-          "dribble",
-          "net",
-          "player",
-          "throw"
-        ]
+        "t": ["athletic", "basketball", "championship", "dribble", "net", "player", "throw"]
       },
       {
         "u": "🏋️",
@@ -3934,80 +3119,32 @@
       {
         "u": "🚴",
         "l": "person biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🚴‍♂️",
         "l": "man biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🚴‍♀️",
         "l": "woman biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🚵",
         "l": "person mountain biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🚵‍♂️",
         "l": "man mountain biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🚵‍♀️",
         "l": "woman mountain biking",
-        "t": [
-          "bicycle",
-          "bicyclist",
-          "bike",
-          "cycle",
-          "cyclist",
-          "riding",
-          "sport"
-        ]
+        "t": ["bicycle", "bicyclist", "bike", "cycle", "cyclist", "riding", "sport"]
       },
       {
         "u": "🤸",
@@ -4057,89 +3194,32 @@
       {
         "u": "🤾",
         "l": "person playing handball",
-        "t": [
-          "athletics",
-          "catch",
-          "chuck",
-          "hurl",
-          "lob",
-          "pitch",
-          "sport",
-          "throw",
-          "toss"
-        ]
+        "t": ["athletics", "catch", "chuck", "hurl", "lob", "pitch", "sport", "throw", "toss"]
       },
       {
         "u": "🤾‍♂️",
         "l": "man playing handball",
-        "t": [
-          "athletics",
-          "catch",
-          "chuck",
-          "hurl",
-          "lob",
-          "pitch",
-          "sport",
-          "throw",
-          "toss"
-        ]
+        "t": ["athletics", "catch", "chuck", "hurl", "lob", "pitch", "sport", "throw", "toss"]
       },
       {
         "u": "🤾‍♀️",
         "l": "woman playing handball",
-        "t": [
-          "athletics",
-          "catch",
-          "chuck",
-          "hurl",
-          "lob",
-          "pitch",
-          "sport",
-          "throw",
-          "toss"
-        ]
+        "t": ["athletics", "catch", "chuck", "hurl", "lob", "pitch", "sport", "throw", "toss"]
       },
       {
         "u": "🤹",
         "l": "person juggling",
-        "t": [
-          "act",
-          "balance",
-          "balancing",
-          "handle",
-          "juggle",
-          "manage",
-          "multitask",
-          "skill"
-        ]
+        "t": ["act", "balance", "balancing", "handle", "juggle", "manage", "multitask", "skill"]
       },
       {
         "u": "🤹‍♂️",
         "l": "man juggling",
-        "t": [
-          "act",
-          "balance",
-          "balancing",
-          "handle",
-          "juggle",
-          "manage",
-          "multitask",
-          "skill"
-        ]
+        "t": ["act", "balance", "balancing", "handle", "juggle", "manage", "multitask", "skill"]
       },
       {
         "u": "🤹‍♀️",
         "l": "woman juggling",
-        "t": [
-          "act",
-          "balance",
-          "balancing",
-          "handle",
-          "juggle",
-          "manage",
-          "multitask",
-          "skill"
-        ]
+        "t": ["act", "balance", "balancing", "handle", "juggle", "manage", "multitask", "skill"]
       },
       {
         "u": "🧘",
@@ -4193,31 +3273,12 @@
       {
         "u": "🛌",
         "l": "person in bed",
-        "t": [
-          "bedtime",
-          "good",
-          "goodnight",
-          "hotel",
-          "nap",
-          "night",
-          "sleep",
-          "tired",
-          "zzz"
-        ]
+        "t": ["bedtime", "good", "goodnight", "hotel", "nap", "night", "sleep", "tired", "zzz"]
       },
       {
         "u": "🧑‍🤝‍🧑",
         "l": "people holding hands",
-        "t": [
-          "bae",
-          "bestie",
-          "bff",
-          "couple",
-          "dating",
-          "flirt",
-          "friends",
-          "twins"
-        ]
+        "t": ["bae", "bestie", "bff", "couple", "dating", "flirt", "friends", "twins"]
       },
       {
         "u": "👭",
@@ -4238,16 +3299,7 @@
       {
         "u": "👫",
         "l": "woman and man holding hands",
-        "t": [
-          "bae",
-          "bestie",
-          "bff",
-          "couple",
-          "dating",
-          "flirt",
-          "friends",
-          "twins"
-        ]
+        "t": ["bae", "bestie", "bff", "couple", "dating", "flirt", "friends", "twins"]
       },
       {
         "u": "👬",
@@ -4444,16 +3496,7 @@
       {
         "u": "🫂",
         "l": "people hugging",
-        "t": [
-          "comfort",
-          "embrace",
-          "farewell",
-          "friendship",
-          "goodbye",
-          "hello",
-          "love",
-          "thanks"
-        ]
+        "t": ["comfort", "embrace", "farewell", "friendship", "goodbye", "hello", "love", "thanks"]
       },
       { "u": "👪️", "l": "family", "t": ["child"] },
       { "u": "🧑‍🧑‍🧒", "l": "family: adult, adult, child", "t": [] },
@@ -4468,16 +3511,7 @@
       {
         "u": "🫆",
         "l": "fingerprint",
-        "t": [
-          "clue",
-          "crime",
-          "detective",
-          "forensics",
-          "identity",
-          "mystery",
-          "safety",
-          "trace"
-        ]
+        "t": ["clue", "crime", "detective", "forensics", "identity", "mystery", "safety", "trace"]
       }
     ]
   },
@@ -4607,16 +3641,7 @@
       {
         "u": "🐑",
         "l": "ewe",
-        "t": [
-          "animal",
-          "baa",
-          "farm",
-          "female",
-          "fluffy",
-          "lamb",
-          "sheep",
-          "wool"
-        ]
+        "t": ["animal", "baa", "farm", "female", "fluffy", "lamb", "sheep", "wool"]
       },
       {
         "u": "🐐",
@@ -4666,15 +3691,7 @@
       {
         "u": "🐨",
         "l": "koala",
-        "t": [
-          "animal",
-          "australia",
-          "bear",
-          "down",
-          "face",
-          "marsupial",
-          "under"
-        ]
+        "t": ["animal", "australia", "bear", "down", "face", "marsupial", "under"]
       },
       { "u": "🐼", "l": "panda", "t": ["animal", "bamboo", "face"] },
       { "u": "🦥", "l": "sloth", "t": ["lazy", "slow"] },
@@ -4768,16 +3785,7 @@
       {
         "u": "🐦‍⬛",
         "l": "black bird",
-        "t": [
-          "animal",
-          "beak",
-          "caw",
-          "corvid",
-          "crow",
-          "ornithology",
-          "raven",
-          "rook"
-        ]
+        "t": ["animal", "beak", "caw", "corvid", "crow", "ornithology", "raven", "rook"]
       },
       {
         "u": "🪿",
@@ -4957,15 +3965,7 @@
       {
         "u": "💐",
         "l": "bouquet",
-        "t": [
-          "anniversary",
-          "birthday",
-          "date",
-          "flower",
-          "love",
-          "plant",
-          "romance"
-        ]
+        "t": ["anniversary", "birthday", "date", "flower", "love", "plant", "romance"]
       },
       {
         "u": "🌸",
@@ -4976,30 +3976,13 @@
       {
         "u": "🪷",
         "l": "lotus",
-        "t": [
-          "beauty",
-          "buddhism",
-          "calm",
-          "flower",
-          "hinduism",
-          "peace",
-          "purity",
-          "serenity"
-        ]
+        "t": ["beauty", "buddhism", "calm", "flower", "hinduism", "peace", "purity", "serenity"]
       },
       { "u": "🏵️", "l": "rosette", "t": ["plant"] },
       {
         "u": "🌹",
         "l": "rose",
-        "t": [
-          "beauty",
-          "elegant",
-          "flower",
-          "love",
-          "plant",
-          "red",
-          "valentine"
-        ]
+        "t": ["beauty", "elegant", "flower", "love", "plant", "red", "valentine"]
       },
       { "u": "🥀", "l": "wilted flower", "t": ["dying"] },
       { "u": "🌺", "l": "hibiscus", "t": ["flower", "plant"] },
@@ -5080,16 +4063,7 @@
       {
         "u": "🪾",
         "l": "leafless tree",
-        "t": [
-          "bare",
-          "barren",
-          "branches",
-          "dead",
-          "drought",
-          "trunk",
-          "winter",
-          "wood"
-        ]
+        "t": ["bare", "barren", "branches", "dead", "drought", "trunk", "winter", "wood"]
       }
     ]
   },
@@ -5187,15 +4161,7 @@
       {
         "u": "🫛",
         "l": "pea pod",
-        "t": [
-          "beans",
-          "beanstalk",
-          "edamame",
-          "legume",
-          "soybean",
-          "vegetable",
-          "veggie"
-        ]
+        "t": ["beans", "beanstalk", "edamame", "legume", "soybean", "vegetable", "veggie"]
       },
       {
         "u": "🍄‍🟫",
@@ -5220,15 +4186,7 @@
       {
         "u": "🫜",
         "l": "root vegetable",
-        "t": [
-          "beet",
-          "food",
-          "garden",
-          "radish",
-          "salad",
-          "turnip",
-          "vegetarian"
-        ]
+        "t": ["beet", "food", "garden", "radish", "salad", "turnip", "vegetarian"]
       },
       {
         "u": "🍞",
@@ -5426,15 +4384,7 @@
       {
         "u": "🍬",
         "l": "candy",
-        "t": [
-          "cavities",
-          "dessert",
-          "halloween",
-          "restaurant",
-          "sweet",
-          "tooth",
-          "wrapper"
-        ]
+        "t": ["cavities", "dessert", "halloween", "restaurant", "sweet", "tooth", "wrapper"]
       },
       {
         "u": "🍭",
@@ -5456,16 +4406,7 @@
       {
         "u": "☕️",
         "l": "hot beverage",
-        "t": [
-          "cafe",
-          "caffeine",
-          "chai",
-          "coffee",
-          "drink",
-          "morning",
-          "steaming",
-          "tea"
-        ]
+        "t": ["cafe", "caffeine", "chai", "coffee", "drink", "morning", "steaming", "tea"]
       },
       { "u": "🫖", "l": "teapot", "t": ["brew", "drink", "food"] },
       {
@@ -5549,15 +4490,7 @@
       {
         "u": "🍻",
         "l": "clinking beer mugs",
-        "t": [
-          "alcohol",
-          "bar",
-          "booze",
-          "bottoms",
-          "cheers",
-          "drinking",
-          "drinks"
-        ]
+        "t": ["alcohol", "bar", "booze", "bottoms", "cheers", "drinking", "drinks"]
       },
       { "u": "🥂", "l": "clinking glasses", "t": ["celebrate", "drink"] },
       {
@@ -5658,15 +4591,7 @@
       {
         "u": "🛘",
         "l": "landslide",
-        "t": [
-          "avalanche",
-          "danger",
-          "disaster",
-          "earthquake",
-          "mountain",
-          "mudslide",
-          "rocks"
-        ]
+        "t": ["avalanche", "danger", "disaster", "earthquake", "mountain", "mudslide", "rocks"]
       },
       { "u": "🌋", "l": "volcano", "t": ["eruption", "mountain", "nature"] },
       { "u": "🗻", "l": "mount fuji", "t": ["mountain", "nature"] },
@@ -5802,15 +4727,7 @@
       {
         "u": "🚂",
         "l": "locomotive",
-        "t": [
-          "caboose",
-          "engine",
-          "railway",
-          "steam",
-          "train",
-          "trains",
-          "travel"
-        ]
+        "t": ["caboose", "engine", "railway", "steam", "train", "trains", "travel"]
       },
       {
         "u": "🚃",
@@ -5881,16 +4798,7 @@
       {
         "u": "🚲️",
         "l": "bicycle",
-        "t": [
-          "bike",
-          "class",
-          "cycling",
-          "cyclist",
-          "gang",
-          "ride",
-          "spin",
-          "spinning"
-        ]
+        "t": ["bike", "class", "cycling", "cyclist", "gang", "ride", "spin", "spinning"]
       },
       { "u": "🛴", "l": "kick scooter", "t": [] },
       { "u": "🛹", "l": "skateboard", "t": ["skater", "wheels"] },
@@ -5951,14 +4859,7 @@
       {
         "u": "🚤",
         "l": "speedboat",
-        "t": [
-          "billionaire",
-          "lake",
-          "luxury",
-          "millionaire",
-          "summer",
-          "travel"
-        ]
+        "t": ["billionaire", "lake", "luxury", "millionaire", "summer", "travel"]
       },
       { "u": "🛳️", "l": "passenger ship", "t": [] },
       { "u": "⛴️", "l": "ferry", "t": ["boat", "passenger"] },
@@ -6116,16 +5017,7 @@
       {
         "u": "🌞",
         "l": "sun with face",
-        "t": [
-          "beach",
-          "bright",
-          "day",
-          "heat",
-          "shine",
-          "sunny",
-          "sunshine",
-          "weather"
-        ]
+        "t": ["beach", "bright", "day", "heat", "shine", "sunny", "sunshine", "weather"]
       },
       { "u": "🪐", "l": "ringed planet", "t": ["saturn", "saturnine"] },
       {
@@ -6215,16 +5107,7 @@
       {
         "u": "💧",
         "l": "droplet",
-        "t": [
-          "cold",
-          "comic",
-          "nature",
-          "sad",
-          "sweat",
-          "tear",
-          "water",
-          "weather"
-        ]
+        "t": ["cold", "comic", "nature", "sad", "sweat", "tear", "water", "weather"]
       },
       {
         "u": "🌊",
@@ -6251,15 +5134,7 @@
       {
         "u": "🧨",
         "l": "firecracker",
-        "t": [
-          "dynamite",
-          "explosive",
-          "fireworks",
-          "light",
-          "pop",
-          "popping",
-          "spark"
-        ]
+        "t": ["dynamite", "explosive", "fireworks", "light", "pop", "popping", "spark"]
       },
       { "u": "✨️", "l": "sparkles", "t": ["*", "magic", "star"] },
       {
@@ -6313,15 +5188,7 @@
       {
         "u": "🎁",
         "l": "wrapped gift",
-        "t": [
-          "birthday",
-          "bow",
-          "box",
-          "celebration",
-          "christmas",
-          "present",
-          "surprise"
-        ]
+        "t": ["birthday", "bow", "box", "celebration", "christmas", "present", "surprise"]
       },
       { "u": "🎗️", "l": "reminder ribbon", "t": ["celebration"] },
       { "u": "🎟️", "l": "admission tickets", "t": [] },
@@ -6330,16 +5197,7 @@
       {
         "u": "🏆️",
         "l": "trophy",
-        "t": [
-          "champion",
-          "champs",
-          "prize",
-          "slay",
-          "sport",
-          "victory",
-          "win",
-          "winning"
-        ]
+        "t": ["champion", "champs", "prize", "slay", "sport", "victory", "win", "winning"]
       },
       { "u": "🏅", "l": "sports medal", "t": ["award", "gold", "winner"] },
       { "u": "🥇", "l": "1st place medal", "t": ["first", "gold"] },
@@ -6408,16 +5266,7 @@
       {
         "u": "🔮",
         "l": "crystal ball",
-        "t": [
-          "fairy",
-          "fairytale",
-          "fantasy",
-          "fortune",
-          "future",
-          "magic",
-          "tale",
-          "tool"
-        ]
+        "t": ["fairy", "fairytale", "fantasy", "fortune", "future", "magic", "tale", "tool"]
       },
       { "u": "🪄", "l": "magic wand", "t": ["magician", "witch", "wizard"] },
       { "u": "🎮️", "l": "video game", "t": ["controller", "entertainment"] },
@@ -6479,15 +5328,7 @@
       {
         "u": "🎭️",
         "l": "performing arts",
-        "t": [
-          "actor",
-          "actress",
-          "entertainment",
-          "mask",
-          "theater",
-          "theatre",
-          "thespian"
-        ]
+        "t": ["actor", "actress", "entertainment", "mask", "theater", "theatre", "thespian"]
       },
       { "u": "🖼️", "l": "framed picture", "t": ["art", "museum", "painting"] },
       {
@@ -6539,15 +5380,7 @@
       {
         "u": "🥼",
         "l": "lab coat",
-        "t": [
-          "clothes",
-          "doctor",
-          "dr",
-          "experiment",
-          "jacket",
-          "scientist",
-          "white"
-        ]
+        "t": ["clothes", "doctor", "dr", "experiment", "jacket", "scientist", "white"]
       },
       { "u": "🦺", "l": "safety vest", "t": ["emergency"] },
       {
@@ -6620,44 +5453,17 @@
       {
         "u": "👚",
         "l": "woman’s clothes",
-        "t": [
-          "blouse",
-          "clothing",
-          "collar",
-          "dress",
-          "dressed",
-          "lady",
-          "shirt",
-          "shopping"
-        ]
+        "t": ["blouse", "clothing", "collar", "dress", "dressed", "lady", "shirt", "shopping"]
       },
       {
         "u": "🪭",
         "l": "folding hand fan",
-        "t": [
-          "clack",
-          "clap",
-          "cool",
-          "cooling",
-          "dance",
-          "flirt",
-          "flutter",
-          "hot",
-          "shy"
-        ]
+        "t": ["clack", "clap", "cool", "cooling", "dance", "flirt", "flutter", "hot", "shy"]
       },
       {
         "u": "👛",
         "l": "purse",
-        "t": [
-          "clothes",
-          "clothing",
-          "coin",
-          "dress",
-          "fancy",
-          "handbag",
-          "shopping"
-        ]
+        "t": ["clothes", "clothing", "coin", "dress", "fancy", "handbag", "shopping"]
       },
       {
         "u": "👜",
@@ -6673,15 +5479,7 @@
       {
         "u": "🎒",
         "l": "backpack",
-        "t": [
-          "backpacking",
-          "bag",
-          "bookbag",
-          "education",
-          "rucksack",
-          "satchel",
-          "school"
-        ]
+        "t": ["backpacking", "bag", "bookbag", "education", "rucksack", "satchel", "school"]
       },
       {
         "u": "🩴",
@@ -6691,16 +5489,7 @@
       {
         "u": "👞",
         "l": "man’s shoe",
-        "t": [
-          "brown",
-          "clothes",
-          "clothing",
-          "feet",
-          "foot",
-          "kick",
-          "shoes",
-          "shopping"
-        ]
+        "t": ["brown", "clothes", "clothing", "feet", "foot", "kick", "shoes", "shopping"]
       },
       {
         "u": "👟",
@@ -6753,16 +5542,7 @@
       {
         "u": "👑",
         "l": "crown",
-        "t": [
-          "clothing",
-          "family",
-          "king",
-          "medieval",
-          "queen",
-          "royal",
-          "royalty",
-          "win"
-        ]
+        "t": ["clothing", "family", "king", "medieval", "queen", "royal", "royalty", "win"]
       },
       {
         "u": "👒",
@@ -6834,16 +5614,7 @@
       {
         "u": "🔕",
         "l": "bell with slash",
-        "t": [
-          "forbidden",
-          "mute",
-          "no",
-          "not",
-          "prohibited",
-          "quiet",
-          "silent",
-          "sound"
-        ]
+        "t": ["forbidden", "mute", "no", "not", "prohibited", "quiet", "silent", "sound"]
       },
       { "u": "🎼", "l": "musical score", "t": ["note"] },
       { "u": "🎵", "l": "musical note", "t": ["sound"] },
@@ -6868,14 +5639,7 @@
       {
         "u": "🪗",
         "l": "accordion",
-        "t": [
-          "box",
-          "concertina",
-          "instrument",
-          "music",
-          "squeeze",
-          "squeezebox"
-        ]
+        "t": ["box", "concertina", "instrument", "music", "squeeze", "squeezebox"]
       },
       { "u": "🎸", "l": "guitar", "t": ["instrument", "music", "strat"] },
       { "u": "🎹", "l": "musical keyboard", "t": ["instrument", "piano"] },
@@ -7017,14 +5781,7 @@
       {
         "u": "📖",
         "l": "open book",
-        "t": [
-          "education",
-          "fantasy",
-          "knowledge",
-          "library",
-          "novels",
-          "reading"
-        ]
+        "t": ["education", "fantasy", "knowledge", "library", "novels", "reading"]
       },
       {
         "u": "📗",
@@ -7068,16 +5825,7 @@
       {
         "u": "🪙",
         "l": "coin",
-        "t": [
-          "dollar",
-          "euro",
-          "gold",
-          "metal",
-          "money",
-          "rich",
-          "silver",
-          "treasure"
-        ]
+        "t": ["dollar", "euro", "gold", "metal", "money", "rich", "silver", "treasure"]
       },
       {
         "u": "💰️",
@@ -7102,17 +5850,7 @@
       {
         "u": "🪎",
         "l": "treasure chest",
-        "t": [
-          "gem",
-          "gold",
-          "jewels",
-          "loot",
-          "money",
-          "prize",
-          "silver",
-          "valuables",
-          "wealth"
-        ]
+        "t": ["gem", "gold", "jewels", "loot", "money", "prize", "silver", "valuables", "wealth"]
       },
       { "u": "💴", "l": "yen banknote", "t": ["bill", "currency", "money"] },
       { "u": "💵", "l": "dollar banknote", "t": ["bill", "currency", "money"] },
@@ -7155,32 +5893,14 @@
       {
         "u": "💹",
         "l": "chart increasing with yen",
-        "t": [
-          "bank",
-          "currency",
-          "graph",
-          "growth",
-          "market",
-          "money",
-          "rise",
-          "trend",
-          "upward"
-        ]
+        "t": ["bank", "currency", "graph", "growth", "market", "money", "rise", "trend", "upward"]
       },
       { "u": "✉️", "l": "envelope", "t": ["e-mail", "email", "letter"] },
       { "u": "📧", "l": "e-mail", "t": ["email", "letter"] },
       {
         "u": "📨",
         "l": "incoming envelope",
-        "t": [
-          "delivering",
-          "e-mail",
-          "email",
-          "letter",
-          "mail",
-          "receive",
-          "sent"
-        ]
+        "t": ["delivering", "e-mail", "email", "letter", "mail", "receive", "sent"]
       },
       {
         "u": "📩",
@@ -7349,30 +6069,13 @@
       {
         "u": "🧲",
         "l": "magnet",
-        "t": [
-          "attraction",
-          "horseshoe",
-          "magnetic",
-          "negative",
-          "positive",
-          "shape",
-          "u"
-        ]
+        "t": ["attraction", "horseshoe", "magnetic", "negative", "positive", "shape", "u"]
       },
       { "u": "🪜", "l": "ladder", "t": ["climb", "rung", "step"] },
       {
         "u": "🪏",
         "l": "shovel",
-        "t": [
-          "bury",
-          "dig",
-          "garden",
-          "hole",
-          "plant",
-          "scoop",
-          "snow",
-          "spade"
-        ]
+        "t": ["bury", "dig", "garden", "hole", "plant", "scoop", "snow", "spade"]
       },
       { "u": "⚗️", "l": "alembic", "t": ["chemistry", "tool"] },
       {
@@ -7408,16 +6111,7 @@
       {
         "u": "💉",
         "l": "syringe",
-        "t": [
-          "doctor",
-          "flu",
-          "medicine",
-          "needle",
-          "shot",
-          "sick",
-          "tool",
-          "vaccination"
-        ]
+        "t": ["doctor", "flu", "medicine", "needle", "shot", "sick", "tool", "vaccination"]
       },
       {
         "u": "🩸",
@@ -7427,30 +6121,13 @@
       {
         "u": "💊",
         "l": "pill",
-        "t": [
-          "doctor",
-          "drugs",
-          "medicated",
-          "medicine",
-          "pills",
-          "sick",
-          "vitamin"
-        ]
+        "t": ["doctor", "drugs", "medicated", "medicine", "pills", "sick", "vitamin"]
       },
       { "u": "🩹", "l": "adhesive bandage", "t": [] },
       {
         "u": "🩼",
         "l": "crutch",
-        "t": [
-          "aid",
-          "cane",
-          "disability",
-          "help",
-          "hurt",
-          "injured",
-          "mobility",
-          "stick"
-        ]
+        "t": ["aid", "cane", "disability", "help", "hurt", "injured", "mobility", "stick"]
       },
       { "u": "🩺", "l": "stethoscope", "t": ["doctor", "heart", "medicine"] },
       {
@@ -7524,16 +6201,7 @@
       {
         "u": "🪦",
         "l": "headstone",
-        "t": [
-          "cemetery",
-          "dead",
-          "grave",
-          "graveyard",
-          "memorial",
-          "rip",
-          "tomb",
-          "tombstone"
-        ]
+        "t": ["cemetery", "dead", "grave", "graveyard", "memorial", "rip", "tomb", "tombstone"]
       },
       { "u": "⚱️", "l": "funeral urn", "t": ["ashes", "death"] },
       {
@@ -7670,15 +6338,7 @@
       {
         "u": "🔞",
         "l": "no one under eighteen",
-        "t": [
-          "18",
-          "age",
-          "forbidden",
-          "not",
-          "prohibited",
-          "restriction",
-          "underage"
-        ]
+        "t": ["18", "age", "forbidden", "not", "prohibited", "restriction", "underage"]
       },
       { "u": "☢️", "l": "radioactive", "t": ["sign"] },
       { "u": "☣️", "l": "biohazard", "t": ["sign"] },
@@ -7720,14 +6380,7 @@
       {
         "u": "🔄",
         "l": "counterclockwise arrows button",
-        "t": [
-          "again",
-          "anticlockwise",
-          "deja",
-          "refresh",
-          "rewindershins",
-          "vu"
-        ]
+        "t": ["again", "anticlockwise", "deja", "refresh", "rewindershins", "vu"]
       },
       { "u": "🔙", "l": "BACK arrow", "t": ["back"] },
       { "u": "🔚", "l": "END arrow", "t": ["end"] },
@@ -7746,15 +6399,7 @@
       {
         "u": "☯️",
         "l": "yin yang",
-        "t": [
-          "difficult",
-          "lives",
-          "religion",
-          "tao",
-          "taoist",
-          "total",
-          "yinyang"
-        ]
+        "t": ["difficult", "lives", "religion", "tao", "taoist", "total", "yinyang"]
       },
       {
         "u": "✝️",
@@ -7771,14 +6416,7 @@
       {
         "u": "🕎",
         "l": "menorah",
-        "t": [
-          "candelabrum",
-          "candlestick",
-          "hanukkah",
-          "jewish",
-          "judaism",
-          "religion"
-        ]
+        "t": ["candelabrum", "candlestick", "hanukkah", "jewish", "judaism", "religion"]
       },
       {
         "u": "🔯",
@@ -7964,15 +6602,7 @@
       {
         "u": "💲",
         "l": "heavy dollar sign",
-        "t": [
-          "billion",
-          "cash",
-          "charge",
-          "currency",
-          "million",
-          "money",
-          "pay"
-        ]
+        "t": ["billion", "cash", "charge", "currency", "million", "money", "pay"]
       },
       {
         "u": "⚕️",
@@ -7996,16 +6626,7 @@
       {
         "u": "✅️",
         "l": "check mark button",
-        "t": [
-          "checked",
-          "checkmark",
-          "complete",
-          "completed",
-          "done",
-          "fixed",
-          "tick",
-          "✓"
-        ]
+        "t": ["checked", "checkmark", "complete", "completed", "done", "fixed", "tick", "✓"]
       },
       {
         "u": "☑️",
@@ -8039,16 +6660,7 @@
       {
         "u": "🫟",
         "l": "splatter",
-        "t": [
-          "drip",
-          "holi",
-          "ink",
-          "liquid",
-          "mess",
-          "paint",
-          "spill",
-          "stain"
-        ]
+        "t": ["drip", "holi", "ink", "liquid", "mess", "paint", "spill", "stain"]
       },
       { "u": "#️⃣", "l": "keycap: #", "t": [] },
       { "u": "*️⃣", "l": "keycap: *", "t": [] },
@@ -8212,16 +6824,7 @@
       {
         "u": "🏁",
         "l": "chequered flag",
-        "t": [
-          "checkered",
-          "finish",
-          "flags",
-          "game",
-          "race",
-          "racing",
-          "sport",
-          "win"
-        ]
+        "t": ["checkered", "finish", "flags", "game", "race", "racing", "sport", "win"]
       },
       {
         "u": "🚩",

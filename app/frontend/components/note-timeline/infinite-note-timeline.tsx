@@ -6,10 +6,7 @@ import type { NoteListPayload } from "./note-list-payload";
 import type { NoteTimelineItemProps } from "./note-timeline-item";
 
 /** 続きを取ってくる手。取れなければ投げる。 */
-export type LoadNotePage = (
-  page: number,
-  perPage: number,
-) => Promise<NoteListPayload>;
+export type LoadNotePage = (page: number, perPage: number) => Promise<NoteListPayload>;
 
 interface InfiniteNoteTimelineProps {
   /** SSR で描いた 1 ページ目。JS が動かない環境ではこれだけが残る。 */
@@ -129,10 +126,7 @@ export function InfiniteNoteTimeline({
         読み込みの様子は文字でも伝える。スクロールだけで内容が増えることに気づけない
         読み方 (読み上げなど) があるため。
       */}
-      <p
-        aria-live="polite"
-        className="py-6 text-center text-sm text-base-content/60"
-      >
+      <p aria-live="polite" className="py-6 text-center text-sm text-base-content/60">
         {state === "loading" && t("timeline.loadingMore")}
         {state === "failed" && (
           <>
@@ -148,10 +142,7 @@ export function InfiniteNoteTimeline({
             </button>
           </>
         )}
-        {state === "idle" &&
-          !hasMore &&
-          notes.length > 0 &&
-          t("timeline.allLoaded")}
+        {state === "idle" && !hasMore && notes.length > 0 && t("timeline.allLoaded")}
       </p>
     </>
   );

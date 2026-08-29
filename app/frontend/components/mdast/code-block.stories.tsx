@@ -46,11 +46,7 @@ export const Wide: Story = {
 export const Tall: Story = {
   args: {
     children: (
-      <code>
-        {Array.from({ length: 20 }, (_, i) => `line ${String(i + 1)}`).join(
-          "\n",
-        )}
-      </code>
+      <code>{Array.from({ length: 20 }, (_, i) => `line ${String(i + 1)}`).join("\n")}</code>
     ),
   },
 };

@@ -1,7 +1,4 @@
-import type {
-  ILogger,
-  LogContext,
-} from "~/backend/domain/shared/logger.interface";
+import type { ILogger, LogContext } from "~/backend/domain/shared/logger.interface";
 
 export class ConsoleLogger implements ILogger {
   constructor(private readonly baseContext: LogContext = {}) {}

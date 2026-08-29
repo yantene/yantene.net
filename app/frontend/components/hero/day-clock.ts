@@ -70,10 +70,7 @@ export function advanceDayClock(deltaMs: number): void {
  * キーフレームが外れる境目は 0 ではなく delay の位置にある。ここを 0 のままにして
  * あるのは、早めに底上げしても周期の倍数である限り絵が変わらないためである。
  */
-function liftToStayPositive(
-  animations: readonly Animation[],
-  deltaMs: number,
-): number {
+function liftToStayPositive(animations: readonly Animation[], deltaMs: number): number {
   const cycle = loopCycleMs();
   if (cycle <= 0) return 0;
 
@@ -97,9 +94,7 @@ function loopCycleMs(): number {
   const sky = document.querySelector(".celestim-sky");
   if (sky === null) return 0;
 
-  const raw = getComputedStyle(sky).getPropertyValue(
-    "--celestim-sidereal-month",
-  );
+  const raw = getComputedStyle(sky).getPropertyValue("--celestim-sidereal-month");
   const months = Number(raw.trim());
   const day = readDayDurationMs();
   if (!Number.isFinite(months) || months <= 0 || day <= 0) return 0;
@@ -143,9 +138,7 @@ function clockAnimations(): readonly Animation[] {
   }
   return document
     .getAnimations()
-    .filter((animation) =>
-      clockAnimationNames.has(animationNameOf(animation) ?? ""),
-    );
+    .filter((animation) => clockAnimationNames.has(animationNameOf(animation) ?? ""));
 }
 
 /** CSS アニメーションなら keyframes 名を返す (JS 生成のアニメーションは null)。 */

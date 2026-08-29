@@ -47,9 +47,7 @@ describe("Session#withView", () => {
 
   it("日が変われば前日ぶんは捨てる", () => {
     // 溜め続けると、読み手の閲覧履歴そのものを持つことになる。
-    const session = newSession()
-      .withView(alpha, today)
-      .withView(beta, tomorrow);
+    const session = newSession().withView(alpha, today).withView(beta, tomorrow);
     expect(session.viewedNotes).toStrictEqual([beta]);
     expect(session.hasViewed(alpha, tomorrow)).toBe(false);
   });

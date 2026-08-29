@@ -55,11 +55,7 @@ describe("createOgRouter GET /notes/:slug が見つからないとき", () => {
 
   it("記事が無いときも Problem Details で断る", async () => {
     // 表は作ってあるが 1 件も入っていない。
-    const response = await createOgRouter().request(
-      "/notes/missing",
-      {},
-      envWith(createTestD1()),
-    );
+    const response = await createOgRouter().request("/notes/missing", {}, envWith(createTestD1()));
 
     await expect(refusalOf(response)).resolves.toEqual(problemDetails404);
   });
@@ -80,11 +76,7 @@ describe("createOgRouter GET /notes/:slug が見つからないとき", () => {
       },
     } as unknown as Env;
 
-    const response = await createOgRouter().request(
-      "/notes/missing",
-      {},
-      broken,
-    );
+    const response = await createOgRouter().request("/notes/missing", {}, broken);
 
     // 404 にならないことが眼目。本番では index.ts の onError がこれを拾う。
     expect(response.status).not.toBe(404);

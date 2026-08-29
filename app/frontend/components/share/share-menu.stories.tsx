@@ -6,8 +6,7 @@ const meta: Meta<typeof ShareMenu> = {
   component: ShareMenu,
   args: {
     url: "https://yantene.net/notes/hacku-2016",
-    title:
-      "オートマチック・オタク・マッチング ― Hack U 2016 名古屋会場に参加しました",
+    title: "オートマチック・オタク・マッチング ― Hack U 2016 名古屋会場に参加しました",
   },
 };
 
@@ -36,7 +35,6 @@ export const Open: Story = {
 /* 長い題は一覧の幅を押し広げない (共有先の URL にだけ効く) ことを見る。 */
 export const LongTitle: Story = {
   args: {
-    title:
-      "Windows タブレット KEIAN KVI-70B に Arch Linux をインストールする手順のすべて",
+    title: "Windows タブレット KEIAN KVI-70B に Arch Linux をインストールする手順のすべて",
   },
 };

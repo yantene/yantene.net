@@ -68,12 +68,8 @@ describe("ShareMenu", () => {
       "href",
       expect.stringContaining("x.com/intent/post"),
     );
-    expect(
-      screen.getByRole("link", { name: "Share on Bluesky" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Share on Facebook" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Share on Bluesky" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Share on Facebook" })).toBeInTheDocument();
   });
 
   /*
@@ -91,9 +87,7 @@ describe("ShareMenu", () => {
     expect(write).toHaveBeenCalledOnce();
     const [item] = recorded;
     expect(Object.keys(item)).toEqual(["text/html", "text/plain"]);
-    await expect(item["text/html"].text()).resolves.toBe(
-      `<a href="${url}">${title}</a>`,
-    );
+    await expect(item["text/html"].text()).resolves.toBe(`<a href="${url}">${title}</a>`);
     await expect(item["text/plain"].text()).resolves.toBe(`[${title}](${url})`);
     expect(await screen.findByText("Copied")).toBeInTheDocument();
   });

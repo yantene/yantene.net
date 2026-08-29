@@ -45,9 +45,7 @@ describe("Note.create", () => {
       sourceHash: "h",
     });
 
-    expect(note.imageUrl?.toString()).toBe(
-      "/api/v1/notes/my-note/assets/cover.png",
-    );
+    expect(note.imageUrl?.toString()).toBe("/api/v1/notes/my-note/assets/cover.png");
   });
 });
 

@@ -11,8 +11,8 @@ pnpm run test:run     # テスト 1 回実行
 # コード品質
 pnpm run lint         # ESLint チェック
 pnpm run lint:fix     # ESLint 自動修正
-pnpm run format       # Prettier チェック
-pnpm run format:fix   # Prettier 自動修正
+pnpm run format       # Oxfmt チェック (書式の設定項目は無い)
+pnpm run format:fix   # Oxfmt 自動修正
 pnpm run typecheck    # TypeScript 型チェック
 pnpm run fix          # lint:fix + format:fix (自動修正まとめ)
 pnpm run check        # lint + format + typecheck (読取検証まとめ)

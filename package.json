@@ -2,10 +2,6 @@
   "name": "yantene",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": "24.15.0"
-  },
-  "packageManager": "pnpm@11.1.2",
   "scripts": {
     "dev": "vp dev --host 0.0.0.0",
     "build": "vp build",
@@ -13,8 +9,8 @@
     "preview:staging": "CLOUDFLARE_ENV=staging pnpm run build && vp preview",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint --fix . --max-warnings 0",
-    "format": "prettier --ignore-path .gitignore --ignore-path .prettierignore --check \"**/*.{js,jsx,ts,tsx,json,jsonc,css,md,yml,yaml}\"",
-    "format:fix": "prettier --ignore-path .gitignore --ignore-path .prettierignore --write \"**/*.{js,jsx,ts,tsx,json,jsonc,css,md,yml,yaml}\"",
+    "format": "vp fmt --check",
+    "format:fix": "vp fmt",
     "typecheck": "pnpm run typegen && pnpm run rr-typegen && tsc -b",
     "fix": "pnpm run lint:fix && pnpm run format:fix",
     "check": "pnpm run lint && pnpm run format && pnpm run typecheck",
@@ -110,7 +106,6 @@
     "eslint-plugin-sonarjs": "^4.1.0",
     "eslint-plugin-unicorn": "^70.0.0",
     "happy-dom": "^20.10.6",
-    "prettier": "^3.9.4",
     "storybook": "^10.4.6",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
@@ -120,5 +115,9 @@
     "vite-plus": "^0.3.0",
     "vitest": "^4.1.11",
     "wrangler": "^4.107.0"
-  }
+  },
+  "engines": {
+    "node": "24.15.0"
+  },
+  "packageManager": "pnpm@11.1.2"
 }

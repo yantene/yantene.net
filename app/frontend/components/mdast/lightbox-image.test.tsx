@@ -28,9 +28,7 @@ describe("LightboxImage", () => {
   it("alt が無ければ用向きだけを名前にする", () => {
     render(<LightboxImage src="/a.png" />);
 
-    expect(
-      screen.getByRole("button", { name: "画像を拡大" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "画像を拡大" })).toBeInTheDocument();
   });
 
   it("拡大したものは alt で名前の付いた dialog になる", () => {

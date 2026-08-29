@@ -35,10 +35,7 @@ export const noteSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
   ["amidakuji_by_cobol", "amidakuji-in-cobol"],
   ["joi2009_yosen_q5_succeed", "joi-2009-qual-q5-solved"],
   ["passed_ap_exam", "passed-ap-exam"],
-  [
-    "svt1311aj_linux_brightness_adjustment",
-    "vaio-svt1311aj-brightness-on-linux",
-  ],
+  ["svt1311aj_linux_brightness_adjustment", "vaio-svt1311aj-brightness-on-linux"],
   ["code_thanks_festival_2014", "code-thanks-festival-2014"],
   ["install_arch_linux_on_uefi_machine", "install-arch-linux-on-vaio-pro"],
   ["tut_tani_checker", "tut-credit-checker"],
@@ -60,10 +57,7 @@ const legacyImageDirectoryPattern = /^\d{4}-\d{2}-\d{2}-(?<slug>.+)$/u;
  */
 const PERMANENT_REDIRECT = 308 as const;
 
-function permanentRedirect(
-  c: Context<{ Bindings: Env }>,
-  to: string,
-): Response {
+function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
   // ノートの配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
   // 載せると、認証の壁を越えて未認証クライアントへ配られてしまうため。
   c.header("Cache-Control", contentCacheControlFor(c.env));
@@ -110,9 +104,7 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   for (const [legacySlug, slug] of noteSlugByLegacySlug) {
-    router.get(`/${legacySlug}.html`, (c) =>
-      permanentRedirect(c, `/notes/${slug}`),
-    );
+    router.get(`/${legacySlug}.html`, (c) => permanentRedirect(c, `/notes/${slug}`));
   }
 
   router.get("/index.html", (c) => permanentRedirect(c, "/"));
@@ -126,27 +118,18 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   // 同一なのでそのまま引き継ぐ。
   router.get("/list.html", (c) => {
     const tag = c.req.query("tag") ?? "";
-    const to =
-      tag.length > 0 ? `/notes?tag=${encodeURIComponent(tag)}` : "/notes";
+    const to = tag.length > 0 ? `/notes?tag=${encodeURIComponent(tag)}` : "/notes";
     return permanentRedirect(c, to);
   });
 
   // 記事に紐付く画像。現行サイトではアセット API が配信する。表に無いディレクトリは
   // 素通りさせ、通常の 404 に委ねる。
   router.get("/images/:directory/:file{.+}", (c, next) => {
-    const legacySlug = legacyImageDirectoryPattern.exec(
-      c.req.param("directory"),
-    )?.groups?.slug;
-    const slug =
-      legacySlug === undefined
-        ? undefined
-        : noteSlugByLegacySlug.get(legacySlug);
+    const legacySlug = legacyImageDirectoryPattern.exec(c.req.param("directory"))?.groups?.slug;
+    const slug = legacySlug === undefined ? undefined : noteSlugByLegacySlug.get(legacySlug);
     if (slug === undefined) return next();
 
-    return permanentRedirect(
-      c,
-      `/api/v1/notes/${slug}/assets/${encodePath(c.req.param("file"))}`,
-    );
+    return permanentRedirect(c, `/api/v1/notes/${slug}/assets/${encodePath(c.req.param("file"))}`);
   });
 
   return router;

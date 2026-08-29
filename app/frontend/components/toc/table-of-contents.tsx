@@ -39,9 +39,7 @@ function useActiveHeading(headings: readonly TocHeading[]): string {
   useEffect(() => {
     if (headings.length === 0) return;
     const elements = [
-      ...document.querySelectorAll<HTMLElement>(
-        ".note-prose h2, .note-prose h3",
-      ),
+      ...document.querySelectorAll<HTMLElement>(".note-prose h2, .note-prose h3"),
     ].filter((element) => element.id.length > 0);
     if (elements.length === 0) return;
 
@@ -51,9 +49,7 @@ function useActiveHeading(headings: readonly TocHeading[]): string {
         for (const entry of entries) {
           visibility.set(entry.target.id, entry.isIntersecting);
         }
-        const firstVisible = headings.find(
-          (heading) => visibility.get(heading.id) === true,
-        );
+        const firstVisible = headings.find((heading) => visibility.get(heading.id) === true);
         if (firstVisible !== undefined) setActiveId(firstVisible.id);
       },
       // ビューポート上部 20% のバンドに入った見出しを「現在地」とみなす。

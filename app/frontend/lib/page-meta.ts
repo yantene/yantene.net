@@ -16,9 +16,7 @@ export interface PageMetaBase {
  * meta 関数は React コンポーネントの外で動くため useTranslation を使えない。
  * locale から翻訳リソースを直接引く。
  */
-export function translationsFor(
-  locale: string,
-): (typeof resources)["en"]["translation"] {
+export function translationsFor(locale: string): (typeof resources)["en"]["translation"] {
   return (
     isSupportedLocale(locale)
       ? // eslint-disable-next-line security/detect-object-injection -- locale is narrowed to SupportedLocale literal
@@ -88,9 +86,7 @@ export function buildPageMeta({
       ? site.title
       : `${title} - ${site.title}`;
   const resolvedDescription =
-    description === undefined || description.length === 0
-      ? site.description
-      : description;
+    description === undefined || description.length === 0 ? site.description : description;
   const image = `${origin}${imagePath}`;
   const url = `${origin}${pathname}`;
 

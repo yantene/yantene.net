@@ -44,19 +44,14 @@ interface ResolvedNote {
   readonly noteId: string;
 }
 
-async function loadNoteDetail(
-  env: Env,
-  slug: NoteSlug,
-): Promise<ResolvedNote | undefined> {
+async function loadNoteDetail(env: Env, slug: NoteSlug): Promise<ResolvedNote | undefined> {
   const [note, mdast] = await Promise.all([
     new D1NoteQueryRepository(env.D1).findBySlug(slug),
     new R2NoteContentCache(env.R2).getMdast(slug),
   ]);
   if (note === undefined) return undefined;
   if (mdast === undefined) {
-    throw new Error(
-      `MDAST cache is missing for an indexed note: ${slug.toString()}`,
-    );
+    throw new Error(`MDAST cache is missing for an indexed note: ${slug.toString()}`);
   }
   const linkCards = await loadLinkCards(env, mdast as Root);
   return { detail: toNoteDetail(note, mdast, linkCards), noteId: note.id };
@@ -79,10 +74,7 @@ async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
 }
 
 /** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */
-async function resolveDetail(
-  env: Env,
-  slugParam: string,
-): Promise<ResolvedNote | undefined> {
+async function resolveDetail(env: Env, slugParam: string): Promise<ResolvedNote | undefined> {
   const slug = NoteSlug.parse(slugParam);
   return slug === undefined ? undefined : loadNoteDetail(env, slug);
 }
@@ -119,9 +111,7 @@ async function loadReactions(
   const sessionId = readSessionId(cookie);
   if (sessionId === undefined) return buildPayload(env, noteId, undefined);
 
-  const session = await new KvSessionQueryRepository(env.SESSIONS).findById(
-    sessionId,
-  );
+  const session = await new KvSessionQueryRepository(env.SESSIONS).findById(sessionId);
   return buildPayload(env, noteId, session?.reactionFor(slug)?.emoji);
 }
 
@@ -171,11 +161,7 @@ export async function loadNoteDetailPage(
   const detail = resolved.detail;
   // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
   if (recording !== null) {
-    recordNoteView(
-      env,
-      { id: resolved.noteId, slug: detail.note.slug },
-      recording,
-    );
+    recordNoteView(env, { id: resolved.noteId, slug: detail.note.slug }, recording);
   }
 
   const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
@@ -185,9 +171,7 @@ export async function loadNoteDetailPage(
     query.findRelated(slug, relatedTags, RELATED_LIMIT),
     loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
     // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
-    new D1WebmentionQueryRepository(env.D1).listByNoteId(
-      entityId<"Note">(resolved.noteId),
-    ),
+    new D1WebmentionQueryRepository(env.D1).listByNoteId(entityId<"Note">(resolved.noteId)),
     new D1WebmentionBlocklist(env.D1).listBlockedHosts(),
   ]);
 

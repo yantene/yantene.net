@@ -1,15 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReactionHint } from "./reaction-hint";
 import type { i18n } from "i18next";
 import { createI18nInstance } from "~/lib/i18n/init";
@@ -69,9 +61,7 @@ describe("ReactionHint", () => {
 
   it("promotes reacting to a reader who has not dismissed it", () => {
     renderHint();
-    expect(screen.getByRole("note")).toHaveTextContent(
-      "匿名でリアクションしてみよう",
-    );
+    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
   });
 
   it("goes away when closed, and stays away afterwards", async () => {

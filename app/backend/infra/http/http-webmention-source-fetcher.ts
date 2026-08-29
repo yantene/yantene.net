@@ -1,9 +1,6 @@
 import { charsetFor, decoderFor } from "./charset";
 import { readCapped } from "./read-capped";
-import type {
-  IWebmentionSourceFetcher,
-  SourceFetchResult,
-} from "~/backend/domain/webmention";
+import type { IWebmentionSourceFetcher, SourceFetchResult } from "~/backend/domain/webmention";
 import { errorToContext, type ILogger } from "~/backend/domain/shared";
 import { WebmentionUrl } from "~/backend/domain/webmention";
 import { httpStatus } from "~/lib/constants/http-status";
@@ -21,10 +18,7 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_BYTES = 1024 * 1024;
 
 /** HTML として読むもの。それ以外は検証のしようがない。 */
-const htmlContentTypes: ReadonlySet<string> = new Set([
-  "text/html",
-  "application/xhtml+xml",
-]);
+const htmlContentTypes: ReadonlySet<string> = new Set(["text/html", "application/xhtml+xml"]);
 
 export interface HttpWebmentionSourceFetcherOptions {
   readonly timeoutMs?: number;
@@ -55,10 +49,8 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
     // メソッド呼び出しだと this が instance になり Workers が Illegal invocation を投げる。
     this.fetchFn =
       options.fetchFn ??
-      ((
-        input: Parameters<typeof fetch>[0],
-        init?: Parameters<typeof fetch>[1],
-      ) => fetch(input, init));
+      ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) =>
+        fetch(input, init));
   }
 
   async fetch(source: WebmentionUrl): Promise<SourceFetchResult> {
@@ -86,10 +78,7 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
       cache: "no-store",
     });
 
-    if (
-      response.status === httpStatus.NOT_FOUND ||
-      response.status === httpStatus.GONE
-    ) {
+    if (response.status === httpStatus.NOT_FOUND || response.status === httpStatus.GONE) {
       return { kind: "gone" };
     }
     if (!response.ok) {

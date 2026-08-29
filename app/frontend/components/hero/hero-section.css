@@ -62,8 +62,7 @@
    * 曖昧になり、光そのものは目に留まらなくなる。中心をやや上に寄せているのは、
    * 下へ伸ばしたぶん文字が楕円の端に来ないようにするため。
    */
-  inset: calc(var(--intro-pad-top) - 4rem) -2rem
-    calc(var(--intro-pad-bottom) - 7.5rem);
+  inset: calc(var(--intro-pad-top) - 4rem) -2rem calc(var(--intro-pad-bottom) - 7.5rem);
   /* 文字より奥へ。位置指定した要素は既定では通常フローの文字より手前に来てしまう。 */
   z-index: -1;
   background: radial-gradient(
@@ -83,9 +82,7 @@
    * 値を変数に置いているのは、背後の光がこの余白を打ち消して文字の範囲だけを覆うため。
    */
   --intro-pad-top: 6rem;
-  --intro-pad-bottom: calc(
-    var(--timeline-height) + var(--scene-height) * 0.5 + 1.5rem
-  );
+  --intro-pad-bottom: calc(var(--timeline-height) + var(--scene-height) * 0.5 + 1.5rem);
 
   isolation: isolate;
   padding-top: var(--intro-pad-top);

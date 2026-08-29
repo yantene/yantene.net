@@ -52,9 +52,6 @@ export const SingleTag: Story = {
 /** 長いタグ名が混ざると折り返る。 */
 export const LongNames: Story = {
   args: {
-    tags: [
-      { tag: "とても長い名前のタグがあるとどう折り返るか", count: 3 },
-      ...tags.slice(0, 5),
-    ],
+    tags: [{ tag: "とても長い名前のタグがあるとどう折り返るか", count: 3 }, ...tags.slice(0, 5)],
   },
 };

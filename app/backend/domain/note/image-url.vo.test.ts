@@ -19,24 +19,16 @@ describe("ImageUrl", () => {
   it("rejects absolute URLs, including raw source-repository URLs", () => {
     // 絶対 URL は正本の直接 URL 露出につながり、CSP (img-src 'self') でも
     // 表示できないため弾く。
-    expect(() => ImageUrl.create("https://example.com/a.png")).toThrow(
+    expect(() => ImageUrl.create("https://example.com/a.png")).toThrow(InvalidImageUrlError);
+    expect(() => ImageUrl.create("https://raw.example/notes/x/cover.png")).toThrow(
       InvalidImageUrlError,
     );
-    expect(() =>
-      ImageUrl.create("https://raw.example/notes/x/cover.png"),
-    ).toThrow(InvalidImageUrlError);
   });
 
   it("rejects protocol-relative and non-http schemes", () => {
-    expect(() => ImageUrl.create("//evil.com/a.png")).toThrow(
-      InvalidImageUrlError,
-    );
-    expect(() => ImageUrl.create("javascript:alert(1)")).toThrow(
-      InvalidImageUrlError,
-    );
-    expect(() => ImageUrl.create("data:image/png;base64,AAAA")).toThrow(
-      InvalidImageUrlError,
-    );
+    expect(() => ImageUrl.create("//evil.com/a.png")).toThrow(InvalidImageUrlError);
+    expect(() => ImageUrl.create("javascript:alert(1)")).toThrow(InvalidImageUrlError);
+    expect(() => ImageUrl.create("data:image/png;base64,AAAA")).toThrow(InvalidImageUrlError);
   });
 
   it("rejects empty input", () => {
@@ -44,11 +36,7 @@ describe("ImageUrl", () => {
   });
 
   it("compares by value with equals", () => {
-    expect(ImageUrl.create("/a.png").equals(ImageUrl.create("/a.png"))).toBe(
-      true,
-    );
-    expect(ImageUrl.create("/a.png").equals(ImageUrl.create("/b.png"))).toBe(
-      false,
-    );
+    expect(ImageUrl.create("/a.png").equals(ImageUrl.create("/a.png"))).toBe(true);
+    expect(ImageUrl.create("/a.png").equals(ImageUrl.create("/b.png"))).toBe(false);
   });
 });

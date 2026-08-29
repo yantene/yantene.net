@@ -1,8 +1,5 @@
 import { sessionKey, sessionToRecord } from "./session-record";
-import type {
-  ISessionCommandRepository,
-  Session,
-} from "~/backend/domain/session";
+import type { ISessionCommandRepository, Session } from "~/backend/domain/session";
 import { SESSION_LIFETIME_DAYS } from "~/backend/domain/session";
 
 const SECONDS_PER_DAY = 86_400;
@@ -17,10 +14,8 @@ export class KvSessionCommandRepository implements ISessionCommandRepository {
    * 来なくなった人のものは黙って消える (掃除の運用が要らない)。
    */
   async save(session: Session): Promise<void> {
-    await this.kv.put(
-      sessionKey(session.id),
-      JSON.stringify(sessionToRecord(session)),
-      { expirationTtl: SESSION_LIFETIME_DAYS * SECONDS_PER_DAY },
-    );
+    await this.kv.put(sessionKey(session.id), JSON.stringify(sessionToRecord(session)), {
+      expirationTtl: SESSION_LIFETIME_DAYS * SECONDS_PER_DAY,
+    });
   }
 }

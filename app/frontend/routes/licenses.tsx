@@ -8,10 +8,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import {
-  cloudflareContext,
-  localeRouteContext,
-} from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
 /** package.json の在り処。ここに挙げていない依存はリポジトリを見てもらう。 */
 const REPOSITORY_URL = "https://github.com/yantene/yantene.net";
@@ -83,9 +80,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 const linkClassName =
   "press-control underline underline-offset-4 transition-colors hover:text-primary";
 
-export default function Licenses({
-  loaderData,
-}: Route.ComponentProps): React.JSX.Element {
+export default function Licenses({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { copyright } = loaderData;
 
@@ -93,12 +88,8 @@ export default function Licenses({
     <AppLayout>
       <Header />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {t("licenses.title")}
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          {t("licenses.lead")}
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("licenses.title")}</h1>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{t("licenses.lead")}</p>
 
         {/*
           1 件ずつが「何に使っていて、誰の成果で、どのライセンスか」の 3 つを持つ。
@@ -107,10 +98,7 @@ export default function Licenses({
         */}
         <ul className="mt-8 flex flex-col gap-6">
           {ATTRIBUTIONS.map((attribution) => (
-            <li
-              key={attribution.name}
-              className="border-l-2 border-border pl-4"
-            >
+            <li key={attribution.name} className="border-l-2 border-border pl-4">
               <p className="text-base font-semibold text-foreground">
                 <a
                   href={attribution.href}
@@ -121,9 +109,7 @@ export default function Licenses({
                   {attribution.name}
                 </a>
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t(attribution.usageKey)}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t(attribution.usageKey)}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t("licenses.licenseLabel")}:{" "}
                 <a

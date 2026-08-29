@@ -180,9 +180,7 @@ describe("LinkCard", () => {
       });
 
       expect(again.isAvailable).toBe(true);
-      expect(
-        again.fetchFailedSince?.equals(fetchedAt.add({ hours: 24 * 10 })),
-      ).toBe(true);
+      expect(again.fetchFailedSince?.equals(fetchedAt.add({ hours: 24 * 10 }))).toBe(true);
     });
   });
 });

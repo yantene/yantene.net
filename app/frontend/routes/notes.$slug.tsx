@@ -6,10 +6,7 @@ import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { loadCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
-import {
-  applyReaction,
-  parseReactionEmoji,
-} from "~/backend/handlers/notes/reaction.handler";
+import { applyReaction, parseReactionEmoji } from "~/backend/handlers/notes/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
@@ -20,10 +17,7 @@ import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import {
-  cloudflareContext,
-  localeRouteContext,
-} from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { WEBMENTION_PATH } from "~/lib/constants/webmention";
 
 /**
@@ -33,11 +27,7 @@ import { WEBMENTION_PATH } from "~/lib/constants/webmention";
  * 呼べるようにしてある。ページ側を素の `<Form method="post">` で組めば、JS が動かない
  * 環境でもハートを押せる。
  */
-export async function action({
-  request,
-  params,
-  context,
-}: Route.ActionArgs): Promise<Response> {
+export async function action({ request, params, context }: Route.ActionArgs): Promise<Response> {
   const form = await request.formData();
   const raw = form.get("emoji");
   // 値が無ければ取り消し。すでに押しているものは、チップが空を送ってくる。
@@ -154,9 +144,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   });
 };
 
-export default function NoteShow({
-  loaderData,
-}: Route.ComponentProps): React.JSX.Element {
+export default function NoteShow({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { copyright } = loaderData;
 
@@ -166,9 +154,7 @@ export default function NoteShow({
         <Header />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">{t("notes.notFound.heading")}</h1>
-          <p className="mt-4 text-base-content/60">
-            {t("notes.notFound.description")}
-          </p>
+          <p className="mt-4 text-base-content/60">{t("notes.notFound.description")}</p>
           <Link to="/notes" className="btn btn-primary press-control mt-8">
             {t("notes.notFound.backToList")}
           </Link>
@@ -178,16 +164,7 @@ export default function NoteShow({
     );
   }
 
-  const {
-    note,
-    mdast,
-    related,
-    headings,
-    origin,
-    reactions,
-    linkCards,
-    webmentions,
-  } = loaderData;
+  const { note, mdast, related, headings, origin, reactions, linkCards, webmentions } = loaderData;
 
   return (
     <AppLayout>

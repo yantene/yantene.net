@@ -2,12 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToNote } from "./note-row";
-import type {
-  INoteCommandRepository,
-  Note,
-  NoteId,
-  NoteSlug,
-} from "~/backend/domain/note";
+import type { INoteCommandRepository, Note, NoteId, NoteSlug } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { viewWeightLog } from "~/backend/domain/note-view";
 import { noteTags, notes, webmentions } from "~/backend/infra/d1/schema";
@@ -62,9 +57,7 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
     await this.db.delete(noteTags).where(eq(noteTags.noteId, noteId));
     const unique = [...new Set(tags.map((tag) => tag.toString()))];
     if (unique.length > 0) {
-      await this.db
-        .insert(noteTags)
-        .values(unique.map((tag) => ({ noteId, tag })));
+      await this.db.insert(noteTags).values(unique.map((tag) => ({ noteId, tag })));
     }
   }
 
@@ -75,9 +68,7 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
       .from(notes)
       .where(eq(notes.slug, slug.toString()));
     await this.db.delete(noteTags).where(inArray(noteTags.noteId, noteIds));
-    await this.db
-      .delete(webmentions)
-      .where(inArray(webmentions.noteId, noteIds));
+    await this.db.delete(webmentions).where(inArray(webmentions.noteId, noteIds));
     await this.db.delete(notes).where(eq(notes.slug, slug.toString()));
   }
 

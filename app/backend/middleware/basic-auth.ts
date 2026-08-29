@@ -1,10 +1,7 @@
 import { basicAuth } from "hono/basic-auth";
 import type { MiddlewareHandler } from "hono";
 
-export const conditionalBasicAuth: MiddlewareHandler = async (
-  context,
-  next,
-) => {
+export const conditionalBasicAuth: MiddlewareHandler = async (context, next) => {
   const env = context.env as Record<string, unknown>;
   const user = env.BASIC_AUTH_USER;
   const pass = env.BASIC_AUTH_PASS;
