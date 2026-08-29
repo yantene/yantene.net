@@ -5,6 +5,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import Licenses, { ATTRIBUTIONS } from "./licenses";
 import type { i18n } from "i18next";
 import { googleFontFamilies } from "~/frontend/root";
+import { translationsFor } from "~/frontend/lib/page-meta";
+import { supportedLocales } from "~/lib/i18n/locale";
 import routes from "~/frontend/routes";
 import { createI18nInstance } from "~/lib/i18n/init";
 
@@ -87,4 +89,34 @@ describe("読み込んでいる書体の帰属", () => {
   it.each(googleFontFamilies.map(({ name }) => name))("%s の帰属が /licenses にある", (name) => {
     expect(ATTRIBUTIONS.some((attribution) => attribution.name === name)).toBe(true);
   });
+});
+
+/*
+ * 用途の文言は翻訳リソースから引く。キーを打ち間違えても i18next はキー文字列を
+ * そのまま返すので、ページには `licenses.usage.notoSerif` のような生の文字列が出る。
+ * テストもスモークも通ってしまう (本文の CC BY 4.0 は出ているため) ので、ここで見張る。
+ *
+ * 上の「足し忘れ」の検査と対にする。項目を足したのにキーが無い、キーはあるのに項目が
+ * 無い、のどちらでも読み手には帰属が届かない。
+ */
+describe("帰属の用途の文言", () => {
+  it.each(ATTRIBUTIONS.map((attribution) => [attribution.name, attribution.usageKey]))(
+    "%s の usageKey (%s) が ja / en の両方にある",
+    (_name, usageKey) => {
+      for (const locale of supportedLocales) {
+        const resolved = translationsFor(locale);
+        const value = usageKey
+          .split(".")
+          .reduce<unknown>(
+            (node, key) =>
+              typeof node === "object" && node !== null
+                ? (node as Record<string, unknown>)[key]
+                : undefined,
+            resolved,
+          );
+
+        expect(typeof value, `${locale} に ${usageKey} が無い`).toBe("string");
+      }
+    },
+  );
 });
