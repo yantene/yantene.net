@@ -27,8 +27,9 @@ interface YearGroup {
  * 記事のない年は現れない。線に欠番の駅を作らないため、年は等間隔には並ばず、
  * 束の大きさ (＝その年に書いた量) がそのまま線の長さになる。
  */
+const yearOf = (note: NoteTimelineItemProps): string => note.publishedOn.slice(0, 4);
+
 function groupByPublishedYear(notes: readonly NoteTimelineItemProps[]): readonly YearGroup[] {
-  const yearOf = (note: NoteTimelineItemProps): string => note.publishedOn.slice(0, 4);
   // Set は現れた順を保つので、年の並びは元の並び順のままになる。
   const years = [...new Set(notes.map((note) => yearOf(note)))];
   return years.map((year) => ({

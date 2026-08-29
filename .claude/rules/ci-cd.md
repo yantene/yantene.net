@@ -5,7 +5,7 @@
 | ワークフロー            | トリガー                     | 内容                                                       |
 | ----------------------- | ---------------------------- | ---------------------------------------------------------- |
 | `pull-request.yml`      | PR open/edit/sync            | ブランチ名・PR タイトルのフォーマット検証                  |
-| `lint.yml`              | PR to main / `workflow_call` | Oxfmt・ESLint・TypeScript・wrangler.jsonc 検証             |
+| `lint.yml`              | PR to main / `workflow_call` | Oxfmt・Oxlint・TypeScript・wrangler.jsonc 検証             |
 | `test.yml`              | PR to main                   | Vitest 実行                                                |
 | `deploy-preview.yml`    | PR to main                   | staging の D1 に migration を適用 + preview デプロイ       |
 | `deploy-staging.yml`    | push to main                 | staging 自動デプロイ                                       |
@@ -18,7 +18,7 @@ PR を main にマージする前に、以下のチェックがすべて pass �
 | チェック名        | ワークフロー         | 内容                                       |
 | ----------------- | -------------------- | ------------------------------------------ |
 | `format`          | `lint.yml`           | Oxfmt フォーマットチェック                 |
-| `eslint`          | `lint.yml`           | ESLint 静的解析                            |
+| `oxlint`          | `lint.yml`           | Oxlint 静的解析                            |
 | `typecheck`       | `lint.yml`           | TypeScript 型チェック                      |
 | `wrangler-config` | `lint.yml`           | 全環境の `wrangler deploy --dry-run` 検証  |
 | `migration-check` | `lint.yml`           | マイグレーションとスキーマの整合性チェック |
