@@ -5,7 +5,7 @@ import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { HomePageData } from "~/backend/handlers/notes/pages.handler";
 import type { ClockOriginData } from "~/frontend/components/hero/clock-origin";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
-import { loadCopyrightYears } from "~/backend/handlers/copyright";
+import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadHomePage } from "~/backend/handlers/notes/pages.handler";
 import { resolveClockOrigin } from "~/frontend/components/hero/clock-origin";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
@@ -20,14 +20,12 @@ export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & ClockOriginData & HomePageData> {
-  const env = context.get(cloudflareContext).env;
-  // 互いに独立した読み出しなので、往復を直列に積まない。
-  const [home, copyright] = await Promise.all([loadHomePage(env), loadCopyrightYears(env)]);
+  const home = await loadHomePage(context.get(cloudflareContext).env);
   return {
     ...home,
     locale: context.get(localeRouteContext),
     origin: new URL(request.url).origin,
-    copyright,
+    copyright: resolveCopyrightYears(),
     /*
      * ヒーローの空をどの時刻から始めるか。ここで時計を読むのは、Workers が I/O の外の
      * 時刻を Unix epoch 0 に固定するため (backend/handlers/copyright.ts に同じ注意がある)。

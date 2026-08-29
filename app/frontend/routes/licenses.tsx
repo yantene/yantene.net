@@ -3,12 +3,12 @@ import { SiGithub } from "react-icons/si";
 import type { Route } from "./+types/licenses";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
-import { loadCopyrightYears } from "~/backend/handlers/copyright";
+import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
+import { localeRouteContext } from "~/frontend/lib/route-context";
 
 /** package.json の在り処。ここに挙げていない依存はリポジトリを見てもらう。 */
 const REPOSITORY_URL = "https://github.com/yantene/yantene.net";
@@ -54,14 +54,11 @@ export const ATTRIBUTIONS = [
   usageKey: string;
 }[];
 
-export async function loader({
-  request,
-  context,
-}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData> {
+export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & CopyrightData {
   return {
     locale: context.get(localeRouteContext),
     origin: new URL(request.url).origin,
-    copyright: await loadCopyrightYears(context.get(cloudflareContext).env),
+    copyright: resolveCopyrightYears(),
   };
 }
 

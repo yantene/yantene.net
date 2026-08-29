@@ -6,7 +6,7 @@ import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
-import { loadCopyrightYears } from "~/backend/handlers/copyright";
+import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -27,17 +27,12 @@ export async function loader({
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & NotesListPageData> {
   const url = new URL(request.url);
-  const env = context.get(cloudflareContext).env;
-  // 互いに独立した読み出しなので、往復を直列に積まない。
-  const [data, copyright] = await Promise.all([
-    loadNotesListPage(env, url),
-    loadCopyrightYears(env),
-  ]);
+  const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
   return {
     ...data,
     locale: context.get(localeRouteContext),
     origin: url.origin,
-    copyright,
+    copyright: resolveCopyrightYears(),
   };
 }
 

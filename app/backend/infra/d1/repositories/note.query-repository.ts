@@ -6,8 +6,6 @@ import {
   eq,
   getTableColumns,
   inArray,
-  max,
-  min,
   ne,
   sql,
   type SQL,
@@ -19,14 +17,12 @@ import type {
   Note,
   NoteListQuery,
   NoteListResult,
-  NotePublishedYearSpan,
   NoteSlug,
   NoteSortField,
   NoteTagCount,
 } from "~/backend/domain/note";
 import { NoteTag } from "~/backend/domain/note";
 import { noteTags, notes } from "~/backend/infra/d1/schema";
-import { isoToPlainDate } from "~/backend/infra/d1/temporal";
 
 const sortColumns = {
   publishedOn: notes.publishedOn,
@@ -167,30 +163,6 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       .groupBy(noteTags.tag)
       .orderBy(desc(count()), asc(noteTags.tag));
     return rows.map((row) => ({ tag: row.tag, count: row.value }));
-  }
-
-  /**
-   * published_on は ISO 日付文字列 ("YYYY-MM-DD") なので、辞書順の最小・最大が
-   * そのまま最古・最新になる。年だけを取り出すために 1 往復で両端を引く。
-   */
-  async findPublishedYearSpan(): Promise<NotePublishedYearSpan | undefined> {
-    const rows = await this.db
-      .select({
-        earliest: min(notes.publishedOn),
-        latest: max(notes.publishedOn),
-      })
-      .from(notes);
-
-    // 集約なので行は必ず 1 つ返る。中身が null なのは 1 件も無いときだけ。
-    const row = rows.at(0);
-    if (row?.earliest == null || row.latest == null) return undefined;
-
-    // 保存されていない形の日付は他の読み出し (rowToNote) でも必ず落ちる。
-    // ここでも同じ変換を通し、破損を握りつぶさない。
-    return {
-      from: isoToPlainDate(row.earliest).year,
-      to: isoToPlainDate(row.latest).year,
-    };
   }
 
   async listSourceHashes(): Promise<ReadonlyMap<string, string>> {
