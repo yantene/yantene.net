@@ -1,42 +1,34 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nextProvider } from "react-i18next";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReactionBar } from "./reaction-bar";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
 import type { ReactionState } from "./reaction-state";
-import type { i18n } from "i18next";
-import { createI18nInstance } from "~/lib/i18n/init";
 
 /*
  * ReactionBar は useFetcher を使うので、データルータの中でしか描けない。
  * 送信までは見ず、「1 つだけ選べる」ことが印として出ているかを確かめる。
  */
-/** 用意した i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
-
 function renderBar(
   state: ReactionState,
   shouldPromptReaction = false,
   action: () => unknown = () => null,
 ): void {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
   const router = createMemoryRouter(
     [
       {
         path: "/",
-        element: (
-          <I18nextProvider i18n={instance}>
-            <ReactionBar {...state} shouldPromptReaction={shouldPromptReaction} />
-          </I18nextProvider>
-        ),
+        element: <ReactionBar {...state} shouldPromptReaction={shouldPromptReaction} />,
         action,
       },
     ],
     { initialEntries: ["/"] },
   );
-  render(<RouterProvider router={router} />);
+  // router は自前で組むので、ヘルパには包ませない。
+  renderWithI18n(<RouterProvider router={router} />, { router: false });
 }
 
 /**
@@ -90,10 +82,6 @@ describe("ReactionBar", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-  });
-
-  beforeAll(async () => {
-    i18nRef.current = await createI18nInstance("ja");
   });
 
   it("誰も押していなくてもハートを 0 件で出す", () => {
