@@ -226,7 +226,7 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
 ## inline style を使わない (CSP)
 
 > ⚠️ **これは規約であって、機械は止めない。** `style-src` には数式のため
-> `'unsafe-inline'` を置いてあり (ADR 0019)、ブラウザは inline style を無視しない。
+> `'unsafe-inline'` を置いてあり (ADR 0007)、ブラウザは inline style を無視しない。
 > lint も止めない (ADR 0027 で Oxlint に移り、`react/forbid-dom-props` は落とした)。
 > それでも自前のコードでは書かない方針を続ける (下記)。守るのは人であって道具ではない。
 > `script-src` は厳格なままなので、inline script は引き続き nonce が要る。

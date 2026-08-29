@@ -111,7 +111,7 @@
  * から読んで先頭に置く (ADR 0017、読み込みは root.tsx の links)。後ろに続くシステムの
  * 日本語フォントは、届くまでの代役と、届かなかったときの落とし先。
  *
- * **Twemoji はここに入れない** (ADR 0015)。`unicode-range` に ASCII の数字が入っており、
+ * **Twemoji はここに入れない** (ADR 0012)。`unicode-range` に ASCII の数字が入っており、
  * 先頭に置くと本文の数字が消える (#180)。
  *
  * スタックを custom property に出してあるのは、Twemoji を当てる要素 (リアクションの UI)

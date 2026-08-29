@@ -435,7 +435,7 @@ describe("MdastRenderer: MathML", () => {
   /*
    * allowlist に無いものは落ちる。
    *
-   * `style` は MathML の要素にだけ通す (ADR 0019)。Temml が桁や数式番号の位置を
+   * `style` は MathML の要素にだけ通す (ADR 0007)。Temml が桁や数式番号の位置を
    * inline style で渡してくるため。**通すのはここだけで、本文の段落や見出しには
    * 入らない** (そちらは rehype-sanitize の既定が落とす)。URL・スクリプトを運べる
    * ものは MathML でも通さない。

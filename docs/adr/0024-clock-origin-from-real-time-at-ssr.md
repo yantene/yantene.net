@@ -19,7 +19,7 @@ CSS アニメーションの `currentTime` 0 から始まる。位相 0 は南�
 決まっていなければならない値は 2 つある。時刻 (1 日の中のどこか) と月齢 (朔望月の中の
 どこか) で、どちらも連続量である。ところが「見た目の可変軸は静的な CSS のクラスの段階で
 持つ」という規律がある。`style-src` は数式のために緩めたが
-([0019](0019-inline-style-for-math.md))、規律のほうは lint (`react/forbid-dom-props`) で
+([0007](0007-strict-csp-outside-development.md))、規律のほうは lint (`react/forbid-dom-props`) で
 明示的に残してある。
 
 ## 検討した選択肢
@@ -101,6 +101,6 @@ CSS アニメーションの `currentTime` 0 から始まる。位相 0 は南�
 ## 参考 / More Information
 
 - [0008](0008-interactive-day-clock-via-web-animations-api.md) — 時計を動かす手段と不変条件
-- [0019](0019-inline-style-for-math.md) — `style-src` を緩めたうえで規律を lint に移した判断
+- [0007](0007-strict-csp-outside-development.md) — `style-src` を緩めたうえで規律を lint に移した判断
 - [0010](0010-hand-written-service-worker-without-precache.md) — ページの蓄え方
 - 実装: `app/frontend/components/hero/clock-origin.ts` / `clock-origin.css`

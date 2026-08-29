@@ -143,7 +143,7 @@ Markdown をサーバー側で HTML に変換せず、MDAST (Markdown AST) の�
 [ADR 0014](../../docs/adr/0014-link-cards-from-ogp-only.md) を参照。
 
 **一度も取れていない URL は素のリンクのまま描く。** 一度は取れた URL が取れなくなった
-ときは、**しばらくは前回の中身のままカードとして出る** ([ADR 0026](../../docs/adr/0026-hold-link-cards-through-short-outages.md))。
+ときは、**しばらくは前回の中身のままカードとして出る** ([ADR 0014](../../docs/adr/0014-link-cards-from-ogp-only.md))。
 相手の短い不調で記事の見た目が変わらないようにするためで、失敗し始めてから 3 日を
 越えてもなお取れなければ素のリンクに落ちる。
 
