@@ -148,6 +148,17 @@ describe("NoteHeader の microformats2", () => {
  * aria-hidden と tabIndex は対で要る。読み上げから消しただけの到達できる要素は、
  * 焦点が当たっても何も読まれない状態になるため、両方を見張る。
  */
+describe("タグの分類", () => {
+  it("タグが p-category として出る", () => {
+    const container = renderHeader();
+
+    const categories = [...container.querySelectorAll(".p-category")].map(
+      (node) => node.textContent,
+    );
+    expect(categories).toEqual(["エッセイ"]);
+  });
+});
+
 describe("mf2 の印は人に渡さない", () => {
   it.each(["u-url", "p-author"])("%s のリンクがタブ順にも読み上げにも出ない", (marker) => {
     const container = renderHeader();

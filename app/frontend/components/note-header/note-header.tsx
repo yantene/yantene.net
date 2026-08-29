@@ -102,7 +102,7 @@ export function NoteHeader({
             <Link
               key={tag}
               to={`/notes?tag=${encodeURIComponent(tag)}`}
-              className="badge badge-outline press-control gap-1 hover:badge-primary"
+              className="badge badge-outline press-control p-category gap-1 hover:badge-primary"
             >
               {tag}
             </Link>

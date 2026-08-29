@@ -79,7 +79,7 @@ export function NoteTimelineItem({
           {tags.length > 0 && (
             <p className="note-timeline-tags">
               {tags.slice(0, SHOWN_TAG_COUNT).map((tag) => (
-                <span key={tag} className="note-timeline-tag">
+                <span key={tag} className="note-timeline-tag p-category">
                   {tag}
                 </span>
               ))}
