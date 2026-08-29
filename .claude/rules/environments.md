@@ -100,30 +100,42 @@ SMOKE_BASE=https://yantene.net pnpm run smoke
 
 Release が公開されると `deploy-production.yml` が自動起動し production にデプロイされる。
 
-### ⚠️ migration を含むリリースは、先に production へ当てる
+### migration は全環境で自動適用される
 
-**staging と production で自動適用の有無が違う。**
+デプロイ系のワークフローは 3 つとも共有の `.github/workflows/deploy.yml` を呼んでいて、
+そこが **その環境の D1 に migration を当ててからデプロイする**。staging と production で
+非対称は無い。
 
-| 環境       | 誰が当てるか                                             |
-| ---------- | -------------------------------------------------------- |
-| staging    | `deploy-preview.yml` が **PR を出した時点で自動適用**    |
-| production | **誰も当てない。人が `pnpm run db:prod:migrate` を流す** |
+| 環境       | 誰が当てるか                                           |
+| ---------- | ------------------------------------------------------ |
+| staging    | `deploy-preview.yml` / `deploy-staging.yml` が自動適用 |
+| production | `deploy-production.yml` が Release 公開時に自動適用    |
 
-この非対称のせいで、列を足す変更は次の順で静かに壊れる。
+順番も `Migrate D1` → `Deploy` で固定されているので、**列を足すだけの変更**なら
+`pnpm run release` を打つだけでよい。新しいコードが列の無い DB に乗ることはない。
 
-1. PR を出す → staging には列が入る → **staging では動くのを確認できる**
-2. main にマージ → staging へ自動デプロイ → 引き続き動く
-3. `pnpm run release` → **列の無い production DB に新しいコードが乗る**
-
-3 の瞬間にその列を読むクエリが全部落ちる。**staging がずっと緑だったぶん気づきにくい。**
+手で流したければ流してもよいが、要らない (冪等なので `No migrations to apply` になる)。
 
 ```bash
-pnpm run db:prod:migrate   # ← リリースの前に
+pnpm run db:prod:migrate   # 任意。確認のためだけなら実害は無い
 pnpm run release
 ```
 
-staging を手で流す必要は無い (流しても `No migrations to apply` になる)。列の削除など
-後方互換でない変更は、これに加えてデプロイとの順序を個別に決めること。
+### ⚠️ 後方互換でない変更は、自動適用が先に走ることを踏まえて分ける
+
+自動なので取り消せない。**列や表を消す migration は、それを読まなくなったコードが
+production に乗る前に走る。** つまり次はリリースの瞬間に壊れる。
+
+1. 列を消す migration と、その列を読まなくしたコードを 1 つのリリースに入れる
+2. Release 公開 → **`Migrate D1` が先に走って列が消える**
+3. `Deploy` はそのあと。**その数十秒、旧コードが消えた列を読み続ける**
+
+削除・改名・NOT NULL 化のような後方互換でない変更は、リリースを 2 回に分ける。
+
+1. 回目: コード側だけ先に出す (その列を読まなくする)。migration は入れない
+2. 回目: 列を消す migration を出す
+
+`migrations/` に破壊的な変更を含む PR は、この 2 段階のどちらなのかを PR に書くこと。
 
 ## wrangler.jsonc の注意点
 

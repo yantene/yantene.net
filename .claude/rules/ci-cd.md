@@ -2,14 +2,14 @@
 
 ## ワークフロー一覧
 
-| ワークフロー            | トリガー                     | 内容                                                 |
-| ----------------------- | ---------------------------- | ---------------------------------------------------- |
-| `pull-request.yml`      | PR open/edit/sync            | ブランチ名・PR タイトルのフォーマット検証            |
-| `lint.yml`              | PR to main / `workflow_call` | Prettier・ESLint・TypeScript・wrangler.jsonc 検証    |
-| `test.yml`              | PR to main                   | Vitest 実行                                          |
-| `deploy-preview.yml`    | PR to main                   | staging の D1 に migration を適用 + preview デプロイ |
-| `deploy-staging.yml`    | push to main                 | staging 自動デプロイ                                 |
-| `deploy-production.yml` | GitHub Release published     | production デプロイ (**migration は当てない**)       |
+| ワークフロー            | トリガー                     | 内容                                                       |
+| ----------------------- | ---------------------------- | ---------------------------------------------------------- |
+| `pull-request.yml`      | PR open/edit/sync            | ブランチ名・PR タイトルのフォーマット検証                  |
+| `lint.yml`              | PR to main / `workflow_call` | Prettier・ESLint・TypeScript・wrangler.jsonc 検証          |
+| `test.yml`              | PR to main                   | Vitest 実行                                                |
+| `deploy-preview.yml`    | PR to main                   | staging の D1 に migration を適用 + preview デプロイ       |
+| `deploy-staging.yml`    | push to main                 | staging 自動デプロイ                                       |
+| `deploy-production.yml` | GitHub Release published     | production の D1 に migration を適用 + production デプロイ |
 
 ## PR で走るチェック
 
@@ -30,8 +30,9 @@ PR を main にマージする前に、以下のチェックがすべて pass �
 
 **マージ判断基準: 上記が全て pass であること。** 一部ジョブが失敗した状態でのマージは禁止。
 
-> ⚠️ `deploy` ジョブは **staging の D1 に migration を当ててから**デプロイする。
-> **production には当たらない**ので、リリース前に手で流すこと (environments.md 参照)。
+> ⚠️ デプロイ系の 3 つはいずれも共有の `deploy.yml` を呼んでおり、**その環境の D1 に
+> migration を当ててからデプロイする**。staging も production も同じで、非対称は無い。
+> 後方互換でない変更をリリースするときの注意は environments.md を参照。
 
 > ⚠️ 現状 GitHub 側のブランチ保護ルール・Ruleset は未設定のため、上記は CI 上で走るだけで
 > マージが機械的にブロックされるわけではない。当面は手動で全チェック pass を確認してから
