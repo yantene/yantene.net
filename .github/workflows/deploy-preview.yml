@@ -42,6 +42,14 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: versions upload --env staging --preview-alias pr-${{ github.event.pull_request.number }}
 
+      # このジョブが答えるべき問いは「staging へデプロイできたか」であって
+      # 「GitHub のコメント API が生きているか」ではない。GitHub の一時的な不調で
+      # 投稿が 503 を返しただけで deploy が赤くなると、デプロイは通っているのに
+      # マージできない状態になる (2026-08-18 に #334 / #336 / #338 で踏んだ)。
+      #
+      # 投稿の失敗は core.warning に落とし、ジョブは緑のままにする。
+      # 握り潰さずに警告として残すので、恒常的に壊れていれば気づける。
+      # デプロイそのものの失敗は、上の段で今までどおり赤くなる。
       - name: Comment on PR
         uses: actions/github-script@v8
         env:
@@ -73,33 +81,40 @@ jobs:
               '</details>',
             ].filter(line => line !== null).join('\n');
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(
-              (c) =>
-                c.user &&
-                c.user.type === 'Bot' &&
-                c.user.login === 'github-actions[bot]' &&
-                c.body &&
-                c.body.includes('## Cloudflare Workers Preview')
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
               });
+
+              const botComment = comments.find(
+                (c) =>
+                  c.user &&
+                  c.user.type === 'Bot' &&
+                  c.user.login === 'github-actions[bot]' &&
+                  c.body &&
+                  c.body.includes('## Cloudflare Workers Preview')
+              );
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } catch (error) {
+              core.warning(
+                `Failed to post the preview comment: ${error instanceof Error ? error.message : String(error)}. ` +
+                'The deployment itself succeeded; see the step above for the preview URL.'
+              );
             }
