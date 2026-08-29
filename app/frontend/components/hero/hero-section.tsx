@@ -91,8 +91,13 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
           隠すのに `hidden` ではなく sr-only を使う。パーサが見えない要素を飛ばす作りだと
           印ごと消えるが、そうなっても気づけないため (壊れても何も言わずに橋が架からない)。
           顔は alt を空にしてあるので読み上げには出ない。
+
+          リンクのほうは `aria-hidden` と `tabIndex={-1}` で人から隠す。sr-only だけでは
+          タブ順に残り、見えないリンクにフォーカスが止まる (#287)。この 2 つは必ず対で
+          置くこと。読み上げから消しただけの到達できる要素は、焦点が当たっても
+          何も読まれない状態になる。
         */}
-        <a className="sr-only u-url" href="/">
+        <a className="sr-only u-url" href="/" aria-hidden="true" tabIndex={-1}>
           yantene.net
         </a>
         <img

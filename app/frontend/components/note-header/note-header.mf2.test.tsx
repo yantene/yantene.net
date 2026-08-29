@@ -139,3 +139,22 @@ describe("NoteHeader の microformats2", () => {
     expect(mention.publishedAt?.toString()).toBe("2026-05-08T00:00:00Z");
   });
 });
+
+/*
+ * mf2 の印は機械にだけ読ませる。sr-only は目に見えなくするだけで、タブ順にも
+ * アクセシビリティツリーにも残るので、放っておくと見えないリンクにフォーカスが
+ * 止まり、表題が二重に読まれる (#287)。
+ *
+ * aria-hidden と tabIndex は対で要る。読み上げから消しただけの到達できる要素は、
+ * 焦点が当たっても何も読まれない状態になるため、両方を見張る。
+ */
+describe("mf2 の印は人に渡さない", () => {
+  it.each(["u-url", "p-author"])("%s のリンクがタブ順にも読み上げにも出ない", (marker) => {
+    const container = renderHeader();
+
+    const link = container.querySelector(`a.${marker}`);
+    expect(link).not.toBeNull();
+    expect(link).toHaveAttribute("aria-hidden", "true");
+    expect(link).toHaveAttribute("tabindex", "-1");
+  });
+});
