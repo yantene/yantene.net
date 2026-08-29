@@ -140,7 +140,7 @@ export class LinkCard {
    *
    * **持ちこたえるのは {@link KEEP_AFTER_FAILURE_WINDOW_HOURS} まで。** それを越えても
    * なお取れないなら中身を捨てて素のリンクに落とす。上限が無いと、恒久的に死んだリンクが
-   * 古い中身を永久に出し続ける。判断の経緯は ADR 0026 を参照。
+   * 古い中身を永久に出し続ける。判断の経緯は ADR 0014 を参照。
    *
    * @param previous 同じ URL の前回の行。初めて取りに行くときは undefined。
    */

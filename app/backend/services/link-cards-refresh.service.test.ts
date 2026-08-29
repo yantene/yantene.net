@@ -179,7 +179,7 @@ describe("LinkCardsRefreshService", () => {
 
   /*
    * 持ちこたえるのは 3 日まで。上限が無いと、恒久的に死んだリンクが古い中身を永久に
-   * 出し続け、force refresh でも消せなくなる (ADR 0026)。
+   * 出し続け、force refresh でも消せなくなる (ADR 0014)。
    */
   it("失敗し続けて 3 日を越えたら中身を捨てて素のリンクに落とす", async () => {
     await service.sync(["https://example.com/a"], now);

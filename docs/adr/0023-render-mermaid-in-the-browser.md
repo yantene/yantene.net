@@ -12,7 +12,7 @@
 
 このサイトには、似た問題を先に解いた前例がある。数式である。`$...$` は refresh のときに
 サーバーで MathML へ組み、MDAST に埋めて配っている ([ADR 0013](0013-math-as-mathml-at-refresh-time.md)、
-[0018](0018-typeset-math-with-temml.md))。読者に数式ライブラリを送らずに済み、SSR にそのまま
+[0013](0013-math-as-mathml-at-refresh-time.md))。読者に数式ライブラリを送らずに済み、SSR にそのまま
 乗るので、クローラーにもフィードにも組み上がった数式が届く。
 
 同じ形を Mermaid にも当てるのが自然に見える。当たらない。理由が 3 つある。
@@ -68,7 +68,7 @@
 - **案 D: CDN から読む** — unpkg や jsDelivr の `mermaid.esm.min.mjs` を読む。
   - Pros: 自分のバンドルが増えない。
   - Cons: **`script-src` に外部ホストを足すことになる。** ここは nonce と `'self'` だけで
-    保っている XSS 緩和の本体で、[ADR 0019](0019-inline-style-for-math.md) が「`style-src` は
+    保っている XSS 緩和の本体で、[ADR 0007](0007-strict-csp-outside-development.md) が「`style-src` は
     緩めても `script-src` は絶対に緩めない」と決めた場所である。図のために開ける口ではない。
 - **案 E: npm の `mermaid` をバンドルに含める (採用)**
   - Pros: `script-src 'self'` のまま動く。版がロックファイルで固定され、供給元が差し替わらない。
@@ -91,7 +91,7 @@
 
 **包むのは sanitize の後**にする。`mermaid-diagram` を allowlist に足さずに済むので、
 本文の生 HTML からこの要素を騙って書くことができない (`<math>` で開いてしまった穴と
-同じものを作らない。ADR 0019 の訂正を参照)。
+同じものを作らない。ADR 0007 の訂正を参照)。
 
 ### サーバーではソースを出し、hydration の後で差し替える
 
@@ -142,7 +142,7 @@ React Router の遷移はクライアント側で起きるので、握ったま�
 
 - Mermaid は SVG の中に `<style>` を差し込み、SVG 自身にも `style="max-width: 819px"` を
   置く。どちらも `style-src` の `'unsafe-inline'` で通った。**これは数式のために置いたもの**
-  (ADR 0019) で、Mermaid のために新しく開けたものではない
+  (ADR 0007) で、Mermaid のために新しく開けたものではない
 - `script-src` は触っていない。ビルド後の Mermaid のチャンクに `eval` も `new Function` も
   1 つも無く、`'unsafe-eval'` は要らない
 - 図の描画中に外へ出るリクエストは無い。`img-src` も `connect-src` も広げていない
@@ -208,7 +208,7 @@ light 固定で、ダークテーマを持たない (`app.css` の daisyUI テ�
 - [ADR 0005](0005-mdast-over-html-rendering.md) — 本文は MDAST のまま運ぶ
 - [ADR 0007](0007-strict-csp-outside-development.md) — `script-src` を厳格に保つ
 - [ADR 0013](0013-math-as-mathml-at-refresh-time.md) — 数式は refresh 時に組む (対比)
-- [ADR 0019](0019-inline-style-for-math.md) — `style-src` の `'unsafe-inline'`
+- [ADR 0007](0007-strict-csp-outside-development.md) — `style-src` の `'unsafe-inline'`
 - 実装: `app/frontend/components/mdast/mermaid-diagram.tsx` /
   `app/frontend/components/mdast/mermaid-loader.client.ts` /
   `app/frontend/components/mdast/mdast-renderer.tsx` (`wrapMermaidBlocks`) /

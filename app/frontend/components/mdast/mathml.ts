@@ -13,7 +13,7 @@
 /**
  * 通す MathML 要素。
  *
- * Temml の MathML 出力が使う要素に、MathML Core の基本要素を足したもの (ADR 0018)。
+ * Temml の MathML 出力が使う要素に、MathML Core の基本要素を足したもの (ADR 0013)。
  * `mglyph` は入れない (src で外部の画像を読み込むため。本文の画像は Markdown で書く)。
  */
 export const mathMlTagNames = [
@@ -57,7 +57,7 @@ export const mathMlTagNames = [
  * 意図的に外してある。
  *
  * **`style` はここにだけ通す。** Temml が表組みの桁や数式番号の位置を inline style で
- * 渡してくるため (ADR 0019)。この一覧が当たるのは MathML の要素だけなので、本文の段落や
+ * 渡してくるため (ADR 0007)。この一覧が当たるのは MathML の要素だけなので、本文の段落や
  * 見出しに inline style が入ることはない (そちらは rehype-sanitize の既定が落とす)。
  */
 export const mathMlAttributes = [

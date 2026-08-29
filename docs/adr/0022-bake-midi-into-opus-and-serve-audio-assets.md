@@ -166,6 +166,6 @@ CSP には `media-src 'self'` を明示する。`default-src` に任せても同
 
 `.claude/rules/adr.md` の不変性に対する例外という点は
 [ADR 0004](0004-github-as-content-source-of-truth.md) /
-[0018](0018-typeset-math-with-temml.md) / [0019](0019-inline-style-for-math.md) と同じ。
+[0013](0013-math-as-mathml-at-refresh-time.md) / [0007](0007-strict-csp-outside-development.md) と同じ。
 本文を直したのは、**ここが「どこを読めばよいか」を示す場所**だからで、存在しない名前を
 残すと読む人が探しに行って見つけられない。

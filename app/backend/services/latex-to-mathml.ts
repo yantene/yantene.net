@@ -11,12 +11,12 @@ import type { Element, ElementContent, Properties, Root as HastRoot, RootContent
  * 組むのは Temml。**KaTeX ではない。** KaTeX の MathML 出力はスクリーンリーダー向けの
  * 意味の層で (本体の CSS が `.katex-mathml` を画面から隠している)、視覚描画に必要な
  * 情報が入っていない。Temml は MathML だけで組む前提のライブラリなので、関数名の後ろの
- * アキのような TeX の作法がそのまま出力に乗る (ADR 0018)。
+ * アキのような TeX の作法がそのまま出力に乗る (ADR 0013)。
  *
  * **出力の inline style はそのまま通す。** Temml は表組みの桁や数式番号の位置を CSS で
  * 渡してくる。以前はそれを MathML の中へ移し替えていたが、そのための後処理がこのファイルの
  * 大半を占め、上流が値を変えるたびに追随が要る状態になっていた。`style-src` に
- * `'unsafe-inline'` を置いたのはこれをやめるため (ADR 0019)。数式以外に inline style が
+ * `'unsafe-inline'` を置いたのはこれをやめるため (ADR 0007)。数式以外に inline style が
  * 入らないよう、sanitize の allowlist は MathML の要素にだけ `style` を許している
  * (components/mdast/mathml.ts)。
  */

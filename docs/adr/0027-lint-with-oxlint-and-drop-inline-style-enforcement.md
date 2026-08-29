@@ -10,7 +10,7 @@
 ESLint のまま残していた。Oxlint に移すと、**ESLint にあって Oxlint に無いルールが落ちる**
 からで、その筆頭が `react/forbid-dom-props` (inline style の禁止) だった。
 
-このルールは惰性で残っていたものではない。[ADR 0019](0019-inline-style-for-math.md) で
+このルールは惰性で残っていたものではない。[ADR 0007](0007-strict-csp-outside-development.md) で
 `style-src` に `'unsafe-inline'` を置いたとき、案 C の Cons にこう書いた。
 
 > ADR 0007 が支えていた「見た目の可変軸は静的なクラスの段階で持つ」規律の強制力が弱まる。
@@ -24,7 +24,7 @@ CSP (style-src 'self') が inline style 属性を落とすため本番で効か�
 ```
 
 実際の CSP は `styleSrc: ["'self'", "'unsafe-inline'", ...]` で、**inline style は本番で
-普通に効く**。「本番で効かない」は ADR 0019 の時点で嘘になっていた。
+普通に効く**。「本番で効かない」は ADR 0007 の時点で嘘になっていた。
 
 ## 検討した選択肢
 
@@ -68,7 +68,7 @@ CSP (style-src 'self') が inline style 属性を落とすため本番で効か�
 
 ### inline style の禁止は規約に留める
 
-**機械的な強制は無くなる。** CSP も止めず (ADR 0019)、lint も止めない。
+**機械的な強制は無くなる。** CSP も止めず (ADR 0007)、lint も止めない。
 それでも「見た目の可変軸は静的な CSS のクラスの段階として持つ」方針は変えない。
 
 守られなかったときに起きるのは本番の破綻ではなく、設計の緩みである。連続値を `style` に

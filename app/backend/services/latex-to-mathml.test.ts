@@ -13,7 +13,7 @@ function elementsOf(nodes: readonly ElementContent[]): Element[] {
  * 組版の要点をひととおり通す式。
  *
  * Temml が inline style を出す形 (表組み・別行立て・`\dfrac` など) を必ず含めること。
- * 上流が値や書き方を変えたら、この一覧を通すテストが落ちる (ADR 0018)。
+ * 上流が値や書き方を変えたら、この一覧を通すテストが落ちる (ADR 0013)。
  */
 const typesettingCases = [
   String.raw`\log w(t) = \frac{t - t_0}{H} \ln 2`,
@@ -61,7 +61,7 @@ describe("latexToMathMl", () => {
   });
 
   /*
-   * Temml の inline style はそのまま通す (ADR 0019)。以前は CSP に落とされるのを避けて
+   * Temml の inline style はそのまま通す (ADR 0007)。以前は CSP に落とされるのを避けて
    * MathML の中へ移し替えていたが、その後処理がこのモジュールの大半を占めていた。
    * `style-src` に `'unsafe-inline'` を置いたので、素通しでよくなった。
    */

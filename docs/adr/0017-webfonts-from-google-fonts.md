@@ -136,7 +136,7 @@ typography 既定の `a` / `strong` など)。**Noto Sans JP が当たると、�
 
 - [ADR 0007](0007-strict-csp-outside-development.md) — `'unsafe-inline'` を足さない方針
 - [ADR 0013](0013-math-as-mathml-at-refresh-time.md) — 数式を MathML で埋める
-- [ADR 0015](0015-twemoji-scoped-to-reaction-ui.md) — フォントをスタックの先頭に置くときの落とし穴
+- [ADR 0012](0012-emoji-reactions-with-twemoji.md) — フォントをスタックの先頭に置くときの落とし穴
 - [#205](https://github.com/yantene/yantene.net/issues/205)
 - 実装: `app/backend/index.ts` (CSP) / `app/frontend/root.tsx` (読み込み) /
   `app/frontend/app.css` (本文) / `app/frontend/components/mdast/mdast-renderer.css` (数式)

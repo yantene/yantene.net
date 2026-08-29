@@ -7,7 +7,7 @@ import { createTestApp } from "~/backend/test-app";
  * ここが黙って壊れると本番の防御が消えるため、環境ごとの挙動をテストで固定する。
  * 「development 以外なら必ず付く」ことを staging / production の両方で確認する。
  *
- * `style-src` の `'unsafe-inline'` は数式のために意図して置いたもの (ADR 0019)。
+ * `style-src` の `'unsafe-inline'` は数式のために意図して置いたもの (ADR 0007)。
  * **`script-src` には決して足さないこと。** そちらは XSS 緩和の本体で、緩めると
  * CSP を持つ意味がほぼ無くなる。下のテストがそれを見張る。
  */
@@ -34,7 +34,7 @@ describe("content security policy", () => {
   });
 
   /*
-   * 数式のために緩めたのは style-src だけ (ADR 0019)。script-src まで一緒に緩むと
+   * 数式のために緩めたのは style-src だけ (ADR 0007)。script-src まで一緒に緩むと
    * XSS 緩和が消えるので、両者を別々に固定する。
    */
   it("never allows inline script, even though inline style is allowed", async () => {
