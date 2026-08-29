@@ -9,8 +9,8 @@ pnpm test             # テスト watch mode
 pnpm run test:run     # テスト 1 回実行
 
 # コード品質
-pnpm run lint         # ESLint チェック
-pnpm run lint:fix     # ESLint 自動修正
+pnpm run lint         # Oxlint チェック
+pnpm run lint:fix     # Oxlint 自動修正
 pnpm run format       # Oxfmt チェック (書式の設定項目は無い)
 pnpm run format:fix   # Oxfmt 自動修正
 pnpm run typecheck    # TypeScript 型チェック

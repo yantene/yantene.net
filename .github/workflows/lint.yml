@@ -16,7 +16,7 @@ jobs:
         include:
           - name: format
             command: pnpm run format
-          - name: eslint
+          - name: oxlint
             command: pnpm run lint
           - name: typecheck
             command: pnpm run typecheck

@@ -225,17 +225,20 @@ Foo.reconstruct(params): Foo<IPersisted>     // DB から復元済み
 
 ## inline style を使わない (CSP)
 
-> ⚠️ `style-src` には数式のため `'unsafe-inline'` を置いてある (ADR 0019)。**ブラウザが
-> inline style を無視することはもう無い。** それでも自前のコードでは書かない方針を続ける
-> (下記)。強制は CSP ではなく ESLint が担う。`script-src` は厳格なままなので、inline
-> script は引き続き nonce が要る。
+> ⚠️ **これは規約であって、機械は止めない。** `style-src` には数式のため
+> `'unsafe-inline'` を置いてあり (ADR 0019)、ブラウザは inline style を無視しない。
+> lint も止めない (ADR 0027 で Oxlint に移り、`react/forbid-dom-props` は落とした)。
+> それでも自前のコードでは書かない方針を続ける (下記)。守るのは人であって道具ではない。
+> `script-src` は厳格なままなので、inline script は引き続き nonce が要る。
 
 CSP が止めなくなっても、自前のコードで連続値を `style` 属性に流す書き方は避ける。
 
 - 見た目の可変軸は**静的な CSS のクラスの段階**として持つ (連続値は使えない)
 - コンポーネント CSS は `app.css` に `@import` で束ねる
 - 自前で出す inline `<script>` には `c.get("secureHeadersNonce")` の nonce を付ける
-- `app/frontend/**/*.tsx` では ESLint (`react/forbid-dom-props`) が `style` を弾く
+- **`style` を弾く仕組みは無い。** 過去は ESLint (`react/forbid-dom-props`) が担っていたが、
+  Oxlint に同等のルールが無く、1 ルールのために ESLint 一式を残す額と釣り合わないと
+  判断して落とした (ADR 0027)。書けてしまうので、書かないことで守る
 
 ### CSP は development では付かない (ADR 0007)
 
