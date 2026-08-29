@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isHttpUrl, withLowercaseScheme } from "~/lib/http-url";
 
 describe("isHttpUrl", () => {
-  // eslint-disable-next-line unicorn/prefer-https -- http と https の両方を通すことが眼目
+  // http と https の両方を通すことが眼目
   it.each(["http://example.com/", "https://example.com/a?b=1#c"])("http(s) は通す (%s)", (url) => {
     expect(isHttpUrl(url)).toBe(true);
   });
@@ -46,7 +46,7 @@ describe("isHttpUrl", () => {
  * `HTTPS://example.com/` は href ごと落ちて、押せない文字列になる (#306)。
  */
 describe("withLowercaseScheme", () => {
-  /* eslint-disable unicorn/prefer-https -- 大小を揃えるだけで、スキームを変えないことが眼目。https に直すと確かめたいものが消える */
+  // 大小を揃えるだけで、スキームを変えないことが眼目。https に直すと確かめたいものが消える
   it.each([
     ["HTTPS://example.com/", "https://example.com/"],
     ["HtTp://Example.COM/Path", "http://Example.COM/Path"],
@@ -54,7 +54,6 @@ describe("withLowercaseScheme", () => {
   ])("%s → %s", (input, expected) => {
     expect(withLowercaseScheme(input)).toBe(expected);
   });
-  /* eslint-enable unicorn/prefer-https */
 
   /* スキームより後ろは触らない。パスは大小を区別する。 */
   it("スキームだけを小文字にする", () => {

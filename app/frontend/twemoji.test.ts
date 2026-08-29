@@ -24,7 +24,7 @@ const knownTarget = "components/reaction/reaction-bar.css";
 const cssWideKeyword = /\b(?:inherit|initial|unset|revert|revert-layer)\b/i;
 
 function read(file: string): string {
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- リポジトリ内の固定パス
+  // リポジトリ内の固定パス
   return readFileSync(path.join(frontendDir, file), "utf8");
 }
 

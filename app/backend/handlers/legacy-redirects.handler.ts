@@ -15,7 +15,7 @@ import type { Context } from "hono";
  *
  * テストが実装そのものを検証できるよう公開する。
  */
-/* eslint-disable no-secrets/no-secrets -- 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。 */
+// 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。
 export const noteSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
   ["i_bought_arduino", "arduino-one-minute-timer"],
   ["sugoroku_by_c", "sugoroku-in-c"],
@@ -45,7 +45,6 @@ export const noteSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
   ["use_tutvpn_wisely", "tut-vpn-with-ocproxy"],
   ["invitation_to_flared", "invitation-to-flared"],
 ]);
-/* eslint-enable no-secrets/no-secrets */
 
 /** 旧サイトの画像ディレクトリ名 (`2016-09-26-hacku_2016`) から日付を落とす。 */
 const legacyImageDirectoryPattern = /^\d{4}-\d{2}-\d{2}-(?<slug>.+)$/u;

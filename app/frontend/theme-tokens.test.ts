@@ -24,7 +24,7 @@ import { describe, expect, it } from "vitest";
  */
 function read(relativePath: string): string {
   const path = fileURLToPath(new URL(relativePath, import.meta.url));
-  // eslint-disable-next-line security/detect-non-literal-fs-filename -- 読む先はこのファイルからの相対で、下に並べたリテラルに限られる。
+  // 読む先はこのファイルからの相対で、下に並べたリテラルに限られる。
   return readFileSync(path, "utf8");
 }
 
@@ -49,7 +49,7 @@ function collectDefinitions(css: string): Map<string, string> {
 /** 写した側。色リテラルに続く `= --token` の印を拾う。 */
 function collectCopies(source: string): { token: string; value: string }[] {
   // 色の後ろは CSS なら `;`、TypeScript なら `";` と続く。どちらも同じ印で追える。
-  // eslint-disable-next-line security/detect-non-literal-regexp -- 組み立てるのは上の 2 つの定数だけで、読んだファイルの中身は混ぜない。
+  // 組み立てるのは上の 2 つの定数だけで、読んだファイルの中身は混ぜない。
   const copy = new RegExp(String.raw`(${COLOR})["']?;? ?/\* ?= ?(${TOKEN}) ?\*/`, "gi");
   return Array.from(source.matchAll(copy), (match) => ({
     token: match[2],

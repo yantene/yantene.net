@@ -19,7 +19,7 @@ export interface PageMetaBase {
 export function translationsFor(locale: string): (typeof resources)["en"]["translation"] {
   return (
     isSupportedLocale(locale)
-      ? // eslint-disable-next-line security/detect-object-injection -- locale is narrowed to SupportedLocale literal
+      ? // locale is narrowed to SupportedLocale literal
         resources[locale]
       : resources.en
   ).translation;

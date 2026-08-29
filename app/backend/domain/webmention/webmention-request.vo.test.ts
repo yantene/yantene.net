@@ -69,7 +69,7 @@ describe("WebmentionRequest", () => {
     ).toThrow(SelfMentionNotAcceptedError);
   });
 
-  /* eslint-disable unicorn/prefer-https -- http にしても抜けられないことが以下の眼目。https に直すと確かめたいものが消える */
+  // http にしても抜けられないことが以下の眼目。https に直すと確かめたいものが消える
 
   /*
    * 判定はホスト名なので、スキームや港を変えても抜けられない。origin で見ると
@@ -95,6 +95,4 @@ describe("WebmentionRequest", () => {
     expect(request.source.toString()).toBe("http://example.com/post");
     expect(request.targetSlug.toString()).toBe("hello");
   });
-
-  /* eslint-enable unicorn/prefer-https */
 });

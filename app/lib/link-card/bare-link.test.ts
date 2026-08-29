@@ -24,7 +24,7 @@ describe("collectBareLinkUrls", () => {
 
   it("スキームを省いた autolink も拾う", () => {
     // GFM は www 始まりを拾い、url にだけ http:// を足す (https ではない)。
-    // eslint-disable-next-line unicorn/prefer-https -- remark-gfm が実際に出す文字列。https に直すと期待値が嘘になる
+    // remark-gfm が実際に出す文字列。https に直すと期待値が嘘になる
     const expected = "http://www.example.com";
     const urls = collectBareLinkUrls(parse("www.example.com\n"));
     expect(urls).toEqual([expected]);

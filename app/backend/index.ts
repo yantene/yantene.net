@@ -131,7 +131,7 @@ const environmentAwareSecureHeaders = createMiddleware<RootBindings>(async (c, n
  */
 export const getApp = (
   handler: (request: Request, env: Env, ctx: ExecutionContext, nonce: string) => Promise<Response>,
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Hono の戻り値型を明示すると型推論を阻害するため、ここだけ推論に任せる
+  // oxlint-disable-next-line typescript/explicit-function-return-type -- Hono の戻り値型を明示すると型推論を阻害するため、ここだけ推論に任せる
 ) => {
   const app = new Hono<RootBindings>();
 

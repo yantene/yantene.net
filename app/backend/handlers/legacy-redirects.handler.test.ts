@@ -21,7 +21,7 @@ function executionCtx(): ExecutionContext {
  * 旧サイトの記事 URL と移転先の対応表。実装の表とは別に、仕様としてここに書き下す
  * (取り違え・取りこぼしをテスト側から独立に押さえるため)。
  */
-/* eslint-disable no-secrets/no-secrets -- 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。 */
+// 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。
 const noteRedirects: readonly (readonly [string, string])[] = [
   ["/i_bought_arduino.html", "/notes/arduino-one-minute-timer"],
   ["/sugoroku_by_c.html", "/notes/sugoroku-in-c"],
@@ -51,7 +51,6 @@ const noteRedirects: readonly (readonly [string, string])[] = [
   ["/use_tutvpn_wisely.html", "/notes/tut-vpn-with-ocproxy"],
   ["/invitation_to_flared.html", "/notes/invitation-to-flared"],
 ];
-/* eslint-enable no-secrets/no-secrets */
 
 describe("legacy note URLs", () => {
   // 実装の表に余分なエントリが紛れると、404 になる URL への恒久リダイレクトが
@@ -122,13 +121,12 @@ describe("legacy pages other than articles", () => {
   });
 
   // 旧サイトのタグには `GNU/Linux` のようにスラッシュを含むものがある。
-  /* eslint-disable no-secrets/no-secrets -- 符号化したタグ名を高エントロピーの秘匿情報と誤検知するため (秘密は含まない)。 */
+  // 符号化したタグ名を高エントロピーの秘匿情報と誤検知するため (秘密は含まない)。
   it("escapes a slash inside a tag", async () => {
     const res = await createTestApp().request("/list.html?tag=GNU%2FLinux", {}, env());
 
     expect(res.headers.get("location")).toBe("/notes?tag=GNU%2FLinux");
   });
-  /* eslint-enable no-secrets/no-secrets */
 });
 
 describe("legacy image URLs", () => {

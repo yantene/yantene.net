@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isExternalHref } from "./href";
 
 describe("isExternalHref", () => {
-  // eslint-disable-next-line unicorn/prefer-https -- http と https の両方を外部として扱うことが眼目
+  // http と https の両方を外部として扱うことが眼目
   it.each(["http://example.com/", "https://example.com/"])("http(s) は外部 (%s)", (href) => {
     expect(isExternalHref(href)).toBe(true);
   });
@@ -51,7 +51,7 @@ describe("isExternalHref", () => {
     });
 
     it("スキームが違えば外部", () => {
-      // eslint-disable-next-line unicorn/prefer-https -- http と https が別の出どころであることが眼目
+      // http と https が別の出どころであることが眼目
       expect(isExternalHref("http://yantene.net/notes/x", origin)).toBe(true);
     });
 
