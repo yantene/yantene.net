@@ -1,43 +1,37 @@
-import { render, screen } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
+import { screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NoteActions } from "./note-actions";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
 import type { NoteActionsPlacement } from "./note-actions";
-import type { i18n } from "i18next";
-import { createI18nInstance } from "~/lib/i18n/init";
 
 /*
  * 中の ReactionBar が useFetcher を使うので、データルータの中でしか描けない。
  * 押した結果までは見ず、置き場所ごとの区別と、両方の手が揃っていることを確かめる。
  */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
-
 function renderActions(placement: NoteActionsPlacement, mine: string | null = null): void {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-
   const router = createMemoryRouter(
     [
       {
         path: "/",
         element: (
-          <I18nextProvider i18n={instance}>
-            <NoteActions
-              placement={placement}
-              reactions={[{ emoji: "❤️", count: 2 }]}
-              mine={mine}
-              url="https://yantene.net/notes/hello"
-              title="題"
-            />
-          </I18nextProvider>
+          <NoteActions
+            placement={placement}
+            reactions={[{ emoji: "❤️", count: 2 }]}
+            mine={mine}
+            url="https://yantene.net/notes/hello"
+            title="題"
+          />
         ),
         action: () => null,
       },
     ],
     { initialEntries: ["/"] },
   );
-  render(<RouterProvider router={router} />);
+  // router は自前で組むので、ヘルパには包ませない。
+  renderWithI18n(<RouterProvider router={router} />, { router: false });
 }
 
 /** happy-dom は localStorage を持たない。促しがそこを読むので代役を置く。 */
@@ -61,10 +55,6 @@ function createStorage(): Storage {
 }
 
 describe("NoteActions", () => {
-  beforeAll(async () => {
-    i18nRef.current = await createI18nInstance("ja");
-  });
-
   beforeEach(() => {
     vi.stubGlobal("localStorage", createStorage());
   });

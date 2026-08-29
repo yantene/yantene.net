@@ -1,13 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nextProvider } from "react-i18next";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReactionHint } from "./reaction-hint";
-import type { i18n } from "i18next";
-import { createI18nInstance } from "~/lib/i18n/init";
+import { withI18n } from "~/frontend/lib/test-render";
 
-/** 用意した i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
+const renderWithI18n = withI18n();
 
 const dismissedKey = "yantene:reaction-hint-dismissed";
 
@@ -37,20 +34,10 @@ function createStorage(): Storage {
 }
 
 function renderHint(): void {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-  render(
-    <I18nextProvider i18n={instance}>
-      <ReactionHint />
-    </I18nextProvider>,
-  );
+  renderWithI18n(<ReactionHint />, { router: false });
 }
 
 describe("ReactionHint", () => {
-  beforeAll(async () => {
-    i18nRef.current = await createI18nInstance("ja");
-  });
-
   beforeEach(() => {
     vi.stubGlobal("localStorage", createStorage());
   });

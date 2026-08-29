@@ -1,12 +1,10 @@
-import { render } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
-import { MemoryRouter } from "react-router";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { NoteHeader } from "./note-header";
-import type { i18n } from "i18next";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
 import { WebmentionUrl } from "~/backend/domain/webmention";
 import { readMention } from "~/backend/services/webmention-source-reader";
-import { createI18nInstance } from "~/lib/i18n/init";
 
 /*
  * 記事が「誰の・何という記事か」を名乗るための印。壊れても画面には何も出ないので、
@@ -21,12 +19,6 @@ const TITLE = "はじめてのノート";
 const PUBLISHED_ON = "2026-05-08";
 
 /** i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
-
-beforeAll(async () => {
-  i18nRef.current = await createI18nInstance("ja");
-});
-
 /** 本文からリンクしている先。送り先のパーサはこれを手掛かりに entry を選ぶ。 */
 const TARGET = "https://example.com/article";
 
@@ -45,29 +37,22 @@ const TARGET = "https://example.com/article";
  * 下の「送り先のパーサから～」に書いた。
  */
 function renderHeader(): HTMLElement {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-
-  const { container } = render(
-    <MemoryRouter>
-      <I18nextProvider i18n={instance}>
-        <main className="h-entry">
-          <NoteHeader
-            slug={SLUG}
-            title={TITLE}
-            imageUrl={null}
-            tags={["エッセイ"]}
-            publishedOn={PUBLISHED_ON}
-            origin={ORIGIN}
-          />
-          <article className="e-content">
-            <p>
-              本文から <a href={TARGET}>よそ</a> へリンクしている。
-            </p>
-          </article>
-        </main>
-      </I18nextProvider>
-    </MemoryRouter>,
+  const { container } = renderWithI18n(
+    <main className="h-entry">
+      <NoteHeader
+        slug={SLUG}
+        title={TITLE}
+        imageUrl={null}
+        tags={["エッセイ"]}
+        publishedOn={PUBLISHED_ON}
+        origin={ORIGIN}
+      />
+      <article className="e-content">
+        <p>
+          本文から <a href={TARGET}>よそ</a> へリンクしている。
+        </p>
+      </article>
+    </main>,
   );
   return container;
 }

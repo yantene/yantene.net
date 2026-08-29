@@ -1,10 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nextProvider } from "react-i18next";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShareMenu } from "./share-menu";
-import type { i18n } from "i18next";
-import { createI18nInstance } from "~/lib/i18n/init";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n("en");
 
 const url = "https://yantene.net/notes/hacku-2016";
 const title = "記事の題";
@@ -43,22 +43,12 @@ function stubClipboardItem(): readonly Record<string, Blob>[] {
  * ここで見るのは「呼べないときに一覧とコピーが使えること」。
  */
 describe("ShareMenu", () => {
-  let i18n: i18n;
-
-  beforeAll(async () => {
-    i18n = await createI18nInstance("en");
-  });
-
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
   const renderMenu = (): void => {
-    render(
-      <I18nextProvider i18n={i18n}>
-        <ShareMenu url={url} title={title} />
-      </I18nextProvider>,
-    );
+    renderWithI18n(<ShareMenu url={url} title={title} />, { router: false });
   };
 
   it("offers every share target as a plain link", () => {

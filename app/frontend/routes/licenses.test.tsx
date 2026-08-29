@@ -1,14 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
+import { screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { beforeAll, describe, expect, it } from "vitest";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
+import { describe, expect, it } from "vitest";
 import Licenses, { ATTRIBUTIONS } from "./licenses";
-import type { i18n } from "i18next";
 import { googleFontFamilies } from "~/frontend/root";
 import { translationsFor } from "~/frontend/lib/page-meta";
 import { supportedLocales } from "~/lib/i18n/locale";
 import routes from "~/frontend/routes";
-import { createI18nInstance } from "~/lib/i18n/init";
 
 /*
  * 絵文字の意匠 (CC BY 4.0) と書体 (SIL OFL 1.1) は、帰属の表示が使用の条件になっている。
@@ -18,16 +18,7 @@ import { createI18nInstance } from "~/lib/i18n/init";
  * 足りない。リンクが残ったまま中身が消えても、中身が残ったままリンクが消えても、
  * 読み手から帰属は見えなくなる。
  */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
-
-beforeAll(async () => {
-  i18nRef.current = await createI18nInstance("ja");
-});
-
 async function renderPage(): Promise<void> {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-
   const Stub = createRoutesStub([
     {
       path: "/licenses",
@@ -40,11 +31,7 @@ async function renderPage(): Promise<void> {
     },
   ]);
 
-  render(
-    <I18nextProvider i18n={instance}>
-      <Stub initialEntries={["/licenses"]} />
-    </I18nextProvider>,
-  );
+  renderWithI18n(<Stub initialEntries={["/licenses"]} />, { router: false });
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
   await screen.findByRole("heading", { name: "ライセンス表示" });

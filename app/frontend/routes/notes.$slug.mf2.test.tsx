@@ -1,10 +1,10 @@
-import { render, screen } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
+import { screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { beforeAll, describe, expect, it } from "vitest";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
+import { describe, expect, it } from "vitest";
 import NoteShow from "./notes.$slug";
-import type { i18n } from "i18next";
-import { createI18nInstance } from "~/lib/i18n/init";
 
 /*
  * 記事全体を h-entry として束ねる印。**NoteHeader の側では見張れない。**
@@ -21,12 +21,6 @@ const ORIGIN = "https://yantene.net";
 const SLUG = "hello-world";
 
 /** i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */
-const i18nRef: { current: i18n | undefined } = { current: undefined };
-
-beforeAll(async () => {
-  i18nRef.current = await createI18nInstance("ja");
-});
-
 /** loader が返すものの代役。印に関わらない値は最小限にする。 */
 function loaderData(): unknown {
   return {
@@ -69,9 +63,6 @@ function loaderData(): unknown {
  * くれるので、ページの JSX をそのまま通せる。
  */
 async function renderPage(): Promise<HTMLElement> {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-
   const Stub = createRoutesStub([
     {
       path: "/notes/:slug",
@@ -81,11 +72,9 @@ async function renderPage(): Promise<HTMLElement> {
     },
   ]);
 
-  const { container } = render(
-    <I18nextProvider i18n={instance}>
-      <Stub initialEntries={[`/notes/${SLUG}`]} />
-    </I18nextProvider>,
-  );
+  const { container } = renderWithI18n(<Stub initialEntries={[`/notes/${SLUG}`]} />, {
+    router: false,
+  });
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
   await screen.findByRole("heading", { name: "はじめてのノート" });

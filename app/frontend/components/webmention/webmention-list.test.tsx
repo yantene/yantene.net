@@ -1,24 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { I18nextProvider } from "react-i18next";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { WebmentionList } from "./webmention-list";
-import type { i18n } from "i18next";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
 import type {
   WebmentionView,
   WebmentionGroups,
 } from "~/backend/handlers/webmentions/webmention-view";
-import { createI18nInstance } from "~/lib/i18n/init";
-
-const i18nRef: { current: i18n | undefined } = { current: undefined };
 
 function renderList(webmentions: WebmentionGroups): void {
-  const instance = i18nRef.current;
-  if (instance === undefined) throw new Error("i18n is not ready");
-  render(
-    <I18nextProvider i18n={instance}>
-      <WebmentionList webmentions={webmentions} />
-    </I18nextProvider>,
-  );
+  renderWithI18n(<WebmentionList webmentions={webmentions} />, { router: false });
 }
 
 function mention(overrides: Partial<WebmentionView>): WebmentionView {
@@ -36,10 +28,6 @@ function mention(overrides: Partial<WebmentionView>): WebmentionView {
 }
 
 describe("WebmentionList", () => {
-  beforeAll(async () => {
-    i18nRef.current = await createI18nInstance("ja");
-  });
-
   it("1 件も無ければ何も描かない", () => {
     const { container } = render(<WebmentionList webmentions={{ faces: [], replies: [] }} />);
     expect(container.innerHTML).toBe("");
