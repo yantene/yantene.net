@@ -75,7 +75,7 @@ app/
 │   ├── services/               # アプリケーションサービス層
 │   ├── test-app.ts             # テスト用の Hono アプリ生成 (ページ委譲はダミー)
 │   └── index.ts                # getApp(handler): Hono を組み立てて返す
-├── frontend/                   # React Router v7 アプリケーション (appDirectory)
+├── frontend/                   # React Router v8 アプリケーション (appDirectory)
 │   ├── routes/                 # ページルート (loader / meta / component を同居)
 │   ├── routes.ts               # ルート定義 (RouteConfig)
 │   ├── root.tsx                # HTML シェル + 既定 meta + ErrorBoundary
