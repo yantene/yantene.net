@@ -1,0 +1,9 @@
+# 書式だけを触ったコミット。git blame の結果から外す。
+#
+# 手元でも効かせるには一度だけ次を実行する (CI やホスティング側は自動で読む)。
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# 足すのは「中身を変えていないと言い切れる」コミットだけにすること。
+
+# build: 書式を Prettier から Oxfmt に移す (#362)
+df711b6b21dfd8aa0d101a651046f7e96a97f599

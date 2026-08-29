@@ -58,6 +58,21 @@ CI チェック待ちで不要な `sleep` を挟まないこと。`gh pr checks 
 ジョブの開始が遅い場合も、PR の close/reopen や再作成で解決しようとしないこと (キューに
 不要なジョブが増えるだけで逆効果になる)。`gh run watch` / `gh pr checks --watch` で待つ。
 
+## 書式だけのコミットは blame から外す
+
+整形器を入れ替えたときのような、**中身を変えずに大量のファイルに触るコミット**は
+`.git-blame-ignore-revs` に SHA を足す。足さないと `git blame` がその行を
+「書式を直した人が書いた」ことにしてしまい、なぜその行があるのかを辿れなくなる。
+
+手元でも効かせるには一度だけ次を実行する (GitHub 側は自動で読む)。
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+squash merge のあとに、**main 側の SHA** を登録すること (ブランチ上のコミットの SHA は
+squash で消えるため)。足すのは中身を変えていないと言い切れるコミットだけにする。
+
 ## Push 前のローカルレビュー
 
 CI とレビューの往復を減らすため、push 前にローカルで検証・レビューを済ませる。
