@@ -56,6 +56,48 @@ export interface MermaidDiagramProps {
 }
 
 /**
+ * 待ち切りの時間。これを越えたら、届いた分の字で組む。
+ *
+ * 応答の返らない要求を待ち続けると、図が組まれないまま `aria-busy` が下りず、
+ * 支援技術に「永遠に読み込み中」と伝わる。欠けた図より、遅れて出る図のほうがましで、
+ * 遅れて出ない図よりは、字幅がずれた図のほうがましである。
+ */
+const GLYPH_WAIT_MS = 3000;
+
+/**
+ * 図に出る字が届くのを待つ。
+ *
+ * 本文の書体は Google Fonts から `display=swap` で読む (ADR 0017)。届く前に図を組むと
+ * システムの書体の字幅で寸法が決まり、あとで字が入れ替わったときに幅だけが変わって
+ * ラベルが枠から欠ける (#283 と同じ壊れ方で、原因だけが違う)。
+ *
+ * **`document.fonts.ready` では足りない。** Noto Sans JP は `unicode-range` で 250 近い
+ * サブセットに分かれており、各サブセットは「その範囲の字がその書体で描かれた」ときに
+ * 初めて取りに行かれる。図のソースは等幅の書体で組まれたコードブロックの中にあるので、
+ * **図のラベルにしか出てこない漢字のサブセットは、この時点でまだ要求されていない。**
+ * `ready` は「いま抱えている読み込み」が片付いた時点で解決してしまう。
+ *
+ * そこで、ソースの字を名指しして読ませる。書体は測る場所から実際に効いている値を採る。
+ * 名前を別に書くと、app.css の `--body-font-stack` と root.tsx の `googleFontFamilies` に
+ * 続く 3 か所目になり、片方だけ変えたときに黙ってずれる。
+ */
+async function waitForGlyphs(measureIn: HTMLElement, source: string): Promise<void> {
+  const { fontFamily } = globalThis.getComputedStyle(measureIn);
+  let giveUp: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    await Promise.race([
+      document.fonts.load(`1em ${fontFamily}`, source),
+      new Promise((resolve) => {
+        giveUp = setTimeout(resolve, GLYPH_WAIT_MS);
+      }),
+    ]);
+  } finally {
+    if (giveUp !== undefined) clearTimeout(giveUp);
+  }
+}
+
+/**
  * Mermaid のコードブロックを、ブラウザ上で SVG に組んで差し替える (ADR 0023)。
  *
  * サーバーでは元のコードブロックを描き、hydration のあとにクライアントで図へ差し替える。
@@ -104,6 +146,9 @@ export function MermaidDiagram({ source, children }: MermaidDiagramProps): React
     void (async () => {
       try {
         const mermaid = await loadMermaid();
+        // 字が届いてから組む。届く前に組むと寸法が古い字幅で決まる。
+        await waitForGlyphs(measureIn, source);
+        if (abort.signal.aborted) return;
         const { svg } = await mermaid.render(renderId, source, measureIn);
         if (!abort.signal.aborted) setRendered({ source, svg });
       } catch {
