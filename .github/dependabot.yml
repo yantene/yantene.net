@@ -10,15 +10,10 @@ updates:
       development-dependencies:
         dependency-type: development
     ignore:
-      # ESLint 10 は eslint-plugin-react が未対応 (context.getFilename 削除に伴う破壊)。
-      # 対応プラグインが揃うまでメジャー更新を保留する。
-      - dependency-name: eslint
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@eslint/js"
-        update-types: ["version-update:semver-major"]
-      # TypeScript 7 は typescript-eslint が未対応。eslint が設定を読む前に
-      # "typescript-eslint does not support TS 7.0" で落ちるため、lint が一切できなくなる。
-      # 対応版が出るまでメジャー更新を保留する。
+      # TypeScript のメジャー更新は保留する。型を見る lint は oxlint-tsgolint が
+      # 担っており、そちらが新しい TS に追随できているかを人が確かめてから上げる。
+      # (以前の保留理由は typescript-eslint の未対応だったが、ADR 0027 で
+      #  ESLint ごと外したので前提が変わった。追随の確認自体は引き続き要る)
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions

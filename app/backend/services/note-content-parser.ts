@@ -93,7 +93,7 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
  * `\p{Script=Han}` のような書き方では拾えない。範囲で並べる。
  */
 const collapsibleAcrossBreak =
-  // eslint-disable-next-line security/detect-unsafe-regex -- 文字クラス 1 つの照合で、後戻りする余地がない
+  // 文字クラス 1 つの照合で、後戻りする余地がない
   /[\u{2E80}-\u{303F}\u{3040}-\u{30FF}\u{3400}-\u{4DBF}\u{4E00}-\u{9FFF}\u{AC00}-\u{D7AF}\u{F900}-\u{FAFF}\u{FF00}-\u{FF60}\u{FFE0}-\u{FFE6}\u{20000}-\u{2FFFD}]/u;
 
 function isCollapsibleAcrossBreak(character: string): boolean {

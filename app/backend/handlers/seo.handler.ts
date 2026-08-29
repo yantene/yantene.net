@@ -1,4 +1,4 @@
-/* eslint-disable no-secrets/no-secrets -- XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。 */
+// XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 

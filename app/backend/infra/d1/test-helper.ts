@@ -70,9 +70,7 @@ function createMockStatement(
       >[];
       const first = rows.at(0);
       if (first === undefined) return Promise.resolve(null);
-      if (colName !== undefined)
-        // eslint-disable-next-line security/detect-object-injection
-        return Promise.resolve((first[colName] ?? null) as T | null);
+      if (colName !== undefined) return Promise.resolve((first[colName] ?? null) as T | null);
       return Promise.resolve(first as T | null);
     },
   } as unknown as D1PreparedStatement;
@@ -104,7 +102,7 @@ export function createTestD1(): D1Database {
   });
 
   for (const migrationFile of migrationFiles) {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- migration paths from trusted _journal.json
+    // migration paths from trusted _journal.json
     const migrationSql = readFileSync(migrationFile, "utf8");
     const statements = migrationSql
       .split("--> statement-breakpoint")

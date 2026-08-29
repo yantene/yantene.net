@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; [ -n \"$f\" ] && pnpm exec prettier --ignore-path .gitignore --ignore-path .prettierignore --ignore-unknown --write \"$f\"; } 2>/dev/null || true"
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; [ -n \"$f\" ] && pnpm exec vp fmt \"$f\"; } 2>/dev/null || true"
           }
         ]
       }

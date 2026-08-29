@@ -52,9 +52,9 @@ export interface AlertProps {
  */
 export function Alert({ kind, children }: AlertProps): React.JSX.Element {
   const resolved: AlertKind = isAlertKind(kind) ? kind : "note";
-  // eslint-disable-next-line security/detect-object-injection -- 添字は isAlertKind で 5 種に絞った後の値
+  // 添字は isAlertKind で 5 種に絞った後の値
   const title = alertTitles[resolved];
-  // eslint-disable-next-line security/detect-object-injection -- 同上
+  // 同上
   const icon = alertIcons[resolved];
 
   return (
