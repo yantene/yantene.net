@@ -1,22 +1,20 @@
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+
+/** yantene が web で書き始めた年。著作権表示の始点。 */
+const FIRST_YEAR = 2003;
 
 /**
- * 著作権表示の期間を読む (Composition Root)。
+ * 著作権表示に出す期間を決める。始点は固定、終点はいまの年。
  *
- * 全ページのフッターが通るので、D1 への往復が 1 つ増える。両端は集約 1 回で引けるため
- * 記事数が増えても重くならない。
+ * **必ず loader のような I/O の内側から呼ぶこと。** Cloudflare Workers は I/O の外
+ * (モジュールのトップレベル評価時) の時刻を Unix epoch 0 に固定するため、そこで年を
+ * 求めると本番の SSR だけが 1970 年になる (#156)。ローカルの workerd では再現しないので
+ * 実装時には気づけない。`app/module-scope-clock.test.ts` が見張っている。
  *
- * **必ず loader のような I/O の内側から呼ぶこと。** ノートが 1 件も無いときの
- * 落とし先として時計を読む。Cloudflare Workers は I/O の外 (モジュールのトップレベル
- * 評価時) の時刻を Unix epoch 0 に固定するため、そこで年を求めると本番の SSR だけが
- * 1970 年になる (#156)。ローカルの workerd では再現しないので実装時には気づけない。
+ * 求めた値は loader から props で描画へ渡す。コンポーネントの中で時計を読むと 1970 年は
+ * 消えるが、SSR (Workers は UTC) と閲覧者のローカル時刻で年が食い違う年末年始の数時間に
+ * hydration mismatch が残る。
  */
-export async function loadCopyrightYears(env: Env): Promise<CopyrightYears> {
-  const span = await new D1NoteQueryRepository(env.D1).findPublishedYearSpan();
-  if (span !== undefined) return span;
-
-  // まだ 1 件も公開していないサイト。出せる期間が無いので、いまの年だけを出す。
-  const currentYear = new Date().getFullYear();
-  return { from: currentYear, to: currentYear };
+export function resolveCopyrightYears(): CopyrightYears {
+  return { from: FIRST_YEAR, to: new Date().getFullYear() };
 }

@@ -259,35 +259,4 @@ describe("D1NoteQueryRepository", () => {
     const results = await new D1NoteQueryRepository(d1).search("なんでも", 10);
     expect(results).toEqual([]);
   });
-
-  it("spans the published years from the oldest note to the newest", async () => {
-    const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    // 投入順は公開日の順にしない。日付で引けていることを、行の順で誤魔化さない。
-    await cmd.upsert(seed({ slug: "mid", publishedOn: "2022-06-30" }));
-    await cmd.upsert(seed({ slug: "newest", publishedOn: "2026-02-01" }));
-    await cmd.upsert(seed({ slug: "oldest", publishedOn: "2019-12-31" }));
-
-    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual({
-      from: 2019,
-      to: 2026,
-    });
-  });
-
-  it("spans a single year when every note was published in it", async () => {
-    const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seed({ slug: "a", publishedOn: "2026-01-10" }));
-    await cmd.upsert(seed({ slug: "b", publishedOn: "2026-11-30" }));
-
-    expect(await new D1NoteQueryRepository(d1).findPublishedYearSpan()).toEqual({
-      from: 2026,
-      to: 2026,
-    });
-  });
-
-  it("returns undefined when there is no note at all", async () => {
-    const query = new D1NoteQueryRepository(createTestD1());
-    expect(await query.findPublishedYearSpan()).toBeUndefined();
-  });
 });

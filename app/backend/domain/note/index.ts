@@ -12,7 +12,6 @@ export type {
   INoteQueryRepository,
   NoteListQuery,
   NoteListResult,
-  NotePublishedYearSpan,
   NoteSortField,
   NoteTagCount,
   SortDirection,

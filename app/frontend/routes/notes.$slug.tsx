@@ -4,7 +4,7 @@ import type { Route } from "./+types/notes.$slug";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
-import { loadCopyrightYears } from "~/backend/handlers/copyright";
+import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
 import { applyReaction, parseReactionEmoji } from "~/backend/handlers/notes/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -90,24 +90,20 @@ export async function loader({
   // 読み手のセッション識別子を預け直す cookie を応答に載せる (ADR 0011)。
   // React Router は loader が付けた Set-Cookie を、文書・データどちらの応答にも運ぶ。
   const headers = new Headers();
-  // 互いに独立した読み出しなので、往復を直列に積まない。
-  const [detail, copyright] = await Promise.all([
-    loadNoteDetailPage(cloudflare.env, params.slug, url.origin, {
-      userAgent: request.headers.get("user-agent"),
-      cookie: request.headers.get("cookie"),
-      waitUntil: (promise) => {
-        cloudflare.ctx.waitUntil(promise);
-      },
-      setCookie: (value) => {
-        headers.append("set-cookie", value);
-      },
-    }),
-    loadCopyrightYears(cloudflare.env),
-  ]);
+  const detail = await loadNoteDetailPage(cloudflare.env, params.slug, url.origin, {
+    userAgent: request.headers.get("user-agent"),
+    cookie: request.headers.get("cookie"),
+    waitUntil: (promise) => {
+      cloudflare.ctx.waitUntil(promise);
+    },
+    setCookie: (value) => {
+      headers.append("set-cookie", value);
+    },
+  });
   const base = {
     locale: context.get(localeRouteContext),
     origin: url.origin,
-    copyright,
+    copyright: resolveCopyrightYears(),
   };
 
   // 存在しない slug は 404 ステータスで not-found 状態のページを描画する。
