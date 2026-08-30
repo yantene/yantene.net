@@ -33,3 +33,6 @@ debug-storybook.log
 
 # React Router build output
 /build/
+
+# postinstall が node_modules から作り直す (scripts/copy-emoji-svg.mjs)
+public/emoji/svg/

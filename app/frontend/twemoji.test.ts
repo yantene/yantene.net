@@ -14,8 +14,14 @@ import { describe, expect, it } from "vitest";
 
 const frontendDir = import.meta.dirname;
 
-/** Twemoji を当ててよい要素。中身が絵文字しかないものに限る。 */
-const allowedTargets = new Set([".reaction-chip-emoji", ".emoji-palette-item"]);
+/**
+ * Twemoji を当ててよい要素。中身が絵文字しかないものに限る。
+ *
+ * チップ (`.reaction-chip-emoji`) は入らない。**あちらは SVG で出す** (#200)。
+ * 常設なので、フォントを当てると記事を開いた時点で 617KB の woff2 を取りに行く。
+ * ここに戻すときは、その通信が全記事ページで起きることを承知の上で戻すこと。
+ */
+const allowedTargets = new Set([".emoji-palette-item"]);
 
 /** Twemoji を当てている場所。ここを見失ったまま通ると、どのテストも意味がない。 */
 const knownTarget = "components/reaction/reaction-bar.css";
@@ -132,6 +138,23 @@ describe("Twemoji の適用範囲", () => {
       // var() のフォールバックに隠れていても、置換後は同じ形になるので数える。
       const isMixed = value.includes(",") && cssWideKeyword.test(value);
       expect(isMixed, `${file}: font-family: ${value}`).toBe(false);
+    }
+  });
+});
+
+/*
+ * チップにフォントを当て直すと、記事を開いた時点で 617KB の woff2 を取りに行く (#200)。
+ * 上の allowedTargets は「当ててよい先」の一覧なので、うっかり足しても通ってしまう。
+ * チップだけは名指しで、当たっていないことを確かめる。
+ */
+describe("チップにフォントを当てない", () => {
+  it(".reaction-chip-emoji に font-family を指定しない", () => {
+    for (const file of cssFiles()) {
+      const css = withoutComments(read(file));
+      for (const [, selectors, block] of css.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+        if (!selectors.includes(".reaction-chip-emoji")) continue;
+        expect(block, `${file} の ${selectors.trim()}`).not.toMatch(/font-family/);
+      }
     }
   });
 });
