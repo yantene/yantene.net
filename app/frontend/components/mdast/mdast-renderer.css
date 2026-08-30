@@ -309,3 +309,19 @@
 .note-prose .markdown-alert-caution {
   --alert-accent: var(--color-error);
 }
+
+/*
+ * 脚注と本文の切れ目。
+ *
+ * remark が出す見出し (`<h2 id="footnote-label">Footnotes</h2>`) は sr-only なので、
+ * 読み上げには境目が伝わる一方、**目で見ると本文の最後の段落と地続きになる。**
+ * 線を 1 本引いて、ここから先が注であることを見えるようにする。
+ *
+ * `<hr>` を本文に足すのではなく境界線にするのは、これが本文の一部ではなく組版だから。
+ * MDAST に無いものを描画側で足すと、原文 Markdown (/notes/<slug>.md) との対応も崩れる。
+ */
+.note-prose .footnotes {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
