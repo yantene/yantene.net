@@ -43,6 +43,23 @@ const KEPT_AFTER_FAILURE_TTL_HOURS = 24;
 const KEEP_AFTER_FAILURE_WINDOW_HOURS = 24 * 3;
 
 /**
+ * 絵の取り逃しを短い間隔で試し続ける上限。
+ *
+ * `missed` は 24 時間で取り直しの対象になるので、**恒久的に壊れた相手を毎日叩き続ける**
+ * (0 バイトを返し続ける CDN、hotlink 保護で空を返すサイト)。1 回あたり 3 つの subrequest と、
+ * 1 回の refresh で取りに行ける枠 (40) を 1 つ消費するため、壊れたリンクが N 本あれば
+ * 毎日 N 枠が埋まり、**本当に古びたカードが `deferred` へ押し出される。**
+ *
+ * この幅を越えたら、取り逃したままでも取れているカードと同じ間隔 (14 日) に倒す。
+ * **諦めて `absent` にはしない。** 絵が無いと分かったわけではないので、状態としては
+ * 嘘になる。変えるのは試す間隔だけ。
+ *
+ * 持ちこたえる上限と同じ 3 日にしてあるが、別の定数にする。同じだからと使い回すと、
+ * 片方だけ変えたときに黙って揃わなくなる。
+ */
+const IMAGE_MISSED_WINDOW_HOURS = 24 * 3;
+
+/**
  * カードの絵をどうしたか。画像の実体は R2 にあるので、ここでは状態だけを持つ。
  *
  * - `stored`: 写した。自分のところから配れる
@@ -87,6 +104,7 @@ export class LinkCard {
        * 「metadata の有無」と「この値の有無」の組が 3 通りの状態に 1 対 1 で対応する。
        */
       readonly fetchFailedSince: Temporal.Instant | undefined;
+      readonly imageMissedSince: Temporal.Instant | undefined;
       readonly fetchedAt: Temporal.Instant;
     },
   ) {}
@@ -97,6 +115,33 @@ export class LinkCard {
     url: LinkCardUrl;
     metadata: LinkCardMetadata;
     fetchedAt: Temporal.Instant;
+    /** 同じ URL の前回の行。絵の取り逃しの起点を引き継ぐために要る。 */
+    previous?: LinkCard | undefined;
+  }): LinkCard {
+    const { previous, ...fields } = params;
+    return new LinkCard({
+      ...fields,
+      fetchFailedSince: undefined,
+      // 取り逃しが続く間は起点を動かさない。取れたか、載せる絵が無いと分かったら消す。
+      imageMissedSince:
+        fields.metadata.image === "missed"
+          ? (previous?.imageMissedSince ?? fields.fetchedAt)
+          : undefined,
+    });
+  }
+
+  /**
+   * 行から復元した、直近の取得が成功しているカード。
+   *
+   * {@link available} は前回の行から取り逃しの起点を導くが、こちらは保存されている
+   * 起点をそのまま受ける。復元のたびに起点を作り直すと、上限にいつまでも届かない。
+   */
+  static availableFromRow(params: {
+    id: string;
+    url: LinkCardUrl;
+    metadata: LinkCardMetadata;
+    fetchedAt: Temporal.Instant;
+    imageMissedSince: Temporal.Instant | undefined;
   }): LinkCard {
     return new LinkCard({ ...params, fetchFailedSince: undefined });
   }
@@ -114,8 +159,9 @@ export class LinkCard {
     metadata: LinkCardMetadata;
     fetchFailedSince: Temporal.Instant;
     fetchedAt: Temporal.Instant;
+    imageMissedSince?: Temporal.Instant | undefined;
   }): LinkCard {
-    return new LinkCard(params);
+    return new LinkCard({ imageMissedSince: undefined, ...params });
   }
 
   /** 取得できなかったカード。素のリンクとして描かれる。 */
@@ -128,6 +174,7 @@ export class LinkCard {
       ...params,
       metadata: undefined,
       fetchFailedSince: undefined,
+      imageMissedSince: undefined,
     });
   }
 
@@ -169,6 +216,8 @@ export class LinkCard {
       metadata,
       fetchFailedSince: since,
       fetchedAt: now,
+      // 取りに行けていないので、絵の取り逃しの起点はそのまま持ち越す。
+      imageMissedSince: previous?.imageMissedSince,
     });
   }
 
@@ -204,6 +253,16 @@ export class LinkCard {
     return this.fields.fetchFailedSince;
   }
 
+  /**
+   * 続いている絵の取り逃しが始まった時刻。取り逃していなければ undefined。
+   *
+   * 短い間隔で試し続ける上限を測る基準で、取り逃しが続く間は書き換えない
+   * (`fetchedAt` のほうは試すたびに進む)。両方を進めると上限にいつまでも届かない。
+   */
+  get imageMissedSince(): Temporal.Instant | undefined {
+    return this.fields.imageMissedSince;
+  }
+
   /** 取り直すべき頃合いか。 */
   isStale(now: Temporal.Instant): boolean {
     return Temporal.Instant.compare(now, this.staleAt()) >= 0;
@@ -220,7 +279,20 @@ export class LinkCard {
     if (this.fields.fetchFailedSince !== undefined) {
       return KEPT_AFTER_FAILURE_TTL_HOURS;
     }
-    return metadata.image === "missed" ? IMAGE_MISSED_TTL_HOURS : AVAILABLE_TTL_HOURS;
+    if (metadata.image !== "missed") return AVAILABLE_TTL_HOURS;
+
+    /*
+     * 取り逃しが長く続いているなら、取れているカードと同じ間隔に倒す。恒久的に壊れた
+     * 相手を毎日叩き続けないため。起点が無い行 (この仕組みより前に入ったもの) は
+     * 短い側で扱う。次に取りに行った時点で起点が入る。
+     */
+    const since = this.fields.imageMissedSince;
+    if (since === undefined) return IMAGE_MISSED_TTL_HOURS;
+
+    const backsOffAt = since.add({ hours: IMAGE_MISSED_WINDOW_HOURS });
+    return Temporal.Instant.compare(this.fields.fetchedAt, backsOffAt) >= 0
+      ? AVAILABLE_TTL_HOURS
+      : IMAGE_MISSED_TTL_HOURS;
   }
 }
 
@@ -233,12 +305,15 @@ export function staleCutoffs(now: Temporal.Instant): {
   readonly available: Temporal.Instant;
   readonly unavailable: Temporal.Instant;
   readonly imageMissed: Temporal.Instant;
+  readonly imageMissedBackOff: Temporal.Instant;
   readonly keptAfterFailure: Temporal.Instant;
 } {
   return {
     available: now.subtract({ hours: AVAILABLE_TTL_HOURS }),
     unavailable: now.subtract({ hours: UNAVAILABLE_TTL_HOURS }),
     imageMissed: now.subtract({ hours: IMAGE_MISSED_TTL_HOURS }),
+    // これより前から取り逃しているカードは、短い間隔で試すのをやめる。
+    imageMissedBackOff: now.subtract({ hours: IMAGE_MISSED_WINDOW_HOURS }),
     // いまの値は取れなかったカードと同じだが、別の項目として渡す。同じだからと
     // 使い回すと、片方だけ変えたときに SQL とエンティティが黙って食い違う。
     keptAfterFailure: now.subtract({ hours: KEPT_AFTER_FAILURE_TTL_HOURS }),

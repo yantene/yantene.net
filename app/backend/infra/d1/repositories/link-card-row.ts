@@ -13,6 +13,7 @@ export interface LinkCardRow {
   readonly imageMissed: number;
   readonly hasFavicon: number;
   readonly fetchFailedSince: number | null;
+  readonly imageMissedSince: number | null;
   readonly fetchedAt: number;
 }
 
@@ -62,11 +63,17 @@ export function toLinkCard(row: LinkCardRow): LinkCard {
     },
     fetchedAt,
   };
-  if (row.fetchFailedSince === null) return LinkCard.available(params);
+  const imageMissedSince =
+    row.imageMissedSince === null ? undefined : unixToInstant(row.imageMissedSince);
+
+  if (row.fetchFailedSince === null) {
+    return LinkCard.availableFromRow({ ...params, imageMissedSince });
+  }
 
   // 中身は在るが直近の取得は失敗した、という行。見せるのは前回のままで、取り直しは早める。
   return LinkCard.keptAfterFailure({
     ...params,
     fetchFailedSince: unixToInstant(row.fetchFailedSince),
+    imageMissedSince,
   });
 }

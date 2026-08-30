@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { toLinkCard } from "./link-card-row";
 import type {
@@ -48,17 +48,36 @@ export class D1LinkCardQueryRepository implements ILinkCardQueryRepository {
     const availableBefore = instantToUnix(query.available);
     const unavailableBefore = instantToUnix(query.unavailable);
     const imageMissedBefore = instantToUnix(query.imageMissed);
+    const imageMissedBackOffBefore = instantToUnix(query.imageMissedBackOff);
     const keptAfterFailureBefore = instantToUnix(query.keptAfterFailure);
+    /*
+     * 絵を取り逃した行は短い間隔で試すが、長く続いているものは長い側へ倒す。
+     * 恒久的に壊れた相手 (0 バイトを返す CDN 等) を毎日叩き続けないため。
+     *
+     * 起点が NULL の行はこの仕組みより前に入ったもの。短い側で扱い、次に取りに行った
+     * 時点で起点が入る。**2 つの枝は重ならないように書く。** 重ねると、間隔の大小を
+     * 変えたときに黙って長いほうが効く。
+     */
+    const missedSinceIsRecent = or(
+      isNull(linkCards.imageMissedSince),
+      gte(linkCards.imageMissedSince, imageMissedBackOffBefore),
+    );
+    const missesRecently = and(eq(linkCards.imageMissed, 1), missedSinceIsRecent);
+    // 「最近取り逃した」以外。取り逃していない行と、取り逃しが長引いている行の両方。
+    const doesNotMissRecently = or(
+      eq(linkCards.imageMissed, 0),
+      lt(linkCards.imageMissedSince, imageMissedBackOffBefore),
+    );
     const staleWhenAvailable = and(
       isNotNull(linkCards.title),
       isNull(linkCards.fetchFailedSince),
-      eq(linkCards.imageMissed, 0),
+      doesNotMissRecently,
       lt(linkCards.fetchedAt, availableBefore),
     );
     const staleWhenImageMissed = and(
       isNotNull(linkCards.title),
       isNull(linkCards.fetchFailedSince),
-      eq(linkCards.imageMissed, 1),
+      missesRecently,
       lt(linkCards.fetchedAt, imageMissedBefore),
     );
     // 中身は在るが直近の取得は失敗した行。見せるものはあるので、短い側の間隔で試す。

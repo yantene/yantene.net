@@ -1,0 +1,1 @@
+ALTER TABLE `link_cards` ADD `image_missed_since` integer;

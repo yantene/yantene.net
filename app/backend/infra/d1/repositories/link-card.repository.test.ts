@@ -60,12 +60,14 @@ function cutoffs(): {
   available: Temporal.Instant;
   unavailable: Temporal.Instant;
   imageMissed: Temporal.Instant;
+  imageMissedBackOff: Temporal.Instant;
   keptAfterFailure: Temporal.Instant;
 } {
   return {
     available: now.subtract({ hours: 24 * 14 }),
     unavailable: now.subtract({ hours: 24 }),
     imageMissed: now.subtract({ hours: 24 }),
+    imageMissedBackOff: now.subtract({ hours: 24 * 3 }),
     keptAfterFailure: now.subtract({ hours: 24 }),
   };
 }
@@ -315,6 +317,7 @@ describe("D1LinkCard リポジトリ", () => {
         // 他の枝は何でも拾う手前に、持ちこたえの枝だけ届かない遠くに置く。
         available: now.subtract({ hours: 1 }),
         imageMissed: now.subtract({ hours: 1 }),
+        imageMissedBackOff: now.subtract({ hours: 1 }),
         keptAfterFailure: now.subtract({ hours: 24 * 100 }),
         limit: 10,
       });
