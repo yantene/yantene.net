@@ -88,7 +88,8 @@ describe("ReactionBar", () => {
     renderBar({ reactions: [], mine: null });
 
     const like = screen.getByRole("button", { name: "いいね" });
-    expect(like.textContent).toContain("❤️");
+    // 絵は SVG で出す (#200)。字ではなく alt に絵文字が載る。
+    expect(like.querySelector("img")?.getAttribute("alt")).toBe("❤️");
     expect(like.textContent).toContain("0");
   });
 
@@ -96,8 +97,8 @@ describe("ReactionBar", () => {
     renderBar({ reactions: [{ emoji: "🎉", count: 9 }], mine: null });
 
     const [likeChip, otherChip] = [...document.querySelectorAll(":scope .reaction-chip")];
-    expect(likeChip.textContent).toContain("❤️");
-    expect(otherChip.textContent).toContain("🎉");
+    expect(likeChip.querySelector("img")?.getAttribute("alt")).toBe("❤️");
+    expect(otherChip.querySelector("img")?.getAttribute("alt")).toBe("🎉");
   });
 
   it("ハートも他の絵文字も同じ形で並べる", () => {
@@ -112,7 +113,7 @@ describe("ReactionBar", () => {
 
     const active = [...document.querySelectorAll(":scope .reaction-chip.is-active")];
     expect(active).toHaveLength(1);
-    expect(active[0].textContent).toContain("🎉");
+    expect(active[0].querySelector("img")?.getAttribute("alt")).toBe("🎉");
   });
 
   it("押しているものをもう一度押すと取り消しを送る", () => {

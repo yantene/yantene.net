@@ -75,13 +75,19 @@
  * 最後の sans-serif は変数が引けなかったときの受け皿で、これが無いと変数を消した瞬間に
  * 宣言ごと無効になり、また静かに Twemoji が当たらなくなる。
  */
-.reaction-chip-emoji,
+/*
+ * フォントを当てるのはパレットだけ。チップは SVG で出すので要らない (#200)。
+ * チップにも当てると、記事を開いた時点で 617KB の woff2 を取りに行ってしまう。
+ */
 .emoji-palette-item {
   font-family: Twemoji, var(--body-font-stack, sans-serif);
 }
 
 .reaction-chip-emoji {
   /* 絵文字は字より一回り大きく。押した対象がひと目で分かるように。 */
+  width: 1.125rem;
+  height: 1.125rem;
+  /* SVG が取れず alt の字に落ちたときも、寸法が崩れないようにしておく。 */
   font-size: 1.125rem;
   line-height: 1;
 }
@@ -179,6 +185,7 @@
   grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));
 }
 
+.reaction-chip-emoji,
 .emoji-palette-item {
   display: flex;
   align-items: center;

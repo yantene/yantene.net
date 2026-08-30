@@ -1,4 +1,5 @@
 import { useCallback, useId, useRef, useState } from "react";
+import { emojiSvgPath } from "~/lib/emoji-svg";
 import { useTranslation } from "react-i18next";
 import { HiOutlineFaceSmile, HiOutlinePlus } from "react-icons/hi2";
 import { useFetcher } from "react-router";
@@ -165,7 +166,21 @@ export function ReactionBar({
             aria-label={reaction.emoji === LIKE ? t("reaction.like") : undefined}
             className={`reaction-chip press-control${isMine ? " is-active" : ""}`}
           >
-            <span className="reaction-chip-emoji">{reaction.emoji}</span>
+            {/*
+              絵はフォントではなく SVG で出す。チップは常設なので、フォントで組むと
+              617KB の woff2 を全記事ページで読むことになる (#200)。
+
+              alt に絵文字そのものを置くのが受け皿。@twemoji/svg は Unicode 15 までで、
+              新しい絵文字には SVG が無いが、取れなければ alt の字がそのまま出る。
+            */}
+            <img
+              className="reaction-chip-emoji"
+              src={emojiSvgPath(reaction.emoji)}
+              alt={reaction.emoji}
+              width={18}
+              height={18}
+              decoding="async"
+            />
             <span className="reaction-chip-count">{reaction.count}</span>
           </button>
         );

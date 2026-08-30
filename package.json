@@ -35,7 +35,8 @@
     "typegen": "wrangler types",
     "rr-typegen": "react-router typegen",
     "wrangler:check": "bash scripts/check-wrangler.sh",
-    "postinstall": "pnpm run typegen && pnpm run rr-typegen"
+    "postinstall": "pnpm run typegen && pnpm run rr-typegen && pnpm run emoji:svg",
+    "emoji:svg": "node scripts/copy-emoji-svg.mjs"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
@@ -81,6 +82,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@twemoji/svg": "^15.0.0",
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
     "@types/node": "^26",
