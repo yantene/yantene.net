@@ -195,3 +195,78 @@ describe("staleCutoffs", () => {
     expect(cutoffs.keptAfterFailure.toString()).toBe("2026-01-31T00:00:00Z");
   });
 });
+
+/*
+ * 取り逃しは 24 時間で取り直しの対象になるので、恒久的に壊れた相手 (0 バイトを返す
+ * CDN、hotlink 保護) を毎日叩き続けてしまう。1 回の refresh で取りに行ける枠は 40 で、
+ * 壊れたリンクが N 本あれば毎日 N 枠が埋まり、本当に古びたカードが押し出される (#324)。
+ */
+describe("絵の取り逃しに上限を置く", () => {
+  const url = LinkCardUrl.create("https://example.com/");
+  const missed = {
+    title: "題",
+    description: undefined,
+    siteName: undefined,
+    image: "missed",
+    hasFavicon: false,
+  } as const;
+
+  function cardMissedSince(since: Temporal.Instant, fetchedAt: Temporal.Instant): LinkCard {
+    return LinkCard.availableFromRow({
+      id: "x",
+      url,
+      metadata: missed,
+      fetchedAt,
+      imageMissedSince: since,
+    });
+  }
+
+  it("取り逃して間もないうちは 24 時間で取り直す", () => {
+    const since = Temporal.Instant.from("2026-02-01T00:00:00Z");
+    const card = cardMissedSince(since, since);
+
+    expect(card.isStale(since.add({ hours: 23 }))).toBe(false);
+    expect(card.isStale(since.add({ hours: 25 }))).toBe(true);
+  });
+
+  it("3 日を越えて取り逃し続けたら、取れているカードと同じ 14 日に倒す", () => {
+    const since = Temporal.Instant.from("2026-02-01T00:00:00Z");
+    // 起点から 4 日後にもう一度取りに行って、やはり取り逃した状態。
+    const card = cardMissedSince(since, since.add({ hours: 24 * 4 }));
+
+    // 24 時間では拾わない (以前はここで毎日拾っていた)。
+    expect(card.isStale(since.add({ hours: 24 * 5 }))).toBe(false);
+    expect(card.isStale(since.add({ hours: 24 * 4 + 24 * 14 + 1 }))).toBe(true);
+  });
+
+  it("絵が取れたら起点を捨てる", () => {
+    const since = Temporal.Instant.from("2026-02-01T00:00:00Z");
+    const previous = cardMissedSince(since, since);
+
+    const next = LinkCard.available({
+      id: "x",
+      url,
+      metadata: { ...missed, image: "stored" },
+      fetchedAt: since.add({ hours: 24 }),
+      previous,
+    });
+
+    expect(next.imageMissedSince).toBeUndefined();
+  });
+
+  it("取り逃しが続く間は起点を動かさない", () => {
+    const since = Temporal.Instant.from("2026-02-01T00:00:00Z");
+    const previous = cardMissedSince(since, since);
+
+    const next = LinkCard.available({
+      id: "x",
+      url,
+      metadata: missed,
+      fetchedAt: since.add({ hours: 24 }),
+      previous,
+    });
+
+    // 起点を進めてしまうと、上限にいつまでも届かない。
+    expect(next.imageMissedSince?.toString()).toBe(since.toString());
+  });
+});

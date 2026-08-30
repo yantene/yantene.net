@@ -41,6 +41,20 @@ export const linkCards = sqliteTable(
      * title が NULL の行では常に NULL になる (持ちこたえる中身が無い)。
      */
     fetchFailedSince: integer("fetch_failed_since"),
+    /*
+     * 絵の取り逃しが始まった時刻 (Unix 秒)。**NULL は「取り逃していない」。**
+     *
+     * fetch_failed_since と同じ理由で時刻にする。取り逃しは 24 時間で取り直しの対象に
+     * なるので、恒久的に壊れた相手 (0 バイトを返し続ける CDN、hotlink 保護) を毎日
+     * 叩き続けてしまう。起点を覚えておけば「いつまで短い間隔で試すか」を測れる。
+     *
+     * 取り逃している間この列は動かさず、fetched_at だけが進む。絵が取れたか、
+     * 載せる絵が無いと分かったら NULL に戻す。
+     *
+     * この列を足す前からある行は NULL のまま image_missed = 1 でありうる。起点が
+     * 分からないので短い側の間隔で扱い、次に取りに行った時点で起点が入る。
+     */
+    imageMissedSince: integer("image_missed_since"),
     fetchedAt: integer("fetched_at").notNull(),
   },
   // 期限切れの洗い替えは「古い順に数件」を引くだけなので、この索引で足りる。

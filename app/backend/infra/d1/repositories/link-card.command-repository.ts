@@ -31,6 +31,8 @@ export class D1LinkCardCommandRepository implements ILinkCardCommandRepository {
       // 失敗が続く間だけ入る。取れたら NULL に戻り、期限は 14 日側へ帰る。
       fetchFailedSince:
         card.fetchFailedSince === undefined ? null : instantToUnix(card.fetchFailedSince),
+      imageMissedSince:
+        card.imageMissedSince === undefined ? null : instantToUnix(card.imageMissedSince),
       fetchedAt: instantToUnix(card.fetchedAt),
     };
 

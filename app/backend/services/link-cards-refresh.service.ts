@@ -189,6 +189,8 @@ export class LinkCardsRefreshService {
           hasFavicon: fetched.favicon !== undefined,
         },
         fetchedAt: now,
+        // 絵の取り逃しが続いているかを、前回の行から引き継がせる (#324)。
+        previous,
       }),
     );
     return "fetched";
