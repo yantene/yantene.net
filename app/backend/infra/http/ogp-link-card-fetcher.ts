@@ -1,5 +1,5 @@
 import { charsetFor, decoderFor } from "./charset";
-import { fetchCapped } from "./fetch-capped";
+import { fetchCapped, fetchCappedUntilHead } from "./fetch-capped";
 import { isAllowedImageType, mediaTypeOf } from "./image-content-type";
 import { parseOgp } from "./parse-ogp";
 import type {
@@ -75,7 +75,12 @@ export class OgpLinkCardFetcher implements ILinkCardFetcher {
   }
 
   private async load(url: LinkCardUrl): Promise<FetchedLinkCard | undefined> {
-    const page = await fetchCapped(url.toString(), {
+    /*
+     * head を読み終えたところで打ち切る。題も説明も絵も favicon も head にあるので、
+     * 本文まで読む必要が無い。上限まで読んでいた頃は、先頭 12 KB に材料が揃っている
+     * のに 1.19 MB 読もうとして上限に当たり、カードにならないページがあった。
+     */
+    const page = await fetchCappedUntilHead(url.toString(), {
       accept: "text/html,application/xhtml+xml",
       maxBytes: HTML_MAX_BYTES,
     });
