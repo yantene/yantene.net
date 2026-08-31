@@ -5,6 +5,7 @@
  * 時間と大きさの両方に上限を置き、超えたら諦める。
  */
 import { readCapped } from "./read-capped";
+import { readUntilHead } from "./read-until-head";
 
 /** 取得に使う名乗り。何が叩いているか分かるようにしておく。 */
 const USER_AGENT = "yantene.net-link-card/1.0 (+https://yantene.net/)";
@@ -19,6 +20,17 @@ export interface CappedResponse {
   readonly url: string;
 }
 
+export interface CappedRequestOptions {
+  readonly accept: string;
+  readonly maxBytes: number;
+}
+
+/** 本文の読み方。上限まで読むか、head で打ち切るか。 */
+type ReadBody = (
+  body: ReadableStream<Uint8Array>,
+  maxBytes: number,
+) => Promise<Uint8Array | undefined>;
+
 /**
  * 上限つきで GET する。取れなければ undefined。
  *
@@ -27,7 +39,28 @@ export interface CappedResponse {
  */
 export async function fetchCapped(
   url: string,
-  options: { accept: string; maxBytes: number },
+  options: CappedRequestOptions,
+): Promise<CappedResponse | undefined> {
+  return await request(url, options, readCapped);
+}
+
+/**
+ * 上限つきで GET し、**`</head>` を読み終えた時点で打ち切る。**
+ *
+ * OGP を探すときだけ使う。材料は head にあるので、本文まで読む必要が無い。
+ * `</head>` が上限までに現れなければ {@link fetchCapped} と同じ結果になる。
+ */
+export async function fetchCappedUntilHead(
+  url: string,
+  options: CappedRequestOptions,
+): Promise<CappedResponse | undefined> {
+  return await request(url, options, readUntilHead);
+}
+
+async function request(
+  url: string,
+  options: CappedRequestOptions,
+  readBody: ReadBody,
 ): Promise<CappedResponse | undefined> {
   const response = await fetch(url, {
     headers: { accept: options.accept, "user-agent": USER_AGENT },
@@ -39,7 +72,7 @@ export async function fetchCapped(
   const body = response.body;
   if (body === null) return undefined;
 
-  const bytes = await readCapped(body, options.maxBytes);
+  const bytes = await readBody(body, options.maxBytes);
   if (bytes === undefined) return undefined;
 
   return {

@@ -187,6 +187,7 @@ describe("OgpLinkCardFetcher", () => {
     expect(fetched).toBeUndefined();
   });
 
+  /* head を閉じないまま上限を超えるページは、打ち切る手がかりが無いので諦める。 */
   it("大きすぎる HTML は読まない", async () => {
     fetchMock.mockResolvedValue(respond("x".repeat(600 * 1024), { contentType: "text/html" }));
 
@@ -195,6 +196,52 @@ describe("OgpLinkCardFetcher", () => {
     );
 
     expect(fetched).toBeUndefined();
+  });
+
+  /*
+   * 本文が上限を超えていても、head に材料が揃っていればカードにする。
+   *
+   * 本番で踏んだのはこれ。商品ページの HTML が 1.19 MB あり、og:title は 2 KB の位置に
+   * あるのに、ページ全体が上限を超えるという理由で丸ごと捨てられていた。
+   */
+  it("本文が上限を超えていても、head に OGP があればカードにする", async () => {
+    const huge = `<html><head><meta property="og:title" content="記事の題"></head><body>${"x".repeat(600 * 1024)}</body></html>`;
+    fetchMock.mockImplementation((url: string) =>
+      url === "https://example.com/a"
+        ? Promise.resolve(respond(huge, { contentType: "text/html", url }))
+        : Promise.resolve(respond(pngBytes, { contentType: "image/png", url })),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("記事の題");
+  });
+
+  /* 塊の切れ目は相手が決める。`</hea` と `d>` に割れても打ち切れること。 */
+  it("</head> が塊をまたいでも head で打ち切れる", async () => {
+    const ascii = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          ascii.encode('<html><head><meta property="og:title" content="記事の題"></hea'),
+        );
+        controller.enqueue(ascii.encode(`d><body>${"x".repeat(600 * 1024)}</body></html>`));
+        controller.close();
+      },
+    });
+    fetchMock.mockImplementation((url: string) =>
+      url === "https://example.com/a"
+        ? Promise.resolve(respond(body, { contentType: "text/html", url }))
+        : Promise.resolve(respond(pngBytes, { contentType: "image/png", url })),
+    );
+
+    const fetched = await new OgpLinkCardFetcher(silentLogger()).fetch(
+      LinkCardUrl.create("https://example.com/a"),
+    );
+
+    expect(fetched?.title).toBe("記事の題");
   });
 
   it("SVG の画像は写さない (カード自体は作る)", async () => {

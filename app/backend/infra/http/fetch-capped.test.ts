@@ -5,7 +5,7 @@
  * 異なるので、ここは node で走らせる (read-capped.test.ts と同じ理由)。
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchCapped } from "./fetch-capped";
+import { fetchCapped, fetchCappedUntilHead } from "./fetch-capped";
 
 const utf8 = new TextEncoder();
 const options = { accept: "text/html", maxBytes: 1024 };
@@ -86,5 +86,39 @@ describe("fetchCapped", () => {
     const page = await fetchCapped("https://example.com/asked", options);
 
     expect(page?.url).toBe("https://example.com/asked");
+  });
+});
+
+describe("fetchCappedUntilHead", () => {
+  /*
+   * OGP の材料は head にある。本文まで読まないことで、上限を超える大きさの
+   * ページでもカードが作れる (これが無いと 1.19 MB のページが丸ごと捨てられる)。
+   */
+  it("</head> までを返し、その後ろは読まない", async () => {
+    stubFetch(
+      new Response(`<html><head><title>題</title></head><body>${"x".repeat(1000)}</body></html>`, {
+        headers: { "content-type": "text/html" },
+      }),
+    );
+
+    const page = await fetchCappedUntilHead("https://example.com/", {
+      accept: "text/html",
+      maxBytes: 100,
+    });
+
+    expect(page?.bytes).toEqual(utf8.encode("<html><head><title>題</title></head>"));
+    expect(page?.contentType).toBe("text/html");
+  });
+
+  /* head を持たないページは、いままでどおり上限で判断する。 */
+  it("</head> を持たない大きすぎる本文は undefined", async () => {
+    stubFetch(new Response("x".repeat(1000)));
+
+    const page = await fetchCappedUntilHead("https://example.com/", {
+      accept: "text/html",
+      maxBytes: 100,
+    });
+
+    expect(page).toBeUndefined();
   });
 });
