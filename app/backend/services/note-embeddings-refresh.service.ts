@@ -59,30 +59,50 @@ export class NoteEmbeddingsRefreshService {
     private readonly logger: ILogger,
   ) {}
 
-  async sync(
-    slugs: readonly string[],
-    options: { readonly force?: boolean } = {},
-  ): Promise<NoteEmbeddingsSyncResult> {
+  /**
+   * ベクトルと近さを揃える。
+   *
+   * **対象は「今回コンテンツが変わった記事」ではなく、D1 にある全記事。** 変わった記事だけを
+   * 見ると、1 回の上限 (MAX_NOTES_PER_RUN) で溢れた記事を拾い直す経路が無くなる。溢れた分は
+   * 次の refresh のときには「変わっていない記事」なので、二度と対象に入らない。
+   * ベクトルが無いことを毎回ここで見つけ直せば、何回かの refresh で自然に揃う。
+   */
+  async sync(options: { readonly force?: boolean } = {}): Promise<NoteEmbeddingsSyncResult> {
     const stored = await this.query.listAll();
     const bySlug = new Map(stored.map((item) => [item.slug.toString(), item] as const));
     const hashes = await this.notes.listSourceHashes();
+    const allSlugs = [...hashes.keys()];
 
     const embedded: string[] = [];
     const unchanged: string[] = [];
     const failed: string[] = [];
 
-    // 作り直すものを先に決める。モデルを差し替えたときは全部が対象になる。
-    const targets = slugs.filter((slug) => {
+    /*
+     * 作り直すものを 2 つに分ける。
+     *
+     * - missing: ベクトルが無い / モデルか本文が古い。放っておくと関連ノートに出てこない
+     * - restated: force のときだけ対象になる、既に今のモデルで作れているもの
+     *
+     * missing を先に並べるのは、force を流したときに毎回同じ先頭 30 本だけが作り直されて、
+     * 一度も作られていない記事が永久に残るのを避けるため。
+     */
+    const missing: string[] = [];
+    const restated: string[] = [];
+    for (const slug of allSlugs) {
       const current = bySlug.get(slug);
-      if (options.force === true || current === undefined) return true;
-      const isSameModel = current.model === this.generator.model;
-      const isSameContent = current.contentHash === (hashes.get(slug) ?? "");
-      if (isSameModel && isSameContent) {
+      const isFresh =
+        current !== undefined &&
+        current.model === this.generator.model &&
+        current.contentHash === (hashes.get(slug) ?? "");
+      if (!isFresh) {
+        missing.push(slug);
+      } else if (options.force === true) {
+        restated.push(slug);
+      } else {
         unchanged.push(slug);
-        return false;
       }
-      return true;
-    });
+    }
+    const targets = [...missing, ...restated];
 
     const planned = targets.slice(0, MAX_NOTES_PER_RUN);
     // 途中で作ったベクトルも近さの計算に入れる。同じ回に処理した記事どうしが
@@ -100,7 +120,7 @@ export class NoteEmbeddingsRefreshService {
       embedded.push(slug);
     }
 
-    const rewrittenPairs = await this.rewriteSimilarities(known, embedded.length);
+    const rewrittenPairs = await this.rewriteSimilarities(known, embedded.length, allSlugs);
     return {
       embedded,
       unchanged,
@@ -116,26 +136,30 @@ export class NoteEmbeddingsRefreshService {
    * 中心化はコーパス全体の平均を引くので、ベクトルが 1 本変わるだけで既存どうしの
    * ペアの値まで動く。1 記事ぶんずつ書き替えると、違う平均で出した値が同じ表に並ぶ。
    *
-   * **全記事が今のモデルで揃っているときだけ書き直す。** モデルを差し替えた直後は
+   * **全記事が今のモデルのベクトルを持っているときだけ書き直す。** モデルを差し替えた直後は
    * 1 回では作り直しきれない (MAX_NOTES_PER_RUN)。揃わないうちに全ペアを消すと、
    * まだ作り直していない記事の関連ノートが空になる。揃うまでは前のモデルの並びを
    * そのまま出しておくほうが、読み手にとって壊れ方が小さい。
+   *
+   * 判定には**全記事の slug** を使う。保存済みのベクトルだけを数えると、まだ 1 度も
+   * 作られていない記事が母数に入らず、「揃っている」と誤って判定してしまう。
    */
   private async rewriteSimilarities(
     known: ReadonlyMap<string, NoteEmbedding>,
     embeddedCount: number,
+    allSlugs: readonly string[],
   ): Promise<number> {
     if (embeddedCount === 0) return 0;
-    const all = [...known.values()];
-    const current = all.filter((item) => item.model === this.generator.model);
-    if (current.length !== all.length) {
+    const ready = allSlugs.filter((slug) => known.get(slug)?.model === this.generator.model);
+    if (ready.length !== allSlugs.length) {
       this.logger.warn("skipped rewriting similarities: embeddings are still being rebuilt", {
         model: this.generator.model,
-        ready: current.length,
-        total: all.length,
+        ready: ready.length,
+        total: allSlugs.length,
       });
       return 0;
     }
+    const current = allSlugs.map((slug) => known.get(slug)).filter((item) => item !== undefined);
     try {
       const pairs = allPairs(current);
       await this.command.replaceAllSimilarities(pairs);

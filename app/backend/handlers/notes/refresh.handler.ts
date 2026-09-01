@@ -91,7 +91,7 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
       new D1NoteQueryRepository(c.env.D1),
       new R2NoteContentCache(c.env.R2),
       new ConsoleLogger({ component: "note-embeddings" }),
-    ).sync(result.processed, { force: isForce });
+    ).sync({ force: isForce });
 
     return c.json({ ...result, linkCards, embeddings });
   });

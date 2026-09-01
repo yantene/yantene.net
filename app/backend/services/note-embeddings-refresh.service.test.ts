@@ -119,7 +119,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       hashes: new Map([["alpha", "hash-1"]]),
     });
 
-    const result = await service.sync(["alpha"]);
+    const result = await service.sync();
 
     expect(result.embedded).toEqual(["alpha"]);
     expect(upserted).toHaveLength(1);
@@ -141,7 +141,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       stored: [stored],
     });
 
-    const result = await service.sync(["alpha"]);
+    const result = await service.sync();
 
     expect(result.unchanged).toEqual(["alpha"]);
     expect(upserted).toHaveLength(0);
@@ -161,7 +161,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       stored: [stored],
     });
 
-    await service.sync(["alpha"]);
+    await service.sync();
 
     expect(upserted).toHaveLength(1);
   });
@@ -179,12 +179,17 @@ describe("NoteEmbeddingsRefreshService", () => {
     }));
     const { service, rewritten } = harness({
       slugs: ["alpha"],
-      hashes: new Map([["alpha", "hash-1"]]),
+      // 対象は「変わった記事」ではなく全記事なので、既存ぶんもハッシュに要る。
+      hashes: new Map([
+        ["alpha", "hash-1"],
+        ["beta", "hash-old"],
+        ["gamma", "hash-old"],
+      ]),
       stored,
       generator: generatorReturning([[1, 0, 0]]),
     });
 
-    const result = await service.sync(["alpha"]);
+    const result = await service.sync();
 
     /*
      * 中心化した類似度はコーパス全体の平均から出るので、alpha を足すと beta と gamma の
@@ -193,9 +198,9 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(rewritten).toHaveLength(1);
     expect(result.rewrittenPairs).toBe(3);
     expect(rewritten[0]?.map((pair) => [pair.noteId, pair.otherNoteId])).toEqual([
+      ["id-alpha", "id-beta"],
+      ["id-alpha", "id-gamma"],
       ["id-beta", "id-gamma"],
-      ["id-beta", "id-alpha"],
-      ["id-gamma", "id-alpha"],
     ]);
   });
 
@@ -212,7 +217,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       ]),
     });
 
-    await service.sync(["alpha", "beta"]);
+    await service.sync();
 
     /*
      * 直交する 2 本なので、素のままなら内積は 0。平均を引くと互いに逆を向くので -1 になる。
@@ -222,28 +227,87 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(rewritten[0]?.[0]?.similarity).toBeCloseTo(-1, 5);
   });
 
-  it("作り直しの途中 (モデル差し替え直後) は書き直さない", async () => {
-    // 古いモデルのまま残っている 1 本。今回の run では上限に掛からずとも揃わない。
-    const stale: NoteEmbedding = {
-      noteId: entityId<"Note">("id-beta"),
-      slug: NoteSlug.create("beta"),
-      model: "an-older-model",
-      contentHash: "hash-old",
-      vector: EmbeddingVector.create([0, 1, 0]),
-    };
+  it("全記事が揃うまで書き直さない", async () => {
+    // beta は正本にあるがベクトルを作れない (findBySlug が返さない)。
     const { service, rewritten } = harness({
       slugs: ["alpha"],
-      hashes: new Map([["alpha", "hash-1"]]),
-      stored: [stale],
+      hashes: new Map([
+        ["alpha", "hash-1"],
+        ["beta", "hash-2"],
+      ]),
       generator: generatorReturning([[1, 0, 0]]),
     });
 
-    const result = await service.sync(["alpha"]);
+    const result = await service.sync();
 
-    // 揃うまで書き直さない。潰すと beta の関連ノートが空になる。
+    /*
+     * 揃うまで書き直さない。潰すと beta の関連ノートが空になる。
+     * 保存済みのベクトルだけを数えると beta が母数に入らず「揃っている」と
+     * 誤判定するので、全記事の slug で判定している。
+     */
     expect(rewritten).toHaveLength(0);
     expect(result.rewrittenPairs).toBe(0);
     expect(result.embedded).toEqual(["alpha"]);
+    expect(result.failed).toEqual(["beta"]);
+  });
+
+  it("1 回で作りきれなかった記事を、次の refresh で拾い直す", async () => {
+    // MAX_NOTES_PER_RUN (30) を 1 本超える。
+    const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
+    const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
+    const vectors = slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1]);
+
+    const first = harness({ slugs, hashes, generator: generatorReturning(vectors) });
+    const a = await first.service.sync();
+
+    expect(a.embedded).toHaveLength(30);
+    expect(a.deferred).toBe(1);
+    // 1 本ぶん足りないので、この時点では書き直さない。
+    expect(a.rewrittenPairs).toBe(0);
+
+    /*
+     * 溢れた 1 本を次の回で拾えること。対象を「今回変わった記事」に絞っていたときは、
+     * 溢れた記事は次の refresh では「変わっていない記事」になり、二度と対象に入らなかった。
+     */
+    const second = harness({
+      slugs,
+      hashes,
+      stored: first.upserted,
+      generator: generatorReturning(vectors),
+    });
+    const b = await second.service.sync();
+
+    expect(b.embedded).toEqual(["n30"]);
+    expect(b.unchanged).toHaveLength(30);
+    expect(b.deferred).toBe(0);
+    expect(b.rewrittenPairs).toBe((31 * 30) / 2);
+  });
+
+  it("force でも、まだ作られていない記事を先に作る", async () => {
+    // 31 本のうち 30 本は今のモデルで作れている。残り 1 本が未作成。
+    const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
+    const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
+    const stored: NoteEmbedding[] = slugs.slice(0, 30).map((slug, i) => ({
+      noteId: entityId<"Note">(`id-${slug}`),
+      slug: NoteSlug.create(slug),
+      model: MODEL,
+      contentHash: `hash-${slug}`,
+      vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),
+    }));
+    const { service } = harness({
+      slugs,
+      hashes,
+      stored,
+      generator: generatorReturning(slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1])),
+    });
+
+    const result = await service.sync({ force: true });
+
+    /*
+     * force は全記事を対象にするが、上限で切ると毎回同じ先頭 30 本になり、
+     * 未作成の 1 本が永久に作られない。未作成を先に並べて防ぐ。
+     */
+    expect(result.embedded).toContain("n30");
   });
 
   it("書き直しが落ちても、記事の同期は通す", async () => {
@@ -257,7 +321,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       generator: generatorReturning([[1, 0, 0]]),
     });
 
-    const result = await service.sync(["alpha", "beta"]);
+    const result = await service.sync();
 
     expect(result.embedded).toEqual(["alpha", "beta"]);
     expect(result.rewrittenPairs).toBe(0);
@@ -281,7 +345,7 @@ describe("NoteEmbeddingsRefreshService", () => {
       generator: failing,
     });
 
-    const result = await service.sync(["alpha", "beta"]);
+    const result = await service.sync();
 
     expect(result.failed).toEqual(["alpha", "beta"]);
     expect(result.embedded).toEqual([]);
