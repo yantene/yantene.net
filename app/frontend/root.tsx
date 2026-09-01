@@ -99,8 +99,8 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "alternate",
     type: "application/atom+xml",
-    title: feedIdentity(null).title,
-    href: feedIdentity(null).path,
+    title: feedIdentity().title,
+    href: feedIdentity().path,
   },
 ];
 

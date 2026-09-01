@@ -171,7 +171,6 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
             slug={note.slug}
             title={note.title}
             imageUrl={note.imageUrl}
-            tags={note.tags}
             publishedOn={note.publishedOn}
             origin={origin}
           />

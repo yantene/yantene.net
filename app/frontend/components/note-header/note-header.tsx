@@ -1,12 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { SiMarkdown } from "react-icons/si";
-import { Link } from "react-router";
 
 export interface NoteHeaderProps {
   readonly slug: string;
   readonly title: string;
   readonly imageUrl: string | null;
-  readonly tags: readonly string[];
   readonly publishedOn: string;
   /** 絶対 URL を組むための出どころ。microformats の `u-url` に使う。 */
   readonly origin: string;
@@ -30,7 +28,6 @@ export function NoteHeader({
   slug,
   title,
   imageUrl,
-  tags,
   publishedOn,
   origin,
 }: NoteHeaderProps): React.JSX.Element {
@@ -96,19 +93,12 @@ export function NoteHeader({
           {t("notes.viewMarkdown")}
         </a>
       </div>
-      {tags.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Link
-              key={tag}
-              to={`/notes?tag=${encodeURIComponent(tag)}`}
-              className="badge badge-outline press-control p-category gap-1 hover:badge-primary"
-            >
-              {tag}
-            </Link>
-          ))}
-        </div>
-      )}
+      {/*
+        タグは廃止した (ADR 0029) が、microformats2 のカテゴリは `article` で固定して残す。
+        Post Type Discovery が `p-name` と `e-content` から導く型と同じ語なので、
+        受け手から見て型とカテゴリが食い違わない。読み手には出さないので sr-only。
+      */}
+      <span className="sr-only p-category">article</span>
     </header>
   );
 }

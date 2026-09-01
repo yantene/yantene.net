@@ -14,7 +14,6 @@ import { Header } from "~/frontend/components/layout/header";
 import { InfiniteNoteTimeline } from "~/frontend/components/note-timeline/infinite-note-timeline";
 import { parseNoteListPayload } from "~/frontend/components/note-timeline/note-list-payload";
 import { Pagination } from "~/frontend/components/pagination/pagination";
-import { TagIndex } from "~/frontend/components/tag-index/tag-index";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
@@ -37,8 +36,7 @@ export async function loader({
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin, tag } = loaderData;
-  const { title, path } = feedIdentity(tag);
+  const { locale, origin } = loaderData;
   const notes = translationsFor(locale).notes;
   /*
    * 絞り込んでいるときは、どのタグの一覧かを title に出す。検索結果や共有先では
@@ -46,7 +44,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
    * 画面の見出しと同じ表現 (filteredByTag) を使って言い回しを揃える。
    * 置換先は関数で渡す ($& などの特殊な並びをタグ名がそのまま含み得るため)。
    */
-  const pageTitle = tag === null ? notes.title : notes.filteredByTag.replace("{{tag}}", () => tag);
+  const pageTitle = notes.title;
   return buildPageMeta({
     locale,
     origin,
@@ -56,7 +54,6 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
      * 絞り込んでいないときは何も足さない。root が出すサイト全体のフィードと
      * 同じものになり、リーダーに同じ購読先を二重に見せてしまう。
      */
-    feed: tag === null ? undefined : { path, title },
   });
 };
 
@@ -69,29 +66,23 @@ interface SortState {
  * ページ送りリンクの URL を組み立てる。現在の per-page / sort-by / order を保持し、
  * 既定値は省略して URL をきれいに保つ。
  */
-function buildHrefForPage(
-  page: number,
-  perPage: number,
-  sort: SortState,
-  tag: string | null,
-): string {
+function buildHrefForPage(page: number, perPage: number, sort: SortState): string {
   const params = new URLSearchParams();
   if (page > 1) params.set("page", String(page));
   if (perPage !== DEFAULT_PER_PAGE) params.set("per-page", String(perPage));
   if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
   if (sort.order !== null) params.set("order", sort.order);
-  if (tag !== null) params.set("tag", tag);
   const query = params.toString();
   return query.length > 0 ? `/notes?${query}` : "/notes";
 }
 
 /**
- * 続きを取りに行く手を、いまの絞り込みと並び順に合わせて作る。
+ * 続きを取りに行く手を、いまの並び順に合わせて作る。
  *
- * 既定の取り方 (`/api/v1/notes` をそのまま叩く) では、タグで絞った一覧の 2 ページ目に
- * 絞り込みのない記事が混ざる。ここで同じ条件を引き継いだものを渡す。
+ * 既定の取り方 (`/api/v1/notes` をそのまま叩く) では並び順が引き継がれず、一覧の
+ * 2 ページ目が別の順で返る。ここで同じ条件を渡す。
  */
-function buildLoadPage(sort: SortState, tag: string | null): LoadNotePage {
+function buildLoadPage(sort: SortState): LoadNotePage {
   return async (page, perPage) => {
     const params = new URLSearchParams({
       page: String(page),
@@ -99,7 +90,6 @@ function buildLoadPage(sort: SortState, tag: string | null): LoadNotePage {
     });
     if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
     if (sort.order !== null) params.set("order", sort.order);
-    if (tag !== null) params.set("tag", tag);
 
     const response = await fetch(`/api/v1/notes?${params.toString()}`, {
       headers: { accept: "application/json" },
@@ -120,21 +110,16 @@ function buildLoadPage(sort: SortState, tag: string | null): LoadNotePage {
  */
 function resultHeading(
   t: (key: string, options?: Record<string, unknown>) => string,
-  { query, tag, total }: { query: string; tag: string | null; total: number },
+  { query, total }: { query: string; total: number },
 ): string {
-  if (query.length > 0 && tag !== null) {
-    return t("notes.resultsForQueryAndTag", { query, tag, count: total });
-  }
   if (query.length > 0) return t("search.resultsFor", { query, count: total });
-  if (tag !== null) return t("notes.resultsForTag", { tag, count: total });
   return t("notes.heading");
 }
 
 export default function NotesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, query, tag, tags, sort, copyright } = loaderData;
-  const hrefForPage = (page: number): string =>
-    buildHrefForPage(page, pagination.perPage, sort, tag);
+  const { notes, pagination, query, sort, copyright } = loaderData;
+  const hrefForPage = (page: number): string => buildHrefForPage(page, pagination.perPage, sort);
   /*
    * 取り方は毎描画で作り直さない。
    *
@@ -143,7 +128,7 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
    * 続きが永久に読まれない。中身のプリミティブに依存させる。
    */
   const { sortBy, order } = sort;
-  const loadPage = useMemo(() => buildLoadPage({ sortBy, order }, tag), [sortBy, order, tag]);
+  const loadPage = useMemo(() => buildLoadPage({ sortBy, order }), [sortBy, order]);
   /*
    * 年で束ねられるのは公開日で並んでいるときだけ。
    *
@@ -163,7 +148,6 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
         <search className="notes-search">
           <form method="get" action="/notes" role="search">
             {/* 絞り込みを保ったまま探せるよう、いま効いているタグを持ち回す。 */}
-            {tag !== null && <input type="hidden" name="tag" value={tag} />}
             <label className="notes-search-field">
               <HiMagnifyingGlass className="notes-search-icon" aria-hidden />
               <input
@@ -176,24 +160,17 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
               />
             </label>
           </form>
-
-          {tags.length > 0 && <TagIndex tags={tags} selected={tag} query={query} />}
         </search>
 
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-          <h1 className="notes-heading">
-            {resultHeading(t, { query, tag, total: pagination.total })}
-          </h1>
+          <h1 className="notes-heading">{resultHeading(t, { query, total: pagination.total })}</h1>
           {/*
             一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
             受け取り続ける手を同じ高さに並べる。絞り込み中はそのタグのフィードを指す
             (見えている一覧と受け取るものを一致させる)。そのときはフッターの全体
             フィードと行き先が分かれるので、文言も分ける。
           */}
-          <FeedLink
-            href={feedIdentity(tag).path}
-            label={tag === null ? undefined : t("feed.tagLabel", { tag })}
-          />
+          <FeedLink href={feedIdentity().path} />
         </div>
 
         {notes.length === 0 ? (

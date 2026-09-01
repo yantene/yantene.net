@@ -59,7 +59,6 @@ describe("Note.reconstruct", () => {
       title,
       summary: "s",
       imageUrl: undefined,
-      tags: [],
       publishedOn,
       lastModifiedOn,
       sourceHash: "h",

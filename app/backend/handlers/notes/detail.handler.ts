@@ -233,7 +233,6 @@ export async function loadNoteDetailPage(
       author: { "@type": "Person", name: "yantene", url: `${origin}/` },
       publisher: { "@type": "Person", name: "yantene" },
       mainEntityOfPage: `${origin}/notes/${detail.note.slug}`,
-      keywords: detail.note.tags,
     },
   };
 }

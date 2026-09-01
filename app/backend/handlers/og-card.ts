@@ -60,7 +60,6 @@ const INK = "#1a2740"; /* = --color-base-content */
 /** 日付の色 (base-content を 62% で白地に乗せた色。--color-muted-foreground と同じ)。 */
 const MUTED_INK = "#717989";
 /** タグの色 (note-timeline.css のタグと同じ base-content 55%)。 */
-const TAG_INK = "#818896";
 
 /**
  * `#rrggbb` に透明度を与える。
@@ -237,21 +236,8 @@ function escapeHtml(value: string): string {
  * 外して底に貼ってあるので、ここで場所を空けておく必要がない。線画に重なるが、線が薄い
  * ぶん字は読める (画面のヒーローも同じ扱いにしてある)。
  */
-export function cardHtml(params: { title: string; date: string; tags: readonly string[] }): string {
+export function cardHtml(params: { title: string; date: string }): string {
   const title = escapeHtml(truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }));
-  /*
-   * タグは中黒で繋ぐ。囲みを付けない理由は note-timeline.css に書いてあるとおりで、
-   * 表題と主張が競るため。
-   *
-   * ただし並べ方は一覧と変えてある。あちらは各タグの頭に中黒を置く (`::before`) が、
-   * この字の大きさで同じことをすると「・プログラミング」がひと塊に見えて、中黒が
-   * 区切りではなく飾りとして読める。ここでは語と語の間にだけ置く。
-   */
-  const tagLine = params.tags
-    .slice(0, 4)
-    .map((tag) => escapeHtml(tag))
-    .join("・");
-
   return `
     <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
       ${cityscapeHtml()}
@@ -261,7 +247,6 @@ export function cardHtml(params: { title: string; date: string; tags: readonly s
         <div style="display:flex;align-items:flex-end;justify-content:space-between;">
           <div style="display:flex;flex-direction:column;">
             <div style="display:flex;font-size:26px;color:${MUTED_INK};">${escapeHtml(params.date)}</div>
-            <div style="display:flex;font-size:24px;color:${TAG_INK};margin-top:12px;">${tagLine}</div>
           </div>
           ${wordmarkHtml(34)}
         </div>

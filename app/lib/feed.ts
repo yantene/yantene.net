@@ -18,37 +18,16 @@ export interface FeedIdentity {
   readonly subtitle: string;
   /** フィード自身のパス (Atom の rel=self、ページの rel=alternate)。 */
   readonly path: string;
-  /**
-   * 対応する HTML ページのパス。Atom の id もこれを使う。
-   *
-   * id は購読の同一性を決める鍵なので、タグごとに別の URI になる必要がある
-   * (同じ id を使い回すと、リーダーが別のフィードを同じ購読として扱う)。
-   */
+  /** 対応する HTML ページのパス。Atom の id もこれを使う。 */
   readonly alternatePath: string;
 }
 
-/**
- * タグを渡すとそのタグのフィード、渡さなければサイト全体のフィードの名乗りを返す。
- *
- * クエリの組み立てに URLSearchParams ではなく encodeURIComponent を使うのは、
- * 空白を `+` で表すのが application/x-www-form-urlencoded の作法だから。
- * `%20` のままにしておけば、どのパーサを通しても同じタグに戻る。
- */
-export function feedIdentity(tag?: string | null): FeedIdentity {
-  if (tag === undefined || tag === null) {
-    return {
-      title: FEED_TITLE,
-      subtitle: FEED_SUBTITLE,
-      path: "/feed.xml",
-      alternatePath: "/",
-    };
-  }
-
-  const encoded = encodeURIComponent(tag);
+/** サイト全体のフィードの名乗り。タグを廃止したので、フィードは 1 本だけになった。 */
+export function feedIdentity(): FeedIdentity {
   return {
-    title: `${FEED_TITLE} - ${tag}`,
-    subtitle: `タグ「${tag}」のノート`,
-    path: `/feed.xml?tag=${encoded}`,
-    alternatePath: `/notes?tag=${encoded}`,
+    title: FEED_TITLE,
+    subtitle: FEED_SUBTITLE,
+    path: "/feed.xml",
+    alternatePath: "/",
   };
 }

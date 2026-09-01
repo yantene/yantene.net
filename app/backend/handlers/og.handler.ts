@@ -83,7 +83,6 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     const html = cardHtml({
       title: note.title.toString(),
       date: note.publishedOn.toString({ calendarName: "never" }),
-      tags: note.tags.map((tag) => tag.toString()),
     });
     return renderAndCache(
       c.env,

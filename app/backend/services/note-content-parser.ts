@@ -40,7 +40,6 @@ export class VisibilityValueError extends Error {
 export interface NoteFrontmatter {
   readonly title: string | undefined;
   readonly imageUrl: string | undefined;
-  readonly tags: readonly string[];
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
   readonly visibility: NoteVisibility;
@@ -76,7 +75,6 @@ export function parseNoteContent(markdown: string): ParsedNoteContent {
     frontmatter: {
       title: asOptionalString(rawMatter.title),
       imageUrl: asOptionalString(rawMatter.imageUrl),
-      tags: asStringArray(rawMatter.tags),
       publishedOn: asDateString(rawMatter.publishedOn),
       lastModifiedOn: asDateString(rawMatter.lastModifiedOn),
       visibility: asVisibility(rawMatter.visibility),
@@ -367,24 +365,6 @@ function asVisibility(value: unknown): NoteVisibility {
     if (normalized === "private") return "private";
   }
   throw new VisibilityValueError(`frontmatter has unreadable visibility: ${JSON.stringify(value)}`);
-}
-
-/**
- * フロントマターの tags を文字列配列に正規化する。配列以外は空配列に、各要素は
- * trim し空文字を除き、重複を除去する (定義順は保つ)。
- */
-function asStringArray(value: unknown): readonly string[] {
-  if (!Array.isArray(value)) return [];
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const item of value) {
-    if (typeof item !== "string") continue;
-    const trimmed = item.trim();
-    if (trimmed.length === 0 || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    result.push(trimmed);
-  }
-  return result;
 }
 
 /**

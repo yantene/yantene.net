@@ -43,7 +43,6 @@ function renderHeader(): HTMLElement {
         slug={SLUG}
         title={TITLE}
         imageUrl={null}
-        tags={["エッセイ"]}
         publishedOn={PUBLISHED_ON}
         origin={ORIGIN}
       />
@@ -133,14 +132,18 @@ describe("NoteHeader の microformats2", () => {
  * aria-hidden と tabIndex は対で要る。読み上げから消しただけの到達できる要素は、
  * 焦点が当たっても何も読まれない状態になるため、両方を見張る。
  */
-describe("タグの分類", () => {
-  it("タグが p-category として出る", () => {
+describe("分類", () => {
+  /*
+   * タグは廃止したが、p-category は `article` で固定して残す。Post Type Discovery が
+   * p-name と e-content から導く型と同じ語なので、型とカテゴリが食い違わない。
+   */
+  it("p-category が article で出る", () => {
     const container = renderHeader();
 
     const categories = [...container.querySelectorAll(".p-category")].map(
       (node) => node.textContent,
     );
-    expect(categories).toEqual(["エッセイ"]);
+    expect(categories).toEqual(["article"]);
   });
 });
 
