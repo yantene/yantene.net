@@ -4,12 +4,13 @@ import { buildPayload, type ReactionsPayload } from "./reaction.handler";
 import { extractHeadings } from "./toc-headings";
 import { recordNoteView, type NoteViewRecording } from "./view-recording";
 import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
+import type { Note } from "~/backend/domain/note";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
-import { NoteNotFoundError, NoteSlug, NoteTag } from "~/backend/domain/note";
+import { NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
@@ -18,6 +19,7 @@ import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import {
   D1LinkCardQueryRepository,
+  D1NoteEmbeddingQueryRepository,
   D1NoteQueryRepository,
   D1WebmentionBlocklist,
   D1WebmentionQueryRepository,
@@ -145,6 +147,31 @@ export type NoteDetailPageData =
     };
 
 /**
+ * 関連ノートを、本文から作ったベクトルの近さで引く (ADR 0028)。
+ *
+ * 近さの表が持つのは slug だけなので、記事の中身は改めてまとめて引く。並び順は
+ * `findBySlugs` が保証しないため、近い順に並べ直す。
+ *
+ * **タグ版へは戻さない。** ベクトルがまだ無い記事 (公開した直後、refresh が 1 回の上限に
+ * 掛かったとき) はここが空になるが、代わりにタグで並べると「なぜこの並びなのか」が
+ * 記事ごとに変わってしまう。次の refresh で入るので、空のまま出す。
+ */
+async function loadRelated(
+  env: Env,
+  query: D1NoteQueryRepository,
+  slug: NoteSlug,
+): Promise<readonly Note[]> {
+  const slugs = await new D1NoteEmbeddingQueryRepository(env.D1).findRelatedSlugs(
+    slug,
+    RELATED_LIMIT,
+  );
+  if (slugs.length === 0) return [];
+  const notes = await query.findBySlugs(slugs);
+  const bySlug = new Map(notes.map((note) => [note.slug.toString(), note] as const));
+  return slugs.map((item) => bySlug.get(item)).filter((note) => note !== undefined);
+}
+
+/**
  * ノート詳細ページのデータを読む (Composition Root)。認証不要。
  * 存在しない slug は throw せず `found: false` を返し、呼び出し側 (loader) が
  * 404 ステータスで not-found 状態のページを描画する。
@@ -164,11 +191,10 @@ export async function loadNoteDetailPage(
     recordNoteView(env, { id: resolved.noteId, slug: detail.note.slug }, recording);
   }
 
-  const relatedTags = detail.note.tags.map((tag) => NoteTag.create(tag));
   const query = new D1NoteQueryRepository(env.D1);
   const slug = NoteSlug.create(detail.note.slug);
   const [related, reactions, webmentions, blockedHosts] = await Promise.all([
-    query.findRelated(slug, relatedTags, RELATED_LIMIT),
+    loadRelated(env, query, slug),
     loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
     // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
     new D1WebmentionQueryRepository(env.D1).listByNoteId(entityId<"Note">(resolved.noteId)),

@@ -193,29 +193,25 @@ describe("D1NoteQueryRepository", () => {
     expect(found?.tags.map((tag) => tag.toString())).toEqual(["新しい"]);
   });
 
-  it("finds related notes ranked by tag overlap, excluding self", async () => {
+  it("slug をまとめて引く (順序は保証しない)", async () => {
     const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seedTagged("target", "2026-01-01", ["x", "y"]));
-    await cmd.upsert(seedTagged("both", "2026-01-02", ["x", "y"])); // 重複 2
-    await cmd.upsert(seedTagged("one", "2026-03-01", ["x"])); // 重複 1
-    await cmd.upsert(seedTagged("none", "2026-05-01", ["z"])); // 重複 0
+    await seedNotes(new D1NoteCommandRepository(d1));
 
-    const related = await new D1NoteQueryRepository(d1).findRelated(
-      NoteSlug.create("target"),
-      [NoteTag.create("x"), NoteTag.create("y")],
-      6,
-    );
+    const found = await new D1NoteQueryRepository(d1).findBySlugs(["c", "a"]);
 
-    // 重複数の降順: both(2) → one(1)。none(0) と自分自身は除外。
-    expect(related.map((note) => note.slug.toString())).toEqual(["both", "one"]);
+    // 並び順は呼び出し側が決める。ここでは中身が揃っていることだけを見る。
+    expect(found.map((note) => note.slug.toString()).toSorted()).toEqual(["a", "c"]);
   });
 
-  it("returns no related notes when the note has no tags", async () => {
+  it("知らない slug は結果に現れず、空を渡せば空が返る", async () => {
     const d1 = createTestD1();
-    await new D1NoteCommandRepository(d1).upsert(seedTagged("solo", "2026-01-01", ["x"]));
-    const related = await new D1NoteQueryRepository(d1).findRelated(NoteSlug.create("solo"), [], 6);
-    expect(related).toEqual([]);
+    await seedNotes(new D1NoteCommandRepository(d1));
+    const query = new D1NoteQueryRepository(d1);
+
+    const found = await query.findBySlugs(["a", "nope"]);
+
+    expect(found.map((note) => note.slug.toString())).toEqual(["a"]);
+    expect(await query.findBySlugs([])).toEqual([]);
   });
 
   it("full-text searches title/body (FTS5 trigram, Japanese substring)", async () => {
