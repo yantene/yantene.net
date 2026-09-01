@@ -40,6 +40,8 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0024](0024-clock-origin-from-real-time-at-ssr.md)           | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める      | Accepted |
 | [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードの絵の取り逃しを別の状態として持ち、短い期限で取り直す   | Accepted |
 | [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは短い不調の間だけ前回の中身で持ちこたえる               | Accepted |
+| [0028](0028-relate-notes-by-embedding-similarity.md)         | 関連ノートを、refresh 時に作るベクトルの近さで並べる                 | Accepted |
+| [0029](0029-retire-tags.md)                                  | タグをやめ、分類は `article` の 1 つに畳む                           | Accepted |
 
 ## 統合した番号
 

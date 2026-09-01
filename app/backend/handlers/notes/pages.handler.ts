@@ -1,8 +1,7 @@
-import type { Note, NoteListResult, NoteTagCount } from "~/backend/domain/note";
+import type { Note, NoteListResult } from "~/backend/domain/note";
 import {
   parseNoteSort,
   parsePagination,
-  parseTag,
   toPublicNote,
   toPublicNoteList,
   type PublicNoteList,
@@ -31,10 +30,6 @@ const SEARCH_LIMIT = 30;
 export interface NotesListPageData extends PublicNoteList {
   /** 検索語 (未指定なら空文字)。 */
   readonly query: string;
-  /** 絞り込み中のタグ (未絞り込みなら null)。 */
-  readonly tag: string | null;
-  /** 一覧に添えるタグの索引 (記事数の多い順)。 */
-  readonly tags: readonly NoteTagCount[];
   /** ページ送りリンクの再構築に使う、リクエストされた並び順。 */
   readonly sort: {
     readonly sortBy: string | null;
@@ -58,17 +53,13 @@ export async function loadNotesListPage(env: Env, url: URL): Promise<NotesListPa
     url.searchParams.get("sort-by") ?? undefined,
     url.searchParams.get("order") ?? undefined,
   );
-  const tag = parseTag(url.searchParams.get("tag") ?? undefined);
   const searchQuery = (url.searchParams.get("q") ?? "").trim();
 
   const query = new D1NoteQueryRepository(env.D1);
   const isSearching = searchQuery.length > 0;
-  const [list, tags] = await Promise.all([
-    isSearching
-      ? searchNotes(query, searchQuery, tag)
-      : query.list({ limit, offset, sortBy, direction, tag }),
-    query.listTags(),
-  ]);
+  const list = isSearching
+    ? await searchNotes(query, searchQuery)
+    : await query.list({ limit, offset, sortBy, direction });
 
   /*
    * 検索は上限までを一度に返すので、続きは無い。1 ページに収めて継ぎ足しを起こさない。
@@ -81,8 +72,6 @@ export async function loadNotesListPage(env: Env, url: URL): Promise<NotesListPa
   return {
     ...paged,
     query: searchQuery,
-    tag: tag ?? null,
-    tags,
     sort: {
       sortBy: url.searchParams.get("sort-by"),
       order: url.searchParams.get("order"),
@@ -90,25 +79,13 @@ export async function loadNotesListPage(env: Env, url: URL): Promise<NotesListPa
   };
 }
 
-/**
- * 検索語で引き、タグの指定があればそこから絞る。
- *
- * 索引は関連度順に返すので、その並びを保ったまま絞る。絞ってから引き直さないのは、
- * 全文検索とタグ絞り込みを 1 つのクエリにまとめられないため。取り切れる件数のうちに
- * 絞る形なので、検索の上限より多くの記事が同じタグに付いていると取りこぼしが出る。
- */
+/** 検索語で引く。索引が返す関連度順をそのまま保つ。 */
 async function searchNotes(
   query: D1NoteQueryRepository,
   searchQuery: string,
-  tag: string | undefined,
 ): Promise<NoteListResult> {
-  const found = await query.search(searchQuery, SEARCH_LIMIT);
-  const notes =
-    tag === undefined
-      ? found
-      : found.filter((note) => note.tags.some((item) => item.toString() === tag));
-
-  // 検索は関連度順にすべて返すので、ページ送りの母数は絞り込み後の件数そのものになる。
+  const notes = await query.search(searchQuery, SEARCH_LIMIT);
+  // 検索は関連度順にすべて返すので、ページ送りの母数は件数そのものになる。
   return { notes, total: notes.length };
 }
 

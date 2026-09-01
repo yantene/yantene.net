@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { parseTag, toPublicNote, type PublicNote } from "./note-view";
+import { toPublicNote, type PublicNote } from "./note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { feedIdentity, type FeedIdentity } from "~/lib/feed";
 
@@ -24,7 +24,12 @@ function toRfc3339(date: string): string {
 
 function entryXml(origin: string, note: PublicNote): string {
   const url = `${origin}/notes/${note.slug}`;
-  const categories = note.tags.map((tag) => `    <category term="${escapeXml(tag)}"/>`).join("\n");
+  /*
+   * カテゴリは記事ごとに変えず `article` で固定する。タグは廃止した (ADR 0029) が、
+   * 「これは記事である」という自己記述は残す。microformats2 の p-category と同じ語で、
+   * Post Type Discovery が `p-name` と `e-content` から導く型 (article) とも一致する。
+   */
+  const categories = `    <category term="article"/>`;
   return `  <entry>
     <title>${escapeXml(note.title)}</title>
     <link href="${url}"/>
@@ -63,29 +68,25 @@ ${entries}
 /**
  * Atom フィードの公開ルータ。`GET /feed.xml` が最新ノートを Atom で返す。
  *
- * `?tag=<タグ>` を付けるとそのタグのノートだけのフィードになる。絞り込みの書き方も
- * 該当なしのときの振る舞い (200 + 空) も、一覧ページ (`/notes?tag=`) と JSON API に
- * 揃えてある。フィードだけ 404 にすると、タグを畳んだ日に購読中のリーダーが
- * 一斉に「消えたフィード」として扱ってしまう。
+ * タグを廃止したのでフィードは 1 本だけ。`?tag=` を付けても無視して全体を返す。
+ * 404 にすると、購読中のリーダーが「消えたフィード」として扱ってしまう。
  */
 export function createFeedRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/feed.xml", async (c) => {
-    const tag = parseTag(c.req.query("tag"));
     const result = await new D1NoteQueryRepository(c.env.D1).list({
       limit: FEED_LIMIT,
       offset: 0,
       sortBy: "publishedOn",
       direction: "desc",
-      tag,
     });
 
     const origin = new URL(c.req.url).origin;
     const xml = buildAtom(
       origin,
       result.notes.map((note) => toPublicNote(note)),
-      feedIdentity(tag),
+      feedIdentity(),
     );
     return c.body(xml, 200, {
       "Content-Type": "application/atom+xml; charset=utf-8",

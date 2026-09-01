@@ -1,15 +1,4 @@
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  getTableColumns,
-  inArray,
-  ne,
-  sql,
-  type SQL,
-} from "drizzle-orm";
+import { asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToNote } from "./note-row";
 import type {
@@ -19,10 +8,8 @@ import type {
   NoteListResult,
   NoteSlug,
   NoteSortField,
-  NoteTagCount,
 } from "~/backend/domain/note";
-import { NoteTag } from "~/backend/domain/note";
-import { noteTags, notes } from "~/backend/infra/d1/schema";
+import { notes } from "~/backend/infra/d1/schema";
 
 const sortColumns = {
   publishedOn: notes.publishedOn,
@@ -40,23 +27,10 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
     const rows = await this.db.select().from(notes).where(eq(notes.slug, slug.toString())).limit(1);
     const row = rows.at(0);
     if (row === undefined) return undefined;
-    const tags = await this.loadTags([row.id]);
-    return rowToNote(row, tags.get(row.id) ?? []);
+    return rowToNote(row);
   }
 
   async list(query: NoteListQuery): Promise<NoteListResult> {
-    // タグ絞り込み: そのタグを持つノート id に限定する。
-    const filter: SQL | undefined =
-      query.tag === undefined
-        ? undefined
-        : inArray(
-            notes.id,
-            this.db
-              .select({ id: noteTags.noteId })
-              .from(noteTags)
-              .where(eq(noteTags.tag, query.tag)),
-          );
-
     const column = sortColumns[query.sortBy];
     const primary = query.direction === "asc" ? asc(column) : desc(column);
     // 同じ日付のノート同士でも順序を安定させる決定的なタイブレーカ。slug は UNIQUE
@@ -68,41 +42,16 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       this.db
         .select()
         .from(notes)
-        .where(filter)
         .orderBy(primary, tiebreaker)
         .limit(query.limit)
         .offset(query.offset),
-      this.db.select({ value: count() }).from(notes).where(filter),
+      this.db.select({ value: count() }).from(notes),
     ]);
 
-    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
     return {
-      notes: rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? [])),
+      notes: rows.map((row) => rowToNote(row)),
       total,
     };
-  }
-
-  async findRelated(
-    slug: NoteSlug,
-    tags: readonly NoteTag[],
-    limit: number,
-  ): Promise<readonly Note[]> {
-    if (tags.length === 0) return [];
-    const tagValues = tags.map((tag) => tag.toString());
-    const slugValue = slug.toString();
-    const overlap = count(noteTags.tag);
-    const rows = await this.db
-      .select({ ...getTableColumns(notes), overlap })
-      .from(notes)
-      .innerJoin(noteTags, eq(noteTags.noteId, notes.id))
-      .where(and(inArray(noteTags.tag, tagValues), ne(notes.slug, slugValue)))
-      .groupBy(notes.id)
-      // 重複数の降順 → 公開日の降順 → slug 昇順 (決定的なタイブレーカ)。
-      .orderBy(desc(overlap), desc(notes.publishedOn), asc(notes.slug))
-      .limit(limit);
-
-    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
-    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
   }
 
   async search(query: string, limit: number): Promise<readonly Note[]> {
@@ -134,10 +83,7 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
     if (slugs.length === 0) return [];
 
     const rows = await this.db.select().from(notes).where(inArray(notes.slug, slugs));
-    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
-    const bySlug = new Map(
-      rows.map((row) => [row.slug, rowToNote(row, tagsByNote.get(row.id) ?? [])]),
-    );
+    const bySlug = new Map(rows.map((row) => [row.slug, rowToNote(row)]));
     // bm25 の並び順を保って返す。
     return slugs.map((slug) => bySlug.get(slug)).filter((note): note is Note => note !== undefined);
   }
@@ -152,17 +98,16 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       .select()
       .from(notes)
       .where(inArray(notes.id, [...ids]));
-    const tagsByNote = await this.loadTags(rows.map((row) => row.id));
-    return rows.map((row) => rowToNote(row, tagsByNote.get(row.id) ?? []));
+    return rows.map((row) => rowToNote(row));
   }
 
-  async listTags(): Promise<readonly NoteTagCount[]> {
+  async findBySlugs(slugs: readonly string[]): Promise<readonly Note[]> {
+    if (slugs.length === 0) return [];
     const rows = await this.db
-      .select({ tag: noteTags.tag, value: count() })
-      .from(noteTags)
-      .groupBy(noteTags.tag)
-      .orderBy(desc(count()), asc(noteTags.tag));
-    return rows.map((row) => ({ tag: row.tag, count: row.value }));
+      .select()
+      .from(notes)
+      .where(inArray(notes.slug, [...slugs]));
+    return rows.map((row) => rowToNote(row));
   }
 
   async listSourceHashes(): Promise<ReadonlyMap<string, string>> {
@@ -170,22 +115,5 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
       .select({ slug: notes.slug, sourceHash: notes.sourceHash })
       .from(notes);
     return new Map(rows.map((row) => [row.slug, row.sourceHash]));
-  }
-
-  /** 指定ノート群のタグを id → NoteTag[] にまとめて読み込む。 */
-  private async loadTags(noteIds: readonly string[]): Promise<Map<string, NoteTag[]>> {
-    const map = new Map<string, NoteTag[]>();
-    if (noteIds.length === 0) return map;
-    const rows = await this.db
-      .select({ noteId: noteTags.noteId, tag: noteTags.tag })
-      .from(noteTags)
-      .where(inArray(noteTags.noteId, [...noteIds]))
-      .orderBy(asc(noteTags.tag));
-    for (const row of rows) {
-      const list = map.get(row.noteId) ?? [];
-      list.push(NoteTag.create(row.tag));
-      map.set(row.noteId, list);
-    }
-    return map;
   }
 }

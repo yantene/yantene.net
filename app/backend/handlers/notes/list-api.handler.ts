@@ -1,10 +1,5 @@
 import { Hono } from "hono";
-import {
-  parseNoteSort,
-  parsePagination,
-  parseTag,
-  toPublicNoteList,
-} from "~/backend/handlers/note-view";
+import { parseNoteSort, parsePagination, toPublicNoteList } from "~/backend/handlers/note-view";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
 /**
@@ -23,10 +18,8 @@ export function createNotesApiRouter(): Hono<{ Bindings: Env }> {
     );
     const { sortBy, direction } = parseNoteSort(c.req.query("sort-by"), c.req.query("order"));
 
-    const tag = parseTag(c.req.query("tag"));
-
     const query = new D1NoteQueryRepository(c.env.D1);
-    const result = await query.list({ limit, offset, sortBy, direction, tag });
+    const result = await query.list({ limit, offset, sortBy, direction });
     return c.json(toPublicNoteList(result, page, perPage));
   });
 

@@ -7,13 +7,17 @@ import {
   D1LinkCardCommandRepository,
   D1LinkCardQueryRepository,
   D1NoteCommandRepository,
+  D1NoteEmbeddingCommandRepository,
+  D1NoteEmbeddingQueryRepository,
   D1NoteQueryRepository,
   D1NoteSearchIndex,
 } from "~/backend/infra/d1/repositories";
+import { WorkersAiEmbeddingGenerator } from "~/backend/infra/ai/workers-ai-embedding-generator";
 import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
+import { NoteEmbeddingsRefreshService } from "~/backend/services/note-embeddings-refresh.service";
 import { NotesRefreshService } from "~/backend/services/notes-refresh.service";
 
 /** シークレットを載せるヘッダ。staging の BASIC 認証 (Authorization) と衝突しないよう専用ヘッダにする。 */
@@ -75,7 +79,21 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
       logger,
     ).sync(result.linkedUrls, Temporal.Now.instant(), { force: isForce });
 
-    return c.json({ ...result, linkCards });
+    /*
+     * 記事のベクトルと、記事どうしの近さを揃える。ここもノートの同期とは失敗の扱いが
+     * 違う (外部のモデルに触るので落ちることがある) ので別のサービスに分けている。
+     * 作れなかった記事は前回のベクトルと近さがそのまま残り、関連ノートは前の並びで出る。
+     */
+    const embeddings = await new NoteEmbeddingsRefreshService(
+      new WorkersAiEmbeddingGenerator(c.env.AI),
+      new D1NoteEmbeddingCommandRepository(c.env.D1),
+      new D1NoteEmbeddingQueryRepository(c.env.D1),
+      new D1NoteQueryRepository(c.env.D1),
+      new R2NoteContentCache(c.env.R2),
+      new ConsoleLogger({ component: "note-embeddings" }),
+    ).sync({ force: isForce });
+
+    return c.json({ ...result, linkCards, embeddings });
   });
 
   return router;

@@ -40,7 +40,6 @@
 @import "./components/reaction/reaction-bar.css";
 @import "./components/reaction/reaction-hint.css";
 @import "./components/share/share-menu.css";
-@import "./components/tag-index/tag-index.css";
 @import "./routes/home.css";
 @import "./routes/notes.css";
 @import "./routes/notes.$slug.css";

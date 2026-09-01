@@ -3,16 +3,15 @@ import { describe, expect, it } from "vitest";
 import { loadNotesListPage } from "./pages.handler";
 import type { NotesListPageData } from "./pages.handler";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { Note, NoteSlug, NoteTag, NoteTitle } from "~/backend/domain/note";
+import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
 import { D1NoteCommandRepository, D1NoteSearchIndex } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
-function note(slug: string, publishedOn: string, tags: readonly string[]): Note<IUnpersisted> {
+function note(slug: string, publishedOn: string): Note<IUnpersisted> {
   return Note.create({
     slug: NoteSlug.create(slug),
     title: NoteTitle.create(slug),
     summary: `summary of ${slug}`,
-    tags: tags.map((tag) => NoteTag.create(tag)),
     publishedOn: Temporal.PlainDate.from(publishedOn),
     lastModifiedOn: Temporal.PlainDate.from(publishedOn),
     sourceHash: `hash-${slug}`,
@@ -22,12 +21,12 @@ function note(slug: string, publishedOn: string, tags: readonly string[]): Note<
 async function seed(d1: D1Database): Promise<void> {
   const cmd = new D1NoteCommandRepository(d1);
   const index = new D1NoteSearchIndex(d1);
-  for (const [slug, publishedOn, tags] of [
-    ["alpha", "2026-01-10", ["Web", "日記"]],
-    ["bravo", "2025-03-10", ["Web"]],
-    ["charlie", "2024-02-10", ["日記"]],
+  for (const [slug, publishedOn] of [
+    ["alpha", "2026-01-10"],
+    ["bravo", "2025-03-10"],
+    ["charlie", "2024-02-10"],
   ] as const) {
-    await cmd.upsert(note(slug, publishedOn, tags));
+    await cmd.upsert(note(slug, publishedOn));
     // 検索は索引を引く。本文を持たないので、表題と要約だけ入れておく。
     await index.index({
       slug: NoteSlug.create(slug),
@@ -50,27 +49,15 @@ describe("loadNotesListPage", () => {
     const page = await load(d1, "");
     expect(page.notes.map((n) => n.slug)).toEqual(["alpha", "bravo", "charlie"]);
     expect(page.query).toBe("");
-    expect(page.tag).toBeNull();
   });
 
-  it("タグの索引を、記事数の多い順に添える", async () => {
-    const d1 = createTestD1();
-    await seed(d1);
-
-    const page = await load(d1, "");
-    expect(page.tags.map((t) => t.tag)).toEqual(["Web", "日記"]);
-    expect(page.tags.map((t) => t.count)).toEqual([2, 2]);
-  });
-
-  it("タグで絞り込む", async () => {
+  /* タグは廃止した (ADR 0029)。残っている ?tag= は無視して全件返す。 */
+  it("?tag= は無視して全件返す", async () => {
     const d1 = createTestD1();
     await seed(d1);
 
     const page = await load(d1, "?tag=Web");
-    expect(page.notes.map((n) => n.slug)).toEqual(["alpha", "bravo"]);
-    expect(page.tag).toBe("Web");
-    // 索引は絞り込んでも全部出す (別のタグへ移れなくなるため)。
-    expect(page.tags).toHaveLength(2);
+    expect(page.notes.map((n) => n.slug)).toEqual(["alpha", "bravo", "charlie"]);
   });
 
   it("検索語を受け取り、結果を 1 ページに収める", async () => {
@@ -85,19 +72,6 @@ describe("loadNotesListPage", () => {
      * API に検索語が渡らず無関係な記事が混ざる。
      */
     expect(page.pagination.totalPages).toBe(1);
-  });
-
-  it("検索語とタグを併用すると、検索結果をさらに絞る", async () => {
-    const d1 = createTestD1();
-    await seed(d1);
-
-    const hit = await load(d1, "?q=summary&tag=日記");
-    expect(hit.notes.map((n) => n.slug).toSorted((a, b) => a.localeCompare(b))).toEqual([
-      "alpha",
-      "charlie",
-    ]);
-    expect(hit.query).toBe("summary");
-    expect(hit.tag).toBe("日記");
   });
 
   it("空白だけの検索語は指定なしとして扱う", async () => {

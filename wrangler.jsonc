@@ -14,6 +14,10 @@
     "GITHUB_REPO": "notes",
     "GITHUB_BRANCH": "main",
   },
+  // Workers AI: 記事のベクトル (関連ノートの並び)。モデルは infra 側が持つ。
+  "ai": {
+    "binding": "AI",
+  },
   "d1_databases": [
     {
       "binding": "D1",
@@ -54,6 +58,9 @@
         "GITHUB_REPO": "notes",
         "GITHUB_BRANCH": "staging",
       },
+      "ai": {
+        "binding": "AI",
+      },
       "d1_databases": [
         {
           "binding": "D1",
@@ -89,6 +96,9 @@
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
         "GITHUB_BRANCH": "main",
+      },
+      "ai": {
+        "binding": "AI",
       },
       "d1_databases": [
         {

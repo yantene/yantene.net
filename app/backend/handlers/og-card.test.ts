@@ -61,15 +61,13 @@ describe("cardHtml", () => {
   const params = {
     title: "はじめてのノート",
     date: "2026-05-08",
-    tags: ["エッセイ"],
   };
 
-  it("表題・日付・タグを載せる", () => {
+  it("表題と日付を載せる", () => {
     const html = cardHtml(params);
 
     expect(html).toContain("はじめてのノート");
     expect(html).toContain("2026-05-08");
-    expect(html).toContain("エッセイ");
   });
 
   /*
@@ -103,14 +101,6 @@ describe("cardHtml", () => {
 
   it("短い表題は切り詰めない", () => {
     expect(cardHtml(params)).not.toContain("…");
-  });
-
-  /* タグは 4 つまで。多いと日付と競って読みづらくなる。 */
-  it("タグは 4 つまでに絞る", () => {
-    const html = cardHtml({ ...params, tags: ["a", "b", "c", "d", "e"] });
-
-    expect(html).toContain("a・b・c・d");
-    expect(html).not.toContain("・e");
   });
 
   it("街と上端の帯を敷く", () => {

@@ -19,8 +19,6 @@ type FeedLinkProps = {
   /**
    * リンクの文言。1 つの画面に行き先の違うフィードが並ぶとき (一覧の見出しと
    * フッター) は、どちらを指しているかが文言で分かるようにする。
-   */
-  readonly label?: string;
   /**
    * 文字の大きさと色。置き場所 (フッターの帯・一覧の見出し脇) で地の色が違うので
    * 呼び出し側が差し替えられるようにしてある。既定値は上書きではなく置き換えなので、
@@ -37,7 +35,6 @@ type FeedLinkProps = {
  */
 export function FeedLink({
   href = "/feed.xml",
-  label,
   className = "text-sm text-base-content/60",
 }: FeedLinkProps): React.JSX.Element {
   const { t } = useTranslation();
@@ -45,7 +42,7 @@ export function FeedLink({
   return (
     <a href={href} type="application/atom+xml" className={`${INLINE_ICON_LINK} ${className}`}>
       <HiOutlineRss aria-hidden="true" />
-      {label ?? t("feed.label")}
+      {t("feed.label")}
     </a>
   );
 }

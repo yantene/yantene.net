@@ -5,7 +5,7 @@ import { rowToNote } from "./note-row";
 import type { INoteCommandRepository, Note, NoteId, NoteSlug } from "~/backend/domain/note";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { viewWeightLog } from "~/backend/domain/note-view";
-import { noteTags, notes, webmentions } from "~/backend/infra/d1/schema";
+import { notes, webmentions } from "~/backend/infra/d1/schema";
 import { instantToUnix, plainDateToIso } from "~/backend/infra/d1/temporal";
 
 export class D1NoteCommandRepository implements INoteCommandRepository {
@@ -47,18 +47,7 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
       .onConflictDoUpdate({ target: notes.slug, set: content })
       .returning();
 
-    await this.replaceTags(row.id, note.tags);
-
-    return rowToNote(row, note.tags);
-  }
-
-  /** ノートのタグを丸ごと入れ替える (差分計算より単純で確実)。重複タグは除去する。 */
-  private async replaceTags(noteId: string, tags: Note["tags"]): Promise<void> {
-    await this.db.delete(noteTags).where(eq(noteTags.noteId, noteId));
-    const unique = [...new Set(tags.map((tag) => tag.toString()))];
-    if (unique.length > 0) {
-      await this.db.insert(noteTags).values(unique.map((tag) => ({ noteId, tag })));
-    }
+    return rowToNote(row);
   }
 
   async deleteBySlug(slug: NoteSlug): Promise<void> {
@@ -67,13 +56,11 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
       .select({ id: notes.id })
       .from(notes)
       .where(eq(notes.slug, slug.toString()));
-    await this.db.delete(noteTags).where(inArray(noteTags.noteId, noteIds));
     await this.db.delete(webmentions).where(inArray(webmentions.noteId, noteIds));
     await this.db.delete(notes).where(eq(notes.slug, slug.toString()));
   }
 
   async delete(id: NoteId): Promise<void> {
-    await this.db.delete(noteTags).where(eq(noteTags.noteId, id));
     await this.db.delete(webmentions).where(eq(webmentions.noteId, id));
     await this.db.delete(notes).where(eq(notes.id, id));
   }

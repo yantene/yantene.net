@@ -12,7 +12,6 @@ import { createNoteMarkdownRouter } from "./handlers/notes/markdown.handler";
 import { createNoteReactionApiRouter } from "./handlers/notes/reaction.handler";
 import { createRefreshRouter } from "./handlers/notes/refresh.handler";
 import { createSearchApiRouter } from "./handlers/notes/search.handler";
-import { createTagsApiRouter } from "./handlers/notes/tags.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
 import { createWebmentionRouter } from "./handlers/webmention.handler";
@@ -148,7 +147,6 @@ export const getApp = (
   app.route("/api/v1/notes", createNoteReactionApiRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
-  app.route("/api/v1/tags", createTagsApiRouter());
   app.route("/api/v1/search", createSearchApiRouter());
   app.route("/og", createOgRouter());
   app.route("/", createFeedRouter());

@@ -7,7 +7,6 @@ export interface NoteTimelineItemProps {
   readonly title: string;
   readonly summary: string;
   readonly imageUrl: string | null;
-  readonly tags: readonly string[];
   readonly publishedOn: string;
 }
 
@@ -24,9 +23,6 @@ interface NoteTimelineItemOptions {
   readonly rank?: number;
 }
 
-/** 添えるタグの数。多いと日付と競って読みづらくなる。 */
-const SHOWN_TAG_COUNT = 3;
-
 /**
  * タイムライン 1 件分。項目全体がノート詳細へのリンクになる。
  *
@@ -39,7 +35,6 @@ export function NoteTimelineItem({
   title,
   summary,
   imageUrl,
-  tags,
   publishedOn,
   omitYear = false,
   rank,
@@ -76,15 +71,6 @@ export function NoteTimelineItem({
             {title}
           </h3>
           <p className="p-summary line-clamp-2 text-sm text-base-content/70">{summary}</p>
-          {tags.length > 0 && (
-            <p className="note-timeline-tags">
-              {tags.slice(0, SHOWN_TAG_COUNT).map((tag) => (
-                <span key={tag} className="note-timeline-tag p-category">
-                  {tag}
-                </span>
-              ))}
-            </p>
-          )}
         </div>
 
         {imageUrl !== null && (

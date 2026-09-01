@@ -8,7 +8,6 @@ const meta: Meta<typeof NoteHeader> = {
     slug: "hello-world",
     title: "はじめてのノート",
     imageUrl: "https://picsum.photos/seed/yantene/1200/514",
-    tags: ["エッセイ", "日記"],
     publishedOn: "2026-05-08",
     origin: "https://yantene.net",
   },
@@ -32,17 +31,11 @@ export const WithoutCover: Story = {
   args: { imageUrl: null },
 };
 
-/** タグを持たない記事。 */
-export const WithoutTags: Story = {
-  args: { tags: [] },
-};
-
-/** 折り返す長さの表題と、多めのタグ。 */
+/** 折り返す長さの表題。 */
 export const LongTitle: Story = {
   args: {
     title:
       "Cloudflare Workers と Hono と React Router v7 で個人サイトを組み直したときに考えていたこと",
-    tags: ["Cloudflare", "Hono", "React Router", "設計", "ふりかえり"],
   },
 };
 

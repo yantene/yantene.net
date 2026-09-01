@@ -4,24 +4,8 @@ import { D1NoteSearchIndex } from "./note-search-index";
 import { D1NoteCommandRepository } from "./note.command-repository";
 import { D1NoteQueryRepository } from "./note.query-repository";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { Note, NoteSlug, NoteTag, NoteTitle } from "~/backend/domain/note";
+import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
-
-function seedTagged(
-  slug: string,
-  publishedOn: string,
-  tags: readonly string[],
-): Note<IUnpersisted> {
-  return Note.create({
-    slug: NoteSlug.create(slug),
-    title: NoteTitle.create(slug),
-    summary: "s",
-    tags: tags.map((tag) => NoteTag.create(tag)),
-    publishedOn: Temporal.PlainDate.from(publishedOn),
-    lastModifiedOn: Temporal.PlainDate.from(publishedOn),
-    sourceHash: `hash-${slug}`,
-  });
-}
 
 function seed(params: {
   slug: string;
@@ -140,95 +124,38 @@ describe("D1NoteQueryRepository", () => {
     expect(page2.notes.map((n) => n.slug.toString())).toEqual(["c"]);
   });
 
-  it("loads a note's tags on findBySlug", async () => {
+  it("slug をまとめて引く (順序は保証しない)", async () => {
     const d1 = createTestD1();
-    await new D1NoteCommandRepository(d1).upsert(
-      seedTagged("t", "2026-01-01", ["日記", "プログラミング"]),
-    );
-    const found = await new D1NoteQueryRepository(d1).findBySlug(NoteSlug.create("t"));
-    expect(found?.tags.map((tag) => tag.toString()).toSorted((a, b) => a.localeCompare(b))).toEqual(
-      ["プログラミング", "日記"],
-    );
+    await seedNotes(new D1NoteCommandRepository(d1));
+
+    const found = await new D1NoteQueryRepository(d1).findBySlugs(["c", "a"]);
+
+    // 並び順は呼び出し側が決める。ここでは中身が揃っていることだけを見る。
+    expect(found.map((note) => note.slug.toString()).toSorted()).toEqual(["a", "c"]);
   });
 
-  it("filters the list by tag (total = filtered count)", async () => {
+  it("知らない slug は結果に現れず、空を渡せば空が返る", async () => {
     const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seedTagged("a", "2026-01-01", ["日記"]));
-    await cmd.upsert(seedTagged("b", "2026-02-01", ["日記", "試験"]));
-    await cmd.upsert(seedTagged("c", "2026-03-01", ["試験"]));
+    await seedNotes(new D1NoteCommandRepository(d1));
+    const query = new D1NoteQueryRepository(d1);
 
-    const { notes, total } = await new D1NoteQueryRepository(d1).list({
-      limit: 10,
-      offset: 0,
-      sortBy: "publishedOn",
-      direction: "desc",
-      tag: "日記",
-    });
+    const found = await query.findBySlugs(["a", "nope"]);
 
-    expect(total).toBe(2);
-    expect(notes.map((n) => n.slug.toString())).toEqual(["b", "a"]);
-  });
-
-  it("lists tags with counts (count desc)", async () => {
-    const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seedTagged("a", "2026-01-01", ["日記"]));
-    await cmd.upsert(seedTagged("b", "2026-02-01", ["日記", "試験"]));
-
-    const tags = await new D1NoteQueryRepository(d1).listTags();
-    expect(tags).toEqual([
-      { tag: "日記", count: 2 },
-      { tag: "試験", count: 1 },
-    ]);
-  });
-
-  it("replaces tags on re-upsert (no stale tags)", async () => {
-    const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seedTagged("x", "2026-01-01", ["古い"]));
-    await cmd.upsert(seedTagged("x", "2026-01-01", ["新しい"]));
-
-    const found = await new D1NoteQueryRepository(d1).findBySlug(NoteSlug.create("x"));
-    expect(found?.tags.map((tag) => tag.toString())).toEqual(["新しい"]);
-  });
-
-  it("finds related notes ranked by tag overlap, excluding self", async () => {
-    const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    await cmd.upsert(seedTagged("target", "2026-01-01", ["x", "y"]));
-    await cmd.upsert(seedTagged("both", "2026-01-02", ["x", "y"])); // 重複 2
-    await cmd.upsert(seedTagged("one", "2026-03-01", ["x"])); // 重複 1
-    await cmd.upsert(seedTagged("none", "2026-05-01", ["z"])); // 重複 0
-
-    const related = await new D1NoteQueryRepository(d1).findRelated(
-      NoteSlug.create("target"),
-      [NoteTag.create("x"), NoteTag.create("y")],
-      6,
-    );
-
-    // 重複数の降順: both(2) → one(1)。none(0) と自分自身は除外。
-    expect(related.map((note) => note.slug.toString())).toEqual(["both", "one"]);
-  });
-
-  it("returns no related notes when the note has no tags", async () => {
-    const d1 = createTestD1();
-    await new D1NoteCommandRepository(d1).upsert(seedTagged("solo", "2026-01-01", ["x"]));
-    const related = await new D1NoteQueryRepository(d1).findRelated(NoteSlug.create("solo"), [], 6);
-    expect(related).toEqual([]);
+    expect(found.map((note) => note.slug.toString())).toEqual(["a"]);
+    expect(await query.findBySlugs([])).toEqual([]);
   });
 
   it("full-text searches title/body (FTS5 trigram, Japanese substring)", async () => {
     const d1 = createTestD1();
     const cmd = new D1NoteCommandRepository(d1);
     const idx = new D1NoteSearchIndex(d1);
-    await cmd.upsert(seedTagged("arduino", "2026-01-01", ["電子工作"]));
+    await cmd.upsert(seed({ slug: "arduino", publishedOn: "2026-01-01" }));
     await idx.index({
       slug: NoteSlug.create("arduino"),
       title: "Arduino を購入",
       body: "マイコンで遊ぶ話",
     });
-    await cmd.upsert(seedTagged("other", "2026-01-02", []));
+    await cmd.upsert(seed({ slug: "other", publishedOn: "2026-01-02" }));
     await idx.index({
       slug: NoteSlug.create("other"),
       title: "別の記事",
@@ -243,7 +170,7 @@ describe("D1NoteQueryRepository", () => {
     const d1 = createTestD1();
     const cmd = new D1NoteCommandRepository(d1);
     const idx = new D1NoteSearchIndex(d1);
-    await cmd.upsert(seedTagged("exam", "2026-01-01", []));
+    await cmd.upsert(seed({ slug: "exam", publishedOn: "2026-01-01" }));
     await idx.index({
       slug: NoteSlug.create("exam"),
       title: "試験に合格した話",
