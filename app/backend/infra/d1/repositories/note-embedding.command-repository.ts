@@ -37,28 +37,26 @@ export class D1NoteEmbeddingCommandRepository implements INoteEmbeddingCommandRe
   }
 
   /**
-   * この記事に紐づく近さの行を入れ替える。
+   * 近さの行を全部入れ替える。
    *
-   * 消してから入れるのは、記事が減ったときに古い相手との行が残らないようにするため。
-   * 途中で落ちるとその記事の関連ノートが一時的に空になるが、次の refresh で入り直す
-   * (ベクトルの側は消していないので、作り直しも要らない)。
+   * 消してから入れるところまでを 1 つの batch にまとめる。D1 の batch は暗黙の
+   * トランザクションなので、途中で落ちても「全記事の関連ノートが空」の状態は表に出ない。
    */
-  async replaceSimilarities(
-    noteId: EntityId<"Note">,
-    similarities: readonly NoteSimilarity[],
-  ): Promise<void> {
-    await this.deleteSimilaritiesOf(noteId);
-    // 両方向を書く。片方向だと、後から書いた記事が古い記事の関連ノートに出てこない。
+  async replaceAllSimilarities(similarities: readonly NoteSimilarity[]): Promise<void> {
+    // 両方向を書く。読むときに OR で引かずに済ませるため (note-similarities.ts)。
     const rows = similarities.flatMap((pair) => [
       { noteId: pair.noteId, otherNoteId: pair.otherNoteId, similarity: pair.similarity },
       { noteId: pair.otherNoteId, otherNoteId: pair.noteId, similarity: pair.similarity },
     ]);
-    // 直前に両方向を消してあるので、素の insert で足りる。
+    const inserts = [];
     for (let index = 0; index < rows.length; index += SIMILARITY_ROWS_PER_STATEMENT) {
-      await this.db
-        .insert(noteSimilarities)
-        .values(rows.slice(index, index + SIMILARITY_ROWS_PER_STATEMENT));
+      inserts.push(
+        this.db
+          .insert(noteSimilarities)
+          .values(rows.slice(index, index + SIMILARITY_ROWS_PER_STATEMENT)),
+      );
     }
+    await this.db.batch([this.db.delete(noteSimilarities), ...inserts]);
   }
 
   async deleteBySlug(slug: NoteSlug): Promise<void> {

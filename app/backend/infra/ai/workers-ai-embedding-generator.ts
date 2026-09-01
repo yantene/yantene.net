@@ -4,19 +4,22 @@ import type { IEmbeddingGenerator } from "~/backend/domain/note-embedding";
 /**
  * 既定のモデル。
  *
- * 記事が全部日本語なので、日本語向けに学習されたものを採る。2048 次元を出すため
- * Vectorize (1 ベクトル 1536 次元まで) には入らないが、57 本の全ペアを総当たりする
- * 構成なのでベクトルデータベースは使っていない。
+ * 日本語向けの `@cf/pfnet/plamo-embedding-1b` ではなく、多言語の bge-m3 を採る。
+ * 手元の 55 本で 4 モデルを回して決めた (ADR 0028)。plamo は日本語特化にもかかわらず
+ * 「どの記事の関連ノートにも出てこない記事」が 7 本残り (bge-m3 は 3 本)、そこに
+ * 書いたばかりの最新記事が入っていた。加えて 2048 次元で保存が倍、値段が 1.6 倍、
+ * Vectorize (1 ベクトル 1536 次元まで) にも入らない。
  */
-export const DEFAULT_EMBEDDING_MODEL = "@cf/pfnet/plamo-embedding-1b";
+export const DEFAULT_EMBEDDING_MODEL = "@cf/baai/bge-m3";
 
 /**
  * このモデルが 1 度に受け取れる長さの目安 (文字数)。
  *
- * 上限は 4096 トークン。日本語は 1 文字が 1 トークンを超えることがあるので、
- * 文字数で余裕を持って切る。超える本文は呼ぶ側が分けて渡す。
+ * 上限は 60,000 トークンで、いまの記事は最長でも 7,229 字なので実際には分割されない。
+ * それでも上限を置くのは、長い記事を書いたときに黙って切り捨てられないようにするため
+ * (超えた分は呼ぶ側が分けて投げ、平均を取る)。モデルの選定もこの値で測っている。
  */
-const MAX_INPUT_CHARACTERS = 3000;
+const MAX_INPUT_CHARACTERS = 8000;
 
 /** 1 度の呼び出しで投げる本数。 */
 const MAX_TEXTS_PER_CALL = 8;

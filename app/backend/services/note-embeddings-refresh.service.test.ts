@@ -56,7 +56,8 @@ function generatorReturning(vectors: readonly number[][]): IEmbeddingGenerator {
 interface Harness {
   readonly service: NoteEmbeddingsRefreshService;
   readonly upserted: NoteEmbedding[];
-  readonly replaced: { noteId: string; rows: readonly NoteSimilarity[] }[];
+  /** replaceAllSimilarities に渡ってきたペアの列。書き直しごとに 1 要素増える。 */
+  readonly rewritten: (readonly NoteSimilarity[])[];
 }
 
 function harness(options: {
@@ -66,15 +67,15 @@ function harness(options: {
   readonly generator?: IEmbeddingGenerator;
 }): Harness {
   const upserted: NoteEmbedding[] = [];
-  const replaced: { noteId: string; rows: readonly NoteSimilarity[] }[] = [];
+  const rewritten: (readonly NoteSimilarity[])[] = [];
 
   const command: INoteEmbeddingCommandRepository = {
     upsert: async (embedding) => {
       upserted.push(embedding);
       return Promise.resolve();
     },
-    replaceSimilarities: async (noteId, rows) => {
-      replaced.push({ noteId, rows });
+    replaceAllSimilarities: async (pairs) => {
+      rewritten.push(pairs);
       return Promise.resolve();
     },
     deleteBySlug: vi.fn(async () => Promise.resolve()),
@@ -107,7 +108,7 @@ function harness(options: {
       silentLogger(),
     ),
     upserted,
-    replaced,
+    rewritten,
   };
 }
 
@@ -165,42 +166,101 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(upserted).toHaveLength(1);
   });
 
-  it("pairs a new note with every note already stored", async () => {
-    const stored: NoteEmbedding[] = ["beta", "gamma"].map((slug) => ({
-      noteId: entityId<"Note">(`id-${slug}`),
-      slug: NoteSlug.create(slug),
+  it("1 本足しただけでも、既存どうしを含む全ペアを書き直す", async () => {
+    const stored: NoteEmbedding[] = [
+      { slug: "beta", raw: [0, 1, 0] },
+      { slug: "gamma", raw: [0, 0, 1] },
+    ].map((item) => ({
+      noteId: entityId<"Note">(`id-${item.slug}`),
+      slug: NoteSlug.create(item.slug),
       model: MODEL,
       contentHash: "hash-old",
-      vector: EmbeddingVector.create([1, 0]),
+      vector: EmbeddingVector.create(item.raw),
     }));
-    const { service, replaced } = harness({
+    const { service, rewritten } = harness({
       slugs: ["alpha"],
       hashes: new Map([["alpha", "hash-1"]]),
       stored,
+      generator: generatorReturning([[1, 0, 0]]),
     });
 
-    await service.sync(["alpha"]);
+    const result = await service.sync(["alpha"]);
 
-    // 古い 2 本ぶんの行が、新しい記事の側から書かれる。両方向にするのは
-    // リポジトリの役目なので、ここではペアが揃っていることだけを見る。
-    expect(replaced).toHaveLength(1);
-    expect(replaced[0]?.rows.map((row) => row.otherNoteId)).toEqual(["id-beta", "id-gamma"]);
+    /*
+     * 中心化した類似度はコーパス全体の平均から出るので、alpha を足すと beta と gamma の
+     * 間の値まで動く。1 記事ぶんだけ書き替えるのでは足りない。
+     */
+    expect(rewritten).toHaveLength(1);
+    expect(result.rewrittenPairs).toBe(3);
+    expect(rewritten[0]?.map((pair) => [pair.noteId, pair.otherNoteId])).toEqual([
+      ["id-beta", "id-gamma"],
+      ["id-beta", "id-alpha"],
+      ["id-gamma", "id-alpha"],
+    ]);
   });
 
-  it("pairs notes embedded in the same run with each other", async () => {
-    const { service, replaced } = harness({
+  it("中心化してから比べる (素の内積のままにしない)", async () => {
+    const { service, rewritten } = harness({
       slugs: ["alpha", "beta"],
       hashes: new Map([
         ["alpha", "hash-1"],
         ["beta", "hash-2"],
       ]),
+      generator: generatorReturning([
+        [1, 0, 0],
+        [0, 1, 0],
+      ]),
     });
 
     await service.sync(["alpha", "beta"]);
 
-    // alpha は相手がいないので 0 行、beta は alpha との 1 行。
-    expect(replaced[0]?.rows).toHaveLength(0);
-    expect(replaced[1]?.rows.map((row) => row.otherNoteId)).toEqual(["id-alpha"]);
+    /*
+     * 直交する 2 本なので、素のままなら内積は 0。平均を引くと互いに逆を向くので -1 になる。
+     * ここが 0 のままなら中心化が効いていない。
+     */
+    expect(rewritten[0]).toHaveLength(1);
+    expect(rewritten[0]?.[0]?.similarity).toBeCloseTo(-1, 5);
+  });
+
+  it("作り直しの途中 (モデル差し替え直後) は書き直さない", async () => {
+    // 古いモデルのまま残っている 1 本。今回の run では上限に掛からずとも揃わない。
+    const stale: NoteEmbedding = {
+      noteId: entityId<"Note">("id-beta"),
+      slug: NoteSlug.create("beta"),
+      model: "an-older-model",
+      contentHash: "hash-old",
+      vector: EmbeddingVector.create([0, 1, 0]),
+    };
+    const { service, rewritten } = harness({
+      slugs: ["alpha"],
+      hashes: new Map([["alpha", "hash-1"]]),
+      stored: [stale],
+      generator: generatorReturning([[1, 0, 0]]),
+    });
+
+    const result = await service.sync(["alpha"]);
+
+    // 揃うまで書き直さない。潰すと beta の関連ノートが空になる。
+    expect(rewritten).toHaveLength(0);
+    expect(result.rewrittenPairs).toBe(0);
+    expect(result.embedded).toEqual(["alpha"]);
+  });
+
+  it("書き直しが落ちても、記事の同期は通す", async () => {
+    const { service } = harness({
+      slugs: ["alpha", "beta"],
+      hashes: new Map([
+        ["alpha", "hash-1"],
+        ["beta", "hash-2"],
+      ]),
+      // 本文が同じ 2 本。中心化するとゼロベクトルになって落ちる経路。
+      generator: generatorReturning([[1, 0, 0]]),
+    });
+
+    const result = await service.sync(["alpha", "beta"]);
+
+    expect(result.embedded).toEqual(["alpha", "beta"]);
+    expect(result.rewrittenPairs).toBe(0);
   });
 
   it("records a failure without stopping the run, leaving the old vector in place", async () => {

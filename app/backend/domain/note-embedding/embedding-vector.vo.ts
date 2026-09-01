@@ -80,6 +80,38 @@ export class EmbeddingVector implements IValueObject<EmbeddingVector> {
     return EmbeddingVector.create(summed);
   }
 
+  /**
+   * コーパス全体の平均を引いてから正規化し直す (中心化)。
+   *
+   * 素のベクトルは全体が同じ向きに寄っている。そのせいで特定の 1 本がどの記事の上位にも
+   * 居座る一方 (ハブ)、どこからも出てこない記事が残る。平均を引くと記事どうしの差だけが
+   * 残り、実測ではハブが 23 回から 10 回に減り、どこからも出てこない記事が 3 本から
+   * 0 本になった (ADR 0028)。
+   *
+   * **平均は記事が増えるたびに動く。** 一部の記事だけ中心化し直すと、違う平均で引いた値が
+   * 同じ表に並んで比べられなくなる。呼ぶ側は必ず全ペアをまとめて計算し直すこと。
+   *
+   * 1 本しか無いときは中心化しない (引くと必ずゼロベクトルになる)。比べる相手が
+   * 居ないので、そのまま返して困らない。
+   */
+  static centerAll(vectors: readonly EmbeddingVector[]): readonly EmbeddingVector[] {
+    const [head] = vectors;
+    if (head === undefined || vectors.length < 2) return vectors;
+    if (vectors.some((vector) => vector.dimensions !== head.dimensions)) {
+      throw new InvalidEmbeddingVectorError("Cannot center vectors of different dimensions.");
+    }
+    const centroid = new Float32Array(head.dimensions);
+    for (const vector of vectors) {
+      for (let index = 0; index < centroid.length; index++) {
+        centroid[index] = (centroid[index] ?? 0) + (vector.values[index] ?? 0) / vectors.length;
+      }
+    }
+    // create が正規化まで済ませる。
+    return vectors.map((vector) =>
+      EmbeddingVector.create(vector.values.map((value, index) => value - (centroid[index] ?? 0))),
+    );
+  }
+
   get dimensions(): number {
     return this.values.length;
   }

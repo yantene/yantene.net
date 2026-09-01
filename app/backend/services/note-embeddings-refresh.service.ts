@@ -30,6 +30,13 @@ export interface NoteEmbeddingsSyncResult {
   readonly failed: string[];
   /** 上限に掛かって今回は見送った件数。黙って切り捨てない。 */
   readonly deferred: number;
+  /**
+   * 書き直した近さのペア数。0 なら並びは前回のまま。
+   *
+   * モデルを差し替えた直後のように、まだ全記事を作り直せていないときは書き直さない。
+   * 途中の平均で全ペアを潰すと、作り直しの済んでいない記事の関連ノートが消えるため。
+   */
+  readonly rewrittenPairs: number;
 }
 
 /**
@@ -90,11 +97,59 @@ export class NoteEmbeddingsRefreshService {
       }
       await this.command.upsert(result);
       known.set(slug, result);
-      await this.command.replaceSimilarities(result.noteId, similaritiesFor(result, known));
       embedded.push(slug);
     }
 
-    return { embedded, unchanged, failed, deferred: targets.length - planned.length };
+    const rewrittenPairs = await this.rewriteSimilarities(known, embedded.length);
+    return {
+      embedded,
+      unchanged,
+      failed,
+      deferred: targets.length - planned.length,
+      rewrittenPairs,
+    };
+  }
+
+  /**
+   * 近さの行を全部書き直す。
+   *
+   * 中心化はコーパス全体の平均を引くので、ベクトルが 1 本変わるだけで既存どうしの
+   * ペアの値まで動く。1 記事ぶんずつ書き替えると、違う平均で出した値が同じ表に並ぶ。
+   *
+   * **全記事が今のモデルで揃っているときだけ書き直す。** モデルを差し替えた直後は
+   * 1 回では作り直しきれない (MAX_NOTES_PER_RUN)。揃わないうちに全ペアを消すと、
+   * まだ作り直していない記事の関連ノートが空になる。揃うまでは前のモデルの並びを
+   * そのまま出しておくほうが、読み手にとって壊れ方が小さい。
+   */
+  private async rewriteSimilarities(
+    known: ReadonlyMap<string, NoteEmbedding>,
+    embeddedCount: number,
+  ): Promise<number> {
+    if (embeddedCount === 0) return 0;
+    const all = [...known.values()];
+    const current = all.filter((item) => item.model === this.generator.model);
+    if (current.length !== all.length) {
+      this.logger.warn("skipped rewriting similarities: embeddings are still being rebuilt", {
+        model: this.generator.model,
+        ready: current.length,
+        total: all.length,
+      });
+      return 0;
+    }
+    try {
+      const pairs = allPairs(current);
+      await this.command.replaceAllSimilarities(pairs);
+      return pairs.length;
+    } catch (error) {
+      /*
+       * 記事の同期はもう済んでいる。ここで throw すると refresh 全体が落ちるので、
+       * 書き直しを見送って前回の並びを残す (embedNote の失敗と同じ扱い)。
+       * 中心化は本文が同じ記事が 2 本あるとゼロベクトルになって落ちるので、
+       * 経路としては実在する。
+       */
+      this.logger.warn("failed to rewrite similarities", errorToContext(error));
+      return 0;
+    }
   }
 
   /** 1 本ぶんのベクトルを作る。作れなければ undefined を返して呼び出し側に判断を渡す。 */
@@ -129,17 +184,26 @@ export class NoteEmbeddingsRefreshService {
   }
 }
 
-/** この記事と、既に分かっている全記事との近さ。自分自身は含めない。 */
-function similaritiesFor(
-  target: NoteEmbedding,
-  known: ReadonlyMap<string, NoteEmbedding>,
-): readonly NoteSimilarity[] {
-  return [...known.values()]
-    .filter((other) => other.noteId !== target.noteId)
-    .filter((other) => other.vector.dimensions === target.vector.dimensions)
-    .map((other) => ({
-      noteId: target.noteId,
-      otherNoteId: other.noteId,
-      similarity: target.vector.similarityTo(other.vector),
-    }));
+/**
+ * 全記事の総当たり。中心化してから比べる。
+ *
+ * ペアは片側だけ返す (a, b) のみで、両方向に増やすのはリポジトリの仕事。
+ */
+function allPairs(embeddings: readonly NoteEmbedding[]): readonly NoteSimilarity[] {
+  const centered = EmbeddingVector.centerAll(embeddings.map((item) => item.vector));
+  const pairs: NoteSimilarity[] = [];
+  for (const [index, left] of embeddings.entries()) {
+    for (let other = index + 1; other < embeddings.length; other++) {
+      const right = embeddings[other];
+      const leftVector = centered[index];
+      const rightVector = centered[other];
+      if (right === undefined || leftVector === undefined || rightVector === undefined) continue;
+      pairs.push({
+        noteId: left.noteId,
+        otherNoteId: right.noteId,
+        similarity: leftVector.similarityTo(rightVector),
+      });
+    }
+  }
+  return pairs;
 }

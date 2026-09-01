@@ -72,3 +72,47 @@ describe("EmbeddingVector", () => {
     );
   });
 });
+
+describe("centerAll", () => {
+  it("平均を引くので、直交する 2 本は逆を向く", () => {
+    const [a, b] = EmbeddingVector.centerAll([
+      EmbeddingVector.create([1, 0, 0]),
+      EmbeddingVector.create([0, 1, 0]),
+    ]);
+    // 素のままなら内積は 0。中心化すると互いに逆向きになる。
+    expect(a?.similarityTo(b)).toBeCloseTo(-1, 5);
+  });
+
+  it("引いたあとも正規化されている", () => {
+    const centered = EmbeddingVector.centerAll([
+      EmbeddingVector.create([1, 0, 0]),
+      EmbeddingVector.create([0, 1, 0]),
+      EmbeddingVector.create([0, 0, 1]),
+    ]);
+    for (const vector of centered) {
+      expect(vector.similarityTo(vector)).toBeCloseTo(1, 5);
+    }
+  });
+
+  it("1 本しか無ければ中心化しない (引くとゼロになるため)", () => {
+    const only = EmbeddingVector.create([1, 0]);
+    expect(EmbeddingVector.centerAll([only])).toEqual([only]);
+    expect(EmbeddingVector.centerAll([])).toEqual([]);
+  });
+
+  it("同じ向きしか無いコーパスは受け取らない", () => {
+    // 平均が自分自身と一致するのでゼロベクトルになる。静かに 0 を返さず落とす。
+    expect(() =>
+      EmbeddingVector.centerAll([EmbeddingVector.create([1, 0]), EmbeddingVector.create([2, 0])]),
+    ).toThrow(InvalidEmbeddingVectorError);
+  });
+
+  it("次元の違うものは混ぜない", () => {
+    expect(() =>
+      EmbeddingVector.centerAll([
+        EmbeddingVector.create([1, 0]),
+        EmbeddingVector.create([0, 1, 0]),
+      ]),
+    ).toThrow(InvalidEmbeddingVectorError);
+  });
+});
