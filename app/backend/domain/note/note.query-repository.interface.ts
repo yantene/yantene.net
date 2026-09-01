@@ -15,16 +15,14 @@ export interface NoteListQuery {
   readonly offset: number;
   readonly sortBy: NoteSortField;
   readonly direction: SortDirection;
-  /** 指定時、そのタグを持つノートだけに絞り込む。 */
 }
 
-/** 一覧の取得結果。total は (絞り込み後の) 全件数 (ページネーション用)。 */
+/** 一覧の取得結果。total は全件数 (ページネーション用)。 */
 export interface NoteListResult {
   readonly notes: readonly Note[];
   readonly total: number;
 }
 
-/** タグと、そのタグを持つノート数。 */
 export interface INoteQueryRepository {
   findBySlug(slug: NoteSlug): Promise<Note | undefined>;
   list(query: NoteListQuery): Promise<NoteListResult>;

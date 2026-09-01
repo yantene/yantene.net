@@ -1,5 +1,4 @@
 import type { NoteEmbedding, NoteSimilarity } from "./note-embedding.entity";
-import type { NoteSlug } from "~/backend/domain/note";
 
 export interface INoteEmbeddingCommandRepository {
   /** ベクトルを保存する (同じノートの行があれば置き換える)。 */
@@ -12,6 +11,12 @@ export interface INoteEmbeddingCommandRepository {
    * 同じ表に並んで比べられなくなるため、まとめて書き直す。
    */
   replaceAllSimilarities(similarities: readonly NoteSimilarity[]): Promise<void>;
-  /** ノートに紐づくベクトルと近さの行を消す。正本から消えたとき用。 */
-  deleteBySlug(slug: NoteSlug): Promise<void>;
+  /**
+   * 対応する記事がもう無い行を消す。
+   *
+   * slug で名指しして消す形は採れない。ノートの同期が先に記事を消すので、後から
+   * 呼ばれるこちらからは slug から id を引けなくなっている。残った行は読み出しの
+   * innerJoin から外れるので表には出ないが、置いたままだと容量だけが増える。
+   */
+  deleteOrphans(): Promise<void>;
 }

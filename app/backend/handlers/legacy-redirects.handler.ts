@@ -113,13 +113,11 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/atom.xml", (c) => permanentRedirect(c, "/feed.xml"));
 
-  // 旧サイトの全記事一覧。タグでの絞り込みはクエリで表しており、タグ名は現行サイトと
-  // 同一なのでそのまま引き継ぐ。
-  router.get("/list.html", (c) => {
-    const tag = c.req.query("tag") ?? "";
-    const to = tag.length > 0 ? `/notes?tag=${encodeURIComponent(tag)}` : "/notes";
-    return permanentRedirect(c, to);
-  });
+  /*
+   * 旧サイトの全記事一覧。タグは廃止したので (ADR 0029)、`?tag=` は捨てて一覧の先頭へ
+   * 送る。効かないクエリを引き継ぐと、308 がブラウザに覚えられて死んだクエリが残る。
+   */
+  router.get("/list.html", (c) => permanentRedirect(c, "/notes"));
 
   // 記事に紐付く画像。現行サイトではアセット API が配信する。表に無いディレクトリは
   // 素通りさせ、通常の 404 に委ねる。

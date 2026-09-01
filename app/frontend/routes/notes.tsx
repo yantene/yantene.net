@@ -38,22 +38,12 @@ export async function loader({
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
   const notes = translationsFor(locale).notes;
-  /*
-   * 絞り込んでいるときは、どのタグの一覧かを title に出す。検索結果や共有先では
-   * title しか見えないため、絞り込みなしと同じ名前だと区別が付かない。
-   * 画面の見出しと同じ表現 (filteredByTag) を使って言い回しを揃える。
-   * 置換先は関数で渡す ($& などの特殊な並びをタグ名がそのまま含み得るため)。
-   */
   const pageTitle = notes.title;
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
     title: pageTitle,
-    /*
-     * 絞り込んでいないときは何も足さない。root が出すサイト全体のフィードと
-     * 同じものになり、リーダーに同じ購読先を二重に見せてしまう。
-     */
   });
 };
 
@@ -147,7 +137,6 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
         */}
         <search className="notes-search">
           <form method="get" action="/notes" role="search">
-            {/* 絞り込みを保ったまま探せるよう、いま効いているタグを持ち回す。 */}
             <label className="notes-search-field">
               <HiMagnifyingGlass className="notes-search-icon" aria-hidden />
               <input
@@ -166,9 +155,7 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
           <h1 className="notes-heading">{resultHeading(t, { query, total: pagination.total })}</h1>
           {/*
             一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
-            受け取り続ける手を同じ高さに並べる。絞り込み中はそのタグのフィードを指す
-            (見えている一覧と受け取るものを一致させる)。そのときはフッターの全体
-            フィードと行き先が分かれるので、文言も分ける。
+            受け取り続ける手を同じ高さに並べる。
           */}
           <FeedLink href={feedIdentity().path} />
         </div>

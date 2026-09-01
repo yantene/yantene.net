@@ -55,6 +55,7 @@ function generatorReturning(vectors: readonly number[][]): IEmbeddingGenerator {
 
 interface Harness {
   readonly service: NoteEmbeddingsRefreshService;
+  readonly command: INoteEmbeddingCommandRepository;
   readonly upserted: NoteEmbedding[];
   /** replaceAllSimilarities に渡ってきたペアの列。書き直しごとに 1 要素増える。 */
   readonly rewritten: (readonly NoteSimilarity[])[];
@@ -78,7 +79,7 @@ function harness(options: {
       rewritten.push(pairs);
       return Promise.resolve();
     },
-    deleteBySlug: vi.fn(async () => Promise.resolve()),
+    deleteOrphans: vi.fn(async () => Promise.resolve()),
   };
 
   const query: INoteEmbeddingQueryRepository = {
@@ -107,6 +108,7 @@ function harness(options: {
       cache,
       silentLogger(),
     ),
+    command,
     upserted,
     rewritten,
   };
@@ -227,28 +229,47 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(rewritten[0]?.[0]?.similarity).toBeCloseTo(-1, 5);
   });
 
-  it("全記事が揃うまで書き直さない", async () => {
-    // beta は正本にあるがベクトルを作れない (findBySlug が返さない)。
-    const { service, rewritten } = harness({
+  it("正本から消えた記事の行を掃除してから始める", async () => {
+    const { service, command } = harness({
       slugs: ["alpha"],
+      hashes: new Map([["alpha", "hash-1"]]),
+      generator: generatorReturning([[1, 0, 0]]),
+    });
+
+    await service.sync();
+
+    // ノートの同期が記事を消したあとなので、ここでしか消せない。
+    expect(command.deleteOrphans).toHaveBeenCalled();
+  });
+
+  it("作れない記事があっても、作れたものだけで書き直す", async () => {
+    // gamma は正本にあるがベクトルを作れない (findBySlug が返さない)。
+    const { service, rewritten } = harness({
+      slugs: ["alpha", "beta"],
       hashes: new Map([
         ["alpha", "hash-1"],
         ["beta", "hash-2"],
+        ["gamma", "hash-3"],
       ]),
-      generator: generatorReturning([[1, 0, 0]]),
+      generator: generatorReturning([
+        [1, 0, 0],
+        [0, 1, 0],
+      ]),
     });
 
     const result = await service.sync();
 
     /*
-     * 揃うまで書き直さない。潰すと beta の関連ノートが空になる。
-     * 保存済みのベクトルだけを数えると beta が母数に入らず「揃っている」と
-     * 誤判定するので、全記事の slug で判定している。
+     * 永久にベクトルを作れない記事が 1 本あるだけで書き直しを止め続けると、以降に
+     * 書いた記事がどの関連ノートにも出てこなくなる。作れない記事は関連ノートに
+     * 出せないだけで、他の記事どうしの近さは正しく出せる。
      */
-    expect(rewritten).toHaveLength(0);
-    expect(result.rewrittenPairs).toBe(0);
-    expect(result.embedded).toEqual(["alpha"]);
-    expect(result.failed).toEqual(["beta"]);
+    expect(result.failed).toEqual(["gamma"]);
+    expect(rewritten).toHaveLength(1);
+    expect(result.rewrittenPairs).toBe(1);
+    expect(rewritten[0]?.map((pair) => [pair.noteId, pair.otherNoteId])).toEqual([
+      ["id-alpha", "id-beta"],
+    ]);
   });
 
   it("1 回で作りきれなかった記事を、次の refresh で拾い直す", async () => {

@@ -1,13 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { eq, or } from "drizzle-orm";
+import { notInArray, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type {
   INoteEmbeddingCommandRepository,
   NoteEmbedding,
   NoteSimilarity,
 } from "~/backend/domain/note-embedding";
-import type { NoteSlug } from "~/backend/domain/note";
-import type { EntityId } from "~/backend/domain/shared";
 import { noteEmbeddings, noteSimilarities, notes } from "~/backend/infra/d1/schema";
 import { instantToUnix } from "~/backend/infra/d1/temporal";
 
@@ -59,22 +57,17 @@ export class D1NoteEmbeddingCommandRepository implements INoteEmbeddingCommandRe
     await this.db.batch([this.db.delete(noteSimilarities), ...inserts]);
   }
 
-  async deleteBySlug(slug: NoteSlug): Promise<void> {
-    const [row] = await this.db
-      .select({ id: notes.id })
-      .from(notes)
-      .where(eq(notes.slug, slug.toString()))
-      .limit(1);
-    if (row === undefined) return;
-    const noteId = row.id as EntityId<"Note">;
-    await this.deleteSimilaritiesOf(noteId);
-    await this.db.delete(noteEmbeddings).where(eq(noteEmbeddings.noteId, noteId));
-  }
-
-  /** 両方向ぶん消す。D1 は外部キーを既定で強制しないので、ここで明示的に掃除する。 */
-  private async deleteSimilaritiesOf(noteId: EntityId<"Note">): Promise<void> {
+  /** 対応する記事がもう無い行を消す。D1 は外部キーを既定で強制しないので明示的に掃除する。 */
+  async deleteOrphans(): Promise<void> {
+    const liveIds = this.db.select({ id: notes.id }).from(notes);
+    await this.db.delete(noteEmbeddings).where(notInArray(noteEmbeddings.noteId, liveIds));
     await this.db
       .delete(noteSimilarities)
-      .where(or(eq(noteSimilarities.noteId, noteId), eq(noteSimilarities.otherNoteId, noteId)));
+      .where(
+        or(
+          notInArray(noteSimilarities.noteId, liveIds),
+          notInArray(noteSimilarities.otherNoteId, liveIds),
+        ),
+      );
   }
 }

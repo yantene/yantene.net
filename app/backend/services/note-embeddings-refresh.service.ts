@@ -68,6 +68,12 @@ export class NoteEmbeddingsRefreshService {
    * ベクトルが無いことを毎回ここで見つけ直せば、何回かの refresh で自然に揃う。
    */
   async sync(options: { readonly force?: boolean } = {}): Promise<NoteEmbeddingsSyncResult> {
+    /*
+     * 正本から消えた記事の行を先に掃除する。ノートの同期が記事を消したあとに走るので、
+     * ここでしか消せない (slug から id を辿る手はもう無い)。
+     */
+    await this.command.deleteOrphans();
+
     const stored = await this.query.listAll();
     const bySlug = new Map(stored.map((item) => [item.slug.toString(), item] as const));
     const hashes = await this.notes.listSourceHashes();
@@ -120,14 +126,14 @@ export class NoteEmbeddingsRefreshService {
       embedded.push(slug);
     }
 
-    const rewrittenPairs = await this.rewriteSimilarities(known, embedded.length, allSlugs);
-    return {
-      embedded,
-      unchanged,
-      failed,
-      deferred: targets.length - planned.length,
-      rewrittenPairs,
-    };
+    const deferred = targets.length - planned.length;
+    const rewrittenPairs = await this.rewriteSimilarities(
+      known,
+      embedded.length,
+      allSlugs,
+      deferred,
+    );
+    return { embedded, unchanged, failed, deferred, rewrittenPairs };
   }
 
   /**
@@ -136,30 +142,41 @@ export class NoteEmbeddingsRefreshService {
    * 中心化はコーパス全体の平均を引くので、ベクトルが 1 本変わるだけで既存どうしの
    * ペアの値まで動く。1 記事ぶんずつ書き替えると、違う平均で出した値が同じ表に並ぶ。
    *
-   * **全記事が今のモデルのベクトルを持っているときだけ書き直す。** モデルを差し替えた直後は
-   * 1 回では作り直しきれない (MAX_NOTES_PER_RUN)。揃わないうちに全ペアを消すと、
-   * まだ作り直していない記事の関連ノートが空になる。揃うまでは前のモデルの並びを
-   * そのまま出しておくほうが、読み手にとって壊れ方が小さい。
+   * **見送るのは「まだ作り切れていない」ときだけ。** モデルを差し替えた直後は 1 回では
+   * 作り直しきれない (MAX_NOTES_PER_RUN)。その途中で全ペアを消すと、まだ作り直して
+   * いない記事の関連ノートが空になる。次の回で揃うので、それまでは前の並びを残す。
    *
-   * 判定には**全記事の slug** を使う。保存済みのベクトルだけを数えると、まだ 1 度も
-   * 作られていない記事が母数に入らず、「揃っている」と誤って判定してしまう。
+   * **「作れない記事がある」ときは見送らない。** 本文の MDAST が R2 に無い、モデルが
+   * VO の弾く値を返すといった理由で永久にベクトルを作れない記事が 1 本でもあると、
+   * 揃うのを待つ形では二度と書き直せなくなる。そうなると新しく書いた記事がどの関連
+   * ノートにも出てこなくなり、しかも表に出る手がかりは warn 1 行しかない。作れない
+   * 記事は関連ノートに出せないだけで、他の記事どうしの近さは正しく出せる。
    */
   private async rewriteSimilarities(
     known: ReadonlyMap<string, NoteEmbedding>,
     embeddedCount: number,
     allSlugs: readonly string[],
+    deferred: number,
   ): Promise<number> {
     if (embeddedCount === 0) return 0;
-    const ready = allSlugs.filter((slug) => known.get(slug)?.model === this.generator.model);
-    if (ready.length !== allSlugs.length) {
+    if (deferred > 0) {
       this.logger.warn("skipped rewriting similarities: embeddings are still being rebuilt", {
         model: this.generator.model,
-        ready: ready.length,
+        deferred,
         total: allSlugs.length,
       });
       return 0;
     }
-    const current = allSlugs.map((slug) => known.get(slug)).filter((item) => item !== undefined);
+    const ready = allSlugs.filter((slug) => known.get(slug)?.model === this.generator.model);
+    if (ready.length !== allSlugs.length) {
+      // 作れない記事は諦めて、作れたものだけで書き直す。止まり続けるよりよい。
+      this.logger.warn("rewriting similarities without notes that could not be embedded", {
+        model: this.generator.model,
+        ready: ready.length,
+        total: allSlugs.length,
+      });
+    }
+    const current = ready.map((slug) => known.get(slug)).filter((item) => item !== undefined);
     try {
       const pairs = allPairs(current);
       await this.command.replaceAllSimilarities(pairs);

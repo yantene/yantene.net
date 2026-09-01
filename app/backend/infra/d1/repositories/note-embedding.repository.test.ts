@@ -154,25 +154,32 @@ describe("D1NoteEmbedding リポジトリ", () => {
     expect(related[0]).toBe("n19");
   });
 
-  it("ノートを消すと、ベクトルも近さも両方向ぶん消える", async () => {
+  it("記事が消えたあと、残った行を掃除できる", async () => {
     const a = await seedNote(d1, "a");
     const b = await seedNote(d1, "b");
     await command.upsert(embedding(a, "a", [1, 0]));
     await command.upsert(embedding(b, "b", [0, 1]));
     await command.replaceAllSimilarities([{ noteId: a, otherNoteId: b, similarity: 0.9 }]);
 
-    await command.deleteBySlug(NoteSlug.create("a"));
+    // ノートの同期が先に記事を消す。こちらから slug を辿ることはもうできない。
+    await d1.prepare("DELETE FROM notes WHERE slug = ?").bind("a").run();
+    await command.deleteOrphans();
 
     expect((await query.listAll()).map((item) => item.slug.toString())).toEqual(["b"]);
     expect(await query.findRelatedSlugs(NoteSlug.create("b"), 6)).toEqual([]);
   });
 
-  it("知らない slug を消しても何も起きない", async () => {
+  it("消えた記事が無ければ、掃除しても何も減らない", async () => {
     const a = await seedNote(d1, "a");
+    const b = await seedNote(d1, "b");
     await command.upsert(embedding(a, "a", [1, 0]));
+    await command.upsert(embedding(b, "b", [0, 1]));
+    await command.replaceAllSimilarities([{ noteId: a, otherNoteId: b, similarity: 0.9 }]);
 
-    await expect(command.deleteBySlug(NoteSlug.create("nope"))).resolves.toBeUndefined();
-    expect(await query.listAll()).toHaveLength(1);
+    await command.deleteOrphans();
+
+    expect(await query.listAll()).toHaveLength(2);
+    expect(await query.findRelatedSlugs(NoteSlug.create("a"), 6)).toEqual(["b"]);
   });
 
   it("ベクトルが 1 本も無ければ空を返す", async () => {

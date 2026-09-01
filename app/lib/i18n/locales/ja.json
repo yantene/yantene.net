@@ -14,8 +14,7 @@
     "loading": "読み込み中"
   },
   "feed": {
-    "label": "フィード",
-    "tagLabel": "「{{tag}}」のフィード"
+    "label": "フィード"
   },
   "timeline": {
     "loadingMore": "続きを読み込んでいる…",
@@ -30,7 +29,6 @@
     "related": "関連記事",
     "toc": "目次",
     "viewMarkdown": "Markdown で見る",
-    "filteredByTag": "タグ「{{tag}}」",
     "clearFilter": "すべて表示",
     "pagination": {
       "label": "ページ送り",
@@ -43,8 +41,6 @@
       "description": "お探しのノートは存在しないか、公開されていない。",
       "backToList": "ノート一覧へ戻る"
     },
-    "resultsForTag": "「{{tag}}」のノート — {{count}} 件",
-    "resultsForQueryAndTag": "「{{query}}」×「{{tag}}」— {{count}} 件",
     "actionsTop": "この記事に反応する・共有する (冒頭)",
     "actionsBottom": "この記事に反応する・共有する (末尾)"
   },

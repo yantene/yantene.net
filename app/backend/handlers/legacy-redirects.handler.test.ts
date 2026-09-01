@@ -113,19 +113,15 @@ describe("legacy pages other than articles", () => {
     expect(res.headers.get("location")).toBe(to);
   });
 
-  it("carries the tag of the old article list over to the note list", async () => {
+  /*
+   * タグは廃止した (ADR 0029)。効かないクエリを引き継ぐと、308 がブラウザに覚えられて
+   * 死んだクエリが残る。旧サイトからのリンクは一覧の先頭へ丸める。
+   */
+  it("drops the tag of the old article list and lands on the note list", async () => {
     const res = await createTestApp().request("/list.html?tag=%E6%97%A5%E8%A8%98", {}, env());
 
     expect(res.status).toBe(308);
-    expect(res.headers.get("location")).toBe("/notes?tag=%E6%97%A5%E8%A8%98");
-  });
-
-  // 旧サイトのタグには `GNU/Linux` のようにスラッシュを含むものがある。
-  // 符号化したタグ名を高エントロピーの秘匿情報と誤検知するため (秘密は含まない)。
-  it("escapes a slash inside a tag", async () => {
-    const res = await createTestApp().request("/list.html?tag=GNU%2FLinux", {}, env());
-
-    expect(res.headers.get("location")).toBe("/notes?tag=GNU%2FLinux");
+    expect(res.headers.get("location")).toBe("/notes");
   });
 });
 

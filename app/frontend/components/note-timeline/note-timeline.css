@@ -174,20 +174,6 @@
   grid-area: date;
 }
 
-.note-timeline-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.125rem;
-  font-size: 0.75rem;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
-}
-
-/* タグは中黒で区切る。囲みを付けると表題と主張が競る。 */
-.note-timeline-tag::before {
-  content: "・";
-}
-
 .note-timeline-body {
   grid-area: body;
 }
