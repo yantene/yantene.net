@@ -28,7 +28,7 @@ import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
-/** 記事末に出す関連記事の最大件数。 */
+/** 記事末に出す関連ノートの最大件数。 */
 const RELATED_LIMIT = 6;
 
 /**
