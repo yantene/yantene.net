@@ -74,6 +74,11 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   ([#322](https://github.com/yantene/yantene.net/issues/322))。R2 の置き場を空けたければ
   手で消すこと。
 
+- 関連ノートを本文のベクトルで並べるようにした ([ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md))。
+  ベクトルを作るのは「変更のあった記事」だけなので、**導入直後は既存記事のベクトルが 1 本も
+  入らない**。関連ノートが全記事で空になるので、一度 force refresh を流すこと。
+  1 回で作り直せるのは 30 本までで、溢れた分は次の refresh に回る。
+
 ## データモデルとストレージ戦略
 
 コンテンツの正本は GitHub リポジトリ (`yantene/notes`) に置く。
@@ -205,6 +210,18 @@ curl -H 'Accept: text/markdown' https://yantene.net/notes/<slug>
 Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数えないので、記事ページが原文に
 化けることはない。判定と、同じ URL が 2 表現を持つことのキャッシュの扱いは
 [ADR 0020](../../docs/adr/0020-negotiate-note-source-markdown-on-accept.md) を参照。
+
+## 関連ノートは本文のベクトルで並ぶ
+
+記事ページの関連ノートは、共通するタグの数ではなく**本文から作ったベクトルの近さ**で
+並べる。ベクトルは refresh のときに作って D1 に置き、読み手のリクエストは外部に触らない。
+設計判断の詳細は [ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md) を参照。
+
+- 近さは**上位 N 件に切らずにペアのまま**持つ。切って保存すると、後から書いた記事が
+  古い記事の関連ノートに永久に出てこない (refresh は変更のあった記事しか処理しない)
+- ベクトルを作れなかった記事は、**前回のベクトルと近さがそのまま残る**。関連ノートは
+  前の並びで出るので、見た目は壊れない
+- `note_similarities` は記事数の 2 乗で増える。57 本で 3,192 行、1,000 本で 999,000 行
 
 ## 補助ドメイン
 
