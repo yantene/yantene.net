@@ -12,12 +12,40 @@ const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
 };
 const migrationFiles = journal.entries.map(({ tag }) => path.join(migrationsDir, `${tag}.sql`));
 
+/**
+ * D1 のバインドに合わせる。
+ *
+ * D1 は ArrayBuffer と ArrayBufferView のどちらも BLOB として受け取るが、
+ * node:sqlite が受け取るのは TypedArray だけで、素の ArrayBuffer は弾く。
+ * ここで吸収しないと、本番では通る書き込みがテストでだけ落ちる。
+ */
+function toSqliteValue(value: unknown): unknown {
+  return value instanceof ArrayBuffer ? new Uint8Array(value) : value;
+}
+
+/**
+ * D1 の読み出しに合わせる。
+ *
+ * D1 が BLOB を返すときは `Array.from` を通すので、受け取るのは数値の配列であって
+ * ArrayBuffer でも Uint8Array でもない。node:sqlite は Uint8Array を返すため、
+ * ここで写しておかないと本番と違う型で列を読むことになる。
+ */
+function fromSqliteValue(value: unknown): unknown {
+  return value instanceof Uint8Array ? Array.from(value) : value;
+}
+
+function fromSqliteRow(row: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key, fromSqliteValue(value)]),
+  );
+}
+
 function createMockStatement(
   nodeSqlStmt: StatementSync,
   boundValues: unknown[],
 ): D1PreparedStatement {
   const stmt: D1PreparedStatement = {
-    bind: (...values: unknown[]) => createMockStatement(nodeSqlStmt, values),
+    bind: (...values: unknown[]) => createMockStatement(nodeSqlStmt, values.map(toSqliteValue)),
     run: () => {
       const result = nodeSqlStmt.run(...(boundValues as Parameters<StatementSync["run"]>));
       return Promise.resolve({
@@ -35,7 +63,12 @@ function createMockStatement(
       } as D1Result);
     },
     all: <T = Record<string, unknown>>() => {
-      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as T[];
+      const rows = (
+        nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
+          string,
+          unknown
+        >[]
+      ).map(fromSqliteRow) as T[];
       return Promise.resolve({
         results: rows,
         meta: {
@@ -51,10 +84,12 @@ function createMockStatement(
       } as D1Result<T>);
     },
     raw: <T = unknown[]>(options?: { columnNames?: boolean }) => {
-      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
-        string,
-        unknown
-      >[];
+      const rows = (
+        nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
+          string,
+          unknown
+        >[]
+      ).map(fromSqliteRow);
       const values = rows.map((row) => Object.values(row) as T);
       if (options?.columnNames === true) {
         const first = rows.at(0);
@@ -64,10 +99,12 @@ function createMockStatement(
       return Promise.resolve(values);
     },
     first: <T = Record<string, unknown>>(colName?: string) => {
-      const rows = nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
-        string,
-        unknown
-      >[];
+      const rows = (
+        nodeSqlStmt.all(...(boundValues as Parameters<StatementSync["all"]>)) as Record<
+          string,
+          unknown
+        >[]
+      ).map(fromSqliteRow);
       const first = rows.at(0);
       if (first === undefined) return Promise.resolve(null);
       if (colName !== undefined) return Promise.resolve((first[colName] ?? null) as T | null);

@@ -6,9 +6,14 @@ import { notes } from "./notes";
  *
  * drizzle の `blob({ mode: "buffer" })` は Node の Buffer を要求する。Workers でも
  * nodejs_compat があれば動くが、ベクトルを出し入れするだけのために polyfill を
- * 通す理由がない。D1 が返すのは ArrayBuffer なので、そのまま写して返す。
+ * 通す理由がない。
+ *
+ * **書きと読みで型が非対称。** D1 は書き込みでは ArrayBuffer / ArrayBufferView を
+ * BLOB として受け取るが、読み出しでは `Array.from` を通した数値の配列を返す
+ * (ArrayBuffer では返ってこない)。`Uint8Array` のコンストラクタはどちらも受けるので、
+ * ここで両方を受ける形にしておく。
  */
-const vectorBytes = customType<{ data: Uint8Array; driverData: ArrayBuffer }>({
+const vectorBytes = customType<{ data: Uint8Array; driverData: ArrayBuffer | number[] }>({
   dataType: () => "blob",
   toDriver: (value) =>
     value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength) as ArrayBuffer,
