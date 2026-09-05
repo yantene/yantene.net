@@ -165,12 +165,12 @@ function logoDataUri(): string {
 }
 
 /**
- * ロゴの縦横比 (幅 / 高さ)。素材の viewBox (823.134 x 256.771) から。
+ * ロゴの縦横比 (幅 / 高さ)。素材の viewBox (805.133 x 256.771) から。
  *
  * `img` には preserveAspectRatio を渡せないので、高さから幅をここで導く。素材を
  * 差し替えて viewBox が変わったら、ここも合わせること (og-card.test.ts が見張る)。
  */
-const LOGO_ASPECT = 823.134 / 256.771;
+const LOGO_ASPECT = 805.133 / 256.771;
 
 /** 寸法を CSS の長さにする (テンプレートに数値をそのまま置くと lint が止める)。 */
 function px(value: number): string {
