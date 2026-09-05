@@ -30,7 +30,11 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
       className={isTransparent ? "absolute inset-x-0 top-0 z-50" : "site-header sticky top-0 z-50"}
     >
       <div className={isTransparent ? "" : "bg-white/60 backdrop-blur-sm"}>
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
+        {/*
+          上下の余白は 12px。ロゴが 40px あるので、16px だと帯が 72px に育つ。検索欄 (32px) と
+          ロゴのどちらが来ても帯が 64px に収まる値にしてある。
+        */}
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-3">
           {/*
             ロゴがホームへのリンクを兼ねる (ナビに Home を置かない)。絵はキャラクターと
             ロゴタイプを並べた一枚で、ヒーローがロゴタイプだけを大きく出すのと対になる。
@@ -41,13 +45,16 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
 
             色は text-foreground から取る (素材の fill が currentColor)。透過時は動く空の
             上に載るので、文字の text-halo に相当する白い縁光を filter で付ける。
+
+            高さ 40px は、キャラクターの顔が読める最小と、14px のナビ・32px の検索欄に対して
+            重くならない最大の間で取った値。素材の字間はこの大きさで見て決めてある。
           */}
           {showLogo && (
             <Link
               to="/"
               className={`press-control inline-flex shrink-0 items-center text-foreground${isTransparent ? " site-header-logo-halo" : ""}`}
             >
-              <Logo className="h-9 w-auto" aria-hidden="true" />
+              <Logo className="h-10 w-auto" aria-hidden="true" />
               <span className="sr-only">やんてね</span>
             </Link>
           )}

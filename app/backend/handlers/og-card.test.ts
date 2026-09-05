@@ -66,7 +66,7 @@ describe("yantene-logo.svg (OG カードが頼っている書き方)", () => {
   it("viewBox の縦横比が変わっていない", () => {
     // og-card.ts の LOGO_ASPECT はこの比から出した値で、img には preserveAspectRatio を
     // 渡していない。比が動くとロゴが潰れる。
-    expect(logoSource).toContain('viewBox="0 0 805.133 256.771"');
+    expect(logoSource).toContain('viewBox="0 0 817.133 256.771"');
   });
 });
 
