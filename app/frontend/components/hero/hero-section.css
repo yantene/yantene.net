@@ -25,9 +25,9 @@
   --scene-height: clamp(9rem, 15vw, 15rem);
 
   /*
-   * 線の太さ。素材ごとに viewBox の拡大率が違うため、素材の側に太さを持たせると
-   * 同じ値でも画面上の太さが揃わない (街と歩行者で 2 倍以上ずれていた)。
-   * vector-effect: non-scaling-stroke と組みで使い、画面上の太さをここで一本化する。
+   * 街の線の太さ。素材の側に太さを持たせると viewBox の拡大率に引きずられて画面上の
+   * 太さが幅ごとに変わるため、vector-effect: non-scaling-stroke と組みで使い、
+   * 画面上の太さをここで決める。歩行者は塗りだけの絵なので関係しない。
    */
   --ink-width: 1px;
 }
@@ -130,8 +130,7 @@
 }
 
 /* 線の太さは拡大率に引きずられず、画面上で一定にする。 */
-.cityscape-svg *,
-.daywalker-svg * {
+.cityscape-svg * {
   vector-effect: non-scaling-stroke;
   stroke-width: var(--ink-width);
 }
@@ -161,32 +160,6 @@
 .cityscape-svg #clouds {
   animation: cityscape-cloud-drift calc(var(--day-cycle) * 4)
     calc(var(--day-cycle) * var(--clock-shift-days)) linear infinite;
-}
-
-/*
- * 見出しの下に敷く手書きのマーカー。
- *
- * 文字の背後に回すため、見出しのテキスト側を relative にして重ね順を作っている
- * (負の z-index は親の背景より下に潜って消えることがある)。
- */
-.hero-heading {
-  position: relative;
-  display: inline-block;
-}
-
-.hero-heading-highlight {
-  position: absolute;
-  /*
-   * 文字の両端から少しはみ出させて、手で引いた線らしくする。
-   * SVG は置換要素なので、left / right を両側から留めても幅は素材の寸法のままになる。
-   * 見出しの幅に追随させるには width を明示するしかない。
-   */
-  left: -0.12em;
-  width: calc(100% + 0.24em);
-  bottom: 0.06em;
-  height: 0.4em;
-  color: oklch(0.88 0.17 130);
-  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

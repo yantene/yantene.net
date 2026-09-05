@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cardHtml, defaultCardHtml } from "./og-card";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
+import logoSource from "~/frontend/assets/yantene-logo.svg?raw";
 import ja from "~/lib/i18n/locales/ja.json";
 
 /**
@@ -52,6 +53,26 @@ describe("cityscape.svg (OG カードが頼っている書き方)", () => {
     expect(cityscapeSource).toContain('viewBox="0 0 407.1932 59.2666"');
   });
 });
+
+/*
+ * ロゴも街と同じく、素材の書き方に頼って data URI にしている。
+ */
+describe("yantene-logo.svg (OG カードが頼っている書き方)", () => {
+  it("塗りの色を currentColor で受けている", () => {
+    // img の data URI には文書の color が届かないので、焼き込む先の目印になる。
+    expect(logoSource).toContain('fill="currentColor"');
+  });
+
+  it("viewBox の縦横比が変わっていない", () => {
+    // og-card.ts の LOGO_ASPECT はこの比から出した値で、img には preserveAspectRatio を
+    // 渡していない。比が動くとロゴが潰れる。
+    expect(logoSource).toContain('viewBox="0 0 823.134 256.771"');
+  });
+});
+
+/** ロゴの data URI に本文の色が焼き込まれているときに現れる字面。 */
+const INKED_LOGO = encodeURIComponent('fill="#1a2740"');
+const UNINKED_LOGO = encodeURIComponent("currentColor");
 
 /*
  * 意匠を単体で組めるようになったので、ここで確かめる。分ける前は Hono のルータと
@@ -109,11 +130,21 @@ describe("cardHtml", () => {
     expect(html).toContain("data:image/svg+xml,");
     expect(html).toContain("linear-gradient(90deg");
   });
+
+  it("署名にロゴを置く (本文の色を焼き込んで)", () => {
+    const html = cardHtml(params);
+
+    expect(html).toContain(INKED_LOGO);
+    expect(html).not.toContain(UNINKED_LOGO);
+  });
 });
 
 describe("defaultCardHtml", () => {
-  it("名乗りを中央に置く", () => {
-    expect(defaultCardHtml()).toContain("やんてね");
+  it("名乗りにロゴを置く (本文の色を焼き込んで)", () => {
+    const html = defaultCardHtml();
+
+    expect(html).toContain(INKED_LOGO);
+    expect(html).not.toContain(UNINKED_LOGO);
   });
 
   /*

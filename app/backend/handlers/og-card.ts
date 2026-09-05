@@ -10,7 +10,7 @@
  * (インライン SVG と CSS が高エントロピーの文字列に見える) で、ルータ側は見張られたままになる。
  */
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
-import highlightSource from "~/frontend/assets/highlight.svg?raw";
+import logoSource from "~/frontend/assets/yantene-logo.svg?raw";
 import { truncateByGrapheme } from "~/lib/truncate";
 
 /*
@@ -22,22 +22,7 @@ import { truncateByGrapheme } from "~/lib/truncate";
  */
 const TITLE_MAX = 56;
 /** カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。 */
-export const OG_TEMPLATE_VERSION = "v12";
-
-/** yantene アイコン (data URI で OG カードに埋め込む)。 */
-const YANTENE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 67.733 67.733"><g transform="translate(-121.17 -27.445)"><path d="M73.685 39.527h135.467v67.733H73.685z" style="fill:#f8e5d6;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><path d="M73.685-28.206h135.467v67.733H73.685z" style="fill:#c9ab80;fill-opacity:1;stroke-width:7.26443;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000"/><circle cx="88.27" cy="-72.048" r="39.677" style="fill:#c9ab80;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><circle cx="167.625" cy="-72.048" r="39.677" style="fill:#f8e5d6;fill-opacity:1;stroke-width:6.78952;stroke-linecap:square;stroke-linejoin:round;paint-order:stroke fill markers;stop-color:#000" transform="rotate(45)"/><path d="M159.46 46.99a14.817 14.74 0 0 1 12.379-6.118 14.817 14.74 0 0 1 12.066 6.708M125.887 41.94a14.817 14.74 0 0 1 13.395-3.669 14.817 14.74 0 0 1 10.561 8.981" style="fill:none;fill-opacity:1;stroke:#78a2d2;stroke-width:4.23333;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers;stop-color:#000"/><path d="m128.378 51.872 16.39 5.9-16.08 7.858M180.139 53.64l-16.668 5.057 15.658 8.666" style="fill:none;stroke:#78a2d2;stroke-width:4.23334;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"/><path d="M143.31 78.073c-3.662 3.393-2.03 25.136 6.81 26.34 8.842 1.204 15.08-18.378 12.73-22.413s-15.876-7.32-19.54-3.927" style="fill:#d47d7d;fill-opacity:1;stroke:none;stroke-width:.529166px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"/></g></svg>`;
-/**
- * アイコンの data URI。**最初にカードを描くときまで遅らせる。**
- *
- * このファイルは og.handler.ts 経由で index.ts から静的に繋がっているので、モジュールの
- * 評価はページ表示でもフィード取得でも走る。2 KB の SVG の URI エンコードを、カードを
- * 描かない要求にまで負わせない (街と手書きの線を artwork に寄せてあるのと同じ理由。
- * こちらだけ素のトップレベルに残っていた)。
- */
-function iconDataUri(): string {
-  artwork.icon ??= `data:image/svg+xml,${encodeURIComponent(YANTENE_ICON_SVG)}`;
-  return artwork.icon;
-}
+export const OG_TEMPLATE_VERSION = "v13";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
@@ -81,10 +66,18 @@ function withAlpha(hex: string, alpha: number): string {
 }
 
 /*
- * 素材から、カードに要るところだけを取り出す。
+ * 素材の先頭に付いている注記を落とす。data URI に入れても誰も読まないうえ、
+ * `currentColor` の語を含むので下の色の焼き込みに巻き込まれる。
+ */
+function withoutNote(source: string): string {
+  const opening = source.indexOf("<svg");
+  return opening === -1 ? source : source.slice(opening);
+}
+
+/*
+ * 街の素材から、カードに要るところだけを取り出す。
  *
- * 落とすのは 2 つ。先頭に付いている素材の注記 (1.5 KB) は、data URI に入れても誰も
- * 読まないうえ、`currentColor` の語を含むので下の色の焼き込みに巻き込まれる。雲は流れる
+ * 注記に加えて雲を落とす。雲は流れる
  * ことで雲に見える意匠 (hero-section.css がひと巡り 4 日かけて動かしている) なので、
  * 止まった絵では建物と同じ細さの線が空の途中に散らばっているようにしか見えない。
  *
@@ -92,8 +85,7 @@ function withAlpha(hex: string, alpha: number): string {
  * 落ちずに戻ってくる。絵が少し騒がしくなるだけなので、ここでは throw せずそのまま通す。
  */
 function skylineOnly(source: string): string {
-  const opening = source.indexOf("<svg");
-  const body = opening === -1 ? source : source.slice(opening);
+  const body = withoutNote(source);
   const clouds = body.indexOf('<g id="clouds">');
   const skyline = body.indexOf('<g id="skyline">');
   if (clouds === -1 || skyline === -1 || skyline < clouds) return body;
@@ -144,7 +136,7 @@ const CITYSCAPE_HEIGHT = 175;
  *
  * 評価そのものを遅らせる余地はまだ残っている ([#301](https://github.com/yantene/yantene.net/issues/301))。
  */
-const artwork: { cityscape?: string; marker?: string; icon?: string } = {};
+const artwork: { cityscape?: string; logo?: string } = {};
 
 /**
  * カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。
@@ -159,19 +151,26 @@ function cityscapeHtml(): string {
 }
 
 /*
- * 見出しの下に敷く手書きのマーカー。ヒーローとヘッダーのロゴに敷いてあるものと同じ。
+ * ロゴ (キャラクターとロゴタイプを並べた一枚)。ヘッダーに出しているものと同じ素材。
  *
- * 画面では絶対配置した SVG を字の背後へ回しているが、ここでは字の背景に敷く。Satori の
- * 絶対配置は基準になる箱の幅を字から取れず、字の幅を自分で見積もって渡す羽目になる
- * (実際、見積もった幅のまま右へはみ出した)。背景なら箱の幅にそのまま追随する。
- *
- * 素材は `preserveAspectRatio="none"` で伸ばす前提なので、横は箱いっぱいに伸ばす。
- * はみ出しと高さの比 (0.12em / 0.4em / 0.06em) は hero-section.css と header.css から。
+ * 素材は塗りを `currentColor` で受ける。`img` の data URI には文書の color が届かない
+ * ので、街と同じく本文の色を焼き込む。
  */
-function markerDataUri(): string {
-  artwork.marker ??= `data:image/svg+xml,${encodeURIComponent(highlightSource)}`;
-  return artwork.marker;
+function logoDataUri(): string {
+  artwork.logo ??= `data:image/svg+xml,${encodeURIComponent(
+    // 置換の文字列に `$&` のような指示を読ませないため、関数で色を返す。
+    withoutNote(logoSource).replaceAll("currentColor", () => INK),
+  )}`;
+  return artwork.logo;
 }
+
+/**
+ * ロゴの縦横比 (幅 / 高さ)。素材の viewBox (823.134 x 256.771) から。
+ *
+ * `img` には preserveAspectRatio を渡せないので、高さから幅をここで導く。素材を
+ * 差し替えて viewBox が変わったら、ここも合わせること (og-card.test.ts が見張る)。
+ */
+const LOGO_ASPECT = 823.134 / 256.771;
 
 /** 寸法を CSS の長さにする (テンプレートに数値をそのまま置くと lint が止める)。 */
 function px(value: number): string {
@@ -179,25 +178,10 @@ function px(value: number): string {
   return `${(Math.round(value * 100) / 100).toString()}px`;
 }
 
-/** マーカーを敷いた「やんてね」。字の大きさだけを受ける。 */
-function markedNameHtml(fontSize: number): string {
-  // 字の両端から少しはみ出させて、手で引いた線らしくする (画面と同じ 0.12em)。
-  const bleed = fontSize * 0.12;
-  const markerHeight = fontSize * 0.4;
-  // 字の下端から 0.06em の高さに置く。背景は上端からの距離で指定する。
-  const markerTop = fontSize - markerHeight - fontSize * 0.06;
-  return `
-    <div style="display:flex;font-size:${px(fontSize)};font-weight:700;color:${INK};line-height:1;padding:0 ${px(bleed)};margin:0 ${px(-bleed)};background-image:url('${markerDataUri()}');background-size:100% ${px(markerHeight)};background-repeat:no-repeat;background-position:0 ${px(markerTop)};">やんてね</div>`;
-}
-
-/** 記事カードの署名 (アイコンを添えた横並びのロゴ)。 */
-function wordmarkHtml(fontSize: number): string {
-  const iconSize = Math.round(fontSize * 1.65);
-  return `
-    <div style="display:flex;align-items:center;">
-      <img src="${iconDataUri()}" width="${iconSize.toString()}" height="${iconSize.toString()}" style="border-radius:${px(Math.round(iconSize * 0.21))};margin-right:${px(Math.round(fontSize * 0.47))};" />
-      ${markedNameHtml(fontSize)}
-    </div>`;
+/** ロゴを高さで置く。幅は縦横比から導く。 */
+function logoHtml(height: number): string {
+  const width = Math.round(height * LOGO_ASPECT);
+  return `<img src="${logoDataUri()}" width="${width.toString()}" height="${height.toString()}" style="width:${px(width)};height:${px(height)};" />`;
 }
 
 /*
@@ -247,7 +231,7 @@ export function cardHtml(params: { title: string; date: string }): string {
           <div style="display:flex;flex-direction:column;">
             <div style="display:flex;font-size:26px;color:${MUTED_INK};">${escapeHtml(params.date)}</div>
           </div>
-          ${wordmarkHtml(34)}
+          ${logoHtml(64)}
         </div>
       </div>
     </div>`;
@@ -269,9 +253,8 @@ export function defaultCardHtml(): string {
       ${cityscapeHtml()}
       ${TOP_BAND_HTML}
       <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;">
-        <img src="${iconDataUri()}" width="132" height="132" style="border-radius:26px;margin-bottom:32px;" />
-        ${markedNameHtml(76)}
-        <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:24px;">Web の向こうから</div>
+        ${logoHtml(160)}
+        <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:32px;">Web の向こうから</div>
       </div>
     </div>`;
 }

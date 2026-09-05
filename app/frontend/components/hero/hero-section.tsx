@@ -4,7 +4,7 @@ import { Cityscape } from "./cityscape";
 import { clockOriginClassName } from "./clock-origin";
 import { TimeScrubber } from "./time-scrubber";
 import type { ClockOrigin } from "./clock-origin";
-import Highlight from "~/frontend/assets/highlight.svg?react";
+import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
 
 /*
  * 出ていく先。
@@ -79,9 +79,17 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
           Web Developer
         </span>
 
-        <h1 className="hero-heading text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
-          <Highlight className="hero-heading-highlight" aria-hidden="true" />
-          <span className="relative p-name">やんてね</span>
+        {/*
+          見出しはロゴタイプの絵で出す。ヘッダーがキャラクターとロゴタイプを並べた一枚を
+          使うのに対し、トップは字だけを大きく置き、キャラクターのほうは地平線を歩かせる
+          (Daywalker)。同じ絵を 2 か所に出さないための分担。
+
+          h-card の名前 (p-name) は機械が読む文字列なので、絵とは別に sr-only で置く。
+          色は text-foreground から取る (素材の fill が currentColor)。
+        */}
+        <h1 className="inline-flex text-foreground">
+          <Logotype className="h-12 w-auto sm:h-16" aria-hidden="true" />
+          <span className="sr-only p-name">やんてね</span>
         </h1>
 
         {/*
