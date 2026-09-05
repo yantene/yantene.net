@@ -75,10 +75,6 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
         Bridgy Fed が「誰のサイトか」を読むのに最初に探す印で、これが無いと橋を架けられない。
       */}
       <div className="hero-intro h-card relative flex flex-col items-center gap-5 px-6 text-center">
-        <span className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-          Web Developer
-        </span>
-
         {/*
           見出しはロゴタイプの絵で出す。ヘッダーがキャラクターとロゴタイプを並べた一枚を
           使うのに対し、トップは字だけを大きく置き、キャラクターのほうは地平線を歩かせる
@@ -123,9 +119,9 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
         <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
           現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
           <br />
-          ブラウザの向こう側で暮らしています。
+          東京で Web 開発者をやっています。
           <br />
-          ラップトップとおいしいごはんと、大切な人たちがいればだいたい幸せです。
+          ラップトップと、おいしいごはんと、あとは大切な人たちがいればだいたい幸せです。
         </p>
 
         <div className="mt-1 flex items-center gap-5">
