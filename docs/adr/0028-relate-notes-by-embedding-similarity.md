@@ -63,7 +63,11 @@ slug の昇順である。
 
 Vectorize は使わない (案 D)。近似最近傍が要る規模ではない。
 
-### モデルは `@cf/baai/bge-m3` を既定にする
+### モデルは `@cf/qwen/qwen3-embedding-0.6b` を既定にする (2026-09-07 に [ADR 0030](0030-switch-embedding-model-to-qwen3.md) で差し替え)
+
+以下は 2026-09-01 に `bge-m3` を選んだときの記録である。選定に使ったハブと取り残しは並びの偏りしか
+見ておらず、関連が合っているかを別の物差しで測り直した結果は ADR 0030 にある。
+
 
 Workers AI の Text Embeddings は 7 つある。`bge-large-en-v1.5`、`bge-base-en-v1.5`、
 `bge-small-en-v1.5` は英語向けで、記事が全部日本語なので落ちる (入力の上限も 512
@@ -170,4 +174,4 @@ refresh のときには「変わっていない記事」なので、二度と対
 - [ADR 0004](0004-github-as-content-source-of-truth.md) — 正本と D1 / R2 の分担
 - [ADR 0014](0014-link-cards-from-ogp-only.md) — 外部に触る処理を refresh から分ける形
 - [Vectorize の制限](https://developers.cloudflare.com/vectorize/platform/limits/) — 1 ベクトル 1536 次元まで
-- [bge-m3 (Workers AI)](https://developers.cloudflare.com/workers-ai/models/bge-m3/) — 1024 次元、60,000 トークン
+- [bge-m3 (Workers AI)](https://developers.cloudflare.com/workers-ai/models/bge-m3/) — 1024 次元。一覧は 60,000 トークンとするが、実測では 8,192 トークンでエラーになる (ADR 0030)

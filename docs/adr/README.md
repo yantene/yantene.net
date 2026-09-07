@@ -42,6 +42,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは短い不調の間だけ前回の中身で持ちこたえる               | Accepted |
 | [0028](0028-relate-notes-by-embedding-similarity.md)         | 関連ノートを、refresh 時に作るベクトルの近さで並べる                 | Accepted |
 | [0029](0029-retire-tags.md)                                  | タグをやめ、分類は `article` の 1 つに畳む                           | Accepted |
+| [0030](0030-switch-embedding-model-to-qwen3.md)              | 関連ノートの埋め込みモデルを qwen3-embedding-0.6b に替える           | Accepted |
 
 ## 統合した番号
 
