@@ -38,18 +38,62 @@ CLOUDFLARE_ENV=production pnpm run build
 ### 1. secret を設定する
 
 ```bash
-pnpm exec wrangler secret put GITHUB_TOKEN --env production    # コンテンツ正本の読み取り
-pnpm exec wrangler secret put REFRESH_SECRET --env production  # 同期エンドポイントの保護
+pnpm exec wrangler secret put ARTIFACTS_ACCOUNT_ID --env production  # コンテンツ正本 (Artifacts) の読み取り
+pnpm exec wrangler secret put ARTIFACTS_API_TOKEN --env production   # 同上。権限は Artifacts > Read だけ
+pnpm exec wrangler secret put REFRESH_SECRET --env production        # 同期エンドポイントの保護
 ```
 
-コンテンツ正本のリポジトリ側からも叩けるようにする。staging とは別の値にすること。
+`ARTIFACTS_API_TOKEN` はダッシュボードの API Tokens で作る。権限は **Account / Artifacts /
+Read** の 1 つだけにする。書き込みの権限は要らないし、持たせると Worker が漏れたときに正本を
+消せる。
+
+`CONTENT_SOURCE` が `github` の環境 (production の切り替え前) は代わりに `GITHUB_TOKEN` を
+置き、コンテンツ正本のリポジトリ側からも refresh を叩けるようにする。
 
 ```bash
-gh secret set PRODUCTION_REFRESH_SECRET -R yantene/notes
+pnpm exec wrangler secret put GITHUB_TOKEN --env production
+gh secret set PRODUCTION_REFRESH_SECRET -R yantene/notes   # staging とは別の値にする
 ```
 
 `REFRESH_SECRET` が無いと `POST /api/v1/refresh` を叩けず、**記事が 1 件も入らないまま
-公開される**。
+公開される**。正本側の secret が無いと refresh が throw する (fail-loud)。
+
+### 1'. Artifacts のリポジトリを用意する
+
+namespace `yantene` と repo `notes` は `wrangler.jsonc` の vars が指している。無ければ作る。
+REST は `ARTIFACTS_API_TOKEN` とは別の、**Artifacts > Edit** を持つトークンで叩く
+(作るときだけ要る。Worker には置かない)。
+
+```bash
+export ACCOUNT_ID=<account-id> CLOUDFLARE_API_TOKEN=<artifacts-edit-token>
+export BASE="https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/artifacts"
+curl -X POST "$BASE/namespaces" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" -d '{"namespace":"yantene"}'
+curl -X POST "$BASE/namespaces/yantene/repos" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" -d '{"name":"notes","default_branch":"main"}'
+```
+
+応答の `remote` (`https://<account-id>.artifacts.cloudflare.net/git/yantene/notes.git`) が
+push 先。書き手の手元には write トークンを 1 本発行して持たせる。TTL は最長 1 年
+(31,536,000 秒)。切れたら発行し直す。
+
+```bash
+curl -X POST "$BASE/namespaces/yantene/tokens" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" -d '{"repo":"notes","scope":"write","ttl":31536000}'
+```
+
+手元の clone に remote を足し、トークンはヘッダで渡す (URL に埋めない)。
+
+```bash
+git remote add artifacts <remote>
+git config remote.artifacts.pushurl <remote>
+git -c http.extraHeader="Authorization: Bearer <token>" push artifacts main staging
+```
+
+毎回 `-c` を打ちたくなければ `git config --local http.<remote>.extraHeader "Authorization: Bearer <token>"`
+で remote の URL に紐付けて持つ (`.git/config` に平文で入るので、clone を共有しないこと)。
+GitHub からの取り込みは公開リポジトリしか受けないので、private の `yantene/notes` は
+このように手元から push して移す。
 
 ### 2. KV namespace を作る
 
@@ -79,8 +123,15 @@ pnpm exec wrangler r2 object put yantene-production/og/fonts/noto-sans-jp-700-fu
 
 ### 4. コンテンツを投入する
 
-`yantene/notes` の refresh ワークフローを対象ブランチで実行する (main → production、
-staging → staging)。
+Artifacts を読む環境は、対象ブランチを push したあと refresh を手で叩く (GitHub Actions は
+Artifacts の push を知らない)。
+
+```bash
+curl -X POST "https://yantene.net/api/v1/refresh" -H "X-Refresh-Token: <secret>"
+```
+
+GitHub を読む環境 (`CONTENT_SOURCE: github`) は `yantene/notes` の refresh ワークフローを
+対象ブランチで実行する (main → production、staging → staging)。
 
 ### 5. スモークで確かめる
 

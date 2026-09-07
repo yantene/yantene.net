@@ -9,7 +9,15 @@
   },
   "vars": {
     "APP_ENV": "development",
-    // コンテンツ正本 (GitHub リポジトリ) の参照。GITHUB_TOKEN は secret で与える。
+    // コンテンツ正本をどちらから読むか (ADR 0031)。production を切り替えるまでは
+    // 環境ごとに違う。値が無いか知らない値なら refresh が throw する (fail-loud)。
+    "CONTENT_SOURCE": "artifacts",
+    // Cloudflare Artifacts (コンテンツ正本) の参照。アカウント ID と API トークン
+    // (Artifacts > Read) は secret で与える: ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
+    "ARTIFACTS_NAMESPACE": "yantene",
+    "ARTIFACTS_REPO": "notes",
+    "ARTIFACTS_BRANCH": "main",
+    // GitHub リポジトリ (切り替え前の正本) の参照。GITHUB_TOKEN は secret で与える。
     "GITHUB_OWNER": "yantene",
     "GITHUB_REPO": "notes",
     "GITHUB_BRANCH": "main",
@@ -54,6 +62,10 @@
       ],
       "vars": {
         "APP_ENV": "staging",
+        "CONTENT_SOURCE": "artifacts",
+        "ARTIFACTS_NAMESPACE": "yantene",
+        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_BRANCH": "staging",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
         "GITHUB_BRANCH": "staging",
@@ -93,6 +105,11 @@
       ],
       "vars": {
         "APP_ENV": "production",
+        // staging で Artifacts の経路を確かめてから "artifacts" に切り替える (#401)。
+        "CONTENT_SOURCE": "github",
+        "ARTIFACTS_NAMESPACE": "yantene",
+        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_BRANCH": "main",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
         "GITHUB_BRANCH": "main",

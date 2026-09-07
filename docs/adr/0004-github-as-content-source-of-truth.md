@@ -1,6 +1,6 @@
 # 0004. コンテンツの正本を GitHub リポジトリに置き、D1 / R2 をキャッシュにする
 
-- Status: Accepted
+- Status: Deprecated ([0031](0031-artifacts-as-content-source-of-truth.md) で置き換え)
 - Date: 2026-07-05
 - Deciders: @yantene
 

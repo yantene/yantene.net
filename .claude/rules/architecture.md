@@ -63,7 +63,8 @@ app/
 │   │   │   └── test-helper.ts  # テスト用 D1 ヘルパー
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
 │   │   ├── kv/                 # KV 実装 (読み手のセッション)
-│   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
+│   │   ├── artifacts/          # コンテンツ正本 (Cloudflare Artifacts) の実装 (ADR 0031)
+│   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ)。production 切替まで残す
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)

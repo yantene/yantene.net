@@ -31,8 +31,22 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 
 ## コンテンツワークフロー
 
-手元で Markdown を書き、コンテンツ正本のリポジトリ (`yantene/notes`) に `git push` する。
-その後 `POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
+手元で Markdown を書き、コンテンツ正本のリポジトリに `git push` する。その後
+`POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
+
+正本は Cloudflare Artifacts のリポジトリ (namespace `yantene` / repo `notes`。ADR 0031)。
+**production はまだ GitHub (`yantene/notes`) を読んでいる** (`wrangler.jsonc` の
+`CONTENT_SOURCE`)。staging で Artifacts の経路を確かめてから切り替える (#401)。
+
+- Artifacts を読む環境 (development / staging): Artifacts の remote に push し、そのあと
+  `curl` で refresh を叩く。GitHub Actions は Artifacts の push を知らない
+- GitHub を読む環境 (production): `yantene/notes` に push すると、あちらのワークフローが
+  refresh を叩く
+
+```bash
+git push artifacts staging                       # 正本 (Artifacts) へ。remote の作り方は environments.md
+curl -X POST "https://staging.yantene.net/api/v1/refresh" -H "X-Refresh-Token: <secret>" -u <basic>
+```
 
 ### 実装変更を既存ノートに反映するとき (force refresh)
 
@@ -90,11 +104,12 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 ## データモデルとストレージ戦略
 
-コンテンツの正本は GitHub リポジトリ (`yantene/notes`) に置く。
-D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・画像のキャッシュを担う。
-設計判断の詳細は [ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) を参照。
+コンテンツの正本は Cloudflare Artifacts のリポジトリに置く (production の切り替えまでは
+GitHub の `yantene/notes` も読める)。D1 はメタデータのインデックス、R2 は原文 Markdown・
+パース済み MDAST・画像のキャッシュを担う。設計判断の詳細は
+[ADR 0031](../../docs/adr/0031-artifacts-as-content-source-of-truth.md) を参照。
 
-- 正本 (GitHub): Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
+- 正本 (Artifacts): Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
 - R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
