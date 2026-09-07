@@ -331,6 +331,67 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(result.embedded).toContain("n30");
   });
 
+  it("force で作り直し損ねた記事が残っても、未作成が無ければ近さを書き直す", async () => {
+    // 31 本すべて今のモデルで作れている。force は 30 本までしか作り直さない。
+    const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
+    const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
+    const stored: NoteEmbedding[] = slugs.map((slug, i) => ({
+      noteId: entityId<"Note">(`id-${slug}`),
+      slug: NoteSlug.create(slug),
+      model: MODEL,
+      contentHash: `hash-${slug}`,
+      vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),
+    }));
+    const { service } = harness({
+      slugs,
+      hashes,
+      stored,
+      generator: generatorReturning(slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1])),
+    });
+
+    const result = await service.sync({ force: true });
+
+    /*
+     * 作り直し損ねた 1 本は報告する。ただし、それを理由に書き直しを見送ると、
+     * 30 本を超えるコーパスでは force を何回流しても近さが書き直されない。
+     * 残った 1 本は今のモデルのベクトルを持っているので、そのまま近さに入れる。
+     */
+    expect(result.embedded).toHaveLength(30);
+    expect(result.deferred).toBe(1);
+    expect(result.rewrittenPairs).toBe((31 * 30) / 2);
+  });
+
+  it("モデルを差し替えて force を流しても、2 回目で近さが書き直される", async () => {
+    // 31 本すべて前のモデルで作られている。
+    const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
+    const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
+    const vectors = slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1]);
+    const stored: NoteEmbedding[] = slugs.map((slug, i) => ({
+      noteId: entityId<"Note">(`id-${slug}`),
+      slug: NoteSlug.create(slug),
+      model: "old-model",
+      contentHash: `hash-${slug}`,
+      vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),
+    }));
+
+    const first = harness({ slugs, hashes, stored, generator: generatorReturning(vectors) });
+    const a = await first.service.sync({ force: true });
+    expect(a.deferred).toBe(1);
+    expect(a.rewrittenPairs).toBe(0);
+
+    // 2 回目: 未作成の 1 本と、作り直し済みの 29 本。作り直し損ねる 1 本は今のモデル。
+    const second = harness({
+      slugs,
+      hashes,
+      stored: [...first.upserted, ...stored.slice(30)],
+      generator: generatorReturning(vectors),
+    });
+    const b = await second.service.sync({ force: true });
+    expect(b.embedded).toContain("n30");
+    expect(b.deferred).toBe(1);
+    expect(b.rewrittenPairs).toBe((31 * 30) / 2);
+  });
+
   it("書き直しが落ちても、記事の同期は通す", async () => {
     const { service } = harness({
       slugs: ["alpha", "beta"],

@@ -78,6 +78,15 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   ベクトルを作るのは「変更のあった記事」だけなので、**導入直後は既存記事のベクトルが 1 本も
   入らない**。関連ノートが全記事で空になるので、一度 force refresh を流すこと。
   1 回で作り直せるのは 30 本までで、溢れた分は次の refresh に回る。
+- 埋め込みモデルを差し替えた ([ADR 0030](../../docs/adr/0030-switch-embedding-model-to-qwen3.md))。
+  **force は要らない。** `note_embeddings.model` の列が違えば通常の refresh が作り直す。ただし
+  1 回 30 本までなので、**記事数 ÷ 30 を切り上げた回数**だけ通常の refresh を流すこと。揃うまで
+  近さの書き直しは走らず、前のモデルの並びが出続ける。結果の `embeddings.deferred` が 0 になり
+  `embeddings.rewrittenPairs` が 0 以外になったら揃っている。`failed` が空でなければもう一度。
+
+  ```bash
+  gh workflow run refresh.yml -R yantene/notes --ref staging   # staging。production は --ref main
+  ```
 
 ## データモデルとストレージ戦略
 

@@ -127,11 +127,18 @@ export class NoteEmbeddingsRefreshService {
     }
 
     const deferred = targets.length - planned.length;
+    /*
+     * 書き直しを見送るかどうかは、missing が溢れたかだけで決める。restated の溢れまで
+     * 数えると、30 本を超えるコーパスでは force を何回流しても deferred が 0 にならず、
+     * 近さが永久に書き直されない。restated は今のモデルのベクトルを既に持っているので、
+     * 作り直さなくても近さの計算に入れられる。
+     */
+    const missingDeferred = Math.max(0, missing.length - MAX_NOTES_PER_RUN);
     const rewrittenPairs = await this.rewriteSimilarities(
       known,
       embedded.length,
       allSlugs,
-      deferred,
+      missingDeferred,
     );
     return { embedded, unchanged, failed, deferred, rewrittenPairs };
   }
@@ -145,6 +152,8 @@ export class NoteEmbeddingsRefreshService {
    * **見送るのは「まだ作り切れていない」ときだけ。** モデルを差し替えた直後は 1 回では
    * 作り直しきれない (MAX_NOTES_PER_RUN)。その途中で全ペアを消すと、まだ作り直して
    * いない記事の関連ノートが空になる。次の回で揃うので、それまでは前の並びを残す。
+   * `deferred` に数えるのは今のモデルのベクトルが無い記事の溢れだけで、force で
+   * 作り直し損ねた記事は数えない (そちらは前のベクトルで近さに入れられる)。
    *
    * **「作れない記事がある」ときは見送らない。** 本文の MDAST が R2 に無い、モデルが
    * VO の弾く値を返すといった理由で永久にベクトルを作れない記事が 1 本でもあると、
