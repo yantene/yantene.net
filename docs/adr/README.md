@@ -43,6 +43,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0028](0028-relate-notes-by-embedding-similarity.md)         | 関連ノートを、refresh 時に作るベクトルの近さで並べる                 | Accepted |
 | [0029](0029-retire-tags.md)                                  | タグをやめ、分類は `article` の 1 つに畳む                           | Accepted |
 | [0030](0030-switch-embedding-model-to-qwen3.md)              | 関連ノートの埋め込みモデルを qwen3-embedding-0.6b に替える           | Accepted |
+| [0031](0031-raise-embedding-input-limit-to-10000.md)         | 埋め込みの入力の上限を 8,000 字から 10,000 字に上げる                | Accepted |
 
 ## 統合した番号
 
