@@ -1,7 +1,7 @@
 /*
  * 記事ページ固有の見た目。
  *
- * 本文の描画は MdastRenderer が、記事の頭は NoteHeader が持つので、ここに置くのは
+ * 本文の描画は MdastRenderer が、記事の頭は ArticleHeader が持つので、ここに置くのは
  * どちらにも属さない部分だけ。
  */
 
@@ -9,13 +9,13 @@
  * 関連記事への分かれ道。
  *
  * 本文と地続きに見えないよう間を大きく取るが、区切り線は引かない。線は
- * NoteBranches の幹が担うので、二重に引くと道が途切れて見える。
+ * ArticleBranches の幹が担うので、二重に引くと道が途切れて見える。
  */
-.note-related {
+.article-related {
   margin-top: 4rem;
 }
 
-.note-related-heading {
+.article-related-heading {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 700;

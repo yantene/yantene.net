@@ -1,4 +1,4 @@
-import { NoteActions } from "./note-actions";
+import { ArticleActions } from "./article-actions";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /*
@@ -6,9 +6,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
  * ここで確かめるのは並びと余白 (上下で主張の強さが変わること)。押した後の見た目は
  * Reaction/ReactionBar の stories が持つ。
  */
-const meta: Meta<typeof NoteActions> = {
-  title: "NoteActions/NoteActions",
-  component: NoteActions,
+const meta: Meta<typeof ArticleActions> = {
+  title: "ArticleActions/ArticleActions",
+  component: ArticleActions,
   args: {
     url: "https://yantene.net/articles/hacku-2016",
     title: "オートマチック・オタク・マッチング",

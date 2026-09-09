@@ -6,7 +6,7 @@ export function EmbedFrame(
   props: Readonly<React.ComponentPropsWithoutRef<"iframe">>,
 ): React.JSX.Element {
   return (
-    <div className="note-embed">
+    <div className="mdast-embed">
       <iframe {...props} title={props.title ?? DEFAULT_EMBED_TITLE} />
     </div>
   );

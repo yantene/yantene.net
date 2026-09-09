@@ -37,10 +37,10 @@ const meta: Meta<typeof MermaidDiagram> = {
   title: "Mdast/MermaidDiagram",
   component: MermaidDiagram,
   parameters: { layout: "padded" },
-  // 図の余白と溢れの扱いは本文 (note-prose) の中でしか当たらない。
+  // 図の余白と溢れの扱いは本文 (mdast-prose) の中でしか当たらない。
   decorators: [
     (Story) => (
-      <div className="note-prose prose max-w-none">
+      <div className="mdast-prose prose max-w-none">
         <Story />
       </div>
     ),

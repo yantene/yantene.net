@@ -1,23 +1,23 @@
 import { screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NoteActions } from "./note-actions";
+import { ArticleActions } from "./article-actions";
 import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
-import type { NoteActionsPlacement } from "./note-actions";
+import type { ArticleActionsPlacement } from "./article-actions";
 
 /*
  * 中の ReactionBar が useFetcher を使うので、データルータの中でしか描けない。
  * 押した結果までは見ず、置き場所ごとの区別と、両方の手が揃っていることを確かめる。
  */
-function renderActions(placement: NoteActionsPlacement, mine: string | null = null): void {
+function renderActions(placement: ArticleActionsPlacement, mine: string | null = null): void {
   const router = createMemoryRouter(
     [
       {
         path: "/",
         element: (
-          <NoteActions
+          <ArticleActions
             placement={placement}
             reactions={[{ emoji: "❤️", count: 2 }]}
             mine={mine}
@@ -54,7 +54,7 @@ function createStorage(): Storage {
   };
 }
 
-describe("NoteActions", () => {
+describe("ArticleActions", () => {
   beforeEach(() => {
     vi.stubGlobal("localStorage", createStorage());
   });
@@ -83,7 +83,7 @@ describe("NoteActions", () => {
     renderActions("top");
 
     const region = screen.getByRole("region", { name: /冒頭/ });
-    expect(region.className).toContain("note-actions-top");
+    expect(region.className).toContain("article-actions-top");
   });
 
   /*

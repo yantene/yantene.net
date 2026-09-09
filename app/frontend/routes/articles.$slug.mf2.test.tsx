@@ -4,13 +4,13 @@ import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
 import { describe, expect, it } from "vitest";
-import NoteShow from "./articles.$slug";
+import ArticleShow from "./articles.$slug";
 
 /*
- * 記事全体を h-entry として束ねる印。**NoteHeader の側では見張れない。**
+ * 記事全体を h-entry として束ねる印。**ArticleHeader の側では見張れない。**
  *
  * h-entry は記事を包む <main> に、e-content は本文の描画に付いており、どちらもこの
- * ルートの JSX にしかない。ここが外れると、note-header.mf2.test.tsx が固定している
+ * ルートの JSX にしかない。ここが外れると、article-header.mf2.test.tsx が固定している
  * u-url / p-name / dt-published / p-author は宙に浮いた単独の項目になり、送り先の
  * パーサから見て「誰の何という記事か」が読めなくなる。個々の印が全部揃っていても、
  * 束ねる側が消えれば同じように壊れる。
@@ -58,7 +58,7 @@ function loaderData(): unknown {
 /**
  * ルートをそのまま描く。
  *
- * NoteActions の中の ReactionBar が useFetcher を使うので、素の描画では足りず
+ * ArticleActions の中の ReactionBar が useFetcher を使うので、素の描画では足りず
  * データルータが要る。createRoutesStub は loader と action を備えた文脈を用意して
  * くれるので、ページの JSX をそのまま通せる。
  */
@@ -66,7 +66,7 @@ async function renderPage(): Promise<HTMLElement> {
   const Stub = createRoutesStub([
     {
       path: "/articles/:slug",
-      Component: NoteShow,
+      Component: ArticleShow,
       loader: () => loaderData(),
       action: () => null,
     },
@@ -97,9 +97,9 @@ describe("記事ページの microformats2", () => {
     expect(content?.closest(".h-entry")).not.toBeNull();
   });
 
-  it("NoteHeader の印が h-entry の中に入っている", async () => {
+  it("ArticleHeader の印が h-entry の中に入っている", async () => {
     /*
-     * 個々の印の中身は note-header.mf2.test.tsx が見る。ここで確かめるのは
+     * 個々の印の中身は article-header.mf2.test.tsx が見る。ここで確かめるのは
      * 「束ねる側の中に入っているか」だけ。入れ子が崩れると、印が揃っていても
      * entry のプロパティとしては読まれない。
      */

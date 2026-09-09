@@ -6,8 +6,8 @@
   "home": {
     "heading": "yantene",
     "tagline": "From the other side of the web",
-    "recentNotes": "Recent articles",
-    "popularNotes": "Popular articles",
+    "recentArticles": "Recent articles",
+    "popularArticles": "Popular articles",
     "viewAll": "View all"
   },
   "navigation": {

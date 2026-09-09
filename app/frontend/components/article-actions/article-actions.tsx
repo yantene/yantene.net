@@ -4,13 +4,13 @@ import { ReactionBar } from "~/frontend/components/reaction/reaction-bar";
 import { ShareMenu } from "~/frontend/components/share/share-menu";
 
 /** 置き場所。上下で余白と主張の強さを変えるだけで、中身は同じ。 */
-export type NoteActionsPlacement = "top" | "bottom";
+export type ArticleActionsPlacement = "top" | "bottom";
 
-export interface NoteActionsProps extends ReactionState {
+export interface ArticleActionsProps extends ReactionState {
   /** 共有する絶対 URL。相対パスだと貼った先で開けない。 */
   readonly url: string;
   readonly title: string;
-  readonly placement: NoteActionsPlacement;
+  readonly placement: ArticleActionsPlacement;
 }
 
 /**
@@ -24,18 +24,18 @@ export interface NoteActionsProps extends ReactionState {
  *
  * 読み上げでは同じものが 2 度並ぶことになるので、置き場所を名前に入れて区別する。
  */
-export function NoteActions({
+export function ArticleActions({
   reactions,
   mine,
   url,
   title,
   placement,
-}: NoteActionsProps): React.JSX.Element {
+}: ArticleActionsProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
     <section
-      className={`note-actions note-actions-${placement}`}
+      className={`article-actions article-actions-${placement}`}
       aria-label={t(placement === "top" ? "articles.actionsTop" : "articles.actionsBottom")}
     >
       {/*

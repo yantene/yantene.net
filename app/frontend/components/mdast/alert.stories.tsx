@@ -11,7 +11,7 @@ const meta: Meta<typeof Alert> = {
   decorators: [
     (Story) => (
       <div className="p-6">
-        <div className="note-prose prose max-w-3xl">
+        <div className="mdast-prose prose max-w-3xl">
           <p>直前の段落。</p>
           <Story />
           <p>直後の段落。</p>

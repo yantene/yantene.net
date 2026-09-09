@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { SiMarkdown } from "react-icons/si";
 
-export interface NoteHeaderProps {
+export interface ArticleHeaderProps {
   readonly slug: string;
   readonly title: string;
   readonly imageUrl: string | null;
@@ -21,20 +21,20 @@ export interface NoteHeaderProps {
  * 本文を表す `e-content` はこの外側 (routes/articles.$slug.tsx) にある。** 束ねる側が外れると、
  * ここの印は宙に浮いた単独の項目になって誰のものでもなくなるので、両方が要る。
  *
- * 見張りも 2 つに分かれている。ここの印は note-header.mf2.test.tsx が、外側の `h-entry` /
+ * 見張りも 2 つに分かれている。ここの印は article-header.mf2.test.tsx が、外側の `h-entry` /
  * `e-content` は routes/articles.$slug.mf2.test.tsx が固定している。
  */
-export function NoteHeader({
+export function ArticleHeader({
   slug,
   title,
   imageUrl,
   publishedOn,
   origin,
-}: NoteHeaderProps): React.JSX.Element {
+}: ArticleHeaderProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
-    <header className="note-header mb-8">
+    <header className="article-header mb-8">
       {/*
         カバー画像は表題より上、記事の先頭に置く。読み始める前に絵で記事の顔を
         立てる。ファーストビューに入るので lazy にはせず、最優先で取りに行く。
@@ -45,20 +45,20 @@ export function NoteHeader({
           alt=""
           fetchPriority="high"
           decoding="async"
-          className="note-header-cover"
+          className="article-header-cover"
         />
       )}
       {/*
         読み始める前に「いつの、何を読むのか」が分かるようにする。日付と種別を
         表題の上に置き、細い線で本文と隔てる。
       */}
-      <p className="note-header-eyebrow">
+      <p className="article-header-eyebrow">
         <time className="dt-published" dateTime={publishedOn}>
           {publishedOn.replaceAll("-", ".")}
         </time>
-        <span className="note-header-kind">ARTICLE</span>
+        <span className="article-header-kind">ARTICLE</span>
       </p>
-      <h1 className="note-header-title p-name">{title}</h1>
+      <h1 className="article-header-title p-name">{title}</h1>
       {/*
         理由は上の JSDoc に書いた。`u-url` は相手のサイトで解決されるので絶対 URL にする。
 

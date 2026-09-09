@@ -109,7 +109,7 @@ describe("MermaidDiagram", () => {
      * 外れるので、後から引数を辿っても祖先を持たない。
      */
     mermaid.render.mockImplementation((_id: string, _source: string, element?: Element) => {
-      didMeasureInProse = element?.closest(".note-prose") != null;
+      didMeasureInProse = element?.closest(".mdast-prose") != null;
       return Promise.resolve({ svg: SVG, diagramType: "flowchart" });
     });
 

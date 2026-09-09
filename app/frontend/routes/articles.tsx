@@ -4,15 +4,15 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/articles";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
-import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
+import type { LoadArticlePage } from "~/frontend/components/article-timeline/infinite-article-timeline";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { InfiniteNoteTimeline } from "~/frontend/components/note-timeline/infinite-note-timeline";
-import { parseNoteListPayload } from "~/frontend/components/note-timeline/note-list-payload";
+import { InfiniteArticleTimeline } from "~/frontend/components/article-timeline/infinite-article-timeline";
+import { parseArticleListPayload } from "~/frontend/components/article-timeline/article-list-payload";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
@@ -71,7 +71,7 @@ function buildHrefForPage(page: number, perPage: number, sort: SortState): strin
  * 既定の取り方 (`/api/v1/articles` をそのまま叩く) では並び順が引き継がれず、一覧の
  * 2 ページ目が別の順で返る。ここで同じ条件を渡す。
  */
-function buildLoadPage(sort: SortState): LoadNotePage {
+function buildLoadPage(sort: SortState): LoadArticlePage {
   return async (page, perPage) => {
     const params = new URLSearchParams({
       page: String(page),
@@ -85,7 +85,7 @@ function buildLoadPage(sort: SortState): LoadNotePage {
     });
     if (!response.ok) throw new Error(`status ${String(response.status)}`);
 
-    const payload = parseNoteListPayload(await response.json());
+    const payload = parseArticleListPayload(await response.json());
     if (payload === null) throw new Error("unexpected payload");
     return payload;
   };
@@ -105,7 +105,7 @@ function resultHeading(
   return t("articles.heading");
 }
 
-export default function NotesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
+export default function ArticlesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { notes, pagination, query, sort, copyright } = loaderData;
   const hrefForPage = (page: number): string => buildHrefForPage(page, pagination.perPage, sort);
@@ -134,10 +134,10 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
           このページが検索の入口と結果を兼ねる。探す前と後で別のページへ飛ばさず、
           フォームは常に同じ場所に置いたままにする。
         */}
-        <search className="notes-search">
+        <search className="articles-search">
           <form method="get" action="/articles" role="search">
-            <label className="notes-search-field">
-              <HiMagnifyingGlass className="notes-search-icon" aria-hidden />
+            <label className="articles-search-field">
+              <HiMagnifyingGlass className="articles-search-icon" aria-hidden />
               <input
                 type="search"
                 name="q"
@@ -151,7 +151,9 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
         </search>
 
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-          <h1 className="notes-heading">{resultHeading(t, { query, total: pagination.total })}</h1>
+          <h1 className="articles-heading">
+            {resultHeading(t, { query, total: pagination.total })}
+          </h1>
           {/*
             一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
             受け取り続ける手を同じ高さに並べる。
@@ -165,8 +167,8 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
           </p>
         ) : (
           <div className="mt-8">
-            <InfiniteNoteTimeline
-              initialNotes={notes}
+            <InfiniteArticleTimeline
+              initialArticles={notes}
               totalPages={pagination.totalPages}
               perPage={pagination.perPage}
               loadPage={loadPage}

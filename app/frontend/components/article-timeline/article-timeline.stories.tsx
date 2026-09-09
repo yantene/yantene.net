@@ -1,4 +1,4 @@
-import { NoteTimeline } from "./note-timeline";
+import { ArticleTimeline } from "./article-timeline";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const notes = [
@@ -36,10 +36,10 @@ const notes = [
   },
 ];
 
-const meta: Meta<typeof NoteTimeline> = {
-  title: "NoteTimeline/NoteTimeline",
-  component: NoteTimeline,
-  args: { notes },
+const meta: Meta<typeof ArticleTimeline> = {
+  title: "ArticleTimeline/ArticleTimeline",
+  component: ArticleTimeline,
+  args: { articles: notes },
   decorators: [
     (Story) => (
       <div className="w-full max-w-5xl px-6">
@@ -56,12 +56,12 @@ export const Default: Story = {};
 
 /** サムネイルが無い記事は、その列ごと詰まる。 */
 export const WithoutImages: Story = {
-  args: { notes: notes.map((note) => ({ ...note, imageUrl: null })) },
+  args: { articles: notes.map((note) => ({ ...note, imageUrl: null })) },
 };
 
 /** 1 件のときは、繋ぐ相手がいないので縦線を出さない。 */
-export const SingleNote: Story = {
-  args: { notes: notes.slice(0, 1) },
+export const SingleArticle: Story = {
+  args: { articles: notes.slice(0, 1) },
 };
 
 /**
@@ -84,7 +84,7 @@ export const GroupedByYear: Story = {
 export const UnevenYears: Story = {
   args: {
     groupByYear: true,
-    notes: [
+    articles: [
       ...Array.from({ length: 2 }, (_, index) => ({
         slug: `recent-${String(index)}`,
         title: `最近書いたノート ${String(index + 1)}`,
@@ -108,7 +108,7 @@ export const UnevenYears: Story = {
 /** 公開月ごとのドットの色を一覧する (12 か月で色相が一周する)。 */
 export const EveryMonth: Story = {
   args: {
-    notes: Array.from({ length: 12 }, (_, index) => {
+    articles: Array.from({ length: 12 }, (_, index) => {
       const month = String(index + 1).padStart(2, "0");
       return {
         slug: `month-${month}`,

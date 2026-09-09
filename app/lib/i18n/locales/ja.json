@@ -6,8 +6,8 @@
   "home": {
     "heading": "やんてね",
     "tagline": "Web の向こうから",
-    "recentNotes": "最近の記事",
-    "popularNotes": "人気の記事",
+    "recentArticles": "最近の記事",
+    "popularArticles": "人気の記事",
     "viewAll": "すべて見る"
   },
   "navigation": {

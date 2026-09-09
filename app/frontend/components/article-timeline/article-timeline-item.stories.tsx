@@ -1,9 +1,9 @@
-import { NoteTimelineItem } from "./note-timeline-item";
+import { ArticleTimelineItem } from "./article-timeline-item";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-const meta: Meta<typeof NoteTimelineItem> = {
-  title: "NoteTimeline/NoteTimelineItem",
-  component: NoteTimelineItem,
+const meta: Meta<typeof ArticleTimelineItem> = {
+  title: "ArticleTimeline/ArticleTimelineItem",
+  component: ArticleTimelineItem,
   args: {
     slug: "hello-world",
     title: "はじめてのノート",
@@ -14,7 +14,7 @@ const meta: Meta<typeof NoteTimelineItem> = {
   decorators: [
     // 単体でも縦線とドットの位置関係が見えるよう、リストの文脈を与える。
     (Story) => (
-      <ol className="note-timeline w-full max-w-3xl px-6">
+      <ol className="article-timeline w-full max-w-3xl px-6">
         <Story />
       </ol>
     ),

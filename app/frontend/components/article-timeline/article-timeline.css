@@ -6,17 +6,17 @@
  * エリア名で 2 通りの並びを並記したほうが対応関係が読める。
  */
 
-.note-timeline {
+.article-timeline {
   /* ドット列の幅。縦線の位置もここから決まるので、変えると線がドットからずれる。 */
-  --note-dot-column: 1.25rem;
-  --note-dot-size: 0.5rem;
+  --timeline-dot-column: 1.25rem;
+  --timeline-dot-size: 0.5rem;
   /* 年を出すときの左の柱の幅。4 桁 + 余白が入る幅を確保する。 */
   --note-year-column: 3.25rem;
   /*
    * 項目の上端からドット中心までの距離。縦線を切り上げ・切り下げる位置でもある。
    * 日付の 1 行目の中心 (上下の余白 + 行の半分) に合わせてある。
    */
-  --note-dot-top: 1.875rem;
+  --timeline-dot-top: 1.875rem;
   /*
    * 項目の上下の余白。ドットの位置はこの余白の内側から数えるので、Tailwind の
    * py-* ではなくここで持つ (両者がずれると、点だけが線から外れる)。
@@ -30,12 +30,12 @@
  * 年を項目の間に挟まず別の列に置くのは、右の列を途切れさせないため。挟むと年のたびに
  * 縦線が分断され、時間が続いているように見えなくなる。
  */
-.note-timeline-group {
+.article-timeline-group {
   display: grid;
   grid-template-columns: var(--note-year-column) minmax(0, 1fr);
 }
 
-.note-timeline-year {
+.article-timeline-year {
   position: sticky;
   /* ヘッダーに潜り込まない位置で止める。 */
   top: 4.5rem;
@@ -48,19 +48,19 @@
   opacity: 0.45;
 }
 
-.note-timeline-item {
+.article-timeline-item {
   position: relative;
 }
 
 /*
  * ドットの列を貫く縦線。両端の項目では半分だけ引き、リストの外へ線が突き抜けないようにする。
  */
-.note-timeline-item::before {
+.article-timeline-item::before {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc(var(--note-dot-column) / 2);
+  left: calc(var(--timeline-dot-column) / 2);
   width: 1px;
   background-color: var(--color-base-300);
 }
@@ -71,41 +71,45 @@
  * 年で束ねたときに年ごとの端で判定すると、年が変わるたびに線が途切れて時間が
  * 続いて見えなくなる。そのため最初の年の先頭と最後の年の末尾だけを端として扱う。
  */
-.note-timeline-flat > .note-timeline-item:first-child::before,
-.note-timeline-group:first-child > .note-timeline-list > .note-timeline-item:first-child::before {
-  top: var(--note-dot-top);
+.article-timeline-flat > .article-timeline-item:first-child::before,
+.article-timeline-group:first-child
+  > .article-timeline-list
+  > .article-timeline-item:first-child::before {
+  top: var(--timeline-dot-top);
 }
 
-.note-timeline-flat > .note-timeline-item:last-child::before,
-.note-timeline-group:last-child > .note-timeline-list > .note-timeline-item:last-child::before {
+.article-timeline-flat > .article-timeline-item:last-child::before,
+.article-timeline-group:last-child
+  > .article-timeline-list
+  > .article-timeline-item:last-child::before {
   top: 0;
   bottom: auto;
-  height: var(--note-dot-top);
+  height: var(--timeline-dot-top);
 }
 
 /*
  * 項目の区切り線は項目の「間」を表すものなので、一覧の末尾には引かない。
  * 引くと最後の記事が線で閉じられ、そこで話が終わったように見える。
  */
-.note-timeline-flat > .note-timeline-item:last-child .note-timeline-link,
-.note-timeline-group:last-child
-  > .note-timeline-list
-  > .note-timeline-item:last-child
-  .note-timeline-link {
+.article-timeline-flat > .article-timeline-item:last-child .article-timeline-link,
+.article-timeline-group:last-child
+  > .article-timeline-list
+  > .article-timeline-item:last-child
+  .article-timeline-link {
   border-bottom-width: 0;
 }
 
 /* 記事が 1 件だけのときは、線を引く相手がいないので出さない。 */
-.note-timeline-flat > .note-timeline-item:first-child:last-child::before,
-.note-timeline-group:first-child:last-child
-  > .note-timeline-list
-  > .note-timeline-item:first-child:last-child::before {
+.article-timeline-flat > .article-timeline-item:first-child:last-child::before,
+.article-timeline-group:first-child:last-child
+  > .article-timeline-list
+  > .article-timeline-item:first-child:last-child::before {
   display: none;
 }
 
-.note-timeline-link {
+.article-timeline-link {
   display: grid;
-  grid-template-columns: var(--note-dot-column) minmax(0, 1fr) auto;
+  grid-template-columns: var(--timeline-dot-column) minmax(0, 1fr) auto;
   grid-template-areas:
     "dot date  thumb"
     "dot body  thumb";
@@ -115,26 +119,28 @@
 }
 
 @media (width >= 40rem) {
-  .note-timeline-link {
+  .article-timeline-link {
     grid-template-columns:
-      var(--note-dot-column) auto minmax(0, 1fr)
+      var(--timeline-dot-column) auto minmax(0, 1fr)
       auto auto;
     grid-template-areas: "dot date body thumb arrow";
     column-gap: 1.5rem;
   }
 }
 
-.note-timeline-dot {
+.article-timeline-dot {
   grid-area: dot;
-  width: var(--note-dot-size);
-  height: var(--note-dot-size);
+  width: var(--timeline-dot-size);
+  height: var(--timeline-dot-size);
   border-radius: 50%;
   /*
    * 縦線の分岐位置とドット中心を揃える。ドットは余白の内側から積まれるので、
-   * 項目上端からの距離 (--note-dot-top) から余白の分を引く。
+   * 項目上端からの距離 (--timeline-dot-top) から余白の分を引く。
    */
-  margin-top: calc(var(--note-dot-top) - var(--note-item-padding-y) - var(--note-dot-size) / 2);
-  margin-left: calc((var(--note-dot-column) - var(--note-dot-size)) / 2);
+  margin-top: calc(
+    var(--timeline-dot-top) - var(--note-item-padding-y) - var(--timeline-dot-size) / 2
+  );
+  margin-left: calc((var(--timeline-dot-column) - var(--timeline-dot-size)) / 2);
   /* 縦線の上に載せて、線を跨ぐ点に見せる。 */
   position: relative;
   z-index: 1;
@@ -148,9 +154,9 @@
  * ドットと同じ列に置いて、項目の作りが両者で変わらないようにしている。縦線は
  * 引かれないので (:has で線を消す)、番号だけが縦に並ぶ。
  */
-.note-timeline-rank {
+.article-timeline-rank {
   grid-area: dot;
-  margin-top: calc(var(--note-dot-top) - var(--note-item-padding-y) - 0.75rem);
+  margin-top: calc(var(--timeline-dot-top) - var(--note-item-padding-y) - 0.75rem);
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1;
@@ -161,35 +167,35 @@
   transition: opacity 0.15s;
 }
 
-.note-timeline-link:hover .note-timeline-rank {
+.article-timeline-link:hover .article-timeline-rank {
   opacity: 0.5;
 }
 
 /* 順位を出す一覧は時系列ではないので、時間を表す縦線は引かない。 */
-.note-timeline-item:has(.note-timeline-rank)::before {
+.article-timeline-item:has(.article-timeline-rank)::before {
   display: none;
 }
 
-.note-timeline-date {
+.article-timeline-date {
   grid-area: date;
 }
 
-.note-timeline-body {
+.article-timeline-body {
   grid-area: body;
 }
 
-.note-timeline-thumb {
+.article-timeline-thumb {
   grid-area: thumb;
 }
 
-.note-timeline-arrow {
+.article-timeline-arrow {
   grid-area: arrow;
   /* 狭い画面では矢印を出さない (リンク全体がタップ領域なので案内が要らない)。 */
   display: none;
 }
 
 @media (width >= 40rem) {
-  .note-timeline-arrow {
+  .article-timeline-arrow {
     display: block;
   }
 }
@@ -201,50 +207,50 @@
  * 5 月の新緑、8 月の日差し、10 月の紅葉、1 月の夜の色、と季節の実感に寄せる向きに
  * 回しているので、色相の並びを逆にすると季節と色が食い違う。
  */
-.note-dot-m01 {
+.season-dot-m01 {
   background-color: oklch(0.6 0.14 250);
 }
 
-.note-dot-m02 {
+.season-dot-m02 {
   background-color: oklch(0.6 0.14 220);
 }
 
-.note-dot-m03 {
+.season-dot-m03 {
   background-color: oklch(0.6 0.14 190);
 }
 
-.note-dot-m04 {
+.season-dot-m04 {
   background-color: oklch(0.6 0.14 160);
 }
 
-.note-dot-m05 {
+.season-dot-m05 {
   background-color: oklch(0.6 0.14 130);
 }
 
-.note-dot-m06 {
+.season-dot-m06 {
   background-color: oklch(0.6 0.14 100);
 }
 
-.note-dot-m07 {
+.season-dot-m07 {
   background-color: oklch(0.6 0.14 70);
 }
 
-.note-dot-m08 {
+.season-dot-m08 {
   background-color: oklch(0.6 0.14 40);
 }
 
-.note-dot-m09 {
+.season-dot-m09 {
   background-color: oklch(0.6 0.14 10);
 }
 
-.note-dot-m10 {
+.season-dot-m10 {
   background-color: oklch(0.6 0.14 340);
 }
 
-.note-dot-m11 {
+.season-dot-m11 {
   background-color: oklch(0.6 0.14 310);
 }
 
-.note-dot-m12 {
+.season-dot-m12 {
   background-color: oklch(0.6 0.14 280);
 }

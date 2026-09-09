@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NoteHeader } from "./note-header";
+import { ArticleHeader } from "./article-header";
 import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
@@ -26,10 +26,10 @@ const TARGET = "https://example.com/article";
  * 記事ページと同じ入れ子で描く。
  *
  * `h-entry` は記事全体を包む `<main>` に、`e-content` は本文の描画に付くので
- * (`routes/articles.$slug.tsx`)、NoteHeader だけを裸で描くと h-entry の外に居ることに
+ * (`routes/articles.$slug.tsx`)、ArticleHeader だけを裸で描くと h-entry の外に居ることに
  * なってしまう。ここで同じ包みを与える。
  *
- * **この包みは手で組んだものなので、ここで固定できるのは NoteHeader が出す印だけである。**
+ * **この包みは手で組んだものなので、ここで固定できるのは ArticleHeader が出す印だけである。**
  * 実際のページで `<main>` に `h-entry` が付いていることは routes/articles.$slug.mf2.test.tsx
  * が見張る。
  *
@@ -39,7 +39,7 @@ const TARGET = "https://example.com/article";
 function renderHeader(): HTMLElement {
   const { container } = renderWithI18n(
     <main className="h-entry">
-      <NoteHeader
+      <ArticleHeader
         slug={SLUG}
         title={TITLE}
         imageUrl={null}
@@ -67,7 +67,7 @@ function marked(container: HTMLElement, className: string): readonly Element[] {
   return [...container.querySelectorAll(`:scope .${className}`)];
 }
 
-describe("NoteHeader の microformats2", () => {
+describe("ArticleHeader の microformats2", () => {
   it("記事を指す u-url を 1 つだけ、絶対 URL で持つ", () => {
     // 相手のサイトで解決されるので、ルート相対だと相手のドメインを指してしまう。
     const urls = marked(renderHeader(), "u-url");

@@ -18,7 +18,7 @@ const meta: Meta<typeof ReactionHint> = {
   component: ReactionHint,
   /*
    * 実際はリアクションの行の上に浮かぶ。位置の基準になる入れ物が要るので、
-   * note-actions と同じ形 (position: relative) を用意して、行の代わりに枠を置く。
+   * article-actions と同じ形 (position: relative) を用意して、行の代わりに枠を置く。
    */
   decorators: [
     (Story) => {
@@ -26,7 +26,7 @@ const meta: Meta<typeof ReactionHint> = {
       return (
         // 促しは行の「上」に浮かぶので、上に見る余地を作っておく。
         <div className="p-6 pt-28">
-          <div className="note-actions-reactions">
+          <div className="article-actions-reactions">
             <div className="reaction-bar">
               <span className="reaction-chip">
                 <span className="reaction-chip-emoji">❤️</span>

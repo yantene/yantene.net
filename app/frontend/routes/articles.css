@@ -1,18 +1,18 @@
 /*
  * ノート一覧 (検索の入口と結果を兼ねるページ) 固有の見た目。
  *
- * 記事の並び自体は NoteTimeline が持つので、ここに置くのは探すための部分だけ。
+ * 記事の並び自体は ArticleTimeline が持つので、ここに置くのは探すための部分だけ。
  */
 
 /* 探す道具をページの頭にまとめる。結果より先に目に入る位置に置く。 */
-.notes-search {
+.articles-search {
   display: block;
   max-width: 36rem;
   margin-inline: auto;
   margin-bottom: 2.5rem;
 }
 
-.notes-search-field {
+.articles-search-field {
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -25,18 +25,18 @@
     box-shadow 0.15s;
 }
 
-.notes-search-field:focus-within {
+.articles-search-field:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 18%, transparent);
 }
 
-.notes-search-icon {
+.articles-search-icon {
   flex: none;
   font-size: 1.125rem;
   color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
 }
 
-.notes-search-field input {
+.articles-search-field input {
   flex: 1;
   min-width: 0;
   border: 0;
@@ -45,12 +45,12 @@
   line-height: 1.75;
 }
 
-.notes-search-field input:focus {
+.articles-search-field input:focus {
   outline: none;
 }
 
 /* 検索欄が主役なので、結果の見出しは控えめに置く。 */
-.notes-heading {
+.articles-heading {
   font-size: 1rem;
   font-weight: 400;
   color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
