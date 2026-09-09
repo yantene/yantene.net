@@ -1,6 +1,6 @@
 # 0032. 長文の投稿を article と呼び、`/articles/<slug>` で配る
 
-- Status: Accepted
+- Status: Accepted (「動かさないもの」の節のみ [0033](0033-rename-note-to-article-in-storage-and-code.md) で置き換え)
 - Date: 2026-09-09
 - Deciders: @yantene
 
@@ -50,40 +50,38 @@
 
 ### 動かすもの
 
-名前はすべて `article` に揃える。外に見えるものも、見えないものも。
+外に見える名前はすべて `articles` に揃える。
 
 - ページ: `/articles`、`/articles/<slug>`
 - 原文 Markdown: `/articles/<slug>.md` と、`Accept` で原文を名指ししたときの
   `/articles/<slug>` ([ADR 0009](0009-serve-note-source-markdown-verbatim.md) /
   [ADR 0020](0020-negotiate-note-source-markdown-on-accept.md) の `/notes/<slug>` は
   この URL のこと)
-- JSON API とアセット: `/api/v1/articles`、`/api/v1/articles/<slug>/assets/<path>`。
-  応答の鍵も `articles` / `article`
+- JSON API とアセット: `/api/v1/articles`、`/api/v1/articles/<slug>/assets/<path>`
 - OG 画像: `/og/articles/<slug>`
 - sitemap、JSON-LD の `mainEntityOfPage`、Atom の `<link>`
 - 正本の配置: `articles/<slug>.md` と `articles/<slug>/<asset>`。refresh はここだけを読む
-- D1 の表と列: `articles`、`article_reactions`、`article_embeddings`、`article_similarities`、
-  `article_id`。検索の索引 (FTS5) は `articles_fts`
-- R2 の鍵: `articles/<slug>/` と `og/articles/`
-- KV のセッション: `viewedArticles`
-- コード: `Article`、`ArticleSlug`、`domain/article`、`handlers/articles/`、
-  `articles-refresh.service.ts`。フロントのコンポーネントは `article-*` (`article-header`、
-  `article-timeline`、`article-branches`、`article-actions`)
 
-読み手に見えない名前まで揃えるのは、短文の投稿を `note` と呼ぶと決めた以上、長文を指す
-`note` が残っていれば同じ名前が別の意味で同居するため。Markdown 本文の組版 (`.mdast-prose`)
-と時系列の季節の印 (`.season-dot-*`) は投稿の種別を問わないので、どちらの名も付けない。
+### 動かさないもの
 
-### `note` のまま残すもの
+**保存の名前は据え置く。** D1 の表 (`notes`、`note_*`) と R2 のキー (`notes/<slug>/`、
+`og/notes/`)。表を改名すると後方互換でなくなり、environments.md の 2 段リリースが要る。
+R2 のキーを変えると写し直すまで全記事の原文と MDAST が見つからない。どちらも読み手には
+見えない名前で、動かして得るものが無い。
 
-- 旧 URL としての `/notes/` (下のリダイレクトと Webmention の受け口が持つ文字列)
-- `footnote`、GFM の Alert の種別 `note` (`> [!NOTE]`)。記事とは別の語
-- 正本のリポジトリ名 `yantene/notes`
+**フロントのコンポーネントは記事を表すものを `article-*` と呼ぶ** (`article-header`、
+`article-timeline`、`article-branches`、`article-actions`)。短文の投稿を表すコンポーネントを
+後から足すときに、`note-*` の名をそちらに使えるようにするため。Markdown 本文の組版
+(`.mdast-prose`) と時系列の季節の印 (`.season-dot-*`) は投稿の種別を問わないので、
+どちらの名も付けない。
+
+バックエンドの識別子 (`Note`、`handlers/notes/`) は据え置く。改名は数百ファイルに触る
+機械的な差分になり、URL を動かす変更と同じ PR に混ぜるとレビューができなくなる。
 
 ### 旧 URL からのリダイレクト
 
 `/notes/<slug>` から `/articles/<slug>` へ 308 で送るのは、**2026 年に公開した記事だけ**
-(`domain/article/article-path.ts` の表)。それより前の記事が `/notes/<slug>` で出ていた期間は
+(`domain/note/article-path.ts` の表)。それより前の記事が `/notes/<slug>` で出ていた期間は
 短く (このサイト自体が 2026 年 8 月に載せ直したもの)、外に残ったリンクは諦める。
 `/notes/` の下に恒久リダイレクトを置くほど短文がその URL を使えなくなるので、表は増やさない。
 
@@ -105,7 +103,7 @@
 加え、上の表に載る記事に限って `/notes/<slug>` 宛ても受ける。送り手のページとの照合は、
 届け出た表記に依らず正規の URL と旧 URL の両方に対して行う。届け出た表記だけで照合すると、
 正規の URL を張っている他人のページを旧 URL 宛てで届け出て「リンクが無い」と判定させ、
-その人の行を消せてしまう (行の鍵は article と source で、表記を含まない)。
+その人の行を消せてしまう (行の鍵は note と source で、表記を含まない)。
 
 ### Atom の `<id>`
 
@@ -115,13 +113,15 @@
 
 ### 閲覧数・リアクション・ベクトル
 
-すべて `articles.id` か `articles.slug` を鍵にしていて、URL を持たない。影響は無い。
+すべて `notes.id` か `notes.slug` を鍵にしていて、URL を持たない。影響は無い。
 
 ## 帰結 / Consequences
 
-- 良い面: 内部の呼び名と外向きの語彙が揃う。短文が `/notes/<id>` と `note` の名を使える
+- 良い面: 内部の呼び名と外向きの語彙が揃う。短文が `/notes/<id>` を使える
 - 悪い面: 2025 年以前の記事の `/notes/<slug>` は 404 になる
 - 悪い面: フィードの購読者に 1 回だけ全件が新着に見える
+- 悪い面: 正本の配置と URL は `articles` なのに、表と R2 とコードは `notes` のまま。
+  読むときに読み替えが要る
 - 運用: 正本のリポジトリ側で `notes/` を `articles/` に動かす。変更検出のハッシュに正本の
   パスが入っているので、動かせば通常の refresh が全記事を作り直し、D1 のカバー画像 URL と
   R2 の MDAST に埋まったアセット URL が `/api/v1/articles/` になる (force は要らない)。
@@ -129,24 +129,14 @@
   refresh を叩いても、`articles/*.md` が 1 本も無いので全件削除のガードで止まる
 - 運用: 本文にルート相対で直書きした `/notes/<slug>` の記事間リンクと、raw HTML の
   `<source src="/api/v1/notes/...">` は refresh では直らない。正本の Markdown を書き換える
-- 運用: D1 の表の改名は 1 段でしか出せない (改名に中間状態が無い)。`Migrate D1` →
-  `Deploy` の数十秒、旧コードが `no such table: notes` で 500 になる。静かな時間帯に出す
-- 運用: R2 の鍵は写し直すまで見つからないので、`articles/<slug>/` に無ければ改名前の
-  `notes/<slug>/` を読む逃げ道を置く。書くのは `articles/` だけで、refresh の片付けが
-  旧鍵の下を消す。リリース直後に force refresh を 1 回流せば旧鍵は残らず、逃げ道は
-  次のリリースで消す。`og/notes/` は写し直しでは消えないので手で消す
-- 運用: KV のセッションに残る `viewedNotes` は読まない。その日にすでに数えた記事を
-  1 回だけ余計に数えるだけで、互換の経路は置かない
 - 検証方法: `legacy-redirects.handler.test.ts` が表の件数を実装と突き合わせ、表に無い
-  `/notes/<slug>` が 308 を返さないことを固定する。`articles-refresh.service.test.ts` が
+  `/notes/<slug>` が 308 を返さないことを固定する。`notes-refresh.service.test.ts` が
   `notes/` の下の記事を読まないことを固定する。`webmention-verification.service.test.ts` が
-  届け出た表記と張られたリンクの表記が食い違っても行が消えないことを固定する。
-  `r2-article-content-cache.test.ts` が旧鍵への逃げ道と片付けを固定する
+  届け出た表記と張られたリンクの表記が食い違っても行が消えないことを固定する
 
 ## 参考 / More Information
 
 - #410 投稿を articles / notes / slides の 3 種別にする (親)
 - #411 長文ノートを articles に改名し、`/notes/<slug>` を `/articles/<slug>` へ移す
-- #429 長文の記事を指す note をコードと保存の名前から無くし、article に揃える
 - [ADR 0029](0029-retire-tags.md) タグをやめ、分類は `article` の 1 つに畳む
 - [Post Type Discovery](https://www.w3.org/TR/post-type-discovery/)

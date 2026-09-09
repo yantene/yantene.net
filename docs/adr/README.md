@@ -45,6 +45,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0030](0030-switch-embedding-model-to-qwen3.md)              | 関連ノートの埋め込みモデルを qwen3-embedding-0.6b に替える           | Accepted |
 | [0031](0031-raise-embedding-input-limit-to-10000.md)         | 埋め込みの入力の上限を 8,000 字から 10,000 字に上げる                | Accepted |
 | [0032](0032-call-long-form-posts-articles.md)                | 長文の投稿を article と呼び、`/articles/<slug>` で配る               | Accepted |
+| [0033](0033-rename-note-to-article-in-storage-and-code.md)   | 長文の記事を指す `note` を、保存とコードの名前からも無くす           | Accepted |
 
 ## 統合した番号
 

@@ -23,7 +23,8 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 
 記事は Markdown 形式の長文で、エッセイ・技術記事・その他の発信を包含する。URL は
 `/articles/<slug>`、正本の配置は `articles/<slug>.md`、コードと D1 / R2 / KV の中でも
-`Article` / `articles` で通す ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。
+`Article` / `articles` で通す ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md) /
+[ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
 `note` は表題の無い短文の投稿 (#412) のために空けてある名前で、記事の意味では使わない。
 
 - スラグ (slug) ベースの URL ルーティング
@@ -55,7 +56,7 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))
 - 要約から生 HTML を除外 ([#112](https://github.com/yantene/yantene.net/issues/112))
 - 原文 Markdown の R2 キャッシュ ([#106](https://github.com/yantene/yantene.net/issues/106))。
-  force refresh を流すまで `/notes/<slug>.md` は 500 になる (fail-loud)
+  force refresh を流すまで `/articles/<slug>.md` は 500 になる (fail-loud)
 - 数式の MathML 埋め込み ([#174](https://github.com/yantene/yantene.net/issues/174))。
   force refresh を流すまで既存記事の `$...$` は素の文字列のまま出る
 - 本文のむき出し URL のリンクカード ([#172](https://github.com/yantene/yantene.net/issues/172))。
@@ -104,12 +105,13 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらも正本の Markdown を
   書き換える (`](/notes/` → `](/articles/`、`/api/v1/notes/` → `/api/v1/articles/`)。
 
-- D1 の表と R2 の鍵を `notes` から `articles` に改めた ([#429](https://github.com/yantene/yantene.net/issues/429))。
+- D1 の表と R2 の鍵を `notes` から `articles` に改めた
+  ([ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
   表は migration が改名するので、force が要るのは **R2 の写しを `articles/<slug>/` に
   移すため**。移すまでは旧鍵 `notes/<slug>/` を読みの逃げ道にしているので記事は出るが、
-  逃げ道は次のリリースで消す。force refresh を 1 回流せば、旧鍵の下には何も残らない
-  (処理した記事の旧鍵を片付けの経路で消す)。OG 画像の旧鍵 `og/notes/` は写し直しでは
-  消えないので、手で消す。
+  逃げ道は #430 で消す。処理できた記事の旧鍵は片付けの経路で消えるが、**`skipped` の記事は
+  片付けまで来ないので旧鍵に残る**。#430 の前に `notes/` の下に現行スラグの写しが無いことを
+  確かめる。OG 画像の旧鍵 `og/notes/` は写し直しでは消えないので、手で消す。
 
 ## データモデルとストレージ戦略
 
