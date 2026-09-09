@@ -38,14 +38,14 @@ const problemDetails404 = {
  * 同じく画像を配る link-cards/assets.handler.ts が Problem Details で断っているので、
  * 「画像だから API ではない」は理由にならない。
  */
-describe("createOgRouter GET /notes/:slug が見つからないとき", () => {
+describe("createOgRouter GET /articles/:slug が見つからないとき", () => {
   /*
    * D1 を渡さない。読めないスラグは表を引く手前で返るので、これで通ることが
    * 「引く前に断っている」ことの裏取りにもなる。
    */
   it("スラグとして読めない値を、表を引かずに Problem Details で断る", async () => {
     const response = await createOgRouter().request(
-      `/notes/${encodeURIComponent("not a slug!")}`,
+      `/articles/${encodeURIComponent("not a slug!")}`,
       {},
       {},
     );
@@ -55,7 +55,11 @@ describe("createOgRouter GET /notes/:slug が見つからないとき", () => {
 
   it("記事が無いときも Problem Details で断る", async () => {
     // 表は作ってあるが 1 件も入っていない。
-    const response = await createOgRouter().request("/notes/missing", {}, envWith(createTestD1()));
+    const response = await createOgRouter().request(
+      "/articles/missing",
+      {},
+      envWith(createTestD1()),
+    );
 
     await expect(refusalOf(response)).resolves.toEqual(problemDetails404);
   });
@@ -76,7 +80,7 @@ describe("createOgRouter GET /notes/:slug が見つからないとき", () => {
       },
     } as unknown as Env;
 
-    const response = await createOgRouter().request("/notes/missing", {}, broken);
+    const response = await createOgRouter().request("/articles/missing", {}, broken);
 
     // 404 にならないことが眼目。本番では index.ts の onError がこれを拾う。
     expect(response.status).not.toBe(404);

@@ -85,10 +85,10 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
             </div>
             {/*
               ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と
-              絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
+              絞り込みは /articles が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
             */}
             <p className="home-view-all">
-              <Link to="/notes" className="link link-primary press-control text-sm">
+              <Link to="/articles" className="link link-primary press-control text-sm">
                 {t("home.viewAll")}
               </Link>
             </p>

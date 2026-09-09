@@ -174,7 +174,7 @@ describe("collapsing soft line breaks", () => {
    */
   it("looks across node boundaries to decide", () => {
     expect(
-      paragraphText("このブログに記事を書くのも、\n[昨年の記事](/notes/foo)\n以来だ。\n"),
+      paragraphText("このブログに記事を書くのも、\n[昨年の記事](/articles/foo)\n以来だ。\n"),
     ).toBe("このブログに記事を書くのも、昨年の記事以来だ。");
   });
 

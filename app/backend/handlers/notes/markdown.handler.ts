@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
-import { NoteSlug } from "~/backend/domain/note";
+import { articlePath, NoteSlug } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";
@@ -13,7 +13,7 @@ const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
 /** slug として妥当なら VO を、そうでなければ undefined を返す。 */
 /** HTML 応答に添える「Markdown 版もある」の広告 (RFC 8288)。 */
 function markdownAlternateLink(slug: NoteSlug): string {
-  const target = `/notes/${slug.toString()}${MARKDOWN_SUFFIX}`;
+  const target = `${articlePath(slug.toString())}${MARKDOWN_SUFFIX}`;
   return `<${target}>; rel="alternate"; type="text/markdown"`;
 }
 
@@ -74,7 +74,7 @@ async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): P
 
   response.headers.set("Vary", "Accept");
   if (response.status === httpStatus.OK && slug !== undefined) {
-    response.headers.set("Content-Location", `/notes/${slug.toString()}${MARKDOWN_SUFFIX}`);
+    response.headers.set("Content-Location", `${articlePath(slug.toString())}${MARKDOWN_SUFFIX}`);
   }
   return response;
 }
@@ -84,11 +84,11 @@ async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): P
  *
  * 1 本の `/:file` で 3 つの入口を捌く。
  *
- * 1. `/notes/<slug>.md` — 拡張子つきの正典 URL (ADR 0009)。Accept は見ない
+ * 1. `/articles/<slug>.md` — 拡張子つきの正典 URL (ADR 0009)。Accept は見ない
  *    (拡張子はネゴシエーションに優先する)。表現が 1 つなので `Vary` も付けない。
- * 2. `/notes/<slug>` で Accept が Markdown を名指ししていない — ページ描画へ素通しし、
+ * 2. `/articles/<slug>` で Accept が Markdown を名指ししていない — ページ描画へ素通しし、
  *    応答に `Vary: Accept` と Markdown 版への `Link` を足すだけ。
- * 3. `/notes/<slug>` で Accept が Markdown を名指しした — 原文を返す (ADR 0020)。
+ * 3. `/articles/<slug>` で Accept が Markdown を名指しした — 原文を返す (ADR 0020)。
  *
  * ページではなく「ファイルとしてのノート」を返す 1 と 3 は、React Router へ委譲せず
  * Hono 側で完結させる (ADR 0006)。

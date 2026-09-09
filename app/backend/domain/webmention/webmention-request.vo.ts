@@ -6,10 +6,13 @@ import {
 } from "./errors";
 import { WebmentionUrl } from "./webmention-url.vo";
 import type { IValueObject } from "~/backend/domain/shared";
-import { InvalidNoteSlugError, NoteSlug } from "~/backend/domain/note";
-
-/** ノートの URL の形。ここに載っていない target は受け取らない。 */
-const NOTE_PATH_PREFIX = "/notes/";
+import {
+  ARTICLE_PATH_PREFIX,
+  FORMER_ARTICLE_PATH_PREFIX,
+  InvalidNoteSlugError,
+  NoteSlug,
+  slugsMovedFromNotes,
+} from "~/backend/domain/note";
 
 interface RequestFields {
   readonly source: WebmentionUrl;
@@ -53,9 +56,9 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
       throw new TargetNotOnThisSiteError(`target is not on this site: ${target.toString()}`);
     }
 
-    const targetSlug = noteSlugFrom(target.pathname);
-    if (targetSlug === undefined) {
-      throw new TargetNotOnThisSiteError(`target is not a note URL: ${target.toString()}`);
+    const article = articleFrom(target.pathname);
+    if (article === undefined) {
+      throw new TargetNotOnThisSiteError(`target is not an article URL: ${target.toString()}`);
     }
 
     /*
@@ -74,10 +77,17 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
 
     return new WebmentionRequest({
       source,
-      targetSlug,
-      // 送り手の書いた表記ではなく、スラグから組み直した正規の URL を持つ。
-      // 末尾のスラッシュやクエリの有無で、リンクの照合が揺れないようにするため。
-      target: WebmentionUrl.create(`${site.origin}${NOTE_PATH_PREFIX}${targetSlug.toString()}`),
+      targetSlug: article.slug,
+      /*
+       * 送り手の書いた表記ではなく、スラグから組み直した URL を持つ。末尾のスラッシュや
+       * クエリの有無で、リンクの照合が揺れないようにするため。
+       *
+       * 接頭辞だけは送り手の書いたものを残す。`/notes/<slug>` から移した記事に旧 URL 宛てで
+       * 届いたとき、送り手のページに書かれているのは旧 URL なので、正規の `/articles/` に
+       * 組み直すとリンクの照合で必ず落ちる。保存する行はスラグで引くので、どちらの接頭辞
+       * でも同じ記事に付く。
+       */
+      target: WebmentionUrl.create(`${site.origin}${article.prefix}${article.slug.toString()}`),
     });
   }
 
@@ -89,7 +99,11 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
     return this.fields.targetSlug;
   }
 
-  /** スラグから組み直した、正規の target URL。 */
+  /**
+   * スラグから組み直した target URL。送り手のページとの照合に使う。
+   *
+   * 接頭辞は送り手の書いたとおり (`/articles/` か、移した記事の `/notes/`)。
+   */
   get target(): WebmentionUrl {
     return this.fields.target;
   }
@@ -124,12 +138,35 @@ function readUrl(raw: unknown, field: string): WebmentionUrl {
   }
 }
 
-/** `/notes/<slug>` からスラグを取り出す。ノートの URL でなければ undefined。 */
-function noteSlugFrom(pathname: string): NoteSlug | undefined {
-  if (!pathname.startsWith(NOTE_PATH_PREFIX)) return undefined;
+/** target のパスから読み取った記事。接頭辞は送り手が書いたもの。 */
+interface ArticleTarget {
+  readonly prefix: string;
+  readonly slug: NoteSlug;
+}
 
-  // 末尾のスラッシュだけは許す (`/notes/hello/`)。それ以外の階層は別の資源。
-  const rest = pathname.slice(NOTE_PATH_PREFIX.length).replace(/\/$/, "");
+/**
+ * 記事の URL のパスからスラグを取り出す。記事の URL でなければ undefined。
+ *
+ * 受けるのは `/articles/<slug>` と、そこへ移した記事に限って `/notes/<slug>`
+ * (domain/note/article-path.ts の表)。移していない記事を `/notes/<slug>` で指されても
+ * 受けない。`/notes/` は短文の投稿に譲る場所で、そちらの識別子と記事のスラグを同じ
+ * 接頭辞の下で取り違えないようにするため。
+ */
+function articleFrom(pathname: string): ArticleTarget | undefined {
+  const canonical = slugUnder(ARTICLE_PATH_PREFIX, pathname);
+  if (canonical !== undefined) return { prefix: ARTICLE_PATH_PREFIX, slug: canonical };
+
+  const former = slugUnder(FORMER_ARTICLE_PATH_PREFIX, pathname);
+  if (former === undefined || !slugsMovedFromNotes.has(former.toString())) return undefined;
+  return { prefix: FORMER_ARTICLE_PATH_PREFIX, slug: former };
+}
+
+/** `<prefix><slug>` の形ならスラグを、そうでなければ undefined を返す。 */
+function slugUnder(prefix: string, pathname: string): NoteSlug | undefined {
+  if (!pathname.startsWith(prefix)) return undefined;
+
+  // 末尾のスラッシュだけは許す (`/articles/hello/`)。それ以外の階層は別の資源。
+  const rest = pathname.slice(prefix.length).replace(/\/$/, "");
   if (rest.length === 0 || rest.includes("/")) return undefined;
 
   try {

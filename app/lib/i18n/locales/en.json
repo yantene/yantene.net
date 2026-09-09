@@ -6,8 +6,8 @@
   "home": {
     "heading": "yantene",
     "tagline": "From the other side of the web",
-    "recentNotes": "Recent notes",
-    "popularNotes": "Popular notes",
+    "recentNotes": "Recent articles",
+    "popularNotes": "Popular articles",
     "viewAll": "View all"
   },
   "navigation": {
@@ -18,15 +18,15 @@
   },
   "timeline": {
     "loadingMore": "Loading more…",
-    "loadMoreFailed": "Could not load more notes.",
+    "loadMoreFailed": "Could not load more articles.",
     "retry": "Try again",
     "allLoaded": "That's all"
   },
-  "notes": {
-    "title": "Notes",
-    "heading": "Notes",
-    "empty": "No notes have been published yet.",
-    "related": "Related notes",
+  "articles": {
+    "title": "Articles",
+    "heading": "Articles",
+    "empty": "No articles have been published yet.",
+    "related": "Related articles",
     "toc": "Contents",
     "viewMarkdown": "View as Markdown",
     "clearFilter": "Show all",
@@ -36,18 +36,18 @@
       "next": "Next page"
     },
     "notFound": {
-      "title": "Note not found",
-      "heading": "Note not found",
-      "description": "The note you are looking for does not exist or is no longer available.",
-      "backToList": "Back to notes"
+      "title": "Article not found",
+      "heading": "Article not found",
+      "description": "The article you are looking for does not exist or is no longer available.",
+      "backToList": "Back to articles"
     },
-    "actionsTop": "React to and share this note (top)",
-    "actionsBottom": "React to and share this note (bottom)"
+    "actionsTop": "React to and share this article (top)",
+    "actionsBottom": "React to and share this article (bottom)"
   },
   "search": {
     "title": "Search",
     "placeholder": "Type keywords",
-    "empty": "No matching notes.",
+    "empty": "No matching articles.",
     "resultsFor": "Results for \"{{query}}\" — {{count}}"
   },
   "share": {

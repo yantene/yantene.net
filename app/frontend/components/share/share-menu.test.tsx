@@ -6,7 +6,7 @@ import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n("en");
 
-const url = "https://yantene.net/notes/hacku-2016";
+const url = "https://yantene.net/articles/hacku-2016";
 const title = "記事の題";
 
 /*

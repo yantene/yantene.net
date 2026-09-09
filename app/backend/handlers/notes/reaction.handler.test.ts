@@ -53,7 +53,7 @@ async function put(
   slug = "alpha",
 ): Promise<{ status: number; payload: ReactionsPayload }> {
   const res = await createTestApp().request(
-    `/api/v1/notes/${slug}/reaction`,
+    `/api/v1/articles/${slug}/reaction`,
     {
       method: "PUT",
       body: JSON.stringify({ emoji }),
@@ -73,7 +73,7 @@ async function put(
 
 async function remove(harness: Harness): Promise<ReactionsPayload> {
   const res = await createTestApp().request(
-    "/api/v1/notes/alpha/reaction",
+    "/api/v1/articles/alpha/reaction",
     {
       method: "DELETE",
       headers: harness.cookie === "" ? {} : { cookie: harness.cookie },

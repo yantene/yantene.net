@@ -23,7 +23,7 @@ describe("isExternalHref", () => {
     expect(isExternalHref("//example.com/")).toBe(true);
   });
 
-  it.each(["/notes/x", "#top", "./a.png", "mailto:a@example.com", ""])(
+  it.each(["/articles/x", "#top", "./a.png", "mailto:a@example.com", ""])(
     "外部でないもの (%s)",
     (href) => {
       expect(isExternalHref(href)).toBe(false);
@@ -32,7 +32,7 @@ describe("isExternalHref", () => {
 
   it("出どころを渡さなければ、自分のサイトでも絶対 URL は外部", () => {
     // Storybook など出どころの決まらない場所では、安全側 (別タブ + rel) に倒す。
-    expect(isExternalHref("https://yantene.net/notes/x")).toBe(true);
+    expect(isExternalHref("https://yantene.net/articles/x")).toBe(true);
   });
 
   describe("出どころを渡したとき", () => {
@@ -43,16 +43,16 @@ describe("isExternalHref", () => {
      * 検索エンジンに「この先は辿らなくてよい」と言っているのと同じだった (#318)。
      */
     it("同じ出どころなら内部", () => {
-      expect(isExternalHref("https://yantene.net/notes/x", origin)).toBe(false);
+      expect(isExternalHref("https://yantene.net/articles/x", origin)).toBe(false);
     });
 
     it("ポートまで含めて見る", () => {
-      expect(isExternalHref("https://yantene.net:8443/notes/x", origin)).toBe(true);
+      expect(isExternalHref("https://yantene.net:8443/articles/x", origin)).toBe(true);
     });
 
     it("スキームが違えば外部", () => {
       // http と https が別の出どころであることが眼目
-      expect(isExternalHref("http://yantene.net/notes/x", origin)).toBe(true);
+      expect(isExternalHref("http://yantene.net/articles/x", origin)).toBe(true);
     });
 
     /*
@@ -71,7 +71,7 @@ describe("isExternalHref", () => {
      * 補われるスキームは読み手の見ているページ次第で、こちらでは決められない。
      */
     it("プロトコル相対は出どころが分かっても外部", () => {
-      expect(isExternalHref("//yantene.net/notes/x", origin)).toBe(true);
+      expect(isExternalHref("//yantene.net/articles/x", origin)).toBe(true);
     });
 
     it("出どころが URL として読めなければ内部と決めつけない", () => {
@@ -79,7 +79,7 @@ describe("isExternalHref", () => {
     });
 
     it("絶対 URL でないものは変わらず内部", () => {
-      expect(isExternalHref("/notes/x", origin)).toBe(false);
+      expect(isExternalHref("/articles/x", origin)).toBe(false);
     });
   });
 });

@@ -21,7 +21,7 @@ function renderActions(placement: NoteActionsPlacement, mine: string | null = nu
             placement={placement}
             reactions={[{ emoji: "❤️", count: 2 }]}
             mine={mine}
-            url="https://yantene.net/notes/hello"
+            url="https://yantene.net/articles/hello"
             title="題"
           />
         ),

@@ -30,13 +30,13 @@ export function Pagination({
   const hasNext = page < totalPages;
 
   return (
-    <nav className="join" aria-label={t("notes.pagination.label")}>
+    <nav className="join" aria-label={t("articles.pagination.label")}>
       {hasPrev ? (
         <Link
           to={hrefForPage(page - 1)}
           rel="prev"
           className="join-item btn press-control"
-          aria-label={t("notes.pagination.previous")}
+          aria-label={t("articles.pagination.previous")}
         >
           «
         </Link>
@@ -72,7 +72,7 @@ export function Pagination({
           to={hrefForPage(page + 1)}
           rel="next"
           className="join-item btn press-control"
-          aria-label={t("notes.pagination.next")}
+          aria-label={t("articles.pagination.next")}
         >
           »
         </Link>

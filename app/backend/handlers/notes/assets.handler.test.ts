@@ -154,7 +154,7 @@ describe("note asset public routing (full app)", () => {
     await seedAsset(bucket);
     const env = { R2: bucket, D1: d1 } as unknown as Env;
 
-    const res = await createTestApp().request("/api/v1/notes/hello/assets/cover.png", {}, env);
+    const res = await createTestApp().request("/api/v1/articles/hello/assets/cover.png", {}, env);
     // React Router へ落ちず Hono 側が応答している (ダミー委譲は 404 を返す)。
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");

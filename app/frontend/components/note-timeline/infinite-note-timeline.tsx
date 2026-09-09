@@ -24,7 +24,7 @@ interface InfiniteNoteTimelineProps {
 
 /** 既定の取り方。公開 API から 1 ページぶんを読む。 */
 const fetchNotePage: LoadNotePage = async (page, perPage) => {
-  const url = `/api/v1/notes?page=${String(page)}&per-page=${String(perPage)}`;
+  const url = `/api/v1/articles?page=${String(page)}&per-page=${String(perPage)}`;
   const response = await fetch(url, {
     headers: { accept: "application/json" },
   });
@@ -41,7 +41,7 @@ const PREFETCH_MARGIN = "320px";
 /**
  * 下端に近づくたびに続きを足していくタイムライン。
  *
- * 1 ページ目はサーバーが描き、以降はブラウザが `/api/v1/notes` から取る。JS が動かない
+ * 1 ページ目はサーバーが描き、以降はブラウザが `/api/v1/articles` から取る。JS が動かない
  * 環境では 1 ページ目のまま止まるが、一覧ページへのリンクが隣にあるので行き止まりにはならない。
  */
 export function InfiniteNoteTimeline({

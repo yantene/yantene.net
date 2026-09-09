@@ -46,7 +46,7 @@ export function NoteTimelineItem({
     <li className="note-timeline-item h-entry">
       {/* 行そのものが押し場所なので、押下の反応は面を塗る press-surface で受ける。 */}
       <Link
-        to={`/notes/${slug}`}
+        to={`/articles/${slug}`}
         className="note-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40 u-url"
       >
         {rank === undefined ? (

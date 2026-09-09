@@ -36,7 +36,7 @@ export function NoteActions({
   return (
     <section
       className={`note-actions note-actions-${placement}`}
-      aria-label={t(placement === "top" ? "notes.actionsTop" : "notes.actionsBottom")}
+      aria-label={t(placement === "top" ? "articles.actionsTop" : "articles.actionsBottom")}
     >
       {/*
         促しを出すのは**下に置いたときだけ**。上にも出すと同じ促しが 1 記事に 2 度並ぶ。

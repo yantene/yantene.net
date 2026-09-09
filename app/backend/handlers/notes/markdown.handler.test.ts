@@ -192,7 +192,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
 
     expect(res.headers.get("Vary")).toBe("Accept");
     // RFC 9110 §8.7: いま返した表現そのものを指す URL。
-    expect(res.headers.get("Content-Location")).toBe("/notes/hello.md");
+    expect(res.headers.get("Content-Location")).toBe("/articles/hello.md");
   });
 
   /*
@@ -264,7 +264,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
  */
 function appWithPage(status: number): Hono<{ Bindings: Env }> {
   const app = new Hono<{ Bindings: Env }>();
-  app.route("/notes", createNoteMarkdownRouter());
+  app.route("/articles", createNoteMarkdownRouter());
   app.all("*", () => new Response("page", { status }));
   return app;
 }
@@ -276,14 +276,14 @@ describe("markdown alternate advertised on the page response", () => {
     await seed(d1, bucket);
 
     const res = await appWithPage(200).request(
-      "/notes/hello",
+      "/articles/hello",
       { headers: { Accept: CHROME_ACCEPT } },
       env(d1, bucket),
     );
 
     expect(res.headers.get("Vary")).toContain("Accept");
     expect(res.headers.get("Link")).toBe(
-      '</notes/hello.md>; rel="alternate"; type="text/markdown"',
+      '</articles/hello.md>; rel="alternate"; type="text/markdown"',
     );
   });
 
@@ -297,7 +297,7 @@ describe("markdown alternate advertised on the page response", () => {
     await seed(d1, bucket);
 
     const res = await appWithPage(404).request(
-      "/notes/hello",
+      "/articles/hello",
       { headers: { Accept: CHROME_ACCEPT } },
       env(d1, bucket),
     );
@@ -316,13 +316,13 @@ function executionCtx(): ExecutionContext {
 }
 
 describe("note markdown routing (full app)", () => {
-  it("serves /notes/<slug>.md from Hono without a session", async () => {
+  it("serves /articles/<slug>.md from Hono without a session", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello.md",
+      "/articles/hello.md",
       {},
       env(d1, bucket),
       executionCtx(),
@@ -332,23 +332,28 @@ describe("note markdown routing (full app)", () => {
     expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
   });
 
-  it("leaves /notes/<slug> (no .md) to the page router", async () => {
+  it("leaves /articles/<slug> (no .md) to the page router", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createTestApp().request("/notes/hello", {}, env(d1, bucket), executionCtx());
+    const res = await createTestApp().request(
+      "/articles/hello",
+      {},
+      env(d1, bucket),
+      executionCtx(),
+    );
 
     // test-app のページ委譲はダミー (404 "Not Found") なので、本文で「Hono が
     // 応答せずページ側に落ちた」ことを観測する。
     expect(await res.text()).toBe("Not Found");
   });
 
-  it("leaves /notes (index) to the page router", async () => {
+  it("leaves /articles (index) to the page router", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createTestApp().request("/notes", {}, env(d1, bucket), executionCtx());
+    const res = await createTestApp().request("/articles", {}, env(d1, bucket), executionCtx());
 
     expect(await res.text()).toBe("Not Found");
   });
@@ -359,7 +364,7 @@ describe("note markdown routing (full app)", () => {
     await seedMeta(d1);
 
     const res = await createTestApp().request(
-      "/notes/hello.md",
+      "/articles/hello.md",
       {},
       env(d1, bucket),
       executionCtx(),
@@ -379,7 +384,7 @@ describe("note markdown routing (full app)", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     const app = createTestApp();
-    await app.request("/notes/hello.md", {}, env(d1, bucket));
+    await app.request("/articles/hello.md", {}, env(d1, bucket));
 
     expect(app.router.name).toBe("SmartRouter + RegExpRouter");
   });
@@ -395,13 +400,13 @@ describe("note markdown negotiation (full app)", () => {
     ["Chrome", CHROME_ACCEPT],
     ["Firefox / Safari", FIREFOX_ACCEPT],
     ["*/* (curl)", "*/*"],
-  ])("leaves /notes/<slug> to the page router (%s)", async (_label, accept) => {
+  ])("leaves /articles/<slug> to the page router (%s)", async (_label, accept) => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       accept === undefined ? {} : { headers: { Accept: accept } },
       env(d1, bucket),
       executionCtx(),
@@ -416,7 +421,7 @@ describe("note markdown negotiation (full app)", () => {
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       { headers: { Accept: CHROME_ACCEPT } },
       env(d1, bucket),
       executionCtx(),
@@ -431,7 +436,7 @@ describe("note markdown negotiation (full app)", () => {
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       { headers: markdownAccept },
       env(d1, bucket),
       executionCtx(),
@@ -450,7 +455,7 @@ describe("note markdown negotiation (full app)", () => {
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       { method: "HEAD", headers: markdownAccept },
       env(d1, bucket),
       executionCtx(),
@@ -458,7 +463,7 @@ describe("note markdown negotiation (full app)", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
-    expect(res.headers.get("Content-Location")).toBe("/notes/hello.md");
+    expect(res.headers.get("Content-Location")).toBe("/articles/hello.md");
     expect(await res.text()).toBe("");
   });
 
@@ -472,7 +477,7 @@ describe("note markdown negotiation (full app)", () => {
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       { method: "POST", headers: markdownAccept },
       env(d1, bucket),
       executionCtx(),
@@ -482,8 +487,8 @@ describe("note markdown negotiation (full app)", () => {
   });
 
   it.each([
-    ["the note index", "/notes"],
-    ["a nested path", "/notes/a/b"],
+    ["the note index", "/articles"],
+    ["a nested path", "/articles/a/b"],
   ])("leaves %s to the page router even for markdown", async (_label, path) => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
@@ -509,7 +514,7 @@ describe("note markdown negotiation (full app)", () => {
     await seed(d1, bucket);
 
     const res = await createTestApp().request(
-      "/notes/hello.data",
+      "/articles/hello.data",
       {},
       env(d1, bucket),
       executionCtx(),
@@ -524,7 +529,7 @@ describe("note markdown negotiation (full app)", () => {
     await seedMeta(d1);
 
     const res = await createTestApp().request(
-      "/notes/hello",
+      "/articles/hello",
       { headers: markdownAccept },
       env(d1, bucket),
       executionCtx(),

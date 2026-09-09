@@ -68,14 +68,14 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
           >
             <nav className="flex items-center gap-5 sm:gap-7">
               {/*
-                ノート一覧が検索とタグの索引を兼ねるので、入口はここ 1 つで足りる。
+                記事一覧が検索を兼ねるので、入口はここ 1 つで足りる。
                 狭い幅では字を伏せ、下の虫眼鏡に同じ入口を引き継ぐ。
               */}
-              <Link to="/notes" className={`${linkClassName} hidden sm:inline`}>
-                Notes
+              <Link to="/articles" className={`${linkClassName} hidden sm:inline`}>
+                Articles
               </Link>
               {/*
-                検索フォームを畳む幅の入口。行き先は上と同じ /notes で、字を並べる幅が
+                検索フォームを畳む幅の入口。行き先は上と同じ /articles で、字を並べる幅が
                 無いぶんを虫眼鏡 1 つに代える (畳んだフォームの在り処を指す形にする)。
                 字が無いので aria-label で名前を与える。
 
@@ -83,7 +83,7 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
                 44px 角へ広げるためのもの。アイコンの 1.25rem だけでは指には小さすぎる。
               */}
               <Link
-                to="/notes"
+                to="/articles"
                 aria-label={t("search.title")}
                 className={`${linkClassName} -m-3 p-3 sm:hidden`}
               >
@@ -92,10 +92,10 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
             </nav>
 
             {/*
-              JS 不要で動く素の GET フォーム。Enter でも虫眼鏡でも /notes に飛ぶ。
+              JS 不要で動く素の GET フォーム。Enter でも虫眼鏡でも /articles に飛ぶ。
               狭い画面では場所を取りすぎるので、上の Search リンクに譲る。
             */}
-            <form method="get" action="/notes" role="search" className="hidden sm:block">
+            <form method="get" action="/articles" role="search" className="hidden sm:block">
               {/* 透過ヘッダーでは夜の空が下に来る。地を薄くしすぎると入力文字が沈む。 */}
               <label className="input input-sm input-bordered flex items-center gap-2 rounded-full bg-base-100/90">
                 <input

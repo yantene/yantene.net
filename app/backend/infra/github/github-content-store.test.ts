@@ -16,15 +16,15 @@ describe("parseTreeResponse", () => {
   it("keeps blob entries (path + sha) and drops trees", () => {
     const json = {
       tree: [
-        { path: "notes/a.md", type: "blob", sha: "s1" },
-        { path: "notes", type: "tree", sha: "s2" },
-        { path: "notes/a/cover.png", type: "blob", sha: "s3" },
+        { path: "articles/a.md", type: "blob", sha: "s1" },
+        { path: "articles", type: "tree", sha: "s2" },
+        { path: "articles/a/cover.png", type: "blob", sha: "s3" },
       ],
       truncated: false,
     };
     expect(parseTreeResponse(json)).toEqual([
-      { path: "notes/a.md", hash: "s1" },
-      { path: "notes/a/cover.png", hash: "s3" },
+      { path: "articles/a.md", hash: "s1" },
+      { path: "articles/a/cover.png", hash: "s3" },
     ]);
   });
 
@@ -43,14 +43,14 @@ describe("GitHubContentStore", () => {
     const fetchFn = vi.fn(() =>
       Promise.resolve(
         Response.json({
-          tree: [{ path: "notes/a.md", type: "blob", sha: "s1" }],
+          tree: [{ path: "articles/a.md", type: "blob", sha: "s1" }],
           truncated: false,
         }),
       ),
     ) as unknown as typeof fetch;
 
     const entries = await store(fetchFn).listTree();
-    expect(entries).toEqual([{ path: "notes/a.md", hash: "s1" }]);
+    expect(entries).toEqual([{ path: "articles/a.md", hash: "s1" }]);
 
     const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).toBe("https://api.test/repos/yantene/notes/git/trees/main?recursive=1");
@@ -63,11 +63,11 @@ describe("GitHubContentStore", () => {
     const bytes = new Uint8Array([1, 2, 3]);
     const fetchFn = vi.fn(() => Promise.resolve(new Response(bytes))) as unknown as typeof fetch;
 
-    const result = await store(fetchFn).readFile("notes/a.md");
+    const result = await store(fetchFn).readFile("articles/a.md");
     expect(result).toEqual(bytes);
 
     const [url, init] = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(url).toBe("https://api.test/repos/yantene/notes/contents/notes/a.md?ref=main");
+    expect(url).toBe("https://api.test/repos/yantene/notes/contents/articles/a.md?ref=main");
     /*
      * raw メディアタイプで頼むこと。既定 (`application/vnd.github+json`) に戻ると、
      * contents API は中身を base64 に包んだ JSON を返す。こちらはその生バイト列を

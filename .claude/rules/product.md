@@ -19,9 +19,13 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 - Celestim（天体アニメーション）は天体へのロマンから
 - 装飾は控えめだが、ところどころに遊び心を入れる
 
-## コアドメイン: ノート (Note)
+## コアドメイン: 記事 (article)
 
-ノートは Markdown 形式の記事で、エッセイ・技術記事・その他の発信を包含する。
+記事は Markdown 形式の長文で、エッセイ・技術記事・その他の発信を包含する。外向きには
+`articles` と呼び、URL は `/articles/<slug>`。**コードと D1 の中では `Note` / `notes` の
+名前のまま**で、短文の投稿 (#412) を足すときに衝突する名前だけを改める
+([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。この文書で「ノート」と
+書いてあるのは、この記事のこと。
 
 - スラグ (slug) ベースの URL ルーティング
 - Markdown 本文 + フロントマター（メタデータ）
@@ -88,13 +92,20 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   gh workflow run refresh.yml -R yantene/notes --ref staging   # staging。production は --ref main
   ```
 
+- 記事の URL とアセット API を `/notes` から `/articles` へ移した
+  ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。本文 (R2 の MDAST) に
+  埋まったアセット URL は `/api/v1/notes/<slug>/assets/...` のままなので、**force refresh を
+  流すまで記事中の画像と音源が 404 になる**。カバー画像の URL (D1) だけは migration 0011 が
+  先に書き換える。正本側で `notes/` を `articles/` に動かしてから流すこと (動かす前は
+  `articles/*.md` が無いので、全件削除のガードで止まる)。
+
 ## データモデルとストレージ戦略
 
 コンテンツの正本は GitHub リポジトリ (`yantene/notes`) に置く。
 D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・画像のキャッシュを担う。
 設計判断の詳細は [ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) を参照。
 
-- 正本 (GitHub): Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
+- 正本 (GitHub): Markdown 本文 (`articles/<slug>.md`) + 画像アセット (`articles/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
 - R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
@@ -180,7 +191,7 @@ refresh の結果では `kept` (古い中身のまま持ちこたえた) と `fa
 ### 画像はアセット API 経由で配信
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
-`/api/v1/notes/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
+`/api/v1/articles/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
 
 ### 数式は refresh 時に MathML へ組む
 
@@ -202,9 +213,9 @@ refresh では何も変換しないので、MDAST は素の `code` ノードの�
 - 組めなかったソースは、書いたままのコードブロックとして残る (記事は壊れない)
 - 図が出るまでに一拍あり、JavaScript が動かない環境とクローラーにはソースが届く
 
-### 原文は `/notes/<slug>.md` で取れる
+### 原文は `/articles/<slug>.md` で取れる
 
-記事ページ (`/notes/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
+記事ページ (`/articles/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
 **そのまま** (フロントマター込み・画像の相対パスも書き換えない) 返す。R2 の原文キャッシュ
 から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
 [ADR 0009](../../docs/adr/0009-serve-note-source-markdown-verbatim.md) を参照。
@@ -212,7 +223,7 @@ refresh では何も変換しないので、MDAST は素の `code` ノードの�
 **拡張子なしでも `Accept` で名指しすれば同じものが返る。**
 
 ```bash
-curl -H 'Accept: text/markdown' https://yantene.net/notes/<slug>
+curl -H 'Accept: text/markdown' https://yantene.net/articles/<slug>
 ```
 
 `text/markdown` の q 値が `text/html` のそれを厳密に上回ったときだけ原文になる。ブラウザの
@@ -274,7 +285,7 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 ### 見るのは Web Analytics の素の画面
 
 数を見るのは Cloudflare ダッシュボードの Web Analytics そのもの。**チャートは組まない。**
-`Path` で `/notes/` に絞り、`Exclude Bots` を付ければ、この計測を入れた目的 (どの記事が
+`Path` で `/articles/` に絞り、`Exclude Bots` を付ければ、この計測を入れた目的 (どの記事が
 読まれ、どこから来たか) は素の画面で足りる。Country / Host / Path / Referer / Device type /
 Browser / OS / Navigation type で絞れる。
 

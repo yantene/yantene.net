@@ -17,7 +17,7 @@ import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
 const SITE = "https://yantene.net";
-const TARGET = `${SITE}/notes/alpha`;
+const TARGET = `${SITE}/articles/alpha`;
 const SOURCE = "https://example.com/post/1";
 
 const LINKING_HTML = `
@@ -203,10 +203,12 @@ describe("POST /webmention", () => {
       ["source が http/https でない", { source: "ftp://example.com/x", target: TARGET }],
       ["target が URL でない", { source: SOURCE, target: "nope" }],
       ["source と target が同じ", { source: TARGET, target: TARGET }],
-      ["target が他所のサイト", { source: SOURCE, target: "https://example.org/notes/alpha" }],
-      ["target がノートの URL でない", { source: SOURCE, target: `${SITE}/notes` }],
-      ["target のノートが存在しない", { source: SOURCE, target: `${SITE}/notes/missing` }],
-      ["source が自サイト", { source: `${SITE}/notes/other`, target: TARGET }],
+      ["target が他所のサイト", { source: SOURCE, target: "https://example.org/articles/alpha" }],
+      ["target が記事の URL でない", { source: SOURCE, target: `${SITE}/articles` }],
+      ["target の記事が存在しない", { source: SOURCE, target: `${SITE}/articles/missing` }],
+      // `/notes/<slug>` から移した記事 (domain/note/article-path.ts の表) 以外は旧 URL で受けない。
+      ["target が移していない記事の旧 URL", { source: SOURCE, target: `${SITE}/notes/alpha` }],
+      ["source が自サイト", { source: `${SITE}/articles/other`, target: TARGET }],
     ])("%s なら 400", async (_name, form) => {
       const harness = await setup();
       stubSource(LINKING_HTML);
@@ -235,7 +237,7 @@ describe("POST /webmention", () => {
       const harness = await setup();
       stubSource(LINKING_HTML);
 
-      await post(harness, { source: SOURCE, target: `${SITE}/notes/missing` });
+      await post(harness, { source: SOURCE, target: `${SITE}/articles/missing` });
       await harness.settle();
 
       expect(globalThis.fetch).not.toHaveBeenCalled();

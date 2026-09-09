@@ -23,7 +23,7 @@ describe("isHttpUrl", () => {
     "javascript:alert(1)",
     "JAVASCRIPT:alert(1)",
     "data:text/html,<b>",
-    "/notes/x",
+    "/articles/x",
     "./a.png",
     "#top",
     "",
@@ -60,7 +60,7 @@ describe("withLowercaseScheme", () => {
     expect(withLowercaseScheme("HTTPS://example.com/A/B.PNG")).toBe("https://example.com/A/B.PNG");
   });
 
-  it.each(["/notes/X", "#Top", "./A.png", "//Example.com/", ""])(
+  it.each(["/articles/X", "#Top", "./A.png", "//Example.com/", ""])(
     "スキームが無ければ触らない (%s)",
     (url) => {
       expect(withLowercaseScheme(url)).toBe(url);

@@ -64,7 +64,7 @@ describe("GET /feed.xml", () => {
     const body = await res.text();
 
     expect(body).toContain("<entry>");
-    expect(body).toContain("https://example.test/notes/hello-world");
+    expect(body).toContain("https://example.test/articles/hello-world");
     // XML エスケープされていること
     expect(body).toContain("Hello &amp; World");
     expect(body).toContain("2026-01-15T00:00:00Z");
@@ -97,8 +97,8 @@ describe("カテゴリ", () => {
 
     // 404 にすると、購読中のリーダーが「消えたフィード」として扱ってしまう。
     expect(res.status).toBe(200);
-    expect(body).toContain("https://example.test/notes/a");
-    expect(body).toContain("https://example.test/notes/b");
+    expect(body).toContain("https://example.test/articles/a");
+    expect(body).toContain("https://example.test/articles/b");
     expect(body).toContain("<title>やんてね</title>");
   });
 });

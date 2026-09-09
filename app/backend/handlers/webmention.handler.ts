@@ -33,7 +33,8 @@ import { createProblemResponse } from "~/lib/problem-details";
  *
  * - source / target が無い・URL でない・http/https でない
  * - source と target が同じ
- * - target がこのサイトのノート URL (`/notes/<slug>`) でない
+ * - target がこのサイトの記事 URL (`/articles/<slug>`) でない。`/notes/<slug>` から移した
+ *   記事に限り、旧 URL 宛ても受ける (domain/note/article-path.ts の表)
  * - target のノートが存在しない
  * - source がこのサイト自身 (self-mention は受けない)
  *

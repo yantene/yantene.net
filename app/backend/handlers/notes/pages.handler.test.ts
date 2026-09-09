@@ -39,7 +39,7 @@ async function seed(d1: D1Database): Promise<void> {
 const envWith = (d1: D1Database): Env => ({ D1: d1 }) as unknown as Env;
 
 const load = (d1: D1Database, search: string): Promise<NotesListPageData> =>
-  loadNotesListPage(envWith(d1), new URL(`https://example.com/notes${search}`));
+  loadNotesListPage(envWith(d1), new URL(`https://example.com/articles${search}`));
 
 describe("loadNotesListPage", () => {
   it("絞り込みがなければ公開日の新しい順に全件返す", async () => {

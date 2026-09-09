@@ -9,8 +9,8 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it } from "vitest";
-import { action } from "./notes.$slug";
-import type { Route } from "./+types/notes.$slug";
+import { action } from "./articles.$slug";
+import type { Route } from "./+types/articles.$slug";
 import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
 import {
   D1NoteCommandRepository,
@@ -61,7 +61,7 @@ async function setup(): Promise<Harness> {
 async function submit(harness: Harness, emoji: string, slug: string = SLUG): Promise<Response> {
   const body = new FormData();
   body.set("emoji", emoji);
-  const request = new Request(`https://example.test/notes/${slug}`, {
+  const request = new Request(`https://example.test/articles/${slug}`, {
     method: "POST",
     body,
     headers: harness.cookie === "" ? {} : { cookie: harness.cookie },
@@ -71,7 +71,7 @@ async function submit(harness: Harness, emoji: string, slug: string = SLUG): Pro
     request,
     url: new URL(request.url),
     params: { slug },
-    pattern: "/notes/:slug",
+    pattern: "/articles/:slug",
     context: harness.context,
   } satisfies Route.ActionArgs);
 
@@ -92,7 +92,7 @@ describe("記事ページの action", () => {
     const response = await submit(harness, "❤️");
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe(`/notes/${SLUG}`);
+    expect(response.headers.get("location")).toBe(`/articles/${SLUG}`);
     expect(await listReactions(harness)).toEqual([{ emoji: "❤️", count: 1 }]);
   });
 

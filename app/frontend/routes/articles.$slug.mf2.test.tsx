@@ -4,7 +4,7 @@ import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
 import { describe, expect, it } from "vitest";
-import NoteShow from "./notes.$slug";
+import NoteShow from "./articles.$slug";
 
 /*
  * 記事全体を h-entry として束ねる印。**NoteHeader の側では見張れない。**
@@ -65,14 +65,14 @@ function loaderData(): unknown {
 async function renderPage(): Promise<HTMLElement> {
   const Stub = createRoutesStub([
     {
-      path: "/notes/:slug",
+      path: "/articles/:slug",
       Component: NoteShow,
       loader: () => loaderData(),
       action: () => null,
     },
   ]);
 
-  const { container } = renderWithI18n(<Stub initialEntries={[`/notes/${SLUG}`]} />, {
+  const { container } = renderWithI18n(<Stub initialEntries={[`/articles/${SLUG}`]} />, {
     router: false,
   });
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildClipboardPayload, buildShareTargets } from "./share-targets";
 
-const url = "https://yantene.net/notes/hacku-2016";
+const url = "https://yantene.net/articles/hacku-2016";
 
 /*
  * 出来上がった URL は、素の文字列ではなくパースして確かめる。組み立てと同じ手順を期待値に

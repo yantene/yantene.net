@@ -18,11 +18,11 @@ export interface NoteHeaderProps {
  * 消えても画面には何も出ない。
  *
  * ここが持つのは、entry の中に入る個々のプロパティだけである。**それらを束ねる `h-entry` と、
- * 本文を表す `e-content` はこの外側 (routes/notes.$slug.tsx) にある。** 束ねる側が外れると、
+ * 本文を表す `e-content` はこの外側 (routes/articles.$slug.tsx) にある。** 束ねる側が外れると、
  * ここの印は宙に浮いた単独の項目になって誰のものでもなくなるので、両方が要る。
  *
  * 見張りも 2 つに分かれている。ここの印は note-header.mf2.test.tsx が、外側の `h-entry` /
- * `e-content` は routes/notes.$slug.mf2.test.tsx が固定している。
+ * `e-content` は routes/articles.$slug.mf2.test.tsx が固定している。
  */
 export function NoteHeader({
   slug,
@@ -71,7 +71,7 @@ export function NoteHeader({
       */}
       <a
         className="sr-only u-url"
-        href={`${origin}/notes/${slug}`}
+        href={`${origin}/articles/${slug}`}
         aria-hidden="true"
         tabIndex={-1}
       >
@@ -86,11 +86,11 @@ export function NoteHeader({
           Link ではなく素の <a> にする (クライアント遷移させない)。
         */}
         <a
-          href={`/notes/${slug}.md`}
+          href={`/articles/${slug}.md`}
           className="press-control inline-flex items-center gap-1 hover:text-primary hover:underline"
         >
           <SiMarkdown aria-hidden="true" />
-          {t("notes.viewMarkdown")}
+          {t("articles.viewMarkdown")}
         </a>
       </div>
       {/*

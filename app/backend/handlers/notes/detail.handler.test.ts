@@ -34,7 +34,7 @@ async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
       slug: NoteSlug.create("hello"),
       title: NoteTitle.create("Hello"),
       summary: "A summary.",
-      imageUrl: ImageUrl.create("/api/v1/notes/hello/assets/cover.png"),
+      imageUrl: ImageUrl.create("/api/v1/articles/hello/assets/cover.png"),
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
       sourceHash: "h1",
@@ -52,7 +52,7 @@ async function fetchDetail(
   bucket: R2Bucket,
   slug: string,
 ): Promise<{ status: number; body: NoteDetail | undefined }> {
-  const res = await createTestApp().request(`/api/v1/notes/${slug}`, {}, env(d1, bucket));
+  const res = await createTestApp().request(`/api/v1/articles/${slug}`, {}, env(d1, bucket));
   const text = await res.text();
   return {
     status: res.status,
@@ -69,7 +69,7 @@ describe("createNoteDetailApiRouter GET /:slug", () => {
     const { status, body } = await fetchDetail(d1, bucket, "hello");
     expect(status).toBe(200);
     expect(body?.note.title).toBe("Hello");
-    expect(body?.note.imageUrl).toBe("/api/v1/notes/hello/assets/cover.png");
+    expect(body?.note.imageUrl).toBe("/api/v1/articles/hello/assets/cover.png");
     expect(body?.mdast).toEqual(sampleMdast);
   });
 

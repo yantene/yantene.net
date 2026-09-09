@@ -48,7 +48,7 @@ const targets = [
     path: "/",
     expectBodyIncludes: "https://static.cloudflareinsights.com/beacon.min.js",
   },
-  "/notes",
+  "/articles",
   /*
    * 帰属の置き場所。CC BY 4.0 が要る表示なので、落ちていることに気づけるようにしておく。
    *
@@ -60,23 +60,23 @@ const targets = [
     path: "/licenses",
     expectBodyIncludes: "CC BY 4.0",
   },
-  "/notes/does-not-exist",
+  "/articles/does-not-exist",
   /*
    * 記事 URL は Accept 次第で HTML と原文 Markdown に分かれる (ADR 0020)。取り違えは
    * 5xx にならないので、両分岐の Content-Type を名指しで確かめる。存在しない slug でも
    * 分岐は同じところを通るため、実在の slug を知らなくても検知できる。
    */
   {
-    label: "/notes/does-not-exist (browser Accept)",
-    path: "/notes/does-not-exist",
+    label: "/articles/does-not-exist (browser Accept)",
+    path: "/articles/does-not-exist",
     headers: {
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
     expectContentType: "text/html",
   },
   {
-    label: "/notes/does-not-exist (Accept: text/markdown)",
-    path: "/notes/does-not-exist",
+    label: "/articles/does-not-exist (Accept: text/markdown)",
+    path: "/articles/does-not-exist",
     headers: { Accept: "text/markdown" },
     expectContentType: "application/problem+json",
   },
@@ -90,8 +90,8 @@ const targets = [
    * 実物の応答を確かめる。上の Accept 分岐と同じ理由で、実在の slug は要らない。
    */
   {
-    label: "/og/notes/does-not-exist",
-    path: "/og/notes/does-not-exist",
+    label: "/og/articles/does-not-exist",
+    path: "/og/articles/does-not-exist",
     expectContentType: "application/problem+json",
   },
 ];

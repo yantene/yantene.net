@@ -6,8 +6,8 @@
   "home": {
     "heading": "やんてね",
     "tagline": "Web の向こうから",
-    "recentNotes": "最近のノート",
-    "popularNotes": "人気のノート",
+    "recentNotes": "最近の記事",
+    "popularNotes": "人気の記事",
     "viewAll": "すべて見る"
   },
   "navigation": {
@@ -22,11 +22,11 @@
     "retry": "もう一度試す",
     "allLoaded": "ここまで"
   },
-  "notes": {
-    "title": "ノート",
-    "heading": "ノート",
-    "empty": "まだ公開されたノートがない。",
-    "related": "関連ノート",
+  "articles": {
+    "title": "記事",
+    "heading": "記事",
+    "empty": "まだ公開された記事がない。",
+    "related": "関連記事",
     "toc": "目次",
     "viewMarkdown": "Markdown で見る",
     "clearFilter": "すべて表示",
@@ -36,10 +36,10 @@
       "next": "次のページ"
     },
     "notFound": {
-      "title": "ノートが見つからない",
-      "heading": "ノートが見つからない",
-      "description": "お探しのノートは存在しないか、公開されていない。",
-      "backToList": "ノート一覧へ戻る"
+      "title": "記事が見つからない",
+      "heading": "記事が見つからない",
+      "description": "お探しの記事は存在しないか、公開されていない。",
+      "backToList": "記事一覧へ戻る"
     },
     "actionsTop": "この記事に反応する・共有する (冒頭)",
     "actionsBottom": "この記事に反応する・共有する (末尾)"
@@ -47,7 +47,7 @@
   "search": {
     "title": "検索",
     "placeholder": "キーワードを入力",
-    "empty": "一致するノートがない。",
+    "empty": "一致する記事がない。",
     "resultsFor": "「{{query}}」の検索結果 — {{count}} 件"
   },
   "share": {

@@ -11,7 +11,7 @@
  */
 
 /** アセット API のパス。resolveAssetUrl が組み立てる形と対にする。 */
-const assetPathPattern = /^\/api\/v1\/notes\/[^/]+\/assets\/.+$/;
+const assetPathPattern = /^\/api\/v1\/articles\/[^/]+\/assets\/.+$/;
 
 /**
  * 音源として通してよい src なら true。

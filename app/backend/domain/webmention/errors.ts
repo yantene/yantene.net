@@ -16,7 +16,7 @@ export class SameSourceAndTargetError extends WebmentionRejectedError {
   readonly name = "SameSourceAndTargetError";
 }
 
-/** target がこのサイトのノート URL (`/notes/<slug>`) でない。 */
+/** target がこのサイトの記事 URL (`/articles/<slug>`) でない。 */
 export class TargetNotOnThisSiteError extends WebmentionRejectedError {
   readonly name = "TargetNotOnThisSiteError";
 }
