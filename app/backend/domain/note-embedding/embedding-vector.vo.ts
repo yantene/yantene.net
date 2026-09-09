@@ -29,7 +29,7 @@ export class EmbeddingVector implements IValueObject<EmbeddingVector> {
     const norm = Math.sqrt(sumOfSquares);
     /*
      * ゼロベクトルを弾く。向きが無いので、どの記事との類似度も 0 になる。
-     * 静かに通すと「どれとも似ていない記事」として関連ノートから消え、原因が
+     * 静かに通すと「どれとも似ていない記事」として関連記事から消え、原因が
      * 表に出ない (fail-loud)。
      */
     if (norm === 0) {
@@ -120,7 +120,7 @@ export class EmbeddingVector implements IValueObject<EmbeddingVector> {
    * コサイン類似度。両方とも正規化済みなので内積で足りる。
    *
    * 次元が違うベクトルは比べない。モデルを差し替えた直後に古い行が残っていると
-   * ここに来るので、0 を返さずに落とす (関連ノートが静かに空になるより、refresh が
+   * ここに来るので、0 を返さずに落とす (関連記事が静かに空になるより、refresh が
    * 落ちて気づけるほうがよい)。
    */
   similarityTo(other: EmbeddingVector): number {

@@ -40,7 +40,7 @@ export class D1NoteEmbeddingQueryRepository implements INoteEmbeddingQueryReposi
    * 近い順に slug を返す。
    *
    * 上位 N 件は保存せず、ここで切る。保存の側で切ると、後から書いた記事が古い記事の
-   * 関連ノートに出てこない (refresh は変更のあった記事しか処理しないため)。
+   * 関連記事に出てこない (refresh は変更のあった記事しか処理しないため)。
    * 同点のときは slug の昇順で決める (並びが実行ごとに揺れないように)。
    */
   async findRelatedSlugs(slug: NoteSlug, limit: number): Promise<readonly string[]> {

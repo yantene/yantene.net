@@ -9,6 +9,6 @@ export interface INoteEmbeddingQueryRepository {
    * ベクトルデータベースも要らない。数千本を超えたらこの前提が崩れる。
    */
   listAll(): Promise<readonly NoteEmbedding[]>;
-  /** 近い順に slug を返す。関連ノートの表示に使う。 */
+  /** 近い順に slug を返す。関連記事の表示に使う。 */
   findRelatedSlugs(slug: NoteSlug, limit: number): Promise<readonly string[]>;
 }
