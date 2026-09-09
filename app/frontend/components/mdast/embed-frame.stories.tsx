@@ -20,7 +20,7 @@ const meta: Meta<typeof EmbedFrame> = {
   decorators: [
     (Story) => (
       <div className="p-6">
-        <div className="note-prose prose max-w-3xl">
+        <div className="mdast-prose prose max-w-3xl">
           <Story />
         </div>
       </div>

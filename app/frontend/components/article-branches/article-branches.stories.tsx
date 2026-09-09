@@ -1,4 +1,4 @@
-import { NoteBranches } from "./note-branches";
+import { ArticleBranches } from "./article-branches";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const notes = [
@@ -24,10 +24,10 @@ const notes = [
   },
 ];
 
-const meta: Meta<typeof NoteBranches> = {
-  title: "NoteBranches/NoteBranches",
-  component: NoteBranches,
-  args: { notes },
+const meta: Meta<typeof ArticleBranches> = {
+  title: "ArticleBranches/ArticleBranches",
+  component: ArticleBranches,
+  args: { articles: notes },
   decorators: [
     // 記事の本文と同じ幅で見る。
     (Story) => (
@@ -45,13 +45,13 @@ export const Default: Story = {};
 
 /** 1 件だけのとき。幹は枝の高さで止まる。 */
 export const SingleBranch: Story = {
-  args: { notes: notes.slice(0, 1) },
+  args: { articles: notes.slice(0, 1) },
 };
 
 /** 表題が長いと折り返り、要約は 1 行で切れる。 */
 export const LongTitles: Story = {
   args: {
-    notes: notes.map((note, index) => ({
+    articles: notes.map((note, index) => ({
       ...note,
       slug: `long-${String(index)}`,
       title: `${note.title} ― さらに長い副題が続く場合にどこで折り返るか`,
@@ -62,7 +62,7 @@ export const LongTitles: Story = {
 /** 記事が多いとき。幹が伸び、枝が等間隔に並ぶ。 */
 export const ManyBranches: Story = {
   args: {
-    notes: Array.from({ length: 6 }, (_, index) => ({
+    articles: Array.from({ length: 6 }, (_, index) => ({
       ...notes[index % notes.length],
       slug: `many-${String(index)}`,
     })),

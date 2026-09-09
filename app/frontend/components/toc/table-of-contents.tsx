@@ -39,7 +39,7 @@ function useActiveHeading(headings: readonly TocHeading[]): string {
   useEffect(() => {
     if (headings.length === 0) return;
     const elements = [
-      ...document.querySelectorAll<HTMLElement>(".note-prose h2, .note-prose h3"),
+      ...document.querySelectorAll<HTMLElement>(".mdast-prose h2, .mdast-prose h3"),
     ].filter((element) => element.id.length > 0);
     if (elements.length === 0) return;
 

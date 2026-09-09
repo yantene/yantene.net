@@ -1,12 +1,12 @@
-import { InfiniteNoteTimeline } from "./infinite-note-timeline";
-import type { LoadNotePage } from "./infinite-note-timeline";
-import type { NoteTimelineItemProps } from "./note-timeline-item";
+import { InfiniteArticleTimeline } from "./infinite-article-timeline";
+import type { LoadArticlePage } from "./infinite-article-timeline";
+import type { ArticleTimelineItemProps } from "./article-timeline-item";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 const TOTAL_PAGES = 3;
 const PER_PAGE = 4;
 
-function notesFor(page: number): NoteTimelineItemProps[] {
+function notesFor(page: number): ArticleTimelineItemProps[] {
   return Array.from({ length: PER_PAGE }, (_, index) => {
     const nth = (page - 1) * PER_PAGE + index + 1;
     const month = String(((nth - 1) % 12) + 1).padStart(2, "0");
@@ -23,25 +23,25 @@ function notesFor(page: number): NoteTimelineItemProps[] {
 }
 
 /** 用意した応答を少し待ってから返す。読み込み中の表示が一瞬で消えないように。 */
-const stubLoad: LoadNotePage = async (page) => {
+const stubLoad: LoadArticlePage = async (page) => {
   await new Promise((resolve) => {
     setTimeout(resolve, 600);
   });
   return { notes: notesFor(page), totalPages: TOTAL_PAGES };
 };
 
-const failingLoad: LoadNotePage = async () => {
+const failingLoad: LoadArticlePage = async () => {
   await new Promise((resolve) => {
     setTimeout(resolve, 400);
   });
   throw new Error("network is down");
 };
 
-const meta: Meta<typeof InfiniteNoteTimeline> = {
-  title: "NoteTimeline/InfiniteNoteTimeline",
-  component: InfiniteNoteTimeline,
+const meta: Meta<typeof InfiniteArticleTimeline> = {
+  title: "ArticleTimeline/InfiniteArticleTimeline",
+  component: InfiniteArticleTimeline,
   args: {
-    initialNotes: notesFor(1),
+    initialArticles: notesFor(1),
     totalPages: TOTAL_PAGES,
     perPage: PER_PAGE,
     loadPage: stubLoad,

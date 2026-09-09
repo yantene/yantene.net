@@ -20,6 +20,6 @@ const assetPathPattern = /^\/api\/v1\/articles\/[^/]+\/assets\/.+$/;
  * 届かない。だから本文にはルート相対の絶対パスが直接書かれている前提で見る。
  * 相対パス (`./song.opus`) は解決されないまま届くので、ここで落とす。
  */
-export function isNoteAssetSrc(src: string): boolean {
+export function isArticleAssetSrc(src: string): boolean {
   return assetPathPattern.test(src);
 }

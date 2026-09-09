@@ -1,7 +1,7 @@
 /*
  * 本文画像のクリック拡大 (lightbox-image.tsx)。
  *
- * 押す側 (`.lightbox-trigger`) は **`.note-prose` の中に置かれている前提**で書いてある。
+ * 押す側 (`.lightbox-trigger`) は **`.mdast-prose` の中に置かれている前提**で書いてある。
  * 暗幕 (`.lightbox-overlay`) のほうは createPortal で body の下に出るので器を持たない。
  */
 
@@ -12,7 +12,7 @@
  * 効かないので、中央に寄せるのはこちら側の仕事になる。block にしただけでは button が
  * 行いっぱいに広がって auto マージンが行き場を失うため、fit-content で中身の幅に詰める。
  */
-.note-prose .lightbox-trigger {
+.mdast-prose .lightbox-trigger {
   display: block;
   width: fit-content;
   max-width: 100%;

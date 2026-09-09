@@ -11,7 +11,7 @@ import { resolveClockOrigin } from "~/frontend/components/hero/clock-origin";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
+import { ArticleTimeline } from "~/frontend/components/article-timeline/article-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
@@ -71,17 +71,17 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           */}
           {popular.length > 0 && (
             <div className="mb-16">
-              <h2 className="text-2xl font-bold">{t("home.popularNotes")}</h2>
+              <h2 className="text-2xl font-bold">{t("home.popularArticles")}</h2>
               <div className="mt-8">
-                <NoteTimeline notes={popular} ranked />
+                <ArticleTimeline articles={popular} ranked />
               </div>
             </div>
           )}
 
           <div>
-            <h2 className="text-2xl font-bold">{t("home.recentNotes")}</h2>
+            <h2 className="text-2xl font-bold">{t("home.recentArticles")}</h2>
             <div className="mt-8">
-              <NoteTimeline notes={recent} groupByYear />
+              <ArticleTimeline articles={recent} groupByYear />
             </div>
             {/*
               ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と

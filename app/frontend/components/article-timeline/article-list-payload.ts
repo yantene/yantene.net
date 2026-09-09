@@ -1,4 +1,4 @@
-import type { NoteTimelineItemProps } from "./note-timeline-item";
+import type { ArticleTimelineItemProps } from "./article-timeline-item";
 
 /**
  * `/api/v1/articles` から返る JSON を、タイムラインが扱える形に読み取る。
@@ -6,12 +6,12 @@ import type { NoteTimelineItemProps } from "./note-timeline-item";
  * 相手はネットワーク越しの unknown なので、型注釈で押し通さずに 1 つずつ確かめる。
  * 形が違えば null を返し、呼び出し側が読み込み失敗として扱う。
  */
-export interface NoteListPayload {
-  readonly notes: readonly NoteTimelineItemProps[];
+export interface ArticleListPayload {
+  readonly notes: readonly ArticleTimelineItemProps[];
   readonly totalPages: number;
 }
 
-export function parseNoteListPayload(value: unknown): NoteListPayload | null {
+export function parseArticleListPayload(value: unknown): ArticleListPayload | null {
   if (!isRecord(value)) return null;
 
   const pagination = value["pagination"];
@@ -21,11 +21,11 @@ export function parseNoteListPayload(value: unknown): NoteListPayload | null {
     return null;
   }
 
-  const rawNotes = value["notes"];
-  if (!Array.isArray(rawNotes)) return null;
+  const rawArticles = value["notes"];
+  if (!Array.isArray(rawArticles)) return null;
 
-  const notes: NoteTimelineItemProps[] = [];
-  for (const raw of rawNotes) {
+  const notes: ArticleTimelineItemProps[] = [];
+  for (const raw of rawArticles) {
     const note = parseNote(raw);
     if (note === null) return null;
     notes.push(note);
@@ -33,7 +33,7 @@ export function parseNoteListPayload(value: unknown): NoteListPayload | null {
   return { notes, totalPages };
 }
 
-function parseNote(value: unknown): NoteTimelineItemProps | null {
+function parseNote(value: unknown): ArticleTimelineItemProps | null {
   if (!isRecord(value)) return null;
 
   const { slug, title, summary, imageUrl, publishedOn } = value;

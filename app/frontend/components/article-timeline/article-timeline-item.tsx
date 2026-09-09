@@ -2,7 +2,7 @@ import { HiArrowRight } from "react-icons/hi2";
 import { Link } from "react-router";
 import { seasonDotClass } from "./season-color";
 
-export interface NoteTimelineItemProps {
+export interface ArticleTimelineItemProps {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
@@ -10,7 +10,7 @@ export interface NoteTimelineItemProps {
   readonly publishedOn: string;
 }
 
-interface NoteTimelineItemOptions {
+interface ArticleTimelineItemOptions {
   /**
    * 日付から年を落とすか。年を別に立てている一覧で使う。
    * 落とすのは見た目だけで、time 要素には完全な日付が残る。
@@ -30,7 +30,7 @@ interface NoteTimelineItemOptions {
  * 同じ一覧なのに情報の在り処が食い違って読みにくくなるため。違いは先頭の印だけで、
  * 時系列なら公開月を表すドット、順位付きなら番号を出す。
  */
-export function NoteTimelineItem({
+export function ArticleTimelineItem({
   slug,
   title,
   summary,
@@ -38,35 +38,38 @@ export function NoteTimelineItem({
   publishedOn,
   omitYear = false,
   rank,
-}: NoteTimelineItemProps & NoteTimelineItemOptions): React.JSX.Element {
+}: ArticleTimelineItemProps & ArticleTimelineItemOptions): React.JSX.Element {
   // "2016-09-26" から年を落として "09-26" にする。
   const shownDate = omitYear ? publishedOn.slice(5) : publishedOn;
 
   return (
-    <li className="note-timeline-item h-entry">
+    <li className="article-timeline-item h-entry">
       {/* 行そのものが押し場所なので、押下の反応は面を塗る press-surface で受ける。 */}
       <Link
         to={`/articles/${slug}`}
-        className="note-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40 u-url"
+        className="article-timeline-link press-surface group border-b border-border/60 transition-colors hover:bg-base-200/40 u-url"
       >
         {rank === undefined ? (
           // ドットは公開月を 1 年の位相として表す装飾で、意味を担っていないため
           // 読み上げからは外す (日付は隣の time 要素が持つ)。
-          <span className={`note-timeline-dot ${seasonDotClass(publishedOn)}`} aria-hidden="true" />
+          <span
+            className={`article-timeline-dot ${seasonDotClass(publishedOn)}`}
+            aria-hidden="true"
+          />
         ) : (
-          <span className="note-timeline-rank" aria-hidden="true">
+          <span className="article-timeline-rank" aria-hidden="true">
             {rank}
           </span>
         )}
 
         <time
           dateTime={publishedOn}
-          className="note-timeline-date dt-published pt-1 text-sm tabular-nums text-base-content/60 sm:pt-0"
+          className="article-timeline-date dt-published pt-1 text-sm tabular-nums text-base-content/60 sm:pt-0"
         >
           {shownDate}
         </time>
 
-        <div className="note-timeline-body flex flex-col gap-1">
+        <div className="article-timeline-body flex flex-col gap-1">
           <h3 className="p-name font-bold leading-snug transition-colors group-hover:text-primary">
             {title}
           </h3>
@@ -74,7 +77,7 @@ export function NoteTimelineItem({
         </div>
 
         {imageUrl !== null && (
-          <figure className="note-timeline-thumb overflow-hidden rounded-lg border border-border/60">
+          <figure className="article-timeline-thumb overflow-hidden rounded-lg border border-border/60">
             {/*
               寸法を属性で与えて読み込み前から場所を確保する (レイアウトシフト対策)。
               実寸ではなく比率を伝えるための値で、表示サイズは CSS 側が決める。
@@ -92,7 +95,7 @@ export function NoteTimelineItem({
         )}
 
         <span
-          className="note-timeline-arrow text-lg text-base-content/40 transition-colors group-hover:text-primary"
+          className="article-timeline-arrow text-lg text-base-content/40 transition-colors group-hover:text-primary"
           aria-hidden="true"
         >
           <HiArrowRight />

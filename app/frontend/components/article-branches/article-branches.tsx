@@ -1,14 +1,14 @@
 import { Link } from "react-router";
 
-export interface NoteBranchItem {
+export interface ArticleBranchItem {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
   readonly publishedOn: string;
 }
 
-interface NoteBranchesProps {
-  readonly notes: readonly NoteBranchItem[];
+interface ArticleBranchesProps {
+  readonly articles: readonly ArticleBranchItem[];
 }
 
 /**
@@ -19,19 +19,22 @@ interface NoteBranchesProps {
  *
  * 関連度で並ぶ場所なので日付は添えるだけに留め、順位も番号も出さない。
  */
-export function NoteBranches({ notes }: NoteBranchesProps): React.JSX.Element {
+export function ArticleBranches({ articles }: ArticleBranchesProps): React.JSX.Element {
   return (
-    <ul className="note-branches">
-      {notes.map((note) => (
-        <li key={note.slug} className="note-branch">
+    <ul className="article-branches">
+      {articles.map((article) => (
+        <li key={article.slug} className="article-branch">
           {/* 一覧の項目と同じく行全体が押し場所なので、押下の反応も同じ press-surface。 */}
-          <Link to={`/articles/${note.slug}`} className="note-branch-link press-surface group">
-            <span className="note-branch-body">
-              <span className="note-branch-title">{note.title}</span>
-              <span className="note-branch-summary">{note.summary}</span>
+          <Link
+            to={`/articles/${article.slug}`}
+            className="article-branch-link press-surface group"
+          >
+            <span className="article-branch-body">
+              <span className="article-branch-title">{article.title}</span>
+              <span className="article-branch-summary">{article.summary}</span>
             </span>
-            <time dateTime={note.publishedOn} className="note-branch-date">
-              {note.publishedOn}
+            <time dateTime={article.publishedOn} className="article-branch-date">
+              {article.publishedOn}
             </time>
           </Link>
         </li>

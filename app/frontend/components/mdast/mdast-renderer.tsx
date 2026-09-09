@@ -9,7 +9,7 @@ import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { Alert } from "./alert";
 import { Anchor } from "./anchor";
-import { isNoteAssetSrc } from "./audio";
+import { isArticleAssetSrc } from "./audio";
 import { CodeBlock } from "./code-block";
 import { normalizeEmbedSrc } from "./embed";
 import { DEFAULT_EMBED_TITLE, EmbedFrame } from "./embed-frame";
@@ -279,7 +279,7 @@ function toAudio(element: Element): Element | null {
   const sources = element.children.flatMap((child) => {
     if (child.type !== "element" || child.tagName !== "source") return [];
     const src = child.properties.src;
-    if (typeof src !== "string" || !isNoteAssetSrc(src)) return [];
+    if (typeof src !== "string" || !isArticleAssetSrc(src)) return [];
     const type = child.properties.type;
     return [
       {
@@ -468,7 +468,7 @@ export function MdastRenderer({
   }, [node, transformImageUrl, cardsByUrl, siteOrigin]);
 
   return (
-    <article className={`note-prose prose max-w-none ${className ?? ""}`.trim()}>
+    <article className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>
       <LinkCardsContext value={cardsByUrl}>{content}</LinkCardsContext>
     </article>
   );

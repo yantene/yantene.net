@@ -5,15 +5,15 @@
  * 決めるので打ち消す。上下の違いは、このまとまりが持つ余白と区切りだけで表す。
  */
 
-.note-actions {
+.article-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
 }
 
-.note-actions .reaction-bar,
-.note-actions .share-menu {
+.article-actions .reaction-bar,
+.article-actions .share-menu {
   margin-top: 0;
 }
 
@@ -21,7 +21,7 @@
  * 上に置くもの。本文の手前なので主張を抑え、細い線で本文と隔てる
  * (記事の頭が重くならないように)。
  */
-.note-actions-top {
+.article-actions-top {
   margin-bottom: 2rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--color-border);
@@ -33,6 +33,6 @@
  * 促し (reaction-hint) がリアクションの行の上に浮かぶので、その丈 (約 46px) と
  * 行との間 (0.5rem) を空けておく。足りないと**本文の最終行に重なって隠す**。
  */
-.note-actions-bottom {
+.article-actions-bottom {
   margin-top: 4rem;
 }

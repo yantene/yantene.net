@@ -10,9 +10,9 @@ import { applyReaction, parseReactionEmoji } from "~/backend/handlers/notes/reac
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
-import { NoteActions } from "~/frontend/components/note-actions/note-actions";
-import { NoteBranches } from "~/frontend/components/note-branches/note-branches";
-import { NoteHeader } from "~/frontend/components/note-header/note-header";
+import { ArticleActions } from "~/frontend/components/article-actions/article-actions";
+import { ArticleBranches } from "~/frontend/components/article-branches/article-branches";
+import { ArticleHeader } from "~/frontend/components/article-header/article-header";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -140,7 +140,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   });
 };
 
-export default function NoteShow({ loaderData }: Route.ComponentProps): React.JSX.Element {
+export default function ArticleShow({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { copyright } = loaderData;
 
@@ -167,7 +167,7 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
       <Header />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">
-          <NoteHeader
+          <ArticleHeader
             slug={note.slug}
             title={note.title}
             imageUrl={note.imageUrl}
@@ -179,7 +179,7 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
             長い記事では、読み始めに共有しようと思っても末尾まで届かないため。
             上下は同じ鍵の fetcher を共有するので、片方で押すともう片方も動く。
           */}
-          <NoteActions
+          <ArticleActions
             placement="top"
             reactions={reactions.reactions}
             mine={reactions.mine}
@@ -192,7 +192,7 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
             className="e-content"
             siteOrigin={origin}
           />
-          <NoteActions
+          <ArticleActions
             placement="bottom"
             reactions={reactions.reactions}
             mine={reactions.mine}
@@ -202,9 +202,9 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
           {/* 届いた反応。1 件も無ければ何も描かない。 */}
           <WebmentionList webmentions={webmentions} />
           {related.length > 0 && (
-            <section className="note-related">
-              <h2 className="note-related-heading">{t("articles.related")}</h2>
-              <NoteBranches notes={related} />
+            <section className="article-related">
+              <h2 className="article-related-heading">{t("articles.related")}</h2>
+              <ArticleBranches articles={related} />
             </section>
           )}
         </main>

@@ -196,7 +196,7 @@ export function MermaidDiagram({ source, children }: MermaidDiagramProps): React
        * Mermaid が字の寸法を測る場所。**本文の中に置くことに意味がある。**
        *
        * 渡さずに呼ぶと、Mermaid は `document.body` の直下に作業用の要素を作ってそこで測る。
-       * 出来上がった図を置くのは本文 (`.note-prose`) の中なので、**本文から継承する字組みが
+       * 出来上がった図を置くのは本文 (`.mdast-prose`) の中なので、**本文から継承する字組みが
        * 計測に乗らない。** 実際、本文の `letter-spacing` が抜けたぶんラベルの実幅が枠を
        * 越え、長いラベルほど末尾から欠けていた (#283)。ここで測れば、字組みの指定が
        * 増えても計測と描画が一致し続ける。

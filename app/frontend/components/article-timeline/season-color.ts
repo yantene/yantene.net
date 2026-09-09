@@ -9,10 +9,10 @@
  * 判別できず、CSS だけが 365 行に膨らむ。
  */
 
-/** 月 (1〜12) → ドットのクラス名。実際の色は note-timeline.css が持つ。 */
+/** 月 (1〜12) → ドットのクラス名。実際の色は article-timeline.css が持つ。 */
 export function seasonDotClass(publishedOn: string): string {
   const month = monthOf(publishedOn);
-  return `note-dot-m${String(month).padStart(2, "0")}`;
+  return `season-dot-m${String(month).padStart(2, "0")}`;
 }
 
 /**

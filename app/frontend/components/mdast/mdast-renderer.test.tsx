@@ -208,7 +208,7 @@ describe("MdastRenderer", () => {
     expect(html).toContain(`src="${embedded}"`);
     expect(html).toContain('loading="lazy"');
     // 枠が付かないと高さを持てず、既定の 150px に潰れる。
-    expect(html).toContain('<div class="note-embed">');
+    expect(html).toContain('<div class="mdast-embed">');
   });
 
   it("drops iframes aimed at hosts outside the allow list", () => {

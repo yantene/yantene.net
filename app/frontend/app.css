@@ -32,11 +32,11 @@
 @import "./components/mdast/lightbox-image.css";
 @import "./components/mdast/mdast-renderer.css";
 @import "./components/navigation-progress/navigation-progress.css";
-@import "./components/note-actions/note-actions.css";
+@import "./components/article-actions/article-actions.css";
 @import "./components/webmention/webmention-list.css";
-@import "./components/note-header/note-header.css";
-@import "./components/note-timeline/note-timeline.css";
-@import "./components/note-branches/note-branches.css";
+@import "./components/article-header/article-header.css";
+@import "./components/article-timeline/article-timeline.css";
+@import "./components/article-branches/article-branches.css";
 @import "./components/reaction/reaction-bar.css";
 @import "./components/reaction/reaction-hint.css";
 @import "./components/share/share-menu.css";

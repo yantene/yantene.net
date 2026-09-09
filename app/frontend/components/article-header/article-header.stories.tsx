@@ -1,9 +1,9 @@
-import { NoteHeader } from "./note-header";
+import { ArticleHeader } from "./article-header";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-const meta: Meta<typeof NoteHeader> = {
-  title: "NoteHeader/NoteHeader",
-  component: NoteHeader,
+const meta: Meta<typeof ArticleHeader> = {
+  title: "ArticleHeader/ArticleHeader",
+  component: ArticleHeader,
   args: {
     slug: "hello-world",
     title: "はじめてのノート",
@@ -40,7 +40,7 @@ export const LongTitle: Story = {
 };
 
 /*
- * 幅の狭い画面。表題の字が一段小さくなる (note-header.css の `width < 40rem`)。
+ * 幅の狭い画面。表題の字が一段小さくなる (article-header.css の `width < 40rem`)。
  *
  * 幅は `globals` で与える。Storybook 10 が読むのはこちらで、`parameters.viewport` に
  * 置いても選ばれず、既定の幅のまま描かれてしまう。

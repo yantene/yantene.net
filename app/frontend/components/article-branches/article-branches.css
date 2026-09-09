@@ -5,7 +5,7 @@
  * (CSP により inline style が使えないので、位置は変数と静的な値で決める)。
  */
 
-.note-branches {
+.article-branches {
   /* 幹から表題までの距離。枝の横線の長さでもある。 */
   --branch-arm: 1.25rem;
   /* 枝が出る高さ。表題の 1 行目の中心に合わせてある。 */
@@ -16,12 +16,12 @@
   padding-left: calc(var(--branch-arm) + 0.75rem);
 }
 
-.note-branch {
+.article-branch {
   position: relative;
 }
 
 /* 幹。上から下まで通し、最後の枝で止める。 */
-.note-branch::before {
+.article-branch::before {
   content: "";
   position: absolute;
   top: 0;
@@ -32,13 +32,13 @@
 }
 
 /* 最後の枝から先へは伸ばさない。ここで道が尽きることを示す。 */
-.note-branch:last-child::before {
+.article-branch:last-child::before {
   bottom: auto;
   height: var(--branch-y);
 }
 
 /* 枝。幹から表題へ向かって横に伸びる。 */
-.note-branch::after {
+.article-branch::after {
   content: "";
   position: absolute;
   top: var(--branch-y);
@@ -48,7 +48,7 @@
   background-color: var(--color-base-300);
 }
 
-.note-branch-link {
+.article-branch-link {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -57,7 +57,7 @@
   padding-block: 0.75rem;
 }
 
-.note-branch-body {
+.article-branch-body {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -65,17 +65,17 @@
   gap: 0.125rem;
 }
 
-.note-branch-title {
+.article-branch-title {
   font-weight: 700;
   line-height: 1.5;
   transition: color 0.15s;
 }
 
-.note-branch-link:hover .note-branch-title {
+.article-branch-link:hover .article-branch-title {
   color: var(--color-primary);
 }
 
-.note-branch-summary {
+.article-branch-summary {
   font-size: 0.8125rem;
   line-height: 1.6;
   color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
@@ -85,7 +85,7 @@
   white-space: nowrap;
 }
 
-.note-branch-date {
+.article-branch-date {
   flex: none;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;

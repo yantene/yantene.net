@@ -14,7 +14,7 @@
  * 切らせるので表示側では切っていないが、こちらは Markdown を手で書くだけで投稿の口が
  * 無いため、表示側で切る。
  */
-.note-header-cover {
+.article-header-cover {
   width: 100%;
   aspect-ratio: 21 / 9;
   object-fit: cover;
@@ -23,7 +23,7 @@
 }
 
 /* 表題の上に置く、日付と種別の行。 */
-.note-header-eyebrow {
+.article-header-eyebrow {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -33,7 +33,7 @@
   color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
 }
 
-.note-header-kind {
+.article-header-kind {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
@@ -43,14 +43,14 @@
  * 種別の前に引く細い線。日付と種別を繋ぎ、そのまま表題へ導く。
  * 幅は固定で、文字量に関わらず同じ長さになるようにする。
  */
-.note-header-kind::before {
+.article-header-kind::before {
   content: "";
   width: 2rem;
   height: 1px;
   background-color: var(--color-base-300);
 }
 
-.note-header-title {
+.article-header-title {
   margin-top: 0.625rem;
   font-size: 2.25rem;
   font-weight: 700;
@@ -58,7 +58,7 @@
 }
 
 @media (width < 40rem) {
-  .note-header-title {
+  .article-header-title {
     font-size: 1.75rem;
   }
 }
