@@ -18,5 +18,5 @@ export {
   ARTICLE_PATH_PREFIX,
   FORMER_ARTICLE_PATH_PREFIX,
   articlePath,
-  slugsMovedFromNotes,
+  slugsRedirectedFromFormerPath,
 } from "./article-path";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { noteSlugByLegacySlug } from "./legacy-redirects.handler";
-import { slugsMovedFromNotes } from "~/backend/domain/note";
+import { slugsRedirectedFromFormerPath } from "~/backend/domain/note";
 import { createTestApp } from "~/backend/test-app";
 
 function env(): Env {
@@ -143,7 +143,7 @@ describe("article URLs from before the rename", () => {
   // 恒久リダイレクトが増える。件数を実装側から取って突き合わせる。
   it("covers the 2026 articles and nothing else", () => {
     expect(movedArticles).toHaveLength(3);
-    expect(slugsMovedFromNotes.size).toBe(movedArticles.length);
+    expect(slugsRedirectedFromFormerPath.size).toBe(movedArticles.length);
   });
 
   it.each(movedArticles)("permanently redirects %s to %s", async (from, to) => {

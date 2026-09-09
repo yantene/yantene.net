@@ -11,7 +11,7 @@ import {
   FORMER_ARTICLE_PATH_PREFIX,
   InvalidNoteSlugError,
   NoteSlug,
-  slugsMovedFromNotes,
+  slugsRedirectedFromFormerPath,
 } from "~/backend/domain/note";
 
 interface RequestFields {
@@ -88,7 +88,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
      * 保存済みの行を消させられる (行の鍵は note と source で、表記を含まない)。
      */
     const canonical = WebmentionUrl.create(`${site.origin}${ARTICLE_PATH_PREFIX}${slug}`);
-    const former = slugsMovedFromNotes.has(slug)
+    const former = slugsRedirectedFromFormerPath.has(slug)
       ? [WebmentionUrl.create(`${site.origin}${FORMER_ARTICLE_PATH_PREFIX}${slug}`)]
       : [];
 
@@ -164,7 +164,7 @@ function articleSlugFrom(pathname: string): NoteSlug | undefined {
   if (canonical !== undefined) return canonical;
 
   const former = slugUnder(FORMER_ARTICLE_PATH_PREFIX, pathname);
-  if (former === undefined || !slugsMovedFromNotes.has(former.toString())) return undefined;
+  if (former === undefined || !slugsRedirectedFromFormerPath.has(former.toString())) return undefined;
   return former;
 }
 

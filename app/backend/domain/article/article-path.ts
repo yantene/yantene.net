@@ -15,7 +15,7 @@ export const ARTICLE_PATH_PREFIX = "/articles/";
  * 改名前の記事ページの URL 接頭辞。
  *
  * `/notes/` は短文の投稿のために空けてある。ここから `/articles/` へ恒久リダイレクトするのは
- * {@link slugsMovedFromNotes} に載る記事だけで、それ以外の `/notes/<slug>` は移さない。
+ * {@link slugsRedirectedFromFormerPath} に載る記事だけで、それ以外の `/notes/<slug>` は移さない。
  */
 export const FORMER_ARTICLE_PATH_PREFIX = "/notes/";
 
@@ -31,7 +31,7 @@ export const FORMER_ARTICLE_PATH_PREFIX = "/notes/";
  *
  * この表は増えない。改名より後に書く記事は最初から `/articles/<slug>` で出る。
  */
-export const slugsMovedFromNotes: ReadonlySet<string> = new Set([
+export const slugsRedirectedFromFormerPath: ReadonlySet<string> = new Set([
   "back-from-times",
   "claude-code-anywhere-with-devpod",
   "the-dryer-shrank-my-kando-jackets",

@@ -5,7 +5,7 @@ import { assetPrefixOf } from "~/backend/services/note-asset-url";
 import {
   articlePath,
   FORMER_ARTICLE_PATH_PREFIX,
-  slugsMovedFromNotes,
+  slugsRedirectedFromFormerPath,
 } from "~/backend/domain/note";
 
 /**
@@ -157,7 +157,7 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
     return permanentRedirect(c, `${assetPrefixOf(slug)}${encodePath(c.req.param("file"))}`);
   });
 
-  for (const slug of slugsMovedFromNotes) {
+  for (const slug of slugsRedirectedFromFormerPath) {
     const from = `${FORMER_ARTICLE_PATH_PREFIX}${slug}`;
     /*
      * 末尾のスラッシュ付きも受ける。ページのルータは付いていても同じ記事に当てていたので、
