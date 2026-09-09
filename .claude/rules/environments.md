@@ -65,7 +65,7 @@ pnpm exec wrangler kv namespace create yantene-production-sessions
 ### 3. R2 に OG 画像用のフォントを置く
 
 OG カードの描画は R2 上のフォント (`og/fonts/*.ttf`) を読む。refresh が同期するのは
-ノートの本文とアセットだけなので、フォントは手で置く。
+記事の本文とアセットだけなので、フォントは手で置く。
 
 ```bash
 pnpm exec wrangler r2 object get yantene-staging/og/fonts/noto-sans-jp-700-full.ttf \
