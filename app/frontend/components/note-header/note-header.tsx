@@ -56,7 +56,7 @@ export function NoteHeader({
         <time className="dt-published" dateTime={publishedOn}>
           {publishedOn.replaceAll("-", ".")}
         </time>
-        <span className="note-header-kind">NOTE</span>
+        <span className="note-header-kind">ARTICLE</span>
       </p>
       <h1 className="note-header-title p-name">{title}</h1>
       {/*
