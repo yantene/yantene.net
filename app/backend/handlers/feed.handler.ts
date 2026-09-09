@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { toPublicNote, type PublicNote } from "./note-view";
+import { articlePath } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 import { feedIdentity, type FeedIdentity } from "~/lib/feed";
 
@@ -23,13 +24,17 @@ function toRfc3339(date: string): string {
 }
 
 function entryXml(origin: string, note: PublicNote): string {
-  const url = `${origin}/notes/${note.slug}`;
+  const url = `${origin}${articlePath(note.slug)}`;
   /*
    * カテゴリは記事ごとに変えず `article` で固定する。タグは廃止した (ADR 0029) が、
    * 「これは記事である」という自己記述は残す。microformats2 の p-category と同じ語で、
    * Post Type Discovery が `p-name` と `e-content` から導く型 (article) とも一致する。
    */
   const categories = `    <category term="article"/>`;
+  /*
+   * `<id>` は記事の URL そのもの。URL を動かせば id も動き、購読者には 1 回だけ全件が
+   * 新着に見える (ADR 0032)。それを飲んで、URL と別の識別子を持たない。
+   */
   return `  <entry>
     <title>${escapeXml(note.title)}</title>
     <link href="${url}"/>

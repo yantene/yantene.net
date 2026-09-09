@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { HiMagnifyingGlass } from "react-icons/hi2";
-import type { Route } from "./+types/notes";
+import type { Route } from "./+types/articles";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
 import type { LoadNotePage } from "~/frontend/components/note-timeline/infinite-note-timeline";
@@ -37,8 +37,7 @@ export async function loader({
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
-  const notes = translationsFor(locale).notes;
-  const pageTitle = notes.title;
+  const pageTitle = translationsFor(locale).articles.title;
   return buildPageMeta({
     locale,
     origin,
@@ -63,13 +62,13 @@ function buildHrefForPage(page: number, perPage: number, sort: SortState): strin
   if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
   if (sort.order !== null) params.set("order", sort.order);
   const query = params.toString();
-  return query.length > 0 ? `/notes?${query}` : "/notes";
+  return query.length > 0 ? `/articles?${query}` : "/articles";
 }
 
 /**
  * 続きを取りに行く手を、いまの並び順に合わせて作る。
  *
- * 既定の取り方 (`/api/v1/notes` をそのまま叩く) では並び順が引き継がれず、一覧の
+ * 既定の取り方 (`/api/v1/articles` をそのまま叩く) では並び順が引き継がれず、一覧の
  * 2 ページ目が別の順で返る。ここで同じ条件を渡す。
  */
 function buildLoadPage(sort: SortState): LoadNotePage {
@@ -81,7 +80,7 @@ function buildLoadPage(sort: SortState): LoadNotePage {
     if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
     if (sort.order !== null) params.set("order", sort.order);
 
-    const response = await fetch(`/api/v1/notes?${params.toString()}`, {
+    const response = await fetch(`/api/v1/articles?${params.toString()}`, {
       headers: { accept: "application/json" },
     });
     if (!response.ok) throw new Error(`status ${String(response.status)}`);
@@ -103,7 +102,7 @@ function resultHeading(
   { query, total }: { query: string; total: number },
 ): string {
   if (query.length > 0) return t("search.resultsFor", { query, count: total });
-  return t("notes.heading");
+  return t("articles.heading");
 }
 
 export default function NotesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
@@ -136,7 +135,7 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
           フォームは常に同じ場所に置いたままにする。
         */}
         <search className="notes-search">
-          <form method="get" action="/notes" role="search">
+          <form method="get" action="/articles" role="search">
             <label className="notes-search-field">
               <HiMagnifyingGlass className="notes-search-icon" aria-hidden />
               <input
@@ -162,7 +161,7 @@ export default function NotesIndex({ loaderData }: Route.ComponentProps): React.
 
         {notes.length === 0 ? (
           <p className="mt-8 text-base-content/60">
-            {t(query.length > 0 ? "search.empty" : "notes.empty")}
+            {t(query.length > 0 ? "search.empty" : "articles.empty")}
           </p>
         ) : (
           <div className="mt-8">

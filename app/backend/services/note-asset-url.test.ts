@@ -4,17 +4,19 @@ import { assetPrefixOf, resolveAssetUrl } from "./note-asset-url";
 describe("resolveAssetUrl", () => {
   it("resolves ./relative paths to the asset API URL", () => {
     expect(resolveAssetUrl("my-note", "./cover.png")).toBe(
-      "/api/v1/notes/my-note/assets/cover.png",
+      "/api/v1/articles/my-note/assets/cover.png",
     );
   });
 
   it("resolves bare relative paths", () => {
-    expect(resolveAssetUrl("my-note", "img/a.png")).toBe("/api/v1/notes/my-note/assets/img/a.png");
+    expect(resolveAssetUrl("my-note", "img/a.png")).toBe(
+      "/api/v1/articles/my-note/assets/img/a.png",
+    );
   });
 
   it("collapses ./ segments instead of producing a malformed URL", () => {
     expect(resolveAssetUrl("my-note", "./img/./a.png")).toBe(
-      "/api/v1/notes/my-note/assets/img/a.png",
+      "/api/v1/articles/my-note/assets/img/a.png",
     );
   });
 
@@ -26,7 +28,7 @@ describe("resolveAssetUrl", () => {
 
 /*
  * 相対パスでないのに、スキームも `/` も持たないものがある。素朴に判定すると相対パスの
- * 側へ落ちて、assets の入口 (`/api/v1/notes/<slug>/assets/`) を指してしまう (#297)。
+ * 側へ落ちて、assets の入口 (`/api/v1/articles/<slug>/assets/`) を指してしまう (#297)。
  */
 describe("resolveAssetUrl: 相対パスでないもの", () => {
   it("ページ内アンカーは触らない", () => {
@@ -51,16 +53,16 @@ describe("resolveAssetUrl: 相対パスでないもの", () => {
 describe("resolveAssetUrl: クエリと断片", () => {
   it("断片を残す", () => {
     expect(resolveAssetUrl("n", "./song.mid#bar-32")).toBe(
-      "/api/v1/notes/n/assets/song.mid#bar-32",
+      "/api/v1/articles/n/assets/song.mid#bar-32",
     );
   });
 
   it("クエリを残す", () => {
-    expect(resolveAssetUrl("n", "./a.png?v=2")).toBe("/api/v1/notes/n/assets/a.png?v=2");
+    expect(resolveAssetUrl("n", "./a.png?v=2")).toBe("/api/v1/articles/n/assets/a.png?v=2");
   });
 
   it("両方あれば両方残す", () => {
-    expect(resolveAssetUrl("n", "./a.png?v=2#top")).toBe("/api/v1/notes/n/assets/a.png?v=2#top");
+    expect(resolveAssetUrl("n", "./a.png?v=2#top")).toBe("/api/v1/articles/n/assets/a.png?v=2#top");
   });
 });
 

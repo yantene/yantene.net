@@ -36,7 +36,7 @@ export interface PageMetaInput {
   /** ページ固有のタイトル。省略時はサイト既定のタイトルのみを使う。 */
   readonly title?: string;
   readonly description?: string;
-  /** OG 画像のパス (例: "/og/notes/foo")。origin を前置して絶対 URL にする。 */
+  /** OG 画像のパス (例: "/og/articles/foo")。origin を前置して絶対 URL にする。 */
   readonly imagePath?: string;
   readonly type?: "website" | "article";
   /** schema.org 構造化データ。渡された場合のみ ld+json を出力する。 */

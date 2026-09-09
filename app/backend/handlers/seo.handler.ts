@@ -1,5 +1,6 @@
 // XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
+import { articlePath } from "~/backend/domain/note";
 import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** sitemap に載せるノート数の上限 (個人ブログ規模では十分)。 */
@@ -38,12 +39,12 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
     const staticUrls = [
       urlEntry(`${origin}/`),
-      urlEntry(`${origin}/notes`),
+      urlEntry(`${origin}/articles`),
       urlEntry(`${origin}/licenses`),
     ];
     const noteUrls = result.notes.map((note) =>
       urlEntry(
-        `${origin}/notes/${note.slug.toJSON()}`,
+        `${origin}${articlePath(note.slug.toJSON())}`,
         note.lastModifiedOn.toString({ calendarName: "never" }),
       ),
     );

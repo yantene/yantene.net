@@ -94,7 +94,7 @@ function negotiatedQuality(ranges: readonly MediaRange[], mediaType: string): nu
 /**
  * `Accept` が記事の原文 Markdown を名指ししているかを判定する。
  *
- * 記事 URL (`/notes/<slug>`) は同じ URL で HTML と Markdown の 2 表現を持つ (ADR 0020)。
+ * 記事 URL (`/articles/<slug>`) は同じ URL で HTML と Markdown の 2 表現を持つ (ADR 0020)。
  * どちらを返すかの判断はここだけに閉じてあり、Hono にも Env にも依らない。
  *
  * 判定は次のとおり。

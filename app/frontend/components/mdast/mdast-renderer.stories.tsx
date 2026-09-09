@@ -14,7 +14,7 @@ function markdownToMdast(markdown: string): MdastRoot {
 const sample = `# 見出し 1
 
 これは **段落** です。_強調_ と \`インラインコード\` と
-[内部リンク](/notes/other) と [外部リンク](https://example.com) を含みます。
+[内部リンク](/articles/other) と [外部リンク](https://example.com) を含みます。
 
 ## 見出し 2
 
@@ -64,7 +64,7 @@ export const Default: Story = {
 export const WithImageResolution: Story = {
   args: {
     node: markdownToMdast("![cover](./cover.png)"),
-    transformImageUrl: (src) => src.replace(/^\.\//, "/api/v1/notes/example/assets/"),
+    transformImageUrl: (src) => src.replace(/^\.\//, "/api/v1/articles/example/assets/"),
   },
 };
 

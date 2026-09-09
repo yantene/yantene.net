@@ -114,7 +114,7 @@ describe("MdastRenderer", () => {
           type: "definition",
           identifier: "pic",
           label: "pic",
-          url: "/api/v1/notes/x/assets/ref.png",
+          url: "/api/v1/articles/x/assets/ref.png",
         },
       ],
     };
@@ -122,15 +122,15 @@ describe("MdastRenderer", () => {
     const { container } = render(<MdastRenderer node={node} />);
     const img = container.querySelector("img");
 
-    expect(img?.getAttribute("src")).toBe("/api/v1/notes/x/assets/ref.png");
+    expect(img?.getAttribute("src")).toBe("/api/v1/articles/x/assets/ref.png");
     expect(img?.getAttribute("width")).toBe("800");
     expect(img?.getAttribute("height")).toBe("450");
   });
 
   it("keeps internal links as plain same-tab anchors", () => {
-    const { container } = render(<MdastRenderer node={md("[x](/notes/other)")} />);
+    const { container } = render(<MdastRenderer node={md("[x](/articles/other)")} />);
     const a = container.querySelector("a");
-    expect(a?.getAttribute("href")).toBe("/notes/other");
+    expect(a?.getAttribute("href")).toBe("/articles/other");
     expect(a?.getAttribute("target")).toBeNull();
   });
 
@@ -148,7 +148,7 @@ describe("MdastRenderer", () => {
   it("keeps same-origin absolute links in the same tab when siteOrigin is given", () => {
     const { container } = render(
       <MdastRenderer
-        node={md("[x](https://yantene.net/notes/other)")}
+        node={md("[x](https://yantene.net/articles/other)")}
         siteOrigin="https://yantene.net"
       />,
     );
@@ -169,7 +169,7 @@ describe("MdastRenderer", () => {
   it("treats absolute links as external when siteOrigin is absent", () => {
     // 出どころが決まらない場所 (Storybook 等) では安全側に倒す。
     const { container } = render(
-      <MdastRenderer node={md("[x](https://yantene.net/notes/other)")} />,
+      <MdastRenderer node={md("[x](https://yantene.net/articles/other)")} />,
     );
     const a = container.querySelector("a");
     expect(a?.getAttribute("target")).toBe("_blank");
@@ -186,11 +186,11 @@ describe("MdastRenderer", () => {
     const { container } = render(
       <MdastRenderer
         node={md("![alt](./cover.png)")}
-        transformImageUrl={(src) => src.replace(/^\.\//, "/api/v1/notes/x/assets/")}
+        transformImageUrl={(src) => src.replace(/^\.\//, "/api/v1/articles/x/assets/")}
       />,
     );
     const img = container.querySelector("img");
-    expect(img?.getAttribute("src")).toBe("/api/v1/notes/x/assets/cover.png");
+    expect(img?.getAttribute("src")).toBe("/api/v1/articles/x/assets/cover.png");
     expect(img?.getAttribute("alt")).toBe("alt");
     expect(img?.getAttribute("loading")).toBe("lazy");
   });
@@ -249,14 +249,14 @@ describe("MdastRenderer: ページ内アンカー", () => {
   const withFootnote = "本文[^1]\n\n[^1]: 注の中身\n";
 
   /** 記事ページと同じ位置。Link が href をここからの絶対パスに直すので、素の "/" だと粗い。 */
-  const notePath = "/notes/foo";
+  const notePath = "/articles/foo";
 
   /** 脚注つきの本文を Router の中で描く。ページ内アンカーは Link になるため要る。 */
   function renderWithFootnote(element?: React.JSX.Element): HTMLElement {
     const router = createMemoryRouter(
       [
         {
-          path: "/notes/:slug",
+          path: "/articles/:slug",
           element: element ?? <MdastRenderer node={md(withFootnote)} />,
         },
       ],
@@ -265,7 +265,7 @@ describe("MdastRenderer: ページ内アンカー", () => {
     return render(<RouterProvider router={router} />).container;
   }
 
-  /** ページ内アンカーとその行き先の id。Link は "#x" を "/notes/foo#x" に直す。 */
+  /** ページ内アンカーとその行き先の id。Link は "#x" を "/articles/foo#x" に直す。 */
   function inPageAnchors(container: HTMLElement): readonly HTMLAnchorElement[] {
     return [...container.querySelectorAll("a")].filter((anchor) =>
       (anchor.getAttribute("href") ?? "").includes("#"),
@@ -341,7 +341,7 @@ describe("MdastRenderer: ページ内アンカー", () => {
   it("leaves links that are not in-page anchors as plain anchors", () => {
     // Router の外でも描けること。ページ内アンカーだけを Link に通す狙いの裏返し。
     const { container } = render(
-      <MdastRenderer node={md("[x](/notes/other) [y](https://example.com)")} />,
+      <MdastRenderer node={md("[x](/articles/other) [y](https://example.com)")} />,
     );
     expect(container.querySelectorAll("a")).toHaveLength(2);
   });
@@ -564,7 +564,7 @@ describe("GFM alerts", () => {
  * 埋め込みと同じ理由で、DOM に載せず SSR した文字列を読む。
  */
 describe("MdastRenderer: audio", () => {
-  const ASSET = "/api/v1/notes/a-song-about-your-eyebrows/assets/song.opus";
+  const ASSET = "/api/v1/articles/a-song-about-your-eyebrows/assets/song.opus";
 
   it("自分のアセットを指す音源を再生バーとして残す", () => {
     const html = ssr(

@@ -35,7 +35,7 @@ describe("WebmentionUrl", () => {
     );
   });
 
-  it.each(["", " ".repeat(3), "not a url", "/notes/hello", "example.com/post"])(
+  it.each(["", " ".repeat(3), "not a url", "/articles/hello", "example.com/post"])(
     "URL として読めない値は断る (%s)",
     (raw) => {
       expect(() => WebmentionUrl.create(raw)).toThrow(InvalidWebmentionUrlError);
@@ -76,24 +76,24 @@ describe("WebmentionUrl", () => {
   });
 
   describe("pointsToSameDocument", () => {
-    const target = WebmentionUrl.create("https://yantene.net/notes/hello");
+    const target = WebmentionUrl.create("https://yantene.net/articles/hello");
 
     /* 計測用のクエリや見出しへの素片でリンクを見失わないこと。 */
     it.each([
-      "https://yantene.net/notes/hello",
-      "https://yantene.net/notes/hello/",
-      "https://yantene.net/notes/hello?utm_source=x",
-      "https://yantene.net/notes/hello#section",
+      "https://yantene.net/articles/hello",
+      "https://yantene.net/articles/hello/",
+      "https://yantene.net/articles/hello?utm_source=x",
+      "https://yantene.net/articles/hello#section",
     ])("クエリ・素片・末尾のスラッシュは無視する (%s)", (raw) => {
       expect(WebmentionUrl.create(raw).pointsToSameDocument(target)).toBe(true);
     });
 
     // 送り先が違えば別。ホストが同じでも、スキームや港が違えば別の資源になる。
     it.each([
-      "https://yantene.net/notes/hello-world",
-      "https://yantene.net/notes",
-      "https://yantene.net:8443/notes/hello",
-      "https://example.com/notes/hello",
+      "https://yantene.net/articles/hello-world",
+      "https://yantene.net/articles",
+      "https://yantene.net:8443/articles/hello",
+      "https://example.com/articles/hello",
     ])("別の資源は別として扱う (%s)", (raw) => {
       expect(WebmentionUrl.create(raw).pointsToSameDocument(target)).toBe(false);
     });

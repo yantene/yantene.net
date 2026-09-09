@@ -3,7 +3,7 @@ import { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
 
 describe("ImageUrl", () => {
   it("accepts a root-relative asset API path", () => {
-    const url = "/api/v1/notes/my-note/assets/cover.png";
+    const url = "/api/v1/articles/my-note/assets/cover.png";
     expect(ImageUrl.create(url).toString()).toBe(url);
   });
 
@@ -20,7 +20,7 @@ describe("ImageUrl", () => {
     // 絶対 URL は正本の直接 URL 露出につながり、CSP (img-src 'self') でも
     // 表示できないため弾く。
     expect(() => ImageUrl.create("https://example.com/a.png")).toThrow(InvalidImageUrlError);
-    expect(() => ImageUrl.create("https://raw.example/notes/x/cover.png")).toThrow(
+    expect(() => ImageUrl.create("https://raw.example/articles/x/cover.png")).toThrow(
       InvalidImageUrlError,
     );
   });

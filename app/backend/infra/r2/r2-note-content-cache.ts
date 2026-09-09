@@ -8,6 +8,10 @@ const DEFAULT_ASSET_CONTENT_TYPE = "application/octet-stream";
  * R2 をバックエンドにした {@link INoteContentCache} 実装。
  * キーはノート単位のプレフィックス `notes/<slug>/` 配下にまとめ、削除時は
  * プレフィックス列挙で一括削除できるようにする。
+ *
+ * 接頭辞は URL (`/articles/<slug>`) や正本の配置 (`articles/`) には追随させない
+ * (ADR 0032)。ここを変えると、force refresh で写し直すまで全記事の原文と MDAST が
+ * 見つからなくなる。
  */
 export class R2NoteContentCache implements INoteContentCache {
   constructor(private readonly bucket: R2Bucket) {}

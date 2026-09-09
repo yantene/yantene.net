@@ -318,7 +318,7 @@
  * 線を 1 本引いて、ここから先が注であることを見えるようにする。
  *
  * `<hr>` を本文に足すのではなく境界線にするのは、これが本文の一部ではなく組版だから。
- * MDAST に無いものを描画側で足すと、原文 Markdown (/notes/<slug>.md) との対応も崩れる。
+ * MDAST に無いものを描画側で足すと、原文 Markdown (/articles/<slug>.md) との対応も崩れる。
  */
 .note-prose .footnotes {
   margin-top: 2.5rem;

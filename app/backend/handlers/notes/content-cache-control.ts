@@ -16,7 +16,7 @@ export function contentCacheControlFor(env: Env): string {
 }
 
 /**
- * Accept で表現が分かれる URL (`/notes/<slug>`) の Markdown 応答に付ける Cache-Control。
+ * Accept で表現が分かれる URL (`/articles/<slug>`) の Markdown 応答に付ける Cache-Control。
  *
  * Cloudflare のエッジは `Accept-Encoding` 以外の `Vary` をキャッシュキーに含めないため、
  * `Vary: Accept` を出しても共有キャッシュが表現を取り違え得る (ブラウザに原文が、

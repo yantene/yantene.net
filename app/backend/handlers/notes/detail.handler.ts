@@ -10,7 +10,7 @@ import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
-import { NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
+import { articlePath, NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
@@ -227,12 +227,12 @@ export async function loadNoteDetailPage(
       "@type": "BlogPosting",
       headline: detail.note.title,
       description: detail.note.summary,
-      image: `${origin}/og/notes/${detail.note.slug}`,
+      image: `${origin}/og/articles/${detail.note.slug}`,
       datePublished: detail.note.publishedOn,
       dateModified: detail.note.lastModifiedOn,
       author: { "@type": "Person", name: "yantene", url: `${origin}/` },
       publisher: { "@type": "Person", name: "yantene" },
-      mainEntityOfPage: `${origin}/notes/${detail.note.slug}`,
+      mainEntityOfPage: `${origin}${articlePath(detail.note.slug)}`,
     },
   };
 }

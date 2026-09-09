@@ -34,14 +34,14 @@ describe("D1NoteCommandRepository", () => {
       unpersistedNote({
         slug: "hello",
         title: "Hello",
-        imageUrl: "/api/v1/notes/hello/assets/cover.png",
+        imageUrl: "/api/v1/articles/hello/assets/cover.png",
       }),
     );
 
     expect(saved.id).toBeTruthy();
     expect(saved.slug.toString()).toBe("hello");
     expect(saved.title.toString()).toBe("Hello");
-    expect(saved.imageUrl?.toString()).toBe("/api/v1/notes/hello/assets/cover.png");
+    expect(saved.imageUrl?.toString()).toBe("/api/v1/articles/hello/assets/cover.png");
     expect(saved.createdAt).toBeInstanceOf(Temporal.Instant);
     expect(saved.updatedAt).toBeInstanceOf(Temporal.Instant);
   });

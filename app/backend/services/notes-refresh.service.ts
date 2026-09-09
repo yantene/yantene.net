@@ -22,7 +22,19 @@ import type { IUnpersisted } from "~/backend/domain/shared";
 import { ImageUrl, Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
-const noteSourcePattern = /^notes\/[^/]+\.md$/;
+/**
+ * 正本の中で記事が置かれる場所。`articles/<slug>.md` と `articles/<slug>/<asset>`。
+ *
+ * `notes/` は短文の投稿のために空けてある。正本側が `articles/` を持たないまま refresh を
+ * 叩くと、下の「全件削除の拒否」で止まる。
+ */
+const SOURCE_DIRECTORY = "articles/";
+
+/** `articles/<base>.md` の形 (直下の .md だけ。`articles/<slug>/<file>.md` はアセット)。 */
+function isNoteSourcePath(path: string): boolean {
+  if (!path.startsWith(SOURCE_DIRECTORY) || !path.endsWith(".md")) return false;
+  return !path.slice(SOURCE_DIRECTORY.length).includes("/");
+}
 
 /** refresh の実行結果サマリ。 */
 export interface RefreshResult {
@@ -70,7 +82,7 @@ class NoteContentError extends Error {
 
 /** 読み取り済みの原文と、その解析結果。読むのは 1 ノートにつき 1 回に留める。 */
 interface NoteSource {
-  /** フロントマター込みの原文。`/notes/<slug>.md` の配信元として R2 に置く。 */
+  /** フロントマター込みの原文。`/articles/<slug>.md` の配信元として R2 に置く。 */
   readonly markdown: string;
   readonly parsed: ParsedNoteContent;
 }
@@ -101,7 +113,7 @@ export class NotesRefreshService {
     const stored = await this.query.listSourceHashes();
 
     // 空のツリーを「全部消してよい」の合図として受け取らない。ブランチの取り違えや
-    // 正本側の事故で notes/ を持たない応答が返ると、掃除の経路がそのまま全件削除に
+    // 正本側の事故で articles/ を持たない応答が返ると、掃除の経路がそのまま全件削除に
     // なる。閲覧数も届いた Webmention も正本には無いので、消したら戻せない。
     // 既に何件か載っているのに 1 件も見つからないのは、同期ではなく事故である。
     //
@@ -109,7 +121,7 @@ export class NotesRefreshService {
     // 在るので groups には入る)。掛かるのは正本の側が空に見えるときだけ。
     if (stored.size > 0 && groups.length === 0) {
       throw new Error(
-        `refusing to delete all ${stored.size.toString()} note(s): the content tree has no notes/*.md`,
+        `refusing to delete all ${stored.size.toString()} note(s): the content tree has no articles/*.md`,
       );
     }
 
@@ -235,10 +247,10 @@ export class NotesRefreshService {
     /*
      * 本文の 2 つの姿 (MDAST と原文) は隣り合わせに書く。同じ URL の 2 表現なので
      * (ADR 0020)、間に他の書き込みを挟むと、途中で落ちたときに**記事ページと
-     * `/notes/<slug>.md` が違う版を出す**時間が延びる。
+     * `/articles/<slug>.md` が違う版を出す**時間が延びる。
      */
     await this.cache.putMdast(group.slug, sized);
-    // 原文はそのまま (フロントマター込み) 置く。`/notes/<slug>.md` の配信元になる。
+    // 原文はそのまま (フロントマター込み) 置く。`/articles/<slug>.md` の配信元になる。
     await this.cache.putSource(group.slug, source.markdown);
     /*
      * 片付けは D1 の upsert より前に置く。後ろだと、片付けに失敗したときに
@@ -308,21 +320,21 @@ export class NotesRefreshService {
 }
 
 /**
- * ツリーを 1 パスでノード単位 (slug) にまとめる。`notes/<base>.md` を起点にし、
- * `notes/<base>/` 配下のエントリをそのアセットとして束ねる。合成ハッシュも算出する。
+ * ツリーを 1 パスでノード単位 (slug) にまとめる。`articles/<base>.md` を起点にし、
+ * `articles/<base>/` 配下のエントリをそのアセットとして束ねる。合成ハッシュも算出する。
  */
 function groupNotes(tree: readonly ContentEntry[]): NoteGroup[] {
   const sources: { base: string; entry: ContentEntry }[] = [];
   const assetsByPrefix = new Map<string, ContentEntry[]>();
 
   for (const entry of tree) {
-    if (noteSourcePattern.test(entry.path)) {
+    if (isNoteSourcePath(entry.path)) {
       sources.push({
-        base: entry.path.slice("notes/".length, -".md".length),
+        base: entry.path.slice(SOURCE_DIRECTORY.length, -".md".length),
         entry,
       });
-    } else if (entry.path.startsWith("notes/")) {
-      const prefixEnd = entry.path.indexOf("/", "notes/".length);
+    } else if (entry.path.startsWith(SOURCE_DIRECTORY)) {
+      const prefixEnd = entry.path.indexOf("/", SOURCE_DIRECTORY.length);
       if (prefixEnd === -1) continue;
       const prefix = entry.path.slice(0, prefixEnd + 1);
       const list = assetsByPrefix.get(prefix) ?? [];
@@ -339,7 +351,7 @@ function groupNotes(tree: readonly ContentEntry[]): NoteGroup[] {
     } catch {
       continue; // slug にできないファイル名は対象外
     }
-    const assetPrefix = `notes/${base}/`;
+    const assetPrefix = `${SOURCE_DIRECTORY}${base}/`;
     const assets = assetsByPrefix.get(assetPrefix) ?? [];
     groups.push({
       slug,
@@ -449,7 +461,7 @@ const assetUrlTypes: ReadonlySet<Nodes["type"]> = new Set(["image", "link", "def
  * 同じことを `[曲](./song.mid)` と書けば通るので、書き方で結果が変わっていた (#295)。
  *
  * 分けても守りにはならない。resolveAssetUrl は絶対 URL・ルート相対・同一文書参照を
- * 素通しするので、`[x]: https://example.com` や `[x]: /notes/other` のような定義は
+ * 素通しするので、`[x]: https://example.com` や `[x]: /articles/other` のような定義は
  * どちらの扱いでも触られない。
  */
 function isAssetUrlNode(node: Nodes): node is Definition | Image | Link {
@@ -463,11 +475,11 @@ function isAssetUrlNode(node: Nodes): node is Definition | Image | Link {
  *
  * `link` を含めるのは、画像として貼れないアセット (曲の MIDI ファイルなど) へ本文から
  * リンクを張るため。`resolveAssetUrl` は絶対 URL とルート相対を素通しするので、外部リンクも
- * 記事間リンク (`/notes/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス。
+ * 記事間リンク (`/articles/...`) も触られない。書き換わるのは `./foo.mid` のような相対パス。
  *
  * ⚠️ **素の相対パスもアセット扱いになる。** `[前の記事](other-note)` は
- * `/api/v1/notes/<slug>/assets/other-note` になり 404 する。記事間のリンクはルート相対
- * (`/notes/other`) で書くこと。参照記法もこれに揃った (#295) ので、`[prev]: other-note`
+ * `/api/v1/articles/<slug>/assets/other-note` になり 404 する。記事間のリンクはルート相対
+ * (`/articles/other`) で書くこと。参照記法もこれに揃った (#295) ので、`[prev]: other-note`
  * のように書いていた定義は同じ角に当たる。
  *
  * `link` は子を持つので、URL を直したうえで中まで降りる (リンクで包んだ画像がある)。

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { data, Link, redirect } from "react-router";
-import type { Route } from "./+types/notes.$slug";
+import type { Route } from "./+types/articles.$slug";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
@@ -23,7 +23,7 @@ import { WEBMENTION_PATH } from "~/lib/constants/webmention";
 /**
  * リアクションの押し外し。
  *
- * API (`PUT/DELETE /api/v1/notes/<slug>/reaction`) と同じ処理を、フォームからも
+ * API (`PUT/DELETE /api/v1/articles/<slug>/reaction`) と同じ処理を、フォームからも
  * 呼べるようにしてある。ページ側を素の `<Form method="post">` で組めば、JS が動かない
  * 環境でもハートを押せる。
  */
@@ -75,7 +75,7 @@ export async function action({ request, params, context }: Route.ActionArgs): Pr
    */
   const headers = new Headers();
   if (outcome.setCookie !== "") headers.append("set-cookie", outcome.setCookie);
-  return redirect(`/notes/${params.slug}`, { headers, status: 303 });
+  return redirect(`/articles/${params.slug}`, { headers, status: 303 });
 }
 
 export async function loader({
@@ -121,7 +121,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
       locale,
       origin,
       pathname: location.pathname,
-      title: translationsFor(locale).notes.notFound.title,
+      title: translationsFor(locale).articles.notFound.title,
     });
   }
 
@@ -132,7 +132,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     pathname: location.pathname,
     title: note.title,
     description: note.summary,
-    imagePath: `/og/notes/${note.slug}`,
+    imagePath: `/og/articles/${note.slug}`,
     type: "article",
     jsonLd,
     // 受け取れるのはノート宛だけなので、記事ページでだけ受け口を広告する。
@@ -149,10 +149,10 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
       <AppLayout>
         <Header />
         <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
-          <h1 className="text-3xl font-bold">{t("notes.notFound.heading")}</h1>
-          <p className="mt-4 text-base-content/60">{t("notes.notFound.description")}</p>
-          <Link to="/notes" className="btn btn-primary press-control mt-8">
-            {t("notes.notFound.backToList")}
+          <h1 className="text-3xl font-bold">{t("articles.notFound.heading")}</h1>
+          <p className="mt-4 text-base-content/60">{t("articles.notFound.description")}</p>
+          <Link to="/articles" className="btn btn-primary press-control mt-8">
+            {t("articles.notFound.backToList")}
           </Link>
         </main>
         <Footer copyright={copyright} />
@@ -183,7 +183,7 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
             placement="top"
             reactions={reactions.reactions}
             mine={reactions.mine}
-            url={`${origin}/notes/${note.slug}`}
+            url={`${origin}/articles/${note.slug}`}
             title={note.title}
           />
           <MdastRenderer
@@ -196,14 +196,14 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
             placement="bottom"
             reactions={reactions.reactions}
             mine={reactions.mine}
-            url={`${origin}/notes/${note.slug}`}
+            url={`${origin}/articles/${note.slug}`}
             title={note.title}
           />
           {/* 届いた反応。1 件も無ければ何も描かない。 */}
           <WebmentionList webmentions={webmentions} />
           {related.length > 0 && (
             <section className="note-related">
-              <h2 className="note-related-heading">{t("notes.related")}</h2>
+              <h2 className="note-related-heading">{t("articles.related")}</h2>
               <NoteBranches notes={related} />
             </section>
           )}
@@ -211,7 +211,7 @@ export default function NoteShow({ loaderData }: Route.ComponentProps): React.JS
         {headings.length >= 2 && (
           <aside className="hidden w-60 shrink-0 lg:block">
             <div className="sticky top-24">
-              <TableOfContents title={t("notes.toc")} headings={headings} />
+              <TableOfContents title={t("articles.toc")} headings={headings} />
             </div>
           </aside>
         )}

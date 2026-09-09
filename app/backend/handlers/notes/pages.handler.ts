@@ -11,7 +11,7 @@ import { D1NoteQueryRepository, D1NoteViewQueryRepository } from "~/backend/infr
 /**
  * ホームに出す「最近」の件数。
  *
- * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切って `/notes` へ送る。
+ * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切って `/articles` へ送る。
  * 年の区切りが 2〜3 個現れる程度に留め、ヒーローの直後が記事で埋まらないようにする。
  */
 const RECENT_COUNT = 5;
@@ -105,7 +105,7 @@ export interface HomePageData {
  * ホームのデータを読む (Composition Root)。
  *
  * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切る。全件を辿る導線は
- * `/notes` が持つ。
+ * `/articles` が持つ。
  */
 export async function loadHomePage(env: Env): Promise<HomePageData> {
   const query = new D1NoteQueryRepository(env.D1);

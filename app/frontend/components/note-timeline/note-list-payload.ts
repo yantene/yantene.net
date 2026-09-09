@@ -1,7 +1,7 @@
 import type { NoteTimelineItemProps } from "./note-timeline-item";
 
 /**
- * `/api/v1/notes` から返る JSON を、タイムラインが扱える形に読み取る。
+ * `/api/v1/articles` から返る JSON を、タイムラインが扱える形に読み取る。
  *
  * 相手はネットワーク越しの unknown なので、型注釈で押し通さずに 1 つずつ確かめる。
  * 形が違えば null を返し、呼び出し側が読み込み失敗として扱う。

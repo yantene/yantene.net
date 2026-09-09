@@ -25,7 +25,7 @@ const sequence = `sequenceDiagram
   participant 読者
   participant Worker
   participant R2
-  読者->>Worker: GET /notes/foo
+  読者->>Worker: GET /articles/foo
   Worker->>R2: MDAST を読む
   R2-->>Worker: MDAST
   Worker-->>読者: SSR した HTML`;

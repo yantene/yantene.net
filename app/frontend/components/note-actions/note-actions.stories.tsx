@@ -10,7 +10,7 @@ const meta: Meta<typeof NoteActions> = {
   title: "NoteActions/NoteActions",
   component: NoteActions,
   args: {
-    url: "https://yantene.net/notes/hacku-2016",
+    url: "https://yantene.net/articles/hacku-2016",
     title: "オートマチック・オタク・マッチング",
     reactions: [
       { emoji: "❤️", count: 12 },

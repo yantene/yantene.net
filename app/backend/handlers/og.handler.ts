@@ -58,7 +58,7 @@ async function renderAndCache(env: Env, cacheKey: string, html: string): Promise
 
 /**
  * OG 画像の生成ルータ (公開)。
- * - GET /og/notes/:slug → 記事のブランドカード (imageUrl 有無に関わらず常に生成)
+ * - GET /og/articles/:slug → 記事のブランドカード (imageUrl 有無に関わらず常に生成)
  * - GET /og/default     → サイト共通のデフォルトカード
  * R2 にキャッシュし、記事更新やテンプレ版変更で自動再生成する。
  *
@@ -73,7 +73,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     renderAndCache(c.env, `og/default-${OG_TEMPLATE_VERSION}.png`, defaultCardHtml()),
   );
 
-  router.get("/notes/:slug", async (c) => {
+  router.get("/articles/:slug", async (c) => {
     const slug = NoteSlug.parse(c.req.param("slug"));
     if (slug === undefined) return notFoundResponse("note not found");
 
@@ -84,6 +84,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       title: note.title.toString(),
       date: note.publishedOn.toString({ calendarName: "never" }),
     });
+    // R2 のキーは URL に追随させない (ADR 0032)。絵の中身に URL は入っていない。
     return renderAndCache(
       c.env,
       `og/notes/${slug.toString()}-${note.sourceHash}-${OG_TEMPLATE_VERSION}.png`,

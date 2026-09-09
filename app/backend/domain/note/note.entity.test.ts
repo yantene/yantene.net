@@ -39,13 +39,13 @@ describe("Note.create", () => {
       slug,
       title,
       summary: "s",
-      imageUrl: ImageUrl.create("/api/v1/notes/my-note/assets/cover.png"),
+      imageUrl: ImageUrl.create("/api/v1/articles/my-note/assets/cover.png"),
       publishedOn,
       lastModifiedOn,
       sourceHash: "h",
     });
 
-    expect(note.imageUrl?.toString()).toBe("/api/v1/notes/my-note/assets/cover.png");
+    expect(note.imageUrl?.toString()).toBe("/api/v1/articles/my-note/assets/cover.png");
   });
 });
 

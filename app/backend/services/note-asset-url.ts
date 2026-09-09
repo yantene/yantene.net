@@ -2,12 +2,12 @@
  * ノート内の相対的なアセット URL (画像・リンク) をアセット API URL (ルート相対) に解決する。
  * 絶対 URL (http/https 等スキーム付き) やルート相対 (`/...`) は解決済みとみなしそのまま返す。
  * 相対パス (`./cover.png` / `img/a.png`) は URL 解決で `./` を畳んでから
- * `/api/v1/notes/<slug>/assets/<path>` にする。
+ * `/api/v1/articles/<slug>/assets/<path>` にする。
  */
 
 /** 解決の基準になる、そのノートのアセットの入口。 */
 export function assetPrefixOf(slug: string): string {
-  return `/api/v1/notes/${slug}/assets/`;
+  return `/api/v1/articles/${slug}/assets/`;
 }
 
 /**
@@ -40,7 +40,7 @@ export function resolveAssetUrl(slug: string, url: string): string {
   /*
    * `../` でアセットの外へ出たものは書き換えない。
    *
-   * `../x.png` は `/api/v1/notes/<slug>/x.png` に、`../../../x.png` は `/api/v1/x.png` に
+   * `../x.png` は `/api/v1/articles/<slug>/x.png` に、`../../../x.png` は `/api/v1/x.png` に
    * なる。どちらもこのノートのアセットではなく、**無関係な API のパスを指す URL を
    * こちらが作り出している**ことになる。書いたまま返せば、少なくとも出どころが分かる。
    */

@@ -50,7 +50,7 @@ describe("NoteTimeline の microformats2", () => {
     expect(entries).toHaveLength(notes.length);
 
     const [first] = entries;
-    expect(first.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/notes/hello");
+    expect(first.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/articles/hello");
     expect(first.querySelector(":scope .p-name")?.textContent).toBe("こんにちは");
     expect(first.querySelector(":scope .dt-published")?.getAttribute("datetime")).toBe(
       "2026-08-01",

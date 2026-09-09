@@ -140,11 +140,11 @@ export const getApp = (
 
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  // ノートの公開 JSON API (一覧 / 詳細 / アセット, クローラー対応)。
-  app.route("/api/v1/notes", createNotesApiRouter());
-  app.route("/api/v1/notes", createNoteDetailApiRouter());
-  app.route("/api/v1/notes", createNoteAssetsRouter());
-  app.route("/api/v1/notes", createNoteReactionApiRouter());
+  // 記事の公開 JSON API (一覧 / 詳細 / アセット, クローラー対応)。
+  app.route("/api/v1/articles", createNotesApiRouter());
+  app.route("/api/v1/articles", createNoteDetailApiRouter());
+  app.route("/api/v1/articles", createNoteAssetsRouter());
+  app.route("/api/v1/articles", createNoteReactionApiRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
   app.route("/api/v1/search", createSearchApiRouter());
@@ -152,15 +152,15 @@ export const getApp = (
   app.route("/", createFeedRouter());
   app.route("/", createSeoRouter());
 
-  // 旧サイト (Jekyll + GitHub Pages) の URL を現行サイトへ恒久リダイレクトする。
-  // 表に無いパスは素通りするので、後続のルーティングには影響しない。
+  // 過去の URL (旧サイトと、記事を `/notes/<slug>` と呼んでいた頃) を現行の URL へ
+  // リダイレクトする。表に無いパスは素通りするので、後続のルーティングには影響しない。
   app.route("/", createLegacyRedirectRouter());
 
-  // ノートの原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
-  // Hono で完結させる。`/notes/<slug>.md` と、`/notes/<slug>` のうち Accept が
-  // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /notes/* は
+  // 記事の原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
+  // Hono で完結させる。`/articles/<slug>.md` と、`/articles/<slug>` のうち Accept が
+  // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /articles/* は
   // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
-  app.route("/notes", createNoteMarkdownRouter());
+  app.route("/articles", createNoteMarkdownRouter());
 
   // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。

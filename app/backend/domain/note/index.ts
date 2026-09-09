@@ -14,3 +14,9 @@ export type {
   NoteSortField,
   SortDirection,
 } from "./note.query-repository.interface";
+export {
+  ARTICLE_PATH_PREFIX,
+  FORMER_ARTICLE_PATH_PREFIX,
+  articlePath,
+  slugsMovedFromNotes,
+} from "./article-path";

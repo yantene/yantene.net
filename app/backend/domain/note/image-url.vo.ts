@@ -1,7 +1,7 @@
 import type { IValueObject } from "~/backend/domain/shared";
 
 // ノートのカバー画像 URL。フロントマターの相対パス (`./cover.png`) は
-// アセット API URL (ルート相対 `/api/v1/notes/<slug>/assets/...`) に解決してから
+// アセット API URL (ルート相対 `/api/v1/articles/<slug>/assets/...`) に解決してから
 // VO 化する前提で、ここでは解決済みの「ルート相対パス」だけを受け入れる。
 //
 // 絶対 URL は弾く。これは 2 つの規約を同時に満たすため:
@@ -26,7 +26,7 @@ export class ImageUrl implements IValueObject<ImageUrl> {
     // ルート相対パスのみ。"//" 始まり (プロトコル相対 = 絶対 URL 相当) は弾く。
     if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
       throw new InvalidImageUrlError(
-        "Image URL must be a root-relative asset path (e.g. /api/v1/notes/<slug>/assets/<file>)",
+        "Image URL must be a root-relative asset path (e.g. /api/v1/articles/<slug>/assets/<file>)",
       );
     }
     return new ImageUrl(trimmed);

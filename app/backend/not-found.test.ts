@@ -46,7 +46,7 @@ describe("路の見つからない要求", () => {
     ["/nope", "GET"],
     ["/api/v1/nope", "GET"],
     ["/og/nope", "GET"],
-    ["/notes/x", "PATCH"],
+    ["/articles/x", "PATCH"],
   ])("%s (%s) はページ委譲へ落ちる", async (path, method) => {
     const res = await appWithMarkedDelegate().request(path, { method }, env(), executionCtx());
 

@@ -41,8 +41,8 @@
 @import "./components/reaction/reaction-hint.css";
 @import "./components/share/share-menu.css";
 @import "./routes/home.css";
-@import "./routes/notes.css";
-@import "./routes/notes.$slug.css";
+@import "./routes/articles.css";
+@import "./routes/articles.$slug.css";
 /*
  * 押下・フォーカスの作法はサイト全体で 1 つ。個別のコンポーネントには持たせない。
  *
