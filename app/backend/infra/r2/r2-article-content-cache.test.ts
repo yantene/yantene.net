@@ -1,42 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { R2NoteContentCache } from "./r2-note-content-cache";
+import { R2ArticleContentCache } from "./r2-article-content-cache";
 import { createTestR2 } from "./test-helper";
-import { NoteSlug } from "~/backend/domain/note";
+import { ArticleSlug } from "~/backend/domain/article";
 
-const slug = NoteSlug.create("my-note");
+const slug = ArticleSlug.create("my-article");
 
-describe("R2NoteContentCache", () => {
+describe("R2ArticleContentCache", () => {
   it("round-trips the source markdown with a markdown content type", async () => {
     const { bucket, store } = createTestR2();
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
     const markdown = "---\ntitle: Hi\n---\n\nBody ![a](./x.png).\n";
 
     await cache.putSource(slug, markdown);
 
     expect(await cache.getSource(slug)).toBe(markdown);
-    expect(store.get("notes/my-note/source.md")?.contentType).toBe("text/markdown; charset=utf-8");
+    expect(store.get("articles/my-article/source.md")?.contentType).toBe(
+      "text/markdown; charset=utf-8",
+    );
   });
 
   it("returns undefined for a missing source", async () => {
-    const cache = new R2NoteContentCache(createTestR2().bucket);
+    const cache = new R2ArticleContentCache(createTestR2().bucket);
     expect(await cache.getSource(slug)).toBeUndefined();
   });
 
   it("round-trips MDAST as JSON", async () => {
     const { bucket } = createTestR2();
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     await cache.putMdast(slug, { type: "root", children: [] });
     expect(await cache.getMdast(slug)).toEqual({ type: "root", children: [] });
   });
 
   it("returns undefined for a missing MDAST", async () => {
-    const cache = new R2NoteContentCache(createTestR2().bucket);
+    const cache = new R2ArticleContentCache(createTestR2().bucket);
     expect(await cache.getMdast(slug)).toBeUndefined();
   });
 
   it("round-trips an asset with its content type", async () => {
-    const cache = new R2NoteContentCache(createTestR2().bucket);
+    const cache = new R2ArticleContentCache(createTestR2().bucket);
     const bytes = new Uint8Array([1, 2, 3]);
 
     await cache.putAsset(slug, "cover.png", {
@@ -55,7 +57,7 @@ describe("R2NoteContentCache", () => {
    */
   it("prunes only the assets that are no longer listed", async () => {
     const { bucket, store } = createTestR2();
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     await cache.putSource(slug, "# Hi\n");
     await cache.putMdast(slug, { type: "root" });
@@ -80,7 +82,7 @@ describe("R2NoteContentCache", () => {
 
   it("prunes every asset when none are listed", async () => {
     const { bucket } = createTestR2();
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     await cache.putSource(slug, "# Hi\n");
     await cache.putAsset(slug, "cover.png", {
@@ -101,7 +103,7 @@ describe("R2NoteContentCache", () => {
    */
   it("prunes across pages", async () => {
     const { bucket } = createTestR2(2);
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     const paths = ["a.png", "b.png", "c.png", "d.png", "e.png"];
     for (const path of paths) {
@@ -122,7 +124,7 @@ describe("R2NoteContentCache", () => {
 
   it("deletes across pages", async () => {
     const { bucket, store } = createTestR2(2);
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     for (const path of ["a.png", "b.png", "c.png", "d.png", "e.png"]) {
       await cache.putAsset(slug, path, {
@@ -131,14 +133,14 @@ describe("R2NoteContentCache", () => {
       });
     }
 
-    await cache.deleteNote(slug);
+    await cache.deleteArticle(slug);
 
     expect(store.size).toBe(0);
   });
 
-  it("deletes all cached objects for a note", async () => {
+  it("deletes all cached objects for an article", async () => {
     const { bucket, store } = createTestR2();
-    const cache = new R2NoteContentCache(bucket);
+    const cache = new R2ArticleContentCache(bucket);
 
     await cache.putSource(slug, "# Hi\n");
     await cache.putMdast(slug, { type: "root" });
@@ -148,7 +150,109 @@ describe("R2NoteContentCache", () => {
     });
     expect(store.size).toBe(3);
 
-    await cache.deleteNote(slug);
+    await cache.deleteArticle(slug);
+    expect(store.size).toBe(0);
+  });
+});
+
+/*
+ * 改名前の接頭辞 `notes/<slug>/` からの移行 (ADR 0032)。次のリリースで消す。
+ */
+describe("R2ArticleContentCache with copies under the former prefix", () => {
+  function putFormer(
+    store: Map<string, { bytes: Uint8Array; contentType: string | undefined }>,
+  ): void {
+    const encoder = new TextEncoder();
+    store.set("notes/my-article/source.md", {
+      bytes: encoder.encode("# Former\n"),
+      contentType: "text/markdown; charset=utf-8",
+    });
+    store.set("notes/my-article/mdast.json", {
+      bytes: encoder.encode('{"type":"root","former":true}'),
+      contentType: "application/json",
+    });
+    store.set("notes/my-article/assets/cover.png", {
+      bytes: new Uint8Array([9]),
+      contentType: "image/png",
+    });
+  }
+
+  it("reads the former copies when the new ones are missing", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+
+    expect(await cache.getSource(slug)).toBe("# Former\n");
+    expect(await cache.getMdast(slug)).toEqual({ type: "root", former: true });
+    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([9]));
+  });
+
+  /* 写し直した記事が古い写しを出してはいけない。 */
+  it("prefers the new copies over the former ones", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+
+    await cache.putSource(slug, "# New\n");
+    await cache.putMdast(slug, { type: "root" });
+    await cache.putAsset(slug, "cover.png", {
+      bytes: new Uint8Array([1]),
+      contentType: "image/png",
+    });
+
+    expect(await cache.getSource(slug)).toBe("# New\n");
+    expect(await cache.getMdast(slug)).toEqual({ type: "root" });
+    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([1]));
+  });
+
+  it("writes only under the new prefix", async () => {
+    const { bucket, store } = createTestR2();
+    const cache = new R2ArticleContentCache(bucket);
+
+    await cache.putSource(slug, "# New\n");
+    await cache.putMdast(slug, { type: "root" });
+    await cache.putAsset(slug, "cover.png", {
+      bytes: new Uint8Array([1]),
+      contentType: "image/png",
+    });
+
+    expect([...store.keys()].toSorted()).toEqual([
+      "articles/my-article/assets/cover.png",
+      "articles/my-article/mdast.json",
+      "articles/my-article/source.md",
+    ]);
+  });
+
+  /*
+   * refresh は書き終えてから片付けに来る。そのときに古い写しを丸ごと消せば、force refresh を
+   * 1 回流すだけで旧接頭辞の下が空になる。
+   */
+  it("drops every former copy when pruning", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+    await cache.putSource(slug, "# New\n");
+    await cache.putMdast(slug, { type: "root" });
+    await cache.putAsset(slug, "cover.png", {
+      bytes: new Uint8Array([1]),
+      contentType: "image/png",
+    });
+
+    await cache.pruneAssets(slug, new Set(["cover.png"]));
+
+    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([]);
+    expect(await cache.getSource(slug)).toBe("# New\n");
+    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([1]));
+  });
+
+  it("deletes the former copies together with the new ones", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+    await cache.putSource(slug, "# New\n");
+
+    await cache.deleteArticle(slug);
+
     expect(store.size).toBe(0);
   });
 });
