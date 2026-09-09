@@ -2,13 +2,13 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { KvSessionCommandRepository } from "./session.command-repository";
 import { KvSessionQueryRepository } from "./session.query-repository";
-import { NoteSlug } from "~/backend/domain/note";
-import { ReactionEmoji } from "~/backend/domain/note-reaction";
+import { ArticleSlug } from "~/backend/domain/article";
+import { ReactionEmoji } from "~/backend/domain/article-reaction";
 import { SESSION_LIFETIME_DAYS, Session, SessionId } from "~/backend/domain/session";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
 
 const today = Temporal.PlainDate.from("2026-08-12");
-const alpha = NoteSlug.create("alpha");
+const alpha = ArticleSlug.create("alpha");
 
 function setup(): {
   store: Map<string, { value: string; expirationTtl: number | undefined }>;
@@ -48,7 +48,7 @@ describe("KvSessionQueryRepository#findById", () => {
 
     const found = await queries.findById(saved.id);
     expect(found?.viewedOn).toBeUndefined();
-    expect(found?.viewedNotes).toStrictEqual([]);
+    expect(found?.viewedArticles).toStrictEqual([]);
   });
 
   it("読めない記録は「無い」とみなす", async () => {
@@ -64,8 +64,8 @@ describe("KvSessionQueryRepository#findById", () => {
       '{"startedOn":"not-a-date"}',
       // 一部だけ読める記録も丸ごと捨てる。中途半端に生き残らせると、壊れたものが
       // 次の保存で「正しい記録」として書き戻される。
-      '{"startedOn":"2026-08-12","viewedNotes":["alpha","Bad Slug"]}',
-      '{"startedOn":"2026-08-12","viewedNotes":"alpha"}',
+      '{"startedOn":"2026-08-12","viewedArticles":["alpha","Bad Slug"]}',
+      '{"startedOn":"2026-08-12","viewedArticles":"alpha"}',
     ];
 
     for (const value of broken) {
@@ -102,7 +102,7 @@ describe("KvSessionCommandRepository#save", () => {
     const { store, commands } = setup();
     const yesterday = today.subtract({ days: 1 });
     const session = Session.start(SessionId.issue(), yesterday)
-      .withView(NoteSlug.create("beta"), yesterday)
+      .withView(ArticleSlug.create("beta"), yesterday)
       .withView(alpha, today);
     await commands.save(session);
 
@@ -111,7 +111,7 @@ describe("KvSessionCommandRepository#save", () => {
     expect(stored).toStrictEqual({
       startedOn: "2026-08-11",
       viewedOn: "2026-08-12",
-      viewedNotes: ["alpha"],
+      viewedArticles: ["alpha"],
       reactions: [],
     });
   });
@@ -125,14 +125,14 @@ describe("KvSessionCommandRepository#save", () => {
     const yesterday = today.subtract({ days: 1 });
     const session = Session.start(SessionId.issue(), yesterday)
       .withReaction(alpha, ReactionEmoji.like(), yesterday)
-      .withView(NoteSlug.create("beta"), today);
+      .withView(ArticleSlug.create("beta"), today);
     await commands.save(session);
 
     const stored: unknown = JSON.parse(store.get(`session:${session.id.toString()}`)?.value ?? "");
     expect(stored).toStrictEqual({
       startedOn: "2026-08-11",
       viewedOn: "2026-08-12",
-      viewedNotes: ["beta"],
+      viewedArticles: ["beta"],
       reactions: [{ slug: "alpha", emoji: "❤️", reactedOn: "2026-08-11" }],
     });
   });

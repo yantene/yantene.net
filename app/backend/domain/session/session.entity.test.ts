@@ -2,12 +2,12 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { SessionId } from "./session-id.vo";
 import { Session } from "./session.entity";
-import { NoteSlug } from "~/backend/domain/note";
+import { ArticleSlug } from "~/backend/domain/article";
 
 const today = Temporal.PlainDate.from("2026-08-12");
 const tomorrow = Temporal.PlainDate.from("2026-08-13");
-const alpha = NoteSlug.create("alpha");
-const beta = NoteSlug.create("beta");
+const alpha = ArticleSlug.create("alpha");
+const beta = ArticleSlug.create("beta");
 
 function newSession(): Session {
   return Session.start(SessionId.issue(), today);
@@ -18,7 +18,7 @@ describe("Session.start", () => {
     const session = newSession();
     expect(session.hasViewed(alpha, today)).toBe(false);
     expect(session.viewedOn).toBeUndefined();
-    expect(session.viewedNotes).toStrictEqual([]);
+    expect(session.viewedArticles).toStrictEqual([]);
   });
 });
 
@@ -48,13 +48,13 @@ describe("Session#withView", () => {
   it("日が変われば前日ぶんは捨てる", () => {
     // 溜め続けると、読み手の閲覧履歴そのものを持つことになる。
     const session = newSession().withView(alpha, today).withView(beta, tomorrow);
-    expect(session.viewedNotes).toStrictEqual([beta]);
+    expect(session.viewedArticles).toStrictEqual([beta]);
     expect(session.hasViewed(alpha, tomorrow)).toBe(false);
   });
 
   it("同じ記事を重ねても増えない", () => {
     const session = newSession().withView(alpha, today).withView(alpha, today);
-    expect(session.viewedNotes).toStrictEqual([alpha]);
+    expect(session.viewedArticles).toStrictEqual([alpha]);
   });
 
   it("識別子と開始日は引き継ぐ", () => {

@@ -1,12 +1,12 @@
 import { ArticleTimeline } from "./article-timeline";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-const notes = [
+const articles = [
   {
     slug: "cloudflare-workers-blog",
     title: "Cloudflare Workers + Hono + React でつくる個人ブログの現在地",
     summary: "なぜまたブログを自作しているのか。アーキテクチャと設計思想のメモ。",
-    imageUrl: "https://picsum.photos/seed/note-a/640/400",
+    imageUrl: "https://picsum.photos/seed/article-a/640/400",
     tags: ["Web", "プログラミング"],
     publishedOn: "2026-05-08",
   },
@@ -14,7 +14,7 @@ const notes = [
     slug: "clean-architecture",
     title: "Clean Architecture を Web アプリに適用してみた",
     summary: "境界を引くことで見えてくる、本当にテストしたいもの。",
-    imageUrl: "https://picsum.photos/seed/note-b/640/400",
+    imageUrl: "https://picsum.photos/seed/article-b/640/400",
     tags: ["プログラミング", "備忘録"],
     publishedOn: "2026-04-21",
   },
@@ -30,7 +30,7 @@ const notes = [
     slug: "adr-for-adr",
     title: "自分のサイトの ADR を ADR で管理するという話",
     summary: "迷った記録を残すことは、未来の自分へのインターフェースになる。",
-    imageUrl: "https://picsum.photos/seed/note-d/640/400",
+    imageUrl: "https://picsum.photos/seed/article-d/640/400",
     tags: ["備忘録", "日記"],
     publishedOn: "2025-10-15",
   },
@@ -39,7 +39,7 @@ const notes = [
 const meta: Meta<typeof ArticleTimeline> = {
   title: "ArticleTimeline/ArticleTimeline",
   component: ArticleTimeline,
-  args: { articles: notes },
+  args: { articles: articles },
   decorators: [
     (Story) => (
       <div className="w-full max-w-5xl px-6">
@@ -56,16 +56,16 @@ export const Default: Story = {};
 
 /** サムネイルが無い記事は、その列ごと詰まる。 */
 export const WithoutImages: Story = {
-  args: { articles: notes.map((note) => ({ ...note, imageUrl: null })) },
+  args: { articles: articles.map((article) => ({ ...article, imageUrl: null })) },
 };
 
 /** 1 件のときは、繋ぐ相手がいないので縦線を出さない。 */
 export const SingleArticle: Story = {
-  args: { articles: notes.slice(0, 1) },
+  args: { articles: articles.slice(0, 1) },
 };
 
 /**
- * 順位付きの並び (人気のノートなど)。項目の作りは時系列のものと同じで、先頭の印だけが
+ * 順位付きの並び (人気の記事など)。項目の作りは時系列のものと同じで、先頭の印だけが
  * 公開月のドットから番号に変わる。時系列ではないので縦線は引かれない。
  */
 export const Ranked: Story = {
@@ -87,7 +87,7 @@ export const UnevenYears: Story = {
     articles: [
       ...Array.from({ length: 2 }, (_, index) => ({
         slug: `recent-${String(index)}`,
-        title: `最近書いたノート ${String(index + 1)}`,
+        title: `最近書いた記事 ${String(index + 1)}`,
         summary: "ぽつぽつ書いている時期。",
         imageUrl: null,
         tags: ["日記"],
@@ -95,7 +95,7 @@ export const UnevenYears: Story = {
       })),
       ...Array.from({ length: 9 }, (_, index) => ({
         slug: `burst-${String(index)}`,
-        title: `よく書いていた頃のノート ${String(index + 1)}`,
+        title: `よく書いていた頃の記事 ${String(index + 1)}`,
         summary: "この年に集中して書いていた。",
         imageUrl: null,
         tags: ["日記"],
@@ -112,7 +112,7 @@ export const EveryMonth: Story = {
       const month = String(index + 1).padStart(2, "0");
       return {
         slug: `month-${month}`,
-        title: `${String(index + 1)} 月に公開したノート`,
+        title: `${String(index + 1)} 月に公開した記事`,
         summary: "ドットの色は公開月を 1 年の位相に見立てて決まる。",
         imageUrl: null,
         tags: ["日記"],

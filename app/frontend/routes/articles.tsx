@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/articles";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { NotesListPageData } from "~/backend/handlers/notes/pages.handler";
+import type { ArticlesListPageData } from "~/backend/handlers/articles/pages.handler";
 import type { LoadArticlePage } from "~/frontend/components/article-timeline/infinite-article-timeline";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
-import { loadNotesListPage } from "~/backend/handlers/notes/pages.handler";
+import { loadArticlesListPage } from "~/backend/handlers/articles/pages.handler";
 import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
@@ -24,9 +24,9 @@ const DEFAULT_PER_PAGE = 20;
 export async function loader({
   request,
   context,
-}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & NotesListPageData> {
+}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & ArticlesListPageData> {
   const url = new URL(request.url);
-  const data = await loadNotesListPage(context.get(cloudflareContext).env, url);
+  const data = await loadArticlesListPage(context.get(cloudflareContext).env, url);
   return {
     ...data,
     locale: context.get(localeRouteContext),
@@ -107,7 +107,7 @@ function resultHeading(
 
 export default function ArticlesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { notes, pagination, query, sort, copyright } = loaderData;
+  const { articles, pagination, query, sort, copyright } = loaderData;
   const hrefForPage = (page: number): string => buildHrefForPage(page, pagination.perPage, sort);
   /*
    * 取り方は毎描画で作り直さない。
@@ -161,14 +161,14 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps): Rea
           <FeedLink href={feedIdentity().path} />
         </div>
 
-        {notes.length === 0 ? (
+        {articles.length === 0 ? (
           <p className="mt-8 text-base-content/60">
             {t(query.length > 0 ? "search.empty" : "articles.empty")}
           </p>
         ) : (
           <div className="mt-8">
             <InfiniteArticleTimeline
-              initialArticles={notes}
+              initialArticles={articles}
               totalPages={pagination.totalPages}
               perPage={pagination.perPage}
               loadPage={loadPage}

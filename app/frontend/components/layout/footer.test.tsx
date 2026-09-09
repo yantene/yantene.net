@@ -22,7 +22,7 @@ describe("Footer", () => {
     renderWithI18n(<Footer copyright={{ from, to }} />);
   }
 
-  it("最初のノートの年から最後のノートの年までを出す", () => {
+  it("最初の記事の年から最後の記事の年までを出す", () => {
     renderFooter(2019, 2026);
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent(

@@ -24,7 +24,7 @@ import type { Element, ElementContent, Properties, Root as HastRoot, RootContent
 /**
  * LaTeX として読めなかった数式。
  *
- * 呼び出し側 (refresh) がノート単位のコンテンツ不正として拾えるよう、infra 障害と
+ * 呼び出し側 (refresh) が記事単位のコンテンツ不正として拾えるよう、infra 障害と
  * 区別できる型にしておく。
  */
 export class MathSyntaxError extends Error {

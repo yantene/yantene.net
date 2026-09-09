@@ -2,11 +2,11 @@ import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
-import { D1NoteCommandRepository } from "./repositories";
-import { notes } from "./schema";
+import { D1ArticleCommandRepository } from "./repositories";
+import { articles } from "./schema";
 import { createTestD1, readViewLogScore } from "./test-helper";
 import { scoreWithWeightAdded, scoreWithWeightRemoved } from "./view-log-score";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
   logScoreAfterReaction,
   logScoreAfterReactionRemoved,
@@ -15,12 +15,12 @@ import {
   VIEW_SCORE_EPOCH,
   VIEW_SCORE_HALF_LIFE_DAYS,
   viewWeightLog,
-} from "~/backend/domain/note-view";
+} from "~/backend/domain/article-view";
 
 /**
  * SQL の式が、ドメインの JS と同じ答えを出すことを固定する。
  *
- * 順位付けの意味を決めているのは domain/note-view/view-ranking で、SQL はその写し。
+ * 順位付けの意味を決めているのは domain/article-view/view-ranking で、SQL はその写し。
  * 写しの側が静かにずれると、順位だけが理由もなく変わる。倍精度の最後の 1 ビットまで
  * 一致することを見ているので、丸め方が変わればここが落ちる。
  */
@@ -33,7 +33,7 @@ function dayAfterEpoch(days: number): string {
 
 interface Harness {
   readonly d1: D1Database;
-  readonly noteId: string;
+  readonly articleId: string;
   /** 出発点をその値に置き直す。 */
   seed: (logScore: number) => Promise<void>;
   /** 重み 1 つぶんを足す。 */
@@ -46,10 +46,10 @@ interface Harness {
 
 async function setup(): Promise<Harness> {
   const d1 = createTestD1();
-  const note = await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create("alpha"),
-      title: NoteTitle.create("Alpha"),
+  const article = await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("alpha"),
+      title: ArticleTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
@@ -58,29 +58,29 @@ async function setup(): Promise<Harness> {
     }),
   );
   const db = drizzle(d1);
-  const row = eq(notes.id, note.id);
+  const row = eq(articles.id, article.id);
 
   return {
     d1,
-    noteId: note.id,
+    articleId: article.id,
     seed: async (logScore) => {
-      await db.update(notes).set({ viewLogScore: logScore }).where(row);
+      await db.update(articles).set({ viewLogScore: logScore }).where(row);
     },
     add: async (weightLog) => {
       await db
-        .update(notes)
+        .update(articles)
         .set({ viewLogScore: scoreWithWeightAdded(weightLog) })
         .where(row);
     },
     remove: async (weightLog, floorLogScore) => {
       await db
-        .update(notes)
+        .update(articles)
         .set({
           viewLogScore: scoreWithWeightRemoved(weightLog, floorLogScore),
         })
         .where(row);
     },
-    score: () => readViewLogScore(d1, note.id),
+    score: () => readViewLogScore(d1, article.id),
   };
 }
 

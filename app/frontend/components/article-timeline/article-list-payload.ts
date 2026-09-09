@@ -7,7 +7,7 @@ import type { ArticleTimelineItemProps } from "./article-timeline-item";
  * 形が違えば null を返し、呼び出し側が読み込み失敗として扱う。
  */
 export interface ArticleListPayload {
-  readonly notes: readonly ArticleTimelineItemProps[];
+  readonly articles: readonly ArticleTimelineItemProps[];
   readonly totalPages: number;
 }
 
@@ -21,19 +21,19 @@ export function parseArticleListPayload(value: unknown): ArticleListPayload | nu
     return null;
   }
 
-  const rawArticles = value["notes"];
+  const rawArticles = value["articles"];
   if (!Array.isArray(rawArticles)) return null;
 
-  const notes: ArticleTimelineItemProps[] = [];
+  const articles: ArticleTimelineItemProps[] = [];
   for (const raw of rawArticles) {
-    const note = parseNote(raw);
-    if (note === null) return null;
-    notes.push(note);
+    const article = parseArticle(raw);
+    if (article === null) return null;
+    articles.push(article);
   }
-  return { notes, totalPages };
+  return { articles, totalPages };
 }
 
-function parseNote(value: unknown): ArticleTimelineItemProps | null {
+function parseArticle(value: unknown): ArticleTimelineItemProps | null {
   if (!isRecord(value)) return null;
 
   const { slug, title, summary, imageUrl, publishedOn } = value;

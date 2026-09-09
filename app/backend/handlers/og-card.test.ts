@@ -80,14 +80,14 @@ const UNINKED_LOGO = encodeURIComponent("currentColor");
  */
 describe("cardHtml", () => {
   const params = {
-    title: "はじめてのノート",
+    title: "はじめての記事",
     date: "2026-05-08",
   };
 
   it("表題と日付を載せる", () => {
     const html = cardHtml(params);
 
-    expect(html).toContain("はじめてのノート");
+    expect(html).toContain("はじめての記事");
     expect(html).toContain("2026-05-08");
   });
 

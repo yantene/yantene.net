@@ -1,10 +1,10 @@
 // XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
-import { articlePath } from "~/backend/domain/note";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import { articlePath } from "~/backend/domain/article";
+import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
-/** sitemap に載せるノート数の上限 (個人ブログ規模では十分)。 */
-const SITEMAP_NOTE_LIMIT = 10_000;
+/** sitemap に載せる記事数の上限 (個人ブログ規模では十分)。 */
+const SITEMAP_ARTICLE_LIMIT = 10_000;
 
 function escapeXml(value: string): string {
   return value
@@ -30,8 +30,8 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/sitemap.xml", async (c) => {
     const origin = new URL(c.req.url).origin;
-    const result = await new D1NoteQueryRepository(c.env.D1).list({
-      limit: SITEMAP_NOTE_LIMIT,
+    const result = await new D1ArticleQueryRepository(c.env.D1).list({
+      limit: SITEMAP_ARTICLE_LIMIT,
       offset: 0,
       sortBy: "lastModifiedOn",
       direction: "desc",
@@ -42,16 +42,16 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
       urlEntry(`${origin}/articles`),
       urlEntry(`${origin}/licenses`),
     ];
-    const noteUrls = result.notes.map((note) =>
+    const articleUrls = result.articles.map((article) =>
       urlEntry(
-        `${origin}${articlePath(note.slug.toJSON())}`,
-        note.lastModifiedOn.toString({ calendarName: "never" }),
+        `${origin}${articlePath(article.slug.toJSON())}`,
+        article.lastModifiedOn.toString({ calendarName: "never" }),
       ),
     );
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticUrls, ...noteUrls].join("\n")}
+${[...staticUrls, ...articleUrls].join("\n")}
 </urlset>
 `;
     return c.body(xml, 200, {

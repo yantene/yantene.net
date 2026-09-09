@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { contentCacheControlFor } from "~/backend/handlers/notes/content-cache-control";
+import { contentCacheControlFor } from "~/backend/handlers/articles/content-cache-control";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { notFoundResponse } from "~/lib/problem-details";
 

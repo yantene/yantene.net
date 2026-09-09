@@ -1,7 +1,7 @@
 import { ArticleBranches } from "./article-branches";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-const notes = [
+const articles = [
   {
     slug: "use-tutvpn-wisely",
     title: "ocproxy で TUT VPN を賢く使う",
@@ -27,7 +27,7 @@ const notes = [
 const meta: Meta<typeof ArticleBranches> = {
   title: "ArticleBranches/ArticleBranches",
   component: ArticleBranches,
-  args: { articles: notes },
+  args: { articles: articles },
   decorators: [
     // 記事の本文と同じ幅で見る。
     (Story) => (
@@ -45,16 +45,16 @@ export const Default: Story = {};
 
 /** 1 件だけのとき。幹は枝の高さで止まる。 */
 export const SingleBranch: Story = {
-  args: { articles: notes.slice(0, 1) },
+  args: { articles: articles.slice(0, 1) },
 };
 
 /** 表題が長いと折り返り、要約は 1 行で切れる。 */
 export const LongTitles: Story = {
   args: {
-    articles: notes.map((note, index) => ({
-      ...note,
+    articles: articles.map((article, index) => ({
+      ...article,
       slug: `long-${String(index)}`,
-      title: `${note.title} ― さらに長い副題が続く場合にどこで折り返るか`,
+      title: `${article.title} ― さらに長い副題が続く場合にどこで折り返るか`,
     })),
   },
 };
@@ -63,7 +63,7 @@ export const LongTitles: Story = {
 export const ManyBranches: Story = {
   args: {
     articles: Array.from({ length: 6 }, (_, index) => ({
-      ...notes[index % notes.length],
+      ...articles[index % articles.length],
       slug: `many-${String(index)}`,
     })),
   },

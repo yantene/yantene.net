@@ -1,6 +1,6 @@
 # 0032. 長文の投稿を article と呼び、`/articles/<slug>` で配る
 
-- Status: Accepted
+- Status: Accepted (「動かさないもの」の節のみ [0033](0033-rename-note-to-article-in-storage-and-code.md) で置き換え)
 - Date: 2026-09-09
 - Deciders: @yantene
 

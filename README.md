@@ -1,12 +1,12 @@
 # yantene.net
 
-yantene の個人ウェブサイト。技術ノート（記事）を Markdown で執筆・公開する。
+yantene の個人ウェブサイト。技術記事を Markdown で執筆・公開する。
 
 Cloudflare Workers + Hono + React Router v7 + React + Drizzle ORM で構築。
 
 ## 特徴
 
-- **ノート (記事)** — Markdown で技術ノートを執筆・公開する。コンテンツは R2 (オブジェクトストレージ)、
+- **記事 (article)** — Markdown で長文の記事を執筆・公開する。コンテンツは R2 (オブジェクトストレージ)、
   メタデータは D1 (SQLite) に保存。スラグベースの URL ルーティングとページネーション。
 - **エッジで完結** — Cloudflare Workers + D1 + R2 のみ。外部 DB もオリジンサーバーも立てずに動く。
 - **サーバー駆動 SPA** — React Router v7 のフレームワークモード。loader でデータ取得を
@@ -43,7 +43,7 @@ pnpm run db:dev:migrate # ローカル D1 にマイグレーション適用 (初
 pnpm dev                # 開発サーバー (http://localhost:5173)
 ```
 
-> ⚠️ `db:dev:migrate` を忘れると、ノート一覧が `no such table: notes` で落ちる。
+> ⚠️ `db:dev:migrate` を忘れると、記事一覧が `no such table: articles` で落ちる。
 > 開発 DB を作り直したいときは `pnpm run db:dev:reset`。
 
 ## ディレクトリ構造
@@ -54,7 +54,7 @@ app/
 │   ├── domain/             # ドメイン層 (インフラ非依存): entity / VO / repo・port interface
 │   ├── infra/              # インフラ層: d1 / r2 / github / console (domain の interface を実装)
 │   ├── services/           # アプリケーションサービス (ユースケース)
-│   ├── handlers/           # HTTP ハンドラ (Composition Root): notes/ / feed / og / seo
+│   ├── handlers/           # HTTP ハンドラ (Composition Root): articles/ / feed / og / seo
 │   ├── middleware/         # BASIC 認証
 │   └── index.ts            # Hono アプリ (default export, wrangler の main)
 ├── frontend/               # React Router v7 アプリケーション
@@ -99,7 +99,7 @@ API・フィード等を先に処理し、残りを React Router のページル
    route("about", "routes/about.tsx"),
    ```
 3. `pnpm run rr-typegen` が `./+types/about` を生成し、loader の戻り値・params・meta が
-   型で結びつく。動的セグメントは `notes.$slug.tsx` のようにドット区切りで置く。
+   型で結びつく。動的セグメントは `articles.$slug.tsx` のようにドット区切りで置く。
 
 データ取得は loader に直接書かず、`backend/handlers/**` の `loadXxxPage(env, ...)` を
 呼ぶ (Composition Root を handlers に保つ)。OGP・JSON-LD は `meta` で

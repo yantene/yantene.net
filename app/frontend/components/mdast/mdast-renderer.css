@@ -1,10 +1,10 @@
 /*
- * ノート本文 (prose) とコードハイライト (hljs) の配色を daisyUI のテーマ変数に
+ * 記事本文 (prose) とコードハイライト (hljs) の配色を daisyUI のテーマ変数に
  * ひも付ける。daisyUI の --color-* は data-theme (light/dark) ごとに切り替わるため、
  * これらを参照しておけばテーマ追従が自動で効く (tailwind の dark: バリアント不要)。
  */
 .mdast-prose {
-  /* note 参考の可読タイポグラフィ: やや大きめ・行間広め・字間ゆとり。 */
+  /* note.com 参考の可読タイポグラフィ: やや大きめ・行間広め・字間ゆとり。 */
   font-size: 1.0625rem;
   line-height: 2;
   letter-spacing: 0.02em;
@@ -29,7 +29,7 @@
 }
 
 /*
- * note 風の段落・見出しリズム (日本語の可読性重視)。
+ * note.com 風の段落・見出しリズム (日本語の可読性重視)。
  *
  * 素の要素に当てるこれらの規則には `:not(:where(.not-prose, .not-prose *))` を付ける。
  * 本文の中には組版の対象でない差し込み (リンクカードなど) が混ざり、そこに本文用の
@@ -247,7 +247,7 @@
 }
 
 /*
- * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (note-content-parser.ts)、
+ * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
  * 配色は daisyUI のテーマ変数を参照するので、light/dark の切り替えに自動で追従する。

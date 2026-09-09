@@ -1,0 +1,107 @@
+import { Temporal } from "@js-temporal/polyfill";
+import { describe, expect, it } from "vitest";
+import type { ArticleDetail } from "./article-detail-view";
+import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
+import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
+import { createTestApp } from "~/backend/test-app";
+
+/** MDAST の put/get だけを賄う最小 R2 モック。 */
+function makeBucket(): R2Bucket {
+  const store = new Map<string, string>();
+  return {
+    put: (key: string, value: string) => {
+      store.set(key, value);
+      return Promise.resolve();
+    },
+    get: (key: string) => {
+      const found = store.get(key);
+      if (found === undefined) return Promise.resolve(null);
+      return Promise.resolve({ text: () => Promise.resolve(found) });
+    },
+  } as unknown as R2Bucket;
+}
+
+const sampleMdast = {
+  type: "root",
+  children: [{ type: "paragraph", children: [{ type: "text", value: "Body." }] }],
+};
+
+async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
+  await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("hello"),
+      title: ArticleTitle.create("Hello"),
+      summary: "A summary.",
+      imageUrl: ImageUrl.create("/api/v1/articles/hello/assets/cover.png"),
+      publishedOn: Temporal.PlainDate.from("2026-01-15"),
+      lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
+      sourceHash: "h1",
+    }),
+  );
+  await new R2ArticleContentCache(bucket).putMdast(ArticleSlug.create("hello"), sampleMdast);
+}
+
+function env(d1: D1Database, bucket: R2Bucket): Env {
+  return { D1: d1, R2: bucket } as unknown as Env;
+}
+
+async function fetchDetail(
+  d1: D1Database,
+  bucket: R2Bucket,
+  slug: string,
+): Promise<{ status: number; body: ArticleDetail | undefined }> {
+  const res = await createTestApp().request(`/api/v1/articles/${slug}`, {}, env(d1, bucket));
+  const text = await res.text();
+  return {
+    status: res.status,
+    body: res.status === 200 ? (JSON.parse(text) as ArticleDetail) : undefined,
+  };
+}
+
+describe("createArticleDetailApiRouter GET /:slug", () => {
+  it("returns article metadata and cached MDAST", async () => {
+    const d1 = createTestD1();
+    const bucket = makeBucket();
+    await seed(d1, bucket);
+
+    const { status, body } = await fetchDetail(d1, bucket, "hello");
+    expect(status).toBe(200);
+    expect(body?.article.title).toBe("Hello");
+    expect(body?.article.imageUrl).toBe("/api/v1/articles/hello/assets/cover.png");
+    expect(body?.mdast).toEqual(sampleMdast);
+  });
+
+  it("returns 404 when the article metadata is missing", async () => {
+    const d1 = createTestD1();
+    const bucket = makeBucket();
+    const { status } = await fetchDetail(d1, bucket, "missing");
+    expect(status).toBe(404);
+  });
+
+  it("fails loud (500, not silent 404) when an indexed article has no cached MDAST", async () => {
+    const d1 = createTestD1();
+    const bucket = makeBucket();
+    await new D1ArticleCommandRepository(d1).upsert(
+      Article.create({
+        slug: ArticleSlug.create("no-body"),
+        title: ArticleTitle.create("No Body"),
+        summary: "s",
+        publishedOn: Temporal.PlainDate.from("2026-01-15"),
+        lastModifiedOn: Temporal.PlainDate.from("2026-01-15"),
+        sourceHash: "h2",
+      }),
+    );
+    // D1 に在るのに R2 に MDAST が無い = キャッシュ不整合。404 で隠さず 500 で表面化させる。
+    const { status } = await fetchDetail(d1, bucket, "no-body");
+    expect(status).toBe(500);
+  });
+
+  it("returns 404 for an invalid slug", async () => {
+    const d1 = createTestD1();
+    const bucket = makeBucket();
+    const { status } = await fetchDetail(d1, bucket, "Invalid_Slug");
+    expect(status).toBe(404);
+  });
+});

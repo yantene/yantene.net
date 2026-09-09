@@ -15,7 +15,7 @@ import { readMention } from "~/backend/services/webmention-source-reader";
  */
 const ORIGIN = "https://yantene.net";
 const SLUG = "hello-world";
-const TITLE = "はじめてのノート";
+const TITLE = "はじめての記事";
 const PUBLISHED_ON = "2026-05-08";
 
 /** i18n を持ち回すための入れ物。トップレベル変数を関数から書き換えない。 */

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cardHtml, defaultCardHtml, OG_TEMPLATE_VERSION } from "./og-card";
-import { NoteSlug } from "~/backend/domain/note";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import { ArticleSlug } from "~/backend/domain/article";
+import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 import { notFoundResponse } from "~/lib/problem-details";
 
 /*
@@ -74,20 +74,20 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
   );
 
   router.get("/articles/:slug", async (c) => {
-    const slug = NoteSlug.parse(c.req.param("slug"));
-    if (slug === undefined) return notFoundResponse("note not found");
+    const slug = ArticleSlug.parse(c.req.param("slug"));
+    if (slug === undefined) return notFoundResponse("article not found");
 
-    const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(slug);
-    if (note === undefined) return notFoundResponse("note not found");
+    const article = await new D1ArticleQueryRepository(c.env.D1).findBySlug(slug);
+    if (article === undefined) return notFoundResponse("article not found");
 
     const html = cardHtml({
-      title: note.title.toString(),
-      date: note.publishedOn.toString({ calendarName: "never" }),
+      title: article.title.toString(),
+      date: article.publishedOn.toString({ calendarName: "never" }),
     });
-    // R2 のキーは URL に追随させない (ADR 0032)。絵の中身に URL は入っていない。
+    // 鍵に入るのは絵を決めるもの (スラグ・版・型) だけ。改名前の `og/notes/` は読まず、手で消す。
     return renderAndCache(
       c.env,
-      `og/notes/${slug.toString()}-${note.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
+      `og/articles/${slug.toString()}-${article.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
       html,
     );
   });

@@ -1,4 +1,4 @@
-import { alertKinds, type AlertKind } from "~/backend/services/note-content-parser";
+import { alertKinds, type AlertKind } from "~/backend/services/article-content-parser";
 
 /**
  * 種別ごとの見出し。本文が日本語なので、GFM の英語ラベルではなく日本語を出す。
@@ -47,7 +47,7 @@ export interface AlertProps {
 /**
  * GFM の Alert (`> [!NOTE]`) を描く。
  *
- * 引用から起こすのは refresh 時のパースの役目で (note-content-parser.ts)、ここは
+ * 引用から起こすのは refresh 時のパースの役目で (article-content-parser.ts)、ここは
  * 種別に応じた見出しとアイコンを添えるだけ。
  */
 export function Alert({ kind, children }: AlertProps): React.JSX.Element {

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToWebmention } from "./webmention-row";
-import type { NoteId } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
 import type { IWebmentionQueryRepository, Webmention } from "~/backend/domain/webmention";
 import { webmentions } from "~/backend/infra/d1/schema";
 
@@ -26,11 +26,11 @@ export class D1WebmentionQueryRepository implements IWebmentionQueryRepository {
    * 同じ時刻に入った行の並びは source の昇順で決める。読み込むたびに順番が
    * 入れ替わらないようにするため。
    */
-  async listByNoteId(noteId: NoteId): Promise<readonly Webmention[]> {
+  async listByArticleId(articleId: ArticleId): Promise<readonly Webmention[]> {
     const rows = await this.db
       .select()
       .from(webmentions)
-      .where(eq(webmentions.noteId, noteId))
+      .where(eq(webmentions.articleId, articleId))
       .orderBy(webmentions.receivedAt, webmentions.source)
       .limit(MAX_ROWS);
 

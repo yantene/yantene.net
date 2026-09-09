@@ -1,7 +1,7 @@
 import type { SessionId } from "./session-id.vo";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { NoteSlug } from "~/backend/domain/note";
-import type { ReactionEmoji } from "~/backend/domain/note-reaction";
+import type { ArticleSlug } from "~/backend/domain/article";
+import type { ReactionEmoji } from "~/backend/domain/article-reaction";
 
 /**
  * セッションの寿命 (日)。
@@ -13,13 +13,13 @@ import type { ReactionEmoji } from "~/backend/domain/note-reaction";
 export const SESSION_LIFETIME_DAYS = 400;
 
 /**
- * この人がノートに押したリアクション。
+ * この人が記事に押したリアクション。
  *
  * 押した日を持つのは、取り消すときに「押したときに足したのと同じ重み」を引くため。
  * 今日の重みで引くと、日をまたいで押し消しするだけでスコアを削れてしまう。
  */
 export interface SessionReaction {
-  readonly slug: NoteSlug;
+  readonly slug: ArticleSlug;
   readonly emoji: ReactionEmoji;
   readonly reactedOn: Temporal.PlainDate;
 }
@@ -30,10 +30,10 @@ interface SessionFields {
   readonly startedOn: Temporal.PlainDate;
   /** 直近に閲覧を数えた日 (UTC)。まだ 1 件も数えていなければ undefined。 */
   readonly viewedOn: Temporal.PlainDate | undefined;
-  /** viewedOn に数えたノート。日が変われば捨てる。 */
-  readonly viewedNotes: readonly NoteSlug[];
+  /** viewedOn に数えた記事。日が変われば捨てる。 */
+  readonly viewedArticles: readonly ArticleSlug[];
   /**
-   * 押したリアクション。1 ノートにつき 1 つ。
+   * 押したリアクション。1 記事につき 1 つ。
    *
    * 閲覧の記録と違って**日が変わっても捨てない**。捨てると、取り消しも差し替えも
    * できなくなり、同じ人が何度でも押せてしまう。閲覧のほうは「その日に数えたか」しか
@@ -45,7 +45,7 @@ interface SessionFields {
 /**
  * 読み手のセッション。サイトを訪れた人ひとりぶんの状態をまとめる集約。
  *
- * いま持っているのは「その日どのノートを数えたか」だけで、同じ日の読み直しを
+ * いま持っているのは「その日どの記事を数えたか」だけで、同じ日の読み直しを
  * 数えないために使う。
  *
  * 識別子は乱数で、名前も IP も持たない。それでも「同じブラウザから来た人」を辿れる
@@ -63,7 +63,7 @@ export class Session {
       id,
       startedOn: on,
       viewedOn: undefined,
-      viewedNotes: [],
+      viewedArticles: [],
       reactions: [],
     });
   }
@@ -73,7 +73,7 @@ export class Session {
     id: SessionId;
     startedOn: Temporal.PlainDate;
     viewedOn: Temporal.PlainDate | undefined;
-    viewedNotes: readonly NoteSlug[];
+    viewedArticles: readonly ArticleSlug[];
     reactions: readonly SessionReaction[];
   }): Session {
     return new Session(params);
@@ -91,14 +91,14 @@ export class Session {
     return this.fields.viewedOn;
   }
 
-  get viewedNotes(): readonly NoteSlug[] {
-    return this.fields.viewedNotes;
+  get viewedArticles(): readonly ArticleSlug[] {
+    return this.fields.viewedArticles;
   }
 
-  /** その日にそのノートをすでに数えたか。 */
-  hasViewed(slug: NoteSlug, on: Temporal.PlainDate): boolean {
+  /** その日にその記事をすでに数えたか。 */
+  hasViewed(slug: ArticleSlug, on: Temporal.PlainDate): boolean {
     if (this.fields.viewedOn?.equals(on) !== true) return false;
-    return this.fields.viewedNotes.some((viewed) => viewed.equals(slug));
+    return this.fields.viewedArticles.some((viewed) => viewed.equals(slug));
   }
 
   /**
@@ -107,14 +107,14 @@ export class Session {
    * 日が変わっていれば前日ぶんは捨てる。持ち回るのは「今日ぶん」だけでよく、
    * 溜め続けると読み手の閲覧履歴そのものになってしまう。
    */
-  withView(slug: NoteSlug, on: Temporal.PlainDate): Session {
+  withView(slug: ArticleSlug, on: Temporal.PlainDate): Session {
     if (this.hasViewed(slug, on)) return this;
 
     const isSameDay = this.fields.viewedOn?.equals(on) === true;
     return new Session({
       ...this.fields,
       viewedOn: on,
-      viewedNotes: isSameDay ? [...this.fields.viewedNotes, slug] : [slug],
+      viewedArticles: isSameDay ? [...this.fields.viewedArticles, slug] : [slug],
     });
   }
 
@@ -122,19 +122,19 @@ export class Session {
     return this.fields.reactions;
   }
 
-  /** そのノートに押しているリアクション。押していなければ undefined。 */
-  reactionFor(slug: NoteSlug): SessionReaction | undefined {
+  /** その記事に押しているリアクション。押していなければ undefined。 */
+  reactionFor(slug: ArticleSlug): SessionReaction | undefined {
     return this.fields.reactions.find((reaction) => reaction.slug.equals(slug));
   }
 
   /**
    * リアクションを押した新しいセッションを返す (非破壊)。
    *
-   * 1 ノートにつき 1 つなので、すでに押していれば差し替える。差し替えでは押した日を
+   * 1 記事につき 1 つなので、すでに押していれば差し替える。差し替えでは押した日を
    * 引き継ぐ。取り消すときに引く重みは最初に押した日で決まっており、押し直しで
    * 今日の日付に更新すると、押し直すだけでスコアを積める抜け道になる。
    */
-  withReaction(slug: NoteSlug, emoji: ReactionEmoji, on: Temporal.PlainDate): Session {
+  withReaction(slug: ArticleSlug, emoji: ReactionEmoji, on: Temporal.PlainDate): Session {
     const existing = this.reactionFor(slug);
     const reaction: SessionReaction = {
       slug,
@@ -152,7 +152,7 @@ export class Session {
   }
 
   /** リアクションを取り消した新しいセッションを返す (非破壊)。 */
-  withoutReaction(slug: NoteSlug): Session {
+  withoutReaction(slug: ArticleSlug): Session {
     return new Session({
       ...this.fields,
       reactions: this.fields.reactions.filter((reaction) => !reaction.slug.equals(slug)),

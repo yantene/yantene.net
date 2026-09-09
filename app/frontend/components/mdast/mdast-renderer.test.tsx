@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { MdastRenderer } from "./mdast-renderer";
 import type { ElementContent, Properties } from "hast";
 import type { Root as MdastRoot } from "mdast";
-import { parseNoteContent } from "~/backend/services/note-content-parser";
+import { parseArticleContent } from "~/backend/services/article-content-parser";
 
 function md(markdown: string): MdastRoot {
   return unified().use(remarkParse).use(remarkGfm).parse(markdown);
@@ -249,7 +249,7 @@ describe("MdastRenderer: ページ内アンカー", () => {
   const withFootnote = "本文[^1]\n\n[^1]: 注の中身\n";
 
   /** 記事ページと同じ位置。Link が href をここからの絶対パスに直すので、素の "/" だと粗い。 */
-  const notePath = "/articles/foo";
+  const articlePath = "/articles/foo";
 
   /** 脚注つきの本文を Router の中で描く。ページ内アンカーは Link になるため要る。 */
   function renderWithFootnote(element?: React.JSX.Element): HTMLElement {
@@ -260,7 +260,7 @@ describe("MdastRenderer: ページ内アンカー", () => {
           element: element ?? <MdastRenderer node={md(withFootnote)} />,
         },
       ],
-      { initialEntries: [notePath] },
+      { initialEntries: [articlePath] },
     );
     return render(<RouterProvider router={router} />).container;
   }
@@ -286,13 +286,13 @@ describe("MdastRenderer: ページ内アンカー", () => {
     expect(dangling).toEqual([]);
   });
 
-  it("keeps in-page anchors on the note's own path", () => {
+  it("keeps in-page anchors on the article's own path", () => {
     // "#x" が "/#x" に解決されると、注へ飛ぶかわりにトップへ飛ぶ。
     const container = renderWithFootnote();
 
     const strayed = inPageAnchors(container)
       .map((anchor) => anchor.getAttribute("href") ?? "")
-      .filter((href) => !href.startsWith(`${notePath}#`));
+      .filter((href) => !href.startsWith(`${articlePath}#`));
     expect(strayed).toEqual([]);
   });
 
@@ -509,17 +509,17 @@ describe("MdastRenderer: MathML", () => {
 });
 
 /*
- * Alert は refresh 時のパースが引用から起こす (note-content-parser.ts)。
+ * Alert は refresh 時のパースが引用から起こす (article-content-parser.ts)。
  * md() は素の remark なので data が付かない。実際の経路に合わせてパーサを通す。
  */
-function note(markdown: string): MdastRoot {
-  return parseNoteContent(`---\ntitle: T\n---\n\n${markdown}`).mdast;
+function article(markdown: string): MdastRoot {
+  return parseArticleContent(`---\ntitle: T\n---\n\n${markdown}`).mdast;
 }
 
 describe("GFM alerts", () => {
   it("種別に応じた見出しとアイコンを添えて描く", () => {
     const { container } = render(
-      <MdastRenderer node={note("> [!WARNING]\n> リンク先は消えました。\n")} />,
+      <MdastRenderer node={article("> [!WARNING]\n> リンク先は消えました。\n")} />,
     );
 
     const alert = container.querySelector(".markdown-alert");
@@ -530,19 +530,21 @@ describe("GFM alerts", () => {
   });
 
   it("ラベル行を本文として描かない", () => {
-    const { container } = render(<MdastRenderer node={note("> [!NOTE]\n> 補足。\n")} />);
+    const { container } = render(<MdastRenderer node={article("> [!NOTE]\n> 補足。\n")} />);
     expect(container.textContent).not.toContain("[!NOTE]");
   });
 
   it("Alert でない引用は blockquote のまま描く", () => {
-    const { container } = render(<MdastRenderer node={note("> ただの引用。\n")} />);
+    const { container } = render(<MdastRenderer node={article("> ただの引用。\n")} />);
     expect(container.querySelector("blockquote")?.textContent).toContain("ただの引用。");
     expect(container.querySelector(".markdown-alert")).toBeNull();
   });
 
   it("Alert の中のリンクや強調を保つ", () => {
     const { container } = render(
-      <MdastRenderer node={note("> [!CAUTION]\n> **危険**な [リンク](https://example.com)。\n")} />,
+      <MdastRenderer
+        node={article("> [!CAUTION]\n> **危険**な [リンク](https://example.com)。\n")}
+      />,
     );
 
     const alert = container.querySelector(".markdown-alert-caution");
@@ -551,7 +553,7 @@ describe("GFM alerts", () => {
   });
 
   it("sanitize が Alert の要素と種別を落とさない", () => {
-    const html = renderToStaticMarkup(<MdastRenderer node={note("> [!TIP]\n> 助言。\n")} />);
+    const html = renderToStaticMarkup(<MdastRenderer node={article("> [!TIP]\n> 助言。\n")} />);
     expect(html).toContain("markdown-alert-tip");
     expect(html).toContain("ヒント");
   });

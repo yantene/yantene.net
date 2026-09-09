@@ -1,5 +1,5 @@
 import { hasLinkToTarget, readMention } from "./webmention-source-reader";
-import type { NoteId } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
 import type { ILogger } from "~/backend/domain/shared";
 import type {
   IWebmentionAvatarMirror,
@@ -29,7 +29,7 @@ export class WebmentionVerificationService {
     private readonly logger: ILogger,
   ) {}
 
-  async verify(noteId: NoteId, request: WebmentionRequest): Promise<void> {
+  async verify(articleId: ArticleId, request: WebmentionRequest): Promise<void> {
     const log = this.logger.child({
       source: request.source.toString(),
       target: request.target.toString(),
@@ -44,7 +44,7 @@ export class WebmentionVerificationService {
      */
     const blockedHosts = await this.blocklist.listBlockedHosts();
     if (isBlockedSource(request.source, blockedHosts)) {
-      await this.commands.deleteBySource(noteId, request.source);
+      await this.commands.deleteBySource(articleId, request.source);
       log.info("webmention blocked: source host is on the blocklist");
       return;
     }
@@ -62,7 +62,7 @@ export class WebmentionVerificationService {
     }
 
     if (result.kind === "gone") {
-      await this.commands.deleteBySource(noteId, request.source);
+      await this.commands.deleteBySource(articleId, request.source);
       log.info("webmention removed: source is gone");
       return;
     }
@@ -90,7 +90,7 @@ export class WebmentionVerificationService {
 
     if (!hasLinkToTarget(result.html, result.url, request.targets)) {
       // リンクが消えた = 取り消し。初回なら消す行が無いだけで、結果は同じ。
-      await this.commands.deleteBySource(noteId, request.source);
+      await this.commands.deleteBySource(articleId, request.source);
       log.info("webmention removed: source does not link to target");
       return;
     }
@@ -107,7 +107,7 @@ export class WebmentionVerificationService {
 
     await this.commands.upsert(
       Webmention.create({
-        noteId,
+        articleId,
         target: request.targetSlug,
         source: request.source,
         type: parsed.type,

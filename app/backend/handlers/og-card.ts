@@ -69,7 +69,7 @@ function withAlpha(hex: string, alpha: number): string {
  * 素材の先頭に付いている注記を落とす。data URI に入れても誰も読まないうえ、
  * `currentColor` の語を含むので下の色の焼き込みに巻き込まれる。
  */
-function withoutNote(source: string): string {
+function withoutPreamble(source: string): string {
   const opening = source.indexOf("<svg");
   return opening === -1 ? source : source.slice(opening);
 }
@@ -85,7 +85,7 @@ function withoutNote(source: string): string {
  * 落ちずに戻ってくる。絵が少し騒がしくなるだけなので、ここでは throw せずそのまま通す。
  */
 function skylineOnly(source: string): string {
-  const body = withoutNote(source);
+  const body = withoutPreamble(source);
   const clouds = body.indexOf('<g id="clouds">');
   const skyline = body.indexOf('<g id="skyline">');
   if (clouds === -1 || skyline === -1 || skyline < clouds) return body;
@@ -159,7 +159,7 @@ function cityscapeHtml(): string {
 function logoDataUri(): string {
   artwork.logo ??= `data:image/svg+xml,${encodeURIComponent(
     // 置換の文字列に `$&` のような指示を読ませないため、関数で色を返す。
-    withoutNote(logoSource).replaceAll("currentColor", () => INK),
+    withoutPreamble(logoSource).replaceAll("currentColor", () => INK),
   )}`;
   return artwork.logo;
 }

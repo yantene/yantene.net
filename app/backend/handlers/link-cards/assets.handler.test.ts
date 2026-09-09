@@ -60,7 +60,7 @@ describe("createLinkCardAssetsRouter", () => {
     await seed(bucket);
 
     // 16 進 32 文字でないものはルートに当たらない (R2 のキーに素の入力を混ぜない)。
-    for (const id of ["../notes", "ABCDEF", `${ID}0`, "zzzz"]) {
+    for (const id of ["../articles", "ABCDEF", `${ID}0`, "zzzz"]) {
       const res = await createLinkCardAssetsRouter().request(`/${id}/image`, {}, envWith(bucket));
       expect(res.status).toBe(404);
     }

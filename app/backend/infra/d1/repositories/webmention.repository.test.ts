@@ -1,10 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { D1NoteCommandRepository } from "./note.command-repository";
+import { D1ArticleCommandRepository } from "./article.command-repository";
 import { D1WebmentionCommandRepository } from "./webmention.command-repository";
 import { D1WebmentionQueryRepository } from "./webmention.query-repository";
-import type { NoteId } from "~/backend/domain/note";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
   Webmention,
   WebmentionAuthor,
@@ -14,23 +14,23 @@ import {
 } from "~/backend/domain/webmention";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
-const SLUG = NoteSlug.create("alpha");
+const SLUG = ArticleSlug.create("alpha");
 const SOURCE = WebmentionUrl.create("https://example.com/post/1");
 
 interface Harness {
-  readonly noteId: NoteId;
-  readonly notes: D1NoteCommandRepository;
+  readonly articleId: ArticleId;
+  readonly articles: D1ArticleCommandRepository;
   readonly commands: D1WebmentionCommandRepository;
   readonly queries: D1WebmentionQueryRepository;
 }
 
 async function setup(): Promise<Harness> {
   const d1 = createTestD1();
-  const notes = new D1NoteCommandRepository(d1);
-  const note = await notes.upsert(
-    Note.create({
+  const articles = new D1ArticleCommandRepository(d1);
+  const article = await articles.upsert(
+    Article.create({
       slug: SLUG,
-      title: NoteTitle.create("Alpha"),
+      title: ArticleTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
@@ -40,15 +40,15 @@ async function setup(): Promise<Harness> {
   );
 
   return {
-    noteId: note.id,
-    notes,
+    articleId: article.id,
+    articles,
     commands: new D1WebmentionCommandRepository(d1),
     queries: new D1WebmentionQueryRepository(d1),
   };
 }
 
 function build(
-  noteId: NoteId,
+  articleId: ArticleId,
   overrides: {
     source?: WebmentionUrl;
     type?: WebmentionType;
@@ -56,7 +56,7 @@ function build(
   } = {},
 ): ReturnType<typeof Webmention.create> {
   return Webmention.create({
-    noteId,
+    articleId,
     target: SLUG,
     source: overrides.source ?? SOURCE,
     type: overrides.type ?? WebmentionType.reply(),
@@ -71,11 +71,11 @@ function build(
 
 describe("D1WebmentionCommandRepository", () => {
   it("保存した内容を読み戻せる", async () => {
-    const { noteId, commands, queries } = await setup();
+    const { articleId, commands, queries } = await setup();
 
-    await commands.upsert(build(noteId));
+    await commands.upsert(build(articleId));
 
-    const [stored] = await queries.listByNoteId(noteId);
+    const [stored] = await queries.listByArticleId(articleId);
     expect(stored.source.toString()).toBe("https://example.com/post/1");
     expect(stored.target.toString()).toBe("alpha");
     expect(stored.type.toString()).toBe("reply");
@@ -85,18 +85,18 @@ describe("D1WebmentionCommandRepository", () => {
   });
 
   /* Webmention は再送で更新される仕様。同じ送り元の行を重ねて積まない。 */
-  it("同じ (ノート, source) は重ねず差し替える", async () => {
-    const { noteId, commands, queries } = await setup();
+  it("同じ (記事, source) は重ねず差し替える", async () => {
+    const { articleId, commands, queries } = await setup();
 
-    await commands.upsert(build(noteId));
+    await commands.upsert(build(articleId));
     await commands.upsert(
-      build(noteId, {
+      build(articleId, {
         type: WebmentionType.like(),
         content: WebmentionContent.fromText("やっぱりいいね"),
       }),
     );
 
-    const stored = await queries.listByNoteId(noteId);
+    const stored = await queries.listByArticleId(articleId);
     expect(stored).toHaveLength(1);
     expect(stored[0].type.toString()).toBe("like");
     expect(stored[0].content?.toString()).toBe("やっぱりいいね");
@@ -104,53 +104,53 @@ describe("D1WebmentionCommandRepository", () => {
 
   /* 表示の並びが送り手の再送で入れ替わらないようにする。 */
   it("差し替えても最初に受け取った時刻は動かさない", async () => {
-    const { noteId, commands, queries } = await setup();
+    const { articleId, commands, queries } = await setup();
 
-    const first = await commands.upsert(build(noteId));
-    const again = await commands.upsert(build(noteId, { type: WebmentionType.like() }));
+    const first = await commands.upsert(build(articleId));
+    const again = await commands.upsert(build(articleId, { type: WebmentionType.like() }));
 
     expect(again.receivedAt.epochMilliseconds).toBe(first.receivedAt.epochMilliseconds);
-    const rows = await queries.listByNoteId(noteId);
+    const rows = await queries.listByArticleId(articleId);
     expect(rows[0].id).toBe(first.id);
   });
 
   it("送り元が違えば別の行になる", async () => {
-    const { noteId, commands, queries } = await setup();
+    const { articleId, commands, queries } = await setup();
 
-    await commands.upsert(build(noteId));
+    await commands.upsert(build(articleId));
     await commands.upsert(
-      build(noteId, {
+      build(articleId, {
         source: WebmentionUrl.create("https://other.example/x"),
       }),
     );
 
-    expect(await queries.listByNoteId(noteId)).toHaveLength(2);
+    expect(await queries.listByArticleId(articleId)).toHaveLength(2);
   });
 
   it("送り元を指して落とせる", async () => {
-    const { noteId, commands, queries } = await setup();
-    await commands.upsert(build(noteId));
+    const { articleId, commands, queries } = await setup();
+    await commands.upsert(build(articleId));
 
-    await commands.deleteBySource(noteId, SOURCE);
+    await commands.deleteBySource(articleId, SOURCE);
 
-    expect(await queries.listByNoteId(noteId)).toEqual([]);
+    expect(await queries.listByArticleId(articleId)).toEqual([]);
   });
 
   it("無い送り元を落としても壊れない", async () => {
-    const { noteId, commands, queries } = await setup();
+    const { articleId, commands, queries } = await setup();
 
-    await commands.deleteBySource(noteId, SOURCE);
+    await commands.deleteBySource(articleId, SOURCE);
 
-    expect(await queries.listByNoteId(noteId)).toEqual([]);
+    expect(await queries.listByArticleId(articleId)).toEqual([]);
   });
 
-  /* D1 は FK 強制が既定で無効なので、ノート側でも明示的に掃除している。 */
-  it("ノートを消すと受信済みの mention も消える", async () => {
-    const { noteId, notes, commands, queries } = await setup();
-    await commands.upsert(build(noteId));
+  /* D1 は FK 強制が既定で無効なので、記事側でも明示的に掃除している。 */
+  it("記事を消すと受信済みの mention も消える", async () => {
+    const { articleId, articles, commands, queries } = await setup();
+    await commands.upsert(build(articleId));
 
-    await notes.deleteBySlug(SLUG);
+    await articles.deleteBySlug(SLUG);
 
-    expect(await queries.listByNoteId(noteId)).toEqual([]);
+    expect(await queries.listByArticleId(articleId)).toEqual([]);
   });
 });

@@ -1,7 +1,7 @@
 /*
  * ホーム固有の見た目。
  *
- * 記事の並び自体は ArticleTimeline / PopularNotes が持つので、ここに置くのは
+ * 記事の並び自体は ArticleTimeline / PopularArticles が持つので、ここに置くのは
  * それらを繋ぐ部分だけ。
  */
 

@@ -288,7 +288,7 @@ describe("LinkCardsRefreshService", () => {
   /*
    * refresh の主経路はこちら。
    *
-   * refresh が渡す referencedUrls は**中身の変わったノートのぶんだけ**なので、変わって
+   * refresh が渡す referencedUrls は**中身の変わった記事のぶんだけ**なので、変わって
    * いない記事に貼られたカードは listStale からしか来ない。前回の行を known からしか
    * 集めていないと、そのカードは「初めて見る URL」として扱われ、失敗した瞬間に中身ごと
    * 捨てられる。**#323 のバグがそのまま戻る。**

@@ -51,8 +51,8 @@ app/
 ├── backend/                    # Hono バックエンド
 │   ├── domain/                 # ドメイン層（インフラ非依存）
 │   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ILogger 等)
-│   │   ├── note/               # Note 集約 (entity, VO, CQRS repo interface, errors)
-│   │   ├── note-view/          # 閲覧数と人気ランキング
+│   │   ├── article/            # Article 集約 (entity, VO, CQRS repo interface, errors)
+│   │   ├── article-view/       # 閲覧数と人気ランキング
 │   │   ├── session/            # 読み手のセッション (ADR 0011)
 │   │   └── content/            # コンテンツ正本のポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）
@@ -66,7 +66,7 @@ app/
 │   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
-│   │   ├── notes/              # 記事の API ルータ + ページ用ローダ (loadXxxPage)。URL は /articles (ADR 0032)
+│   │   ├── articles/           # 記事の API ルータ + ページ用ローダ (loadXxxPage)
 │   │   ├── session-cookie.ts   # セッション識別子を運ぶ cookie の読み書き
 │   │   ├── feed.handler.ts     # Atom フィード
 │   │   ├── og.handler.ts       # OG 画像
@@ -105,7 +105,7 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
   技術名 (D1 / R2 / Cloudflare) を持ち込まない。
 - **インフラ実装** → `backend/infra/<技術>/`。domain のインターフェースを実装する。
 - **HTTP ハンドラ (Composition Root)** → `backend/handlers/`。具象の生成・注入はここだけ。
-  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `notes/`）。
+  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `articles/`）。
 - **横断的な前処理** → `backend/middleware/`。
 - **複数ハンドラで共有するユースケース** → `backend/services/`（必要になった時点で作成）。
 - **画面** → `frontend/routes/`。`routes.ts` に登録し、ファイル名は kebab-case
