@@ -1,64 +1,68 @@
 import { asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { rowToNote } from "./note-row";
+import { rowToArticle } from "./article-row";
 import type {
-  INoteQueryRepository,
-  Note,
-  NoteListQuery,
-  NoteListResult,
-  NoteSlug,
-  NoteSortField,
-} from "~/backend/domain/note";
-import { notes } from "~/backend/infra/d1/schema";
+  IArticleQueryRepository,
+  Article,
+  ArticleListQuery,
+  ArticleListResult,
+  ArticleSlug,
+  ArticleSortField,
+} from "~/backend/domain/article";
+import { articles } from "~/backend/infra/d1/schema";
 
 const sortColumns = {
-  publishedOn: notes.publishedOn,
-  lastModifiedOn: notes.lastModifiedOn,
-} as const satisfies Record<NoteSortField, unknown>;
+  publishedOn: articles.publishedOn,
+  lastModifiedOn: articles.lastModifiedOn,
+} as const satisfies Record<ArticleSortField, unknown>;
 
-export class D1NoteQueryRepository implements INoteQueryRepository {
+export class D1ArticleQueryRepository implements IArticleQueryRepository {
   private readonly db;
 
   constructor(d1: D1Database) {
     this.db = drizzle(d1);
   }
 
-  async findBySlug(slug: NoteSlug): Promise<Note | undefined> {
-    const rows = await this.db.select().from(notes).where(eq(notes.slug, slug.toString())).limit(1);
+  async findBySlug(slug: ArticleSlug): Promise<Article | undefined> {
+    const rows = await this.db
+      .select()
+      .from(articles)
+      .where(eq(articles.slug, slug.toString()))
+      .limit(1);
     const row = rows.at(0);
     if (row === undefined) return undefined;
-    return rowToNote(row);
+    return rowToArticle(row);
   }
 
-  async list(query: NoteListQuery): Promise<NoteListResult> {
+  async list(query: ArticleListQuery): Promise<ArticleListResult> {
     const column = sortColumns[query.sortBy];
     const primary = query.direction === "asc" ? asc(column) : desc(column);
-    // 同じ日付のノート同士でも順序を安定させる決定的なタイブレーカ。slug は UNIQUE
+    // 同じ日付の記事同士でも順序を安定させる決定的なタイブレーカ。slug は UNIQUE
     // なので offset ページネーションで行の重複・欠落が起きない。
-    const tiebreaker = asc(notes.slug);
+    const tiebreaker = asc(articles.slug);
 
     // 行取得と総件数取得は独立なので並行実行する (公開一覧のホットパスの往復を半減)。
     const [rows, [{ value: total }]] = await Promise.all([
       this.db
         .select()
-        .from(notes)
+        .from(articles)
         .orderBy(primary, tiebreaker)
         .limit(query.limit)
         .offset(query.offset),
-      this.db.select({ value: count() }).from(notes),
+      this.db.select({ value: count() }).from(articles),
     ]);
 
     return {
-      notes: rows.map((row) => rowToNote(row)),
+      articles: rows.map((row) => rowToArticle(row)),
       total,
     };
   }
 
-  async search(query: string, limit: number): Promise<readonly Note[]> {
+  async search(query: string, limit: number): Promise<readonly Article[]> {
     const trimmed = query.trim();
     if (trimmed.length === 0) return [];
 
-    // 索引 (notes_fts) は infra が実行時生成する仮想テーブル。未構築なら空を返す。
+    // 索引 (articles_fts) は infra が実行時生成する仮想テーブル。未構築なら空を返す。
     let ranked: { slug: string }[];
     try {
       if (trimmed.length < 3) {
@@ -67,13 +71,13 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
         const escaped = trimmed.replaceAll(/[~%_]/g, (character) => `~${character}`);
         const like = `%${escaped}%`;
         ranked = await this.db.all<{ slug: string }>(
-          sql`SELECT slug FROM notes_fts WHERE title LIKE ${like} ESCAPE '~' OR body LIKE ${like} ESCAPE '~' LIMIT ${limit}`,
+          sql`SELECT slug FROM articles_fts WHERE title LIKE ${like} ESCAPE '~' OR body LIKE ${like} ESCAPE '~' LIMIT ${limit}`,
         );
       } else {
         // クエリ全体を 1 個の FTS5 文字列トークンとして扱う (二重引用符はエスケープ)。
         const match = `"${trimmed.replaceAll('"', '""')}"`;
         ranked = await this.db.all<{ slug: string }>(
-          sql`SELECT slug FROM notes_fts WHERE notes_fts MATCH ${match} ORDER BY bm25(notes_fts) LIMIT ${limit}`,
+          sql`SELECT slug FROM articles_fts WHERE articles_fts MATCH ${match} ORDER BY bm25(articles_fts) LIMIT ${limit}`,
         );
       }
     } catch {
@@ -82,38 +86,40 @@ export class D1NoteQueryRepository implements INoteQueryRepository {
     const slugs = ranked.map((row) => row.slug);
     if (slugs.length === 0) return [];
 
-    const rows = await this.db.select().from(notes).where(inArray(notes.slug, slugs));
-    const bySlug = new Map(rows.map((row) => [row.slug, rowToNote(row)]));
+    const rows = await this.db.select().from(articles).where(inArray(articles.slug, slugs));
+    const bySlug = new Map(rows.map((row) => [row.slug, rowToArticle(row)]));
     // bm25 の並び順を保って返す。
-    return slugs.map((slug) => bySlug.get(slug)).filter((note): note is Note => note !== undefined);
+    return slugs
+      .map((slug) => bySlug.get(slug))
+      .filter((article): article is Article => article !== undefined);
   }
 
   /**
    * id をまとめて引く。並び順は呼び出し側が決めるので、ここでは整えない。
    * (人気順のように、DB の並びとは別の順序で使われるため)
    */
-  async findByIds(ids: readonly string[]): Promise<readonly Note[]> {
+  async findByIds(ids: readonly string[]): Promise<readonly Article[]> {
     if (ids.length === 0) return [];
     const rows = await this.db
       .select()
-      .from(notes)
-      .where(inArray(notes.id, [...ids]));
-    return rows.map((row) => rowToNote(row));
+      .from(articles)
+      .where(inArray(articles.id, [...ids]));
+    return rows.map((row) => rowToArticle(row));
   }
 
-  async findBySlugs(slugs: readonly string[]): Promise<readonly Note[]> {
+  async findBySlugs(slugs: readonly string[]): Promise<readonly Article[]> {
     if (slugs.length === 0) return [];
     const rows = await this.db
       .select()
-      .from(notes)
-      .where(inArray(notes.slug, [...slugs]));
-    return rows.map((row) => rowToNote(row));
+      .from(articles)
+      .where(inArray(articles.slug, [...slugs]));
+    return rows.map((row) => rowToArticle(row));
   }
 
   async listSourceHashes(): Promise<ReadonlyMap<string, string>> {
     const rows = await this.db
-      .select({ slug: notes.slug, sourceHash: notes.sourceHash })
-      .from(notes);
+      .select({ slug: articles.slug, sourceHash: articles.sourceHash })
+      .from(articles);
     return new Map(rows.map((row) => [row.slug, row.sourceHash]));
   }
 }

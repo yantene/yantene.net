@@ -14,7 +14,7 @@ function create(source: unknown, target: unknown): WebmentionRequest {
 }
 
 describe("WebmentionRequest", () => {
-  it("ノート宛の mention を受け入れ、スラグを取り出す", () => {
+  it("記事宛の mention を受け入れ、スラグを取り出す", () => {
     const request = create("https://example.com/post", "https://yantene.net/articles/hello");
 
     expect(request.source.toString()).toBe("https://example.com/post");

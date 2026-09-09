@@ -9,14 +9,14 @@ import type { IValueObject } from "~/backend/domain/shared";
 import {
   ARTICLE_PATH_PREFIX,
   FORMER_ARTICLE_PATH_PREFIX,
-  InvalidNoteSlugError,
-  NoteSlug,
+  InvalidArticleSlugError,
+  ArticleSlug,
   slugsRedirectedFromFormerPath,
-} from "~/backend/domain/note";
+} from "~/backend/domain/article";
 
 interface RequestFields {
   readonly source: WebmentionUrl;
-  readonly targetSlug: NoteSlug;
+  readonly targetSlug: ArticleSlug;
   readonly target: WebmentionUrl;
   readonly targets: readonly WebmentionUrl[];
 }
@@ -28,7 +28,7 @@ interface RequestFields {
  * 「source を実際に取りに行って target へのリンクを確かめる」ところから先は
  * 相手のサーバー次第で時間がかかるので、ここでは行わない (非同期段の仕事)。
  *
- * ノートが実在するかまでは見ない。それには永続化層が要り、ドメインの外だから。
+ * 記事が実在するかまでは見ない。それには永続化層が要り、ドメインの外だから。
  */
 export class WebmentionRequest implements IValueObject<WebmentionRequest> {
   private constructor(private readonly fields: RequestFields) {}
@@ -37,7 +37,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
    * 受け取ったフォームの値を検証する。受け取れないものは
    * {@link WebmentionRejectedError} 系の typed error で throw する。
    *
-   * @param siteOrigin このサイト自身の origin。target がここのノートを指しているか、
+   * @param siteOrigin このサイト自身の origin。target がここの記事を指しているか、
    *   source がこのサイト自身でないかの判定に使う。
    */
   static create(params: {
@@ -85,7 +85,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
      * 両方を渡し (`targets`)、送り手がどちらの表記で届け出ても、ページにどちらが書いて
      * あっても同じ結果になるようにする。届け出た表記だけで照合すると、正規の URL を
      * 張っているページを旧 URL 宛てで届け出るだけで「リンクが無い」と判定でき、
-     * 保存済みの行を消させられる (行の鍵は note と source で、表記を含まない)。
+     * 保存済みの行を消させられる (行の鍵は article と source で、表記を含まない)。
      */
     const canonical = WebmentionUrl.create(`${site.origin}${ARTICLE_PATH_PREFIX}${slug}`);
     const former = slugsRedirectedFromFormerPath.has(slug)
@@ -104,7 +104,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
     return this.fields.source;
   }
 
-  get targetSlug(): NoteSlug {
+  get targetSlug(): ArticleSlug {
     return this.fields.targetSlug;
   }
 
@@ -155,21 +155,22 @@ function readUrl(raw: unknown, field: string): WebmentionUrl {
  * 記事の URL のパスからスラグを取り出す。記事の URL でなければ undefined。
  *
  * 受けるのは `/articles/<slug>` と、そこへ移した記事に限って `/notes/<slug>`
- * (domain/note/article-path.ts の表)。移していない記事を `/notes/<slug>` で指されても
+ * (domain/article/article-path.ts の表)。移していない記事を `/notes/<slug>` で指されても
  * 受けない。`/notes/` は短文の投稿のために空けてある場所で、そちらの識別子と記事の
  * スラグを同じ接頭辞の下で取り違えないようにするため。
  */
-function articleSlugFrom(pathname: string): NoteSlug | undefined {
+function articleSlugFrom(pathname: string): ArticleSlug | undefined {
   const canonical = slugUnder(ARTICLE_PATH_PREFIX, pathname);
   if (canonical !== undefined) return canonical;
 
   const former = slugUnder(FORMER_ARTICLE_PATH_PREFIX, pathname);
-  if (former === undefined || !slugsRedirectedFromFormerPath.has(former.toString())) return undefined;
+  if (former === undefined || !slugsRedirectedFromFormerPath.has(former.toString()))
+    return undefined;
   return former;
 }
 
 /** `<prefix><slug>` の形ならスラグを、そうでなければ undefined を返す。 */
-function slugUnder(prefix: string, pathname: string): NoteSlug | undefined {
+function slugUnder(prefix: string, pathname: string): ArticleSlug | undefined {
   if (!pathname.startsWith(prefix)) return undefined;
 
   // 末尾のスラッシュだけは許す (`/articles/hello/`)。それ以外の階層は別の資源。
@@ -177,9 +178,9 @@ function slugUnder(prefix: string, pathname: string): NoteSlug | undefined {
   if (rest.length === 0 || rest.includes("/")) return undefined;
 
   try {
-    return NoteSlug.create(decodeURIComponent(rest));
+    return ArticleSlug.create(decodeURIComponent(rest));
   } catch (error) {
-    if (error instanceof InvalidNoteSlugError) return undefined;
+    if (error instanceof InvalidArticleSlugError) return undefined;
     // decodeURIComponent は壊れたパーセント符号で URIError を投げる。
     if (error instanceof URIError) return undefined;
     throw error;

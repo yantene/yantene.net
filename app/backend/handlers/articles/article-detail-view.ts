@@ -1,8 +1,8 @@
-import type { Note } from "~/backend/domain/note";
+import type { Article } from "~/backend/domain/article";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 
-/** ノート詳細で公開するメタデータ (内部 id は出さない)。 */
-export interface PublicNoteMeta {
+/** 記事詳細で公開するメタデータ (内部 id は出さない)。 */
+export interface PublicArticleMeta {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
@@ -12,8 +12,8 @@ export interface PublicNoteMeta {
 }
 
 /** 詳細レスポンス / ページ props。メタデータ + パース済み MDAST。 */
-export interface NoteDetail {
-  readonly note: PublicNoteMeta;
+export interface ArticleDetail {
+  readonly article: PublicArticleMeta;
   readonly mdast: unknown;
   /**
    * 本文に貼られたむき出しの URL のカード。URL をキーに引く。
@@ -24,15 +24,19 @@ export interface NoteDetail {
   readonly linkCards: LinkCardMap;
 }
 
-export function toNoteDetail(note: Note, mdast: unknown, linkCards: LinkCardMap): NoteDetail {
+export function toArticleDetail(
+  article: Article,
+  mdast: unknown,
+  linkCards: LinkCardMap,
+): ArticleDetail {
   return {
-    note: {
-      slug: note.slug.toJSON(),
-      title: note.title.toJSON(),
-      summary: note.summary,
-      imageUrl: note.imageUrl?.toJSON() ?? null,
-      publishedOn: note.publishedOn.toString({ calendarName: "never" }),
-      lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
+    article: {
+      slug: article.slug.toJSON(),
+      title: article.title.toJSON(),
+      summary: article.summary,
+      imageUrl: article.imageUrl?.toJSON() ?? null,
+      publishedOn: article.publishedOn.toString({ calendarName: "never" }),
+      lastModifiedOn: article.lastModifiedOn.toString({ calendarName: "never" }),
     },
     mdast,
     linkCards,

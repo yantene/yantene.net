@@ -1,10 +1,10 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { createNoteAssetsRouter } from "./assets.handler";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
+import { createArticleAssetsRouter } from "./assets.handler";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
-import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
@@ -13,11 +13,11 @@ function envWith(d1: D1Database, bucket: R2Bucket): Env {
 }
 
 /** 索引に記事を 1 本入れる。配信はこの行が在ることを条件にする (#316)。 */
-async function seedNote(d1: D1Database): Promise<void> {
-  await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create("hello"),
-      title: NoteTitle.create("Hello"),
+async function seedArticle(d1: D1Database): Promise<void> {
+  await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("hello"),
+      title: ArticleTitle.create("Hello"),
       summary: "A summary.",
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
@@ -27,24 +27,24 @@ async function seedNote(d1: D1Database): Promise<void> {
 }
 
 async function seedAsset(bucket: R2Bucket): Promise<void> {
-  await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "cover.png", {
+  await new R2ArticleContentCache(bucket).putAsset(ArticleSlug.create("hello"), "cover.png", {
     bytes: new Uint8Array([1, 2, 3]),
     contentType: "image/png",
   });
 }
 
-describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
+describe("createArticleAssetsRouter GET /:slug/assets/:path", () => {
   it("serves a cached asset with its content type and cache headers", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
+    await seedArticle(d1);
     const bytes = new Uint8Array([1, 2, 3, 4]);
-    await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "cover.png", {
+    await new R2ArticleContentCache(bucket).putAsset(ArticleSlug.create("hello"), "cover.png", {
       bytes,
       contentType: "image/png",
     });
 
-    const res = await createNoteAssetsRouter().request(
+    const res = await createArticleAssetsRouter().request(
       "/hello/assets/cover.png",
       {},
       envWith(d1, bucket),
@@ -59,13 +59,13 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
   it("serves assets nested under subdirectories (slash in path)", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
-    await new R2NoteContentCache(bucket).putAsset(NoteSlug.create("hello"), "img/a.png", {
+    await seedArticle(d1);
+    await new R2ArticleContentCache(bucket).putAsset(ArticleSlug.create("hello"), "img/a.png", {
       bytes: new Uint8Array([9]),
       contentType: "image/png",
     });
 
-    const res = await createNoteAssetsRouter().request(
+    const res = await createArticleAssetsRouter().request(
       "/hello/assets/img/a.png",
       {},
       envWith(d1, bucket),
@@ -76,8 +76,8 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
   it("returns 404 for a missing asset", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
-    const res = await createNoteAssetsRouter().request(
+    await seedArticle(d1);
+    const res = await createArticleAssetsRouter().request(
       "/hello/assets/missing.png",
       {},
       envWith(d1, bucket),
@@ -90,12 +90,12 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
    * R2 に残る。掃除は D1 の行を辿るので届かず、書き手が非公開にしても絵だけ配られ
    * 続けていた。スラグが推測できれば読める状態だった (#316)。
    */
-  it("returns 404 when the note is not indexed, even if the asset is cached", async () => {
+  it("returns 404 when the article is not indexed, even if the asset is cached", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedAsset(bucket);
 
-    const res = await createNoteAssetsRouter().request(
+    const res = await createArticleAssetsRouter().request(
       "/hello/assets/cover.png",
       {},
       envWith(d1, bucket),
@@ -107,7 +107,7 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
   it("returns 404 for an invalid slug", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    const res = await createNoteAssetsRouter().request(
+    const res = await createArticleAssetsRouter().request(
       "/Invalid_Slug/assets/x.png",
       {},
       envWith(d1, bucket),
@@ -118,9 +118,9 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
   it("uses public cache-control when BASIC auth is off", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
+    await seedArticle(d1);
     await seedAsset(bucket);
-    const res = await createNoteAssetsRouter().request(
+    const res = await createArticleAssetsRouter().request(
       "/hello/assets/cover.png",
       {},
       envWith(d1, bucket),
@@ -131,7 +131,7 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
   it("uses private cache-control when BASIC auth is enabled (staging)", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
+    await seedArticle(d1);
     await seedAsset(bucket);
     const env = {
       D1: d1,
@@ -139,18 +139,18 @@ describe("createNoteAssetsRouter GET /:slug/assets/:path", () => {
       BASIC_AUTH_USER: "u",
       BASIC_AUTH_PASS: "p",
     } as unknown as Env;
-    const res = await createNoteAssetsRouter().request("/hello/assets/cover.png", {}, env);
+    const res = await createArticleAssetsRouter().request("/hello/assets/cover.png", {}, env);
     const cacheControl = res.headers.get("Cache-Control");
     expect(cacheControl).toContain("private");
     expect(cacheControl).not.toContain("public");
   });
 });
 
-describe("note asset public routing (full app)", () => {
+describe("article asset public routing (full app)", () => {
   it("serves assets through the composed app", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
-    await seedNote(d1);
+    await seedArticle(d1);
     await seedAsset(bucket);
     const env = { R2: bucket, D1: d1 } as unknown as Env;
 

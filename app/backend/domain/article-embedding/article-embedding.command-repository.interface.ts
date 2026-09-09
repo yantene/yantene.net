@@ -1,8 +1,8 @@
-import type { NoteEmbedding, NoteSimilarity } from "./note-embedding.entity";
+import type { ArticleEmbedding, ArticleSimilarity } from "./article-embedding.entity";
 
-export interface INoteEmbeddingCommandRepository {
-  /** ベクトルを保存する (同じノートの行があれば置き換える)。 */
-  upsert(embedding: NoteEmbedding): Promise<void>;
+export interface IArticleEmbeddingCommandRepository {
+  /** ベクトルを保存する (同じ記事の行があれば置き換える)。 */
+  upsert(embedding: ArticleEmbedding): Promise<void>;
   /**
    * 近さの行を全部入れ替える。
    *
@@ -10,11 +10,11 @@ export interface INoteEmbeddingCommandRepository {
    * 既存どうしのペアの値まで動く。1 記事ぶんずつ書き替えると、違う平均で出した値が
    * 同じ表に並んで比べられなくなるため、まとめて書き直す。
    */
-  replaceAllSimilarities(similarities: readonly NoteSimilarity[]): Promise<void>;
+  replaceAllSimilarities(similarities: readonly ArticleSimilarity[]): Promise<void>;
   /**
    * 対応する記事がもう無い行を消す。
    *
-   * slug で名指しして消す形は採れない。ノートの同期が先に記事を消すので、後から
+   * slug で名指しして消す形は採れない。記事の同期が先に記事を消すので、後から
    * 呼ばれるこちらからは slug から id を引けなくなっている。残った行は読み出しの
    * innerJoin から外れるので表には出ないが、置いたままだと容量だけが増える。
    */

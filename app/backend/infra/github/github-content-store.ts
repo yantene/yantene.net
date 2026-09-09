@@ -127,7 +127,7 @@ interface GitTreeEntry {
  * git tree API のレスポンスを {@link ContentEntry}[] に変換する。
  * 形状: `{ tree: [{ path, type: "blob"|"tree", sha }], truncated }`。
  * blob (ファイル) のみ返す。`truncated` が true のときは snapshot が不完全で、
- * 全ノート削除と誤認しかねないため fail-loud で throw する。
+ * 全記事削除と誤認しかねないため fail-loud で throw する。
  */
 export function parseTreeResponse(json: unknown): ContentEntry[] {
   if (typeof json !== "object" || json === null) {

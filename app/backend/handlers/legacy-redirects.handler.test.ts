@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { noteSlugByLegacySlug } from "./legacy-redirects.handler";
-import { slugsRedirectedFromFormerPath } from "~/backend/domain/note";
+import { articleSlugByLegacySlug } from "./legacy-redirects.handler";
+import { slugsRedirectedFromFormerPath } from "~/backend/domain/article";
 import { createTestApp } from "~/backend/test-app";
 
 function env(): Env {
@@ -23,7 +23,7 @@ function executionCtx(): ExecutionContext {
  * (取り違え・取りこぼしをテスト側から独立に押さえるため)。
  */
 // 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。
-const noteRedirects: readonly (readonly [string, string])[] = [
+const articleRedirects: readonly (readonly [string, string])[] = [
   ["/i_bought_arduino.html", "/articles/arduino-one-minute-timer"],
   ["/sugoroku_by_c.html", "/articles/sugoroku-in-c"],
   ["/one_month_before_the_fe_exam.html", "/articles/one-month-until-fe-exam"],
@@ -53,15 +53,15 @@ const noteRedirects: readonly (readonly [string, string])[] = [
   ["/invitation_to_flared.html", "/articles/invitation-to-flared"],
 ];
 
-describe("legacy note URLs", () => {
+describe("legacy article URLs", () => {
   // 実装の表に余分なエントリが紛れると、404 になる URL への恒久リダイレクトが
   // 読者のブラウザに焼き付く。件数を実装側から取って突き合わせる。
   it("covers every article of the old site and nothing else", () => {
-    expect(noteRedirects).toHaveLength(27);
-    expect(noteSlugByLegacySlug.size).toBe(noteRedirects.length);
+    expect(articleRedirects).toHaveLength(27);
+    expect(articleSlugByLegacySlug.size).toBe(articleRedirects.length);
   });
 
-  it.each(noteRedirects)("permanently redirects %s to %s", async (from, to) => {
+  it.each(articleRedirects)("permanently redirects %s to %s", async (from, to) => {
     const res = await createTestApp().request(from, {}, env());
 
     expect(res.status).toBe(308);
@@ -82,7 +82,7 @@ describe("legacy note URLs", () => {
     expect(res.headers.get("location")).toBe("/articles/comb-sort-in-java");
   });
 
-  it("caches the redirect under the same rule as note content", async () => {
+  it("caches the redirect under the same rule as article content", async () => {
     const res = await createTestApp().request("/combsort.html", {}, env());
 
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
@@ -161,7 +161,7 @@ describe("article URLs from before the rename", () => {
     expect(res.headers.get("location")).toBe(`${to}.md`);
   });
 
-  it("caches the redirect under the same rule as note content", async () => {
+  it("caches the redirect under the same rule as article content", async () => {
     const res = await createTestApp().request("/notes/back-from-times", {}, env());
 
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");

@@ -17,14 +17,14 @@ const markdownProcessor = unified().use(remarkParse).use(remarkGfm).use(remarkMa
  * 記事の公開範囲。フロントマターの `visibility` で指定する。
  *
  * 既定は `public`。`private` を書いた記事は同期の対象から外れ、D1 にも R2 にも
- * 載らない (notes-refresh.service.ts)。
+ * 載らない (articles-refresh.service.ts)。
  */
-export type NoteVisibility = "public" | "private";
+export type ArticleVisibility = "public" | "private";
 
 /**
  * `visibility` として読めない値が書かれていた。
  *
- * 呼び出し側 (refresh) がノート単位のコンテンツ不正として拾えるよう、infra 障害と
+ * 呼び出し側 (refresh) が記事単位のコンテンツ不正として拾えるよう、infra 障害と
  * 区別できる型にしておく。
  *
  * 読めない値を `private` に倒さないのは、綴りを間違えた記事が黙って消えるため。
@@ -37,16 +37,16 @@ export class VisibilityValueError extends Error {
 }
 
 /** フロントマターから取り出した生のメタデータ (検証前)。 */
-export interface NoteFrontmatter {
+export interface ArticleFrontmatter {
   readonly title: string | undefined;
   readonly imageUrl: string | undefined;
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
-  readonly visibility: NoteVisibility;
+  readonly visibility: ArticleVisibility;
 }
 
-export interface ParsedNoteContent {
-  readonly frontmatter: NoteFrontmatter;
+export interface ParsedArticleContent {
+  readonly frontmatter: ArticleFrontmatter;
   /** フロントマターを除いた本文の MDAST (数式には MathML を埋めてある)。 */
   readonly mdast: Root;
   /** 見出し・脚注・数式を除いた本文先頭 160 文字の要約。 */
@@ -58,9 +58,9 @@ export interface ParsedNoteContent {
  * フロントマターは vfile-matter で抽出・除去し、残りの本文を MDAST に変換する。
  *
  * 読めない LaTeX があると MathSyntaxError (latex-to-mathml.ts) を送出する。
- * 呼び出し側 (refresh) がノート単位で拾う。
+ * 呼び出し側 (refresh) が記事単位で拾う。
  */
-export function parseNoteContent(markdown: string): ParsedNoteContent {
+export function parseArticleContent(markdown: string): ParsedArticleContent {
   const file = new VFile({ value: markdown });
   matter(file, { strip: true });
   const rawMatter = (file.data.matter ?? {}) as Record<string, unknown>;
@@ -170,7 +170,7 @@ function withCollapsedSoftBreaks<T extends Nodes>(node: T): T {
  * 埋まった MathML を出すだけで済み、読者に数式ライブラリを送らずにすむ (ADR 0013)。
  *
  * 変換は refresh のときにしか走らない。読めない LaTeX は MathSyntaxError として
- * 送出し、呼び出し側がノート単位で拾う。
+ * 送出し、呼び出し側が記事単位で拾う。
  */
 function withMathMl<T extends Nodes>(node: T): T {
   return mapTree(node, (child) => {
@@ -357,7 +357,7 @@ function asOptionalString(value: unknown): string | undefined {
  * {@link VisibilityValueError} を送出する (どちらとも読めない以上、公開しないまま
  * 書き手に知らせる)。
  */
-function asVisibility(value: unknown): NoteVisibility {
+function asVisibility(value: unknown): ArticleVisibility {
   if (value === undefined || value === null) return "public";
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();

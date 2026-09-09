@@ -59,7 +59,7 @@ function parseMediaRange(entry: string): MediaRange | undefined {
  * `Accept` を媒体範囲の列に分解する。
  *
  * 正規表現は使わない。ネストした量指定子で書くと ReDoS 検知の誤検知に触れるため
- * (note-slug.vo.ts と同じ事情)。引用文字列の中のカンマ・セミコロンは扱わない割り切り
+ * (article-slug.vo.ts と同じ事情)。引用文字列の中のカンマ・セミコロンは扱わない割り切り
  * (Accept に引用付きパラメータが来ることは実際上なく、resolve-locale.ts の
  * Accept-Language も同じ割り切りをしている)。
  */

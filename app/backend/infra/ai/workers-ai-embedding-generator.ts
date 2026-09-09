@@ -1,5 +1,5 @@
-import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/note-embedding";
-import type { IEmbeddingGenerator } from "~/backend/domain/note-embedding";
+import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/article-embedding";
+import type { IEmbeddingGenerator } from "~/backend/domain/article-embedding";
 
 /**
  * 既定のモデル。
@@ -16,8 +16,8 @@ export const DEFAULT_EMBEDDING_MODEL = "@cf/qwen/qwen3-embedding-0.6b";
  * モデルの仕様ではなく、後半が消えないように自分で置いた安全弁である。超えた分は呼ぶ側が
  * 分けて投げ、平均を取る。
  *
- * 8,192 トークンが何字にあたるかは本文の中身で変わる。密な日本語 (55 ノート中いちばん
- * トークンが詰まる JOI のノートを繰り返した文章) で測ると、ベクトルが変わらなくなるのは
+ * 8,192 トークンが何字にあたるかは本文の中身で変わる。密な日本語 (55 記事中いちばん
+ * トークンが詰まる JOI の記事を繰り返した文章) で測ると、ベクトルが変わらなくなるのは
  * 11,500 字と 12,000 字の間。ASCII が半分混じる記事なら 16,000 字から 24,000 字の間まで入る。
  * 10,000 字は密なほうの下端 11,500 字に 0.85 を掛けて千字単位に丸めた値 (ADR 0031)。
  * 緩めるなら、切り捨てはログにも結果にも出ないことを踏まえること。

@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** 公開したノートが 1 年ぶんしか無いとき。期間ではなく 1 つの年だけを出す。 */
+/** 公開した記事が 1 年ぶんしか無いとき。期間ではなく 1 つの年だけを出す。 */
 export const SingleYear: Story = {
   args: { copyright: { from: 2026, to: 2026 } },
 };

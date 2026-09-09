@@ -1,11 +1,11 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import { describe, expect, it } from "vitest";
 import { MathSyntaxError } from "./latex-to-mathml";
-import { extractSummary, parseNoteContent } from "./note-content-parser";
-import type { ParsedNoteContent } from "./note-content-parser";
+import { extractSummary, parseArticleContent } from "./article-content-parser";
+import type { ParsedArticleContent } from "./article-content-parser";
 
 const withFrontmatter = `---
-title: My Note
+title: My Article
 imageUrl: ./cover.png
 tags: [日記, プログラミング]
 publishedOn: 2026-01-15
@@ -19,11 +19,11 @@ First paragraph body.
 Second paragraph.
 `;
 
-describe("parseNoteContent", () => {
+describe("parseArticleContent", () => {
   it("extracts frontmatter fields", () => {
-    const { frontmatter } = parseNoteContent(withFrontmatter);
+    const { frontmatter } = parseArticleContent(withFrontmatter);
     expect(frontmatter).toEqual({
-      title: "My Note",
+      title: "My Article",
       imageUrl: "./cover.png",
       publishedOn: "2026-01-15",
       lastModifiedOn: "2026-01-20",
@@ -32,19 +32,19 @@ describe("parseNoteContent", () => {
   });
 
   it("parses the body (without frontmatter) into MDAST", () => {
-    const { mdast } = parseNoteContent(withFrontmatter);
+    const { mdast } = parseArticleContent(withFrontmatter);
     // 先頭は yaml ノードではなく heading (フロントマターは除去済み)。
     expect(mdast.children.at(0)?.type).toBe("heading");
   });
 
   it("derives a summary from body text, skipping headings", () => {
-    const { summary } = parseNoteContent(withFrontmatter);
+    const { summary } = parseArticleContent(withFrontmatter);
     expect(summary.startsWith("First paragraph body.")).toBe(true);
     expect(summary).not.toContain("Heading");
   });
 
   it("returns undefined frontmatter fields when absent", () => {
-    const { frontmatter } = parseNoteContent("# Just a title\n\nBody.");
+    const { frontmatter } = parseArticleContent("# Just a title\n\nBody.");
     expect(frontmatter.title).toBeUndefined();
     expect(frontmatter.publishedOn).toBeUndefined();
   });
@@ -53,12 +53,12 @@ describe("parseNoteContent", () => {
 describe("extractSummary", () => {
   it("caps the summary at 160 characters", () => {
     const long = "a ".repeat(200);
-    const { mdast } = parseNoteContent(long);
+    const { mdast } = parseArticleContent(long);
     expect(extractSummary(mdast).length).toBeLessThanOrEqual(160);
   });
 
   it("skips code blocks and footnote definitions", () => {
-    const { mdast } = parseNoteContent("```ts\nconst x = 1;\n```\n\nProse text here.\n");
+    const { mdast } = parseArticleContent("```ts\nconst x = 1;\n```\n\nProse text here.\n");
     expect(extractSummary(mdast)).toBe("Prose text here.");
   });
 
@@ -67,7 +67,7 @@ describe("extractSummary", () => {
    * 要約に露出しないことを固定する (issue #112)。
    */
   it("drops inline raw HTML tags but keeps the text they wrap", () => {
-    const { mdast } = parseNoteContent(
+    const { mdast } = parseArticleContent(
       "ダウンロードは<s>こちら</s> (2017年09月21日追記: データを失くしました)\n",
     );
     expect(extractSummary(mdast)).toBe(
@@ -76,14 +76,14 @@ describe("extractSummary", () => {
   });
 
   it("drops block-level raw HTML", () => {
-    const { mdast } = parseNoteContent(
+    const { mdast } = parseArticleContent(
       "<div class='box'>\n<div>囲みの見出し</div>\n\n問題の本文。\n",
     );
     expect(extractSummary(mdast)).toBe("問題の本文。");
   });
 
   it("drops HTML comments", () => {
-    const { mdast } = parseNoteContent("<!-- 下書きメモ -->\n\n公開する本文。\n");
+    const { mdast } = parseArticleContent("<!-- 下書きメモ -->\n\n公開する本文。\n");
     expect(extractSummary(mdast)).toBe("公開する本文。");
   });
 
@@ -92,21 +92,21 @@ describe("extractSummary", () => {
    * 制御綴りが一覧や OGP にそのまま出るので、生 HTML と同じく除く。
    */
   it("drops the LaTeX source of inline math but keeps the prose around it", () => {
-    const { mdast } = parseNoteContent(
+    const { mdast } = parseArticleContent(
       "解の公式は $\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$ である。\n",
     );
     expect(extractSummary(mdast)).toBe("解の公式は である。");
   });
 
   it("drops display math blocks entirely", () => {
-    const { mdast } = parseNoteContent("$$\n\\frac{a}{b}\n$$\n\n本文。\n");
+    const { mdast } = parseArticleContent("$$\n\\frac{a}{b}\n$$\n\n本文。\n");
     expect(extractSummary(mdast)).toBe("本文。");
   });
 });
 
 describe("math", () => {
   it("turns $...$ into an inlineMath node carrying MathML", () => {
-    const { mdast } = parseNoteContent("式 $a^2$ です。\n");
+    const { mdast } = parseArticleContent("式 $a^2$ です。\n");
     const paragraph = mdast.children.at(0);
     const math =
       paragraph?.type === "paragraph"
@@ -121,7 +121,7 @@ describe("math", () => {
   });
 
   it("turns $$...$$ into a display math node", () => {
-    const { mdast } = parseNoteContent("$$\na^2\n$$\n");
+    const { mdast } = parseArticleContent("$$\na^2\n$$\n");
     const math = mdast.children.at(0);
     expect(math?.type).toBe("math");
     expect(math?.data?.hName).toBe("math");
@@ -130,20 +130,20 @@ describe("math", () => {
 
   /* 既定の hName は code / pre。上書きし損ねると数式が LaTeX のまま出る。 */
   it("replaces the code fallback that remark-math sets by default", () => {
-    const { mdast } = parseNoteContent("$$\na^2\n$$\n");
+    const { mdast } = parseArticleContent("$$\na^2\n$$\n");
     expect(mdast.children.at(0)?.data?.hChildren).not.toMatchObject([{ tagName: "code" }]);
   });
 
   it("leaves math inside inline code alone", () => {
-    const { mdast } = parseNoteContent("記法は `$a$` と書く。\n");
+    const { mdast } = parseArticleContent("記法は `$a$` と書く。\n");
     const paragraph = mdast.children.at(0);
     const kinds =
       paragraph?.type === "paragraph" ? paragraph.children.map((child) => child.type) : [];
     expect(kinds).not.toContain("inlineMath");
   });
 
-  it("throws MathSyntaxError so refresh can skip the note", () => {
-    expect(() => parseNoteContent("壊れた式 $\\frac{$ です。\n")).toThrow(MathSyntaxError);
+  it("throws MathSyntaxError so refresh can skip the article", () => {
+    expect(() => parseArticleContent("壊れた式 $\\frac{$ です。\n")).toThrow(MathSyntaxError);
   });
 });
 
@@ -153,7 +153,7 @@ describe("math", () => {
  */
 describe("collapsing soft line breaks", () => {
   const paragraphText = (markdown: string): string =>
-    mdastToString(parseNoteContent(markdown).mdast);
+    mdastToString(parseArticleContent(markdown).mdast);
 
   it("joins a break between two full-width characters", () => {
     expect(paragraphText("このブログに記事を書くのも、\n以来 1 年ぶりだ。\n")).toBe(
@@ -180,20 +180,20 @@ describe("collapsing soft line breaks", () => {
 
   /* 畳んだ結果は要約にも効く (D1 のメタデータと OGP がこれを使う)。 */
   it("reaches the summary as well", () => {
-    const { summary } = parseNoteContent("日本語の文を\n文節ごとに\n改行して書く。\n");
+    const { summary } = parseArticleContent("日本語の文を\n文節ごとに\n改行して書く。\n");
     expect(summary).toBe("日本語の文を文節ごとに改行して書く。");
   });
 
   /* コードブロックの改行は本文ではないので触らない。 */
   it("leaves line breaks inside code untouched", () => {
-    const { mdast } = parseNoteContent("```\n日本語\n改行\n```\n");
+    const { mdast } = parseArticleContent("```\n日本語\n改行\n```\n");
     expect(mdastToString(mdast)).toBe("日本語\n改行");
   });
 });
 
 describe("GFM alerts", () => {
-  const parseBody = (body: string): ParsedNoteContent =>
-    parseNoteContent(`---\ntitle: T\n---\n\n${body}`);
+  const parseBody = (body: string): ParsedArticleContent =>
+    parseArticleContent(`---\ntitle: T\n---\n\n${body}`);
 
   it("引用の冒頭のラベルを種別として取り出し、ラベル行は本文に残さない", () => {
     const { mdast } = parseBody("> [!NOTE]\n> 補足の本文。\n");
@@ -257,14 +257,14 @@ describe("GFM alerts", () => {
 
 describe("要約と Alert", () => {
   it("記事の頭に置いた Alert を要約に数えない", () => {
-    const { summary } = parseNoteContent(
+    const { summary } = parseArticleContent(
       `---\ntitle: T\n---\n\n> [!WARNING]\n> リンク先は消えました。\n\n本題はここから始まる。\n`,
     );
     expect(summary).toBe("本題はここから始まる。");
   });
 
   it("ラベルの無い引用は本文として要約に数える", () => {
-    const { summary } = parseNoteContent(
+    const { summary } = parseArticleContent(
       `---\ntitle: T\n---\n\n> 引用は本文の一部。\n\n続きの段落。\n`,
     );
     expect(summary).toBe("引用は本文の一部。 続きの段落。");

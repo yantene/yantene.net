@@ -1,4 +1,4 @@
-/** ノートのコンテンツ配信 (アセット・原文 Markdown) に付ける max-age。 */
+/** 記事のコンテンツ配信 (アセット・原文 Markdown) に付ける max-age。 */
 const MAX_AGE_SECONDS = 3600;
 
 /**

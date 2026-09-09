@@ -1,30 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { InvalidNoteTitleError, NoteTitle } from "./note-title.vo";
+import { InvalidArticleTitleError, ArticleTitle } from "./article-title.vo";
 
-describe("NoteTitle", () => {
+describe("ArticleTitle", () => {
   it("keeps the original casing and symbols", () => {
-    expect(NoteTitle.create("Hello, World! 記事").toString()).toBe("Hello, World! 記事");
+    expect(ArticleTitle.create("Hello, World! 記事").toString()).toBe("Hello, World! 記事");
   });
 
   it("trims surrounding whitespace", () => {
-    expect(NoteTitle.create("  Title  ").toString()).toBe("Title");
+    expect(ArticleTitle.create("  Title  ").toString()).toBe("Title");
   });
 
   it("rejects empty or whitespace-only input", () => {
-    expect(() => NoteTitle.create("")).toThrow(InvalidNoteTitleError);
-    expect(() => NoteTitle.create(" ".repeat(3))).toThrow(InvalidNoteTitleError);
+    expect(() => ArticleTitle.create("")).toThrow(InvalidArticleTitleError);
+    expect(() => ArticleTitle.create(" ".repeat(3))).toThrow(InvalidArticleTitleError);
   });
 
   it("rejects titles longer than 200 characters", () => {
-    expect(() => NoteTitle.create("あ".repeat(201))).toThrow(InvalidNoteTitleError);
+    expect(() => ArticleTitle.create("あ".repeat(201))).toThrow(InvalidArticleTitleError);
   });
 
   it("compares by value with equals", () => {
-    expect(NoteTitle.create("A").equals(NoteTitle.create("A"))).toBe(true);
-    expect(NoteTitle.create("A").equals(NoteTitle.create("B"))).toBe(false);
+    expect(ArticleTitle.create("A").equals(ArticleTitle.create("A"))).toBe(true);
+    expect(ArticleTitle.create("A").equals(ArticleTitle.create("B"))).toBe(false);
   });
 
   it("serializes to a plain string via toJSON", () => {
-    expect(NoteTitle.create("Title").toJSON()).toBe("Title");
+    expect(ArticleTitle.create("Title").toJSON()).toBe("Title");
   });
 });

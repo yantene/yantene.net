@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { assetPrefixOf, resolveAssetUrl } from "./note-asset-url";
+import { assetPrefixOf, resolveAssetUrl } from "./article-asset-url";
 
 describe("resolveAssetUrl", () => {
   it("resolves ./relative paths to the asset API URL", () => {
-    expect(resolveAssetUrl("my-note", "./cover.png")).toBe(
-      "/api/v1/articles/my-note/assets/cover.png",
+    expect(resolveAssetUrl("my-article", "./cover.png")).toBe(
+      "/api/v1/articles/my-article/assets/cover.png",
     );
   });
 
   it("resolves bare relative paths", () => {
-    expect(resolveAssetUrl("my-note", "img/a.png")).toBe(
-      "/api/v1/articles/my-note/assets/img/a.png",
+    expect(resolveAssetUrl("my-article", "img/a.png")).toBe(
+      "/api/v1/articles/my-article/assets/img/a.png",
     );
   });
 
   it("collapses ./ segments instead of producing a malformed URL", () => {
-    expect(resolveAssetUrl("my-note", "./img/./a.png")).toBe(
-      "/api/v1/articles/my-note/assets/img/a.png",
+    expect(resolveAssetUrl("my-article", "./img/./a.png")).toBe(
+      "/api/v1/articles/my-article/assets/img/a.png",
     );
   });
 
@@ -67,7 +67,7 @@ describe("resolveAssetUrl: クエリと断片", () => {
 });
 
 /*
- * 寸法表は「解決後の URL」を鍵にしている (notes-refresh.service.ts の cacheAssets)。
+ * 寸法表は「解決後の URL」を鍵にしている (articles-refresh.service.ts の cacheAssets)。
  * 本文の側も同じ関数を通るので、符号化の揺れを気にせず突き合わせられる。**名前へ戻す
  * 方向にすると `100%25.png` のような名前が別物に化ける** (#297)。
  */

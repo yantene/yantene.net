@@ -1,9 +1,9 @@
 /**
- * ノートが読まれたことを記録する。
+ * 記事が読まれたことを記録する。
  *
  * 記録するのは回数だけで、読んだ人を特定できる値は受け取らないし、保存もしない。
  */
-export interface INoteViewCommandRepository {
+export interface IArticleViewCommandRepository {
   /**
    * 累計を 1 増やし、対数スコアに重み 1 つぶんを足す。
    *
@@ -13,5 +13,5 @@ export interface INoteViewCommandRepository {
    *
    * 記事が無ければ何も起きない。
    */
-  addView(noteId: string, weightLog: number): Promise<void>;
+  addView(articleId: string, weightLog: number): Promise<void>;
 }

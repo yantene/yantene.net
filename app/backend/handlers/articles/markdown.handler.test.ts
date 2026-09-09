@@ -1,11 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
-import { createNoteMarkdownRouter } from "./markdown.handler";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
+import { createArticleMarkdownRouter } from "./markdown.handler";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
-import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
@@ -24,10 +24,10 @@ function env(d1: D1Database, bucket: R2Bucket): Env {
 
 /** D1 のメタデータだけを入れる (R2 の原文は入れない)。 */
 async function seedMeta(d1: D1Database): Promise<void> {
-  await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create("hello"),
-      title: NoteTitle.create("Hello"),
+  await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("hello"),
+      title: ArticleTitle.create("Hello"),
       summary: "A summary.",
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
@@ -39,16 +39,16 @@ async function seedMeta(d1: D1Database): Promise<void> {
 /** メタデータ (D1) と原文 (R2) を揃える。 */
 async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
   await seedMeta(d1);
-  await new R2NoteContentCache(bucket).putSource(NoteSlug.create("hello"), helloMarkdown);
+  await new R2ArticleContentCache(bucket).putSource(ArticleSlug.create("hello"), helloMarkdown);
 }
 
-describe("createNoteMarkdownRouter GET /:slug.md", () => {
+describe("createArticleMarkdownRouter GET /:slug.md", () => {
   it("serves the source markdown verbatim, frontmatter included", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(200);
     // 原文そのまま: フロントマターも画像の相対パスも書き換えない。
@@ -60,7 +60,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
     expect(res.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
     expect(res.headers.get("Content-Disposition")).toBe('inline; filename="hello.md"');
@@ -71,7 +71,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request("/hello.md", {}, env(d1, bucket));
 
     expect(res.headers.get("Cache-Control")).toContain("public");
   });
@@ -81,7 +81,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello.md",
       {},
       {
@@ -100,17 +100,21 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request("/missing.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request("/missing.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("application/problem");
   });
 
-  it("returns 404 for a slug that is not a valid NoteSlug", async () => {
+  it("returns 404 for a slug that is not a valid ArticleSlug", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request("/Invalid_Slug.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request(
+      "/Invalid_Slug.md",
+      {},
+      env(d1, bucket),
+    );
 
     expect(res.status).toBe(404);
   });
@@ -121,7 +125,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request("/.md", {}, env(d1, bucket));
+    const res = await createArticleMarkdownRouter().request("/.md", {}, env(d1, bucket));
 
     expect(res.status).toBe(404);
     expect(res.headers.get("Content-Type")).toContain("application/problem");
@@ -133,7 +137,7 @@ describe("createNoteMarkdownRouter GET /:slug.md", () => {
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello.md",
       { headers: { Accept: "text/html" } },
       env(d1, bucket),
@@ -161,13 +165,13 @@ const basicAuthEnvs: readonly (readonly [string, Partial<Env>])[] = [
   ["BASIC auth on (staging)", { BASIC_AUTH_USER: "u", BASIC_AUTH_PASS: "p" }],
 ];
 
-describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () => {
+describe("createArticleMarkdownRouter GET /:slug with Accept: text/markdown", () => {
   it("serves the source markdown verbatim with the same headers as .md", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello",
       { headers: markdownAccept },
       env(d1, bucket),
@@ -184,7 +188,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello",
       { headers: markdownAccept },
       env(d1, bucket),
@@ -205,7 +209,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello",
       { headers: markdownAccept },
       { ...env(d1, bucket), ...authEnv },
@@ -216,12 +220,12 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
 
   it.each([
     ["an unknown slug", "/missing"],
-    ["a slug that is not a valid NoteSlug", "/Invalid_Slug"],
+    ["a slug that is not a valid ArticleSlug", "/Invalid_Slug"],
   ])("returns 404 Problem Details for %s", async (_label, path) => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       path,
       { headers: markdownAccept },
       env(d1, bucket),
@@ -244,7 +248,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
     const { bucket } = createTestR2();
     await seed(d1, bucket);
 
-    const res = await createNoteMarkdownRouter().request(
+    const res = await createArticleMarkdownRouter().request(
       "/hello",
       { headers: { Accept: accept } },
       env(d1, bucket),
@@ -264,7 +268,7 @@ describe("createNoteMarkdownRouter GET /:slug with Accept: text/markdown", () =>
  */
 function appWithPage(status: number): Hono<{ Bindings: Env }> {
   const app = new Hono<{ Bindings: Env }>();
-  app.route("/articles", createNoteMarkdownRouter());
+  app.route("/articles", createArticleMarkdownRouter());
   app.all("*", () => new Response("page", { status }));
   return app;
 }
@@ -315,7 +319,7 @@ function executionCtx(): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
-describe("note markdown routing (full app)", () => {
+describe("article markdown routing (full app)", () => {
   it("serves /articles/<slug>.md from Hono without a session", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
@@ -358,7 +362,7 @@ describe("note markdown routing (full app)", () => {
     expect(await res.text()).toBe("Not Found");
   });
 
-  it("fails loud (500, not silent 404) when an indexed note has no cached source", async () => {
+  it("fails loud (500, not silent 404) when an indexed article has no cached source", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedMeta(d1);
@@ -390,7 +394,7 @@ describe("note markdown routing (full app)", () => {
   });
 });
 
-describe("note markdown negotiation (full app)", () => {
+describe("article markdown negotiation (full app)", () => {
   /*
    * ブラウザに原文を配ってしまうのがこの機能の最悪の回帰。Chrome の実文字列を含めて、
    * 記事ページに落ちること (ダミー委譲の "Not Found") を固定する。
@@ -487,7 +491,7 @@ describe("note markdown negotiation (full app)", () => {
   });
 
   it.each([
-    ["the note index", "/articles"],
+    ["the article index", "/articles"],
     ["a nested path", "/articles/a/b"],
   ])("leaves %s to the page router even for markdown", async (_label, path) => {
     const d1 = createTestD1();
@@ -523,7 +527,7 @@ describe("note markdown negotiation (full app)", () => {
     expect(await res.text()).toBe("Not Found");
   });
 
-  it("fails loud (500) when an indexed note has no cached source", async () => {
+  it("fails loud (500) when an indexed article has no cached source", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedMeta(d1);

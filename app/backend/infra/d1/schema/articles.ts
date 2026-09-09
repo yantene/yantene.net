@@ -1,7 +1,7 @@
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
- * ノートのメタデータインデックス。コンテンツ正本は GitHub リポジトリ、
+ * 記事のメタデータインデックス。コンテンツ正本は GitHub リポジトリ、
  * 本文 (MDAST) と画像は R2 にあり、この D1 テーブルは一覧・ルーティング用の
  * メタデータだけを保持する (ADR 0004)。
  *
@@ -9,8 +9,8 @@ import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core
  *   ("YYYY-MM-DD") で保存し、辞書順ソート = 日付順ソートを利用する。
  * - created_at / updated_at: D1 行の作成・更新時刻 (Unix 秒)。コンテンツ日付とは別。
  */
-export const notes = sqliteTable(
-  "notes",
+export const articles = sqliteTable(
+  "articles",
   {
     id: text("id").primaryKey(),
     slug: text("slug").notNull().unique(),
@@ -34,7 +34,7 @@ export const notes = sqliteTable(
      * - view_log_score: 人気の目安 (自然対数)。新しく読まれるほど大きな重みを足して
      *   いくので、素の値なら指数的に膨らんで倍精度でも 85 年ほどで溢れる。対数のまま
      *   持てば経過に対して線形にしか増えず、事実上いつまでも壊れない。対数は単調なので
-     *   この列で直接 ORDER BY すれば人気順になる (詳細は domain/note-view/view-ranking)
+     *   この列で直接 ORDER BY すれば人気順になる (詳細は domain/article-view/view-ranking)
      *
      * 初期値は 0 で、対数の 0 は素の 1、つまり「基準日に 1 回読まれた」ぶんに当たる。
      * 実際には読まれていないのに 1 回ぶんを置くのは、素の 0 だと対数が -∞ になって
@@ -51,6 +51,6 @@ export const notes = sqliteTable(
   },
   (table) => [
     // 人気順は「対数スコアの大きい順に数件」を引くだけなので、この索引で足りる。
-    index("notes_view_log_score_idx").on(table.viewLogScore),
+    index("articles_view_log_score_idx").on(table.viewLogScore),
   ],
 );

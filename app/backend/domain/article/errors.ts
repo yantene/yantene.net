@@ -1,6 +1,6 @@
-export class NoteNotFoundError extends Error {
-  readonly name = "NoteNotFoundError";
+export class ArticleNotFoundError extends Error {
+  readonly name = "ArticleNotFoundError";
   constructor(slug: string) {
-    super(`Note not found: ${slug}`);
+    super(`Article not found: ${slug}`);
   }
 }

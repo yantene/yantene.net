@@ -11,10 +11,10 @@ import { RouterContextProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { action } from "./articles.$slug";
 import type { Route } from "./+types/articles.$slug";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
-  D1NoteCommandRepository,
-  D1NoteReactionQueryRepository,
+  D1ArticleCommandRepository,
+  D1ArticleReactionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
@@ -26,7 +26,7 @@ const PUBLISHED_ON = "2026-01-15";
 interface Harness {
   readonly env: Env;
   readonly context: RouterContextProvider;
-  readonly noteId: string;
+  readonly articleId: string;
   /** 応答が返した cookie。次の押下へ持ち回る。 */
   cookie: string;
 }
@@ -34,10 +34,10 @@ interface Harness {
 async function setup(): Promise<Harness> {
   const d1 = createTestD1();
   const { kv } = createTestKv();
-  const note = await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create(SLUG),
-      title: NoteTitle.create("Alpha"),
+  const article = await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create(SLUG),
+      title: ArticleTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from(PUBLISHED_ON),
@@ -54,7 +54,7 @@ async function setup(): Promise<Harness> {
     ctx: {} as unknown as ExecutionContext,
   });
 
-  return { env, context, noteId: note.id, cookie: "" };
+  return { env, context, articleId: article.id, cookie: "" };
 }
 
 /** リアクションの行から押下を 1 つ送る。空文字は取り消し。 */
@@ -82,7 +82,7 @@ async function submit(harness: Harness, emoji: string, slug: string = SLUG): Pro
 }
 
 function listReactions(harness: Harness): Promise<readonly { emoji: string; count: number }[]> {
-  return new D1NoteReactionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
+  return new D1ArticleReactionQueryRepository(harness.env.D1).listByArticleId(harness.articleId);
 }
 
 describe("記事ページの action", () => {
@@ -118,7 +118,7 @@ describe("記事ページの action", () => {
 
   /*
    * 記事が無いときも同じ形で割れていた (#269)。applyReaction が投げる
-   * NoteNotFoundError は Hono の onError に届かないので、ページ側では 500 になる。
+   * ArticleNotFoundError は Hono の onError に届かないので、ページ側では 500 になる。
    * 非公開に切り替えた直後、開いたままのタブから押すと踏める。
    */
   it("無い記事へ押しても throw せず、API と同じ 404 で断る", async () => {

@@ -2,11 +2,11 @@ import { useTranslation } from "react-i18next";
 import { data, Link, redirect } from "react-router";
 import type { Route } from "./+types/articles.$slug";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { NoteDetailPageData } from "~/backend/handlers/notes/detail.handler";
+import type { ArticleDetailPageData } from "~/backend/handlers/articles/detail.handler";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
-import { loadNoteDetailPage } from "~/backend/handlers/notes/detail.handler";
-import { applyReaction, parseReactionEmoji } from "~/backend/handlers/notes/reaction.handler";
+import { loadArticleDetailPage } from "~/backend/handlers/articles/detail.handler";
+import { applyReaction, parseReactionEmoji } from "~/backend/handlers/articles/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
@@ -83,14 +83,14 @@ export async function loader({
   params,
   context,
 }: Route.LoaderArgs): Promise<
-  ReturnType<typeof data<PageMetaBase & CopyrightData & NoteDetailPageData>>
+  ReturnType<typeof data<PageMetaBase & CopyrightData & ArticleDetailPageData>>
 > {
   const url = new URL(request.url);
   const cloudflare = context.get(cloudflareContext);
   // 読み手のセッション識別子を預け直す cookie を応答に載せる (ADR 0011)。
   // React Router は loader が付けた Set-Cookie を、文書・データどちらの応答にも運ぶ。
   const headers = new Headers();
-  const detail = await loadNoteDetailPage(cloudflare.env, params.slug, url.origin, {
+  const detail = await loadArticleDetailPage(cloudflare.env, params.slug, url.origin, {
     userAgent: request.headers.get("user-agent"),
     cookie: request.headers.get("cookie"),
     waitUntil: (promise) => {
@@ -125,17 +125,17 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     });
   }
 
-  const { note, jsonLd } = loaderData;
+  const { article, jsonLd } = loaderData;
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    title: note.title,
-    description: note.summary,
-    imagePath: `/og/articles/${note.slug}`,
+    title: article.title,
+    description: article.summary,
+    imagePath: `/og/articles/${article.slug}`,
     type: "article",
     jsonLd,
-    // 受け取れるのはノート宛だけなので、記事ページでだけ受け口を広告する。
+    // 受け取れるのは記事宛だけなので、記事ページでだけ受け口を広告する。
     webmentionPath: WEBMENTION_PATH,
   });
 };
@@ -160,7 +160,8 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
     );
   }
 
-  const { note, mdast, related, headings, origin, reactions, linkCards, webmentions } = loaderData;
+  const { article, mdast, related, headings, origin, reactions, linkCards, webmentions } =
+    loaderData;
 
   return (
     <AppLayout>
@@ -168,10 +169,10 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">
           <ArticleHeader
-            slug={note.slug}
-            title={note.title}
-            imageUrl={note.imageUrl}
-            publishedOn={note.publishedOn}
+            slug={article.slug}
+            title={article.title}
+            imageUrl={article.imageUrl}
+            publishedOn={article.publishedOn}
             origin={origin}
           />
           {/*
@@ -183,8 +184,8 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             placement="top"
             reactions={reactions.reactions}
             mine={reactions.mine}
-            url={`${origin}/articles/${note.slug}`}
-            title={note.title}
+            url={`${origin}/articles/${article.slug}`}
+            title={article.title}
           />
           <MdastRenderer
             node={mdast}
@@ -196,8 +197,8 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             placement="bottom"
             reactions={reactions.reactions}
             mine={reactions.mine}
-            url={`${origin}/articles/${note.slug}`}
-            title={note.title}
+            url={`${origin}/articles/${article.slug}`}
+            title={article.title}
           />
           {/* 届いた反応。1 件も無ければ何も描かない。 */}
           <WebmentionList webmentions={webmentions} />

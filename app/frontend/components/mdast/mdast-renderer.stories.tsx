@@ -1,14 +1,14 @@
 import { MdastRenderer } from "./mdast-renderer";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { Root as MdastRoot } from "mdast";
-import { parseNoteContent } from "~/backend/services/note-content-parser";
+import { parseArticleContent } from "~/backend/services/article-content-parser";
 
 /*
  * 本番と同じ経路で MDAST を組む。数式の MathML は refresh 時にここで埋まるので、
  * 素の remark で組むと数式だけがストーリーと本番で食い違う。
  */
 function markdownToMdast(markdown: string): MdastRoot {
-  return parseNoteContent(markdown).mdast;
+  return parseArticleContent(markdown).mdast;
 }
 
 const sample = `# 見出し 1

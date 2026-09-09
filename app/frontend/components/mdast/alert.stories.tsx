@@ -25,7 +25,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** 読み飛ばしても困らないが、知っておくと話が早い補足。 */
-export const Note: Story = {
+export const Article: Story = {
   args: {
     kind: "note",
     children: <p>画像を紛失しました。ごめんなさい。</p>,
@@ -81,7 +81,7 @@ export const WithMultipleBlocks: Story = {
   },
 };
 
-/** 種別を読めなかったときは note に倒す。 */
+/** 種別を読めなかったときは article に倒す。 */
 export const UnknownKind: Story = {
   args: {
     kind: "hint",

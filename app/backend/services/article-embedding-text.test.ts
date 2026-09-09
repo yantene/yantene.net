@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEmbeddingChunks } from "./note-embedding-text";
+import { buildEmbeddingChunks } from "./article-embedding-text";
 import type { Root } from "mdast";
 
 function paragraph(value: string): Root["children"][number] {
@@ -17,7 +17,7 @@ describe("buildEmbeddingChunks", () => {
       type: "root",
       children: [
         paragraph("説明"),
-        { type: "code", lang: "sql", value: "SELECT slug FROM notes_fts" },
+        { type: "code", lang: "sql", value: "SELECT slug FROM articles_fts" },
         paragraph("続き"),
       ],
     };

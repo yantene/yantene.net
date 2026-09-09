@@ -1,10 +1,10 @@
 import { type SQL, sql } from "drizzle-orm";
-import { notes } from "~/backend/infra/d1/schema";
+import { articles } from "~/backend/infra/d1/schema";
 
 /**
- * 対数スコア (notes.view_log_score) の足し引きを、SQL の式として組む。
+ * 対数スコア (articles.view_log_score) の足し引きを、SQL の式として組む。
  *
- * ドメイン (domain/note-view/view-ranking) が JS で定義している log-sum-exp と同じものを
+ * ドメイン (domain/article-view/view-ranking) が JS で定義している log-sum-exp と同じものを
  * SQL で書き直したもの。読んでから書き戻す 2 手にすると、その間に別の閲覧やリアクションが
  * 挟まったときに、後から書いたほうが先の加算を丸ごと上書きして消してしまう。SQLite に
  * ln / exp / max があるので、今の値から新しい値を作るところまで 1 文に収められる。
@@ -21,7 +21,7 @@ import { notes } from "~/backend/infra/d1/schema";
  * 倍精度の最後の 1 ビットまで一致することは view-log-score.test.ts が固定している。
  */
 export function scoreWithWeightAdded(weightLog: number): SQL<number> {
-  const score = notes.viewLogScore;
+  const score = articles.viewLogScore;
   const larger = sql`max(${score}, ${weightLog})`;
 
   return sql`${larger} + ln(exp(${score} - ${larger}) + exp(${weightLog} - ${larger}))`;
@@ -44,7 +44,7 @@ export function scoreWithWeightAdded(weightLog: number): SQL<number> {
  * @param floorLogScore 下限。この記事の出発点 (投稿日の重み) を渡す。
  */
 export function scoreWithWeightRemoved(weightLog: number, floorLogScore: number): SQL<number> {
-  const score = notes.viewLogScore;
+  const score = articles.viewLogScore;
   const removed = sql`${score} + ln(1 - exp(${weightLog} - ${score}))`;
 
   return sql`max(ifnull(${removed}, ${floorLogScore}), ${floorLogScore})`;

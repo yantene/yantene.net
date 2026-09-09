@@ -52,7 +52,7 @@ export interface PageMetaInput {
   /**
    * Webmention の受け口 (`WEBMENTION_PATH`)。渡されたページだけが広告する。
    *
-   * 受け取れるのはノート宛だけなので、一覧やトップで広告しても送り手を無駄に
+   * 受け取れるのは記事宛だけなので、一覧やトップで広告しても送り手を無駄に
    * 400 へ歩かせるだけになる。
    */
   readonly webmentionPath?: string;

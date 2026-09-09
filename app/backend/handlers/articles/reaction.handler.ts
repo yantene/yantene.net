@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { deleteReaction, putReaction } from "./reaction-recording";
 import type { Context } from "hono";
-import { NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
-import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/note-reaction";
+import { ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
+import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/article-reaction";
 import { SessionId } from "~/backend/domain/session";
 import { buildSessionCookie, readSessionId } from "~/backend/handlers/session-cookie";
 import {
-  D1NoteQueryRepository,
-  D1NoteReactionQueryRepository,
+  D1ArticleQueryRepository,
+  D1ArticleReactionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { httpStatus } from "~/lib/constants/http-status";
 import { createProblemResponse } from "~/lib/problem-details";
@@ -92,17 +92,17 @@ export async function applyReaction(
   emoji: ReactionEmoji | undefined,
   cookie: string | null,
 ): Promise<ReactionOutcome | undefined> {
-  const slug = NoteSlug.parse(slugParam);
+  const slug = ArticleSlug.parse(slugParam);
   if (slug === undefined) return undefined;
 
-  const note = await new D1NoteQueryRepository(env.D1).findBySlug(slug);
-  if (note === undefined) return undefined;
+  const article = await new D1ArticleQueryRepository(env.D1).findBySlug(slug);
+  if (article === undefined) return undefined;
 
   const existingId = readSessionId(cookie);
   // 取り消しは、持っていない相手には効かせようがない。発行もしない。
   if (emoji === undefined && existingId === undefined) {
     return {
-      payload: await buildPayload(env, note.id, undefined),
+      payload: await buildPayload(env, article.id, undefined),
       setCookie: "",
     };
   }
@@ -110,26 +110,26 @@ export async function applyReaction(
   const sessionId = existingId ?? SessionId.issue();
   const session =
     emoji === undefined
-      ? await deleteReaction(env, { id: note.id, slug }, sessionId)
-      : await putReaction(env, { id: note.id, slug }, sessionId, emoji);
+      ? await deleteReaction(env, { id: article.id, slug }, sessionId)
+      : await putReaction(env, { id: article.id, slug }, sessionId, emoji);
 
   return {
-    payload: await buildPayload(env, note.id, session.reactionFor(slug)?.emoji),
+    payload: await buildPayload(env, article.id, session.reactionFor(slug)?.emoji),
     setCookie: sessionCookieFor(env, sessionId),
   };
 }
 
 /**
- * ノートのリアクション API。
+ * 記事のリアクション API。
  *
  * - PUT /:slug/reaction — `{ emoji }` を押す (すでに押していれば差し替え)
  * - DELETE /:slug/reaction — 取り消す
  *
- * 1 ノートにつき 1 人 1 つなので、「増やす」ではなく「いまの状態を置く」形にしてある。
+ * 1 記事につき 1 人 1 つなので、「増やす」ではなく「いまの状態を置く」形にしてある。
  * 押した人はセッション (cookie → KV) で決まる。cookie を持っていなければその場で
  * 発行し、応答に載せる。
  */
-export function createNoteReactionApiRouter(): Hono<{ Bindings: Env }> {
+export function createArticleReactionApiRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.put("/:slug/reaction", async (c) => {
@@ -164,7 +164,7 @@ async function apply(
   emoji: ReactionEmoji | undefined,
 ): Promise<ReactionOutcome> {
   const outcome = await applyReaction(c.env, slugParam, emoji, c.req.header("cookie") ?? null);
-  if (outcome === undefined) throw new NoteNotFoundError(slugParam);
+  if (outcome === undefined) throw new ArticleNotFoundError(slugParam);
   return outcome;
 }
 
@@ -185,10 +185,10 @@ function respond(c: Context<{ Bindings: Env }>, outcome: ReactionOutcome): Respo
 /** 押されている数と、この読み手が押しているものをまとめる。 */
 export async function buildPayload(
   env: Env,
-  noteId: string,
+  articleId: string,
   mine: ReactionEmoji | undefined,
 ): Promise<ReactionsPayload> {
-  const reactions = await new D1NoteReactionQueryRepository(env.D1).listByNoteId(noteId);
+  const reactions = await new D1ArticleReactionQueryRepository(env.D1).listByArticleId(articleId);
   return {
     reactions: reactions.map((reaction) => ({
       emoji: reaction.emoji,

@@ -1,19 +1,19 @@
 import { Temporal } from "@js-temporal/polyfill";
-import type { NoteSlug } from "~/backend/domain/note";
-import type { ReactionEmoji } from "~/backend/domain/note-reaction";
+import type { ArticleSlug } from "~/backend/domain/article";
+import type { ReactionEmoji } from "~/backend/domain/article-reaction";
 import type { Session, SessionId } from "~/backend/domain/session";
-import { reactionWeightLog, viewWeightLog } from "~/backend/domain/note-view";
+import { reactionWeightLog, viewWeightLog } from "~/backend/domain/article-view";
 import { Session as SessionEntity } from "~/backend/domain/session";
-import { D1NoteReactionCommandRepository } from "~/backend/infra/d1/repositories";
+import { D1ArticleReactionCommandRepository } from "~/backend/infra/d1/repositories";
 import {
   KvSessionCommandRepository,
   KvSessionQueryRepository,
 } from "~/backend/infra/kv/repositories";
 
-/** リアクションを付け外しするノート。数を動かすのに id が、セッションの照合に slug が要る。 */
-export interface ReactedNoteRef {
+/** リアクションを付け外しする記事。数を動かすのに id が、セッションの照合に slug が要る。 */
+export interface ReactedArticleRef {
   readonly id: string;
-  readonly slug: NoteSlug;
+  readonly slug: ArticleSlug;
 }
 
 /**
@@ -44,32 +44,32 @@ async function loadSession(
  */
 export async function putReaction(
   env: Env,
-  note: ReactedNoteRef,
+  article: ReactedArticleRef,
   sessionId: SessionId,
   emoji: ReactionEmoji,
 ): Promise<Session> {
   const today = Temporal.Now.plainDateISO("UTC");
   const session = await loadSession(env, sessionId, today);
-  const existing = session.reactionFor(note.slug);
+  const existing = session.reactionFor(article.slug);
 
   // 同じ絵文字を押し直しても何も起きない (取り消しは別の入り口が持つ)。
   if (existing?.emoji.equals(emoji) === true) return session;
 
-  const reactions = new D1NoteReactionCommandRepository(env.D1);
-  const next = session.withReaction(note.slug, emoji, today);
+  const reactions = new D1ArticleReactionCommandRepository(env.D1);
+  const next = session.withReaction(article.slug, emoji, today);
 
   // 先にセッションを書く。途中で落ちたときに、数だけ動いて押した本人が
   // 取り消せない状態になるのを避ける。
   await new KvSessionCommandRepository(env.SESSIONS).save(next);
 
   if (existing !== undefined) {
-    await reactions.decrement(note.id, existing.emoji);
+    await reactions.decrement(article.id, existing.emoji);
   }
-  await reactions.increment(note.id, emoji);
+  await reactions.increment(article.id, emoji);
 
   if (existing === undefined) {
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
-    await reactions.addLogScore(note.id, reactionWeightLog(today.toString()));
+    await reactions.addLogScore(article.id, reactionWeightLog(today.toString()));
   }
 
   return next;
@@ -83,20 +83,20 @@ export async function putReaction(
  */
 export async function deleteReaction(
   env: Env,
-  note: ReactedNoteRef,
+  article: ReactedArticleRef,
   sessionId: SessionId,
 ): Promise<Session> {
   const today = Temporal.Now.plainDateISO("UTC");
   const session = await loadSession(env, sessionId, today);
-  const existing = session.reactionFor(note.slug);
+  const existing = session.reactionFor(article.slug);
   if (existing === undefined) return session;
 
-  const reactions = new D1NoteReactionCommandRepository(env.D1);
-  const next = session.withoutReaction(note.slug);
+  const reactions = new D1ArticleReactionCommandRepository(env.D1);
+  const next = session.withoutReaction(article.slug);
 
   await new KvSessionCommandRepository(env.SESSIONS).save(next);
-  await reactions.decrement(note.id, existing.emoji);
-  await removeReactionScore(reactions, note.id, existing.reactedOn.toString());
+  await reactions.decrement(article.id, existing.emoji);
+  await removeReactionScore(reactions, article.id, existing.reactedOn.toString());
 
   return next;
 }
@@ -112,15 +112,15 @@ export async function deleteReaction(
  * 記事が無ければ投稿日も読めず、そのまま何もしない。
  */
 async function removeReactionScore(
-  reactions: D1NoteReactionCommandRepository,
-  noteId: string,
+  reactions: D1ArticleReactionCommandRepository,
+  articleId: string,
   reactedOn: string,
 ): Promise<void> {
-  const publishedOn = await reactions.findPublishedOn(noteId);
+  const publishedOn = await reactions.findPublishedOn(articleId);
   if (publishedOn === undefined) return;
 
   await reactions.subtractLogScore(
-    noteId,
+    articleId,
     reactionWeightLog(reactedOn),
     viewWeightLog(publishedOn),
   );

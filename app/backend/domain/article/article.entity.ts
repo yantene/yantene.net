@@ -1,15 +1,15 @@
 import type { ImageUrl } from "./image-url.vo";
-import type { NoteSlug } from "./note-slug.vo";
-import type { NoteTitle } from "./note-title.vo";
+import type { ArticleSlug } from "./article-slug.vo";
+import type { ArticleTitle } from "./article-title.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
-export type NoteId = EntityId<"Note">;
+export type ArticleId = EntityId<"Article">;
 
-interface NoteFields<T extends IPersisted | IUnpersisted> {
-  readonly id: T["id"] extends string ? NoteId : undefined;
-  readonly slug: NoteSlug;
-  readonly title: NoteTitle;
+interface ArticleFields<T extends IPersisted | IUnpersisted> {
+  readonly id: T["id"] extends string ? ArticleId : undefined;
+  readonly slug: ArticleSlug;
+  readonly title: ArticleTitle;
   /** MDAST から自動抽出した一覧用の要約 (先頭 160 文字)。手書きしない。 */
   readonly summary: string;
   /** カバー画像 URL。フロントマターに imageUrl が無ければ undefined。 */
@@ -29,23 +29,23 @@ interface NoteFields<T extends IPersisted | IUnpersisted> {
 }
 
 /**
- * ノート集約。Markdown 記事のメタデータを表す。
+ * 記事集約。Markdown 記事のメタデータを表す。
  * 本文 (MDAST) と画像アセットは別ストレージ (R2) にあり、本エンティティは
  * D1 のメタデータインデックスに対応する。
  */
-export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
-  private constructor(private readonly fields: NoteFields<T>) {}
+export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
+  private constructor(private readonly fields: ArticleFields<T>) {}
 
   static create(params: {
-    slug: NoteSlug;
-    title: NoteTitle;
+    slug: ArticleSlug;
+    title: ArticleTitle;
     summary: string;
     imageUrl?: ImageUrl;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
     sourceHash: string;
-  }): Note<IUnpersisted> {
-    return new Note({
+  }): Article<IUnpersisted> {
+    return new Article({
       id: undefined,
       slug: params.slug,
       title: params.title,
@@ -60,9 +60,9 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
   }
 
   static reconstruct(params: {
-    id: NoteId;
-    slug: NoteSlug;
-    title: NoteTitle;
+    id: ArticleId;
+    slug: ArticleSlug;
+    title: ArticleTitle;
     summary: string;
     imageUrl: ImageUrl | undefined;
     publishedOn: Temporal.PlainDate;
@@ -70,19 +70,19 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
-  }): Note {
-    return new Note(params);
+  }): Article {
+    return new Article(params);
   }
 
-  get id(): NoteFields<T>["id"] {
+  get id(): ArticleFields<T>["id"] {
     return this.fields.id;
   }
 
-  get slug(): NoteSlug {
+  get slug(): ArticleSlug {
     return this.fields.slug;
   }
 
-  get title(): NoteTitle {
+  get title(): ArticleTitle {
     return this.fields.title;
   }
 
@@ -106,11 +106,11 @@ export class Note<T extends IPersisted | IUnpersisted = IPersisted> {
     return this.fields.sourceHash;
   }
 
-  get createdAt(): NoteFields<T>["createdAt"] {
+  get createdAt(): ArticleFields<T>["createdAt"] {
     return this.fields.createdAt;
   }
 
-  get updatedAt(): NoteFields<T>["updatedAt"] {
+  get updatedAt(): ArticleFields<T>["updatedAt"] {
     return this.fields.updatedAt;
   }
 }

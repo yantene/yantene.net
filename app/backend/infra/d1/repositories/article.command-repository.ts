@@ -1,14 +1,19 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { rowToNote } from "./note-row";
-import type { INoteCommandRepository, Note, NoteId, NoteSlug } from "~/backend/domain/note";
+import { rowToArticle } from "./article-row";
+import type {
+  IArticleCommandRepository,
+  Article,
+  ArticleId,
+  ArticleSlug,
+} from "~/backend/domain/article";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { viewWeightLog } from "~/backend/domain/note-view";
-import { notes, webmentions } from "~/backend/infra/d1/schema";
+import { viewWeightLog } from "~/backend/domain/article-view";
+import { articles, webmentions } from "~/backend/infra/d1/schema";
 import { instantToUnix, plainDateToIso } from "~/backend/infra/d1/temporal";
 
-export class D1NoteCommandRepository implements INoteCommandRepository {
+export class D1ArticleCommandRepository implements IArticleCommandRepository {
   private readonly db;
 
   constructor(d1: D1Database) {
@@ -18,50 +23,50 @@ export class D1NoteCommandRepository implements INoteCommandRepository {
   /**
    * slug をキーに upsert する。新規なら id と created_at を採番し、既存なら
    * それらを保持したまま内容と updated_at を更新する。RETURNING で確定行を取り、
-   * タグ (note_tags) を入れ直してから永続化済みエンティティを復元して返す。
+   * タグ (article_tags) を入れ直してから永続化済みエンティティを復元して返す。
    */
-  async upsert(note: Note<IUnpersisted>): Promise<Note> {
+  async upsert(article: Article<IUnpersisted>): Promise<Article> {
     const now = Temporal.Now.instant();
     const nowUnix = instantToUnix(now);
     const content = {
-      title: note.title.toString(),
-      summary: note.summary,
-      imageUrl: note.imageUrl?.toString() ?? null,
-      publishedOn: plainDateToIso(note.publishedOn),
-      lastModifiedOn: plainDateToIso(note.lastModifiedOn),
-      sourceHash: note.sourceHash,
+      title: article.title.toString(),
+      summary: article.summary,
+      imageUrl: article.imageUrl?.toString() ?? null,
+      publishedOn: plainDateToIso(article.publishedOn),
+      lastModifiedOn: plainDateToIso(article.lastModifiedOn),
+      sourceHash: article.sourceHash,
       updatedAt: nowUnix,
     };
 
     const [row] = await this.db
-      .insert(notes)
+      .insert(articles)
       .values({
         id: crypto.randomUUID(),
-        slug: note.slug.toString(),
+        slug: article.slug.toString(),
         createdAt: nowUnix,
         // 人気の出発点は投稿日の重み。content には含めないので、既にある記事を
         // 上書きするときに読まれた実績が巻き戻ることはない。
-        viewLogScore: viewWeightLog(plainDateToIso(note.publishedOn)),
+        viewLogScore: viewWeightLog(plainDateToIso(article.publishedOn)),
         ...content,
       })
-      .onConflictDoUpdate({ target: notes.slug, set: content })
+      .onConflictDoUpdate({ target: articles.slug, set: content })
       .returning();
 
-    return rowToNote(row);
+    return rowToArticle(row);
   }
 
-  async deleteBySlug(slug: NoteSlug): Promise<void> {
+  async deleteBySlug(slug: ArticleSlug): Promise<void> {
     // 子テーブルは FK cascade だが D1 は FK 強制が既定で無効なため明示的に掃除する。
-    const noteIds = this.db
-      .select({ id: notes.id })
-      .from(notes)
-      .where(eq(notes.slug, slug.toString()));
-    await this.db.delete(webmentions).where(inArray(webmentions.noteId, noteIds));
-    await this.db.delete(notes).where(eq(notes.slug, slug.toString()));
+    const articleIds = this.db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.slug, slug.toString()));
+    await this.db.delete(webmentions).where(inArray(webmentions.articleId, articleIds));
+    await this.db.delete(articles).where(eq(articles.slug, slug.toString()));
   }
 
-  async delete(id: NoteId): Promise<void> {
-    await this.db.delete(webmentions).where(eq(webmentions.noteId, id));
-    await this.db.delete(notes).where(eq(notes.id, id));
+  async delete(id: ArticleId): Promise<void> {
+    await this.db.delete(webmentions).where(eq(webmentions.articleId, id));
+    await this.db.delete(articles).where(eq(articles.id, id));
   }
 }

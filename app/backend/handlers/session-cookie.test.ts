@@ -48,7 +48,7 @@ describe("buildSessionCookie", () => {
     const cookie = buildSessionCookie(id, secure);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
-    // セッションはノートに限らないのでサイト全体に効かせる。
+    // セッションは記事に限らないのでサイト全体に効かせる。
     expect(cookie).toContain("Path=/");
   });
 

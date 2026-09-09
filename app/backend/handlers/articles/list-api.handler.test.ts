@@ -1,16 +1,16 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { createNotesApiRouter } from "./list-api.handler";
+import { createArticlesApiRouter } from "./list-api.handler";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import type { PublicNoteList } from "~/backend/handlers/note-view";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
+import type { PublicArticleList } from "~/backend/handlers/article-view";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
-function note(slug: string, publishedOn: string): Note<IUnpersisted> {
-  return Note.create({
-    slug: NoteSlug.create(slug),
-    title: NoteTitle.create(slug),
+function article(slug: string, publishedOn: string): Article<IUnpersisted> {
+  return Article.create({
+    slug: ArticleSlug.create(slug),
+    title: ArticleTitle.create(slug),
     summary: `summary of ${slug}`,
     publishedOn: Temporal.PlainDate.from(publishedOn),
     lastModifiedOn: Temporal.PlainDate.from(publishedOn),
@@ -19,10 +19,10 @@ function note(slug: string, publishedOn: string): Note<IUnpersisted> {
 }
 
 async function seed(d1: D1Database): Promise<void> {
-  const cmd = new D1NoteCommandRepository(d1);
-  await cmd.upsert(note("a", "2026-01-10"));
-  await cmd.upsert(note("b", "2026-03-10"));
-  await cmd.upsert(note("c", "2026-02-10"));
+  const cmd = new D1ArticleCommandRepository(d1);
+  await cmd.upsert(article("a", "2026-01-10"));
+  await cmd.upsert(article("b", "2026-03-10"));
+  await cmd.upsert(article("c", "2026-02-10"));
 }
 
 function envWith(d1: D1Database): Env {
@@ -30,18 +30,18 @@ function envWith(d1: D1Database): Env {
 }
 
 /**
- * GET / を叩いてボディを PublicNoteList として取り出す。Hono の request() 応答型は
+ * GET / を叩いてボディを PublicArticleList として取り出す。Hono の request() 応答型は
  * ここでは解決できないため、text() → JSON.parse で明示的に読み取る。
  */
-async function fetchList(d1: D1Database, query = ""): Promise<PublicNoteList> {
-  const res = await createNotesApiRouter().request(`/${query}`, {}, envWith(d1));
+async function fetchList(d1: D1Database, query = ""): Promise<PublicArticleList> {
+  const res = await createArticlesApiRouter().request(`/${query}`, {}, envWith(d1));
   expect(res.status).toBe(200);
   const text = await res.text();
-  return JSON.parse(text) as PublicNoteList;
+  return JSON.parse(text) as PublicArticleList;
 }
 
-describe("createNotesApiRouter GET /", () => {
-  it("returns notes without requiring a session (public)", async () => {
+describe("createArticlesApiRouter GET /", () => {
+  it("returns articles without requiring a session (public)", async () => {
     const d1 = createTestD1();
     await seed(d1);
 
@@ -53,7 +53,7 @@ describe("createNotesApiRouter GET /", () => {
       totalPages: 1,
     });
     // 既定は publishedOn 降順。
-    expect(body.notes.map((n) => n.slug)).toEqual(["b", "c", "a"]);
+    expect(body.articles.map((n) => n.slug)).toEqual(["b", "c", "a"]);
   });
 
   it("paginates with page and per-page", async () => {
@@ -67,7 +67,7 @@ describe("createNotesApiRouter GET /", () => {
       total: 3,
       totalPages: 2,
     });
-    expect(body.notes.map((n) => n.slug)).toEqual(["a"]);
+    expect(body.articles.map((n) => n.slug)).toEqual(["a"]);
   });
 
   it("clamps an out-of-range page to totalPages", async () => {
@@ -85,7 +85,7 @@ describe("createNotesApiRouter GET /", () => {
     await seed(d1);
 
     const body = await fetchList(d1, "?sort-by=published&order=asc");
-    expect(body.notes.map((n) => n.slug)).toEqual(["a", "c", "b"]);
+    expect(body.articles.map((n) => n.slug)).toEqual(["a", "c", "b"]);
   });
 
   it("exposes only public fields and null imageUrl when absent", async () => {
@@ -93,7 +93,7 @@ describe("createNotesApiRouter GET /", () => {
     await seed(d1);
 
     const body = await fetchList(d1);
-    const first = body.notes[0];
+    const first = body.articles[0];
 
     expect(Object.keys(first).toSorted((a, b) => a.localeCompare(b))).toEqual([
       "imageUrl",

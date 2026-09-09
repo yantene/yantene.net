@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseNoteSort, parsePagination } from "./note-view";
+import { parseArticleSort, parsePagination } from "./article-view";
 
 describe("parsePagination", () => {
   it("defaults to page 1 and per-page 20", () => {
@@ -38,23 +38,23 @@ describe("parsePagination", () => {
   });
 });
 
-describe("parseNoteSort", () => {
+describe("parseArticleSort", () => {
   it("defaults to publishedOn descending", () => {
-    expect(parseNoteSort(undefined, undefined)).toEqual({
+    expect(parseArticleSort(undefined, undefined)).toEqual({
       sortBy: "publishedOn",
       direction: "desc",
     });
   });
 
   it("maps 'modified' to lastModifiedOn and 'asc' to ascending", () => {
-    expect(parseNoteSort("modified", "asc")).toEqual({
+    expect(parseArticleSort("modified", "asc")).toEqual({
       sortBy: "lastModifiedOn",
       direction: "asc",
     });
   });
 
   it("treats unknown values as the safe defaults", () => {
-    expect(parseNoteSort("bogus", "bogus")).toEqual({
+    expect(parseArticleSort("bogus", "bogus")).toEqual({
       sortBy: "publishedOn",
       direction: "desc",
     });

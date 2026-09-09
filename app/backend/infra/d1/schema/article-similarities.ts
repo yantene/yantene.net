@@ -1,5 +1,5 @@
 import { index, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { notes } from "./notes";
+import { articles } from "./articles";
 
 /**
  * 記事どうしの近さ。関連記事はこの表を読んで並べる。
@@ -13,20 +13,20 @@ import { notes } from "./notes";
  * 当たるのは数千本のあたりで、そこまで来たら上位 N 件に切る形へ移すことになる。
  * 片方向にして読むたびに OR で引く形は、索引が効かなくなるので採らない。
  */
-export const noteSimilarities = sqliteTable(
-  "note_similarities",
+export const articleSimilarities = sqliteTable(
+  "article_similarities",
   {
-    noteId: text("note_id")
+    articleId: text("article_id")
       .notNull()
-      .references(() => notes.id, { onDelete: "cascade" }),
-    otherNoteId: text("other_note_id")
+      .references(() => articles.id, { onDelete: "cascade" }),
+    otherArticleId: text("other_article_id")
       .notNull()
-      .references(() => notes.id, { onDelete: "cascade" }),
+      .references(() => articles.id, { onDelete: "cascade" }),
     similarity: real("similarity").notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.noteId, table.otherNoteId] }),
+    primaryKey({ columns: [table.articleId, table.otherArticleId] }),
     // 「この記事に近い順に 6 件」がこの索引だけで済む。
-    index("note_similarities_note_id_similarity_idx").on(table.noteId, table.similarity),
+    index("article_similarities_article_id_similarity_idx").on(table.articleId, table.similarity),
   ],
 );

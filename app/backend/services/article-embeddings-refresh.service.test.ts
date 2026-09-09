@@ -1,17 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
-import { NoteEmbeddingsRefreshService } from "./note-embeddings-refresh.service";
+import { ArticleEmbeddingsRefreshService } from "./article-embeddings-refresh.service";
 import type { Root } from "mdast";
-import type { INoteContentCache, INoteQueryRepository, Note } from "~/backend/domain/note";
+import type {
+  IArticleContentCache,
+  IArticleQueryRepository,
+  Article,
+} from "~/backend/domain/article";
 import type {
   IEmbeddingGenerator,
-  INoteEmbeddingCommandRepository,
-  INoteEmbeddingQueryRepository,
-  NoteEmbedding,
-  NoteSimilarity,
-} from "~/backend/domain/note-embedding";
+  IArticleEmbeddingCommandRepository,
+  IArticleEmbeddingQueryRepository,
+  ArticleEmbedding,
+  ArticleSimilarity,
+} from "~/backend/domain/article-embedding";
 import type { ILogger } from "~/backend/domain/shared";
-import { NoteSlug } from "~/backend/domain/note";
-import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/note-embedding";
+import { ArticleSlug } from "~/backend/domain/article";
+import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/article-embedding";
 import { entityId } from "~/backend/domain/shared";
 
 const MODEL = "test-model";
@@ -27,12 +31,12 @@ function silentLogger(): ILogger {
   return logger;
 }
 
-function noteOf(slug: string): Note {
+function articleOf(slug: string): Article {
   return {
-    id: entityId<"Note">(`id-${slug}`),
-    slug: NoteSlug.create(slug),
+    id: entityId<"Article">(`id-${slug}`),
+    slug: ArticleSlug.create(slug),
     title: { toString: () => `題 ${slug}` },
-  } as unknown as Note;
+  } as unknown as Article;
 }
 
 function bodyOf(value: string): Root {
@@ -54,23 +58,23 @@ function generatorReturning(vectors: readonly number[][]): IEmbeddingGenerator {
 }
 
 interface Harness {
-  readonly service: NoteEmbeddingsRefreshService;
-  readonly command: INoteEmbeddingCommandRepository;
-  readonly upserted: NoteEmbedding[];
+  readonly service: ArticleEmbeddingsRefreshService;
+  readonly command: IArticleEmbeddingCommandRepository;
+  readonly upserted: ArticleEmbedding[];
   /** replaceAllSimilarities に渡ってきたペアの列。書き直しごとに 1 要素増える。 */
-  readonly rewritten: (readonly NoteSimilarity[])[];
+  readonly rewritten: (readonly ArticleSimilarity[])[];
 }
 
 function harness(options: {
   readonly slugs: readonly string[];
   readonly hashes: ReadonlyMap<string, string>;
-  readonly stored?: readonly NoteEmbedding[];
+  readonly stored?: readonly ArticleEmbedding[];
   readonly generator?: IEmbeddingGenerator;
 }): Harness {
-  const upserted: NoteEmbedding[] = [];
-  const rewritten: (readonly NoteSimilarity[])[] = [];
+  const upserted: ArticleEmbedding[] = [];
+  const rewritten: (readonly ArticleSimilarity[])[] = [];
 
-  const command: INoteEmbeddingCommandRepository = {
+  const command: IArticleEmbeddingCommandRepository = {
     upsert: async (embedding) => {
       upserted.push(embedding);
       return Promise.resolve();
@@ -82,29 +86,29 @@ function harness(options: {
     deleteOrphans: vi.fn(async () => Promise.resolve()),
   };
 
-  const query: INoteEmbeddingQueryRepository = {
+  const query: IArticleEmbeddingQueryRepository = {
     listAll: async () => Promise.resolve(options.stored ?? []),
     findRelatedSlugs: vi.fn(async () => Promise.resolve([])),
   };
 
-  const notes = {
-    findBySlug: async (slug: NoteSlug) =>
+  const articles = {
+    findBySlug: async (slug: ArticleSlug) =>
       Promise.resolve(
-        options.slugs.includes(slug.toString()) ? noteOf(slug.toString()) : undefined,
+        options.slugs.includes(slug.toString()) ? articleOf(slug.toString()) : undefined,
       ),
     listSourceHashes: async () => Promise.resolve(options.hashes),
-  } as unknown as INoteQueryRepository;
+  } as unknown as IArticleQueryRepository;
 
   const cache = {
     getMdast: async () => Promise.resolve(bodyOf("本文")),
-  } as unknown as INoteContentCache;
+  } as unknown as IArticleContentCache;
 
   return {
-    service: new NoteEmbeddingsRefreshService(
+    service: new ArticleEmbeddingsRefreshService(
       options.generator ?? generatorReturning([[1, 0]]),
       command,
       query,
-      notes,
+      articles,
       cache,
       silentLogger(),
     ),
@@ -114,8 +118,8 @@ function harness(options: {
   };
 }
 
-describe("NoteEmbeddingsRefreshService", () => {
-  it("embeds a note that has no vector yet", async () => {
+describe("ArticleEmbeddingsRefreshService", () => {
+  it("embeds an article that has no vector yet", async () => {
     const { service, upserted } = harness({
       slugs: ["alpha"],
       hashes: new Map([["alpha", "hash-1"]]),
@@ -129,10 +133,10 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(upserted[0]?.contentHash).toBe("hash-1");
   });
 
-  it("skips a note whose body and model are both unchanged", async () => {
-    const stored: NoteEmbedding = {
-      noteId: entityId<"Note">("id-alpha"),
-      slug: NoteSlug.create("alpha"),
+  it("skips an article whose body and model are both unchanged", async () => {
+    const stored: ArticleEmbedding = {
+      articleId: entityId<"Article">("id-alpha"),
+      slug: ArticleSlug.create("alpha"),
       model: MODEL,
       contentHash: "hash-1",
       vector: EmbeddingVector.create([1, 0]),
@@ -150,9 +154,9 @@ describe("NoteEmbeddingsRefreshService", () => {
   });
 
   it("re-embeds when the model changed even though the body did not", async () => {
-    const stored: NoteEmbedding = {
-      noteId: entityId<"Note">("id-alpha"),
-      slug: NoteSlug.create("alpha"),
+    const stored: ArticleEmbedding = {
+      articleId: entityId<"Article">("id-alpha"),
+      slug: ArticleSlug.create("alpha"),
       model: "an-older-model",
       contentHash: "hash-1",
       vector: EmbeddingVector.create([1, 0]),
@@ -169,12 +173,12 @@ describe("NoteEmbeddingsRefreshService", () => {
   });
 
   it("1 本足しただけでも、既存どうしを含む全ペアを書き直す", async () => {
-    const stored: NoteEmbedding[] = [
+    const stored: ArticleEmbedding[] = [
       { slug: "beta", raw: [0, 1, 0] },
       { slug: "gamma", raw: [0, 0, 1] },
     ].map((item) => ({
-      noteId: entityId<"Note">(`id-${item.slug}`),
-      slug: NoteSlug.create(item.slug),
+      articleId: entityId<"Article">(`id-${item.slug}`),
+      slug: ArticleSlug.create(item.slug),
       model: MODEL,
       contentHash: "hash-old",
       vector: EmbeddingVector.create(item.raw),
@@ -199,7 +203,7 @@ describe("NoteEmbeddingsRefreshService", () => {
      */
     expect(rewritten).toHaveLength(1);
     expect(result.rewrittenPairs).toBe(3);
-    expect(rewritten[0]?.map((pair) => [pair.noteId, pair.otherNoteId])).toEqual([
+    expect(rewritten[0]?.map((pair) => [pair.articleId, pair.otherArticleId])).toEqual([
       ["id-alpha", "id-beta"],
       ["id-alpha", "id-gamma"],
       ["id-beta", "id-gamma"],
@@ -238,7 +242,7 @@ describe("NoteEmbeddingsRefreshService", () => {
 
     await service.sync();
 
-    // ノートの同期が記事を消したあとなので、ここでしか消せない。
+    // 記事の同期が記事を消したあとなので、ここでしか消せない。
     expect(command.deleteOrphans).toHaveBeenCalled();
   });
 
@@ -267,13 +271,13 @@ describe("NoteEmbeddingsRefreshService", () => {
     expect(result.failed).toEqual(["gamma"]);
     expect(rewritten).toHaveLength(1);
     expect(result.rewrittenPairs).toBe(1);
-    expect(rewritten[0]?.map((pair) => [pair.noteId, pair.otherNoteId])).toEqual([
+    expect(rewritten[0]?.map((pair) => [pair.articleId, pair.otherArticleId])).toEqual([
       ["id-alpha", "id-beta"],
     ]);
   });
 
   it("1 回で作りきれなかった記事を、次の refresh で拾い直す", async () => {
-    // MAX_NOTES_PER_RUN (30) を 1 本超える。
+    // MAX_ARTICLES_PER_RUN (30) を 1 本超える。
     const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
     const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
     const vectors = slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1]);
@@ -308,9 +312,9 @@ describe("NoteEmbeddingsRefreshService", () => {
     // 31 本のうち 30 本は今のモデルで作れている。残り 1 本が未作成。
     const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
     const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
-    const stored: NoteEmbedding[] = slugs.slice(0, 30).map((slug, i) => ({
-      noteId: entityId<"Note">(`id-${slug}`),
-      slug: NoteSlug.create(slug),
+    const stored: ArticleEmbedding[] = slugs.slice(0, 30).map((slug, i) => ({
+      articleId: entityId<"Article">(`id-${slug}`),
+      slug: ArticleSlug.create(slug),
       model: MODEL,
       contentHash: `hash-${slug}`,
       vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),
@@ -335,9 +339,9 @@ describe("NoteEmbeddingsRefreshService", () => {
     // 31 本すべて今のモデルで作れている。force は 30 本までしか作り直さない。
     const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
     const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
-    const stored: NoteEmbedding[] = slugs.map((slug, i) => ({
-      noteId: entityId<"Note">(`id-${slug}`),
-      slug: NoteSlug.create(slug),
+    const stored: ArticleEmbedding[] = slugs.map((slug, i) => ({
+      articleId: entityId<"Article">(`id-${slug}`),
+      slug: ArticleSlug.create(slug),
       model: MODEL,
       contentHash: `hash-${slug}`,
       vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),
@@ -366,9 +370,9 @@ describe("NoteEmbeddingsRefreshService", () => {
     const slugs = Array.from({ length: 31 }, (_, i) => `n${String(i).padStart(2, "0")}`);
     const hashes = new Map(slugs.map((slug) => [slug, `hash-${slug}`]));
     const vectors = slugs.map((_, i) => [Math.cos(i), Math.sin(i), 1]);
-    const stored: NoteEmbedding[] = slugs.map((slug, i) => ({
-      noteId: entityId<"Note">(`id-${slug}`),
-      slug: NoteSlug.create(slug),
+    const stored: ArticleEmbedding[] = slugs.map((slug, i) => ({
+      articleId: entityId<"Article">(`id-${slug}`),
+      slug: ArticleSlug.create(slug),
       model: "old-model",
       contentHash: `hash-${slug}`,
       vector: EmbeddingVector.create([Math.cos(i), Math.sin(i), 1]),

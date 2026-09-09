@@ -8,9 +8,9 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import type { ReactionsPayload } from "./reaction.handler";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
-import { viewWeightLog } from "~/backend/domain/note-view";
-import { D1NoteCommandRepository } from "~/backend/infra/d1/repositories";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { viewWeightLog } from "~/backend/domain/article-view";
+import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1, readViewLogScore } from "~/backend/infra/d1/test-helper";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
 import { createTestApp } from "~/backend/test-app";
@@ -19,7 +19,7 @@ const PUBLISHED_ON = "2026-01-15";
 
 interface Harness {
   readonly env: Env;
-  readonly noteId: string;
+  readonly articleId: string;
   /** 応答が返した cookie。次のリクエストへ持ち回る。 */
   cookie: string;
 }
@@ -27,10 +27,10 @@ interface Harness {
 async function setup(): Promise<Harness> {
   const d1 = createTestD1();
   const { kv } = createTestKv();
-  const note = await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create("alpha"),
-      title: NoteTitle.create("Alpha"),
+  const article = await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("alpha"),
+      title: ArticleTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from(PUBLISHED_ON),
@@ -41,7 +41,7 @@ async function setup(): Promise<Harness> {
 
   return {
     env: { D1: d1, SESSIONS: kv, APP_ENV: "test" } as unknown as Env,
-    noteId: note.id,
+    articleId: article.id,
     cookie: "",
   };
 }
@@ -84,7 +84,7 @@ async function remove(harness: Harness): Promise<ReactionsPayload> {
 }
 
 function logScore(harness: Harness): Promise<number | undefined> {
-  return readViewLogScore(harness.env.D1, harness.noteId);
+  return readViewLogScore(harness.env.D1, harness.articleId);
 }
 
 describe("リアクション API", () => {
@@ -107,7 +107,7 @@ describe("リアクション API", () => {
     expect(harness.cookie).toMatch(/^session=/);
   });
 
-  /* 1 ノートにつき 1 つ。別のものを押したら乗り換える。 */
+  /* 1 記事につき 1 つ。別のものを押したら乗り換える。 */
   it("別の絵文字を押すと差し替わる", async () => {
     const harness = await setup();
 

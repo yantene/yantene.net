@@ -28,9 +28,9 @@ function loaderData(): unknown {
     locale: "ja",
     origin: ORIGIN,
     copyright: { from: 2024, to: 2026 },
-    note: {
+    article: {
       slug: SLUG,
-      title: "はじめてのノート",
+      title: "はじめての記事",
       summary: "ようこそ",
       imageUrl: null,
       tags: ["エッセイ"],
@@ -77,7 +77,7 @@ async function renderPage(): Promise<HTMLElement> {
   });
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
-  await screen.findByRole("heading", { name: "はじめてのノート" });
+  await screen.findByRole("heading", { name: "はじめての記事" });
   return container;
 }
 

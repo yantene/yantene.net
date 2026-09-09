@@ -1,12 +1,12 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { D1NoteCommandRepository } from "./note.command-repository";
-import { D1NoteQueryRepository } from "./note.query-repository";
+import { D1ArticleCommandRepository } from "./article.command-repository";
+import { D1ArticleQueryRepository } from "./article.query-repository";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { ImageUrl, Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
-function unpersistedNote(params: {
+function unpersistedArticle(params: {
   slug: string;
   title: string;
   summary?: string;
@@ -14,10 +14,10 @@ function unpersistedNote(params: {
   publishedOn?: string;
   lastModifiedOn?: string;
   sourceHash?: string;
-}): Note<IUnpersisted> {
-  return Note.create({
-    slug: NoteSlug.create(params.slug),
-    title: NoteTitle.create(params.title),
+}): Article<IUnpersisted> {
+  return Article.create({
+    slug: ArticleSlug.create(params.slug),
+    title: ArticleTitle.create(params.title),
     summary: params.summary ?? "summary",
     imageUrl: params.imageUrl === undefined ? undefined : ImageUrl.create(params.imageUrl),
     publishedOn: Temporal.PlainDate.from(params.publishedOn ?? "2026-01-15"),
@@ -26,12 +26,12 @@ function unpersistedNote(params: {
   });
 }
 
-describe("D1NoteCommandRepository", () => {
-  it("inserts a new note and returns it persisted", async () => {
-    const cmd = new D1NoteCommandRepository(createTestD1());
+describe("D1ArticleCommandRepository", () => {
+  it("inserts a new article and returns it persisted", async () => {
+    const cmd = new D1ArticleCommandRepository(createTestD1());
 
     const saved = await cmd.upsert(
-      unpersistedNote({
+      unpersistedArticle({
         slug: "hello",
         title: "Hello",
         imageUrl: "/api/v1/articles/hello/assets/cover.png",
@@ -46,20 +46,20 @@ describe("D1NoteCommandRepository", () => {
     expect(saved.updatedAt).toBeInstanceOf(Temporal.Instant);
   });
 
-  it("stores a note without a cover image as undefined", async () => {
-    const cmd = new D1NoteCommandRepository(createTestD1());
-    const saved = await cmd.upsert(unpersistedNote({ slug: "x", title: "X" }));
+  it("stores an article without a cover image as undefined", async () => {
+    const cmd = new D1ArticleCommandRepository(createTestD1());
+    const saved = await cmd.upsert(unpersistedArticle({ slug: "x", title: "X" }));
     expect(saved.imageUrl).toBeUndefined();
   });
 
   it("updates in place on slug conflict, keeping the same id", async () => {
     const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    const query = new D1NoteQueryRepository(d1);
+    const cmd = new D1ArticleCommandRepository(d1);
+    const query = new D1ArticleQueryRepository(d1);
 
-    const first = await cmd.upsert(unpersistedNote({ slug: "post", title: "Original" }));
+    const first = await cmd.upsert(unpersistedArticle({ slug: "post", title: "Original" }));
     const second = await cmd.upsert(
-      unpersistedNote({ slug: "post", title: "Updated", summary: "new" }),
+      unpersistedArticle({ slug: "post", title: "Updated", summary: "new" }),
     );
 
     expect(second.id).toBe(first.id);
@@ -76,25 +76,25 @@ describe("D1NoteCommandRepository", () => {
     expect(total).toBe(1);
   });
 
-  it("deletes a note by slug", async () => {
+  it("deletes an article by slug", async () => {
     const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    const query = new D1NoteQueryRepository(d1);
+    const cmd = new D1ArticleCommandRepository(d1);
+    const query = new D1ArticleQueryRepository(d1);
 
-    await cmd.upsert(unpersistedNote({ slug: "gone", title: "Gone" }));
-    await cmd.deleteBySlug(NoteSlug.create("gone"));
+    await cmd.upsert(unpersistedArticle({ slug: "gone", title: "Gone" }));
+    await cmd.deleteBySlug(ArticleSlug.create("gone"));
 
-    expect(await query.findBySlug(NoteSlug.create("gone"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("gone"))).toBeUndefined();
   });
 
-  it("deletes a note by id", async () => {
+  it("deletes an article by id", async () => {
     const d1 = createTestD1();
-    const cmd = new D1NoteCommandRepository(d1);
-    const query = new D1NoteQueryRepository(d1);
+    const cmd = new D1ArticleCommandRepository(d1);
+    const query = new D1ArticleQueryRepository(d1);
 
-    const saved = await cmd.upsert(unpersistedNote({ slug: "byid", title: "T" }));
+    const saved = await cmd.upsert(unpersistedArticle({ slug: "byid", title: "T" }));
     await cmd.delete(saved.id);
 
-    expect(await query.findBySlug(NoteSlug.create("byid"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("byid"))).toBeUndefined();
   });
 });

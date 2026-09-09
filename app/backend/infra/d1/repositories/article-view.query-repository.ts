@@ -1,9 +1,9 @@
 import { asc, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type { INoteViewQueryRepository } from "~/backend/domain/note-view";
-import { notes } from "~/backend/infra/d1/schema";
+import type { IArticleViewQueryRepository } from "~/backend/domain/article-view";
+import { articles } from "~/backend/infra/d1/schema";
 
-export class D1NoteViewQueryRepository implements INoteViewQueryRepository {
+export class D1ArticleViewQueryRepository implements IArticleViewQueryRepository {
   private readonly db;
 
   constructor(d1: D1Database) {
@@ -22,11 +22,11 @@ export class D1NoteViewQueryRepository implements INoteViewQueryRepository {
    * ある方を見せたい。公開日まで並ぶことも有りうるので、最後は id で決める。並びが
    * 実行ごとに揺れると、順位が理由もなく入れ替わってしまう。
    */
-  async listPopularNoteIds(limit: number): Promise<readonly string[]> {
+  async listPopularArticleIds(limit: number): Promise<readonly string[]> {
     const rows = await this.db
-      .select({ id: notes.id })
-      .from(notes)
-      .orderBy(desc(notes.viewLogScore), desc(notes.publishedOn), asc(notes.id))
+      .select({ id: articles.id })
+      .from(articles)
+      .orderBy(desc(articles.viewLogScore), desc(articles.publishedOn), asc(articles.id))
       .limit(limit);
 
     return rows.map((row) => row.id);

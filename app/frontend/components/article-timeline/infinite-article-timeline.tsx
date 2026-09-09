@@ -83,7 +83,7 @@ export function InfiniteArticleTimeline({
     setState("loading");
     try {
       const payload = await loadPage(next, perPage);
-      setArticles((current) => [...current, ...payload.notes]);
+      setArticles((current) => [...current, ...payload.articles]);
       setPage(next);
       setState("idle");
     } catch {

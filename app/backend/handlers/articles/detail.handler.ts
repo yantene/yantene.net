@@ -1,62 +1,65 @@
 import { Hono } from "hono";
-import { toNoteDetail } from "./note-detail-view";
+import { toArticleDetail } from "./article-detail-view";
 import { buildPayload, type ReactionsPayload } from "./reaction.handler";
 import { extractHeadings } from "./toc-headings";
-import { recordNoteView, type NoteViewRecording } from "./view-recording";
-import type { NoteDetail, PublicNoteMeta } from "./note-detail-view";
-import type { Note } from "~/backend/domain/note";
+import { recordArticleView, type ArticleViewRecording } from "./view-recording";
+import type { ArticleDetail, PublicArticleMeta } from "./article-detail-view";
+import type { Article } from "~/backend/domain/article";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
-import { articlePath, NoteNotFoundError, NoteSlug } from "~/backend/domain/note";
+import { articlePath, ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
-import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
+import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import {
   D1LinkCardQueryRepository,
-  D1NoteEmbeddingQueryRepository,
-  D1NoteQueryRepository,
+  D1ArticleEmbeddingQueryRepository,
+  D1ArticleQueryRepository,
   D1WebmentionBlocklist,
   D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
-import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /** 記事末に出す関連記事の最大件数。 */
 const RELATED_LIMIT = 6;
 
 /**
- * slug からノート詳細 (メタデータ + キャッシュ済み MDAST) を読む。
+ * slug から記事詳細 (メタデータ + キャッシュ済み MDAST) を読む。
  *
- * - D1 にメタデータが無い = そもそも存在しないノート → undefined (呼び出し側で 404)。
+ * - D1 にメタデータが無い = そもそも存在しない記事 → undefined (呼び出し側で 404)。
  * - D1 に在るのに R2 の MDAST が無い = キャッシュ不整合。静かに 404 で隠さず throw する
  *   (fail-loud)。公開済みの記事が消えて見えるより、不整合を表面化させる。
  *
  * D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
  */
-/** 内部用。API に出す NoteDetail に加えて、閲覧の記録に要る id を併せて返す。 */
-interface ResolvedNote {
-  readonly detail: NoteDetail;
-  readonly noteId: string;
+/** 内部用。API に出す ArticleDetail に加えて、閲覧の記録に要る id を併せて返す。 */
+interface ResolvedArticle {
+  readonly detail: ArticleDetail;
+  readonly articleId: string;
 }
 
-async function loadNoteDetail(env: Env, slug: NoteSlug): Promise<ResolvedNote | undefined> {
-  const [note, mdast] = await Promise.all([
-    new D1NoteQueryRepository(env.D1).findBySlug(slug),
-    new R2NoteContentCache(env.R2).getMdast(slug),
+async function loadArticleDetail(
+  env: Env,
+  slug: ArticleSlug,
+): Promise<ResolvedArticle | undefined> {
+  const [article, mdast] = await Promise.all([
+    new D1ArticleQueryRepository(env.D1).findBySlug(slug),
+    new R2ArticleContentCache(env.R2).getMdast(slug),
   ]);
-  if (note === undefined) return undefined;
+  if (article === undefined) return undefined;
   if (mdast === undefined) {
-    throw new Error(`MDAST cache is missing for an indexed note: ${slug.toString()}`);
+    throw new Error(`MDAST cache is missing for an indexed article: ${slug.toString()}`);
   }
   const linkCards = await loadLinkCards(env, mdast as Root);
-  return { detail: toNoteDetail(note, mdast, linkCards), noteId: note.id };
+  return { detail: toArticleDetail(article, mdast, linkCards), articleId: article.id };
 }
 
 /**
@@ -76,22 +79,22 @@ async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
 }
 
 /** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */
-async function resolveDetail(env: Env, slugParam: string): Promise<ResolvedNote | undefined> {
-  const slug = NoteSlug.parse(slugParam);
-  return slug === undefined ? undefined : loadNoteDetail(env, slug);
+async function resolveDetail(env: Env, slugParam: string): Promise<ResolvedArticle | undefined> {
+  const slug = ArticleSlug.parse(slugParam);
+  return slug === undefined ? undefined : loadArticleDetail(env, slug);
 }
 
 /**
- * ノート詳細の公開 JSON API ルータ。認証不要。
- * GET /:slug → メタデータ + MDAST。存在しなければ NoteNotFoundError (→ 404)。
+ * 記事詳細の公開 JSON API ルータ。認証不要。
+ * GET /:slug → メタデータ + MDAST。存在しなければ ArticleNotFoundError (→ 404)。
  */
-export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
+export function createArticleDetailApiRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/:slug", async (c) => {
     const slugParam = c.req.param("slug");
     const resolved = await resolveDetail(c.env, slugParam);
-    if (resolved === undefined) throw new NoteNotFoundError(slugParam);
+    if (resolved === undefined) throw new ArticleNotFoundError(slugParam);
     return c.json(resolved.detail);
   });
 
@@ -106,22 +109,22 @@ export function createNoteDetailApiRouter(): Hono<{ Bindings: Env }> {
  */
 async function loadReactions(
   env: Env,
-  noteId: string,
-  slug: NoteSlug,
+  articleId: string,
+  slug: ArticleSlug,
   cookie: string | null,
 ): Promise<ReactionsPayload> {
   const sessionId = readSessionId(cookie);
-  if (sessionId === undefined) return buildPayload(env, noteId, undefined);
+  if (sessionId === undefined) return buildPayload(env, articleId, undefined);
 
   const session = await new KvSessionQueryRepository(env.SESSIONS).findById(sessionId);
-  return buildPayload(env, noteId, session?.reactionFor(slug)?.emoji);
+  return buildPayload(env, articleId, session?.reactionFor(slug)?.emoji);
 }
 
-export type NoteDetailPageData =
+export type ArticleDetailPageData =
   | { readonly found: false }
   | {
       readonly found: true;
-      readonly note: PublicNoteMeta;
+      readonly article: PublicArticleMeta;
       /** パース済み MDAST。loader を通して渡すため具体型で持つ (unknown だと型が落ちる)。 */
       readonly mdast: Root;
       /** 本文に貼られたむき出しの URL のカード。URL をキーに引く。 */
@@ -133,7 +136,7 @@ export type NoteDetailPageData =
        * hydration mismatch になる (#156)。
        */
       readonly webmentions: WebmentionGroups;
-      readonly related: readonly PublicNote[];
+      readonly related: readonly PublicArticle[];
       readonly headings: readonly TocHeading[];
       /**
        * 押されているリアクションと、この読み手が押しているもの。
@@ -158,46 +161,48 @@ export type NoteDetailPageData =
  */
 async function loadRelated(
   env: Env,
-  query: D1NoteQueryRepository,
-  slug: NoteSlug,
-): Promise<readonly Note[]> {
-  const slugs = await new D1NoteEmbeddingQueryRepository(env.D1).findRelatedSlugs(
+  query: D1ArticleQueryRepository,
+  slug: ArticleSlug,
+): Promise<readonly Article[]> {
+  const slugs = await new D1ArticleEmbeddingQueryRepository(env.D1).findRelatedSlugs(
     slug,
     RELATED_LIMIT,
   );
   if (slugs.length === 0) return [];
-  const notes = await query.findBySlugs(slugs);
-  const bySlug = new Map(notes.map((note) => [note.slug.toString(), note] as const));
-  return slugs.map((item) => bySlug.get(item)).filter((note) => note !== undefined);
+  const articles = await query.findBySlugs(slugs);
+  const bySlug = new Map(articles.map((article) => [article.slug.toString(), article] as const));
+  return slugs.map((item) => bySlug.get(item)).filter((article) => article !== undefined);
 }
 
 /**
- * ノート詳細ページのデータを読む (Composition Root)。認証不要。
+ * 記事詳細ページのデータを読む (Composition Root)。認証不要。
  * 存在しない slug は throw せず `found: false` を返し、呼び出し側 (loader) が
  * 404 ステータスで not-found 状態のページを描画する。
  */
-export async function loadNoteDetailPage(
+export async function loadArticleDetailPage(
   env: Env,
   slugParam: string,
   origin: string,
-  recording: NoteViewRecording | null,
-): Promise<NoteDetailPageData> {
+  recording: ArticleViewRecording | null,
+): Promise<ArticleDetailPageData> {
   const resolved = await resolveDetail(env, slugParam);
   if (resolved === undefined) return { found: false };
 
   const detail = resolved.detail;
   // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
   if (recording !== null) {
-    recordNoteView(env, { id: resolved.noteId, slug: detail.note.slug }, recording);
+    recordArticleView(env, { id: resolved.articleId, slug: detail.article.slug }, recording);
   }
 
-  const query = new D1NoteQueryRepository(env.D1);
-  const slug = NoteSlug.create(detail.note.slug);
+  const query = new D1ArticleQueryRepository(env.D1);
+  const slug = ArticleSlug.create(detail.article.slug);
   const [related, reactions, webmentions, blockedHosts] = await Promise.all([
     loadRelated(env, query, slug),
-    loadReactions(env, resolved.noteId, slug, recording?.cookie ?? null),
+    loadReactions(env, resolved.articleId, slug, recording?.cookie ?? null),
     // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
-    new D1WebmentionQueryRepository(env.D1).listByNoteId(entityId<"Note">(resolved.noteId)),
+    new D1WebmentionQueryRepository(env.D1).listByArticleId(
+      entityId<"Article">(resolved.articleId),
+    ),
     new D1WebmentionBlocklist(env.D1).listBlockedHosts(),
   ]);
 
@@ -215,24 +220,24 @@ export async function loadNoteDetailPage(
   const mdast = detail.mdast as Root;
   return {
     found: true,
-    note: detail.note,
+    article: detail.article,
     mdast,
     linkCards: detail.linkCards,
     webmentions: toWebmentionGroups(shown),
-    related: related.map((note) => toPublicNote(note)),
+    related: related.map((article) => toPublicArticle(article)),
     headings: extractHeadings(mdast),
     reactions,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
-      headline: detail.note.title,
-      description: detail.note.summary,
-      image: `${origin}/og/articles/${detail.note.slug}`,
-      datePublished: detail.note.publishedOn,
-      dateModified: detail.note.lastModifiedOn,
+      headline: detail.article.title,
+      description: detail.article.summary,
+      image: `${origin}/og/articles/${detail.article.slug}`,
+      datePublished: detail.article.publishedOn,
+      dateModified: detail.article.lastModifiedOn,
       author: { "@type": "Person", name: "yantene", url: `${origin}/` },
       publisher: { "@type": "Person", name: "yantene" },
-      mainEntityOfPage: `${origin}${articlePath(detail.note.slug)}`,
+      mainEntityOfPage: `${origin}${articlePath(detail.article.slug)}`,
     },
   };
 }

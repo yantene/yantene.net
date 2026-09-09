@@ -23,7 +23,7 @@ import type { Element, ElementContent, Root as HastRoot, RootContent } from "has
 import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
-import { ALERT_TAG_NAME } from "~/backend/services/note-content-parser";
+import { ALERT_TAG_NAME } from "~/backend/services/article-content-parser";
 import { withLowercaseScheme } from "~/lib/http-url";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
@@ -88,7 +88,7 @@ const sanitizeSchema = {
     source: ["src", "type"],
     [LINK_CARD_TAG]: ["url"],
     // Alert も link-card と同じくこちらが組み立てた印で、同じ経路なら本文からも書ける。
-    // 運ぶのは種別 1 つだけ (note-content-parser.ts が引用から起こす)。
+    // 運ぶのは種別 1 つだけ (article-content-parser.ts が引用から起こす)。
     [ALERT_TAG_NAME]: ["kind"],
     ...Object.fromEntries(mathMlTagNames.map((tagName) => [tagName, [...mathMlAttributes]])),
   },

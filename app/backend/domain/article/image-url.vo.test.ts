@@ -3,7 +3,7 @@ import { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
 
 describe("ImageUrl", () => {
   it("accepts a root-relative asset API path", () => {
-    const url = "/api/v1/articles/my-note/assets/cover.png";
+    const url = "/api/v1/articles/my-article/assets/cover.png";
     expect(ImageUrl.create(url).toString()).toBe(url);
   });
 

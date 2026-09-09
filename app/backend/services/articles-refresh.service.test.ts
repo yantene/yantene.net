@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NotesRefreshService } from "./notes-refresh.service";
+import { ArticlesRefreshService } from "./articles-refresh.service";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
-import type { CachedAsset, INoteContentCache } from "~/backend/domain/note";
-import { NoteSlug } from "~/backend/domain/note";
+import type { CachedAsset, IArticleContentCache } from "~/backend/domain/article";
+import { ArticleSlug } from "~/backend/domain/article";
 import {
   Webmention,
   WebmentionAuthor,
@@ -10,16 +10,16 @@ import {
   WebmentionUrl,
 } from "~/backend/domain/webmention";
 import {
-  D1NoteCommandRepository,
-  D1NoteQueryRepository,
-  D1NoteSearchIndex,
+  D1ArticleCommandRepository,
+  D1ArticleQueryRepository,
+  D1ArticleSearchIndex,
   D1WebmentionCommandRepository,
   D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 class MockContentStore implements IContentStore {
-  /** readFile に渡されたパス。1 ノートを何度読んだかを見るために控える。 */
+  /** readFile に渡されたパス。1 記事を何度読んだかを見るために控える。 */
   readonly reads: string[] = [];
 
   constructor(private readonly files: Map<string, { hash: string; bytes: Uint8Array }>) {}
@@ -34,40 +34,40 @@ class MockContentStore implements IContentStore {
   }
 }
 
-class InMemoryCache implements INoteContentCache {
+class InMemoryCache implements IArticleContentCache {
   readonly sources = new Map<string, string>();
   readonly mdasts = new Map<string, unknown>();
   readonly assets = new Map<string, CachedAsset>();
 
-  putSource(slug: NoteSlug, markdown: string): Promise<void> {
+  putSource(slug: ArticleSlug, markdown: string): Promise<void> {
     this.sources.set(slug.toString(), markdown);
     return Promise.resolve();
   }
-  getSource(slug: NoteSlug): Promise<string | undefined> {
+  getSource(slug: ArticleSlug): Promise<string | undefined> {
     return Promise.resolve(this.sources.get(slug.toString()));
   }
   /** この slug の putMdast で落とす。同期の途中で落ちたときの姿を見るために使う。 */
   failMdastFor?: string;
-  putMdast(slug: NoteSlug, mdast: unknown): Promise<void> {
+  putMdast(slug: ArticleSlug, mdast: unknown): Promise<void> {
     if (this.failMdastFor === slug.toString()) {
       return Promise.reject(new Error("R2 is down"));
     }
     this.mdasts.set(slug.toString(), mdast);
     return Promise.resolve();
   }
-  getMdast(slug: NoteSlug): Promise<unknown> {
+  getMdast(slug: ArticleSlug): Promise<unknown> {
     return Promise.resolve(this.mdasts.get(slug.toString()));
   }
-  putAsset(slug: NoteSlug, path: string, asset: CachedAsset): Promise<void> {
+  putAsset(slug: ArticleSlug, path: string, asset: CachedAsset): Promise<void> {
     this.assets.set(`${slug.toString()}::${path}`, asset);
     return Promise.resolve();
   }
-  getAsset(slug: NoteSlug, path: string): Promise<CachedAsset | undefined> {
+  getAsset(slug: ArticleSlug, path: string): Promise<CachedAsset | undefined> {
     return Promise.resolve(this.assets.get(`${slug.toString()}::${path}`));
   }
   /** この slug の pruneAssets で落とす。 */
   failPruneFor?: string;
-  pruneAssets(slug: NoteSlug, keep: ReadonlySet<string>): Promise<void> {
+  pruneAssets(slug: ArticleSlug, keep: ReadonlySet<string>): Promise<void> {
     if (this.failPruneFor === slug.toString()) {
       return Promise.reject(new Error("R2 list failed"));
     }
@@ -79,7 +79,7 @@ class InMemoryCache implements INoteContentCache {
     }
     return Promise.resolve();
   }
-  deleteNote(slug: NoteSlug): Promise<void> {
+  deleteArticle(slug: ArticleSlug): Promise<void> {
     this.sources.delete(slug.toString());
     this.mdasts.delete(slug.toString());
     const prefix = `${slug.toString()}::`;
@@ -138,21 +138,21 @@ Body with an inline image ![alt](./inline.png).
 `;
 
 function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
-  service: NotesRefreshService;
-  command: D1NoteCommandRepository;
-  query: D1NoteQueryRepository;
+  service: ArticlesRefreshService;
+  command: D1ArticleCommandRepository;
+  query: D1ArticleQueryRepository;
   cache: InMemoryCache;
   content: MockContentStore;
   /** Webmention など、同期の巻き添えを見るために同じ DB を触る用。 */
   d1: D1Database;
 } {
   const d1 = createTestD1();
-  const command = new D1NoteCommandRepository(d1);
-  const query = new D1NoteQueryRepository(d1);
+  const command = new D1ArticleCommandRepository(d1);
+  const query = new D1ArticleQueryRepository(d1);
   const cache = new InMemoryCache();
-  const searchIndex = new D1NoteSearchIndex(d1);
+  const searchIndex = new D1ArticleSearchIndex(d1);
   const content = new MockContentStore(files);
-  const service = new NotesRefreshService(content, command, query, cache, searchIndex);
+  const service = new ArticlesRefreshService(content, command, query, cache, searchIndex);
   return { service, command, query, cache, content, d1 };
 }
 
@@ -160,8 +160,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("NotesRefreshService", () => {
-  it("indexes a note, caches its MDAST and assets, resolves image URLs", async () => {
+describe("ArticlesRefreshService", () => {
+  it("indexes an article, caches its MDAST and assets, resolves image URLs", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
       ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
@@ -173,12 +173,12 @@ describe("NotesRefreshService", () => {
     expect(result.processed).toEqual(["hello"]);
     expect(result.skipped).toEqual([]);
 
-    const note = await query.findBySlug(NoteSlug.create("hello"));
-    expect(note?.title.toString()).toBe("Hello");
-    expect(note?.imageUrl?.toString()).toBe("/api/v1/articles/hello/assets/cover.png");
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    expect(article?.title.toString()).toBe("Hello");
+    expect(article?.imageUrl?.toString()).toBe("/api/v1/articles/hello/assets/cover.png");
     // sourceHash は md + アセットの合成ハッシュ (生の blob ハッシュではない)。
-    expect(note?.sourceHash).toMatch(/^[0-9a-f]{8}$/);
-    expect(note?.summary).toContain("Body with an inline image");
+    expect(article?.sourceHash).toMatch(/^[0-9a-f]{8}$/);
+    expect(article?.summary).toContain("Body with an inline image");
 
     // アセットが R2 キャッシュに入る。
     expect(cache.assets.has("hello::cover.png")).toBe(true);
@@ -289,7 +289,7 @@ lastModifiedOn: 2026-01-15
   });
 
   /*
-   * **素の相対パスはアセット扱いになる。** 直書きの `[前の記事](other-note)` が元から
+   * **素の相対パスはアセット扱いになる。** 直書きの `[前の記事](other-article)` が元から
    * こうで、#295 で参照記法もこれに揃った。記事間のリンクはルート相対で書くという
    * 決まりを、ここで固定しておく (書き方で結果が変わらないことのほうを取った)。
    */
@@ -302,7 +302,7 @@ lastModifiedOn: 2026-01-15
 
 [前の記事][prev]
 
-[prev]: other-note
+[prev]: other-article
 `;
     const files = new Map([["articles/bare.md", { hash: "h1", bytes: bytes(bareMd) }]]);
     const { service, cache } = setup(files);
@@ -310,7 +310,7 @@ lastModifiedOn: 2026-01-15
     await service.refresh();
 
     expect(JSON.stringify(cache.mdasts.get("bare"))).toContain(
-      "/api/v1/articles/bare/assets/other-note",
+      "/api/v1/articles/bare/assets/other-article",
     );
   });
 
@@ -415,7 +415,7 @@ lastModifiedOn: 2026-01-15
   /*
    * 同期の途中で落ちても、**その記事を消したまま残さない。**
    *
-   * 以前は先に deleteNote してから書き直していたので、途中で落ちると D1 に行があるのに
+   * 以前は先に deleteArticle してから書き直していたので、途中で落ちると D1 に行があるのに
    * R2 に原文も MDAST も無い状態になり、記事ページが 500 になった。しかも落ちた原因が
    * ファイル名のような固定のものだと毎回同じ場所で死ぬ (#297 がまさにそれ)。
    */
@@ -445,7 +445,7 @@ lastModifiedOn: 2026-01-15
   /*
    * **D1 の upsert より前に済ませるものが、本当に前で走っているか。**
    *
-   * contentHash が入った時点でそのノートは「同期済み」になり、次の refresh は読まずに
+   * contentHash が入った時点でその記事は「同期済み」になり、次の refresh は読まずに
    * 飛ばす。だから upsert より後ろに置いた処理は、落ちても二度と直らない (force を
    * 流すまで) うえ、直す必要があることも表に出ない。
    */
@@ -453,7 +453,9 @@ lastModifiedOn: 2026-01-15
     [
       "検索の索引",
       (harness: ReturnType<typeof setup>) => {
-        vi.spyOn(D1NoteSearchIndex.prototype, "index").mockRejectedValue(new Error("step failed"));
+        vi.spyOn(D1ArticleSearchIndex.prototype, "index").mockRejectedValue(
+          new Error("step failed"),
+        );
         return harness;
       },
     ],
@@ -514,7 +516,7 @@ lastModifiedOn: 2026-01-15
    * decodeURIComponent が URIError を投げ、**その記事のキャッシュを消した後で
    * refresh 全体が止まっていた** (#297)。ファイル名を変えるまで毎回同じ場所で死ぬ。
    *
-   * 巻き添えを見るために、後ろにもう 1 本ノートを置いてある。
+   * 巻き添えを見るために、後ろにもう 1 本記事を置いてある。
    */
   it("survives an asset name with a stray percent sign", async () => {
     const oddMd = `---
@@ -536,7 +538,7 @@ lastModifiedOn: 2026-01-15
 
     const result = await service.refresh();
 
-    // 落ちずに両方とも入る。後ろのノートが巻き添えにならない。
+    // 落ちずに両方とも入る。後ろの記事が巻き添えにならない。
     expect(result.processed).toContain("odd");
     expect(result.processed).toContain("hello");
     expect(result.skipped).toEqual([]);
@@ -553,14 +555,14 @@ lastModifiedOn: 2026-01-15
 
   /*
    * `#` 始まりを素通しするようにしたので、フロントマターの imageUrl に書かれると
-   * ImageUrl.create (ルート相対しか受けない) で弾かれ、そのノートは skipped になる。
+   * ImageUrl.create (ルート相対しか受けない) で弾かれ、その記事は skipped になる。
    *
    * これは `imageUrl: https://example.com/a.png` が以前から辿る道と同じで、#297 で
    * 増えたのは入口が 1 つ増えたことだけ。**黙って壊れた絵を出すより、報告して止まる
    * ほうがよい**という既存の判断に揃えてある。ここで固定しておかないと、次に
    * resolveAssetUrl を触る人が気づかないまま挙動を変える。
    */
-  it("reports a note whose imageUrl is not a resolvable asset", async () => {
+  it("reports an article whose imageUrl is not a resolvable asset", async () => {
     const oddCover = `---
 title: Odd cover
 imageUrl: "#cover"
@@ -628,10 +630,10 @@ lastModifiedOn: 2026-01-15
     expect(cache.sources.get("hello")).toBe(helloMd);
   });
 
-  it("drops the cached source when the note disappears from the content store", async () => {
+  it("drops the cached source when the article disappears from the content store", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-      // ツリーが空になると全件削除の安全弁に掛かるので、無関係のノートを 1 本残す。
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係の記事を 1 本残す。
       ["articles/other.md", { hash: "o1", bytes: bytes(helloMd) }],
     ]);
     const { service, cache } = setup(files);
@@ -668,9 +670,9 @@ lastModifiedOn: 2026-01-15
 
   /*
    * 変更検出は md + アセットのハッシュなので、実装変更 (MDAST の作り方を変えた等) は
-   * 通常の refresh では既存ノートに反映されない。force はそれを流すための逃げ道。
+   * 通常の refresh では既存記事に反映されない。force はそれを流すための逃げ道。
    */
-  it("reprocesses unchanged notes when force is given", async () => {
+  it("reprocesses unchanged articles when force is given", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
       ["articles/hello/cover.png", { hash: "a1", bytes: pngBytes(1200, 630) }],
@@ -703,7 +705,7 @@ lastModifiedOn: 2026-01-15
     expect(mdastJson).not.toContain("hProperties");
   });
 
-  it("skips unchanged notes on a second refresh (hash match)", async () => {
+  it("skips unchanged articles on a second refresh (hash match)", async () => {
     const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service } = setup(files);
 
@@ -712,7 +714,7 @@ lastModifiedOn: 2026-01-15
     expect(second.processed).toEqual([]);
   });
 
-  it("reprocesses a note when its hash changes", async () => {
+  it("reprocesses an article when its hash changes", async () => {
     const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service } = setup(files);
 
@@ -722,10 +724,10 @@ lastModifiedOn: 2026-01-15
     expect(second.processed).toEqual(["hello"]);
   });
 
-  it("deletes notes removed from the tree", async () => {
+  it("deletes articles removed from the tree", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
-      // ツリーが空になると全件削除の安全弁に掛かるので、無関係のノートを 1 本残す。
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係の記事を 1 本残す。
       ["articles/other.md", { hash: "o1", bytes: bytes(helloMd) }],
     ]);
     const { service, query, cache } = setup(files);
@@ -735,11 +737,11 @@ lastModifiedOn: 2026-01-15
     const result = await service.refresh();
 
     expect(result.deleted).toEqual(["hello"]);
-    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeUndefined();
     expect(cache.mdasts.has("hello")).toBe(false);
   });
 
-  it("skips notes with invalid frontmatter (missing publishedOn)", async () => {
+  it("skips articles with invalid frontmatter (missing publishedOn)", async () => {
     const files = new Map([
       ["articles/bad.md", { hash: "b1", bytes: bytes("---\ntitle: Bad\n---\n\nBody.\n") }],
     ]);
@@ -749,14 +751,14 @@ lastModifiedOn: 2026-01-15
     expect(result.processed).toEqual([]);
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0].path).toBe("articles/bad.md");
-    expect(await query.findBySlug(NoteSlug.create("bad"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("bad"))).toBeUndefined();
   });
 
   /*
    * 数式は refresh のときに MathML へ組む。読めない LaTeX があったら、そのノードだけを
-   * 落として理由を返す (refresh 全体を落とすと他のノートまで同期されない)。
+   * 落として理由を返す (refresh 全体を落とすと他の記事まで同期されない)。
    */
-  it("skips notes whose LaTeX cannot be parsed", async () => {
+  it("skips articles whose LaTeX cannot be parsed", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }] as const,
       [
@@ -775,10 +777,10 @@ lastModifiedOn: 2026-01-15
     expect(result.processed).toEqual(["hello"]);
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0].path).toBe("articles/bad-math.md");
-    expect(await query.findBySlug(NoteSlug.create("bad-math"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("bad-math"))).toBeUndefined();
   });
 
-  it("caches the MathML built from the LaTeX in the note body", async () => {
+  it("caches the MathML built from the LaTeX in the article body", async () => {
     const files = new Map([
       [
         "articles/hello.md",
@@ -855,7 +857,7 @@ describe("visibility", () => {
     expect(result.processed).toEqual(["hello"]);
     expect(result.unpublished).toEqual(["secret"]);
 
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
     expect(cache.sources.has("secret")).toBe(false);
     expect(cache.mdasts.has("secret")).toBe(false);
   });
@@ -873,7 +875,7 @@ describe("visibility", () => {
     const { service, query, cache } = setup(files);
 
     await service.refresh();
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
     expect(cache.sources.has("secret")).toBe(true);
 
     // 同じ slug を private にして再度 refresh
@@ -885,7 +887,7 @@ describe("visibility", () => {
 
     expect(result.unpublished).toEqual(["secret"]);
     expect(result.deleted).toEqual(["secret"]);
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
     expect(cache.sources.has("secret")).toBe(false);
   });
 
@@ -895,7 +897,7 @@ describe("visibility", () => {
 
     const result = await service.refresh();
     expect(result.unpublished).toEqual([]);
-    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
   });
 
   it("public を明示した記事は公開する", async () => {
@@ -906,7 +908,7 @@ describe("visibility", () => {
 
     const result = await service.refresh();
     expect(result.processed).toEqual(["secret"]);
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
   });
 
   it("読めない値は公開せず、綴りの誤りとして報告する", async () => {
@@ -921,7 +923,7 @@ describe("visibility", () => {
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0]?.path).toBe("articles/secret.md");
     expect(result.skipped[0]?.reason).toContain("visibility");
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
   });
 
   /*
@@ -949,7 +951,7 @@ describe("visibility", () => {
 
     expect(result.skipped).toHaveLength(1);
     expect(result.deleted).toEqual([]);
-    expect(await query.findBySlug(NoteSlug.create("secret"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
     expect(cache.sources.has("secret")).toBe(true);
   });
 
@@ -992,19 +994,19 @@ describe("visibility", () => {
 
     expect(result.processed).toEqual([]);
     expect(content.reads).toHaveLength(readsAfterFirst);
-    // 読まなかったノートを「正本から消えた」と誤認して掃除していないこと。
+    // 読まなかった記事を「正本から消えた」と誤認して掃除していないこと。
     expect(result.deleted).toEqual([]);
-    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
   });
 });
 
 /*
- * コンテンツ不正 (読めない LaTeX / 読めない visibility) はそのノートを飛ばすだけで、
- * 前回同期した内容には手を付けない。スキップしたノートを掃除の対象に残していたころは、
+ * コンテンツ不正 (読めない LaTeX / 読めない visibility) はその記事を飛ばすだけで、
+ * 前回同期した内容には手を付けない。スキップした記事を掃除の対象に残していたころは、
  * 書き手の誤字 1 つで公開中の記事が 404 になり、閲覧数も届いた Webmention も
  * 巻き添えで消えていた ([#250](https://github.com/yantene/yantene.net/issues/250))。
  */
-describe("コンテンツ不正でスキップしたノート", () => {
+describe("コンテンツ不正でスキップした記事", () => {
   /** 公開に必要なフロントマターは揃っていて、本文の LaTeX だけが読めない。 */
   const brokenMathMd = String.raw`---
 title: Broken
@@ -1025,11 +1027,11 @@ publishedOn: 2026-01-15
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0].path).toBe("articles/hello.md");
     expect(result.processed).toEqual([]);
-    // 正本には在るのだから、消えたノートとして掃除してはいけない。
+    // 正本には在るのだから、消えた記事として掃除してはいけない。
     expect(result.deleted).toEqual([]);
 
-    const note = await query.findBySlug(NoteSlug.create("hello"));
-    expect(note?.title.toString()).toBe("Hello");
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    expect(article?.title.toString()).toBe("Hello");
     // 原文と MDAST も前回同期したまま。記事は読めるままになる。
     expect(cache.sources.get("hello")).toBe(helloMd);
     expect(cache.mdasts.has("hello")).toBe(true);
@@ -1040,14 +1042,14 @@ publishedOn: 2026-01-15
     const { service, query, d1 } = setup(files);
 
     await service.refresh();
-    const note = await query.findBySlug(NoteSlug.create("hello"));
-    if (note === undefined) throw new Error("1 回目の同期で載っていること");
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    if (article === undefined) throw new Error("1 回目の同期で載っていること");
 
     // 記事に反応が 1 件届いた状態を作る。
     await new D1WebmentionCommandRepository(d1).upsert(
       Webmention.create({
-        noteId: note.id,
-        target: note.slug,
+        articleId: article.id,
+        target: article.slug,
         source: WebmentionUrl.create("https://example.com/post/1"),
         type: WebmentionType.reply(),
         author: WebmentionAuthor.create({ name: "Alice" }),
@@ -1057,8 +1059,8 @@ publishedOn: 2026-01-15
     files.set("articles/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
     await service.refresh();
 
-    // ノートの行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
-    const stored = await new D1WebmentionQueryRepository(d1).listByNoteId(note.id);
+    // 記事の行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
+    const stored = await new D1WebmentionQueryRepository(d1).listByArticleId(article.id);
     expect(stored).toHaveLength(1);
     expect(stored[0].source.toString()).toBe("https://example.com/post/1");
   });
@@ -1078,7 +1080,7 @@ describe("空のツリー", () => {
     files.clear();
 
     await expect(service.refresh()).rejects.toThrow(/refusing to delete/);
-    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
     expect(cache.sources.has("hello")).toBe(true);
   });
 
@@ -1097,8 +1099,8 @@ describe("空のツリー", () => {
     files.set("notes/other.md", { hash: "h2", bytes: bytes(helloMd) });
 
     await expect(service.refresh()).rejects.toThrow(/no articles\/\*\.md/);
-    expect(await query.findBySlug(NoteSlug.create("hello"))).toBeDefined();
-    expect(await query.findBySlug(NoteSlug.create("other"))).toBeUndefined();
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("other"))).toBeUndefined();
   });
 
   it("まだ 1 件も載っていなければ空のツリーを受け入れる", async () => {

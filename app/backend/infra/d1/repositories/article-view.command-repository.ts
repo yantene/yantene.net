@@ -1,10 +1,10 @@
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import type { INoteViewCommandRepository } from "~/backend/domain/note-view";
-import { notes } from "~/backend/infra/d1/schema";
+import type { IArticleViewCommandRepository } from "~/backend/domain/article-view";
+import { articles } from "~/backend/infra/d1/schema";
 import { scoreWithWeightAdded } from "~/backend/infra/d1/view-log-score";
 
-export class D1NoteViewCommandRepository implements INoteViewCommandRepository {
+export class D1ArticleViewCommandRepository implements IArticleViewCommandRepository {
   private readonly db;
 
   constructor(d1: D1Database) {
@@ -19,13 +19,13 @@ export class D1NoteViewCommandRepository implements INoteViewCommandRepository {
    *
    * 記事が無ければ 1 行も当たらず、何も起きない。
    */
-  async addView(noteId: string, weightLog: number): Promise<void> {
+  async addView(articleId: string, weightLog: number): Promise<void> {
     await this.db
-      .update(notes)
+      .update(articles)
       .set({
-        viewCount: sql`${notes.viewCount} + 1`,
+        viewCount: sql`${articles.viewCount} + 1`,
         viewLogScore: scoreWithWeightAdded(weightLog),
       })
-      .where(eq(notes.id, noteId));
+      .where(eq(articles.id, articleId));
   }
 }

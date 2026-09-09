@@ -1,19 +1,19 @@
-export { NoteNotFoundError } from "./errors";
+export { ArticleNotFoundError } from "./errors";
 export { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
-export { InvalidNoteSlugError, NoteSlug } from "./note-slug.vo";
-export { InvalidNoteTitleError, NoteTitle } from "./note-title.vo";
-export { Note } from "./note.entity";
-export type { NoteId } from "./note.entity";
-export type { CachedAsset, INoteContentCache } from "./note-content-cache.interface";
-export type { INoteCommandRepository } from "./note.command-repository.interface";
-export type { INoteSearchIndex, NoteSearchDocument } from "./note-search-index.interface";
+export { InvalidArticleSlugError, ArticleSlug } from "./article-slug.vo";
+export { InvalidArticleTitleError, ArticleTitle } from "./article-title.vo";
+export { Article } from "./article.entity";
+export type { ArticleId } from "./article.entity";
+export type { CachedAsset, IArticleContentCache } from "./article-content-cache.interface";
+export type { IArticleCommandRepository } from "./article.command-repository.interface";
+export type { IArticleSearchIndex, ArticleSearchDocument } from "./article-search-index.interface";
 export type {
-  INoteQueryRepository,
-  NoteListQuery,
-  NoteListResult,
-  NoteSortField,
+  IArticleQueryRepository,
+  ArticleListQuery,
+  ArticleListResult,
+  ArticleSortField,
   SortDirection,
-} from "./note.query-repository.interface";
+} from "./article.query-repository.interface";
 export {
   ARTICLE_PATH_PREFIX,
   FORMER_ARTICLE_PATH_PREFIX,

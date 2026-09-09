@@ -115,7 +115,7 @@ function createMockStatement(
 }
 
 /**
- * ノートの対数スコアを直に読む。
+ * 記事の対数スコアを直に読む。
  *
  * 本番の経路にはこの列を読む手が無い。足し引きは UPDATE 1 文で完結し、読み出す側は
  * ORDER BY に使うだけなので、リポジトリに読み取りを生やすとテストのためだけの口が
@@ -123,11 +123,11 @@ function createMockStatement(
  */
 export async function readViewLogScore(
   d1: D1Database,
-  noteId: string,
+  articleId: string,
 ): Promise<number | undefined> {
   const row = await d1
-    .prepare("SELECT view_log_score AS score FROM notes WHERE id = ?")
-    .bind(noteId)
+    .prepare("SELECT view_log_score AS score FROM articles WHERE id = ?")
+    .bind(articleId)
     .first<{ score: number }>();
 
   return row?.score;

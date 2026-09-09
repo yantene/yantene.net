@@ -8,7 +8,7 @@ import type { ArticleTimelineItemProps } from "./article-timeline-item";
  * Bridgy が記事の並びを見つける経路。h-feed が 1 つで、各項目が h-entry として
  * URL を持っていること。
  */
-const notes: ArticleTimelineItemProps[] = [
+const articles: ArticleTimelineItemProps[] = [
   {
     slug: "hello",
     title: "こんにちは",
@@ -28,7 +28,7 @@ const notes: ArticleTimelineItemProps[] = [
 function renderTimeline(isGroupedByYear: boolean): HTMLElement {
   const { container } = render(
     <MemoryRouter>
-      <ArticleTimeline articles={notes} groupByYear={isGroupedByYear} />
+      <ArticleTimeline articles={articles} groupByYear={isGroupedByYear} />
     </MemoryRouter>,
   );
   return container;
@@ -47,7 +47,7 @@ describe("ArticleTimeline の microformats2", () => {
   it("各項目が h-entry として URL と題と日付を持つ", () => {
     const container = renderTimeline(false);
     const entries = [...container.querySelectorAll(":scope .h-entry")];
-    expect(entries).toHaveLength(notes.length);
+    expect(entries).toHaveLength(articles.length);
 
     const [first] = entries;
     expect(first.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/articles/hello");

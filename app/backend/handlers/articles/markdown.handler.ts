@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
-import { articlePath, NoteSlug } from "~/backend/domain/note";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
-import { R2NoteContentCache } from "~/backend/infra/r2/r2-note-content-cache";
+import { articlePath, ArticleSlug } from "~/backend/domain/article";
+import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -12,7 +12,7 @@ const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
 
 /** slug として妥当なら VO を、そうでなければ undefined を返す。 */
 /** HTML 応答に添える「Markdown 版もある」の広告 (RFC 8288)。 */
-function markdownAlternateLink(slug: NoteSlug): string {
+function markdownAlternateLink(slug: ArticleSlug): string {
   const target = `${articlePath(slug.toString())}${MARKDOWN_SUFFIX}`;
   return `<${target}>; rel="alternate"; type="text/markdown"`;
 }
@@ -25,25 +25,25 @@ function markdownAlternateLink(slug: NoteSlug): string {
  * 載せるため。検証済みの値だけがヘッダーに乗るようにしておく (パスパラメータは復号済みで
  * 届くので、素通しすると改行を含む値でヘッダー生成が落ちる)。
  */
-async function noteSourceResponse(
+async function articleSourceResponse(
   env: Env,
-  slug: NoteSlug | undefined,
+  slug: ArticleSlug | undefined,
   options: { readonly cacheControl: string },
 ): Promise<Response> {
-  if (slug === undefined) return notFoundResponse("note not found");
+  if (slug === undefined) return notFoundResponse("article not found");
 
   // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
-  const [note, markdown] = await Promise.all([
-    new D1NoteQueryRepository(env.D1).findBySlug(slug),
-    new R2NoteContentCache(env.R2).getSource(slug),
+  const [article, markdown] = await Promise.all([
+    new D1ArticleQueryRepository(env.D1).findBySlug(slug),
+    new R2ArticleContentCache(env.R2).getSource(slug),
   ]);
 
-  // D1 にメタデータが無い = そもそも存在しないノート。
-  if (note === undefined) return notFoundResponse("note not found");
+  // D1 にメタデータが無い = そもそも存在しない記事。
+  if (article === undefined) return notFoundResponse("article not found");
   // D1 に在るのに原文が無い = キャッシュ不整合。静かに 404 で隠さず throw する
   // (fail-loud)。実装追加の直後は force refresh で原文を流し込む必要がある。
   if (markdown === undefined) {
-    throw new Error(`Markdown source cache is missing for an indexed note: ${slug.toString()}`);
+    throw new Error(`Markdown source cache is missing for an indexed article: ${slug.toString()}`);
   }
 
   return new Response(markdown, {
@@ -67,8 +67,11 @@ async function noteSourceResponse(
  * `#preparedHeaders` を引き継がないため、Response を返す経路で `c.header()` を使うと
  * 何も言わずに消える。
  */
-async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): Promise<Response> {
-  const response = await noteSourceResponse(env, slug, {
+async function negotiatedSourceResponse(
+  env: Env,
+  slug: ArticleSlug | undefined,
+): Promise<Response> {
+  const response = await articleSourceResponse(env, slug, {
     cacheControl: NEGOTIATED_CONTENT_CACHE_CONTROL,
   });
 
@@ -80,7 +83,7 @@ async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): P
 }
 
 /**
- * ノートの原文 Markdown を返す公開ルータ。認証不要。
+ * 記事の原文 Markdown を返す公開ルータ。認証不要。
  *
  * 1 本の `/:file` で 3 つの入口を捌く。
  *
@@ -90,7 +93,7 @@ async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): P
  *    応答に `Vary: Accept` と Markdown 版への `Link` を足すだけ。
  * 3. `/articles/<slug>` で Accept が Markdown を名指しした — 原文を返す (ADR 0020)。
  *
- * ページではなく「ファイルとしてのノート」を返す 1 と 3 は、React Router へ委譲せず
+ * ページではなく「ファイルとしての記事」を返す 1 と 3 は、React Router へ委譲せず
  * Hono 側で完結させる (ADR 0006)。
  *
  * **ルートは 1 本に保つこと。** `/:file{[^/]+[.]md}` と `/:slug` のように分けると
@@ -98,22 +101,26 @@ async function negotiatedSourceResponse(env: Env, slug: NoteSlug | undefined): P
  * アプリ全体のリクエストが遅いマッチャーを通ることになる (番人は markdown.handler.test.ts の
  * "keeps the whole app on the faster router")。
  *
- * slug に `.` は使えない (NoteSlug の制約) ため、`<slug>.md` を別のノートと取り違える
+ * slug に `.` は使えない (ArticleSlug の制約) ため、`<slug>.md` を別の記事と取り違える
  * 余地はない。`.md` を落とした残りが slug として妥当でなければ 404。
  *
  * 本文は正本そのまま (フロントマター込み・画像の相対パスも書き換えない) を返す。
  * 解決済みの URL が要るクライアントには MDAST を返す JSON API がある (ADR 0005)。
  */
-export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
+export function createArticleMarkdownRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/:file", async (c, next) => {
     const file = c.req.param("file");
 
     if (file.endsWith(MARKDOWN_SUFFIX)) {
-      return noteSourceResponse(c.env, NoteSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)), {
-        cacheControl: contentCacheControlFor(c.env),
-      });
+      return articleSourceResponse(
+        c.env,
+        ArticleSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)),
+        {
+          cacheControl: contentCacheControlFor(c.env),
+        },
+      );
     }
 
     if (!isMarkdownPreferred(c.req.header("Accept"))) {
@@ -126,14 +133,14 @@ export function createNoteMarkdownRouter(): Hono<{ Bindings: Env }> {
       // (loader が status 404 を返す) にまで付けると、`rel=alternate` を辿る相手に
       // 必ず 404 になる URL を教えることになる。ここで在否を確かめ直すと D1 の読み取りが
       // ページ表示のたびに 1 回増えるので、下流が出した status をそのまま使う。
-      const slug = NoteSlug.parse(file);
+      const slug = ArticleSlug.parse(file);
       if (slug !== undefined && c.res.ok) {
         c.header("Link", markdownAlternateLink(slug), { append: true });
       }
       return;
     }
 
-    return negotiatedSourceResponse(c.env, NoteSlug.parse(file));
+    return negotiatedSourceResponse(c.env, ArticleSlug.parse(file));
   });
 
   return router;

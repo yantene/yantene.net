@@ -26,7 +26,7 @@ const problemDetails404 = {
     type: "about:blank",
     title: "Not Found",
     status: 404,
-    detail: "note not found",
+    detail: "article not found",
   },
 };
 
@@ -68,7 +68,7 @@ describe("createOgRouter GET /articles/:slug が見つからないとき", () =>
    * 404 に倒す try で囲ってあるのはスラグの解釈だけで、表を引くところは外に在る。
    * 引くところまで囲うと、D1 の不調が「カードの無い記事」の顔をして静かに通る。
    *
-   * いまの NoteSlug.create は InvalidNoteSlugError しか投げないので、握りの狭さ自体は
+   * いまの ArticleSlug.create は InvalidArticleSlugError しか投げないので、握りの狭さ自体は
    * 入力からは確かめようがない。代わりに、握りの外に在るべきものが外に在ることを見る。
    */
   it("表を引けなかった失敗は握らずに投げる", async () => {

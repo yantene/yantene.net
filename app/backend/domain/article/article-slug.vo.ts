@@ -6,17 +6,19 @@ import type { IValueObject } from "~/backend/domain/shared";
 const slugCharsPattern = /^[a-z0-9-]+$/;
 const MAX_LENGTH = 200;
 
-export class InvalidNoteSlugError extends Error {
-  readonly name = "InvalidNoteSlugError";
+export class InvalidArticleSlugError extends Error {
+  readonly name = "InvalidArticleSlugError";
 }
 
-export class NoteSlug implements IValueObject<NoteSlug> {
+export class ArticleSlug implements IValueObject<ArticleSlug> {
   private constructor(private readonly value: string) {}
 
-  static create(raw: string): NoteSlug {
+  static create(raw: string): ArticleSlug {
     const trimmed = raw.trim().toLowerCase();
     if (trimmed.length === 0 || trimmed.length > MAX_LENGTH) {
-      throw new InvalidNoteSlugError(`Note slug must be 1..${String(MAX_LENGTH)} characters long`);
+      throw new InvalidArticleSlugError(
+        `Article slug must be 1..${String(MAX_LENGTH)} characters long`,
+      );
     }
     if (
       !slugCharsPattern.test(trimmed) ||
@@ -24,11 +26,11 @@ export class NoteSlug implements IValueObject<NoteSlug> {
       trimmed.endsWith("-") ||
       trimmed.includes("--")
     ) {
-      throw new InvalidNoteSlugError(
-        "Note slug must be lowercase alphanumerics separated by single hyphens",
+      throw new InvalidArticleSlugError(
+        "Article slug must be lowercase alphanumerics separated by single hyphens",
       );
     }
-    return new NoteSlug(trimmed);
+    return new ArticleSlug(trimmed);
   }
 
   /**
@@ -42,11 +44,11 @@ export class NoteSlug implements IValueObject<NoteSlug> {
    * 返すのは「読めたか」だけ。undefined を 404 にするか別の応答にするかは、受け取る
    * 側 (handlers) の関心なのでここでは決めない。
    */
-  static parse(raw: string): NoteSlug | undefined {
+  static parse(raw: string): ArticleSlug | undefined {
     try {
       return this.create(raw);
     } catch (error) {
-      if (error instanceof InvalidNoteSlugError) return undefined;
+      if (error instanceof InvalidArticleSlugError) return undefined;
       throw error;
     }
   }
@@ -55,7 +57,7 @@ export class NoteSlug implements IValueObject<NoteSlug> {
     return this.value;
   }
 
-  equals(other: NoteSlug): boolean {
+  equals(other: ArticleSlug): boolean {
     return this.value === other.value;
   }
 

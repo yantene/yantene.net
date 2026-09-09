@@ -1,5 +1,5 @@
 /**
- * 記事 (長文のノート) のページ URL の形。
+ * 記事 (長文の投稿) のページ URL の形。
  *
  * ここに置く 2 つの表は、旧サイトからの転送 (handlers/legacy-redirects.handler.ts) と
  * Webmention の target の読み取り (domain/webmention) の両方が引く。片方にだけ持たせると、

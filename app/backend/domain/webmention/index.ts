@@ -3,7 +3,7 @@ export {
   InvalidWebmentionUrlError,
   SameSourceAndTargetError,
   SelfMentionNotAcceptedError,
-  TargetNoteNotFoundError,
+  TargetArticleNotFoundError,
   TargetNotOnThisSiteError,
   WebmentionRejectedError,
 } from "./errors";

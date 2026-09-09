@@ -1,6 +1,6 @@
 import type { IValueObject } from "~/backend/domain/shared";
 
-// ノートのカバー画像 URL。フロントマターの相対パス (`./cover.png`) は
+// 記事のカバー画像 URL。フロントマターの相対パス (`./cover.png`) は
 // アセット API URL (ルート相対 `/api/v1/articles/<slug>/assets/...`) に解決してから
 // VO 化する前提で、ここでは解決済みの「ルート相対パス」だけを受け入れる。
 //

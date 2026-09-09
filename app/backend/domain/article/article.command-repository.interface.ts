@@ -1,18 +1,18 @@
-import type { NoteSlug } from "./note-slug.vo";
-import type { Note, NoteId } from "./note.entity";
+import type { ArticleSlug } from "./article-slug.vo";
+import type { Article, ArticleId } from "./article.entity";
 import type { IUnpersisted } from "~/backend/domain/shared";
 
-export interface INoteCommandRepository {
+export interface IArticleCommandRepository {
   /**
-   * ノートのメタデータを slug をキーに upsert する。
+   * 記事のメタデータを slug をキーに upsert する。
    * refresh 時に正本の内容で D1 を同期するための操作。
    * 既存 slug があれば更新、無ければ新規作成し、永続化済みエンティティを返す。
    */
-  upsert(note: Note<IUnpersisted>): Promise<Note>;
+  upsert(article: Article<IUnpersisted>): Promise<Article>;
 
-  /** slug のノートを削除する (正本から消えたノートの掃除に使う)。 */
-  deleteBySlug(slug: NoteSlug): Promise<void>;
+  /** slug の記事を削除する (正本から消えた記事の掃除に使う)。 */
+  deleteBySlug(slug: ArticleSlug): Promise<void>;
 
-  /** id のノートを削除する。 */
-  delete(id: NoteId): Promise<void>;
+  /** id の記事を削除する。 */
+  delete(id: ArticleId): Promise<void>;
 }

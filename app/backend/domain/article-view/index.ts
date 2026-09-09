@@ -1,5 +1,5 @@
-export type { INoteViewCommandRepository } from "./note-view.command-repository.interface";
-export type { INoteViewQueryRepository } from "./note-view.query-repository.interface";
+export type { IArticleViewCommandRepository } from "./article-view.command-repository.interface";
+export type { IArticleViewQueryRepository } from "./article-view.query-repository.interface";
 export {
   logScoreAfterReaction,
   logScoreAfterReactionRemoved,

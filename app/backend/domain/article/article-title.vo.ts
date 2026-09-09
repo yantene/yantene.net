@@ -4,28 +4,28 @@ import type { IValueObject } from "~/backend/domain/shared";
 // 前後の空白は正規化し、空文字と過長を弾く。
 const MAX_LENGTH = 200;
 
-export class InvalidNoteTitleError extends Error {
-  readonly name = "InvalidNoteTitleError";
+export class InvalidArticleTitleError extends Error {
+  readonly name = "InvalidArticleTitleError";
 }
 
-export class NoteTitle implements IValueObject<NoteTitle> {
+export class ArticleTitle implements IValueObject<ArticleTitle> {
   private constructor(private readonly value: string) {}
 
-  static create(raw: string): NoteTitle {
+  static create(raw: string): ArticleTitle {
     const trimmed = raw.trim();
     if (trimmed.length === 0 || trimmed.length > MAX_LENGTH) {
-      throw new InvalidNoteTitleError(
-        `Note title must be 1..${String(MAX_LENGTH)} characters long`,
+      throw new InvalidArticleTitleError(
+        `Article title must be 1..${String(MAX_LENGTH)} characters long`,
       );
     }
-    return new NoteTitle(trimmed);
+    return new ArticleTitle(trimmed);
   }
 
   toString(): string {
     return this.value;
   }
 
-  equals(other: NoteTitle): boolean {
+  equals(other: ArticleTitle): boolean {
     return this.value === other.value;
   }
 

@@ -3,18 +3,18 @@ import type { WebmentionContent } from "./webmention-content.vo";
 import type { WebmentionType } from "./webmention-type.vo";
 import type { WebmentionUrl } from "./webmention-url.vo";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { NoteId, NoteSlug } from "~/backend/domain/note";
+import type { ArticleId, ArticleSlug } from "~/backend/domain/article";
 import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type WebmentionId = EntityId<"Webmention">;
 
 interface WebmentionFields<T extends IPersisted | IUnpersisted> {
   readonly id: T["id"] extends string ? WebmentionId : undefined;
-  /** 送り先のノート。 */
-  readonly noteId: NoteId;
-  /** 送り先のノートのスラグ。URL を組み直さずに済むよう、行にも持たせる。 */
-  readonly target: NoteSlug;
-  /** 送り元の記事の URL。(ノート, source) の組で一意。 */
+  /** 送り先の記事。 */
+  readonly articleId: ArticleId;
+  /** 送り先の記事のスラグ。URL を組み直さずに済むよう、行にも持たせる。 */
+  readonly target: ArticleSlug;
+  /** 送り元の記事の URL。(記事, source) の組で一意。 */
   readonly source: WebmentionUrl;
   readonly type: WebmentionType;
   readonly author: WebmentionAuthor;
@@ -50,8 +50,8 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
   private constructor(private readonly fields: WebmentionFields<T>) {}
 
   static create(params: {
-    noteId: NoteId;
-    target: NoteSlug;
+    articleId: ArticleId;
+    target: ArticleSlug;
     source: WebmentionUrl;
     type: WebmentionType;
     author: WebmentionAuthor;
@@ -61,7 +61,7 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
   }): Webmention<IUnpersisted> {
     return new Webmention({
       id: undefined,
-      noteId: params.noteId,
+      articleId: params.articleId,
       target: params.target,
       source: params.source,
       type: params.type,
@@ -76,8 +76,8 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
 
   static reconstruct(params: {
     id: WebmentionId;
-    noteId: NoteId;
-    target: NoteSlug;
+    articleId: ArticleId;
+    target: ArticleSlug;
     source: WebmentionUrl;
     type: WebmentionType;
     author: WebmentionAuthor;
@@ -94,11 +94,11 @@ export class Webmention<T extends IPersisted | IUnpersisted = IPersisted> {
     return this.fields.id;
   }
 
-  get noteId(): NoteId {
-    return this.fields.noteId;
+  get articleId(): ArticleId {
+    return this.fields.articleId;
   }
 
-  get target(): NoteSlug {
+  get target(): ArticleSlug {
     return this.fields.target;
   }
 

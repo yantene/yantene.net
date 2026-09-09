@@ -1,5 +1,5 @@
 import { customType, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { notes } from "./notes";
+import { articles } from "./articles";
 
 /**
  * BLOB を Uint8Array のまま扱う列。
@@ -29,13 +29,13 @@ const vectorBytes = customType<{ data: Uint8Array; driverData: ArrayBuffer | num
  * (2 MB) にも遠い。
  *
  * - model: 作ったモデルの識別子。差し替えたら作り直す
- * - content_hash: 作った時点の notes.source_hash。本文が変わったら作り直す
+ * - content_hash: 作った時点の articles.source_hash。本文が変わったら作り直す
  * - dimensions: vector の長さ。次元の違う行が混ざったことを読むときに気づける
  */
-export const noteEmbeddings = sqliteTable("note_embeddings", {
-  noteId: text("note_id")
+export const articleEmbeddings = sqliteTable("article_embeddings", {
+  articleId: text("article_id")
     .primaryKey()
-    .references(() => notes.id, { onDelete: "cascade" }),
+    .references(() => articles.id, { onDelete: "cascade" }),
   model: text("model").notNull(),
   contentHash: text("content_hash").notNull(),
   dimensions: integer("dimensions").notNull(),

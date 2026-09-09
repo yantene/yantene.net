@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { WebmentionVerificationService } from "./webmention-verification.service";
-import type { NoteId } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
 import type { ILogger } from "~/backend/domain/shared";
 import type {
   IWebmentionCommandRepository,
@@ -11,7 +11,7 @@ import type {
 import { entityId } from "~/backend/domain/shared";
 import { WebmentionRequest, WebmentionUrl } from "~/backend/domain/webmention";
 
-const noteId: NoteId = entityId<"Note">("note-1");
+const articleId: ArticleId = entityId<"Article">("article-1");
 const SOURCE = "https://example.com/post/1";
 const request = WebmentionRequest.create({
   source: SOURCE,
@@ -80,7 +80,7 @@ describe("WebmentionVerificationService", () => {
   it("target をリンクしていれば保存する", async () => {
     const { service, upsert } = harness(fetched(LINKING_HTML));
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).toHaveBeenCalledTimes(1);
     const stored = upsert.mock.calls[0][0] as Webmention;
@@ -95,7 +95,7 @@ describe("WebmentionVerificationService", () => {
    *
    * 届け出た表記だけで照合すると、正規の URL を張っている他人のページを旧 URL 宛てで
    * 届け出るだけで「リンクが無い」と判定させ、その人の行を消せてしまう (行の鍵は
-   * note と source で、表記を含まない)。
+   * article と source で、表記を含まない)。
    */
   describe("移した記事の 2 つの URL", () => {
     const linking = (href: string): string => `
@@ -115,7 +115,7 @@ describe("WebmentionVerificationService", () => {
         fetched(linking(`https://yantene.net${linked}`)),
       );
 
-      await service.verify(noteId, request(`https://yantene.net${target}`));
+      await service.verify(articleId, request(`https://yantene.net${target}`));
 
       expect(deleteBySource).not.toHaveBeenCalled();
       expect(upsert).toHaveBeenCalledTimes(1);
@@ -131,7 +131,7 @@ describe("WebmentionVerificationService", () => {
   it("リンクしていなければ保存しない", async () => {
     const { service, upsert, deleteBySource } = harness(fetched("<p>関係のない記事</p>"));
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).not.toHaveBeenCalled();
     // 前に受け取っていたぶんは取り消し扱いにする。
@@ -141,7 +141,7 @@ describe("WebmentionVerificationService", () => {
   it("送り元が消えていれば保存済みの行を落とす", async () => {
     const { service, upsert, deleteBySource } = harness({ kind: "gone" });
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).not.toHaveBeenCalled();
     expect(deleteBySource).toHaveBeenCalledTimes(1);
@@ -157,7 +157,7 @@ describe("WebmentionVerificationService", () => {
       reason: "fetch failed",
     });
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).not.toHaveBeenCalled();
     expect(deleteBySource).not.toHaveBeenCalled();
@@ -175,7 +175,7 @@ describe("WebmentionVerificationService", () => {
       fetched(SELF_CANONICAL_HTML, "https://yantene.net/articles/hello"),
     );
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).not.toHaveBeenCalled();
     expect(deleteBySource).not.toHaveBeenCalled();
@@ -185,7 +185,7 @@ describe("WebmentionVerificationService", () => {
   it("別のホストへ転送されたら保存しない", async () => {
     const { service, upsert } = harness(fetched(LINKING_HTML, "https://elsewhere.example/reply"));
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).not.toHaveBeenCalled();
   });
@@ -194,7 +194,7 @@ describe("WebmentionVerificationService", () => {
   it("同じホストの中での転送は通す", async () => {
     const { service, upsert } = harness(fetched(LINKING_HTML, "https://example.com/post/1/amp"));
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     expect(upsert).toHaveBeenCalledTimes(1);
   });
@@ -204,7 +204,7 @@ describe("WebmentionVerificationService", () => {
       fetched('<p><a href="https://yantene.net/articles/hello">これ</a></p>'),
     );
 
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
 
     const stored = upsert.mock.calls[0][0] as Webmention;
     expect(stored.type.toString()).toBe("mention");
@@ -214,7 +214,7 @@ describe("WebmentionVerificationService", () => {
     it("止めている送信元は取りに行かず、保存もしない", async () => {
       const { service, upsert, deleteBySource } = harness(fetched(LINKING_HTML), ["example.com"]);
 
-      await service.verify(noteId, request);
+      await service.verify(articleId, request);
 
       expect(upsert).not.toHaveBeenCalled();
       // 止める前に届いていた行が残らないよう、消しにいく。
@@ -224,7 +224,7 @@ describe("WebmentionVerificationService", () => {
     it("止めている相手の下位ドメインからでも保存しない", async () => {
       const { service, upsert } = harness(fetched(LINKING_HTML), ["com"]);
 
-      await service.verify(noteId, request);
+      await service.verify(articleId, request);
 
       expect(upsert).not.toHaveBeenCalled();
     });
@@ -232,7 +232,7 @@ describe("WebmentionVerificationService", () => {
     it("止めていない送信元はこれまでどおり保存する", async () => {
       const { service, upsert } = harness(fetched(LINKING_HTML), ["other.example"]);
 
-      await service.verify(noteId, request);
+      await service.verify(articleId, request);
 
       expect(upsert).toHaveBeenCalledTimes(1);
     });

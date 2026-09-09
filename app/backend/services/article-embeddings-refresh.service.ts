@@ -1,16 +1,16 @@
-import { buildEmbeddingChunks } from "./note-embedding-text";
+import { buildEmbeddingChunks } from "./article-embedding-text";
 import type { Root } from "mdast";
-import type { INoteContentCache, INoteQueryRepository } from "~/backend/domain/note";
+import type { IArticleContentCache, IArticleQueryRepository } from "~/backend/domain/article";
 import type {
   IEmbeddingGenerator,
-  INoteEmbeddingCommandRepository,
-  INoteEmbeddingQueryRepository,
-  NoteEmbedding,
-  NoteSimilarity,
-} from "~/backend/domain/note-embedding";
+  IArticleEmbeddingCommandRepository,
+  IArticleEmbeddingQueryRepository,
+  ArticleEmbedding,
+  ArticleSimilarity,
+} from "~/backend/domain/article-embedding";
 import type { ILogger } from "~/backend/domain/shared";
-import { NoteSlug } from "~/backend/domain/note";
-import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/note-embedding";
+import { ArticleSlug } from "~/backend/domain/article";
+import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/article-embedding";
 import { errorToContext } from "~/backend/domain/shared";
 
 /**
@@ -19,9 +19,9 @@ import { errorToContext } from "~/backend/domain/shared";
  * 1 本につきモデルの呼び出しが最低 1 回出るので、Workers のサブリクエスト上限に対して
  * 余裕を持たせる。溢れた分は次回に回る。
  */
-const MAX_NOTES_PER_RUN = 30;
+const MAX_ARTICLES_PER_RUN = 30;
 
-export interface NoteEmbeddingsSyncResult {
+export interface ArticleEmbeddingsSyncResult {
   /** ベクトルを作り直した slug。 */
   readonly embedded: string[];
   /** 本文もモデルも変わっていないので作り直さなかった slug。 */
@@ -42,20 +42,20 @@ export interface NoteEmbeddingsSyncResult {
 /**
  * 記事のベクトルと、記事どうしの近さを揃えるサービス。
  *
- * ノートの同期 (NotesRefreshService) から分けてあるのは、外部のモデルに触るので失敗の
+ * 記事の同期 (ArticlesRefreshService) から分けてあるのは、外部のモデルに触るので失敗の
  * 扱いが違うため。リンクカードと同じ理由で、こちらが落ちても記事の同期は通す。
  * ベクトルが作れなかった記事は、前回のベクトルと近さがそのまま残る。
  *
  * 近さは上位 N 件に切らずにペアのまま保存する。切ってしまうと、後から書いた記事が
  * 古い記事の関連記事に永久に出てこない (refresh は変更のあった記事しか処理しない)。
  */
-export class NoteEmbeddingsRefreshService {
+export class ArticleEmbeddingsRefreshService {
   constructor(
     private readonly generator: IEmbeddingGenerator,
-    private readonly command: INoteEmbeddingCommandRepository,
-    private readonly query: INoteEmbeddingQueryRepository,
-    private readonly notes: INoteQueryRepository,
-    private readonly cache: INoteContentCache,
+    private readonly command: IArticleEmbeddingCommandRepository,
+    private readonly query: IArticleEmbeddingQueryRepository,
+    private readonly articles: IArticleQueryRepository,
+    private readonly cache: IArticleContentCache,
     private readonly logger: ILogger,
   ) {}
 
@@ -63,20 +63,20 @@ export class NoteEmbeddingsRefreshService {
    * ベクトルと近さを揃える。
    *
    * **対象は「今回コンテンツが変わった記事」ではなく、D1 にある全記事。** 変わった記事だけを
-   * 見ると、1 回の上限 (MAX_NOTES_PER_RUN) で溢れた記事を拾い直す経路が無くなる。溢れた分は
+   * 見ると、1 回の上限 (MAX_ARTICLES_PER_RUN) で溢れた記事を拾い直す経路が無くなる。溢れた分は
    * 次の refresh のときには「変わっていない記事」なので、二度と対象に入らない。
    * ベクトルが無いことを毎回ここで見つけ直せば、何回かの refresh で自然に揃う。
    */
-  async sync(options: { readonly force?: boolean } = {}): Promise<NoteEmbeddingsSyncResult> {
+  async sync(options: { readonly force?: boolean } = {}): Promise<ArticleEmbeddingsSyncResult> {
     /*
-     * 正本から消えた記事の行を先に掃除する。ノートの同期が記事を消したあとに走るので、
+     * 正本から消えた記事の行を先に掃除する。記事の同期が記事を消したあとに走るので、
      * ここでしか消せない (slug から id を辿る手はもう無い)。
      */
     await this.command.deleteOrphans();
 
     const stored = await this.query.listAll();
     const bySlug = new Map(stored.map((item) => [item.slug.toString(), item] as const));
-    const hashes = await this.notes.listSourceHashes();
+    const hashes = await this.articles.listSourceHashes();
     const allSlugs = [...hashes.keys()];
 
     const embedded: string[] = [];
@@ -110,13 +110,13 @@ export class NoteEmbeddingsRefreshService {
     }
     const targets = [...missing, ...restated];
 
-    const planned = targets.slice(0, MAX_NOTES_PER_RUN);
+    const planned = targets.slice(0, MAX_ARTICLES_PER_RUN);
     // 途中で作ったベクトルも近さの計算に入れる。同じ回に処理した記事どうしが
     // 互いの関連記事に出ないと、新しく足した記事がひとかたまりで抜け落ちる。
     const known = new Map(bySlug);
 
     for (const slug of planned) {
-      const result = await this.embedNote(slug, hashes.get(slug) ?? "");
+      const result = await this.embedArticle(slug, hashes.get(slug) ?? "");
       if (result === undefined) {
         failed.push(slug);
         continue;
@@ -133,7 +133,7 @@ export class NoteEmbeddingsRefreshService {
      * 近さが永久に書き直されない。restated は今のモデルのベクトルを既に持っているので、
      * 作り直さなくても近さの計算に入れられる。
      */
-    const missingDeferred = Math.max(0, missing.length - MAX_NOTES_PER_RUN);
+    const missingDeferred = Math.max(0, missing.length - MAX_ARTICLES_PER_RUN);
     const rewrittenPairs = await this.rewriteSimilarities(
       known,
       embedded.length,
@@ -150,7 +150,7 @@ export class NoteEmbeddingsRefreshService {
    * ペアの値まで動く。1 記事ぶんずつ書き替えると、違う平均で出した値が同じ表に並ぶ。
    *
    * **見送るのは「まだ作り切れていない」ときだけ。** モデルを差し替えた直後は 1 回では
-   * 作り直しきれない (MAX_NOTES_PER_RUN)。その途中で全ペアを消すと、まだ作り直して
+   * 作り直しきれない (MAX_ARTICLES_PER_RUN)。その途中で全ペアを消すと、まだ作り直して
    * いない記事の関連記事が空になる。次の回で揃うので、それまでは前の並びを残す。
    * `deferred` に数えるのは今のモデルのベクトルが無い記事の溢れだけで、force で
    * 作り直し損ねた記事は数えない (そちらは前のベクトルで近さに入れられる)。
@@ -158,11 +158,11 @@ export class NoteEmbeddingsRefreshService {
    * **「作れない記事がある」ときは見送らない。** 本文の MDAST が R2 に無い、モデルが
    * VO の弾く値を返すといった理由で永久にベクトルを作れない記事が 1 本でもあると、
    * 揃うのを待つ形では二度と書き直せなくなる。そうなると新しく書いた記事がどの関連
-   * ノートにも出てこなくなり、しかも表に出る手がかりは warn 1 行しかない。作れない
+   * 記事にも出てこなくなり、しかも表に出る手がかりは warn 1 行しかない。作れない
    * 記事は関連記事に出せないだけで、他の記事どうしの近さは正しく出せる。
    */
   private async rewriteSimilarities(
-    known: ReadonlyMap<string, NoteEmbedding>,
+    known: ReadonlyMap<string, ArticleEmbedding>,
     embeddedCount: number,
     allSlugs: readonly string[],
     deferred: number,
@@ -179,7 +179,7 @@ export class NoteEmbeddingsRefreshService {
     const ready = allSlugs.filter((slug) => known.get(slug)?.model === this.generator.model);
     if (ready.length !== allSlugs.length) {
       // 作れない記事は諦めて、作れたものだけで書き直す。止まり続けるよりよい。
-      this.logger.warn("rewriting similarities without notes that could not be embedded", {
+      this.logger.warn("rewriting similarities without articles that could not be embedded", {
         model: this.generator.model,
         ready: ready.length,
         total: allSlugs.length,
@@ -193,7 +193,7 @@ export class NoteEmbeddingsRefreshService {
     } catch (error) {
       /*
        * 記事の同期はもう済んでいる。ここで throw すると refresh 全体が落ちるので、
-       * 書き直しを見送って前回の並びを残す (embedNote の失敗と同じ扱い)。
+       * 書き直しを見送って前回の並びを残す (embedArticle の失敗と同じ扱い)。
        * 中心化は本文が同じ記事が 2 本あるとゼロベクトルになって落ちるので、
        * 経路としては実在する。
        */
@@ -203,23 +203,26 @@ export class NoteEmbeddingsRefreshService {
   }
 
   /** 1 本ぶんのベクトルを作る。作れなければ undefined を返して呼び出し側に判断を渡す。 */
-  private async embedNote(slug: string, contentHash: string): Promise<NoteEmbedding | undefined> {
+  private async embedArticle(
+    slug: string,
+    contentHash: string,
+  ): Promise<ArticleEmbedding | undefined> {
     try {
-      const note = await this.notes.findBySlug(NoteSlug.create(slug));
-      if (note?.id === undefined) return undefined;
-      const mdast = (await this.cache.getMdast(note.slug)) as Root | undefined;
+      const article = await this.articles.findBySlug(ArticleSlug.create(slug));
+      if (article?.id === undefined) return undefined;
+      const mdast = (await this.cache.getMdast(article.slug)) as Root | undefined;
       if (mdast === undefined) {
         throw new EmbeddingGenerationError(`No cached MDAST for ${slug}.`);
       }
       const chunks = buildEmbeddingChunks(
-        note.title.toString(),
+        article.title.toString(),
         mdast,
         this.generator.maxInputCharacters,
       );
       const vectors = await this.generator.embed(chunks);
       return {
-        noteId: note.id,
-        slug: note.slug,
+        articleId: article.id,
+        slug: article.slug,
         model: this.generator.model,
         contentHash,
         // 分けて投げた分は平均して 1 本にする。mean が正規化まで済ませる。
@@ -228,7 +231,7 @@ export class NoteEmbeddingsRefreshService {
     } catch (error) {
       // 記事の同期は既に済んでいる。ここで throw すると refresh 全体が落ちるので、
       // 1 本ぶんの失敗として記録して次へ進む。前回のベクトルはそのまま残る。
-      this.logger.warn("failed to embed note", { slug, ...errorToContext(error) });
+      this.logger.warn("failed to embed article", { slug, ...errorToContext(error) });
       return undefined;
     }
   }
@@ -239,9 +242,9 @@ export class NoteEmbeddingsRefreshService {
  *
  * ペアは片側だけ返す (a, b) のみで、両方向に増やすのはリポジトリの仕事。
  */
-function allPairs(embeddings: readonly NoteEmbedding[]): readonly NoteSimilarity[] {
+function allPairs(embeddings: readonly ArticleEmbedding[]): readonly ArticleSimilarity[] {
   const centered = EmbeddingVector.centerAll(embeddings.map((item) => item.vector));
-  const pairs: NoteSimilarity[] = [];
+  const pairs: ArticleSimilarity[] = [];
   for (const [index, left] of embeddings.entries()) {
     for (let other = index + 1; other < embeddings.length; other++) {
       const right = embeddings[other];
@@ -249,8 +252,8 @@ function allPairs(embeddings: readonly NoteEmbedding[]): readonly NoteSimilarity
       const rightVector = centered[other];
       if (right === undefined || leftVector === undefined || rightVector === undefined) continue;
       pairs.push({
-        noteId: left.noteId,
-        otherNoteId: right.noteId,
+        articleId: left.articleId,
+        otherArticleId: right.articleId,
         similarity: leftVector.similarityTo(rightVector),
       });
     }

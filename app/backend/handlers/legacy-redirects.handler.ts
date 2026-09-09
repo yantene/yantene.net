@@ -1,15 +1,15 @@
 import { Hono } from "hono";
-import { contentCacheControlFor } from "./notes/content-cache-control";
+import { contentCacheControlFor } from "./articles/content-cache-control";
 import type { Context } from "hono";
-import { assetPrefixOf } from "~/backend/services/note-asset-url";
+import { assetPrefixOf } from "~/backend/services/article-asset-url";
 import {
   articlePath,
   FORMER_ARTICLE_PATH_PREFIX,
   slugsRedirectedFromFormerPath,
-} from "~/backend/domain/note";
+} from "~/backend/domain/article";
 
 /**
- * 旧サイトの記事スラグ → 現行サイトのノートスラグ。
+ * 旧サイトの記事スラグ → 現行サイトの記事のスラグ。
  *
  * 現行スラグは旧スラグをそのまま移したものではない。`_` を `-` に置換しただけで一致するのは
  * 27 本中 6 本だけで、残りは付け直してある。つまり変換規則では表せないので明示テーブルで持つ。
@@ -22,7 +22,7 @@ import {
  * テストが実装そのものを検証できるよう公開する。
  */
 // 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。
-export const noteSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
+export const articleSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
   ["i_bought_arduino", "arduino-one-minute-timer"],
   ["sugoroku_by_c", "sugoroku-in-c"],
   ["one_month_before_the_fe_exam", "one-month-until-fe-exam"],
@@ -69,7 +69,7 @@ const PERMANENT_REDIRECT = 308 as const;
 const TEMPORARY_REDIRECT = 307 as const;
 
 function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
-  // ノートの配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
+  // 記事の配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
   // 載せると、認証の壁を越えて未認証クライアントへ配られてしまうため。
   c.header("Cache-Control", contentCacheControlFor(c.env));
   return c.redirect(to, PERMANENT_REDIRECT);
@@ -112,7 +112,7 @@ function encodePath(path: string): string {
  * 投稿に譲ったので、記事は `/articles/` へ移った。
  *
  * - /notes/<slug>, /notes/<slug>.md     → /articles/<slug>, /articles/<slug>.md
- *   (domain/note/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
+ *   (domain/article/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
  * - /notes?…                            → /articles?… (307。あの URL は短文の一覧として戻る)
  *
  * どちらの世代も、記事は `/:file{[^/]+[.]html}` のような可変パターンではなく静的パスとして
@@ -129,7 +129,7 @@ function encodePath(path: string): string {
 export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
-  for (const [legacySlug, slug] of noteSlugByLegacySlug) {
+  for (const [legacySlug, slug] of articleSlugByLegacySlug) {
     // 2 世代を跨ぐ記事でも、旧サイトからの転送は現行の URL へ直に送る (2 段にしない)。
     router.get(`/${legacySlug}.html`, (c) => permanentRedirect(c, articlePath(slug)));
   }
@@ -151,7 +151,7 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   // 素通りさせ、通常の 404 に委ねる。
   router.get("/images/:directory/:file{.+}", (c, next) => {
     const legacySlug = legacyImageDirectoryPattern.exec(c.req.param("directory"))?.groups?.slug;
-    const slug = legacySlug === undefined ? undefined : noteSlugByLegacySlug.get(legacySlug);
+    const slug = legacySlug === undefined ? undefined : articleSlugByLegacySlug.get(legacySlug);
     if (slug === undefined) return next();
 
     return permanentRedirect(c, `${assetPrefixOf(slug)}${encodePath(c.req.param("file"))}`);

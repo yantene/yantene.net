@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { toPublicNote, type PublicNote } from "~/backend/handlers/note-view";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
+import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** 検索結果の最大件数。 */
 const SEARCH_LIMIT = 30;
@@ -11,18 +11,18 @@ function parseQuery(raw: string | undefined): string {
 
 /**
  * 全文検索の公開 JSON API。
- * GET /?q= → { query, notes }。
+ * GET /?q= → { query, articles }。
  */
 export function createSearchApiRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/", async (c) => {
     const query = parseQuery(c.req.query("q"));
-    const notes =
+    const articles =
       query.length === 0
         ? []
-        : await new D1NoteQueryRepository(c.env.D1).search(query, SEARCH_LIMIT);
-    return c.json({ query, notes: notes.map((note) => toPublicNote(note)) });
+        : await new D1ArticleQueryRepository(c.env.D1).search(query, SEARCH_LIMIT);
+    return c.json({ query, articles: articles.map((article) => toPublicArticle(article)) });
   });
 
   return router;
@@ -30,7 +30,7 @@ export function createSearchApiRouter(): Hono<{ Bindings: Env }> {
 
 export interface SearchPageData {
   readonly query: string;
-  readonly notes: readonly PublicNote[];
+  readonly articles: readonly PublicArticle[];
 }
 
 /**
@@ -43,6 +43,8 @@ export async function loadSearchPage(
 ): Promise<SearchPageData> {
   const query = parseQuery(rawQuery);
   const results =
-    query.length === 0 ? [] : await new D1NoteQueryRepository(env.D1).search(query, SEARCH_LIMIT);
-  return { query, notes: results.map((note) => toPublicNote(note)) };
+    query.length === 0
+      ? []
+      : await new D1ArticleQueryRepository(env.D1).search(query, SEARCH_LIMIT);
+  return { query, articles: results.map((article) => toPublicArticle(article)) };
 }

@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import type { NoteId } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
 import type { ILogger } from "~/backend/domain/shared";
 import { errorToContext } from "~/backend/domain/shared";
 import {
-  TargetNoteNotFoundError,
+  TargetArticleNotFoundError,
   WebmentionRejectedError,
   WebmentionRequest,
 } from "~/backend/domain/webmention";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import {
-  D1NoteQueryRepository,
+  D1ArticleQueryRepository,
   D1WebmentionBlocklist,
   D1WebmentionCommandRepository,
 } from "~/backend/infra/d1/repositories";
@@ -34,8 +34,8 @@ import { createProblemResponse } from "~/lib/problem-details";
  * - source / target が無い・URL でない・http/https でない
  * - source と target が同じ
  * - target がこのサイトの記事 URL (`/articles/<slug>`) でない。`/notes/<slug>` から移した
- *   記事に限り、旧 URL 宛ても受ける (domain/note/article-path.ts の表)
- * - target のノートが存在しない
+ *   記事に限り、旧 URL 宛ても受ける (domain/article/article-path.ts の表)
+ * - target の記事が存在しない
  * - source がこのサイト自身 (self-mention は受けない)
  *
  * staging では BASIC 認証の内側に居るため外から叩けないが、それでよい。認証を回避する
@@ -63,10 +63,10 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
         siteOrigin: new URL(c.req.url).origin,
       });
 
-      const note = await new D1NoteQueryRepository(c.env.D1).findBySlug(request.targetSlug);
-      if (note === undefined) {
-        throw new TargetNoteNotFoundError(
-          `target note does not exist: ${request.targetSlug.toString()}`,
+      const article = await new D1ArticleQueryRepository(c.env.D1).findBySlug(request.targetSlug);
+      if (article === undefined) {
+        throw new TargetArticleNotFoundError(
+          `target article does not exist: ${request.targetSlug.toString()}`,
         );
       }
 
@@ -77,7 +77,7 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
         new D1WebmentionBlocklist(c.env.D1),
         logger,
       );
-      c.executionCtx.waitUntil(verifyAndLog(service, note.id, request, logger));
+      c.executionCtx.waitUntil(verifyAndLog(service, article.id, request, logger));
     } catch (error) {
       if (error instanceof WebmentionRejectedError) {
         return createProblemResponse(httpStatus.BAD_REQUEST, "Bad Request", error.message);
@@ -119,12 +119,12 @@ const limitBody = bodyLimit({
  */
 async function verifyAndLog(
   service: WebmentionVerificationService,
-  noteId: NoteId,
+  articleId: ArticleId,
   request: WebmentionRequest,
   logger: ILogger,
 ): Promise<void> {
   try {
-    await service.verify(noteId, request);
+    await service.verify(articleId, request);
   } catch (error) {
     logger.error("webmention verification failed", {
       source: request.source.toString(),

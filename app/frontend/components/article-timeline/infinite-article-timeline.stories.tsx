@@ -6,13 +6,13 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 const TOTAL_PAGES = 3;
 const PER_PAGE = 4;
 
-function notesFor(page: number): ArticleTimelineItemProps[] {
+function articlesFor(page: number): ArticleTimelineItemProps[] {
   return Array.from({ length: PER_PAGE }, (_, index) => {
     const nth = (page - 1) * PER_PAGE + index + 1;
     const month = String(((nth - 1) % 12) + 1).padStart(2, "0");
     return {
-      slug: `note-${String(nth)}`,
-      title: `${String(nth)} 件目のノート`,
+      slug: `article-${String(nth)}`,
+      title: `${String(nth)} 件目の記事`,
       summary:
         "下端に近づくと次のページを取りに行く。ここでは取得の手を差し替えて応答を作っている。",
       imageUrl: nth % 3 === 0 ? null : `https://picsum.photos/seed/${String(nth)}/640/400`,
@@ -27,7 +27,7 @@ const stubLoad: LoadArticlePage = async (page) => {
   await new Promise((resolve) => {
     setTimeout(resolve, 600);
   });
-  return { notes: notesFor(page), totalPages: TOTAL_PAGES };
+  return { articles: articlesFor(page), totalPages: TOTAL_PAGES };
 };
 
 const failingLoad: LoadArticlePage = async () => {
@@ -41,7 +41,7 @@ const meta: Meta<typeof InfiniteArticleTimeline> = {
   title: "ArticleTimeline/InfiniteArticleTimeline",
   component: InfiniteArticleTimeline,
   args: {
-    initialArticles: notesFor(1),
+    initialArticles: articlesFor(1),
     totalPages: TOTAL_PAGES,
     perPage: PER_PAGE,
     loadPage: stubLoad,

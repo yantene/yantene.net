@@ -6,7 +6,7 @@ const meta: Meta<typeof ArticleHeader> = {
   component: ArticleHeader,
   args: {
     slug: "hello-world",
-    title: "はじめてのノート",
+    title: "はじめての記事",
     imageUrl: "https://picsum.photos/seed/yantene/1200/514",
     publishedOn: "2026-05-08",
     origin: "https://yantene.net",

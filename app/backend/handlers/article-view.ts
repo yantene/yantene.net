@@ -1,11 +1,16 @@
-import type { Note, NoteListResult, NoteSortField, SortDirection } from "~/backend/domain/note";
+import type {
+  Article,
+  ArticleListResult,
+  ArticleSortField,
+  SortDirection,
+} from "~/backend/domain/article";
 
 /**
- * 外部 (JSON API / ページ props) に公開してよい Note の表現。
+ * 外部 (JSON API / ページ props) に公開してよい Article の表現。
  * ドメインエンティティをそのまま晒さず、公開可能なフィールドだけに絞る。
  * 識別子は slug (URL 用) のみ公開し、内部 id は出さない。
  */
-export interface PublicNote {
+export interface PublicArticle {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
@@ -21,32 +26,32 @@ export interface Pagination {
   readonly totalPages: number;
 }
 
-export interface PublicNoteList {
-  readonly notes: readonly PublicNote[];
+export interface PublicArticleList {
+  readonly articles: readonly PublicArticle[];
   readonly pagination: Pagination;
 }
 
-/** Note エンティティを公開 DTO へ変換する (API / pages 共通)。 */
-export function toPublicNote(note: Note): PublicNote {
+/** Article エンティティを公開 DTO へ変換する (API / pages 共通)。 */
+export function toPublicArticle(article: Article): PublicArticle {
   return {
-    slug: note.slug.toJSON(),
-    title: note.title.toJSON(),
-    summary: note.summary,
-    imageUrl: note.imageUrl?.toJSON() ?? null,
-    publishedOn: note.publishedOn.toString({ calendarName: "never" }),
-    lastModifiedOn: note.lastModifiedOn.toString({ calendarName: "never" }),
+    slug: article.slug.toJSON(),
+    title: article.title.toJSON(),
+    summary: article.summary,
+    imageUrl: article.imageUrl?.toJSON() ?? null,
+    publishedOn: article.publishedOn.toString({ calendarName: "never" }),
+    lastModifiedOn: article.lastModifiedOn.toString({ calendarName: "never" }),
   };
 }
 
 /** ページネーション付きの一覧結果を公開 DTO へ変換する。 */
-export function toPublicNoteList(
-  result: NoteListResult,
+export function toPublicArticleList(
+  result: ArticleListResult,
   page: number,
   perPage: number,
-): PublicNoteList {
+): PublicArticleList {
   const totalPages = Math.max(1, Math.ceil(result.total / perPage));
   return {
-    notes: result.notes.map((note) => toPublicNote(note)),
+    articles: result.articles.map((article) => toPublicArticle(article)),
     pagination: {
       // 範囲外のページ番号は totalPages に丸めて pager と整合させる。
       page: Math.min(page, totalPages),
@@ -83,11 +88,11 @@ function clampInt(raw: string | undefined, fallback: number, min: number, max: n
 }
 
 /** クエリ文字列 (sort-by / order) を検証済みのソート指定に解決する。 */
-export function parseNoteSort(
+export function parseArticleSort(
   sortByParam: string | undefined,
   orderParam: string | undefined,
-): { sortBy: NoteSortField; direction: SortDirection } {
-  const sortBy: NoteSortField = sortByParam === "modified" ? "lastModifiedOn" : "publishedOn";
+): { sortBy: ArticleSortField; direction: SortDirection } {
+  const sortBy: ArticleSortField = sortByParam === "modified" ? "lastModifiedOn" : "publishedOn";
   const direction: SortDirection = orderParam === "asc" ? "asc" : "desc";
   return { sortBy, direction };
 }
