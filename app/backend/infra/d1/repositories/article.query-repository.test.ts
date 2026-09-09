@@ -183,6 +183,8 @@ describe("D1ArticleQueryRepository", () => {
 
   it("returns empty search results when the index is not built", async () => {
     const d1 = createTestD1();
+    // 索引は infra が実行時に作る。migration 0011 が改名のために作ってしまうので、無い状態に戻す。
+    await d1.exec("DROP TABLE IF EXISTS articles_fts");
     const results = await new D1ArticleQueryRepository(d1).search("なんでも", 10);
     expect(results).toEqual([]);
   });

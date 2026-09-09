@@ -156,7 +156,7 @@ describe("R2ArticleContentCache", () => {
 });
 
 /*
- * 改名前の接頭辞 `notes/<slug>/` からの移行 (ADR 0032)。次のリリースで消す。
+ * 改名前の接頭辞 `notes/<slug>/` からの移行 (ADR 0033)。写し終えたら消す (#430)。
  */
 describe("R2ArticleContentCache with copies under the former prefix", () => {
   function putFormer(
@@ -224,10 +224,10 @@ describe("R2ArticleContentCache with copies under the former prefix", () => {
   });
 
   /*
-   * refresh は書き終えてから片付けに来る。そのときに古い写しを丸ごと消せば、force refresh を
-   * 1 回流すだけで旧接頭辞の下が空になる。
+   * refresh は書き終えてから片付けに来る。そのときに古い写しを消せば、force refresh を
+   * 1 回流すだけで、処理できた記事の旧接頭辞の下は空になる。
    */
-  it("drops every former copy when pruning", async () => {
+  it("drops the former copies that were rewritten under the new prefix when pruning", async () => {
     const { bucket, store } = createTestR2();
     putFormer(store);
     const cache = new R2ArticleContentCache(bucket);
@@ -243,6 +243,39 @@ describe("R2ArticleContentCache with copies under the former prefix", () => {
     expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([]);
     expect(await cache.getSource(slug)).toBe("# New\n");
     expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([1]));
+  });
+
+  /*
+   * 正本に在るのに今回読めなかったアセットは、旧鍵の写しが唯一の写し。消すと一時的な
+   * 失敗で絵が欠け、contentHash が入るので次の refresh でも直らない。
+   */
+  it("keeps a former asset that is listed but was not copied", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+    await cache.putSource(slug, "# New\n");
+    await cache.putMdast(slug, { type: "root" });
+    // cover.png は正本に在るが、今回は読めなかった (新しい鍵に写していない)。
+
+    await cache.pruneAssets(slug, new Set(["cover.png"]));
+
+    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([
+      "notes/my-article/assets/cover.png",
+    ]);
+    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([9]));
+    expect(await cache.getSource(slug)).toBe("# New\n");
+  });
+
+  it("drops a former asset that the source no longer lists", async () => {
+    const { bucket, store } = createTestR2();
+    putFormer(store);
+    const cache = new R2ArticleContentCache(bucket);
+    await cache.putSource(slug, "# New\n");
+    await cache.putMdast(slug, { type: "root" });
+
+    await cache.pruneAssets(slug, new Set());
+
+    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([]);
   });
 
   it("deletes the former copies together with the new ones", async () => {

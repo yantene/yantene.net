@@ -8,11 +8,12 @@ const DEFAULT_ASSET_CONTENT_TYPE = "application/octet-stream";
 const CONTENT_KEY_PREFIX = "articles/";
 
 /**
- * 改名前の接頭辞 (ADR 0032)。**次のリリースで消す移行コード。**
+ * 改名前の接頭辞 (ADR 0033)。**写し終えたら消す移行コード (#430)。**
  *
  * 鍵を一度に切り替えると、force refresh が写し直すまで全記事の原文と MDAST が見つからず、
  * 記事ページが 500 になる。読むときはこちらへも降り、書くのは新しい接頭辞だけにして、
- * 片付けのときに古い写しを消す。force refresh を 1 回流せば、この下には何も残らない。
+ * 片付けのときに古い写しを消す。force refresh で処理できた記事の旧鍵は消えるが、
+ * skipped の記事は片付けまで来ないので残る。消す前に一覧で確かめること。
  */
 const FORMER_CONTENT_KEY_PREFIX = "notes/";
 
@@ -100,12 +101,18 @@ export class R2ArticleContentCache implements IArticleContentCache {
   /**
    * 行き場を失った写しを片付ける。
    *
-   * 改名前の接頭辞の下は丸ごと消す。refresh はアセット・MDAST・原文を新しい接頭辞に
-   * 書き終えてからここへ来るので、消しても読み手が見失うものは無い。
+   * 改名前の接頭辞の下も片付ける。原文と MDAST は refresh がここへ来る前に新しい鍵へ
+   * 書き終えているので無条件に消す。アセットは、**新しい鍵に写せたものだけ**消す。
+   * 正本に在るのに今回読めなかったアセット (`keep` に在って新しい鍵に無いもの) は、
+   * 旧鍵の写しが唯一の写しなので残す (一時的な失敗で前回の写しを落とさない)。
    */
   async pruneAssets(slug: ArticleSlug, keep: ReadonlySet<string>): Promise<void> {
-    await this.deleteUnder(this.assetKey(this.prefix(slug), ""), keep);
-    await this.deleteUnder(this.formerPrefix(slug));
+    const copied = await this.deleteUnder(this.assetKey(this.prefix(slug), ""), keep);
+    const notYetCopied = [...keep].filter((path) => !copied.has(path));
+    await this.deleteUnder(
+      this.formerPrefix(slug),
+      new Set(notYetCopied.map((path) => this.assetKey("", path))),
+    );
   }
 
   async deleteArticle(slug: ArticleSlug): Promise<void> {
@@ -114,21 +121,26 @@ export class R2ArticleContentCache implements IArticleContentCache {
   }
 
   /**
-   * その前置の下を消す。`keep` に前置を落とした名前があるものは残す。
+   * その前置の下を消す。`keep` に前置を落とした名前があるものは残す。残した名前を返す。
    *
    * 列挙は頁に分かれて返るので cursor を辿る。**残したものは次の頁でも列挙されない**
    * (cursor は列挙の位置であって、消した件数ではない) ので、辿り方は消す・残すに
    * よらず同じでよい。
    */
-  private async deleteUnder(prefix: string, keep: ReadonlySet<string> = new Set()): Promise<void> {
+  private async deleteUnder(
+    prefix: string,
+    keep: ReadonlySet<string> = new Set(),
+  ): Promise<ReadonlySet<string>> {
+    const kept = new Set<string>();
     let cursor: string | undefined;
     do {
       const listing = await this.bucket.list({ prefix, cursor });
-      const stale = listing.objects
-        .map((object) => object.key)
-        .filter((key) => !keep.has(key.slice(prefix.length)));
-      if (stale.length > 0) await this.bucket.delete(stale);
+      const names = listing.objects.map((object) => object.key.slice(prefix.length));
+      const stale = names.filter((name) => !keep.has(name));
+      for (const name of names) if (keep.has(name)) kept.add(name);
+      if (stale.length > 0) await this.bucket.delete(stale.map((name) => `${prefix}${name}`));
       cursor = listing.truncated ? listing.cursor : undefined;
     } while (cursor !== undefined);
+    return kept;
   }
 }

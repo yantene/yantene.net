@@ -21,6 +21,7 @@ CREATE INDEX `articles_view_log_score_idx` ON `articles` (`view_log_score`);--> 
 CREATE INDEX `article_similarities_article_id_similarity_idx` ON `article_similarities` (`article_id`,`similarity`);--> statement-breakpoint
 CREATE UNIQUE INDEX `webmentions_article_id_source_idx` ON `webmentions` (`article_id`,`source`);--> statement-breakpoint
 -- 検索の索引 (FTS5) は Drizzle の外で infra が実行時に作る (article-search-index.ts)。
--- 表が無い環境 (新規、テスト) でも通るように、同じ定義で作ってから改名する。
+-- 改名で中身を残すため、表が無い環境 (新規、テスト) でも通るように同じ定義で作ってから改名する。
+-- 定義の正本は article-search-index.ts で、ここはその写し。
 CREATE VIRTUAL TABLE IF NOT EXISTS `notes_fts` USING fts5(slug UNINDEXED, title, body, tokenize = 'trigram');--> statement-breakpoint
 ALTER TABLE `notes_fts` RENAME TO `articles_fts`;
