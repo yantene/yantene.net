@@ -84,7 +84,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       title: article.title.toString(),
       date: article.publishedOn.toString({ calendarName: "never" }),
     });
-    // 鍵に入るのは絵を決めるもの (スラグ・版・型) だけ。改名前の `og/notes/` は写し直しで捨てる。
+    // 鍵に入るのは絵を決めるもの (スラグ・版・型) だけ。改名前の `og/notes/` は読まず、手で消す。
     return renderAndCache(
       c.env,
       `og/articles/${slug.toString()}-${article.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
