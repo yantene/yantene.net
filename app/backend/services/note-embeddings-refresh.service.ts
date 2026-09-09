@@ -26,7 +26,7 @@ export interface NoteEmbeddingsSyncResult {
   readonly embedded: string[];
   /** 本文もモデルも変わっていないので作り直さなかった slug。 */
   readonly unchanged: string[];
-  /** 作れなかった slug。関連ノートは前回の並びのまま残る。 */
+  /** 作れなかった slug。関連記事は前回の並びのまま残る。 */
   readonly failed: string[];
   /** 上限に掛かって今回は見送った件数。黙って切り捨てない。 */
   readonly deferred: number;
@@ -34,7 +34,7 @@ export interface NoteEmbeddingsSyncResult {
    * 書き直した近さのペア数。0 なら並びは前回のまま。
    *
    * モデルを差し替えた直後のように、まだ全記事を作り直せていないときは書き直さない。
-   * 途中の平均で全ペアを潰すと、作り直しの済んでいない記事の関連ノートが消えるため。
+   * 途中の平均で全ペアを潰すと、作り直しの済んでいない記事の関連記事が消えるため。
    */
   readonly rewrittenPairs: number;
 }
@@ -47,7 +47,7 @@ export interface NoteEmbeddingsSyncResult {
  * ベクトルが作れなかった記事は、前回のベクトルと近さがそのまま残る。
  *
  * 近さは上位 N 件に切らずにペアのまま保存する。切ってしまうと、後から書いた記事が
- * 古い記事の関連ノートに永久に出てこない (refresh は変更のあった記事しか処理しない)。
+ * 古い記事の関連記事に永久に出てこない (refresh は変更のあった記事しか処理しない)。
  */
 export class NoteEmbeddingsRefreshService {
   constructor(
@@ -86,7 +86,7 @@ export class NoteEmbeddingsRefreshService {
     /*
      * 作り直すものを 2 つに分ける。
      *
-     * - missing: ベクトルが無い / モデルか本文が古い。放っておくと関連ノートに出てこない
+     * - missing: ベクトルが無い / モデルか本文が古い。放っておくと関連記事に出てこない
      * - restated: force のときだけ対象になる、既に今のモデルで作れているもの
      *
      * missing を先に並べるのは、force を流したときに毎回同じ先頭 30 本だけが作り直されて、
@@ -112,7 +112,7 @@ export class NoteEmbeddingsRefreshService {
 
     const planned = targets.slice(0, MAX_NOTES_PER_RUN);
     // 途中で作ったベクトルも近さの計算に入れる。同じ回に処理した記事どうしが
-    // 互いの関連ノートに出ないと、新しく足した記事がひとかたまりで抜け落ちる。
+    // 互いの関連記事に出ないと、新しく足した記事がひとかたまりで抜け落ちる。
     const known = new Map(bySlug);
 
     for (const slug of planned) {
@@ -151,7 +151,7 @@ export class NoteEmbeddingsRefreshService {
    *
    * **見送るのは「まだ作り切れていない」ときだけ。** モデルを差し替えた直後は 1 回では
    * 作り直しきれない (MAX_NOTES_PER_RUN)。その途中で全ペアを消すと、まだ作り直して
-   * いない記事の関連ノートが空になる。次の回で揃うので、それまでは前の並びを残す。
+   * いない記事の関連記事が空になる。次の回で揃うので、それまでは前の並びを残す。
    * `deferred` に数えるのは今のモデルのベクトルが無い記事の溢れだけで、force で
    * 作り直し損ねた記事は数えない (そちらは前のベクトルで近さに入れられる)。
    *
@@ -159,7 +159,7 @@ export class NoteEmbeddingsRefreshService {
    * VO の弾く値を返すといった理由で永久にベクトルを作れない記事が 1 本でもあると、
    * 揃うのを待つ形では二度と書き直せなくなる。そうなると新しく書いた記事がどの関連
    * ノートにも出てこなくなり、しかも表に出る手がかりは warn 1 行しかない。作れない
-   * 記事は関連ノートに出せないだけで、他の記事どうしの近さは正しく出せる。
+   * 記事は関連記事に出せないだけで、他の記事どうしの近さは正しく出せる。
    */
   private async rewriteSimilarities(
     known: ReadonlyMap<string, NoteEmbedding>,

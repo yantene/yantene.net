@@ -38,7 +38,7 @@ export class D1NoteEmbeddingCommandRepository implements INoteEmbeddingCommandRe
    * 近さの行を全部入れ替える。
    *
    * 消してから入れるところまでを 1 つの batch にまとめる。D1 の batch は暗黙の
-   * トランザクションなので、途中で落ちても「全記事の関連ノートが空」の状態は表に出ない。
+   * トランザクションなので、途中で落ちても「全記事の関連記事が空」の状態は表に出ない。
    */
   async replaceAllSimilarities(similarities: readonly NoteSimilarity[]): Promise<void> {
     // 両方向を書く。読むときに OR で引かずに済ませるため (note-similarities.ts)。

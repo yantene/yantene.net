@@ -91,7 +91,7 @@ describe("D1NoteEmbedding リポジトリ", () => {
     await command.replaceAllSimilarities([{ noteId: a, otherNoteId: b, similarity: 0.9 }]);
 
     expect(await query.findRelatedSlugs(NoteSlug.create("a"), 6)).toEqual(["b"]);
-    // 片方向だけだと、後から書いた記事が古い記事の関連ノートに出てこない。
+    // 片方向だけだと、後から書いた記事が古い記事の関連記事に出てこない。
     expect(await query.findRelatedSlugs(NoteSlug.create("b"), 6)).toEqual(["a"]);
   });
 
@@ -133,7 +133,7 @@ describe("D1NoteEmbedding リポジトリ", () => {
     await command.replaceAllSimilarities([{ noteId: a, otherNoteId: fresh, similarity: 0.8 }]);
 
     expect(await query.findRelatedSlugs(NoteSlug.create("a"), 6)).toEqual(["fresh"]);
-    // 逆向きの行も消えていること。消し漏らすと old の関連ノートに a が残り続ける。
+    // 逆向きの行も消えていること。消し漏らすと old の関連記事に a が残り続ける。
     expect(await query.findRelatedSlugs(NoteSlug.create("old"), 6)).toEqual([]);
   });
 

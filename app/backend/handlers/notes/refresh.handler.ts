@@ -82,7 +82,7 @@ export function createRefreshRouter(): Hono<{ Bindings: Env }> {
     /*
      * 記事のベクトルと、記事どうしの近さを揃える。ここもノートの同期とは失敗の扱いが
      * 違う (外部のモデルに触るので落ちることがある) ので別のサービスに分けている。
-     * 作れなかった記事は前回のベクトルと近さがそのまま残り、関連ノートは前の並びで出る。
+     * 作れなかった記事は前回のベクトルと近さがそのまま残り、関連記事は前の並びで出る。
      */
     const embeddings = await new NoteEmbeddingsRefreshService(
       new WorkersAiEmbeddingGenerator(c.env.AI),
