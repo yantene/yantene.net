@@ -14,7 +14,7 @@ export const ARTICLE_PATH_PREFIX = "/articles/";
 /**
  * 改名前の記事ページの URL 接頭辞。
  *
- * `/notes/` は短文の投稿に譲る (#412)。ここから `/articles/` へ恒久リダイレクトするのは
+ * `/notes/` は短文の投稿のために空けてある。ここから `/articles/` へ恒久リダイレクトするのは
  * {@link slugsMovedFromNotes} に載る記事だけで、それ以外の `/notes/<slug>` は移さない。
  */
 export const FORMER_ARTICLE_PATH_PREFIX = "/notes/";
@@ -24,8 +24,7 @@ export const FORMER_ARTICLE_PATH_PREFIX = "/notes/";
  *
  * 載せるのは 2026 年に公開した記事だけ。それより前の記事が `/notes/<slug>` で出ていた
  * 期間は短く (このサイト自体が 2026 年 8 月に載せ直したもの)、外に残ったリンクは諦める。
- * `/notes/` の下に恒久リダイレクトを増やすほど短文の投稿の URL と取り合いになり、
- * 308 はブラウザに焼き付いて取り消せない。
+ * `/notes/` の下に恒久リダイレクトを置くほど、短文の投稿がその URL を使えなくなる。
  *
  * 接頭辞の丸ごと書き換え (`/notes/*` → `/articles/*`) を採らないのも同じ理由で、
  * 存在しない `/notes/<なんでも>` にまで恒久リダイレクトを返すことになる。

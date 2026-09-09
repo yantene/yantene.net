@@ -6,7 +6,7 @@ const SOURCE = WebmentionUrl.create("https://example.com/post/1");
 const TARGET = WebmentionUrl.create("https://yantene.net/articles/hello");
 
 function hasLink(html: string): boolean {
-  return hasLinkToTarget(html, SOURCE, TARGET);
+  return hasLinkToTarget(html, SOURCE, [TARGET]);
 }
 
 describe("hasLinkToTarget", () => {
@@ -52,9 +52,26 @@ describe("hasLinkToTarget", () => {
   });
 });
 
+describe("hasLinkToTarget with several URLs for one article", () => {
+  const FORMER = WebmentionUrl.create("https://yantene.net/notes/hello");
+
+  // `/notes/<slug>` から移した記事は 2 つの URL で応える。どちらへのリンクでも足りる。
+  it.each([
+    ["正規の URL", '<a href="https://yantene.net/articles/hello">x</a>'],
+    ["旧 URL", '<a href="https://yantene.net/notes/hello">x</a>'],
+  ])("%s へのリンクを通す", (_label, html) => {
+    expect(hasLinkToTarget(html, SOURCE, [TARGET, FORMER])).toBe(true);
+  });
+
+  it("どちらもリンクしていなければ通さない", () => {
+    const html = '<a href="https://yantene.net/articles/other">x</a>';
+    expect(hasLinkToTarget(html, SOURCE, [TARGET, FORMER])).toBe(false);
+  });
+});
+
 describe("readMention", () => {
   function read(html: string): ReturnType<typeof readMention> {
-    return readMention(html, SOURCE, TARGET);
+    return readMention(html, SOURCE, [TARGET]);
   }
 
   it("u-in-reply-to は返信として読む", () => {

@@ -116,7 +116,7 @@ describe("NoteHeader の microformats2", () => {
     const source = WebmentionUrl.create(`${ORIGIN}/articles/${SLUG}`);
     const target = WebmentionUrl.create(TARGET);
 
-    const mention = readMention(html, source, target);
+    const mention = readMention(html, source, [target]);
 
     expect(mention.author.name).toBe("yantene");
     expect(mention.author.url?.toString()).toBe(`${ORIGIN}/`);

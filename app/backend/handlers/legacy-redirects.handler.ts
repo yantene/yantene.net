@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./notes/content-cache-control";
 import type { Context } from "hono";
+import { assetPrefixOf } from "~/backend/services/note-asset-url";
 import {
   articlePath,
   FORMER_ARTICLE_PATH_PREFIX,
@@ -62,28 +63,23 @@ const legacyImageDirectoryPattern = /^\d{4}-\d{2}-\d{2}-(?<slug>.+)$/u;
 const PERMANENT_REDIRECT = 308 as const;
 
 /**
- * 一時移転。`/notes` (一覧) にだけ使う。あの URL は短文の投稿の一覧として戻ってくる
- * 予定 (#412) で、308 を返すとブラウザがそれを覚えて、戻ってきた後も記事一覧へ飛ばし続ける。
+ * 一時移転。`/notes` (一覧) にだけ使う。あの URL は短文の投稿の一覧として戻ってくる場所で、
+ * 308 を返すとブラウザがそれを覚えて、戻ってきた後も記事一覧へ飛ばし続ける。
  */
 const TEMPORARY_REDIRECT = 307 as const;
 
-function redirectWithCacheControl(
-  c: Context<{ Bindings: Env }>,
-  to: string,
-  status: typeof PERMANENT_REDIRECT | typeof TEMPORARY_REDIRECT,
-): Response {
+function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
   // ノートの配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
   // 載せると、認証の壁を越えて未認証クライアントへ配られてしまうため。
   c.header("Cache-Control", contentCacheControlFor(c.env));
-  return c.redirect(to, status);
-}
-
-function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
-  return redirectWithCacheControl(c, to, PERMANENT_REDIRECT);
+  return c.redirect(to, PERMANENT_REDIRECT);
 }
 
 function temporaryRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
-  return redirectWithCacheControl(c, to, TEMPORARY_REDIRECT);
+  // 覚えさせない。max-age を付けると 307 でもその間はキャッシュから答えられ、
+  // 「戻ってくる URL」を一時移転にした意味が薄れる。
+  c.header("Cache-Control", "no-store");
+  return c.redirect(to, TEMPORARY_REDIRECT);
 }
 
 /**
@@ -99,8 +95,9 @@ function encodePath(path: string): string {
 }
 
 /**
- * 過去の URL を現行の URL へリダイレクトする公開ルータ。認証不要なので index.ts で
- * auth ガードより前にマウントする。過去の URL は 2 世代ある。
+ * 過去の URL を現行の URL へリダイレクトするルータ。index.ts で BASIC 認証の後ろに
+ * マウントするので、staging では認証を通した相手にだけ答える (どの URL が在るかを
+ * 外に教えない)。過去の URL は 2 世代ある。
  *
  * **旧 yantene.net (Jekyll + GitHub Pages)。** 外部のリンク・検索結果・フィード購読に
  * 残っており、ドメインを本アプリへ向けた時点で行き先を失った。
@@ -116,7 +113,7 @@ function encodePath(path: string): string {
  *
  * - /notes/<slug>, /notes/<slug>.md     → /articles/<slug>, /articles/<slug>.md
  *   (domain/note/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
- * - /notes                              → /articles (307。あの URL は短文の一覧として戻る)
+ * - /notes?…                            → /articles?… (307。あの URL は短文の一覧として戻る)
  *
  * どちらの世代も、記事は `/:file{[^/]+[.]html}` のような可変パターンではなく静的パスとして
  * 1 本ずつ登録する。ルート直下でカスタム正規表現のパラメータを使うと、Hono の SmartRouter
@@ -126,7 +123,8 @@ function encodePath(path: string): string {
  * 移転先にクエリ文字列は持ち込まない。過去の記事 URL にクエリは無く、外から付いて
  * くるのは utm 等のトラッキングだけである。計測用に Cloudflare Web Analytics のビーコンは
  * 置いてあるが (ADR 0021。CSP の connect-src にも cloudflareinsights.com がある)、utm を
- * 読むコードはこのアプリのどこにも無い。
+ * 読むコードはこのアプリのどこにも無い。例外は `/notes` の一覧で、`?q=` や `?page=` は
+ * つい先日までこのアプリ自身が出していた効くクエリなので、そのまま `/articles` へ渡す。
  */
 export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
@@ -156,20 +154,23 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
     const slug = legacySlug === undefined ? undefined : noteSlugByLegacySlug.get(legacySlug);
     if (slug === undefined) return next();
 
-    return permanentRedirect(
-      c,
-      `/api/v1/articles/${slug}/assets/${encodePath(c.req.param("file"))}`,
-    );
+    return permanentRedirect(c, `${assetPrefixOf(slug)}${encodePath(c.req.param("file"))}`);
   });
 
   for (const slug of slugsMovedFromNotes) {
     const from = `${FORMER_ARTICLE_PATH_PREFIX}${slug}`;
-    router.get(from, (c) => permanentRedirect(c, articlePath(slug)));
+    /*
+     * 末尾のスラッシュ付きも受ける。ページのルータは付いていても同じ記事に当てていたので、
+     * その形で外に残ったリンクもある。POST も受けるのは、改名前に開いたままのページの
+     * リアクションのフォーム (JS 無しの `<Form method="post">`) が旧 URL へ送るため。
+     * 308 はメソッドと本文を保つので、移転先の action がそのまま受ける。
+     */
+    router.on(["GET", "POST"], [from, `${from}/`], (c) => permanentRedirect(c, articlePath(slug)));
     // 記事ページが `Link: rel="alternate"` で広告していた原文 Markdown の URL (ADR 0009)。
     router.get(`${from}.md`, (c) => permanentRedirect(c, `${articlePath(slug)}.md`));
   }
 
-  router.get("/notes", (c) => temporaryRedirect(c, "/articles"));
+  router.get("/notes", (c) => temporaryRedirect(c, `/articles${new URL(c.req.url).search}`));
 
   return router;
 }

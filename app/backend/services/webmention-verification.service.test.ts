@@ -90,30 +90,39 @@ describe("WebmentionVerificationService", () => {
   });
 
   /*
-   * 記事を `/notes/<slug>` と呼んでいた頃の URL 宛て (ADR 0032)。送り手のページに
-   * 書かれているのは旧 URL なので、照合もその URL で行う。保存する行はスラグで引くので、
-   * 正規の URL 宛てと同じ記事に付く。
+   * `/notes/<slug>` から移した記事は 2 つの URL で応える (ADR 0032)。送り手がどちらの
+   * 表記で届け出ても、ページにどちらが書いてあっても、同じ行に同じ種別で付く。
+   *
+   * 届け出た表記だけで照合すると、正規の URL を張っている他人のページを旧 URL 宛てで
+   * 届け出るだけで「リンクが無い」と判定させ、その人の行を消せてしまう (行の鍵は
+   * note と source で、表記を含まない)。
    */
-  it("移した記事の旧 URL 宛てなら、旧 URL へのリンクで照合して保存する", async () => {
-    const formerRequest = WebmentionRequest.create({
-      source: SOURCE,
-      target: "https://yantene.net/notes/back-from-times",
-      siteOrigin: "https://yantene.net",
-    });
-    const { service, upsert } = harness(
-      fetched(`
+  describe("移した記事の 2 つの URL", () => {
+    const linking = (href: string): string => `
         <div class="h-entry">
-          <a class="u-in-reply-to" href="https://yantene.net/notes/back-from-times">re</a>
+          <a class="u-in-reply-to" href="${href}">re</a>
           <div class="e-content"><p>おかえり</p></div>
-        </div>`),
-    );
+        </div>`;
+    const request = (target: string): WebmentionRequest =>
+      WebmentionRequest.create({ source: SOURCE, target, siteOrigin: "https://yantene.net" });
 
-    await service.verify(noteId, formerRequest);
+    it.each([
+      ["旧 URL 宛てで、ページも旧 URL", "/notes/back-from-times", "/notes/back-from-times"],
+      ["旧 URL 宛てで、ページは正規の URL", "/notes/back-from-times", "/articles/back-from-times"],
+      ["正規の URL 宛てで、ページは旧 URL", "/articles/back-from-times", "/notes/back-from-times"],
+    ])("%s なら返信として保存し、消さない", async (_label, target, linked) => {
+      const { service, upsert, deleteBySource } = harness(
+        fetched(linking(`https://yantene.net${linked}`)),
+      );
 
-    expect(upsert).toHaveBeenCalledTimes(1);
-    const stored = upsert.mock.calls[0][0] as Webmention;
-    expect(stored.type.toString()).toBe("reply");
-    expect(stored.target.toString()).toBe("back-from-times");
+      await service.verify(noteId, request(`https://yantene.net${target}`));
+
+      expect(deleteBySource).not.toHaveBeenCalled();
+      expect(upsert).toHaveBeenCalledTimes(1);
+      const stored = upsert.mock.calls[0][0] as Webmention;
+      expect(stored.type.toString()).toBe("reply");
+      expect(stored.target.toString()).toBe("back-from-times");
+    });
   });
 
   /*

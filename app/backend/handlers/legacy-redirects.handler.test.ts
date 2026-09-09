@@ -167,6 +167,29 @@ describe("article URLs from before the rename", () => {
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
   });
 
+  // ページのルータは末尾のスラッシュ付きでも同じ記事に当てていた。
+  it("accepts a trailing slash", async () => {
+    const res = await createTestApp().request("/notes/back-from-times/", {}, env());
+
+    expect(res.status).toBe(308);
+    expect(res.headers.get("location")).toBe("/articles/back-from-times");
+  });
+
+  /*
+   * 改名前に開いたままのページのリアクションのフォーム (JS 無しの `<Form method="post">`)
+   * は旧 URL へ POST する。308 はメソッドと本文を保つので、移転先の action がそのまま受ける。
+   */
+  it("carries a POST over to the new URL", async () => {
+    const res = await createTestApp().request(
+      "/notes/back-from-times",
+      { method: "POST", body: new URLSearchParams({ emoji: "❤️" }) },
+      env(),
+    );
+
+    expect(res.status).toBe(308);
+    expect(res.headers.get("location")).toBe("/articles/back-from-times");
+  });
+
   /*
    * 2025 年以前の記事は移さない。素通りした先はページ描画で、`/notes/<slug>` の
    * ルートはもう無いので 404 になる。恒久リダイレクトの行き先が無い状態を作らないよう、
@@ -193,6 +216,21 @@ describe("article URLs from before the rename", () => {
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe("/articles");
+  });
+
+  // `?q=` や `?page=` は改名の直前までこのアプリ自身が出していた効くクエリ。
+  it("keeps the query of the old article list", async () => {
+    const res = await createTestApp().request("/notes?q=devpod&page=2", {}, env());
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("/articles?q=devpod&page=2");
+  });
+
+  // 覚えさせない。max-age を付けると 307 でもその間はキャッシュから答えられる。
+  it("does not let the temporary redirect be cached", async () => {
+    const res = await createTestApp().request("/notes", {}, env());
+
+    expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
   it("keeps the whole app on the faster router", async () => {

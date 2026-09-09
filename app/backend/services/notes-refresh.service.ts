@@ -25,11 +25,16 @@ import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 /**
  * 正本の中で記事が置かれる場所。`articles/<slug>.md` と `articles/<slug>/<asset>`。
  *
- * `notes/` は短文の投稿に譲る (#412)。正本側が `articles/` を持たないまま refresh を
+ * `notes/` は短文の投稿のために空けてある。正本側が `articles/` を持たないまま refresh を
  * 叩くと、下の「全件削除の拒否」で止まる。
  */
 const SOURCE_DIRECTORY = "articles/";
-const noteSourcePattern = /^articles\/[^/]+\.md$/;
+
+/** `articles/<base>.md` の形 (直下の .md だけ。`articles/<slug>/<file>.md` はアセット)。 */
+function isNoteSourcePath(path: string): boolean {
+  if (!path.startsWith(SOURCE_DIRECTORY) || !path.endsWith(".md")) return false;
+  return !path.slice(SOURCE_DIRECTORY.length).includes("/");
+}
 
 /** refresh の実行結果サマリ。 */
 export interface RefreshResult {
@@ -323,7 +328,7 @@ function groupNotes(tree: readonly ContentEntry[]): NoteGroup[] {
   const assetsByPrefix = new Map<string, ContentEntry[]>();
 
   for (const entry of tree) {
-    if (noteSourcePattern.test(entry.path)) {
+    if (isNoteSourcePath(entry.path)) {
       sources.push({
         base: entry.path.slice(SOURCE_DIRECTORY.length, -".md".length),
         entry,

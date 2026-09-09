@@ -64,18 +64,39 @@ describe("WebmentionRequest", () => {
 
   /*
    * 記事を `/notes/<slug>` と呼んでいた頃の URL (ADR 0032)。そこから移した記事に限って
-   * 旧 URL 宛ても受け、target は送り手の書いた接頭辞のまま組み直す。送り手のページに
-   * 書かれているのは旧 URL なので、正規の `/articles/` に直すとリンクの照合で必ず落ちる。
+   * 旧 URL 宛ても受ける。
    */
   describe("改名前の /notes/<slug> 宛て", () => {
-    it("移した記事なら受け入れ、target は旧 URL のまま組み直す", () => {
+    it("移した記事なら受け入れ、target は正規の URL に組み直す", () => {
       const request = create(
         "https://example.com/post",
         "https://yantene.net/notes/back-from-times/?utm_source=x",
       );
 
       expect(request.targetSlug.toString()).toBe("back-from-times");
-      expect(request.target.toString()).toBe("https://yantene.net/notes/back-from-times");
+      expect(request.target.toString()).toBe("https://yantene.net/articles/back-from-times");
+    });
+
+    // 照合に使う URL は、届け出た表記に依らず正規と旧の両方。片方だけにすると、
+    // 正規の URL を張っているページを旧 URL 宛てで届け出て「リンクが無い」ことにできる。
+    it.each([
+      "https://yantene.net/notes/back-from-times",
+      "https://yantene.net/articles/back-from-times",
+    ])("移した記事の targets は届け出た表記に依らず 2 つ (%s)", (target) => {
+      const request = create("https://example.com/post", target);
+
+      expect(request.targets.map((url) => url.toString())).toEqual([
+        "https://yantene.net/articles/back-from-times",
+        "https://yantene.net/notes/back-from-times",
+      ]);
+    });
+
+    it("移していない記事の targets は正規の URL だけ", () => {
+      const request = create("https://example.com/post", "https://yantene.net/articles/hello");
+
+      expect(request.targets.map((url) => url.toString())).toEqual([
+        "https://yantene.net/articles/hello",
+      ]);
     });
 
     // `/notes/` は短文の投稿に譲る場所。移していない記事のスラグを `/notes/` の下で

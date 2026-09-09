@@ -88,14 +88,14 @@ export class WebmentionVerificationService {
       return;
     }
 
-    if (!hasLinkToTarget(result.html, result.url, request.target)) {
+    if (!hasLinkToTarget(result.html, result.url, request.targets)) {
       // リンクが消えた = 取り消し。初回なら消す行が無いだけで、結果は同じ。
       await this.commands.deleteBySource(noteId, request.source);
       log.info("webmention removed: source does not link to target");
       return;
     }
 
-    const parsed = readMention(result.html, result.url, request.target);
+    const parsed = readMention(result.html, result.url, request.targets);
 
     /*
      * 著者アイコンを自分のところへ写す。相手のドメインからは読み込めない

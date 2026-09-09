@@ -93,11 +93,17 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   ```
 
 - 記事の URL とアセット API を `/notes` から `/articles` へ移した
-  ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。本文 (R2 の MDAST) に
-  埋まったアセット URL は `/api/v1/notes/<slug>/assets/...` のままなので、**force refresh を
-  流すまで記事中の画像と音源が 404 になる**。カバー画像の URL (D1) だけは migration 0011 が
-  先に書き換える。正本側で `notes/` を `articles/` に動かしてから流すこと (動かす前は
-  `articles/*.md` が無いので、全件削除のガードで止まる)。
+  ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。**force は要らない。**
+  正本側で `notes/` を `articles/` に動かすと、ハッシュに正本のパスが入っているので通常の
+  refresh が全記事を作り直す (D1 のカバー画像 URL と、R2 の MDAST に埋まったアセット URL の
+  両方)。動かして refresh が走るまでは、記事中の画像と音源とカバー画像が 404 になる。
+  動かす前に叩いた refresh は `articles/*.md` が無いので全件削除のガードで止まる (記事は
+  消えない)。全記事のハッシュが変わるので埋め込みも作り直しになり、1 回 30 本までなので
+  **記事数 ÷ 30 を切り上げた回数**だけ refresh を流すこと。
+
+  refresh では直らないものが 2 つある。本文に**ルート相対で直書きした** `/notes/<slug>` の
+  記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらも正本の Markdown を
+  書き換える (`](/notes/` → `](/articles/`、`/api/v1/notes/` → `/api/v1/articles/`)。
 
 ## データモデルとストレージ戦略
 
