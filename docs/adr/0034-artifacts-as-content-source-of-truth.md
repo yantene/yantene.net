@@ -101,10 +101,10 @@ refresh が止まるだけで、配信には届かない。
   `tree` / `blob` / `exec` / `symlink` / `gitlink`
 - `file?ref=&path=` は生バイト列を 200 で返し、無いパスは 404
 - **blob ハッシュは手元の `git rev-parse` と一致した。** 変更検出が引き継がれる裏付けになる
-- **リポジトリトークンで REST を叩くと 401 になる** (`{"code":10000,"message":"Authentication
-  error"}`)。`issue-token --scope read` で出したトークンを `Authorization: Bearer` に載せ、
-  `?expires=` を付けた形と落とした形の両方で試して同じ。git の remote に対しては同じ
-  トークンが通るので、**トークンの種類ごとに通る面が分かれている**。案 C が成立しない
+- **リポジトリトークンで REST を叩くと 401 になる。** `issue-token --scope read` で出した
+  トークンを `Authorization: Bearer` に載せ、`?expires=` を付けた形と落とした形の両方で
+  試して、どちらも `code: 10000` の `Authentication error` が返った。同じトークンが git の
+  remote には通るので、**トークンの種類ごとに通る面が分かれている**。案 C が成立しない
   裏付けで、Worker に置くトークンをこれ以上狭められないことを意味する
 - ルート (9 件) と `articles/` (83 件) のどちらも `result_info` が付かなかった。
   この規模ではツリーの分割は起きない。分割されたら throw する作りは、想定外を静かに
