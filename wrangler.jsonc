@@ -67,7 +67,7 @@
         "CONTENT_SOURCE": "github",
         "ARTIFACTS_NAMESPACE": "yantene",
         "ARTIFACTS_REPO": "content",
-        "ARTIFACTS_BRANCH": "staging",
+        "ARTIFACTS_BRANCH": "main",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
         "GITHUB_BRANCH": "staging",

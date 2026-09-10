@@ -52,8 +52,12 @@ binding からも読める。これで正本も Cloudflare に閉じられる。
 案 B を採る。
 
 - **正本は Cloudflare Artifacts のリポジトリ** (namespace `yantene`、repo `content`)。
-  `articles/<slug>.md` が本文、`articles/<slug>/<filename>` が画像アセット。staging と
-  production はブランチで分ける (`staging` / `main`)
+  `articles/<slug>.md` が本文、`articles/<slug>/<filename>` が画像アセット。
+  **staging も production も `main` を読む。** 環境ごとにブランチを分けない
+- **長生きするブランチは `main` だけ。** かつて GitHub 側に置いていた `staging` ブランチは、
+  GitHub Actions が `push` でしか refresh を起こせないための置き場で、記事を本番へ出す前に
+  staging サイトで見るために使っていた。Artifacts には PR も Actions も無く、公開前の記事は
+  本番へ出したうえで隠す (`visibility`) 方針に変えるので、環境ごとに正本を分ける理由が無い
 - **D1 はメタデータの索引、R2 は原文・MDAST・画像の写し。** 通常のリクエストは D1 + R2
   だけで捌き、正本に触るのは `POST /api/v1/refresh` のときだけ。ここは 0004 から変えない
 - **読み取りは REST API だけ。** infra の `ArtifactsContentStore` が
