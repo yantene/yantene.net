@@ -4,6 +4,9 @@ const DEFAULT_BASE_URL = "https://api.cloudflare.com/client/v4";
 const HTTP_OK = 200;
 const HTTP_NOT_FOUND = 404;
 
+/** ログとエラーに載せる応答本文の長さの上限。 */
+const MAX_ERROR_BODY = 200;
+
 export interface ArtifactsContentStoreConfig {
   /** Cloudflare アカウント ID。REST のパスに入る。 */
   readonly accountId: string;
@@ -138,8 +141,15 @@ export class ArtifactsContentStore implements IContentStore {
     }
     // 中身は octet-stream で返る。エラーの封筒 (JSON) が 200 で返ってきたときに、
     // その JSON を記事の本文として R2 に書き込まないようにする (fail-loud)。
+    //
+    // content-type だけで弾かないのは、記事が `.json` のアセットを連れているときに
+    // 巻き添えにするため。封筒かどうかは中身の形で見分ける。
     if ((response.headers.get("content-type") ?? "").includes("json")) {
-      throw new ArtifactsRequestError(response.status, await safeText(response));
+      const text = await response.text();
+      if (looksLikeEnvelope(text)) {
+        throw new ArtifactsRequestError(response.status, text.slice(0, MAX_ERROR_BODY));
+      }
+      return new TextEncoder().encode(text);
     }
     return new Uint8Array(await response.arrayBuffer());
   }
@@ -148,9 +158,25 @@ export class ArtifactsContentStore implements IContentStore {
 async function safeText(response: Response): Promise<string> {
   try {
     const text = await response.text();
-    return text.slice(0, 200);
+    return text.slice(0, MAX_ERROR_BODY);
   } catch {
     return "<no body>";
+  }
+}
+
+/**
+ * Cloudflare API v4 の封筒 (`{ result, success, errors, messages }`) かどうか。
+ *
+ * `file` が中身の代わりに封筒を 200 で返してきたのを見分けるために使う。`success` を
+ * 持つ JSON オブジェクトを封筒とみなす。記事の連れている `.json` のアセットが
+ * たまたまこの形をしていることは考えにくい。
+ */
+function looksLikeEnvelope(text: string): boolean {
+  try {
+    const json: unknown = JSON.parse(text);
+    return typeof json === "object" && json !== null && "success" in json;
+  } catch {
+    return false;
   }
 }
 

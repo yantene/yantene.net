@@ -86,6 +86,12 @@ force refresh の口として残す (product.md に、force が要った変更�
 - 通常の同期 → Queue から (自動)
 - force refresh → `POST /api/v1/refresh?force=true` を `REFRESH_SECRET` で保護して残す
 
+⚠️ **この口は Queue の外を通るので、直列化が効かない。** force refresh は全記事を読み直す
+ぶん長く (数十秒〜)、その最中に push が来ると Queue 側の速い同期が新しい姿を書いたあとに
+force が古い姿で上書きしうる。**force を流すときは push を重ねない。** 口を 2 つ持つ以上、
+機械では守れない (Queue 側を弾く鍵を置くと、鍵を離し損ねたときに同期が止まる方が高くつく)。
+重なってしまったら、もう一度 push するか force を流し直せば揃う。
+
 ## 帰結 / Consequences
 
 - 良い面: push から同期までが Cloudflare の中で閉じる。コンテンツリポジトリ側に secret と
@@ -94,11 +100,13 @@ force refresh の口として残す (product.md に、force が要った変更�
   問題にならないが、記事が増えれば伸びる
 - 悪い面: 再試行を使い切って落ちた push は、次の push まで反映されないままになる。
   気づく仕組み (dead letter queue か通知) は別に要る
+- 悪い面: 直列化が効くのは Queue を通る同期だけ。手で叩く force refresh と push が
+  重なると、古い姿で固まりうる (上記)
 - 運用: これが動いたら、`yantene/notes` の `refresh.yml` と GitHub secret の
   `PRODUCTION_REFRESH_SECRET` / `STAGING_REFRESH_SECRET` は死ぬ
 - 検証方法: `refresh-queue.handler.test.ts` が、読んでいるブランチへの push でだけ走ること、
   バッチをまとめて 1 回にすること、コンテンツリポジトリが Artifacts でない環境で何もしないこと、
-  落ちたら ack しないことを固定する
+  形の読めない push イベントを捨てずに同期へ倒すこと、落ちたら ack しないことを固定する
 
 ## 参考 / More Information
 

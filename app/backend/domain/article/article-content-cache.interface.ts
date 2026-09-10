@@ -12,7 +12,7 @@ export interface CachedAsset {
  * ドメインはストレージ技術 (R2) を知らない。infra が実装する。
  */
 export interface IArticleContentCache {
-  /** 原文の Markdown (フロントマターを含むコンテンツリポジトリそのもの) を保存する。 */
+  /** 原文の Markdown (フロントマターを含む、書かれたそのまま) を保存する。 */
   putSource(slug: ArticleSlug, markdown: string): Promise<void>;
   /** 原文の Markdown を取得する。無ければ undefined。 */
   getSource(slug: ArticleSlug): Promise<string | undefined>;

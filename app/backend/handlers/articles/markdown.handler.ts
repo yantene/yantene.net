@@ -104,7 +104,7 @@ async function negotiatedSourceResponse(
  * slug に `.` は使えない (ArticleSlug の制約) ため、`<slug>.md` を別の記事と取り違える
  * 余地はない。`.md` を落とした残りが slug として妥当でなければ 404。
  *
- * 本文はコンテンツリポジトリそのまま (フロントマター込み・画像の相対パスも書き換えない) を返す。
+ * 本文は書かれたそのまま (フロントマター込み・画像の相対パスも書き換えない) を返す。
  * 解決済みの URL が要るクライアントには MDAST を返す JSON API がある (ADR 0005)。
  */
 export function createArticleMarkdownRouter(): Hono<{ Bindings: Env }> {

@@ -15,18 +15,37 @@ interface ArtifactsPushedEvent {
 }
 
 /**
- * 読んでいるコンテンツリポジトリのブランチへの push か。
+ * メッセージ 1 通の扱い。
+ *
+ * - `refresh`: 読んでいるリポジトリのブランチへの push
+ * - `skip`: 別の種別のイベント、別のリポジトリ・別のブランチへの push
+ * - `unrecognized`: push イベントなのに送り元か ref が読めない
+ */
+type Verdict = "refresh" | "skip" | "unrecognized";
+
+/**
+ * メッセージが何なのかを見分ける。
  *
  * 送り元 (namespace / repo) も見る。購読をアカウント単位で張ると、同じアカウントの
  * 別のリポジトリへの push もここへ来るため。
+ *
+ * push イベントなのに送り元か ref が読めないときを `skip` と分けるのは、そこを混ぜると
+ * 「別ブランチへの push だった」と「イベントの形が変わって読めなくなった」が
+ * 同じログになり、push しても同期されない状態に気づけなくなるため。
  */
-function isPushToWatchedBranch(body: unknown, env: Env): boolean {
-  if (typeof body !== "object" || body === null) return false;
+function classify(body: unknown, env: Env): Verdict {
+  if (typeof body !== "object" || body === null) return "unrecognized";
   const event = body as ArtifactsPushedEvent;
-  if (event.type !== PUSHED_EVENT_TYPE) return false;
-  if (event.source?.namespace !== env.ARTIFACTS_NAMESPACE) return false;
-  if (event.source?.repoName !== env.ARTIFACTS_REPO) return false;
-  return event.payload?.ref === `refs/heads/${env.ARTIFACTS_BRANCH}`;
+  if (event.type !== PUSHED_EVENT_TYPE) return "skip";
+
+  const namespace = event.source?.namespace;
+  const repoName = event.source?.repoName;
+  const ref = event.payload?.ref;
+  if (typeof namespace !== "string" || typeof repoName !== "string" || typeof ref !== "string") {
+    return "unrecognized";
+  }
+  if (namespace !== env.ARTIFACTS_NAMESPACE || repoName !== env.ARTIFACTS_REPO) return "skip";
+  return ref === `refs/heads/${env.ARTIFACTS_BRANCH}` ? "refresh" : "skip";
 }
 
 /**
@@ -57,14 +76,27 @@ export async function handleRefreshQueue(batch: MessageBatch, env: Env): Promise
   }
 
   const branch = env.ARTIFACTS_BRANCH;
-  const targeted = batch.messages.filter((message) => isPushToWatchedBranch(message.body, env));
-  if (targeted.length === 0) {
+  const verdicts = batch.messages.map((message) => classify(message.body, env));
+
+  const unrecognized = verdicts.filter((verdict) => verdict === "unrecognized").length;
+  if (unrecognized > 0) {
+    // 形が読めないと「別ブランチへの push」と区別できない。黙って捨てると push しても
+    // 同期が走らないまま気づけないので、記録に残したうえで同期へ倒す。refresh は冪等で、
+    // 変わっていない記事は読み直さないため、余分に走っても害は無い (fail-loud)。
+    logger.error("形の読めない push イベントが来た。安全側に倒して同期する", {
+      unrecognized,
+      messages: batch.messages.length,
+    });
+  }
+
+  const pushes = verdicts.filter((verdict) => verdict === "refresh").length;
+  if (pushes === 0 && unrecognized === 0) {
     logger.info("同期の要らないイベントだった", { branch, messages: batch.messages.length });
     batch.ackAll();
     return;
   }
 
-  logger.info("push を受けて同期する", { branch, pushes: targeted.length });
+  logger.info("push を受けて同期する", { branch, pushes, unrecognized });
   const result = await runRefresh(env, { force: false });
   logger.info("同期が終わった", { result });
   batch.ackAll();

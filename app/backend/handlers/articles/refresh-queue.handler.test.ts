@@ -102,6 +102,31 @@ describe("handleRefreshQueue", () => {
     expect(runRefreshMock).not.toHaveBeenCalled();
   });
 
+  /*
+   * イベントの形は実測で割り出したもので、変わりうる。読めなくなったときに「別ブランチへの
+   * push だった」と同じ扱いで捨てると、push しても同期されない状態に気づけない。refresh は
+   * 冪等なので、読めないものは同期へ倒す。
+   */
+  it("syncs anyway when a push event cannot be read", async () => {
+    const { batch: b, ackAll } = batch([
+      { type: "cf.artifacts.repo.pushed", source: { repo_name: "yantene-staging" }, payload: {} },
+    ]);
+
+    await handleRefreshQueue(b, env());
+
+    expect(runRefreshMock).toHaveBeenCalledTimes(1);
+    expect(ackAll).toHaveBeenCalled();
+  });
+
+  /* この Queue に来るのは張った購読からだけなので、オブジェクトですらないなら形が変わっている。 */
+  it("syncs anyway when a message is not an object", async () => {
+    const { batch: b } = batch(["cf.artifacts.repo.pushed"]);
+
+    await handleRefreshQueue(b, env());
+
+    expect(runRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
   /* Artifacts を読んでいない環境で走らせると、push を合図に GitHub の中身を同期してしまう。 */
   it("does nothing when the content source is not artifacts", async () => {
     const { batch: b, ackAll } = batch([pushEvent("refs/heads/main")]);

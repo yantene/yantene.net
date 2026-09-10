@@ -251,8 +251,8 @@ function readAlertLabel(
  * 要素にアイコンと見出しを添える。ラベルを本文に残さないのは、要約 (冒頭 160 文字) と
  * 検索インデックスに `[!NOTE]` という文字列が混ざらないようにするため。
  *
- * 変換は refresh のときにしか走らない。MDAST をコンテンツリポジトリとして R2 に置く構成 (ADR 0005) に
- * 合わせ、描画側では引用の中身を判定しない。
+ * 変換は refresh のときにしか走らない。組み上げた MDAST をそのまま R2 に置いて配信する
+ * 構成 (ADR 0005) に合わせ、描画側では引用の中身を判定しない。
  */
 function withGfmAlerts<T extends Nodes>(node: T): T {
   return mapTree(node, (child) => {

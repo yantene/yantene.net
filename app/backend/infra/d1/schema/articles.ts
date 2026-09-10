@@ -1,9 +1,9 @@
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
- * 記事のメタデータインデックス。コンテンツリポジトリは GitHub リポジトリ、
+ * 記事のメタデータインデックス。原文は git のコンテンツリポジトリに、
  * 本文 (MDAST) と画像は R2 にあり、この D1 テーブルは一覧・ルーティング用の
- * メタデータだけを保持する (ADR 0004)。
+ * メタデータだけを保持する (ADR 0034)。
  *
  * - published_on / last_modified_on: フロントマター由来の日付。ISO 日付文字列
  *   ("YYYY-MM-DD") で保存し、辞書順ソート = 日付順ソートを利用する。

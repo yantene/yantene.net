@@ -247,6 +247,19 @@ describe("ArtifactsContentStore", () => {
     await expect(store(fetchFn).readFile("a.md")).rejects.toBeInstanceOf(ArtifactsRequestError);
   });
 
+  it("returns the bytes of a JSON asset instead of mistaking it for an envelope", async () => {
+    // 記事が `.json` のアセットを連れていることはありうる。content-type だけで弾くと
+    // 巻き添えで refresh 全体が落ちる。
+    const body = '{"labels":["a","b"]}';
+    const fetchFn = vi.fn(() =>
+      Promise.resolve(
+        new Response(body, { status: 200, headers: { "content-type": "application/json" } }),
+      ),
+    ) as unknown as typeof fetch;
+    const bytes = await store(fetchFn).readFile("articles/a/data.json");
+    expect(new TextDecoder().decode(bytes)).toBe(body);
+  });
+
   it("throws ArtifactsRequestError on other non-ok responses", async () => {
     const fetchFn = vi.fn(() =>
       Promise.resolve(new Response("boom", { status: 500 })),
