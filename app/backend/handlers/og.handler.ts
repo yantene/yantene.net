@@ -7,7 +7,7 @@ import { notFoundResponse } from "~/lib/problem-details";
 /*
  * フル字形の Noto Sans JP (サブセットだと ― 等の記号が豆腐になるため)。
  *
- * ⚠️ **ここを差し替えたら og-card.ts の OG_TEMPLATE_VERSION も上げること。** 蓄えの鍵は
+ * ⚠️ **ここを差し替えたら og-card.ts の OG_TEMPLATE_VERSION も上げること。** 蓄えのキーは
  * その版だけを見ているので、上げないと既に描いてあるカードが古い字のまま配られ続ける。
  */
 const FONT_KEY = "og/fonts/noto-sans-jp-700-full.ttf";
@@ -84,7 +84,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       title: article.title.toString(),
       date: article.publishedOn.toString({ calendarName: "never" }),
     });
-    // 鍵に入るのは絵を決めるもの (スラグ・版・型) だけ。改名前の `og/notes/` は読まず、手で消す。
+    // キーに入るのは絵を決めるもの (スラグ・版・型) だけ。改名前の `og/notes/` は読まず、手で消す。
     return renderAndCache(
       c.env,
       `og/articles/${slug.toString()}-${article.sourceHash}-${OG_TEMPLATE_VERSION}.png`,

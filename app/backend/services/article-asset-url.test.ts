@@ -67,7 +67,7 @@ describe("resolveAssetUrl: クエリと断片", () => {
 });
 
 /*
- * 寸法表は「解決後の URL」を鍵にしている (articles-refresh.service.ts の cacheAssets)。
+ * 寸法表は「解決後の URL」をキーにしている (articles-refresh.service.ts の cacheAssets)。
  * 本文の側も同じ関数を通るので、符号化の揺れを気にせず突き合わせられる。**名前へ戻す
  * 方向にすると `100%25.png` のような名前が別物に化ける** (#297)。
  */

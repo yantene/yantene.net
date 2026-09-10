@@ -85,7 +85,7 @@ export class WebmentionRequest implements IValueObject<WebmentionRequest> {
      * 両方を渡し (`targets`)、送り手がどちらの表記で届け出ても、ページにどちらが書いて
      * あっても同じ結果になるようにする。届け出た表記だけで照合すると、正規の URL を
      * 張っているページを旧 URL 宛てで届け出るだけで「リンクが無い」と判定でき、
-     * 保存済みの行を消させられる (行の鍵は article と source で、表記を含まない)。
+     * 保存済みの行を消させられる (行のキーは article と source で、表記を含まない)。
      */
     const canonical = WebmentionUrl.create(`${site.origin}${ARTICLE_PATH_PREFIX}${slug}`);
     const former = slugsRedirectedFromFormerPath.has(slug)

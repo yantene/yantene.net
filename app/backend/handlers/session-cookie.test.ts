@@ -44,7 +44,7 @@ describe("buildSessionCookie", () => {
     expect(buildSessionCookie(id, secure)).toContain(`${SESSION_COOKIE}=${id.toString()}`);
   });
 
-  it("鍵として守る属性を付ける", () => {
+  it("キーとして守る属性を付ける", () => {
     const cookie = buildSessionCookie(id, secure);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
