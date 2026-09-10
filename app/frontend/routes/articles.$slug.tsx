@@ -178,7 +178,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
           {/*
             反応する手と共有する手は、読み終えた足元だけでなく本文の手前にも置く。
             長い記事では、読み始めに共有しようと思っても末尾まで届かないため。
-            上下は同じ鍵の fetcher を共有するので、片方で押すともう片方も動く。
+            上下は同じキーの fetcher を共有するので、片方で押すともう片方も動く。
           */}
           <ArticleActions
             placement="top"

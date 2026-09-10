@@ -241,7 +241,7 @@ export class ArticlesRefreshService {
      * 残り、D1 に行があるのに R2 に MDAST が無い状態になる (記事ページが 500)。しかも
      * 落ちた原因がファイル名のような固定のものだと、毎回同じ場所で死んで直らない (#310)。
      *
-     * 原文と MDAST は鍵が決まっているので上書きで足りる。消す必要があるのは、リネーム
+     * 原文と MDAST はキーが決まっているので上書きで足りる。消す必要があるのは、リネーム
      * ・削除されて**行き場を失ったアセット**だけ。
      */
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
@@ -294,7 +294,7 @@ export class ArticlesRefreshService {
       });
       const size = readImageDimensions(bytes);
       /*
-       * 鍵は**解決後の URL**。本文の側も同じ resolveAssetUrl を通るので、符号化の
+       * キーは**解決後の URL**。本文の側も同じ resolveAssetUrl を通るので、符号化の
        * 揺れ (`絵.png` → `%E7%B5%B5.png`、`100%25.png` はそのまま) を気にせず突き合わせ
        * られる。URL から名前へ戻す方向だと、`%25` を含む名前が別物に化ける (#297)。
        */
@@ -507,7 +507,7 @@ function withAssetUrls<T extends Nodes>(node: T, slug: string): T {
  * `if (!map.has(id))` で先勝ちにしており (CommonMark の定義の扱いに合わせている)、
  * ここが後勝ちだと**描かれる画像と埋めた寸法が別物になる。**
  *
- * 名前はそのまま鍵にしてよい。mdast は `identifier` を参照側も定義側も小文字に均して
+ * 名前はそのままキーにしてよい。mdast は `identifier` を参照側も定義側も小文字に均して
  * おり (`label` が書いたままを持つ)、あちらが両側を大文字に揃えているのと同じことに
  * なる。
  */
@@ -543,7 +543,7 @@ function sizedUrlOf(node: Nodes, definitionUrls: ReadonlyMap<string, string>): s
  * フロント側の変更なしに `<img width height>` が出るようになる。寸法が取れなかった
  * 画像には何も付けない (誤った値で見た目を壊さない)。
  *
- * 表の鍵は解決後の URL なので、ノードの URL をそのまま引くだけでよい (cacheAssets)。
+ * 表のキーは解決後の URL なので、ノードの URL をそのまま引くだけでよい (cacheAssets)。
  * URL は {@link withAssetUrls} を通った後のものを渡すこと。
  *
  * **参照記法 (`![alt][id]`) では、寸法を載せる先が定義ではなく参照の側になる。**

@@ -71,7 +71,7 @@ export function ReactionBar({
 }: ReactionBarProps): React.JSX.Element {
   const { t } = useTranslation();
   /*
-   * 上下に 2 つ置かれるので、同じ鍵で fetcher を共有する。別々にすると、送信中の
+   * 上下に 2 つ置かれるので、同じキーで fetcher を共有する。別々にすると、送信中の
    * 楽観表示が押したほうにしか出ず、もう片方だけ古い姿のまま残る。
    */
   const fetcher = useFetcher({ key: REACTION_FETCHER_KEY });

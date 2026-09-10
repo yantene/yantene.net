@@ -5,7 +5,7 @@ import { readCookieValues } from "~/lib/cookie";
  * 読み手のセッション識別子を運ぶ cookie。
  *
  * 中身は識別子だけで、意味のある値は何も入れない。セッションの持ち物は KV 側にあり、
- * これはそこを指す鍵にすぎない。読み手に見えても、他人のものを当てられなければ困らない。
+ * これはそこを指すキーにすぎない。読み手に見えても、他人のものを当てられなければ困らない。
  */
 export const SESSION_COOKIE = "session";
 
@@ -45,7 +45,7 @@ export function buildSessionCookie(id: SessionId, options: { readonly secure: bo
     `${SESSION_COOKIE}=${id.toString()}`,
     `Max-Age=${String(SESSION_LIFETIME_DAYS * SECONDS_PER_DAY)}`,
     `Path=${PATH}`,
-    // 読み手の JavaScript に鍵を触らせない。盗まれると他人になりすませる。
+    // 読み手の JavaScript にキーを触らせない。盗まれると他人になりすませる。
     "HttpOnly",
     // 他所からの遷移でも送ってほしい (リンクを踏んで来た人も同じ人として扱う)。
     "SameSite=Lax",
@@ -56,7 +56,7 @@ export function buildSessionCookie(id: SessionId, options: { readonly secure: bo
 /**
  * Cookie ヘッダーから名前の一致する値を取り出す。無ければ undefined。
  *
- * **同じ名前が並んでいたら先頭を採る。** 鍵として読めるかどうかの判定は呼ぶ側が持って
+ * **同じ名前が並んでいたら先頭を採る。** キーとして読めるかどうかの判定は呼ぶ側が持って
  * いて、ここで選び直す手掛かりが無い (ロケールのほうは「読める最初」を採る。
  * app/lib/cookie.ts を参照)。
  */

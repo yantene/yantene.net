@@ -105,11 +105,11 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらも正本の Markdown を
   書き換える (`](/notes/` → `](/articles/`、`/api/v1/notes/` → `/api/v1/articles/`)。
 
-- D1 の表と R2 の鍵を `notes` から `articles` に改めた
+- D1 の表と R2 のキーを `notes` から `articles` に改めた
   ([ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
   表は migration が改名するので、force が要るのは **R2 の写しを `articles/<slug>/` に
-  移すため**。旧鍵 `notes/<slug>/` は読まないので、写し直すまで記事の原文と MDAST は
-  見つからない。写し直しても旧鍵の写しは消えないので、R2 の置き場を空けたければ手で消す
+  移すため**。旧キー `notes/<slug>/` は読まないので、写し直すまで記事の原文と MDAST は
+  見つからない。写し直しても旧キーの写しは消えないので、R2 の置き場を空けたければ手で消す
   (OG 画像の `og/notes/` も同じ)。
 
 ## データモデルとストレージ戦略

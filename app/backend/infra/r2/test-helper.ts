@@ -15,8 +15,8 @@ function toBytes(value: string | ArrayBuffer | ArrayBufferView): Uint8Array {
 /**
  * 符号単位の順。
  *
- * R2 は鍵をこの順に返す。上の再開判定が `>` (符号単位の比較) なので、並べ方も揃えて
- * おかないと非 ASCII の鍵で食い違い、頁をまたぐ掃除が取りこぼす。localeCompare は
+ * R2 はキーをこの順に返す。上の再開判定が `>` (符号単位の比較) なので、並べ方も揃えて
+ * おかないと非 ASCII のキーで食い違い、頁をまたぐ掃除が取りこぼす。localeCompare は
  * 使えない。
  */
 function byCodeUnit(a: string, b: string): number {
@@ -64,7 +64,7 @@ export function createTestR2(pageSize = Infinity): {
       });
     },
     /*
-     * 頁に分けて返す。cursor は**最後に返した鍵**で、再開はその次から
+     * 頁に分けて返す。cursor は**最後に返したキー**で、再開はその次から
      * (本物の R2 と同じ)。件数で数える作りにすると、列挙しながら消したときに位置が
      * ずれて取りこぼすので、そこを模しておかないと掃除の実装を確かめたことにならない。
      *

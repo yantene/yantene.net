@@ -62,7 +62,7 @@ async function copyLink(url: string, title: string): Promise<void> {
 
 /*
  * 翻訳のキーは組み立てず、そのまま書く。`share.${state}` のように綴ると、キーを grep しても
- * 見つからない場所ができる (実際、ここで share.failed という無い鍵を引いていた)。
+ * 見つからない場所ができる (実際、ここで share.failed という無いキーを引いていた)。
  */
 function feedbackText(state: CopyState, t: (key: string) => string): string | undefined {
   if (state === "copied") return t("share.copied");
