@@ -108,10 +108,9 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - D1 の表と R2 の鍵を `notes` から `articles` に改めた
   ([ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
   表は migration が改名するので、force が要るのは **R2 の写しを `articles/<slug>/` に
-  移すため**。移すまでは旧鍵 `notes/<slug>/` を読みの逃げ道にしているので記事は出るが、
-  逃げ道は #430 で消す。処理できた記事の旧鍵は片付けの経路で消えるが、**`skipped` の記事は
-  片付けまで来ないので旧鍵に残る**。#430 の前に `notes/` の下に現行スラグの写しが無いことを
-  確かめる。OG 画像の旧鍵 `og/notes/` は写し直しでは消えないので、手で消す。
+  移すため**。旧鍵 `notes/<slug>/` は読まないので、写し直すまで記事の原文と MDAST は
+  見つからない。写し直しても旧鍵の写しは消えないので、R2 の置き場を空けたければ手で消す
+  (OG 画像の `og/notes/` も同じ)。
 
 ## データモデルとストレージ戦略
 

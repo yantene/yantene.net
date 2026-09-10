@@ -153,63 +153,13 @@ describe("R2ArticleContentCache", () => {
     await cache.deleteArticle(slug);
     expect(store.size).toBe(0);
   });
-});
 
-/*
- * 改名前の接頭辞 `notes/<slug>/` からの移行 (ADR 0033)。写し終えたら消す (#430)。
- */
-describe("R2ArticleContentCache with copies under the former prefix", () => {
-  function putFormer(
-    store: Map<string, { bytes: Uint8Array; contentType: string | undefined }>,
-  ): void {
-    const encoder = new TextEncoder();
-    store.set("notes/my-article/source.md", {
-      bytes: encoder.encode("# Former\n"),
-      contentType: "text/markdown; charset=utf-8",
-    });
-    store.set("notes/my-article/mdast.json", {
-      bytes: encoder.encode('{"type":"root","former":true}'),
-      contentType: "application/json",
-    });
-    store.set("notes/my-article/assets/cover.png", {
-      bytes: new Uint8Array([9]),
-      contentType: "image/png",
-    });
-  }
-
-  it("reads the former copies when the new ones are missing", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-
-    expect(await cache.getSource(slug)).toBe("# Former\n");
-    expect(await cache.getMdast(slug)).toEqual({ type: "root", former: true });
-    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([9]));
-  });
-
-  /* 写し直した記事が古い写しを出してはいけない。 */
-  it("prefers the new copies over the former ones", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-
-    await cache.putSource(slug, "# New\n");
-    await cache.putMdast(slug, { type: "root" });
-    await cache.putAsset(slug, "cover.png", {
-      bytes: new Uint8Array([1]),
-      contentType: "image/png",
-    });
-
-    expect(await cache.getSource(slug)).toBe("# New\n");
-    expect(await cache.getMdast(slug)).toEqual({ type: "root" });
-    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([1]));
-  });
-
-  it("writes only under the new prefix", async () => {
+  /* 書くのは記事の接頭辞の下だけ。 */
+  it("writes only under the article prefix", async () => {
     const { bucket, store } = createTestR2();
     const cache = new R2ArticleContentCache(bucket);
 
-    await cache.putSource(slug, "# New\n");
+    await cache.putSource(slug, "# Hi\n");
     await cache.putMdast(slug, { type: "root" });
     await cache.putAsset(slug, "cover.png", {
       bytes: new Uint8Array([1]),
@@ -221,71 +171,5 @@ describe("R2ArticleContentCache with copies under the former prefix", () => {
       "articles/my-article/mdast.json",
       "articles/my-article/source.md",
     ]);
-  });
-
-  /*
-   * refresh は書き終えてから片付けに来る。そのときに古い写しを消せば、force refresh を
-   * 1 回流すだけで、処理できた記事の旧接頭辞の下は空になる。
-   */
-  it("drops the former copies that were rewritten under the new prefix when pruning", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-    await cache.putSource(slug, "# New\n");
-    await cache.putMdast(slug, { type: "root" });
-    await cache.putAsset(slug, "cover.png", {
-      bytes: new Uint8Array([1]),
-      contentType: "image/png",
-    });
-
-    await cache.pruneAssets(slug, new Set(["cover.png"]));
-
-    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([]);
-    expect(await cache.getSource(slug)).toBe("# New\n");
-    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([1]));
-  });
-
-  /*
-   * 正本に在るのに今回読めなかったアセットは、旧鍵の写しが唯一の写し。消すと一時的な
-   * 失敗で絵が欠け、contentHash が入るので次の refresh でも直らない。
-   */
-  it("keeps a former asset that is listed but was not copied", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-    await cache.putSource(slug, "# New\n");
-    await cache.putMdast(slug, { type: "root" });
-    // cover.png は正本に在るが、今回は読めなかった (新しい鍵に写していない)。
-
-    await cache.pruneAssets(slug, new Set(["cover.png"]));
-
-    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([
-      "notes/my-article/assets/cover.png",
-    ]);
-    expect((await cache.getAsset(slug, "cover.png"))?.bytes).toEqual(new Uint8Array([9]));
-    expect(await cache.getSource(slug)).toBe("# New\n");
-  });
-
-  it("drops a former asset that the source no longer lists", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-    await cache.putSource(slug, "# New\n");
-    await cache.putMdast(slug, { type: "root" });
-
-    await cache.pruneAssets(slug, new Set());
-
-    expect([...store.keys()].filter((key) => key.startsWith("notes/"))).toEqual([]);
-  });
-
-  it("deletes the former copies together with the new ones", async () => {
-    const { bucket, store } = createTestR2();
-    putFormer(store);
-    const cache = new R2ArticleContentCache(bucket);
-    await cache.putSource(slug, "# New\n");
-
-    await cache.deleteArticle(slug);
-
-    expect(store.size).toBe(0);
   });
 });

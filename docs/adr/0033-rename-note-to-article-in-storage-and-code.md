@@ -63,16 +63,11 @@ environments.md の 2 段リリースは採れない。改名には「読まな�
 中間状態が無い。`Migrate D1` → `Deploy` の数十秒、旧コードが `no such table: notes` で 500 に
 なることを飲み、静かな時間帯に出す。
 
-### R2 の鍵は逃げ道を置いて移す
+### R2 の鍵は force refresh で移す
 
-鍵を一度に切り替えると、force refresh が写し直すまで全記事の原文と MDAST が見つからず 500 になる。
-読むときは `articles/<slug>/` を先に見て、無ければ改名前の `notes/<slug>/` に降りる。書くのは
-`articles/` だけ。refresh の片付けで旧鍵の下を消す。原文と MDAST は書き終えてから片付けに来るので
-無条件に消し、アセットは新しい鍵に写せたものだけ消す (正本に在るのに読めなかったアセットは、
-旧鍵の写しが唯一の写しなので残す)。
-
-逃げ道は移行のためのコードで、写し終えたら消す (#430)。OG 画像の旧鍵 `og/notes/` は読まず、
-写し直しでは消えないので手で消す。
+R2 には D1 の `ALTER TABLE ... RENAME TO` に当たるものが無く、鍵を変えるには写し直すしかない。
+読むのも書くのも `articles/<slug>/` の下だけで、旧鍵 `notes/<slug>/` には触らない。改名を
+リリースしたあと force refresh を 1 回流して写し直す。
 
 ### KV と JSON API に互換の経路は置かない
 
@@ -84,18 +79,14 @@ environments.md の 2 段リリースは採れない。改名には「読まな�
 
 - 良い面: `note` が短文だけを指す。URL・正本・表・鍵・コードの名前が一つに揃う
 - 悪い面: リリースの瞬間に数十秒の停止が出る
-- 悪い面: 改名のあと force refresh を 1 回流すまで、R2 は逃げ道で読む
-- 運用: リリース後に force refresh を流す。処理できた記事の旧鍵は片付けで消える。**refresh が
-  `skipped` にした記事は片付けまで来ないので、旧鍵の写しがそのまま残る。** #430 で逃げ道を消す
-  前に、`notes/` の下に現行スラグの写しが無いことを一覧で確かめる。正本にもう無いスラグの孤児と
-  `og/notes/` は手で消す
+- 悪い面: 改名をリリースしてから force refresh が写し直すまで、記事の原文と MDAST は見つからない
+- 運用: リリース後に force refresh を流す。旧鍵 `notes/<slug>/` と `og/notes/` の写しは読まれなく
+  なるだけで消えないので、R2 の置き場を空けたければ手で消す
 - 検証方法: `validate-migrations.mjs` が空の DB で migration を通す。
-  `r2-article-content-cache.test.ts` が旧鍵への逃げ道と片付け (写せなかったアセットを残すことを
-  含む) を固定する。`article.query-repository.test.ts` が索引の無い状態で検索が空を返すことを
-  固定する
+  `r2-article-content-cache.test.ts` が書き先の接頭辞と片付けを固定する。
+  `article.query-repository.test.ts` が索引の無い状態で検索が空を返すことを固定する
 
 ## 参考 / More Information
 
 - #429 長文の記事を指す note をコードと保存の名前から無くし、article に揃える
-- #430 R2 の旧鍵 `notes/<slug>/` への逃げ道を落とす
 - [ADR 0032](0032-call-long-form-posts-articles.md) 長文の投稿を article と呼び、`/articles/<slug>` で配る
