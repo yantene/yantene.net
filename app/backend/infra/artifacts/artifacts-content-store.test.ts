@@ -6,7 +6,8 @@ import {
   parseTreeResponse,
 } from "./artifacts-content-store";
 
-const BASE = "https://api.test/client/v4/accounts/acct-1/artifacts/namespaces/yantene/repos/notes";
+const BASE =
+  "https://api.test/client/v4/accounts/acct-1/artifacts/namespaces/yantene/repos/content";
 
 function envelope(result: unknown, resultInfo?: unknown): Response {
   return Response.json({
@@ -25,7 +26,7 @@ function store(
   return new ArtifactsContentStore({
     accountId: "acct-1",
     namespace: "yantene",
-    repo: "notes",
+    repo: "content",
     branch: "main",
     baseUrl: "https://api.test/client/v4",
     getAuthToken,

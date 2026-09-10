@@ -86,12 +86,12 @@ curl -sS -X POST \
 repo とトークンは wrangler で足りる。
 
 ```bash
-pnpm exec wrangler artifacts repos create notes --namespace yantene --default-branch main
-pnpm exec wrangler artifacts repos issue-token notes --namespace yantene \
+pnpm exec wrangler artifacts repos create content --namespace yantene --default-branch main
+pnpm exec wrangler artifacts repos issue-token content --namespace yantene \
   --scope write --ttl 31536000   # TTL は秒。最長 1 年
 ```
 
-repo の remote は `https://<account-id>.artifacts.cloudflare.net/git/yantene/notes.git`。
+repo の remote は `https://<account-id>.artifacts.cloudflare.net/git/yantene/content.git`。
 **書き手の push はここへ。** トークンは URL に埋めず、ヘッダで渡す。
 
 ```bash

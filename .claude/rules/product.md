@@ -39,7 +39,7 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 `POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
 
 正本は GitHub (`yantene/notes`) から Cloudflare Artifacts (namespace `yantene` /
-repo `notes`) へ移す途中で、どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が
+repo `content`) へ移す途中で、どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が
 決める ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
 **いまは 3 環境とも `github`。** staging の secret を置いてから順に切り替える (#401)。
 

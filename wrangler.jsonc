@@ -15,7 +15,7 @@
     // Cloudflare Artifacts (これからの正本) の参照。アカウント ID と API トークン
     // (Artifacts > Read) は secret で与える: ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
     "ARTIFACTS_NAMESPACE": "yantene",
-    "ARTIFACTS_REPO": "notes",
+    "ARTIFACTS_REPO": "content",
     "ARTIFACTS_BRANCH": "main",
     // GitHub リポジトリ (いまの正本) の参照。GITHUB_TOKEN は secret で与える。
     "GITHUB_OWNER": "yantene",
@@ -66,7 +66,7 @@
         // "artifacts" に切り替える (#401)。
         "CONTENT_SOURCE": "github",
         "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_REPO": "content",
         "ARTIFACTS_BRANCH": "staging",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
@@ -110,7 +110,7 @@
         // staging で Artifacts の経路を確かめてから "artifacts" に切り替える (#401)。
         "CONTENT_SOURCE": "github",
         "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "notes",
+        "ARTIFACTS_REPO": "content",
         "ARTIFACTS_BRANCH": "main",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
