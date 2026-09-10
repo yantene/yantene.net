@@ -118,6 +118,15 @@ describe("handleRefreshQueue", () => {
     expect(ackAll).toHaveBeenCalled();
   });
 
+  /* 種別が読めないのは「別のイベントだった」ではなく「形が変わった」。 */
+  it("syncs anyway when a message carries no type", async () => {
+    const { batch: b } = batch([{ source: { namespace: "yantene" }, payload: {} }]);
+
+    await handleRefreshQueue(b, env());
+
+    expect(runRefreshMock).toHaveBeenCalledTimes(1);
+  });
+
   /* この Queue に来るのは張った購読からだけなので、オブジェクトですらないなら形が変わっている。 */
   it("syncs anyway when a message is not an object", async () => {
     const { batch: b } = batch(["cf.artifacts.repo.pushed"]);

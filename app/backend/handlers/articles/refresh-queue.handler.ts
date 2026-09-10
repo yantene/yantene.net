@@ -36,6 +36,8 @@ type Verdict = "refresh" | "skip" | "unrecognized";
 function classify(body: unknown, env: Env): Verdict {
   if (typeof body !== "object" || body === null) return "unrecognized";
   const event = body as ArtifactsPushedEvent;
+  // 種別が読めないのは「別のイベントだった」ではなく「形が変わった」。
+  if (typeof event.type !== "string") return "unrecognized";
   if (event.type !== PUSHED_EVENT_TYPE) return "skip";
 
   const namespace = event.source?.namespace;
@@ -46,6 +48,15 @@ function classify(body: unknown, env: Env): Verdict {
   }
   if (namespace !== env.ARTIFACTS_NAMESPACE || repoName !== env.ARTIFACTS_REPO) return "skip";
   return ref === `refs/heads/${env.ARTIFACTS_BRANCH}` ? "refresh" : "skip";
+}
+
+/** 読み飛ばしたメッセージの種別 (重複を畳む)。 */
+function skippedTypes(messages: MessageBatch["messages"]): readonly string[] {
+  const types = messages.map((message) => {
+    const type = (message.body as ArtifactsPushedEvent | null)?.type;
+    return typeof type === "string" ? type : "<no type>";
+  });
+  return [...new Set(types)];
 }
 
 /**
@@ -91,7 +102,13 @@ export async function handleRefreshQueue(batch: MessageBatch, env: Env): Promise
 
   const pushes = verdicts.filter((verdict) => verdict === "refresh").length;
   if (pushes === 0 && unrecognized === 0) {
-    logger.info("同期の要らないイベントだった", { branch, messages: batch.messages.length });
+    // 読み飛ばした種別を載せる。実 push で初めて分かることがあるので、`wrangler tail` から
+    // 「何が来て読み飛ばされたのか」を追えるようにしておく。
+    logger.info("同期の要らないイベントだった", {
+      branch,
+      messages: batch.messages.length,
+      types: skippedTypes(batch.messages),
+    });
     batch.ackAll();
     return;
   }
