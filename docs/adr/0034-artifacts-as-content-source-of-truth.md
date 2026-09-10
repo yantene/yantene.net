@@ -24,7 +24,7 @@ binding からも読める。これでコンテンツも Cloudflare に閉じら
 - Workers binding (`env.ARTIFACTS`) はリポジトリ管理とトークン発行が主で、**中身を読む
   メソッドが 1 つも無い**。binding は `create` / `get` / `import` / `list` / `delete`、
   リポジトリのハンドルは `createToken` / `listTokens` / `revokeToken` / `fork` だけ
-  (wrangler 4.130 が生成する型で確認)。ファイルはおろかツリーもコミットも読めない
+  (wrangler 4.131 が生成する型で確認)。ファイルはおろかツリーもコミットも読めない
 - REST API はツリー・コミット・ファイルを読める。認証は Cloudflare API トークンで、
   リポジトリトークン (git 用) では REST を叩けない。文書がそう分けている
 - push を購読するイベント (`cf.artifacts.repo.pushed`) と、それで Workflow を起こす
