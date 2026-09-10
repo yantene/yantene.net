@@ -42,7 +42,7 @@ export interface ArtifactsTreeEntry {
 }
 
 /**
- * Cloudflare Artifacts のリポジトリをコンテンツ正本として使う {@link IContentStore} 実装。
+ * Cloudflare Artifacts のリポジトリをコンテンツリポジトリとして使う {@link IContentStore} 実装。
  *
  * 読むのは REST API だけ (ADR 0034)。Workers binding にはファイルの中身を読む口が無く、
  * ツリーを読む口も wrangler の型に無いため、経路を 1 つに揃えてある。
@@ -53,7 +53,7 @@ export interface ArtifactsTreeEntry {
  *   変更検出 (D1 の contentHash) はそのまま引き継げる。
  * - readFile: `file?ref=<branch>&path=<path>` で生バイト列を受ける。
  *
- * ドメイン・refresh・D1 / R2 は正本の種類を知らないので、GitHub 実装との差し替えは
+ * ドメイン・refresh・D1 / R2 はコンテンツリポジトリの種類を知らないので、GitHub 実装との差し替えは
  * Composition Root (`resolveContentStore`) だけで済む。
  */
 export class ArtifactsContentStore implements IContentStore {
@@ -198,7 +198,7 @@ function describeErrors(errors: unknown): string {
  * `GET /log?ref=&limit=1` の応答から、先頭コミットの tree ハッシュを取り出す。
  *
  * コミットが 1 つも無い (空のブランチ) は throw する。空のツリーを返すと、その先の
- * refresh が「正本が空になった」と受け取って掃除に進む。
+ * refresh が「コンテンツリポジトリが空になった」と受け取って掃除に進む。
  */
 export function parseLogResponse(json: unknown): string {
   const { result } = unwrapEnvelope(json, "log");

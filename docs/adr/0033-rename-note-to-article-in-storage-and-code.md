@@ -6,7 +6,7 @@
 
 ## Context / 背景
 
-[ADR 0032](0032-call-long-form-posts-articles.md) で長文の投稿を article と呼び、URL と正本の
+[ADR 0032](0032-call-long-form-posts-articles.md) で長文の投稿を article と呼び、URL とコンテンツリポジトリの
 配置とフロントのコンポーネントを `articles` に揃えた。読み手に見えない名前 (D1 の表と列、
 R2 と KV のキー、バックエンドの識別子、JSON API の応答のキー) は `note` のまま残していた。
 
@@ -22,7 +22,7 @@ R2 と KV のキー、バックエンドの識別子、JSON API の応答のキ�
   - Cons: 表の改名は後方互換でなく、リリースの瞬間に短い停止が出る。R2 は写し直しが要る
 - **案 B: 長文は `Note` のまま残し、短文に別の名 (`Post` など) を付ける** — 何も動かさない。
   - Pros: リリースの停止も写し直しも無い
-  - Cons: URL と正本は `articles` なのにコードと表は `notes` という読み替えが恒久になる。
+  - Cons: URL とコンテンツリポジトリは `articles` なのにコードと表は `notes` という読み替えが恒久になる。
     短文の `note` を別の名で呼ぶ矛盾は ADR 0032 の案 B と同じ
 - **案 C: コードだけ改名し、表と R2 のキーは残す** — 停止と写し直しを避ける。
   - Pros: リリースは通常どおり
@@ -48,7 +48,7 @@ R2 と KV のキー、バックエンドの識別子、JSON API の応答のキ�
 
 - 旧 URL としての `/notes/` (ADR 0032 のリダイレクトと Webmention の受け口が持つ文字列)
 - `footnote`、GFM の Alert の種別 `note` (`> [!NOTE]`) とその訳語「ノート」。記事とは別の語
-- 正本のリポジトリ名 `yantene/notes`
+- コンテンツリポジトリ名 `yantene/notes`
 - 一括置換で意味が逆さまになる 2 つは別の名にした。旧 URL からリダイレクトする記事の表は
   `slugsRedirectedFromFormerPath`、OG カードが SVG の先頭の注記を落とす関数は
   `withoutPreamble`
@@ -77,7 +77,7 @@ R2 には D1 の `ALTER TABLE ... RENAME TO` に当たるものが無く、キ�
 
 ## 帰結 / Consequences
 
-- 良い面: `note` が短文だけを指す。URL・正本・表・キー・コードの名前が一つに揃う
+- 良い面: `note` が短文だけを指す。URL・コンテンツリポジトリ・表・キー・コードの名前が一つに揃う
 - 悪い面: リリースの瞬間に数十秒の停止が出る
 - 悪い面: 改名をリリースしてから force refresh が写し直すまで、記事の原文と MDAST は見つからない
 - 運用: リリース後に force refresh を流す。旧キー `notes/<slug>/` と `og/notes/` の写しは読まれなく

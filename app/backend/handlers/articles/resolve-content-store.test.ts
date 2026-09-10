@@ -5,7 +5,7 @@ import { GitHubContentStore } from "~/backend/infra/github/github-content-store"
 
 const VARS = {
   ARTIFACTS_NAMESPACE: "yantene",
-  ARTIFACTS_REPO: "content",
+  ARTIFACTS_REPO: "yantene-staging",
   ARTIFACTS_BRANCH: "main",
   GITHUB_OWNER: "yantene",
   GITHUB_REPO: "notes",

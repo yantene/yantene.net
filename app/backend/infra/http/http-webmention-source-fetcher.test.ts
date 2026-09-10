@@ -160,7 +160,7 @@ describe("HttpWebmentionSourceFetcher", () => {
    * 空を本文として通すと、リンクが見つからない = 取り消しと読まれ、**過去に受け取った
    * 返信やいいねが消える** (webmention-verification.service.ts が deleteBySource を呼ぶ)。
    * 送り元の一時的な不調でそれが起きるのは、unavailable の枝を用意した理由と食い違う。
-   * Webmention は正本のどこにも無いので、消したら戻せない (#293)。
+   * Webmention はコンテンツリポジトリのどこにも無いので、消したら戻せない (#293)。
    */
   it("中身の無い本文は取れなかったことにする", async () => {
     const response = new Response(emptyStream(), {

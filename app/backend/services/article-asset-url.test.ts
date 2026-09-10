@@ -71,7 +71,7 @@ describe("resolveAssetUrl: クエリと断片", () => {
  * 本文の側も同じ関数を通るので、符号化の揺れを気にせず突き合わせられる。**名前へ戻す
  * 方向にすると `100%25.png` のような名前が別物に化ける** (#297)。
  */
-describe("resolveAssetUrl: 正本の名前と本文の書き方が同じ URL に落ちる", () => {
+describe("resolveAssetUrl: コンテンツリポジトリの名前と本文の書き方が同じ URL に落ちる", () => {
   it.each([
     ["絵.png", "./絵.png"],
     ["50%off.png", "./50%off.png"],

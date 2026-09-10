@@ -1,7 +1,7 @@
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
- * 記事のメタデータインデックス。コンテンツ正本は GitHub リポジトリ、
+ * 記事のメタデータインデックス。コンテンツリポジトリは GitHub リポジトリ、
  * 本文 (MDAST) と画像は R2 にあり、この D1 テーブルは一覧・ルーティング用の
  * メタデータだけを保持する (ADR 0004)。
  *
@@ -19,7 +19,7 @@ export const articles = sqliteTable(
     imageUrl: text("image_url"),
     publishedOn: text("published_on").notNull(),
     lastModifiedOn: text("last_modified_on").notNull(),
-    // コンテンツ正本のリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
+    // コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
     // refresh の変更検出に使う。既定は空ハッシュで、これは次回 refresh で必ず不一致に
     // なり再処理される (書き損じた行が「同じ内容」として素通りしない)。
     sourceHash: text("source_hash").notNull().default(""),

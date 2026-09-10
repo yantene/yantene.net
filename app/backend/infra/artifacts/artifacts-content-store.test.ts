@@ -7,7 +7,7 @@ import {
 } from "./artifacts-content-store";
 
 const BASE =
-  "https://api.test/client/v4/accounts/acct-1/artifacts/namespaces/yantene/repos/content";
+  "https://api.test/client/v4/accounts/acct-1/artifacts/namespaces/yantene/repos/yantene-staging";
 
 function envelope(result: unknown, resultInfo?: unknown): Response {
   return Response.json({
@@ -26,7 +26,7 @@ function store(
   return new ArtifactsContentStore({
     accountId: "acct-1",
     namespace: "yantene",
-    repo: "content",
+    repo: "yantene-staging",
     branch: "main",
     baseUrl: "https://api.test/client/v4",
     getAuthToken,
@@ -67,7 +67,7 @@ describe("parseLogResponse", () => {
   });
 
   it("throws (fail-loud) when the ref has no commits", () => {
-    // 空のツリーを返すと、refresh が「正本が空になった」と受け取って掃除に進む。
+    // 空のツリーを返すと、refresh が「コンテンツリポジトリが空になった」と受け取って掃除に進む。
     expect(() => parseLogResponse({ result: [], success: true, errors: [], messages: [] })).toThrow(
       ArtifactsRequestError,
     );

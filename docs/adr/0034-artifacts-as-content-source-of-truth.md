@@ -1,4 +1,4 @@
-# 0034. コンテンツの正本を Cloudflare Artifacts に置き、REST API で読む
+# 0034. コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む
 
 - Status: Proposed
 - Date: 2026-09-11
@@ -6,18 +6,18 @@
 
 ## Context / 背景
 
-記事 (Markdown + 画像) の正本をどこに置き、refresh がどう読むかを決める。要件は
+記事 (Markdown + 画像) をどこに置き、refresh がどう読むかを決める。要件は
 [0004](0004-github-as-content-source-of-truth.md) と同じで、次の通り。
 
 - 手元で Markdown を書いて `git push` するだけで反映されるワークフロー。管理画面は作らない
-- Workers から正本のファイルを読めること。配信 (一覧・詳細・画像) は正本のレイテンシや
+- Workers からそのファイルを読めること。配信 (一覧・詳細・画像) はそのレイテンシや
   レート制限に引きずられないこと
 - バージョン管理があること
 
-このサイトは Cloudflare Workers + D1 + R2 + KV + Workers AI で組んであり、正本だけが
+このサイトは Cloudflare Workers + D1 + R2 + KV + Workers AI で組んであり、コンテンツだけが
 Cloudflare の外 (GitHub) にある。Cloudflare Artifacts は Git 互換のリポジトリを
 Durable Objects の上に置く製品で、標準の Git クライアントで push でき、REST API と Workers
-binding からも読める。これで正本も Cloudflare に閉じられる。
+binding からも読める。これでコンテンツも Cloudflare に閉じられる。
 
 読み取りの手段には制約がある。
 
@@ -32,13 +32,13 @@ binding からも読める。これで正本も Cloudflare に閉じられる。
 
 ## 検討した選択肢
 
-- **案 A: GitHub リポジトリのまま** — 正本を Cloudflare の外に置き続ける。
+- **案 A: GitHub リポジトリのまま** — Cloudflare の外に置き続ける。
   - Pros: 枯れている。Web エディタがある。GitHub Actions が push で refresh を叩ける
-  - Cons: 正本だけが外にある。refresh の起動に GitHub 側の secret とワークフローが要り、
+  - Cons: コンテンツだけが外にある。refresh の起動に GitHub 側の secret とワークフローが要り、
     設定が 2 つのリポジトリにまたがる
-- **案 B: Artifacts を正本にし、REST API を Cloudflare API トークンで読む (採用)** —
+- **案 B: Artifacts に置き、REST API を Cloudflare API トークンで読む (採用)** —
   refresh のときだけ REST でツリーとファイルを読む。
-  - Pros: 正本が Cloudflare に閉じる。読み取り経路が 1 つ (REST) で、文書と OpenAPI に
+  - Pros: コンテンツも Cloudflare に閉じる。読み取り経路が 1 つ (REST) で、文書と OpenAPI に
     形が書いてある。API トークンは Artifacts > Read だけに絞れる
   - Cons: 製品はまだ beta。Worker に API トークンを常駐させる (ただし読み取り専用・
     Artifacts 限定)。Web エディタが無い
@@ -51,15 +51,17 @@ binding からも読める。これで正本も Cloudflare に閉じられる。
 
 案 B を採る。
 
-- **正本は Cloudflare Artifacts のリポジトリ** (namespace `yantene`、repo `content`)。
-  `articles/<slug>.md` が本文、`articles/<slug>/<filename>` が画像アセット。
-  **staging も production も `main` を読む。** 環境ごとにブランチを分けない
-- **長生きするブランチは `main` だけ。** かつて GitHub 側に置いていた `staging` ブランチは、
-  GitHub Actions が `push` でしか refresh を起こせないための置き場で、記事を本番へ出す前に
-  staging サイトで見るために使っていた。Artifacts には PR も Actions も無く、公開前の記事は
-  本番へ出したうえで隠す (`visibility`) 方針に変えるので、環境ごとに正本を分ける理由が無い
+- **置き場は Cloudflare Artifacts のリポジトリ。** namespace は `yantene`、repo は環境ごとに
+  `yantene-production` / `yantene-staging` (D1 や R2 と同じ命名)。`articles/<slug>.md` が本文、
+  `articles/<slug>/<filename>` が画像アセット
+- **環境はリポジトリで分け、ブランチでは分けない。** 長生きするブランチはどちらも `main` だけ。
+  push の購読は 1 リポジトリに 1 つしか張れないので ([0035](0035-refresh-on-push-through-a-queue.md))、
+  1 つのリポジトリを両環境から自動で同期できない。かつて GitHub 側に置いていた `staging`
+  ブランチは、GitHub Actions が `push` でしか refresh を起こせないための置き場で、記事を
+  本番へ出す前に staging サイトで見るために使っていた。公開前の記事は本番へ出したうえで
+  隠す方針に変えるので、その役目は無くなる
 - **D1 はメタデータの索引、R2 は原文・MDAST・画像の写し。** 通常のリクエストは D1 + R2
-  だけで捌き、正本に触るのは `POST /api/v1/refresh` のときだけ。ここは 0004 から変えない
+  だけで捌き、コンテンツリポジトリに触るのは `POST /api/v1/refresh` のときだけ。ここは 0004 から変えない
 - **読み取りは REST API だけ。** infra の `ArtifactsContentStore` が
   `IContentStore` (`listTree` / `readFile`) を実装する
   - `listTree`: `log?ref=<branch>&limit=1` で先頭コミットの tree ハッシュを取り、
@@ -69,11 +71,11 @@ binding からも読める。これで正本も Cloudflare に閉じられる。
   - 分割された応答 (`result_info` に次のページがある) と、コミットの無いブランチは throw する。
     欠けたツリーを完全なものとして返すと、欠けた分が「消えた記事」になる (fail-loud)
 - **変更検出は git の blob ハッシュ (SHA-1)。** GitHub の tree API が返す `sha` と同じ値
-  なので、正本を移しても D1 の contentHash は一致し、全記事の再処理は走らない
+  なので、コンテンツリポジトリを移しても D1 の contentHash は一致し、全記事の再処理は走らない
 - **認証は Cloudflare API トークン。** 権限は Artifacts > Read だけに絞り、secret
   (`ARTIFACTS_API_TOKEN`) で与える。アカウント ID も secret (`ARTIFACTS_ACCOUNT_ID`)。
   namespace / repo / branch は wrangler の vars。**未設定なら静かに劣化させず throw する**
-- **どの正本を読むかは var `CONTENT_SOURCE` で環境ごとに決める** (`artifacts` / `github`)。
+- **どのコンテンツリポジトリを読むかは var `CONTENT_SOURCE` で環境ごとに決める** (`artifacts` / `github`)。
   production を切り替えるまでの間、`GitHubContentStore` を残して選べるようにする。
   値が無いか知らない値なら throw する。secret の有無で黙って切り替えることはしない
 - **Workers binding (`artifacts`) は付けない。** 読み取りに要らず、アカウントで Artifacts が
@@ -82,13 +84,13 @@ binding からも読める。これで正本も Cloudflare に閉じられる。
 - **書き手の push は標準の Git。** リポジトリスコープの write トークン (TTL は最長 1 年) を
   発行し、`http.extraHeader` か credential helper で持つ。手順は environments.md に置く
 
-beta を受け入れる理由: 中身は素の Git なので、製品が変わっても正本は手元の clone に残り、
+beta を受け入れる理由: 中身は素の Git なので、製品が変わってもコンテンツリポジトリは手元の clone に残り、
 撤退は `git clone` 1 回で済む。読み手の経路は D1 + R2 で閉じているので、Artifacts の不調は
 refresh が止まるだけで、配信には届かない。
 
 ### 実測して確かめたこと
 
-上の 3 つの経路は、namespace と repo を作って正本を push したうえで実際に叩いて確かめた。
+上の 3 つの経路は、namespace と repo を作ってコンテンツリポジトリを push したうえで実際に叩いて確かめた。
 
 - `log?ref=main&limit=1` の `result` は配列で、各要素が `hash` と `treeHash` を持つ。
   **並びは新しい順**で、`limit=3` の 3 件が手元の `git log -3` と完全に一致した。
@@ -108,7 +110,7 @@ refresh が止まるだけで、配信には届かない。
 
 ## 帰結 / Consequences
 
-- 良い面: 正本まで Cloudflare に閉じる。`git push` のワークフローは変わらない。読み取り経路が
+- 良い面: コンテンツまで Cloudflare に閉じる。`git push` のワークフローは変わらない。読み取り経路が
   1 つになり、形が OpenAPI で確定している。変更検出のハッシュが引き継がれる
 - 悪い面・トレードオフ: beta への依存。GitHub の Web エディタが無くなり、手元に clone が
   無い場所から直せない。push から refresh までが自動で繋がっていない (GitHub Actions は
@@ -126,7 +128,7 @@ refresh が止まるだけで、配信には届かない。
 - 実装: `app/backend/infra/artifacts/artifacts-content-store.ts` /
   `app/backend/handlers/articles/resolve-content-store.ts`
 - [0003](0003-clean-architecture-and-cqrs.md) /
-  [0004](0004-github-as-content-source-of-truth.md) (いまの正本。production を
+  [0004](0004-github-as-content-source-of-truth.md) (いまのコンテンツリポジトリ。production を
   切り替えたときに Deprecated にする)
 - [#401](https://github.com/yantene/yantene.net/issues/401)
 - [Cloudflare Artifacts REST API](https://developers.cloudflare.com/artifacts/api/rest-api/) /

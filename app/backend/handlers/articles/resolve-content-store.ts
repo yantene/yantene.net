@@ -3,9 +3,9 @@ import { ArtifactsContentStore } from "~/backend/infra/artifacts/artifacts-conte
 import { GitHubContentStore } from "~/backend/infra/github/github-content-store";
 
 /**
- * Composition Root: env からコンテンツ正本の設定を解決して {@link IContentStore} を生成する。
+ * Composition Root: env からコンテンツリポジトリの設定を解決して {@link IContentStore} を生成する。
  *
- * どちらの正本を読むかは wrangler.jsonc の var `CONTENT_SOURCE` で環境ごとに決める
+ * どちらのコンテンツリポジトリを読むかは wrangler.jsonc の var `CONTENT_SOURCE` で環境ごとに決める
  * (ADR 0034)。存在ベースのフォールバック (secret があれば有効) は採らず、値が無いか
  * 知らない値なら throw する (fail-loud)。
  *

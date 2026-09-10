@@ -15,7 +15,8 @@
     // Cloudflare Artifacts (これからの正本) の参照。アカウント ID と API トークン
     // (Artifacts > Read) は secret で与える: ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
     "ARTIFACTS_NAMESPACE": "yantene",
-    "ARTIFACTS_REPO": "content",
+    // 手元から production のリポジトリを読まないよう staging 側を指す。
+    "ARTIFACTS_REPO": "yantene-staging",
     "ARTIFACTS_BRANCH": "main",
     // GitHub リポジトリ (いまの正本) の参照。GITHUB_TOKEN は secret で与える。
     "GITHUB_OWNER": "yantene",
@@ -66,7 +67,9 @@
         // "artifacts" に切り替える (#401)。
         "CONTENT_SOURCE": "github",
         "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "content",
+        // 環境ごとに別のリポジトリを読む。push の購読は 1 リポジトリに 1 つしか
+        // 張れないので、同じリポジトリを両環境から自動同期できない。
+        "ARTIFACTS_REPO": "yantene-staging",
         "ARTIFACTS_BRANCH": "main",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
@@ -95,6 +98,20 @@
           "id": "2ef09db83bcb407198426e0c14f766b7",
         },
       ],
+      "queues": {
+        "consumers": [
+          {
+            "queue": "yantene-staging-content-events",
+            // **同時に走らせない。** refresh は「正本のいまの姿」を D1 / R2 に写す処理なので、
+            // 並行させると先に読んだ側が後から書き、古い姿で固まる。直列なら 2 回目は
+            // 1 回目が書き終わってから最新を読み直すので、最後の push が必ず反映される。
+            "max_concurrency": 1,
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 3,
+          },
+        ],
+      },
     },
     "production": {
       // workers.dev は開かない。同じ内容が 2 つの URL で引けると、検索エンジンから見て
@@ -110,7 +127,7 @@
         // staging で Artifacts の経路を確かめてから "artifacts" に切り替える (#401)。
         "CONTENT_SOURCE": "github",
         "ARTIFACTS_NAMESPACE": "yantene",
-        "ARTIFACTS_REPO": "content",
+        "ARTIFACTS_REPO": "yantene-production",
         "ARTIFACTS_BRANCH": "main",
         "GITHUB_OWNER": "yantene",
         "GITHUB_REPO": "notes",
@@ -139,6 +156,20 @@
           "id": "4710c1549b9c40ba97e0c05131caff53",
         },
       ],
+      "queues": {
+        "consumers": [
+          {
+            "queue": "yantene-production-content-events",
+            // **同時に走らせない。** refresh は「正本のいまの姿」を D1 / R2 に写す処理なので、
+            // 並行させると先に読んだ側が後から書き、古い姿で固まる。直列なら 2 回目は
+            // 1 回目が書き終わってから最新を読み直すので、最後の push が必ず反映される。
+            "max_concurrency": 1,
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 3,
+          },
+        ],
+      },
     },
   },
 }

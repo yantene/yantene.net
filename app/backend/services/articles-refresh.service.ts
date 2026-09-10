@@ -23,9 +23,9 @@ import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/a
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /**
- * 正本の中で記事が置かれる場所。`articles/<slug>.md` と `articles/<slug>/<asset>`。
+ * コンテンツリポジトリの中で記事が置かれる場所。`articles/<slug>.md` と `articles/<slug>/<asset>`。
  *
- * `notes/` は短文の投稿のために空けてある。正本側が `articles/` を持たないまま refresh を
+ * `notes/` は短文の投稿のために空けてある。コンテンツリポジトリ側が `articles/` を持たないまま refresh を
  * 叩くと、下の「全件削除の拒否」で止まる。
  */
 const SOURCE_DIRECTORY = "articles/";
@@ -40,7 +40,7 @@ function isArticleSourcePath(path: string): boolean {
 export interface RefreshResult {
   /** 再処理した slug。 */
   readonly processed: string[];
-  /** 削除した slug (正本から消えた記事)。 */
+  /** 削除した slug (コンテンツリポジトリから消えた記事)。 */
   readonly deleted: string[];
   /** 非公開の指定により同期しなかった slug。既に載っていたものは deleted にも入る。 */
   readonly unpublished: string[];
@@ -88,15 +88,15 @@ interface ArticleSource {
 }
 
 /**
- * 正本 (GitHub) → D1 + R2 のコンテンツ同期サービス。
+ * コンテンツリポジトリ (GitHub) → D1 + R2 のコンテンツ同期サービス。
  *
  * ツリーを取得し、md + アセットの合成ハッシュで変更を検出、変わった記事だけ内容を
  * 読み直して MDAST を R2 にキャッシュ・メタデータを D1 に upsert・画像を R2 にキャッシュ
- * する。正本から消えた記事は D1 / R2 から掃除する (ADR 0004)。
+ * する。コンテンツリポジトリから消えた記事は D1 / R2 から掃除する (ADR 0004)。
  *
  * コンテンツ不正 (フロントマター欠落等) はその記事だけをスキップして結果に記録する。
  * スキップした記事は掃除の対象にせず、前回同期した内容を残す (誤字 1 つで公開中の
- * 記事を消さない)。infra 障害 (正本 / R2 / D1) は握りつぶさず throw する (fail-loud)。
+ * 記事を消さない)。infra 障害 (コンテンツリポジトリ / R2 / D1) は握りつぶさず throw する (fail-loud)。
  */
 export class ArticlesRefreshService {
   constructor(
@@ -113,12 +113,12 @@ export class ArticlesRefreshService {
     const stored = await this.query.listSourceHashes();
 
     // 空のツリーを「全部消してよい」の合図として受け取らない。ブランチの取り違えや
-    // 正本側の事故で articles/ を持たない応答が返ると、掃除の経路がそのまま全件削除に
-    // なる。閲覧数も届いた Webmention も正本には無いので、消したら戻せない。
+    // コンテンツリポジトリ側の事故で articles/ を持たない応答が返ると、掃除の経路がそのまま全件削除に
+    // なる。閲覧数も届いた Webmention もコンテンツリポジトリには無いので、消したら戻せない。
     // 既に何件か載っているのに 1 件も見つからないのは、同期ではなく事故である。
     //
     // 全記事を private にしたときはここに掛からない (非公開の記事もツリーには
-    // 在るので groups には入る)。掛かるのは正本の側が空に見えるときだけ。
+    // 在るので groups には入る)。掛かるのはコンテンツリポジトリの側が空に見えるときだけ。
     if (stored.size > 0 && groups.length === 0) {
       throw new Error(
         `refusing to delete all ${stored.size.toString()} article(s): the content tree has no articles/*.md`,
@@ -166,9 +166,9 @@ export class ArticlesRefreshService {
       if (!source.ok) {
         // 読めなかった理由はコンテンツ不正 (読めない LaTeX / 読めない visibility) に
         // 限られる。infra 障害は attempt が握らずに送出するので、ここには来ない。
-        // つまり記事自体は正本に在るので、seen に入れて掃除の対象から外す。
-        // 入れ忘れると「正本から消えた記事」と同じ経路で D1・R2 から消え、閲覧数も
-        // 届いた Webmention も道連れになる。Webmention は正本のどこにも無いので戻せない。
+        // つまり記事自体はコンテンツリポジトリに在るので、seen に入れて掃除の対象から外す。
+        // 入れ忘れると「コンテンツリポジトリから消えた記事」と同じ経路で D1・R2 から消え、閲覧数も
+        // 届いた Webmention も道連れになる。Webmention はコンテンツリポジトリのどこにも無いので戻せない。
         //
         // 読み取りの後で落ちる不正 (publishedOn 欠落など) は seen.add より後の
         // buildArticleContent で起きるため元から旧版が残る。この分岐だけが非対称だった。
@@ -176,7 +176,7 @@ export class ArticlesRefreshService {
         continue;
       }
 
-      // 非公開の記事は seen に入れない。正本から消えた記事と同じ経路で
+      // 非公開の記事は seen に入れない。コンテンツリポジトリから消えた記事と同じ経路で
       // D1 と R2 から掃除され、以後どの配信経路にも現れなくなる。
       // 配信側で除外条件を書き足す方式だと、経路が増えるたびに漏れが起きる。
       if (source.value.parsed.frontmatter.visibility === "private") {
@@ -259,7 +259,7 @@ export class ArticlesRefreshService {
      * 片付けは D1 の upsert より前に置く。後ろだと、片付けに失敗したときに
      * contentHash だけが新しくなり、行き場を失った写しが次の refresh でも拾われない。
      *
-     * 残す一覧は「正本にあるアセット」であって「今回書けたもの」ではない。読めなかった
+     * 残す一覧は「コンテンツリポジトリにあるアセット」であって「今回書けたもの」ではない。読めなかった
      * アセットまで消すと、一時的な失敗で前回の写しを落とすことになる。
      */
     await this.cache.pruneAssets(group.slug, assetPathsOf(group));
@@ -368,7 +368,7 @@ function groupArticles(tree: readonly ContentEntry[]): ArticleGroup[] {
   return groups;
 }
 
-/** その記事が正本に持っているアセットの相対パス。 */
+/** その記事がコンテンツリポジトリに持っているアセットの相対パス。 */
 function assetPathsOf(group: ArticleGroup): ReadonlySet<string> {
   return new Set(group.assets.map((asset) => asset.path.slice(group.assetPrefix.length)));
 }

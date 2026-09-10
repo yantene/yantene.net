@@ -44,7 +44,7 @@ pnpm exec wrangler secret put REFRESH_SECRET --env production  # 同期エンド
 `REFRESH_SECRET` が無いと `POST /api/v1/refresh` を叩けず、**記事が 1 件も入らないまま
 公開される**。
 
-正本の読み取りに要る secret は `CONTENT_SOURCE` (wrangler.jsonc の vars) がどちらを
+コンテンツリポジトリの読み取りに要る secret は `CONTENT_SOURCE` (wrangler.jsonc の vars) がどちらを
 指すかで変わる ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
 
 `artifacts` の環境。
@@ -56,10 +56,10 @@ pnpm exec wrangler secret put ARTIFACTS_API_TOKEN --env production
 
 `ARTIFACTS_API_TOKEN` は**ダッシュボードの API Tokens で作る**。権限は
 **Account / Artifacts / Read** の 1 つだけにすること。書き込みの権限は要らないし、
-持たせると Worker が漏れたときに正本を消せる。wrangler の OAuth トークンを流用しないこと
+持たせると Worker が漏れたときにコンテンツリポジトリを消せる。wrangler の OAuth トークンを流用しないこと
 (スコープが広すぎる)。
 
-`github` の環境。正本のリポジトリ側からも refresh を叩けるようにする (staging とは
+`github` の環境。コンテンツリポジトリ側からも refresh を叩けるようにする (staging とは
 別の値にすること)。
 
 ```bash
@@ -83,20 +83,20 @@ curl -sS -X POST \
   -d '{"namespace":"yantene"}'
 ```
 
-repo とトークンは wrangler で足りる。
+repo とトークンは wrangler で足りる。**リポジトリは環境ごとに 1 つ**で、名前は D1 や R2 と
+同じ `yantene-<環境>` にする (push の購読が 1 リポジトリに 1 つしか張れないため。ADR 0035)。
 
 ```bash
-pnpm exec wrangler artifacts repos create content --namespace yantene --default-branch main
-pnpm exec wrangler artifacts repos issue-token content --namespace yantene \
+pnpm exec wrangler artifacts repos create yantene-production --namespace yantene --default-branch main
+pnpm exec wrangler artifacts repos issue-token yantene-production --namespace yantene \
   --scope write --ttl 31536000   # TTL は秒。最長 1 年
 ```
 
-repo の remote は `https://<account-id>.artifacts.cloudflare.net/git/yantene/content.git`。
+repo の remote は `https://<account-id>.artifacts.cloudflare.net/git/yantene/yantene-production.git`。
 **書き手の push はここへ。** トークンは URL に埋めず、ヘッダで渡す。
 
 ```bash
-git -c http.extraHeader="Authorization: Bearer <token>" \
-  push <remote> main staging
+git -c http.extraHeader="Authorization: Bearer <token>" push <remote> main
 ```
 
 毎回 `-c` を打ちたくなければ、git 標準の credential helper に食わせる (Artifacts は
@@ -111,6 +111,33 @@ GitHub からの取り込みは公開リポジトリしか受けないので、p
 手元の clone から push して移す。
 
 ⚠️ **トークンは必ず期限が切れる (最長 1 年)。** 切れたら `issue-token` で取り直す。
+
+### 1''. push で同期が走るようにする
+
+push を Queue に流し、Worker の `queue()` が受けて同期する (ADR 0035)。Queue は環境ごとに
+1 つ。名前は `wrangler.jsonc` の `queues.consumers` が指している。
+
+```bash
+pnpm exec wrangler queues create yantene-production-content-events
+```
+
+購読は **wrangler では張れない** (リポジトリを指す `source.namespace` / `source.repo_name` を
+渡すオプションが CLI に無い)。REST を直接叩く。`queue_id` は `wrangler queues list` で引く。
+
+```bash
+curl -sS -X POST \
+  "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/event_subscriptions/subscriptions" \
+  -H "Authorization: Bearer $CF_TOKEN" -H 'Content-Type: application/json' \
+  -d '{
+    "name": "yantene-production-content-pushes",
+    "source": { "type": "artifacts.repo", "namespace": "yantene", "repo_name": "yantene-production" },
+    "events": ["pushed"],
+    "destination": { "type": "queues.queue", "queue_id": "<queue-id>" }
+  }'
+```
+
+**イベント名は `pushed`。** メッセージ本体の `type` は `cf.artifacts.repo.pushed` だが、
+購読を作るときに渡すのは接頭辞の無いほう。
 
 ### 2. KV namespace を作る
 
@@ -143,11 +170,11 @@ pnpm exec wrangler r2 object put yantene-production/og/fonts/noto-sans-jp-700-fu
 `CONTENT_SOURCE` が `github` の環境は、`yantene/notes` の refresh ワークフローを対象
 ブランチで実行する (main → production、staging → staging)。
 
-`artifacts` の環境は、対象ブランチを Artifacts へ push したあと refresh を手で叩く
-(GitHub Actions は Artifacts の push を知らない)。
+`artifacts` の環境は、その環境のリポジトリの `main` へ push すれば同期が走る (1'')。
+手で叩きたいとき (実装を変えて既存の記事に反映させるとき) は force を付ける。
 
 ```bash
-curl -X POST "https://yantene.net/api/v1/refresh" -H "X-Refresh-Token: <secret>"
+curl -X POST "https://yantene.net/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 ```
 
 ### 5. スモークで確かめる

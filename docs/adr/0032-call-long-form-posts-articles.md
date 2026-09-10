@@ -21,7 +21,7 @@
 
 ## 検討した選択肢
 
-- **案 A: 長文を `articles` に改名し、`/notes/` を短文に譲る (採用)** — 正本の配置は
+- **案 A: 長文を `articles` に改名し、`/notes/` を短文に譲る (採用)** — コンテンツリポジトリの配置は
   `articles/<slug>.md`、URL は `/articles/<slug>`。
   - Pros: 外向きの語彙 (Post Type Discovery、Atom の category) と内部の呼び名が揃う。
     短文が `/notes/<id>` を素直に使える
@@ -60,7 +60,7 @@
 - JSON API とアセット: `/api/v1/articles`、`/api/v1/articles/<slug>/assets/<path>`
 - OG 画像: `/og/articles/<slug>`
 - sitemap、JSON-LD の `mainEntityOfPage`、Atom の `<link>`
-- 正本の配置: `articles/<slug>.md` と `articles/<slug>/<asset>`。refresh はここだけを読む
+- コンテンツリポジトリの配置: `articles/<slug>.md` と `articles/<slug>/<asset>`。refresh はここだけを読む
 
 ### 動かさないもの
 
@@ -120,15 +120,15 @@ R2 のキーを変えると写し直すまで全記事の原文と MDAST が見�
 - 良い面: 内部の呼び名と外向きの語彙が揃う。短文が `/notes/<id>` を使える
 - 悪い面: 2025 年以前の記事の `/notes/<slug>` は 404 になる
 - 悪い面: フィードの購読者に 1 回だけ全件が新着に見える
-- 悪い面: 正本の配置と URL は `articles` なのに、表と R2 とコードは `notes` のまま。
+- 悪い面: コンテンツリポジトリの配置と URL は `articles` なのに、表と R2 とコードは `notes` のまま。
   読むときに読み替えが要る
-- 運用: 正本のリポジトリ側で `notes/` を `articles/` に動かす。変更検出のハッシュに正本の
+- 運用: コンテンツリポジトリ側で `notes/` を `articles/` に動かす。変更検出のハッシュにコンテンツリポジトリの
   パスが入っているので、動かせば通常の refresh が全記事を作り直し、D1 のカバー画像 URL と
   R2 の MDAST に埋まったアセット URL が `/api/v1/articles/` になる (force は要らない)。
   動かして refresh が走るまでは記事中の画像と音源とカバー画像が 404 になる。動かす前に
   refresh を叩いても、`articles/*.md` が 1 本も無いので全件削除のガードで止まる
 - 運用: 本文にルート相対で直書きした `/notes/<slug>` の記事間リンクと、raw HTML の
-  `<source src="/api/v1/notes/...">` は refresh では直らない。正本の Markdown を書き換える
+  `<source src="/api/v1/notes/...">` は refresh では直らない。コンテンツリポジトリの Markdown を書き換える
 - 検証方法: `legacy-redirects.handler.test.ts` が表の件数を実装と突き合わせ、表に無い
   `/notes/<slug>` が 308 を返さないことを固定する。`notes-refresh.service.test.ts` が
   `notes/` の下の記事を読まないことを固定する。`webmention-verification.service.test.ts` が

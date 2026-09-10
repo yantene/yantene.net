@@ -127,7 +127,7 @@ iframe か audio を含むブロックだけは丸ごと通すので
 
 ### 危険度の見積もり
 
-- 本文の正本は自分のリポジトリで、外部からの投稿経路がない (Webmention はテキストのみ)。
+- 本文のコンテンツリポジトリは自分のリポジトリで、外部からの投稿経路がない (Webmention はテキストのみ)。
   手書きの `<math style="...">` を置けるのも、そこへ push できる人間だけである
 - `img-src` は `'self' data:` のままなので、CSS からの外部への送信口が塞がっている
 - ただし `font-src` に Google Fonts を開けてある ([ADR 0017](0017-webfonts-from-google-fonts.md))

@@ -105,7 +105,7 @@ export class HttpWebmentionSourceFetcher implements IWebmentionSourceFetcher {
      * 空を本文として通すと、リンクが見つからない = 取り消しと読まれ、**過去に受け取った
      * 返信やいいねが消える。** 送り元の一時的な不調でそれが起きるのは、`unavailable` の
      * 枝を用意した理由 (一時的な障害で過去の行を消さない) と食い違う。Webmention は
-     * 正本のどこにも無いので、消したら戻せない (#293)。
+     * コンテンツリポジトリのどこにも無いので、消したら戻せない (#293)。
      */
     if (bytes.byteLength === 0) {
       return { kind: "unavailable", reason: "empty body" };

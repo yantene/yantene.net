@@ -22,7 +22,7 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 ## コアドメイン: 記事 (article)
 
 記事は Markdown 形式の長文で、エッセイ・技術記事・その他の発信を包含する。URL は
-`/articles/<slug>`、正本の配置は `articles/<slug>.md`、コードと D1 / R2 / KV の中でも
+`/articles/<slug>`、コンテンツリポジトリの配置は `articles/<slug>.md`、コードと D1 / R2 / KV の中でも
 `Article` / `articles` で通す ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md) /
 [ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
 `note` は表題の無い短文の投稿 (#412) のために空けてある名前で、記事の意味では使わない。
@@ -35,17 +35,21 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 
 ## コンテンツワークフロー
 
-手元で Markdown を書き、コンテンツ正本のリポジトリに `git push` する。その後
-`POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
+手元で Markdown を書き、コンテンツリポジトリに `git push` する。**push を合図に D1 / R2 へ
+同期される。** 管理画面は設けない。
 
-正本は GitHub (`yantene/notes`) から Cloudflare Artifacts (namespace `yantene` /
-repo `content`) へ移す途中で、どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が
-決める ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
+コンテンツリポジトリは GitHub (`yantene/notes`) から Cloudflare Artifacts へ移す途中で、
+どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が決める
+([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
 **いまは 3 環境とも `github`。** staging の secret を置いてから順に切り替える (#401)。
 
 - `github` の環境: `yantene/notes` に push すると、あちらのワークフローが refresh を叩く
-- `artifacts` の環境: Artifacts の remote に push し、そのあと refresh を手で叩く
-  (GitHub Actions は Artifacts の push を知らない)
+- `artifacts` の環境: 環境ごとのリポジトリ (`yantene/yantene-production` /
+  `yantene/yantene-staging`) に push すると、その push が Queue に流れて同期が走る
+  ([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))
+
+同期は**同時に 2 つ走らない**。立て続けに push しても、最後に走った同期が最新の中身を
+読むので、リポジトリの最新の姿が必ず D1 / R2 に載って終わる。
 
 ### 実装変更を既存記事に反映するとき (force refresh)
 
@@ -103,7 +107,7 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 - 記事の URL とアセット API を `/notes` から `/articles` へ移した
   ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。**force は要らない。**
-  正本側で `notes/` を `articles/` に動かすと、ハッシュに正本のパスが入っているので通常の
+  コンテンツリポジトリ側で `notes/` を `articles/` に動かすと、ハッシュにコンテンツリポジトリのパスが入っているので通常の
   refresh が全記事を作り直す (D1 のカバー画像 URL と、R2 の MDAST に埋まったアセット URL の
   両方)。動かして refresh が走るまでは、記事中の画像と音源とカバー画像が 404 になる。
   動かす前に叩いた refresh は `articles/*.md` が無いので全件削除のガードで止まる (記事は
@@ -111,7 +115,7 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   **記事数 ÷ 30 を切り上げた回数**だけ refresh を流すこと。
 
   refresh では直らないものが 2 つある。本文に**ルート相対で直書きした** `/notes/<slug>` の
-  記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらも正本の Markdown を
+  記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらもコンテンツリポジトリの Markdown を
   書き換える (`](/notes/` → `](/articles/`、`/api/v1/notes/` → `/api/v1/articles/`)。
 
 - D1 の表と R2 のキーを `notes` から `articles` に改めた
@@ -123,13 +127,13 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 ## データモデルとストレージ戦略
 
-コンテンツの正本はリポジトリ 1 つ (いまは GitHub の `yantene/notes`、移行先は Cloudflare
+コンテンツリポジトリはリポジトリ 1 つ (いまは GitHub の `yantene/notes`、移行先は Cloudflare
 Artifacts) に置く。D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・
 画像のキャッシュを担う。設計判断の詳細は
 [ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) と
 [ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md) を参照。
 
-- 正本: Markdown 本文 (`articles/<slug>.md`) + 画像アセット (`articles/<slug>/<filename>`)
+- コンテンツリポジトリ: Markdown 本文 (`articles/<slug>.md`) + 画像アセット (`articles/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
 - R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
@@ -152,7 +156,7 @@ visibility: private # 任意。既定は公開
 
 `visibility: private` を書いた記事は同期しない。D1 にも R2 にも載らないため、一覧・
 タグ・検索・フィード・sitemap・OGP・原文 Markdown のどこにも現れず、URL を直打ちしても
-404 になる。既に同期済みの記事に後から書いた場合は、正本から消えた記事と同じ経路で
+404 になる。既に同期済みの記事に後から書いた場合は、コンテンツリポジトリから消えた記事と同じ経路で
 D1 と R2 から掃除される。
 
 配信側に除外条件を書き足す方式は採らない。経路が増えるたびに書き漏らし、そのとき漏れる
@@ -215,7 +219,7 @@ refresh の結果では `kept` (古い中身のまま持ちこたえた) と `fa
 ### 画像はアセット API 経由で配信
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
-`/api/v1/articles/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
+`/api/v1/articles/<slug>/assets/<path>` に解決する。コンテンツリポジトリの直接 URL を露出させない。
 
 ### 数式は refresh 時に MathML へ組む
 
@@ -239,7 +243,7 @@ refresh では何も変換しないので、MDAST は素の `code` ノードの�
 
 ### 原文は `/articles/<slug>.md` で取れる
 
-記事ページ (`/articles/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
+記事ページ (`/articles/<slug>`) の URL 末尾に `.md` を付けると、コンテンツリポジトリの Markdown を
 **そのまま** (フロントマター込み・画像の相対パスも書き換えない) 返す。R2 の原文キャッシュ
 から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
 [ADR 0009](../../docs/adr/0009-serve-note-source-markdown-verbatim.md) を参照。

@@ -17,7 +17,7 @@ describe("ImageUrl", () => {
   });
 
   it("rejects absolute URLs, including raw source-repository URLs", () => {
-    // 絶対 URL は正本の直接 URL 露出につながり、CSP (img-src 'self') でも
+    // 絶対 URL はコンテンツリポジトリの直接 URL 露出につながり、CSP (img-src 'self') でも
     // 表示できないため弾く。
     expect(() => ImageUrl.create("https://example.com/a.png")).toThrow(InvalidImageUrlError);
     expect(() => ImageUrl.create("https://raw.example/articles/x/cover.png")).toThrow(

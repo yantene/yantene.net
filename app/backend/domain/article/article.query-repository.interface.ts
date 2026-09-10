@@ -43,7 +43,7 @@ export interface IArticleQueryRepository {
   search(query: string, limit: number): Promise<readonly Article[]>;
   /**
    * 全記事の slug → sourceHash の対応を返す。refresh の変更検出に使う
-   * (正本のツリーが返すハッシュと突き合わせる)。
+   * (コンテンツリポジトリのツリーが返すハッシュと突き合わせる)。
    */
   listSourceHashes(): Promise<ReadonlyMap<string, string>>;
 }
