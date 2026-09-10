@@ -37,7 +37,7 @@ function isEqualConstantTime(a: string, b: string): boolean {
  * 記事の同期 (refresh) の JSON API ルータ。
  *
  * 認証はユーザ session ではなく運用シークレット (`REFRESH_SECRET`) で行う。コンテンツ
- * 同期は CI/運用操作であり、`yantene/notes` への push を契機に叩かれるため。
+ * 同期は CI/運用操作であり、正本への push を契機に叩かれるため。
  *
  * - `REFRESH_SECRET` 未設定なら静かに無効化せず fail-loud で throw する (secure by default)。
  * - `X-Refresh-Token` ヘッダが一致しなければ 401。
