@@ -8,7 +8,7 @@
 
 エッジランタイム (Cloudflare Workers) 上に Hono + React Router でフルスタックアプリケーションを
 構築するにあたり、ビジネスロジックとインフラ技術の結合度が問題になる。D1 (SQLite)・R2 など
-Cloudflare 固有のバインディングや、コンテンツ正本の外部 API にドメインロジックが直接依存すると、
+Cloudflare 固有のバインディングや、コンテンツリポジトリの外部 API にドメインロジックが直接依存すると、
 テスト困難・技術ロックインが生じる。
 
 また、読み取りと書き込みでは要件が異なる場合が多い (一覧はページネーション付き・詳細は
@@ -36,8 +36,8 @@ Cloudflare 固有のバインディングや、コンテンツ正本の外部 AP
 - 具象クラスの生成・注入は Composition Root (handlers/) のみが行う。
 - レイヤー間の依存方向は `domain ← services ← handlers / middleware, infra → domain` とする。
 
-この抽象は実際に効いている。コンテンツ正本の読み取り口はドメインの `IContentStore`
-(`listTree` / `readFile`) に閉じており、どのストレージを正本にするかは infra の実装詳細に
+この抽象は実際に効いている。コンテンツリポジトリの読み取り口はドメインの `IContentStore`
+(`listTree` / `readFile`) に閉じており、どのストレージをコンテンツリポジトリにするかは infra の実装詳細に
 とどまる ([0004](0004-github-as-content-source-of-truth.md))。
 
 ## 帰結 / Consequences

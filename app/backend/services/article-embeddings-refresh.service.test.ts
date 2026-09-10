@@ -233,7 +233,7 @@ describe("ArticleEmbeddingsRefreshService", () => {
     expect(rewritten[0]?.[0]?.similarity).toBeCloseTo(-1, 5);
   });
 
-  it("正本から消えた記事の行を掃除してから始める", async () => {
+  it("コンテンツリポジトリから消えた記事の行を掃除してから始める", async () => {
     const { service, command } = harness({
       slugs: ["alpha"],
       hashes: new Map([["alpha", "hash-1"]]),
@@ -247,7 +247,7 @@ describe("ArticleEmbeddingsRefreshService", () => {
   });
 
   it("作れない記事があっても、作れたものだけで書き直す", async () => {
-    // gamma は正本にあるがベクトルを作れない (findBySlug が返さない)。
+    // gamma はコンテンツリポジトリにあるがベクトルを作れない (findBySlug が返さない)。
     const { service, rewritten } = harness({
       slugs: ["alpha", "beta"],
       hashes: new Map([

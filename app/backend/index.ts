@@ -162,7 +162,7 @@ export const getApp = (
   // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
   app.route("/articles", createArticleMarkdownRouter());
 
-  // 記事の同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
+  // 記事の同期 (コンテンツリポジトリ → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。
   app.route("/api/v1", createRefreshRouter());
 

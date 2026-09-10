@@ -29,7 +29,7 @@ export class GitHubRequestError extends Error {
 }
 
 /**
- * GitHub リポジトリをコンテンツ正本として使う {@link IContentStore} 実装。
+ * GitHub リポジトリをコンテンツリポジトリとして使う {@link IContentStore} 実装。
  *
  * - listTree: git tree API (`?recursive=1`) で全 blob を取得し、`sha` (git blob ハッシュ)
  *   を {@link ContentEntry.hash} にする。変更検出はこのハッシュで行う。
@@ -37,7 +37,7 @@ export class GitHubRequestError extends Error {
  *   `Accept` に書いてある (ここに写しを置かない。写した説明が実装と食い違ったまま
  *   残っていたのが #282)。
  *
- * ドメイン・refresh・D1/R2 は正本の種類を知らないので、別のストレージへ移すときも
+ * ドメイン・refresh・D1/R2 はコンテンツリポジトリの種類を知らないので、別のストレージへ移すときも
  * この実装を差し替えるだけで済む (IContentStore の抽象の利点。ADR 0004)。
  */
 export class GitHubContentStore implements IContentStore {

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * テーマの色を数値で抱えている場所を、定義と突き合わせる。
  *
- * 配色の正本は app.css の daisyUI テーマ (name: "yantene") と header.css の地平線で、
+ * 配色の定義は app.css の daisyUI テーマ (name: "yantene") と header.css の地平線で、
  * 画面は custom property と color-mix でそこから組み立てる。ところがその 2 つを使えない
  * 場所が 2 か所ある。オフラインページは本体の CSS が届かず (蓄えから直接返る)、OG カードは
  * Satori に静的な HTML を渡すため。どちらも色を数値で写すしかない。

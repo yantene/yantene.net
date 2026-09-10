@@ -69,7 +69,7 @@ export class ArticleEmbeddingsRefreshService {
    */
   async sync(options: { readonly force?: boolean } = {}): Promise<ArticleEmbeddingsSyncResult> {
     /*
-     * 正本から消えた記事の行を先に掃除する。記事の同期が記事を消したあとに走るので、
+     * コンテンツリポジトリから消えた記事の行を先に掃除する。記事の同期が記事を消したあとに走るので、
      * ここでしか消せない (slug から id を辿る手はもう無い)。
      */
     await this.command.deleteOrphans();

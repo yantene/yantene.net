@@ -15,7 +15,7 @@ JavaScript なしで組版できる。読者に数式ライブラリを送らず
 ([ADR 0005](0005-mdast-over-html-rendering.md))。本文は HTML ではなく MDAST で渡している。
 数式もこの経路に乗せたい。
 
-コンテンツは正本 (GitHub) から refresh のときだけ読み直し、MDAST を R2 に置いている
+コンテンツはコンテンツリポジトリ (GitHub) から refresh のときだけ読み直し、MDAST を R2 に置いている
 ([ADR 0004](0004-github-as-content-source-of-truth.md))。重い変換をここで一度だけ
 済ませられる場所は既にある。
 

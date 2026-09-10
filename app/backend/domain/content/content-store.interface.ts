@@ -1,5 +1,5 @@
 /**
- * コンテンツ正本 (Markdown 本文・画像アセット) の読み取り口。
+ * コンテンツリポジトリ (Markdown 本文・画像アセット) の読み取り口。
  * ドメインはストレージ技術 (GitHub 等) を知らない。infra が実装する。
  *
  * 変更検出はコンテンツハッシュで行う: refresh 時にツリーを取得し、各ファイルの
@@ -8,7 +8,7 @@
 
 /** ツリー内の 1 ファイル。hash はそのファイル内容のリビジョン識別子。 */
 export interface ContentEntry {
-  /** 正本内のパス (例: "articles/my-article.md", "articles/my-article/cover.png")。 */
+  /** コンテンツリポジトリ内のパス (例: "articles/my-article.md", "articles/my-article/cover.png")。 */
   readonly path: string;
   /** ファイル内容のハッシュ (変更検出用)。 */
   readonly hash: string;

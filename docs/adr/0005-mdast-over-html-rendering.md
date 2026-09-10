@@ -33,7 +33,7 @@
 - フロントエンド側の MDAST/HAST レンダラー (`app/frontend/components/mdast/`) が
   React コンポーネントに変換する
 - 画像の相対パス (`./image.png`) はアセット API URL (`/api/v1/notes/<slug>/assets/<path>`)
-  に解決してからキャッシュする。正本 (GitHub) の直接 URL は露出させない
+  に解決してからキャッシュする。コンテンツリポジトリ (GitHub) の直接 URL は露出させない
 - 一覧用の要約も同じ MDAST から自動抽出する。見出し・脚注・コードブロック・生 HTML を
   除いたテキストノードの先頭 160 文字を切り出すので、要約を手書きする必要がない
 

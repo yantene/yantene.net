@@ -1,5 +1,6 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { getApp } from "~/backend";
+import { handleRefreshQueue } from "~/backend/handlers/articles/refresh-queue.handler";
 import {
   cloudflareContext,
   localeRouteContext,
@@ -25,4 +26,6 @@ const app = getApp(async (request, env, ctx, nonce) => {
 
 export default {
   fetch: app.fetch.bind(app),
+  // コンテンツリポジトリへの push を受けて同期する (Artifacts の event subscription → Queue)。
+  queue: handleRefreshQueue,
 } satisfies ExportedHandler<Env>;

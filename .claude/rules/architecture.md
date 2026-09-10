@@ -11,7 +11,7 @@
 - **拡張は注入で開く (DI / OCP)** — 具象クラスを生成するのは Composition Root
   (handlers/, `index.ts`) だけ。利用側はインターフェースを注入で受け取る。振る舞いの
   差し替え・追加は「既存コードの修正」ではなく「注入点での差し替え」で行う
-  (例: コンテンツ正本を移すときは `resolveContentStore(env)` が返す `IContentStore` の
+  (例: コンテンツリポジトリを移すときは `resolveContentStore(env)` が返す `IContentStore` の
   実装を差し替えるだけで、domain / services / handlers は変えない)。
 - **不正な状態を型で表現不能にする** — 制約は実行時チェックだけに頼らず型で表す。VO は
   factory でのみ生成 (バリデーション込み) し immutable、ドメインエラーは typed class、
@@ -54,7 +54,7 @@ app/
 │   │   ├── article/            # Article 集約 (entity, VO, CQRS repo interface, errors)
 │   │   ├── article-view/       # 閲覧数と人気ランキング
 │   │   ├── session/            # 読み手のセッション (ADR 0011)
-│   │   └── content/            # コンテンツ正本のポート (IContentStore)
+│   │   └── content/            # コンテンツリポジトリのポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）
 │   │   ├── d1/                 # D1 (SQLite) 実装
 │   │   │   ├── schema/         # Drizzle テーブル定義
@@ -63,7 +63,8 @@ app/
 │   │   │   └── test-helper.ts  # テスト用 D1 ヘルパー
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
 │   │   ├── kv/                 # KV 実装 (読み手のセッション)
-│   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
+│   │   ├── artifacts/          # コンテンツリポジトリ (Cloudflare Artifacts) の実装 (ADR 0034)
+│   │   ├── github/             # コンテンツリポジトリ (GitHub リポジトリ)。切り替えまで残す
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── articles/           # 記事の API ルータ + ページ用ローダ (loadXxxPage)

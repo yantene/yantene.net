@@ -10,7 +10,7 @@
 (`note.query-repository.ts` の `findRelated`)。並びは共通タグ数の降順、公開日の降順、
 slug の昇順である。
 
-正本の 55 本を数えると、この第 1 キーがほとんど働いていない。タグは延べ 113 個・19 種類で、
+コンテンツリポジトリの 55 本を数えると、この第 1 キーがほとんど働いていない。タグは延べ 113 個・19 種類で、
 1 記事にしか付いていないタグが 9 種類ある。1 記事あたりのタグ数は 1 個が 15 本、2 個が 26 本で、
 半数以上が 2 個以下に収まる。しかも 34 本に「日記」が付いている。
 
@@ -167,7 +167,7 @@ refresh のときには「変わっていない記事」なので、二度と対
 
 ## 参考 / More Information
 
-- [ADR 0004](0004-github-as-content-source-of-truth.md) — 正本と D1 / R2 の分担
+- [ADR 0004](0004-github-as-content-source-of-truth.md) — コンテンツリポジトリと D1 / R2 の分担
 - [ADR 0014](0014-link-cards-from-ogp-only.md) — 外部に触る処理を refresh から分ける形
 - [Vectorize の制限](https://developers.cloudflare.com/vectorize/platform/limits/) — 1 ベクトル 1536 次元まで
 - [bge-m3 (Workers AI)](https://developers.cloudflare.com/workers-ai/models/bge-m3/) — 1024 次元、60,000 トークン

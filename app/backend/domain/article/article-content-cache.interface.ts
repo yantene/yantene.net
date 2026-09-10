@@ -8,11 +8,11 @@ export interface CachedAsset {
 
 /**
  * 記事本文 (原文 Markdown・パース済み MDAST) と画像アセットのキャッシュ。
- * 通常リクエストはこのキャッシュから配信し、正本には触らない (ADR 0004)。
+ * 通常リクエストはこのキャッシュから配信し、コンテンツリポジトリには触らない (ADR 0004)。
  * ドメインはストレージ技術 (R2) を知らない。infra が実装する。
  */
 export interface IArticleContentCache {
-  /** 原文の Markdown (フロントマターを含む正本そのもの) を保存する。 */
+  /** 原文の Markdown (フロントマターを含む、書かれたそのまま) を保存する。 */
   putSource(slug: ArticleSlug, markdown: string): Promise<void>;
   /** 原文の Markdown を取得する。無ければ undefined。 */
   getSource(slug: ArticleSlug): Promise<string | undefined>;
@@ -35,6 +35,6 @@ export interface IArticleContentCache {
    */
   pruneAssets(slug: ArticleSlug, keep: ReadonlySet<string>): Promise<void>;
 
-  /** 記事のキャッシュ (原文・MDAST・全アセット) を削除する。正本から消えたとき用。 */
+  /** 記事のキャッシュ (原文・MDAST・全アセット) を削除する。コンテンツリポジトリから消えたとき用。 */
   deleteArticle(slug: ArticleSlug): Promise<void>;
 }

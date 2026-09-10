@@ -17,7 +17,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0001](0001-record-architecture-decisions.md)                | アーキテクチャ決定を ADR として記録する                              | Accepted |
 | [0002](0002-value-objects-at-repository-boundaries.md)       | リポジトリ境界では Value Object / ブランド型で受け渡す               | Accepted |
 | [0003](0003-clean-architecture-and-cqrs.md)                  | Clean Architecture (DIP) と CQRS を採用する                          | Accepted |
-| [0004](0004-github-as-content-source-of-truth.md)            | コンテンツの正本を GitHub に置き、D1 / R2 をキャッシュにする         | Accepted |
+| [0004](0004-github-as-content-source-of-truth.md)            | コンテンツリポジトリを GitHub に置き、D1 / R2 をキャッシュにする     | Accepted |
 | [0005](0005-mdast-over-html-rendering.md)                    | Markdown を HTML ではなく MDAST でフロントエンドに渡す               | Accepted |
 | [0006](0006-react-router-framework-mode.md)                  | ページ描画は React Router のフレームワークモードに任せる             | Accepted |
 | [0007](0007-strict-csp-outside-development.md)               | CSP は development でのみ外し、script-src は厳格・style-src は緩める | Accepted |
@@ -46,6 +46,8 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0031](0031-raise-embedding-input-limit-to-10000.md)         | 埋め込みの入力の上限を 8,000 字から 10,000 字に上げる                | Accepted |
 | [0032](0032-call-long-form-posts-articles.md)                | 長文の投稿を article と呼び、`/articles/<slug>` で配る               | Accepted |
 | [0033](0033-rename-note-to-article-in-storage-and-code.md)   | 長文の記事を指す `note` を、保存とコードの名前からも無くす           | Accepted |
+| [0034](0034-artifacts-as-content-source-of-truth.md)         | コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む  | Proposed |
+| [0035](0035-refresh-on-push-through-a-queue.md)              | コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる  | Proposed |
 
 ## 統合した番号
 

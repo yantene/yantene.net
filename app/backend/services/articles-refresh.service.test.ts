@@ -615,7 +615,7 @@ lastModifiedOn: 2026-01-15
 
   /*
    * `/articles/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
-   * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
+   * フロントマターも画像の相対パスも書き換えずコンテンツリポジトリそのままを保つ。
    */
   it("caches the source markdown verbatim", async () => {
     const files = new Map([
@@ -994,7 +994,7 @@ describe("visibility", () => {
 
     expect(result.processed).toEqual([]);
     expect(content.reads).toHaveLength(readsAfterFirst);
-    // 読まなかった記事を「正本から消えた」と誤認して掃除していないこと。
+    // 読まなかった記事を「コンテンツリポジトリから消えた」と誤認して掃除していないこと。
     expect(result.deleted).toEqual([]);
     expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
   });
@@ -1027,7 +1027,7 @@ publishedOn: 2026-01-15
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0].path).toBe("articles/hello.md");
     expect(result.processed).toEqual([]);
-    // 正本には在るのだから、消えた記事として掃除してはいけない。
+    // コンテンツリポジトリには在るのだから、消えた記事として掃除してはいけない。
     expect(result.deleted).toEqual([]);
 
     const article = await query.findBySlug(ArticleSlug.create("hello"));
@@ -1059,7 +1059,7 @@ publishedOn: 2026-01-15
     files.set("articles/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
     await service.refresh();
 
-    // 記事の行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
+    // 記事の行を消すと Webmention も一緒に消える。コンテンツリポジトリのどこにも無いので戻せない。
     const stored = await new D1WebmentionQueryRepository(d1).listByArticleId(article.id);
     expect(stored).toHaveLength(1);
     expect(stored[0].source.toString()).toBe("https://example.com/post/1");
@@ -1067,8 +1067,8 @@ publishedOn: 2026-01-15
 });
 
 /*
- * 掃除の経路は「正本から消えた 1 本」を消すためのもので、「正本が空に見える」を
- * 全件削除の合図として受け取らない。ブランチの取り違えや正本側の事故で articles/ を
+ * 掃除の経路は「コンテンツリポジトリから消えた 1 本」を消すためのもので、「コンテンツリポジトリが空に見える」を
+ * 全件削除の合図として受け取らない。ブランチの取り違えやコンテンツリポジトリ側の事故で articles/ を
  * 持たない応答が返ったとき、被害はコンテンツ不正のときと同じになる。
  */
 describe("空のツリー", () => {
@@ -1085,7 +1085,7 @@ describe("空のツリー", () => {
   });
 
   /*
-   * 記事は `articles/` に置く (ADR 0032)。正本側がまだ `notes/` のままで refresh を
+   * 記事は `articles/` に置く (ADR 0032)。コンテンツリポジトリ側がまだ `notes/` のままで refresh を
    * 叩いても、`notes/` は読まずに「1 件も無い」と見なして同じガードに掛ける。
    * 置き換えの前後で順序を誤っても、載っている記事が消えることはない。
    */

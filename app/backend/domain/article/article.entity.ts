@@ -19,8 +19,8 @@ interface ArticleFields<T extends IPersisted | IUnpersisted> {
   /** フロントマター由来の最終更新日 (日付のみ)。 */
   readonly lastModifiedOn: Temporal.PlainDate;
   /**
-   * コンテンツ正本 (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
-   * (正本のツリーが返すファイルハッシュ)。
+   * コンテンツリポジトリ (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
+   * (コンテンツリポジトリのツリーが返すファイルハッシュ)。
    */
   readonly sourceHash: string;
   /** D1 行の作成・更新時刻 (永続化メタデータ。コンテンツ日付とは別)。 */
