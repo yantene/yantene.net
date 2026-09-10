@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-illustration.svg から、実装で使う 2 つの素材を切り出す。
+illustration.svg から、実装で使う街並みの素材を切り出す。
+
+ロゴ (キャラクターとロゴタイプ) は別の原画 yantene.svg から手で切り出しており、
+このスクリプトの対象ではない (手順は app/frontend/assets/yantene-logo.svg の注記)。
 
 illustration.svg はワイヤーの下敷きを敷いた作業用の一枚絵で、座標は Inkscape の mm、
 レイヤーに translate が掛かっている。切り出す側はそれを知らずに済むよう、各素材の
@@ -40,7 +43,6 @@ DEST = ROOT / "app" / "frontend" / "assets"
 # 画素から測った各素材の枠 (下敷き画像のピクセル)。
 BOXES = {
     "cityscape": (0, 240, 1539, 464),  # 街 + 雲。下端がそのまま地平線になる
-    "highlight": (600, 195, 938, 220),
 }
 
 
@@ -101,11 +103,6 @@ NOTES = {
   - 複製は use 要素ではなく実体で置く。use の中身は CSS セレクタから見えず、
     継承しない vector-effect が届かないため、複製だけ線が太くなる。
 """,
-    "highlight": """
-  見出しの下に敷く手書きのマーカー。illustration.svg から切り出したもので、直接は編集しない。
-
-  preserveAspectRatio="none" で見出しの幅まで引き伸ばすため、縦横比は保たれない。
-""",
 }
 
 
@@ -120,7 +117,6 @@ def main() -> None:
 
     clouds: list[ET.Element] = []
     skyline: list[ET.Element] = []
-    highlight: list[ET.Element] = []
 
     for el in layer:
         tag = el.tag.split("}")[-1]
@@ -129,17 +125,15 @@ def main() -> None:
         ident = el.get("id", "")
         if ident == "g112":
             clouds.extend(list(el))
-        elif ident == "path112":
-            highlight.append(el)
-        elif ident == "g113":
-            # ロゴ「やんてね！」。ヘッダーはヒーローと同じ「下線付きのやんてね」
-            # (highlight + テキスト) で組むようになったので、切り出さない。
+        elif ident in ("path112", "g113"):
+            # 見出しのマーカー (path112) と旧ロゴ「やんてね！」(g113)。ロゴは別の原画
+            # (yantene.svg) から切り出した素材に置き換わったので、どちらも切り出さない。
             # 街に混ざらないよう、ここで明示的に落とす。
             continue
         else:
             skyline.append(el)
 
-    for group in (clouds, skyline, highlight):
+    for group in (clouds, skyline):
         for el in group:
             clean(el)
 
@@ -163,9 +157,6 @@ def main() -> None:
 
     written = {
         "cityscape.svg": wrap([cloud_group, sky_group], box, NOTES["cityscape"]),
-        "highlight.svg": wrap(
-            highlight, BOXES["highlight"], NOTES["highlight"], ' preserveAspectRatio="none"'
-        ),
     }
     for name, text in written.items():
         (DEST / name).write_text(text + "\n")

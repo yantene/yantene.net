@@ -1,5 +1,5 @@
 import type { webmentions } from "~/backend/infra/d1/schema";
-import { NoteSlug } from "~/backend/domain/note";
+import { ArticleSlug } from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import {
   Webmention,
@@ -23,8 +23,8 @@ import { unixToInstant } from "~/backend/infra/d1/temporal";
 export function rowToWebmention(row: typeof webmentions.$inferSelect): Webmention {
   return Webmention.reconstruct({
     id: entityId<"Webmention">(row.id),
-    noteId: entityId<"Note">(row.noteId),
-    target: NoteSlug.create(row.target),
+    articleId: entityId<"Article">(row.articleId),
+    target: ArticleSlug.create(row.target),
     source: WebmentionUrl.create(row.source),
     type: WebmentionType.create(row.type),
     author: WebmentionAuthor.reconstruct({

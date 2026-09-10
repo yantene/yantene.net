@@ -1,10 +1,10 @@
 /*
- * ノート本文 (prose) とコードハイライト (hljs) の配色を daisyUI のテーマ変数に
+ * 記事本文 (prose) とコードハイライト (hljs) の配色を daisyUI のテーマ変数に
  * ひも付ける。daisyUI の --color-* は data-theme (light/dark) ごとに切り替わるため、
  * これらを参照しておけばテーマ追従が自動で効く (tailwind の dark: バリアント不要)。
  */
-.note-prose {
-  /* note 参考の可読タイポグラフィ: やや大きめ・行間広め・字間ゆとり。 */
+.mdast-prose {
+  /* note.com 参考の可読タイポグラフィ: やや大きめ・行間広め・字間ゆとり。 */
   font-size: 1.0625rem;
   line-height: 2;
   letter-spacing: 0.02em;
@@ -29,7 +29,7 @@
 }
 
 /*
- * note 風の段落・見出しリズム (日本語の可読性重視)。
+ * note.com 風の段落・見出しリズム (日本語の可読性重視)。
  *
  * 素の要素に当てるこれらの規則には `:not(:where(.not-prose, .not-prose *))` を付ける。
  * 本文の中には組版の対象でない差し込み (リンクカードなど) が混ざり、そこに本文用の
@@ -45,22 +45,22 @@
  * 当たるので、差し込みの中には現れない。差し込みが素の要素を使うようになったら、
  * そのときは同じ除外をそちらにも足すこと。
  */
-.note-prose :where(p):not(:where(.not-prose, .not-prose *)) {
+.mdast-prose :where(p):not(:where(.not-prose, .not-prose *)) {
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
-.note-prose :where(h2):not(:where(.not-prose, .not-prose *)) {
+.mdast-prose :where(h2):not(:where(.not-prose, .not-prose *)) {
   margin-top: 2.75em;
   margin-bottom: 1em;
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--color-base-300);
   font-weight: 700;
 }
-.note-prose :where(h3):not(:where(.not-prose, .not-prose *)) {
+.mdast-prose :where(h3):not(:where(.not-prose, .not-prose *)) {
   margin-top: 2em;
   font-weight: 700;
 }
-.note-prose :where(img):not(:where(.not-prose, .not-prose *)) {
+.mdast-prose :where(img):not(:where(.not-prose, .not-prose *)) {
   margin-inline: auto;
   border-radius: 0.5rem;
   /*
@@ -80,74 +80,74 @@
   width: auto;
   height: auto;
 }
-.note-prose :where(a):not(:where(.not-prose, .not-prose *)) {
+.mdast-prose :where(a):not(:where(.not-prose, .not-prose *)) {
   text-underline-offset: 0.2em;
 }
 
 /* インラインコードの背景 (prose 既定は透明なので軽く敷く)。 */
-.note-prose :not(pre) > code {
+.mdast-prose :not(pre) > code {
   background-color: var(--color-base-200);
   padding: 0.15em 0.35em;
   border-radius: 0.25rem;
   font-weight: 500;
 }
-.note-prose :not(pre) > code::before,
-.note-prose :not(pre) > code::after {
+.mdast-prose :not(pre) > code::before,
+.mdast-prose :not(pre) > code::after {
   content: none; /* prose が付ける前後のバッククォートを消す */
 }
 
 /* rehype-highlight (highlight.js) のトークン配色。daisyUI の意味色に寄せる。 */
-.note-prose .hljs {
+.mdast-prose .hljs {
   color: var(--color-base-content);
 }
-.note-prose .hljs-comment,
-.note-prose .hljs-quote {
+.mdast-prose .hljs-comment,
+.mdast-prose .hljs-quote {
   color: color-mix(in oklch, var(--color-base-content) 55%, transparent);
   font-style: italic;
 }
-.note-prose .hljs-keyword,
-.note-prose .hljs-selector-tag,
-.note-prose .hljs-literal,
-.note-prose .hljs-section,
-.note-prose .hljs-name,
-.note-prose .hljs-built_in {
+.mdast-prose .hljs-keyword,
+.mdast-prose .hljs-selector-tag,
+.mdast-prose .hljs-literal,
+.mdast-prose .hljs-section,
+.mdast-prose .hljs-name,
+.mdast-prose .hljs-built_in {
   color: var(--color-primary);
 }
-.note-prose .hljs-string,
-.note-prose .hljs-regexp,
-.note-prose .hljs-addition,
-.note-prose .hljs-attribute,
-.note-prose .hljs-meta-string {
+.mdast-prose .hljs-string,
+.mdast-prose .hljs-regexp,
+.mdast-prose .hljs-addition,
+.mdast-prose .hljs-attribute,
+.mdast-prose .hljs-meta-string {
   color: var(--color-success);
 }
-.note-prose .hljs-number,
-.note-prose .hljs-variable,
-.note-prose .hljs-template-variable,
-.note-prose .hljs-type,
-.note-prose .hljs-params,
-.note-prose .hljs-meta {
+.mdast-prose .hljs-number,
+.mdast-prose .hljs-variable,
+.mdast-prose .hljs-template-variable,
+.mdast-prose .hljs-type,
+.mdast-prose .hljs-params,
+.mdast-prose .hljs-meta {
   color: var(--color-warning);
 }
-.note-prose .hljs-title,
-.note-prose .hljs-function .hljs-title,
-.note-prose .hljs-class .hljs-title,
-.note-prose .hljs-selector-id,
-.note-prose .hljs-selector-class {
+.mdast-prose .hljs-title,
+.mdast-prose .hljs-function .hljs-title,
+.mdast-prose .hljs-class .hljs-title,
+.mdast-prose .hljs-selector-id,
+.mdast-prose .hljs-selector-class {
   color: var(--color-secondary);
 }
-.note-prose .hljs-attr,
-.note-prose .hljs-symbol,
-.note-prose .hljs-bullet,
-.note-prose .hljs-link {
+.mdast-prose .hljs-attr,
+.mdast-prose .hljs-symbol,
+.mdast-prose .hljs-bullet,
+.mdast-prose .hljs-link {
   color: var(--color-accent);
 }
-.note-prose .hljs-deletion {
+.mdast-prose .hljs-deletion {
   color: var(--color-error);
 }
-.note-prose .hljs-emphasis {
+.mdast-prose .hljs-emphasis {
   font-style: italic;
 }
-.note-prose .hljs-strong {
+.mdast-prose .hljs-strong {
   font-weight: 700;
 }
 
@@ -168,7 +168,7 @@
  * 本文は行間を広く取っている (line-height: 2) が、それを数式にも効かせると
  * 上下の添字が間延びする。数式の中だけ素の行間に戻す。
  */
-.note-prose :where(math) {
+.mdast-prose :where(math) {
   font-family: "STIX Two Math", math, serif;
   line-height: normal;
 }
@@ -181,7 +181,7 @@
  * 同じ font-size だと数式だけ痩せて見えるため。字面を揃えるための係数で、数式を
  * 目立たせたいわけではない。
  */
-.note-prose :where(math[display="block"]) {
+.mdast-prose :where(math[display="block"]) {
   font-size: 1.15em;
   margin-block: 1.5em;
   overflow-x: auto;
@@ -201,12 +201,12 @@
  * **左半分がスクロールで辿れなくなる** (はみ出しが左右に等分される)。auto マージンは
  * 余りが無ければ 0 に潰れるだけなので、そうならない。
  */
-.note-prose .mermaid-diagram {
+.mdast-prose .mermaid-diagram {
   margin: 1.75em 0;
   overflow-x: auto;
 }
 
-.note-prose .mermaid-diagram svg {
+.mdast-prose .mermaid-diagram svg {
   display: block;
   margin-inline: auto;
   max-width: 100%;
@@ -228,7 +228,7 @@
  * `width: max-content` は器の幅で折り返させないため。ここで折り返すと、本番の器
  * (`.mermaid-diagram`) より狭く測ってしまう。
  *
- * **`.note-prose` で絞らない。** 隠すのはこの要素そのものの性質であって、置かれた場所の
+ * **`.mdast-prose` で絞らない。** 隠すのはこの要素そのものの性質であって、置かれた場所の
  * 性質ではない。本文の外で図を描いたとき (Storybook やテスト) にだけ、組んでいる最中の
  * 図が流れの中に現れる、という差を作らない。
  */
@@ -242,18 +242,18 @@
 }
 
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
-.note-prose :is(h1, h2, h3, h4, h5, h6) {
+.mdast-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;
 }
 
 /*
- * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (note-content-parser.ts)、
+ * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
  * 配色は daisyUI のテーマ変数を参照するので、light/dark の切り替えに自動で追従する。
  * 種別ごとの違いは --alert-accent 1 つに集約し、残りの指定は共通で持つ。
  */
-.note-prose .markdown-alert {
+.mdast-prose .markdown-alert {
   --alert-accent: var(--color-info);
   margin: 1.75em 0;
   padding: 0.9em 1.25em;
@@ -262,15 +262,15 @@
   background: color-mix(in oklch, var(--alert-accent) 8%, transparent);
 }
 
-.note-prose .markdown-alert > :first-child {
+.mdast-prose .markdown-alert > :first-child {
   margin-top: 0;
 }
 
-.note-prose .markdown-alert > :last-child {
+.mdast-prose .markdown-alert > :last-child {
   margin-bottom: 0;
 }
 
-.note-prose .markdown-alert-title {
+.mdast-prose .markdown-alert-title {
   display: flex;
   align-items: center;
   gap: 0.4em;
@@ -283,30 +283,30 @@
   letter-spacing: 0.04em;
 }
 
-.note-prose .markdown-alert-icon {
+.mdast-prose .markdown-alert-icon {
   flex: none;
   /* テキストのベースラインに合わせる。アイコンは 16px 四方の viewBox。 */
   width: 1.1em;
   height: 1.1em;
 }
 
-.note-prose .markdown-alert-note {
+.mdast-prose .markdown-alert-note {
   --alert-accent: var(--color-info);
 }
 
-.note-prose .markdown-alert-tip {
+.mdast-prose .markdown-alert-tip {
   --alert-accent: var(--color-success);
 }
 
-.note-prose .markdown-alert-important {
+.mdast-prose .markdown-alert-important {
   --alert-accent: var(--color-secondary);
 }
 
-.note-prose .markdown-alert-warning {
+.mdast-prose .markdown-alert-warning {
   --alert-accent: var(--color-warning);
 }
 
-.note-prose .markdown-alert-caution {
+.mdast-prose .markdown-alert-caution {
   --alert-accent: var(--color-error);
 }
 
@@ -318,9 +318,9 @@
  * 線を 1 本引いて、ここから先が注であることを見えるようにする。
  *
  * `<hr>` を本文に足すのではなく境界線にするのは、これが本文の一部ではなく組版だから。
- * MDAST に無いものを描画側で足すと、原文 Markdown (/notes/<slug>.md) との対応も崩れる。
+ * MDAST に無いものを描画側で足すと、原文 Markdown (/articles/<slug>.md) との対応も崩れる。
  */
-.note-prose .footnotes {
+.mdast-prose .footnotes {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--color-border);

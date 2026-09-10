@@ -8,7 +8,7 @@
 
 /** ツリー内の 1 ファイル。hash はそのファイル内容のリビジョン識別子。 */
 export interface ContentEntry {
-  /** 正本内のパス (例: "notes/my-note.md", "notes/my-note/cover.png")。 */
+  /** 正本内のパス (例: "articles/my-article.md", "articles/my-article/cover.png")。 */
   readonly path: string;
   /** ファイル内容のハッシュ (変更検出用)。 */
   readonly hash: string;

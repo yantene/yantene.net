@@ -1,10 +1,10 @@
 import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
-import { notes } from "./notes";
+import { articles } from "./articles";
 
 /**
  * 受信した Webmention。検証を通ったものだけが入る。
  *
- * - (note_id, source) で一意。Webmention は再送で更新される仕様なので、同じ送り元から
+ * - (article_id, source) で一意。Webmention は再送で更新される仕様なので、同じ送り元から
  *   何度届いても行は 1 つに保つ。
  * - author_name / content は保存の時点でタグを落としたテキストになっている
  *   (domain/webmention の VO が均す)。ただし `<` や `>` は**文字として**残りうるので
@@ -14,17 +14,17 @@ import { notes } from "./notes";
  * - received_at は初めて受け取った時刻、updated_at は最後に検証し直した時刻。
  *   再送で received_at を動かさないのは、表示の並びが送り手の都合で入れ替わらない
  *   ようにするため。
- * - note 削除時のカスケード用に FK を張るが、D1 は FK 強制が既定で無効なため、
- *   note 側の Command リポジトリでも明示的に掃除する (note_tags と同じ扱い)。
+ * - article 削除時のカスケード用に FK を張るが、D1 は FK 強制が既定で無効なため、
+ *   article 側の Command リポジトリでも明示的に掃除する (article_tags と同じ扱い)。
  */
 export const webmentions = sqliteTable(
   "webmentions",
   {
     id: text("id").primaryKey(),
-    noteId: text("note_id")
+    articleId: text("article_id")
       .notNull()
-      .references(() => notes.id, { onDelete: "cascade" }),
-    /** 送り先のノートのスラグ。note_id を引き直さずに URL を組めるよう持たせる。 */
+      .references(() => articles.id, { onDelete: "cascade" }),
+    /** 送り先の記事のスラグ。article_id を引き直さずに URL を組めるよう持たせる。 */
     target: text("target").notNull(),
     /** 送り元の記事の URL。 */
     source: text("source").notNull(),
@@ -45,5 +45,5 @@ export const webmentions = sqliteTable(
     receivedAt: integer("received_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
-  (table) => [uniqueIndex("webmentions_note_id_source_idx").on(table.noteId, table.source)],
+  (table) => [uniqueIndex("webmentions_article_id_source_idx").on(table.articleId, table.source)],
 );

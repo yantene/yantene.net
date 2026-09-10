@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { rowToWebmention } from "./webmention-row";
-import type { NoteId } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import type {
   IWebmentionCommandRepository,
@@ -20,7 +20,7 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
   }
 
   /**
-   * (ノート, source) をキーに upsert する。
+   * (記事, source) をキーに upsert する。
    *
    * 再送で更新される仕様なので、読んでから分岐せず 1 手で置く。received_at は
    * insert のときだけ入り、更新では触らない (初めて受け取った時刻を残すため)。
@@ -44,13 +44,13 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
       .insert(webmentions)
       .values({
         id: crypto.randomUUID(),
-        noteId: webmention.noteId,
+        articleId: webmention.articleId,
         source: webmention.source.toString(),
         receivedAt: nowUnix,
         ...content,
       })
       .onConflictDoUpdate({
-        target: [webmentions.noteId, webmentions.source],
+        target: [webmentions.articleId, webmentions.source],
         set: content,
       })
       .returning();
@@ -64,8 +64,11 @@ export class D1WebmentionCommandRepository implements IWebmentionCommandReposito
     return rowToWebmention(row);
   }
 
-  async deleteBySource(noteId: NoteId, source: WebmentionUrl): Promise<void> {
-    const row = and(eq(webmentions.noteId, noteId), eq(webmentions.source, source.toString()));
+  async deleteBySource(articleId: ArticleId, source: WebmentionUrl): Promise<void> {
+    const row = and(
+      eq(webmentions.articleId, articleId),
+      eq(webmentions.source, source.toString()),
+    );
 
     await this.db.delete(webmentions).where(row);
   }

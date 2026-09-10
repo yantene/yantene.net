@@ -7,7 +7,7 @@ import { buildPageMeta, translationsFor } from "./page-meta";
  */
 describe("buildPageMeta", () => {
   const origin = "https://yantene.net";
-  const pathname = "/notes/foo";
+  const pathname = "/articles/foo";
 
   function find(
     descriptors: ReturnType<typeof buildPageMeta>,
@@ -75,11 +75,11 @@ describe("buildPageMeta", () => {
       locale: "ja",
       origin,
       pathname,
-      imagePath: "/og/notes/foo",
+      imagePath: "/og/articles/foo",
     });
 
-    expect(find(meta, "property", "og:image")).toBe("https://yantene.net/og/notes/foo");
-    expect(find(meta, "name", "twitter:image")).toBe("https://yantene.net/og/notes/foo");
+    expect(find(meta, "property", "og:image")).toBe("https://yantene.net/og/articles/foo");
+    expect(find(meta, "name", "twitter:image")).toBe("https://yantene.net/og/articles/foo");
   });
 
   it("defaults the OG image to the site-wide one", () => {
@@ -108,14 +108,14 @@ describe("buildPageMeta", () => {
     expect(meta).toContainEqual({
       tagName: "link",
       rel: "canonical",
-      href: "https://yantene.net/notes/foo",
+      href: "https://yantene.net/articles/foo",
     });
   });
 
   it("emits og:url built from origin and pathname", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
-    expect(find(meta, "property", "og:url")).toBe("https://yantene.net/notes/foo");
+    expect(find(meta, "property", "og:url")).toBe("https://yantene.net/articles/foo");
   });
 
   /*
@@ -146,12 +146,12 @@ describe("buildPageMeta", () => {
   });
 
   /*
-   * Webmention の受け口はノート宛だけなので、記事ページ以外は広告しない。
+   * Webmention の受け口は記事宛だけなので、記事ページ以外は広告しない。
    * 全ページが通る経路なので、渡されなかったときに何も足さないことを固定する
    * (jsonLd で「渡さないページが全部 500」を出した前科がある)。
    */
   it("omits the webmention link when no endpoint is given", () => {
-    for (const pathname of ["/", "/notes", "/notes?tag=Web", "/notes/foo"]) {
+    for (const pathname of ["/", "/articles", "/articles?tag=Web", "/articles/foo"]) {
       const meta = buildPageMeta({ locale: "ja", origin, pathname });
 
       expect(meta.some((d) => (d as Record<string, unknown>).rel === "webmention")).toBe(false);

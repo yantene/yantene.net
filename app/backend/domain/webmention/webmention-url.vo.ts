@@ -76,7 +76,7 @@ export class WebmentionUrl implements IValueObject<WebmentionUrl> {
     return new URL(this.value).hostname;
   }
 
-  /** パス部分 (例: `/notes/hello`)。 */
+  /** パス部分 (例: `/articles/hello`)。 */
   get pathname(): string {
     return new URL(this.value).pathname;
   }

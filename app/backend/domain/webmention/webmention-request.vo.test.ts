@@ -14,8 +14,8 @@ function create(source: unknown, target: unknown): WebmentionRequest {
 }
 
 describe("WebmentionRequest", () => {
-  it("ノート宛の mention を受け入れ、スラグを取り出す", () => {
-    const request = create("https://example.com/post", "https://yantene.net/notes/hello");
+  it("記事宛の mention を受け入れ、スラグを取り出す", () => {
+    const request = create("https://example.com/post", "https://yantene.net/articles/hello");
 
     expect(request.source.toString()).toBe("https://example.com/post");
     expect(request.targetSlug.toString()).toBe("hello");
@@ -28,17 +28,17 @@ describe("WebmentionRequest", () => {
   it("target はスラグから組み直した正規の URL になる", () => {
     const request = create(
       "https://example.com/post",
-      "https://yantene.net/notes/hello/?utm_source=x",
+      "https://yantene.net/articles/hello/?utm_source=x",
     );
 
-    expect(request.target.toString()).toBe("https://yantene.net/notes/hello");
+    expect(request.target.toString()).toBe("https://yantene.net/articles/hello");
   });
 
   it.each([
-    ["source", undefined, "https://yantene.net/notes/hello"],
-    ["source", "", "https://yantene.net/notes/hello"],
-    ["source", "not a url", "https://yantene.net/notes/hello"],
-    ["source", "ftp://example.com/x", "https://yantene.net/notes/hello"],
+    ["source", undefined, "https://yantene.net/articles/hello"],
+    ["source", "", "https://yantene.net/articles/hello"],
+    ["source", "not a url", "https://yantene.net/articles/hello"],
+    ["source", "ftp://example.com/x", "https://yantene.net/articles/hello"],
     ["target", "https://example.com/post", undefined],
     ["target", "https://example.com/post", ""],
     ["target", "https://example.com/post", "nope"],
@@ -48,24 +48,73 @@ describe("WebmentionRequest", () => {
 
   it("source と target が同じなら断る", () => {
     expect(() =>
-      create("https://yantene.net/notes/hello", "https://yantene.net/notes/hello"),
+      create("https://yantene.net/articles/hello", "https://yantene.net/articles/hello"),
     ).toThrow(SameSourceAndTargetError);
   });
 
   it.each([
-    "https://example.com/notes/hello",
+    "https://example.com/articles/hello",
     "https://yantene.net/",
-    "https://yantene.net/notes",
-    "https://yantene.net/notes/hello/extra",
-    "https://yantene.net/notes/Invalid_Slug",
-  ])("このサイトのノート URL でない target は断る (%s)", (target) => {
+    "https://yantene.net/articles",
+    "https://yantene.net/articles/hello/extra",
+    "https://yantene.net/articles/Invalid_Slug",
+  ])("このサイトの記事 URL でない target は断る (%s)", (target) => {
     expect(() => create("https://example.com/post", target)).toThrow(TargetNotOnThisSiteError);
+  });
+
+  /*
+   * 記事を `/notes/<slug>` と呼んでいた頃の URL (ADR 0032)。そこから移した記事に限って
+   * 旧 URL 宛ても受ける。
+   */
+  describe("改名前の /notes/<slug> 宛て", () => {
+    it("移した記事なら受け入れ、target は正規の URL に組み直す", () => {
+      const request = create(
+        "https://example.com/post",
+        "https://yantene.net/notes/back-from-times/?utm_source=x",
+      );
+
+      expect(request.targetSlug.toString()).toBe("back-from-times");
+      expect(request.target.toString()).toBe("https://yantene.net/articles/back-from-times");
+    });
+
+    // 照合に使う URL は、届け出た表記に依らず正規と旧の両方。片方だけにすると、
+    // 正規の URL を張っているページを旧 URL 宛てで届け出て「リンクが無い」ことにできる。
+    it.each([
+      "https://yantene.net/notes/back-from-times",
+      "https://yantene.net/articles/back-from-times",
+    ])("移した記事の targets は届け出た表記に依らず 2 つ (%s)", (target) => {
+      const request = create("https://example.com/post", target);
+
+      expect(request.targets.map((url) => url.toString())).toEqual([
+        "https://yantene.net/articles/back-from-times",
+        "https://yantene.net/notes/back-from-times",
+      ]);
+    });
+
+    it("移していない記事の targets は正規の URL だけ", () => {
+      const request = create("https://example.com/post", "https://yantene.net/articles/hello");
+
+      expect(request.targets.map((url) => url.toString())).toEqual([
+        "https://yantene.net/articles/hello",
+      ]);
+    });
+
+    // `/notes/` は短文の投稿に譲る場所。移していない記事のスラグを `/notes/` の下で
+    // 受けると、そちらの識別子と取り違える余地ができる。
+    it.each([
+      "https://yantene.net/notes/hacku-2016",
+      "https://yantene.net/notes/hello",
+      "https://yantene.net/notes",
+      "https://yantene.net/notes/back-from-times/extra",
+    ])("移していない記事や記事でないものは断る (%s)", (target) => {
+      expect(() => create("https://example.com/post", target)).toThrow(TargetNotOnThisSiteError);
+    });
   });
 
   /* 自分の記事どうしのリンクで勝手に増えても、読み手にとっての意味が無い。 */
   it("自サイトからの mention は断る", () => {
     expect(() =>
-      create("https://yantene.net/notes/other", "https://yantene.net/notes/hello"),
+      create("https://yantene.net/articles/other", "https://yantene.net/articles/hello"),
     ).toThrow(SelfMentionNotAcceptedError);
   });
 
@@ -78,19 +127,19 @@ describe("WebmentionRequest", () => {
    * 変えられるため、自分の名前の行を好きなだけ積める)。
    */
   it.each([
-    ["同じ記事", "http://yantene.net/notes/hello"],
-    ["別の記事", "http://yantene.net/notes/other"],
-    ["クエリ違い", "http://yantene.net/notes/hello?x=1"],
-    ["港違い", "https://yantene.net:8443/notes/other"],
+    ["同じ記事", "http://yantene.net/articles/hello"],
+    ["別の記事", "http://yantene.net/articles/other"],
+    ["クエリ違い", "http://yantene.net/articles/hello?x=1"],
+    ["港違い", "https://yantene.net:8443/articles/other"],
   ])("スキームや港を変えた自サイトからの mention も断る (%s)", (_case, source) => {
-    expect(() => create(source, "https://yantene.net/notes/hello")).toThrow(
+    expect(() => create(source, "https://yantene.net/articles/hello")).toThrow(
       SelfMentionNotAcceptedError,
     );
   });
 
   /* 断るのはホスト名が一致するときだけ。他所からの mention は http でも受け取る。 */
   it("他所のサイトからの mention は http でも受け入れる", () => {
-    const request = create("http://example.com/post", "https://yantene.net/notes/hello");
+    const request = create("http://example.com/post", "https://yantene.net/articles/hello");
 
     expect(request.source.toString()).toBe("http://example.com/post");
     expect(request.targetSlug.toString()).toBe("hello");

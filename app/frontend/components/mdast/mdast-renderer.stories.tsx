@@ -1,20 +1,20 @@
 import { MdastRenderer } from "./mdast-renderer";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { Root as MdastRoot } from "mdast";
-import { parseNoteContent } from "~/backend/services/note-content-parser";
+import { parseArticleContent } from "~/backend/services/article-content-parser";
 
 /*
  * 本番と同じ経路で MDAST を組む。数式の MathML は refresh 時にここで埋まるので、
  * 素の remark で組むと数式だけがストーリーと本番で食い違う。
  */
 function markdownToMdast(markdown: string): MdastRoot {
-  return parseNoteContent(markdown).mdast;
+  return parseArticleContent(markdown).mdast;
 }
 
 const sample = `# 見出し 1
 
 これは **段落** です。_強調_ と \`インラインコード\` と
-[内部リンク](/notes/other) と [外部リンク](https://example.com) を含みます。
+[内部リンク](/articles/other) と [外部リンク](https://example.com) を含みます。
 
 ## 見出し 2
 
@@ -64,7 +64,7 @@ export const Default: Story = {
 export const WithImageResolution: Story = {
   args: {
     node: markdownToMdast("![cover](./cover.png)"),
-    transformImageUrl: (src) => src.replace(/^\.\//, "/api/v1/notes/example/assets/"),
+    transformImageUrl: (src) => src.replace(/^\.\//, "/api/v1/articles/example/assets/"),
   },
 };
 

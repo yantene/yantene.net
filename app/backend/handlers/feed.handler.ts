@@ -1,11 +1,12 @@
 import { Hono } from "hono";
-import { toPublicNote, type PublicNote } from "./note-view";
-import { D1NoteQueryRepository } from "~/backend/infra/d1/repositories";
+import { toPublicArticle, type PublicArticle } from "./article-view";
+import { articlePath } from "~/backend/domain/article";
+import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 import { feedIdentity, type FeedIdentity } from "~/lib/feed";
 
 const FEED_LIMIT = 20;
 const FEED_AUTHOR = "yantene";
-/** ノートが 1 件も無いときの feed updated (Date に依存させない安全側の既定値)。 */
+/** 記事が 1 件も無いときの feed updated (Date に依存させない安全側の既定値)。 */
 const FALLBACK_UPDATED = "2026-01-01T00:00:00Z";
 
 function escapeXml(value: string): string {
@@ -22,33 +23,41 @@ function toRfc3339(date: string): string {
   return `${date}T00:00:00Z`;
 }
 
-function entryXml(origin: string, note: PublicNote): string {
-  const url = `${origin}/notes/${note.slug}`;
+function entryXml(origin: string, article: PublicArticle): string {
+  const url = `${origin}${articlePath(article.slug)}`;
   /*
    * カテゴリは記事ごとに変えず `article` で固定する。タグは廃止した (ADR 0029) が、
    * 「これは記事である」という自己記述は残す。microformats2 の p-category と同じ語で、
    * Post Type Discovery が `p-name` と `e-content` から導く型 (article) とも一致する。
    */
   const categories = `    <category term="article"/>`;
+  /*
+   * `<id>` は記事の URL そのもの。URL を動かせば id も動き、購読者には 1 回だけ全件が
+   * 新着に見える (ADR 0032)。それを飲んで、URL と別の識別子を持たない。
+   */
   return `  <entry>
-    <title>${escapeXml(note.title)}</title>
+    <title>${escapeXml(article.title)}</title>
     <link href="${url}"/>
     <id>${url}</id>
-    <published>${toRfc3339(note.publishedOn)}</published>
-    <updated>${toRfc3339(note.lastModifiedOn)}</updated>
-    <summary>${escapeXml(note.summary)}</summary>
+    <published>${toRfc3339(article.publishedOn)}</published>
+    <updated>${toRfc3339(article.lastModifiedOn)}</updated>
+    <summary>${escapeXml(article.summary)}</summary>
 ${categories}
   </entry>`;
 }
 
-function buildAtom(origin: string, notes: readonly PublicNote[], identity: FeedIdentity): string {
+function buildAtom(
+  origin: string,
+  articles: readonly PublicArticle[],
+  identity: FeedIdentity,
+): string {
   // feed 全体の updated は最新の更新日時 (エントリの lastModifiedOn の最大)。
   const updated =
-    notes
-      .map((note) => toRfc3339(note.lastModifiedOn))
+    articles
+      .map((article) => toRfc3339(article.lastModifiedOn))
       .toSorted((a, b) => a.localeCompare(b))
       .at(-1) ?? FALLBACK_UPDATED;
-  const entries = notes.map((note) => entryXml(origin, note)).join("\n");
+  const entries = articles.map((article) => entryXml(origin, article)).join("\n");
   const selfUrl = escapeXml(`${origin}${identity.path}`);
   const alternateUrl = escapeXml(`${origin}${identity.alternatePath}`);
   return `<?xml version="1.0" encoding="utf-8"?>
@@ -66,7 +75,7 @@ ${entries}
 }
 
 /**
- * Atom フィードの公開ルータ。`GET /feed.xml` が最新ノートを Atom で返す。
+ * Atom フィードの公開ルータ。`GET /feed.xml` が最新記事を Atom で返す。
  *
  * タグを廃止したのでフィードは 1 本だけ。`?tag=` を付けても無視して全体を返す。
  * 404 にすると、購読中のリーダーが「消えたフィード」として扱ってしまう。
@@ -75,7 +84,7 @@ export function createFeedRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/feed.xml", async (c) => {
-    const result = await new D1NoteQueryRepository(c.env.D1).list({
+    const result = await new D1ArticleQueryRepository(c.env.D1).list({
       limit: FEED_LIMIT,
       offset: 0,
       sortBy: "publishedOn",
@@ -85,7 +94,7 @@ export function createFeedRouter(): Hono<{ Bindings: Env }> {
     const origin = new URL(c.req.url).origin;
     const xml = buildAtom(
       origin,
-      result.notes.map((note) => toPublicNote(note)),
+      result.articles.map((article) => toPublicArticle(article)),
       feedIdentity(),
     );
     return c.body(xml, 200, {

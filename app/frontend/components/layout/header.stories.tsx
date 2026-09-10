@@ -50,7 +50,7 @@ export const TransparentWithoutLogo: Story = {
 };
 
 /*
- * 検索フォームを畳む幅の姿。Notes の字と検索欄が消え、同じ /notes を指す虫眼鏡だけが
+ * 検索フォームを畳む幅の姿。Articles の字と検索欄が消え、同じ /articles を指す虫眼鏡だけが
  * 残ることを確かめる。同じ行き先のリンクを 2 つ並べた回帰 (#154) を見張る場所。
  */
 export const SolidNarrow: Story = {

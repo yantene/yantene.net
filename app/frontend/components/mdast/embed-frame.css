@@ -8,7 +8,7 @@
  * 幅は本文に合わせ、高さは 16:9 から導く。元の iframe は width='100%' だけを持ち
  * 高さの指定がないため、枠を与えないと既定の 150px に潰れる。
  */
-.note-embed {
+.mdast-embed {
   aspect-ratio: 16 / 9;
   width: 100%;
   overflow: hidden;
@@ -16,7 +16,7 @@
   background-color: var(--color-base-300);
 }
 
-.note-embed iframe {
+.mdast-embed iframe {
   width: 100%;
   height: 100%;
   border: 0;

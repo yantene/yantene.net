@@ -2,16 +2,16 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Route } from "./+types/home";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { HomePageData } from "~/backend/handlers/notes/pages.handler";
+import type { HomePageData } from "~/backend/handlers/articles/pages.handler";
 import type { ClockOriginData } from "~/frontend/components/hero/clock-origin";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
-import { loadHomePage } from "~/backend/handlers/notes/pages.handler";
+import { loadHomePage } from "~/backend/handlers/articles/pages.handler";
 import { resolveClockOrigin } from "~/frontend/components/hero/clock-origin";
 import { HeroSection } from "~/frontend/components/hero/hero-section";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
-import { NoteTimeline } from "~/frontend/components/note-timeline/note-timeline";
+import { ArticleTimeline } from "~/frontend/components/article-timeline/article-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
@@ -71,24 +71,24 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           */}
           {popular.length > 0 && (
             <div className="mb-16">
-              <h2 className="text-2xl font-bold">{t("home.popularNotes")}</h2>
+              <h2 className="text-2xl font-bold">{t("home.popularArticles")}</h2>
               <div className="mt-8">
-                <NoteTimeline notes={popular} ranked />
+                <ArticleTimeline articles={popular} ranked />
               </div>
             </div>
           )}
 
           <div>
-            <h2 className="text-2xl font-bold">{t("home.recentNotes")}</h2>
+            <h2 className="text-2xl font-bold">{t("home.recentArticles")}</h2>
             <div className="mt-8">
-              <NoteTimeline notes={recent} groupByYear />
+              <ArticleTimeline articles={recent} groupByYear />
             </div>
             {/*
               ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と
-              絞り込みは /notes が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
+              絞り込みは /articles が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
             */}
             <p className="home-view-all">
-              <Link to="/notes" className="link link-primary press-control text-sm">
+              <Link to="/articles" className="link link-primary press-control text-sm">
                 {t("home.viewAll")}
               </Link>
             </p>

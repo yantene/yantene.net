@@ -1,6 +1,6 @@
 # 0028. 関連ノートを、refresh 時に作るベクトルの近さで並べる
 
-- Status: Accepted
+- Status: Accepted (モデルの選定と入力上限の実測のみ [0030](0030-switch-embedding-model-to-qwen3.md) で置き換え)
 - Date: 2026-09-01
 - Deciders: @yantene
 

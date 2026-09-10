@@ -13,7 +13,7 @@ import type { ReactionCount, ReactionState } from "./reaction-state";
 const LIKE = "❤️";
 
 /** 同じ記事のリアクションはどこに置かれても 1 つの送信として扱う。 */
-const REACTION_FETCHER_KEY = "note-reaction";
+const REACTION_FETCHER_KEY = "article-reaction";
 
 interface ReactionBarProps extends ReactionState {
   /**
@@ -56,7 +56,7 @@ function pendingView(current: ReactionState, formData: FormData | undefined): Re
 /**
  * 記事の末尾に置くリアクションの行。
  *
- * ハートで「いいね」、押されている絵文字は数と一緒に並べる。1 ノートにつき 1 人 1 つなので、
+ * ハートで「いいね」、押されている絵文字は数と一緒に並べる。1 記事につき 1 人 1 つなので、
  * 別のものを押すと乗り換え、同じものをもう一度押すと取り消しになる。
  *
  * 押した本人かどうかはセッションで決まり、SSR の時点で確定している。ここでクライアント
@@ -71,7 +71,7 @@ export function ReactionBar({
 }: ReactionBarProps): React.JSX.Element {
   const { t } = useTranslation();
   /*
-   * 上下に 2 つ置かれるので、同じ鍵で fetcher を共有する。別々にすると、送信中の
+   * 上下に 2 つ置かれるので、同じキーで fetcher を共有する。別々にすると、送信中の
    * 楽観表示が押したほうにしか出ず、もう片方だけ古い姿のまま残る。
    */
   const fetcher = useFetcher({ key: REACTION_FETCHER_KEY });

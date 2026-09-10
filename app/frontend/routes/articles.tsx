@@ -1,0 +1,197 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { HiMagnifyingGlass } from "react-icons/hi2";
+import type { Route } from "./+types/articles";
+import type { CopyrightData } from "~/backend/handlers/copyright-years";
+import type { ArticlesListPageData } from "~/backend/handlers/articles/pages.handler";
+import type { LoadArticlePage } from "~/frontend/components/article-timeline/infinite-article-timeline";
+import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { resolveCopyrightYears } from "~/backend/handlers/copyright";
+import { loadArticlesListPage } from "~/backend/handlers/articles/pages.handler";
+import { FeedLink } from "~/frontend/components/feed/feed-link";
+import { Footer } from "~/frontend/components/layout/footer";
+import { Header } from "~/frontend/components/layout/header";
+import { InfiniteArticleTimeline } from "~/frontend/components/article-timeline/infinite-article-timeline";
+import { parseArticleListPayload } from "~/frontend/components/article-timeline/article-list-payload";
+import { Pagination } from "~/frontend/components/pagination/pagination";
+import { AppLayout } from "~/frontend/layouts/app-layout";
+import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
+import { feedIdentity } from "~/lib/feed";
+
+const DEFAULT_PER_PAGE = 20;
+
+export async function loader({
+  request,
+  context,
+}: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & ArticlesListPageData> {
+  const url = new URL(request.url);
+  const data = await loadArticlesListPage(context.get(cloudflareContext).env, url);
+  return {
+    ...data,
+    locale: context.get(localeRouteContext),
+    origin: url.origin,
+    copyright: resolveCopyrightYears(),
+  };
+}
+
+export const meta: Route.MetaFunction = ({ loaderData, location }) => {
+  const { locale, origin } = loaderData;
+  const pageTitle = translationsFor(locale).articles.title;
+  return buildPageMeta({
+    locale,
+    origin,
+    pathname: location.pathname,
+    title: pageTitle,
+  });
+};
+
+interface SortState {
+  readonly sortBy: string | null;
+  readonly order: string | null;
+}
+
+/**
+ * ページ送りリンクの URL を組み立てる。現在の per-page / sort-by / order を保持し、
+ * 既定値は省略して URL をきれいに保つ。
+ */
+function buildHrefForPage(page: number, perPage: number, sort: SortState): string {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (perPage !== DEFAULT_PER_PAGE) params.set("per-page", String(perPage));
+  if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
+  if (sort.order !== null) params.set("order", sort.order);
+  const query = params.toString();
+  return query.length > 0 ? `/articles?${query}` : "/articles";
+}
+
+/**
+ * 続きを取りに行く手を、いまの並び順に合わせて作る。
+ *
+ * 既定の取り方 (`/api/v1/articles` をそのまま叩く) では並び順が引き継がれず、一覧の
+ * 2 ページ目が別の順で返る。ここで同じ条件を渡す。
+ */
+function buildLoadPage(sort: SortState): LoadArticlePage {
+  return async (page, perPage) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      "per-page": String(perPage),
+    });
+    if (sort.sortBy !== null) params.set("sort-by", sort.sortBy);
+    if (sort.order !== null) params.set("order", sort.order);
+
+    const response = await fetch(`/api/v1/articles?${params.toString()}`, {
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new Error(`status ${String(response.status)}`);
+
+    const payload = parseArticleListPayload(await response.json());
+    if (payload === null) throw new Error("unexpected payload");
+    return payload;
+  };
+}
+
+/**
+ * 結果の見出しを組み立てる。
+ *
+ * 何で絞った結果を見ているのかが一目で分かるようにする。検索語もタグも無いときは
+ * ページの名前をそのまま出す。
+ */
+function resultHeading(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  { query, total }: { query: string; total: number },
+): string {
+  if (query.length > 0) return t("search.resultsFor", { query, count: total });
+  return t("articles.heading");
+}
+
+export default function ArticlesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
+  const { t } = useTranslation();
+  const { articles, pagination, query, sort, copyright } = loaderData;
+  const hrefForPage = (page: number): string => buildHrefForPage(page, pagination.perPage, sort);
+  /*
+   * 取り方は毎描画で作り直さない。
+   *
+   * 依存に sort をそのまま置くと、loader が返す度に別のオブジェクトになるため毎描画で
+   * 作り直しになる。その度に下端の見張りが張り替えられ、観測が呼ばれる前に外れて、
+   * 続きが永久に読まれない。中身のプリミティブに依存させる。
+   */
+  const { sortBy, order } = sort;
+  const loadPage = useMemo(() => buildLoadPage({ sortBy, order }), [sortBy, order]);
+  /*
+   * 年で束ねられるのは公開日で並んでいるときだけ。
+   *
+   * 検索結果は関連度順なので公開年が前後し、束ねると同じ年が飛び飛びに現れて時間軸に
+   * 見えなくなる。更新日順も同じ理由で束ねない。
+   */
+  const isGroupByYear = query.length === 0 && (sort.sortBy === null || sort.sortBy === "published");
+
+  return (
+    <AppLayout>
+      <Header />
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+        {/*
+          このページが検索の入口と結果を兼ねる。探す前と後で別のページへ飛ばさず、
+          フォームは常に同じ場所に置いたままにする。
+        */}
+        <search className="articles-search">
+          <form method="get" action="/articles" role="search">
+            <label className="articles-search-field">
+              <HiMagnifyingGlass className="articles-search-icon" aria-hidden />
+              <input
+                type="search"
+                name="q"
+                defaultValue={query}
+                placeholder={t("search.placeholder")}
+                aria-label={t("search.title")}
+                autoComplete="off"
+              />
+            </label>
+          </form>
+        </search>
+
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+          <h1 className="articles-heading">
+            {resultHeading(t, { query, total: pagination.total })}
+          </h1>
+          {/*
+            一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
+            受け取り続ける手を同じ高さに並べる。
+          */}
+          <FeedLink href={feedIdentity().path} />
+        </div>
+
+        {articles.length === 0 ? (
+          <p className="mt-8 text-base-content/60">
+            {t(query.length > 0 ? "search.empty" : "articles.empty")}
+          </p>
+        ) : (
+          <div className="mt-8">
+            <InfiniteArticleTimeline
+              initialArticles={articles}
+              totalPages={pagination.totalPages}
+              perPage={pagination.perPage}
+              loadPage={loadPage}
+              groupByYear={isGroupByYear}
+            />
+          </div>
+        )}
+
+        {/*
+          継ぎ足しはブラウザが動くことを前提にしている。動かない環境では 1 ページ目で
+          行き止まりになるため、そのときだけページ送りを出す。
+        */}
+        <noscript>
+          <div className="mt-10 flex justify-center">
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              hrefForPage={hrefForPage}
+            />
+          </div>
+        </noscript>
+      </main>
+      <Footer copyright={copyright} />
+    </AppLayout>
+  );
+}

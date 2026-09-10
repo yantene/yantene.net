@@ -1,0 +1,1114 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ArticlesRefreshService } from "./articles-refresh.service";
+import type { ContentEntry, IContentStore } from "~/backend/domain/content";
+import type { CachedAsset, IArticleContentCache } from "~/backend/domain/article";
+import { ArticleSlug } from "~/backend/domain/article";
+import {
+  Webmention,
+  WebmentionAuthor,
+  WebmentionType,
+  WebmentionUrl,
+} from "~/backend/domain/webmention";
+import {
+  D1ArticleCommandRepository,
+  D1ArticleQueryRepository,
+  D1ArticleSearchIndex,
+  D1WebmentionCommandRepository,
+  D1WebmentionQueryRepository,
+} from "~/backend/infra/d1/repositories";
+import { createTestD1 } from "~/backend/infra/d1/test-helper";
+
+class MockContentStore implements IContentStore {
+  /** readFile に渡されたパス。1 記事を何度読んだかを見るために控える。 */
+  readonly reads: string[] = [];
+
+  constructor(private readonly files: Map<string, { hash: string; bytes: Uint8Array }>) {}
+
+  listTree(): Promise<readonly ContentEntry[]> {
+    return Promise.resolve([...this.files].map(([path, { hash }]) => ({ path, hash })));
+  }
+
+  readFile(path: string): Promise<Uint8Array | undefined> {
+    this.reads.push(path);
+    return Promise.resolve(this.files.get(path)?.bytes);
+  }
+}
+
+class InMemoryCache implements IArticleContentCache {
+  readonly sources = new Map<string, string>();
+  readonly mdasts = new Map<string, unknown>();
+  readonly assets = new Map<string, CachedAsset>();
+
+  putSource(slug: ArticleSlug, markdown: string): Promise<void> {
+    this.sources.set(slug.toString(), markdown);
+    return Promise.resolve();
+  }
+  getSource(slug: ArticleSlug): Promise<string | undefined> {
+    return Promise.resolve(this.sources.get(slug.toString()));
+  }
+  /** この slug の putMdast で落とす。同期の途中で落ちたときの姿を見るために使う。 */
+  failMdastFor?: string;
+  putMdast(slug: ArticleSlug, mdast: unknown): Promise<void> {
+    if (this.failMdastFor === slug.toString()) {
+      return Promise.reject(new Error("R2 is down"));
+    }
+    this.mdasts.set(slug.toString(), mdast);
+    return Promise.resolve();
+  }
+  getMdast(slug: ArticleSlug): Promise<unknown> {
+    return Promise.resolve(this.mdasts.get(slug.toString()));
+  }
+  putAsset(slug: ArticleSlug, path: string, asset: CachedAsset): Promise<void> {
+    this.assets.set(`${slug.toString()}::${path}`, asset);
+    return Promise.resolve();
+  }
+  getAsset(slug: ArticleSlug, path: string): Promise<CachedAsset | undefined> {
+    return Promise.resolve(this.assets.get(`${slug.toString()}::${path}`));
+  }
+  /** この slug の pruneAssets で落とす。 */
+  failPruneFor?: string;
+  pruneAssets(slug: ArticleSlug, keep: ReadonlySet<string>): Promise<void> {
+    if (this.failPruneFor === slug.toString()) {
+      return Promise.reject(new Error("R2 list failed"));
+    }
+    const prefix = `${slug.toString()}::`;
+    for (const key of this.assets.keys()) {
+      if (key.startsWith(prefix) && !keep.has(key.slice(prefix.length))) {
+        this.assets.delete(key);
+      }
+    }
+    return Promise.resolve();
+  }
+  deleteArticle(slug: ArticleSlug): Promise<void> {
+    this.sources.delete(slug.toString());
+    this.mdasts.delete(slug.toString());
+    const prefix = `${slug.toString()}::`;
+    for (const key of this.assets.keys()) {
+      if (key.startsWith(prefix)) this.assets.delete(key);
+    }
+    return Promise.resolve();
+  }
+}
+
+interface WalkedNode {
+  type: string;
+  url?: string;
+  data?: { hProperties?: Record<string, unknown> };
+  children?: WalkedNode[];
+}
+
+/** 木からその種別のノードをすべて集める。 */
+function collectByType(node: unknown, type: string): WalkedNode[] {
+  if (typeof node !== "object" || node === null) return [];
+  const record = node as WalkedNode;
+  const here = record.type === type ? [record] : [];
+  const children = record.children ?? [];
+  return [...here, ...children.flatMap((child) => collectByType(child, type))];
+}
+
+/** 木から最初のその種別のノードを探す。 */
+function findByType(node: unknown, type: string): WalkedNode | undefined {
+  return collectByType(node, type).at(0);
+}
+
+function bytes(text: string): Uint8Array {
+  return new TextEncoder().encode(text);
+}
+
+/** 寸法だけ読める最小の PNG (シグネチャ + IHDR)。 */
+function pngBytes(width: number, height: number): Uint8Array {
+  const png = new Uint8Array(24);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  const view = new DataView(png.buffer);
+  view.setUint32(8, 13);
+  png.set([0x49, 0x48, 0x44, 0x52], 12); // "IHDR"
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return png;
+}
+
+const helloMd = `---
+title: Hello
+imageUrl: ./cover.png
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-16
+---
+
+Body with an inline image ![alt](./inline.png).
+`;
+
+function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
+  service: ArticlesRefreshService;
+  command: D1ArticleCommandRepository;
+  query: D1ArticleQueryRepository;
+  cache: InMemoryCache;
+  content: MockContentStore;
+  /** Webmention など、同期の巻き添えを見るために同じ DB を触る用。 */
+  d1: D1Database;
+} {
+  const d1 = createTestD1();
+  const command = new D1ArticleCommandRepository(d1);
+  const query = new D1ArticleQueryRepository(d1);
+  const cache = new InMemoryCache();
+  const searchIndex = new D1ArticleSearchIndex(d1);
+  const content = new MockContentStore(files);
+  const service = new ArticlesRefreshService(content, command, query, cache, searchIndex);
+  return { service, command, query, cache, content, d1 };
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("ArticlesRefreshService", () => {
+  it("indexes an article, caches its MDAST and assets, resolves image URLs", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.skipped).toEqual([]);
+
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    expect(article?.title.toString()).toBe("Hello");
+    expect(article?.imageUrl?.toString()).toBe("/api/v1/articles/hello/assets/cover.png");
+    // sourceHash は md + アセットの合成ハッシュ (生の blob ハッシュではない)。
+    expect(article?.sourceHash).toMatch(/^[0-9a-f]{8}$/);
+    expect(article?.summary).toContain("Body with an inline image");
+
+    // アセットが R2 キャッシュに入る。
+    expect(cache.assets.has("hello::cover.png")).toBe(true);
+    expect(cache.assets.has("hello::inline.png")).toBe(true);
+
+    // 本文 MDAST の画像 URL がアセット API URL に解決されている。
+    const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
+    expect(mdastJson).toContain("/api/v1/articles/hello/assets/inline.png");
+  });
+
+  /*
+   * 画像として貼れないアセット (曲の MIDI など) へ、本文からリンクを張れるようにしてある
+   * (ADR 0022)。書き換わるのは相対パスだけで、外部リンクと記事間リンクには触らない。
+   */
+  it("resolves relative link URLs and leaves absolute ones alone", async () => {
+    const linksMd = `---
+title: Links
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[原本](./song.mid) と [外](https://example.com/song.mid) と [他の記事](/articles/other)。
+`;
+    const files = new Map([
+      ["articles/links.md", { hash: "h1", bytes: bytes(linksMd) }],
+      ["articles/links/song.mid", { hash: "a1", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("links"));
+    expect(mdastJson).toContain("/api/v1/articles/links/assets/song.mid");
+    // 外部リンクとルート相対はそのまま (アセット配下へ押し込まれない)。
+    expect(mdastJson).toContain("https://example.com/song.mid");
+    expect(mdastJson).not.toContain("assets/articles/other");
+    expect(mdastJson).toContain("/articles/other");
+  });
+
+  /*
+   * 参照記法 (`![alt][id]` と `[text][id]`) は、行き先を離れた場所の定義に持つ。
+   * **画像参照でもリンク参照でも同じように解決する。**
+   *
+   * 以前は画像参照から指された定義だけを直しており、`[曲][tune]` と書くと 404 して
+   * いた。同じことを `[曲](./song.mid)` と書けば通るので、書き方で結果が変わって
+   * いた (#295)。
+   */
+  it("resolves definitions for both image and link references", async () => {
+    const refsMd = `---
+title: Refs
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic] と [曲][tune]。
+
+[pic]: ./inline.png
+[tune]: ./song.mid
+`;
+    const files = new Map([
+      ["articles/refs.md", { hash: "h1", bytes: bytes(refsMd) }],
+      ["articles/refs/inline.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["articles/refs/song.mid", { hash: "a2", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("refs"));
+    expect(mdastJson).toContain("/api/v1/articles/refs/assets/inline.png");
+    expect(mdastJson).toContain("/api/v1/articles/refs/assets/song.mid");
+    // 相対パスのまま残っていないこと。
+    expect(mdastJson).not.toContain("./song.mid");
+  });
+
+  /*
+   * 分けても守りにはならないことの裏取り。resolveAssetUrl は絶対 URL・ルート相対・
+   * 同一文書参照を素通しするので、定義をすべて対象にしても触られない。
+   *
+   * 同一文書参照 (`#` と `?`) は、この変更で初めて定義の側からこの経路に入る。直書きの
+   * 側は別のテストが押さえているが、定義の側は押さえられていなかった。
+   */
+  it("leaves absolute and root-relative definitions alone", async () => {
+    const outerMd = `---
+title: Outer
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[外][away] と [他の記事][other] と [まとめ][sum] と [問い][q]。
+
+[away]: https://example.com/a
+[other]: /articles/other
+[sum]: #summary
+[q]: ?v=2
+`;
+    const files = new Map([["articles/outer.md", { hash: "h1", bytes: bytes(outerMd) }]]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("outer"));
+    expect(mdastJson).toContain("https://example.com/a");
+    expect(mdastJson).toContain("/articles/other");
+    expect(mdastJson).toContain('"#summary"');
+    expect(mdastJson).toContain('"?v=2"');
+    expect(mdastJson).not.toContain("assets/");
+  });
+
+  /*
+   * **素の相対パスはアセット扱いになる。** 直書きの `[前の記事](other-article)` が元から
+   * こうで、#295 で参照記法もこれに揃った。記事間のリンクはルート相対で書くという
+   * 決まりを、ここで固定しておく (書き方で結果が変わらないことのほうを取った)。
+   */
+  it("treats a bare relative definition as an asset path", async () => {
+    const bareMd = `---
+title: Bare
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[前の記事][prev]
+
+[prev]: other-article
+`;
+    const files = new Map([["articles/bare.md", { hash: "h1", bytes: bytes(bareMd) }]]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    expect(JSON.stringify(cache.mdasts.get("bare"))).toContain(
+      "/api/v1/articles/bare/assets/other-article",
+    );
+  });
+
+  /*
+   * 参照記法で貼った画像にも寸法を持たせる。
+   *
+   * **載せる先は定義ではなく参照の側。** mdast-util-to-hast の imageReference ハンドラは
+   * 定義から URL と alt だけを引いて img を組み、applyData を当てるのは参照の側なので、
+   * 定義に載せても描画には届かない (#296)。
+   */
+  it("embeds dimensions on the reference, not the definition", async () => {
+    const refsMd = `---
+title: Sized refs
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic]
+
+[pic]: ./ref.png
+`;
+    const files = new Map([
+      ["articles/sized.md", { hash: "h1", bytes: bytes(refsMd) }],
+      ["articles/sized/ref.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const root = cache.mdasts.get("sized");
+    const reference = findByType(root, "imageReference");
+    const definition = findByType(root, "definition");
+
+    expect(reference?.data?.hProperties).toEqual({ width: 800, height: 450 });
+    // 定義には付けない。読む者がいないので、付けても誤解のもとになる。
+    expect(definition).toBeDefined();
+    expect(definition?.data).toBeUndefined();
+  });
+
+  /*
+   * 同じ名前の定義が並んだら、**先に書いたほうが勝つ。**
+   *
+   * mdast-util-to-hast は `if (!map.has(id))` で先勝ちにしている (CommonMark の定義の
+   * 扱いに合わせたもの)。こちらが後勝ちだと、描かれるのは 1 つめの画像なのに埋まる
+   * 寸法は 2 つめのものになり、**縦横比の違う枠を確保する** = 直したかったはずの
+   * レイアウトシフトを自分で起こす。
+   */
+  it("uses the first definition when a label is repeated", async () => {
+    const dupeMd = `---
+title: Dupe
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵][pic]
+
+[pic]: ./first.png
+[pic]: ./second.png
+`;
+    const files = new Map([
+      ["articles/dupe.md", { hash: "h1", bytes: bytes(dupeMd) }],
+      ["articles/dupe/first.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["articles/dupe/second.png", { hash: "a2", bytes: pngBytes(100, 1000) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const reference = findByType(cache.mdasts.get("dupe"), "imageReference");
+    expect(reference?.data?.hProperties).toEqual({ width: 800, height: 450 });
+  });
+
+  /*
+   * リンクで包んだ画像 (`[![alt](./a.png)](./b.mid)`) は、link の下に image が入る。
+   * link 自身の URL を直したところで止まると、中の画像が相対パスのまま残る。
+   */
+  it("resolves an image nested inside a link", async () => {
+    const nestedMd = `---
+title: Nested
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+[![ジャケット](./inline.png)](./song.mid)
+`;
+    const files = new Map([
+      ["articles/nested.md", { hash: "h1", bytes: bytes(nestedMd) }],
+      ["articles/nested/inline.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["articles/nested/song.mid", { hash: "a2", bytes: bytes("MThd") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("nested"));
+    expect(mdastJson).toContain("/api/v1/articles/nested/assets/inline.png");
+    expect(mdastJson).toContain("/api/v1/articles/nested/assets/song.mid");
+    // 寸法も、入れ子の中の画像に届いている。
+    expect(mdastJson).toContain('"width":800');
+  });
+
+  /*
+   * 同期の途中で落ちても、**その記事を消したまま残さない。**
+   *
+   * 以前は先に deleteArticle してから書き直していたので、途中で落ちると D1 に行があるのに
+   * R2 に原文も MDAST も無い状態になり、記事ページが 500 になった。しかも落ちた原因が
+   * ファイル名のような固定のものだと毎回同じ場所で死ぬ (#297 がまさにそれ)。
+   */
+  it("keeps the previous cache when a sync fails midway", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    // 1 回目は成功させる。
+    await service.refresh();
+    const before = JSON.stringify(cache.mdasts.get("hello"));
+    expect(before).toBeDefined();
+
+    // 2 回目は MDAST の書き込みで落とす (force で読み直させる)。
+    cache.failMdastFor = "hello";
+    await expect(service.refresh({ force: true })).rejects.toThrow("R2 is down");
+
+    // 前回の写しが残っていること。記事ページが 500 にならない。
+    expect(JSON.stringify(cache.mdasts.get("hello"))).toBe(before);
+    expect(cache.sources.get("hello")).toBeDefined();
+    expect(cache.assets.has("hello::cover.png")).toBe(true);
+  });
+
+  /*
+   * **D1 の upsert より前に済ませるものが、本当に前で走っているか。**
+   *
+   * contentHash が入った時点でその記事は「同期済み」になり、次の refresh は読まずに
+   * 飛ばす。だから upsert より後ろに置いた処理は、落ちても二度と直らない (force を
+   * 流すまで) うえ、直す必要があることも表に出ない。
+   */
+  it.each([
+    [
+      "検索の索引",
+      (harness: ReturnType<typeof setup>) => {
+        vi.spyOn(D1ArticleSearchIndex.prototype, "index").mockRejectedValue(
+          new Error("step failed"),
+        );
+        return harness;
+      },
+    ],
+    [
+      "アセットの片付け",
+      (harness: ReturnType<typeof setup>) => {
+        harness.cache.failPruneFor = "hello";
+        return harness;
+      },
+    ],
+  ])("%s が落ちたら同期済みにしない", async (_name, breakStep) => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const harness = breakStep(setup(files));
+
+    await expect(harness.service.refresh()).rejects.toThrow();
+
+    // contentHash が入っていないこと。次の refresh が読み直す。
+    expect(await harness.query.listSourceHashes()).toEqual(new Map());
+  });
+
+  /*
+   * 消してから書く形をやめた代わりに、行き場を失ったアセットは明示的に片付ける。
+   * リネームや削除で残った写しが、いつまでも配信され続けないように。
+   */
+  it("prunes assets that disappeared from the source of truth", async () => {
+    const before = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+      ["articles/hello/old.png", { hash: "a3", bytes: bytes("OLD") }],
+    ]);
+    const { service, cache } = setup(before);
+    await service.refresh();
+    expect(cache.assets.has("hello::old.png")).toBe(true);
+
+    /*
+     * **md は触らない。** 実際の流れは `git rm articles/hello/old.png` だけで、本文は
+     * そのまま。それでも再同期が走るのは、contentHash がアセットの (path, hash) も
+     * 畳んでいるため。ここで md のハッシュも変えてしまうと、その仕掛けが壊れても
+     * 気づけない。
+     */
+    before.delete("articles/hello/old.png");
+
+    await service.refresh();
+
+    expect(cache.assets.has("hello::old.png")).toBe(false);
+    // 残っているものは消さない。
+    expect(cache.assets.has("hello::cover.png")).toBe(true);
+    expect(cache.assets.has("hello::inline.png")).toBe(true);
+  });
+
+  /*
+   * 符号として読めない `%` を持つファイル名。以前は寸法を引く手前の
+   * decodeURIComponent が URIError を投げ、**その記事のキャッシュを消した後で
+   * refresh 全体が止まっていた** (#297)。ファイル名を変えるまで毎回同じ場所で死ぬ。
+   *
+   * 巻き添えを見るために、後ろにもう 1 本記事を置いてある。
+   */
+  it("survives an asset name with a stray percent sign", async () => {
+    const oddMd = `---
+title: Odd
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+![絵](./50%off.png)
+`;
+    const files = new Map([
+      ["articles/odd.md", { hash: "h1", bytes: bytes(oddMd) }],
+      ["articles/odd/50%off.png", { hash: "a1", bytes: pngBytes(800, 450) }],
+      ["articles/hello.md", { hash: "h2", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a2", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a3", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    const result = await service.refresh();
+
+    // 落ちずに両方とも入る。後ろの記事が巻き添えにならない。
+    expect(result.processed).toContain("odd");
+    expect(result.processed).toContain("hello");
+    expect(result.skipped).toEqual([]);
+    // 消しただけで終わらず、MDAST が書き直されている。
+    expect(cache.mdasts.get("odd")).toBeDefined();
+    const oddJson = JSON.stringify(cache.mdasts.get("odd"));
+    expect(oddJson).toContain("/api/v1/articles/odd/assets/50%off.png");
+    /*
+     * 落ちないだけでなく、寸法も引けていること。ここを見ないと「例外を握った」だけの
+     * 直しでも通ってしまい、その名前の画像だけ静かにレイアウトシフトを起こす。
+     */
+    expect(oddJson).toContain('"width":800');
+  });
+
+  /*
+   * `#` 始まりを素通しするようにしたので、フロントマターの imageUrl に書かれると
+   * ImageUrl.create (ルート相対しか受けない) で弾かれ、その記事は skipped になる。
+   *
+   * これは `imageUrl: https://example.com/a.png` が以前から辿る道と同じで、#297 で
+   * 増えたのは入口が 1 つ増えたことだけ。**黙って壊れた絵を出すより、報告して止まる
+   * ほうがよい**という既存の判断に揃えてある。ここで固定しておかないと、次に
+   * resolveAssetUrl を触る人が気づかないまま挙動を変える。
+   */
+  it("reports an article whose imageUrl is not a resolvable asset", async () => {
+    const oddCover = `---
+title: Odd cover
+imageUrl: "#cover"
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+本文。
+`;
+    const files = new Map([
+      ["articles/odd-cover.md", { hash: "h1", bytes: bytes(oddCover) }],
+      ["articles/hello.md", { hash: "h2", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(640, 360) }],
+    ]);
+    const { service } = setup(files);
+
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("articles/odd-cover.md");
+  });
+
+  /*
+   * ページ内アンカーは相対パスではない。assets 配下へ押し込むと、押しても 404 になる
+   * (#297)。脚注は footnoteReference なのでこの経路を通らないが、手書きの目次や
+   * 「先頭へ戻る」は link ノードとしてここを通る。
+   */
+  it("leaves in-page anchors alone", async () => {
+    const anchorMd = `---
+title: Anchors
+publishedOn: 2026-01-15
+lastModifiedOn: 2026-01-15
+---
+
+## 見出し
+
+[先頭に戻る](#top) と [外](https://example.com/)。
+`;
+    const files = new Map([["articles/anchors.md", { hash: "h1", bytes: bytes(anchorMd) }]]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("anchors"));
+    expect(mdastJson).toContain('"#top"');
+    expect(mdastJson).not.toContain("assets/");
+  });
+
+  /*
+   * `/articles/<slug>.md` の配信元になる原文を R2 に置く。MDAST と違い、
+   * フロントマターも画像の相対パスも書き換えず正本そのままを保つ。
+   */
+  it("caches the source markdown verbatim", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    expect(cache.sources.get("hello")).toBe(helloMd);
+  });
+
+  it("drops the cached source when the article disappears from the content store", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係の記事を 1 本残す。
+      ["articles/other.md", { hash: "o1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, cache } = setup(files);
+    await service.refresh();
+    expect(cache.sources.has("hello")).toBe(true);
+
+    files.delete("articles/hello.md");
+    const result = await service.refresh();
+
+    expect(result.deleted).toEqual(["hello"]);
+    expect(cache.sources.has("hello")).toBe(false);
+  });
+
+  /*
+   * 画像の width/height は refresh 時に MDAST へ埋める (レイアウトシフト対策)。
+   * 寸法を読めない画像には何も付けないことも併せて固定する。
+   */
+  it("embeds image dimensions into the cached MDAST", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: pngBytes(1200, 630) }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const images = collectByType(cache.mdasts.get("hello"), "image");
+
+    expect(images).toHaveLength(1);
+    expect(images[0].url).toBe("/api/v1/articles/hello/assets/inline.png");
+    expect(images[0].data?.hProperties).toEqual({ width: 800, height: 450 });
+  });
+
+  /*
+   * 変更検出は md + アセットのハッシュなので、実装変更 (MDAST の作り方を変えた等) は
+   * 通常の refresh では既存記事に反映されない。force はそれを流すための逃げ道。
+   */
+  it("reprocesses unchanged articles when force is given", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: pngBytes(1200, 630) }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: pngBytes(800, 450) }],
+    ]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    // 2 回目: ハッシュが同じなのでスキップされる
+    const second = await service.refresh();
+    expect(second.processed).toEqual([]);
+    // force ならスキップせず再処理する
+    const forced = await service.refresh({ force: true });
+    expect(forced.processed).toEqual(["hello"]);
+  });
+
+  it("leaves images without readable dimensions untouched", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      // 寸法を判別できないダミーバイト列
+      ["articles/hello/inline.png", { hash: "a2", bytes: bytes("not an image") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+
+    const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
+    expect(mdastJson).toContain("/api/v1/articles/hello/assets/inline.png");
+    expect(mdastJson).not.toContain("hProperties");
+  });
+
+  it("skips unchanged articles on a second refresh (hash match)", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    const second = await service.refresh();
+    expect(second.processed).toEqual([]);
+  });
+
+  it("reprocesses an article when its hash changes", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    files.set("articles/hello.md", { hash: "h2", bytes: bytes(helloMd) });
+    const second = await service.refresh();
+    expect(second.processed).toEqual(["hello"]);
+  });
+
+  it("deletes articles removed from the tree", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      // ツリーが空になると全件削除の安全弁に掛かるので、無関係の記事を 1 本残す。
+      ["articles/other.md", { hash: "o1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.delete("articles/hello.md");
+    const result = await service.refresh();
+
+    expect(result.deleted).toEqual(["hello"]);
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeUndefined();
+    expect(cache.mdasts.has("hello")).toBe(false);
+  });
+
+  it("skips articles with invalid frontmatter (missing publishedOn)", async () => {
+    const files = new Map([
+      ["articles/bad.md", { hash: "b1", bytes: bytes("---\ntitle: Bad\n---\n\nBody.\n") }],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual([]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("articles/bad.md");
+    expect(await query.findBySlug(ArticleSlug.create("bad"))).toBeUndefined();
+  });
+
+  /*
+   * 数式は refresh のときに MathML へ組む。読めない LaTeX があったら、そのノードだけを
+   * 落として理由を返す (refresh 全体を落とすと他の記事まで同期されない)。
+   */
+  it("skips articles whose LaTeX cannot be parsed", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }] as const,
+      [
+        "articles/bad-math.md",
+        {
+          hash: "m1",
+          bytes: bytes(
+            "---\ntitle: Bad math\npublishedOn: 2026-01-15\n---\n\n式 $\\frac{$ です。\n",
+          ),
+        },
+      ] as const,
+    ]);
+    const { service, query } = setup(new Map(files));
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("articles/bad-math.md");
+    expect(await query.findBySlug(ArticleSlug.create("bad-math"))).toBeUndefined();
+  });
+
+  it("caches the MathML built from the LaTeX in the article body", async () => {
+    const files = new Map([
+      [
+        "articles/hello.md",
+        {
+          hash: "h1",
+          bytes: bytes("---\ntitle: Math\npublishedOn: 2026-01-15\n---\n\n式 $a^2$ です。\n"),
+        },
+      ],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+    const mdastJson = JSON.stringify(cache.mdasts.get("hello"));
+    expect(mdastJson).toContain("http://www.w3.org/1998/Math/MathML");
+    expect(mdastJson).toContain("msup");
+  });
+
+  it("reprocesses when only an asset changes (image-only edit)", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("v1") }],
+    ]);
+    const { service } = setup(files);
+
+    await service.refresh();
+    // .md は据え置きで画像だけ差し替える。
+    files.set("articles/hello/cover.png", { hash: "a2", bytes: bytes("v2") });
+    const second = await service.refresh();
+    expect(second.processed).toEqual(["hello"]);
+  });
+
+  it("prunes assets that were removed or renamed", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/old.png", { hash: "a1", bytes: bytes("old") }],
+    ]);
+    const { service, cache } = setup(files);
+
+    await service.refresh();
+    expect(cache.assets.has("hello::old.png")).toBe(true);
+
+    // old.png を new.png にリネーム (+ .md も更新して再処理させる)。
+    files.delete("articles/hello/old.png");
+    files.set("articles/hello/new.png", { hash: "a2", bytes: bytes("new") });
+    files.set("articles/hello.md", { hash: "h2", bytes: bytes(helloMd) });
+    await service.refresh();
+
+    expect(cache.assets.has("hello::old.png")).toBe(false);
+    expect(cache.assets.has("hello::new.png")).toBe(true);
+  });
+
+  it("propagates infra errors (fail-loud) instead of skipping them", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, cache } = setup(files);
+    // R2 書き込みが落ちる状況を再現する。
+    cache.putMdast = () => Promise.reject(new Error("R2 down"));
+
+    await expect(service.refresh()).rejects.toThrow("R2 down");
+  });
+});
+
+describe("visibility", () => {
+  const withVisibility = (value: string): string =>
+    `---\ntitle: Secret\npublishedOn: 2026-01-15\nvisibility: ${value}\n---\n\n人に見せたくない話。\n`;
+
+  it("private の記事は同期しない", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("private")) }],
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect(result.unpublished).toEqual(["secret"]);
+
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
+    expect(cache.sources.has("secret")).toBe(false);
+    expect(cache.mdasts.has("secret")).toBe(false);
+  });
+
+  it("公開済みの記事を private にすると D1 と R2 から消える", async () => {
+    const files = new Map([
+      [
+        "articles/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes("---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n"),
+        },
+      ],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    expect(cache.sources.has("secret")).toBe(true);
+
+    // 同じ slug を private にして再度 refresh
+    files.set("articles/secret.md", {
+      hash: "s2",
+      bytes: bytes(withVisibility("private")),
+    });
+    const result = await service.refresh();
+
+    expect(result.unpublished).toEqual(["secret"]);
+    expect(result.deleted).toEqual(["secret"]);
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
+    expect(cache.sources.has("secret")).toBe(false);
+  });
+
+  it("visibility を書かなければ公開する", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.unpublished).toEqual([]);
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+  });
+
+  it("public を明示した記事は公開する", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("public")) }],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["secret"]);
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+  });
+
+  it("読めない値は公開せず、綴りの誤りとして報告する", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("prvate")) }],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+    // 隠すと決めた記事ではないので unpublished には数えない。
+    expect(result.unpublished).toEqual([]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.path).toBe("articles/secret.md");
+    expect(result.skipped[0]?.reason).toContain("visibility");
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
+  });
+
+  /*
+   * 綴りの誤りは「隠すと決めた意思」ではないので、公開済みの記事を取り下げる理由にも
+   * ならない。書き直すまで前回の内容を出し続ける。
+   */
+  it("公開済みの記事の visibility が読めなくなっても消さない", async () => {
+    const files = new Map([
+      [
+        "articles/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes("---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\n本文。\n"),
+        },
+      ],
+    ]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.set("articles/secret.md", {
+      hash: "s2",
+      bytes: bytes(withVisibility("prvate")),
+    });
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
+    expect(result.deleted).toEqual([]);
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    expect(cache.sources.has("secret")).toBe(true);
+  });
+
+  it("大文字や前後の空白を許す", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility('"  PRIVATE  "')) }],
+    ]);
+    const { service } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.unpublished).toEqual(["secret"]);
+  });
+
+  it("公開範囲を見るために原文を読み直さない", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, content } = setup(files);
+
+    await service.refresh();
+
+    expect(content.reads.filter((path) => path === "articles/hello.md")).toEqual([
+      "articles/hello.md",
+    ]);
+  });
+
+  it("変更のない記事は原文を開かない", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/inline.png", { hash: "a2", bytes: bytes("PNG2") }],
+    ]);
+    const { service, content, query } = setup(files);
+
+    await service.refresh();
+    const readsAfterFirst = content.reads.length;
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(content.reads).toHaveLength(readsAfterFirst);
+    // 読まなかった記事を「正本から消えた」と誤認して掃除していないこと。
+    expect(result.deleted).toEqual([]);
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+  });
+});
+
+/*
+ * コンテンツ不正 (読めない LaTeX / 読めない visibility) はその記事を飛ばすだけで、
+ * 前回同期した内容には手を付けない。スキップした記事を掃除の対象に残していたころは、
+ * 書き手の誤字 1 つで公開中の記事が 404 になり、閲覧数も届いた Webmention も
+ * 巻き添えで消えていた ([#250](https://github.com/yantene/yantene.net/issues/250))。
+ */
+describe("コンテンツ不正でスキップした記事", () => {
+  /** 公開に必要なフロントマターは揃っていて、本文の LaTeX だけが読めない。 */
+  const brokenMathMd = String.raw`---
+title: Broken
+publishedOn: 2026-01-15
+---
+
+式 $\frac{$ です。
+`;
+
+  it("公開済みの本文を壊しても、D1 と R2 の旧版を残す", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.set("articles/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0].path).toBe("articles/hello.md");
+    expect(result.processed).toEqual([]);
+    // 正本には在るのだから、消えた記事として掃除してはいけない。
+    expect(result.deleted).toEqual([]);
+
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    expect(article?.title.toString()).toBe("Hello");
+    // 原文と MDAST も前回同期したまま。記事は読めるままになる。
+    expect(cache.sources.get("hello")).toBe(helloMd);
+    expect(cache.mdasts.has("hello")).toBe(true);
+  });
+
+  it("公開済みの本文を壊しても、届いた Webmention を消さない", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, query, d1 } = setup(files);
+
+    await service.refresh();
+    const article = await query.findBySlug(ArticleSlug.create("hello"));
+    if (article === undefined) throw new Error("1 回目の同期で載っていること");
+
+    // 記事に反応が 1 件届いた状態を作る。
+    await new D1WebmentionCommandRepository(d1).upsert(
+      Webmention.create({
+        articleId: article.id,
+        target: article.slug,
+        source: WebmentionUrl.create("https://example.com/post/1"),
+        type: WebmentionType.reply(),
+        author: WebmentionAuthor.create({ name: "Alice" }),
+      }),
+    );
+
+    files.set("articles/hello.md", { hash: "h2", bytes: bytes(brokenMathMd) });
+    await service.refresh();
+
+    // 記事の行を消すと Webmention も一緒に消える。正本のどこにも無いので戻せない。
+    const stored = await new D1WebmentionQueryRepository(d1).listByArticleId(article.id);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].source.toString()).toBe("https://example.com/post/1");
+  });
+});
+
+/*
+ * 掃除の経路は「正本から消えた 1 本」を消すためのもので、「正本が空に見える」を
+ * 全件削除の合図として受け取らない。ブランチの取り違えや正本側の事故で articles/ を
+ * 持たない応答が返ったとき、被害はコンテンツ不正のときと同じになる。
+ */
+describe("空のツリー", () => {
+  it("1 件も見つからないときは全件削除せず送出する", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, query, cache } = setup(files);
+
+    await service.refresh();
+    files.clear();
+
+    await expect(service.refresh()).rejects.toThrow(/refusing to delete/);
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+    expect(cache.sources.has("hello")).toBe(true);
+  });
+
+  /*
+   * 記事は `articles/` に置く (ADR 0032)。正本側がまだ `notes/` のままで refresh を
+   * 叩いても、`notes/` は読まずに「1 件も無い」と見なして同じガードに掛ける。
+   * 置き換えの前後で順序を誤っても、載っている記事が消えることはない。
+   */
+  it("改名前の notes/ に置かれた記事は読まず、全件削除もしない", async () => {
+    const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
+    const { service, query } = setup(files);
+
+    await service.refresh();
+    files.clear();
+    files.set("notes/hello.md", { hash: "h1", bytes: bytes(helloMd) });
+    files.set("notes/other.md", { hash: "h2", bytes: bytes(helloMd) });
+
+    await expect(service.refresh()).rejects.toThrow(/no articles\/\*\.md/);
+    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+    expect(await query.findBySlug(ArticleSlug.create("other"))).toBeUndefined();
+  });
+
+  it("まだ 1 件も載っていなければ空のツリーを受け入れる", async () => {
+    const { service } = setup(new Map());
+
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.deleted).toEqual([]);
+  });
+});

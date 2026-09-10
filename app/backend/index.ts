@@ -5,19 +5,19 @@ import { NONCE, secureHeaders, type SecureHeadersVariables } from "hono/secure-h
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
 import { createLinkCardAssetsRouter } from "./handlers/link-cards/assets.handler";
-import { createNoteAssetsRouter } from "./handlers/notes/assets.handler";
-import { createNoteDetailApiRouter } from "./handlers/notes/detail.handler";
-import { createNotesApiRouter } from "./handlers/notes/list-api.handler";
-import { createNoteMarkdownRouter } from "./handlers/notes/markdown.handler";
-import { createNoteReactionApiRouter } from "./handlers/notes/reaction.handler";
-import { createRefreshRouter } from "./handlers/notes/refresh.handler";
-import { createSearchApiRouter } from "./handlers/notes/search.handler";
+import { createArticleAssetsRouter } from "./handlers/articles/assets.handler";
+import { createArticleDetailApiRouter } from "./handlers/articles/detail.handler";
+import { createArticlesApiRouter } from "./handlers/articles/list-api.handler";
+import { createArticleMarkdownRouter } from "./handlers/articles/markdown.handler";
+import { createArticleReactionApiRouter } from "./handlers/articles/reaction.handler";
+import { createRefreshRouter } from "./handlers/articles/refresh.handler";
+import { createSearchApiRouter } from "./handlers/articles/search.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
 import { createWebmentionRouter } from "./handlers/webmention.handler";
 import { createWebmentionAvatarsRouter } from "./handlers/webmentions/avatars.handler";
 import type { MiddlewareHandler } from "hono";
-import { NoteNotFoundError } from "~/backend/domain/note";
+import { ArticleNotFoundError } from "~/backend/domain/article";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
 import {
   WEB_ANALYTICS_BEACON_SRC,
@@ -140,11 +140,11 @@ export const getApp = (
 
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  // ノートの公開 JSON API (一覧 / 詳細 / アセット, クローラー対応)。
-  app.route("/api/v1/notes", createNotesApiRouter());
-  app.route("/api/v1/notes", createNoteDetailApiRouter());
-  app.route("/api/v1/notes", createNoteAssetsRouter());
-  app.route("/api/v1/notes", createNoteReactionApiRouter());
+  // 記事の公開 JSON API (一覧 / 詳細 / アセット, クローラー対応)。
+  app.route("/api/v1/articles", createArticlesApiRouter());
+  app.route("/api/v1/articles", createArticleDetailApiRouter());
+  app.route("/api/v1/articles", createArticleAssetsRouter());
+  app.route("/api/v1/articles", createArticleReactionApiRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
   app.route("/api/v1/search", createSearchApiRouter());
@@ -152,21 +152,21 @@ export const getApp = (
   app.route("/", createFeedRouter());
   app.route("/", createSeoRouter());
 
-  // 旧サイト (Jekyll + GitHub Pages) の URL を現行サイトへ恒久リダイレクトする。
-  // 表に無いパスは素通りするので、後続のルーティングには影響しない。
+  // 過去の URL (旧サイトと、記事を `/notes/<slug>` と呼んでいた頃) を現行の URL へ
+  // リダイレクトする。表に無いパスは素通りするので、後続のルーティングには影響しない。
   app.route("/", createLegacyRedirectRouter());
 
-  // ノートの原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
-  // Hono で完結させる。`/notes/<slug>.md` と、`/notes/<slug>` のうち Accept が
-  // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /notes/* は
+  // 記事の原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
+  // Hono で完結させる。`/articles/<slug>.md` と、`/articles/<slug>` のうち Accept が
+  // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /articles/* は
   // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
-  app.route("/notes", createNoteMarkdownRouter());
+  app.route("/articles", createArticleMarkdownRouter());
 
-  // ノート同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
+  // 記事の同期 (コンテンツ正本 → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。
   app.route("/api/v1", createRefreshRouter());
 
-  // Webmention の受け口 (POST /webmention)。ノート詳細ページの
+  // Webmention の受け口 (POST /webmention)。記事詳細ページの
   // <link rel="webmention"> が広告している先。
   app.route("/", createWebmentionRouter());
 
@@ -204,7 +204,7 @@ export const getApp = (
       return response;
     }
     // ドメインエラー → HTTP マッピング (Composition Root の責務)。
-    if (error instanceof NoteNotFoundError) {
+    if (error instanceof ArticleNotFoundError) {
       return notFoundResponse(error.message);
     }
     console.error(error);

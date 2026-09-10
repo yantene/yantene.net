@@ -3,36 +3,36 @@ import { hasLinkToTarget, readMention } from "./webmention-source-reader";
 import { WebmentionUrl } from "~/backend/domain/webmention";
 
 const SOURCE = WebmentionUrl.create("https://example.com/post/1");
-const TARGET = WebmentionUrl.create("https://yantene.net/notes/hello");
+const TARGET = WebmentionUrl.create("https://yantene.net/articles/hello");
 
 function hasLink(html: string): boolean {
-  return hasLinkToTarget(html, SOURCE, TARGET);
+  return hasLinkToTarget(html, SOURCE, [TARGET]);
 }
 
 describe("hasLinkToTarget", () => {
   it("素のリンクを見つける", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/hello">x</a>')).toBe(true);
+    expect(hasLink('<a href="https://yantene.net/articles/hello">x</a>')).toBe(true);
   });
 
   it("引用符なしの属性も読む", () => {
-    expect(hasLink("<a href=https://yantene.net/notes/hello>x</a>")).toBe(true);
+    expect(hasLink("<a href=https://yantene.net/articles/hello>x</a>")).toBe(true);
   });
 
   it("素片やクエリが付いていても同じ資源として数える", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/hello?ref=x#top">x</a>')).toBe(true);
+    expect(hasLink('<a href="https://yantene.net/articles/hello?ref=x#top">x</a>')).toBe(true);
   });
 
   it("相対リンクは source の URL を基準に解決する", () => {
     // source が別のサイトなので、相対リンクがこちらを指すことはない。
-    expect(hasLink('<a href="/notes/hello">x</a>')).toBe(false);
+    expect(hasLink('<a href="/articles/hello">x</a>')).toBe(false);
   });
 
   it("img の src も数える", () => {
-    expect(hasLink('<img src="https://yantene.net/notes/hello" alt="">')).toBe(true);
+    expect(hasLink('<img src="https://yantene.net/articles/hello" alt="">')).toBe(true);
   });
 
   it("属性の中の `&amp;` を戻してから解決する", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/hello?a=1&amp;b=2">x</a>')).toBe(true);
+    expect(hasLink('<a href="https://yantene.net/articles/hello?a=1&amp;b=2">x</a>')).toBe(true);
   });
 
   /*
@@ -40,11 +40,11 @@ describe("hasLinkToTarget", () => {
    * 読んでしまうと、誰でも好きな記事に行を作れてしまう。
    */
   it("本文に書かれただけの URL は数えない", () => {
-    expect(hasLink("<p>https://yantene.net/notes/hello は良い記事だ</p>")).toBe(false);
+    expect(hasLink("<p>https://yantene.net/articles/hello は良い記事だ</p>")).toBe(false);
   });
 
   it("別の記事へのリンクは数えない", () => {
-    expect(hasLink('<a href="https://yantene.net/notes/other">x</a>')).toBe(false);
+    expect(hasLink('<a href="https://yantene.net/articles/other">x</a>')).toBe(false);
   });
 
   it("リンクが一つも無ければ false", () => {
@@ -52,15 +52,32 @@ describe("hasLinkToTarget", () => {
   });
 });
 
+describe("hasLinkToTarget with several URLs for one article", () => {
+  const FORMER = WebmentionUrl.create("https://yantene.net/notes/hello");
+
+  // `/notes/<slug>` から移した記事は 2 つの URL で応える。どちらへのリンクでも足りる。
+  it.each([
+    ["正規の URL", '<a href="https://yantene.net/articles/hello">x</a>'],
+    ["旧 URL", '<a href="https://yantene.net/notes/hello">x</a>'],
+  ])("%s へのリンクを通す", (_label, html) => {
+    expect(hasLinkToTarget(html, SOURCE, [TARGET, FORMER])).toBe(true);
+  });
+
+  it("どちらもリンクしていなければ通さない", () => {
+    const html = '<a href="https://yantene.net/articles/other">x</a>';
+    expect(hasLinkToTarget(html, SOURCE, [TARGET, FORMER])).toBe(false);
+  });
+});
+
 describe("readMention", () => {
   function read(html: string): ReturnType<typeof readMention> {
-    return readMention(html, SOURCE, TARGET);
+    return readMention(html, SOURCE, [TARGET]);
   }
 
   it("u-in-reply-to は返信として読む", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
         <div class="e-content"><p>いい記事だった</p></div>
       </div>`);
 
@@ -71,7 +88,7 @@ describe("readMention", () => {
   it("u-like-of はいいねとして読む", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-like-of" href="https://yantene.net/notes/hello">like</a>
+        <a class="u-like-of" href="https://yantene.net/articles/hello">like</a>
       </div>`);
 
     expect(parsed.type.toString()).toBe("like");
@@ -85,7 +102,7 @@ describe("readMention", () => {
   it("u-repost-of はリポストとして読む", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-repost-of" href="https://yantene.net/notes/hello">rt</a>
+        <a class="u-repost-of" href="https://yantene.net/articles/hello">rt</a>
       </div>`);
 
     expect(parsed.type.toString()).toBe("repost");
@@ -97,7 +114,7 @@ describe("readMention", () => {
       <div class="h-entry">
         <a class="u-in-reply-to" href="https://example.org/other">re</a>
         <div class="e-content">
-          <p>参考: <a href="https://yantene.net/notes/hello">これ</a></p>
+          <p>参考: <a href="https://yantene.net/articles/hello">これ</a></p>
         </div>
       </div>`);
 
@@ -105,7 +122,7 @@ describe("readMention", () => {
   });
 
   it("mf2 が無いページも言及として読める", () => {
-    const parsed = read('<p><a href="https://yantene.net/notes/hello">x</a></p>');
+    const parsed = read('<p><a href="https://yantene.net/articles/hello">x</a></p>');
 
     expect(parsed.type.toString()).toBe("mention");
     expect(parsed.author.name).toBeUndefined();
@@ -120,7 +137,7 @@ describe("readMention", () => {
             <span class="p-name">Alice</span>
           </a>
         </div>
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
       </div>`);
 
     expect(parsed.author.name).toBe("Alice");
@@ -133,7 +150,7 @@ describe("readMention", () => {
     const parsed = read(`
       <div class="h-card"><a class="p-name u-url" href="/">Bob</a></div>
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
       </div>`);
 
     expect(parsed.author.name).toBe("Bob");
@@ -142,7 +159,7 @@ describe("readMention", () => {
   it("dt-published を時刻として読む", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
         <time class="dt-published" datetime="2026-08-01T10:00:00+09:00">x</time>
       </div>`);
 
@@ -152,7 +169,7 @@ describe("readMention", () => {
   it("日付だけの dt-published はその日の始まり (UTC) にする", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
         <time class="dt-published" datetime="2026-08-01">x</time>
       </div>`);
 
@@ -162,7 +179,7 @@ describe("readMention", () => {
   it("読めない dt-published は欠かす", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
         <time class="dt-published" datetime="いつか">x</time>
       </div>`);
 
@@ -172,7 +189,7 @@ describe("readMention", () => {
   it("e-content が無ければ p-summary で代える", () => {
     const parsed = read(`
       <div class="h-entry">
-        <a class="u-like-of" href="https://yantene.net/notes/hello">like</a>
+        <a class="u-like-of" href="https://yantene.net/articles/hello">like</a>
         <p class="p-summary">要約だけある</p>
       </div>`);
 
@@ -192,7 +209,7 @@ describe("readMention", () => {
       <div class="h-entry">
         <div class="e-content"><p>無関係な記事 2</p></div>
       </div>
-      <p><a href="https://yantene.net/notes/hello">脇のリンク</a></p>`);
+      <p><a href="https://yantene.net/articles/hello">脇のリンク</a></p>`);
 
     expect(parsed.type.toString()).toBe("mention");
     expect(parsed.content).toBeUndefined();
@@ -207,7 +224,7 @@ describe("readMention", () => {
         <div class="e-content"><p>無関係</p></div>
       </div>
       <div class="h-entry">
-        <a class="u-in-reply-to" href="https://yantene.net/notes/hello">re</a>
+        <a class="u-in-reply-to" href="https://yantene.net/articles/hello">re</a>
         <div class="e-content"><p>こっちが本命</p></div>
       </div>`);
 

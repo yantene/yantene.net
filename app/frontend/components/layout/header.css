@@ -36,37 +36,12 @@
 }
 
 /*
- * ロゴ。ヒーローの見出しと同じ手書きのマーカーを、文字の背後に敷く。
+ * 透過ヘッダーでロゴに付ける縁光。
  *
- * 寸法はすべて em 基準なので、ヒーローと同じ比率のまま字の大きさだけが違う。それでも
- * hero-section.css の .hero-heading を使い回さず、ヘッダー用に起こしてある。あちらは
- * 空・街・目盛りの釣り合いを見ながら触る場所で、相乗りすると「ヒーローだけを直した
- * つもりの調整」がヘッダーにも黙って効く (逆も同じ)。同じ絵を使うという関係だけを
- * 共有し、寸法は各々が持つ。
- *
- * マーカーを文字の背後に回すため、文字側 (span) を relative にして重ね順を作っている
- * (負の z-index は親の背景より下に潜って消えることがある)。字の側は leading-none に
- * しておくこと。行の余白ぶんだけマーカーが下がり、下線になってしまう。
+ * 文字には text-halo (text-shadow) を使っているが、SVG の塗りには text-shadow が届かない。
+ * 同じ見え方を filter の drop-shadow で作る。値は app.css の text-halo と揃えてある。
  */
-.site-header-wordmark {
-  position: relative;
-  display: inline-block;
-}
-
-.site-header-wordmark-highlight {
-  position: absolute;
-  /*
-   * 文字の両端から少しはみ出させて、手で引いた線らしくする。
-   * SVG は置換要素なので、left / right を両側から留めても幅は素材の寸法のままになる。
-   * 文字の幅に追随させるには width を明示するしかない。
-   */
-  left: -0.12em;
-  width: calc(100% + 0.24em);
-  bottom: 0.06em;
-  height: 0.4em;
-  /*
-   * 色は指定しない。highlight.svg が fill を属性で持っている (currentColor ではない)
-   * ので、ここで color を書いても効かず、書いた人だけがそう思い込む。
-   */
-  pointer-events: none;
+.site-header-logo-halo {
+  filter: drop-shadow(0 1px 3px rgb(255 255 255 / 0.7))
+    drop-shadow(0 1px 8px rgb(255 255 255 / 0.5));
 }

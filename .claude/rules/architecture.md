@@ -51,8 +51,8 @@ app/
 ├── backend/                    # Hono バックエンド
 │   ├── domain/                 # ドメイン層（インフラ非依存）
 │   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ILogger 等)
-│   │   ├── note/               # Note 集約 (entity, VO, CQRS repo interface, errors)
-│   │   ├── note-view/          # 閲覧数と人気ランキング
+│   │   ├── article/            # Article 集約 (entity, VO, CQRS repo interface, errors)
+│   │   ├── article-view/       # 閲覧数と人気ランキング
 │   │   ├── session/            # 読み手のセッション (ADR 0011)
 │   │   └── content/            # コンテンツ正本のポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）
@@ -66,7 +66,7 @@ app/
 │   │   ├── github/             # コンテンツ正本 (GitHub リポジトリ) の実装
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
-│   │   ├── notes/              # ノートの API ルータ + ページ用ローダ (loadXxxPage)
+│   │   ├── articles/           # 記事の API ルータ + ページ用ローダ (loadXxxPage)
 │   │   ├── session-cookie.ts   # セッション識別子を運ぶ cookie の読み書き
 │   │   ├── feed.handler.ts     # Atom フィード
 │   │   ├── og.handler.ts       # OG 画像
@@ -105,11 +105,11 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
   技術名 (D1 / R2 / Cloudflare) を持ち込まない。
 - **インフラ実装** → `backend/infra/<技術>/`。domain のインターフェースを実装する。
 - **HTTP ハンドラ (Composition Root)** → `backend/handlers/`。具象の生成・注入はここだけ。
-  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `notes/`）。
+  リソースが増えたら `handlers/<resource>/` でサブディレクトリ化する（例: `articles/`）。
 - **横断的な前処理** → `backend/middleware/`。
 - **複数ハンドラで共有するユースケース** → `backend/services/`（必要になった時点で作成）。
 - **画面** → `frontend/routes/`。`routes.ts` に登録し、ファイル名は kebab-case
-  (動的セグメントは `notes.$slug.tsx` のようにドット区切り)。
+  (動的セグメントは `articles.$slug.tsx` のようにドット区切り)。
 - **ページのデータ取得** → `backend/handlers/**` に `loadXxxPage(env, ...)` として置き、
   ルートの loader から呼ぶ。infra の生成・注入はここ (Composition Root) が担う。
 - **再利用 UI** → `frontend/components/`（必要になった時点で作成）。コンポーネントには必ず
@@ -125,8 +125,9 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
 1. ブラウザのリクエストは `workers/app.ts` → `getApp()` の Hono に入る
 2. Hono が先に応答するのは横断的関心事とページ以外のエンドポイント:
    secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
-   ノートの原文 Markdown (`/notes/<slug>.md` と、`Accept` が `text/markdown` を名指しした
-   ときの `/notes/<slug>`。ADR 0020) / Webmention の受け口 (`POST /webmention`)
+   記事の原文 Markdown (`/articles/<slug>.md` と、`Accept` が `text/markdown` を名指しした
+   ときの `/articles/<slug>`。ADR 0020) / Webmention の受け口 (`POST /webmention`) /
+   過去の URL のリダイレクト (`legacy-redirects.handler.ts`)
 3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
 4. React Router がルートを解決し、loader が `context.get(cloudflareContext).env` から
    `backend/handlers` のローダを呼んでデータを揃える
@@ -291,8 +292,8 @@ Unix epoch 0 に固定する。そこで求めた「いまの時刻」は本番�
 URL パスセグメントとクエリパラメータは kebab-case で統一する。
 
 ```
-✅ /api/v1/notes?per-page=20&sort-by=date
-❌ /api/v1/notes?per_page=20&sortBy=date
+✅ /api/v1/articles?per-page=20&sort-by=date
+❌ /api/v1/articles?per_page=20&sortBy=date
 ```
 
 ## パスエイリアス

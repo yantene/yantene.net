@@ -5,7 +5,7 @@ const meta: Meta<typeof ShareMenu> = {
   title: "Share/ShareMenu",
   component: ShareMenu,
   args: {
-    url: "https://yantene.net/notes/hacku-2016",
+    url: "https://yantene.net/articles/hacku-2016",
     title: "オートマチック・オタク・マッチング ― Hack U 2016 名古屋会場に参加しました",
   },
 };

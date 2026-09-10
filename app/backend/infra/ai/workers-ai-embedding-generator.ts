@@ -1,25 +1,28 @@
-import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/note-embedding";
-import type { IEmbeddingGenerator } from "~/backend/domain/note-embedding";
+import { EmbeddingGenerationError, EmbeddingVector } from "~/backend/domain/article-embedding";
+import type { IEmbeddingGenerator } from "~/backend/domain/article-embedding";
 
 /**
  * 既定のモデル。
  *
- * 日本語向けの `@cf/pfnet/plamo-embedding-1b` ではなく、多言語の bge-m3 を採る。
- * 手元の 55 本で 4 モデルを回して決めた (ADR 0028)。plamo は日本語特化にもかかわらず
- * 「どの記事の関連ノートにも出てこない記事」が 7 本残り (bge-m3 は 3 本)、そこに
- * 書いたばかりの最新記事が入っていた。加えて 2048 次元で保存が倍、値段が 1.6 倍、
- * Vectorize (1 ベクトル 1536 次元まで) にも入らない。
+ * 多言語の qwen3-embedding-0.6b (1024 次元、一般提供)。人手で付けていたタグを物差しに
+ * 4 モデルを測り直して選んだ。選定の経緯と他のモデルを落とした理由は ADR 0030 にある。
  */
-export const DEFAULT_EMBEDDING_MODEL = "@cf/baai/bge-m3";
+export const DEFAULT_EMBEDDING_MODEL = "@cf/qwen/qwen3-embedding-0.6b";
 
 /**
- * このモデルが 1 度に受け取れる長さの目安 (文字数)。
+ * このモデルに 1 度に渡す長さの上限 (文字数)。
  *
- * 上限は 60,000 トークンで、いまの記事は最長でも 7,229 字なので実際には分割されない。
- * それでも上限を置くのは、長い記事を書いたときに黙って切り捨てられないようにするため
- * (超えた分は呼ぶ側が分けて投げ、平均を取る)。モデルの選定もこの値で測っている。
+ * qwen3 は 8,192 トークンから先を**黙って**切り捨てる。エラーにならないので、この上限は
+ * モデルの仕様ではなく、後半が消えないように自分で置いた安全弁である。超えた分は呼ぶ側が
+ * 分けて投げ、平均を取る。
+ *
+ * 8,192 トークンが何字にあたるかは本文の中身で変わる。密な日本語 (55 記事中いちばん
+ * トークンが詰まる JOI の記事を繰り返した文章) で測ると、ベクトルが変わらなくなるのは
+ * 11,500 字と 12,000 字の間。ASCII が半分混じる記事なら 16,000 字から 24,000 字の間まで入る。
+ * 10,000 字は密なほうの下端 11,500 字に 0.85 を掛けて千字単位に丸めた値 (ADR 0031)。
+ * 緩めるなら、切り捨てはログにも結果にも出ないことを踏まえること。
  */
-const MAX_INPUT_CHARACTERS = 8000;
+const MAX_INPUT_CHARACTERS = 10_000;
 
 /** 1 度の呼び出しで投げる本数。 */
 const MAX_TEXTS_PER_CALL = 8;

@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { toWebmentionGroups, toWebmentionView } from "./webmention-view";
-import { NoteSlug } from "~/backend/domain/note";
+import { ArticleSlug } from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import {
   Webmention,
@@ -22,8 +22,8 @@ function mention(params: {
 }): Webmention {
   return Webmention.reconstruct({
     id: entityId<"Webmention">(params.id),
-    noteId: entityId<"Note">("note-1"),
-    target: NoteSlug.create("hello"),
+    articleId: entityId<"Article">("article-1"),
+    target: ArticleSlug.create("hello"),
     source: WebmentionUrl.create(`https://example.com/${params.id}`),
     type: WebmentionType.create(params.type),
     author: WebmentionAuthor.reconstruct({

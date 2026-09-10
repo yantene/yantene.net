@@ -7,17 +7,17 @@
  */
 import { Temporal } from "@js-temporal/polyfill";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { NoteId } from "~/backend/domain/note";
-import { Note, NoteSlug, NoteTitle } from "~/backend/domain/note";
+import type { ArticleId } from "~/backend/domain/article";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
-  D1NoteCommandRepository,
+  D1ArticleCommandRepository,
   D1WebmentionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
 const SITE = "https://yantene.net";
-const TARGET = `${SITE}/notes/alpha`;
+const TARGET = `${SITE}/articles/alpha`;
 const SOURCE = "https://example.com/post/1";
 
 const LINKING_HTML = `
@@ -29,7 +29,7 @@ const LINKING_HTML = `
 
 interface Harness {
   readonly env: Env;
-  readonly noteId: NoteId;
+  readonly articleId: ArticleId;
   /** waitUntil に渡された処理が終わるまで待つ。 */
   readonly settle: () => Promise<void>;
   readonly executionCtx: ExecutionContext;
@@ -37,10 +37,10 @@ interface Harness {
 
 async function setup(): Promise<Harness> {
   const d1 = createTestD1();
-  const note = await new D1NoteCommandRepository(d1).upsert(
-    Note.create({
-      slug: NoteSlug.create("alpha"),
-      title: NoteTitle.create("Alpha"),
+  const article = await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create("alpha"),
+      title: ArticleTitle.create("Alpha"),
       summary: "summary",
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
@@ -52,7 +52,7 @@ async function setup(): Promise<Harness> {
   const pending: Promise<unknown>[] = [];
   return {
     env: { D1: d1, APP_ENV: "test" } as unknown as Env,
-    noteId: note.id,
+    articleId: article.id,
     settle: async () => {
       await Promise.all(pending);
     },
@@ -104,7 +104,7 @@ async function post(harness: Harness, form: Record<string, string>): Promise<Res
 }
 
 function stored(harness: Harness): Promise<readonly unknown[]> {
-  return new D1WebmentionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
+  return new D1WebmentionQueryRepository(harness.env.D1).listByArticleId(harness.articleId);
 }
 
 afterEach(() => {
@@ -140,7 +140,9 @@ describe("POST /webmention", () => {
     await post(harness, { source: SOURCE, target: TARGET });
     await harness.settle();
 
-    const rows = await new D1WebmentionQueryRepository(harness.env.D1).listByNoteId(harness.noteId);
+    const rows = await new D1WebmentionQueryRepository(harness.env.D1).listByArticleId(
+      harness.articleId,
+    );
     expect(rows).toHaveLength(1);
     expect(rows[0].source.toString()).toBe(SOURCE);
     expect(rows[0].type.toString()).toBe("reply");
@@ -203,10 +205,12 @@ describe("POST /webmention", () => {
       ["source が http/https でない", { source: "ftp://example.com/x", target: TARGET }],
       ["target が URL でない", { source: SOURCE, target: "nope" }],
       ["source と target が同じ", { source: TARGET, target: TARGET }],
-      ["target が他所のサイト", { source: SOURCE, target: "https://example.org/notes/alpha" }],
-      ["target がノートの URL でない", { source: SOURCE, target: `${SITE}/notes` }],
-      ["target のノートが存在しない", { source: SOURCE, target: `${SITE}/notes/missing` }],
-      ["source が自サイト", { source: `${SITE}/notes/other`, target: TARGET }],
+      ["target が他所のサイト", { source: SOURCE, target: "https://example.org/articles/alpha" }],
+      ["target が記事の URL でない", { source: SOURCE, target: `${SITE}/articles` }],
+      ["target の記事が存在しない", { source: SOURCE, target: `${SITE}/articles/missing` }],
+      // `/notes/<slug>` から移した記事 (domain/article/article-path.ts の表) 以外は旧 URL で受けない。
+      ["target が移していない記事の旧 URL", { source: SOURCE, target: `${SITE}/notes/alpha` }],
+      ["source が自サイト", { source: `${SITE}/articles/other`, target: TARGET }],
     ])("%s なら 400", async (_name, form) => {
       const harness = await setup();
       stubSource(LINKING_HTML);
@@ -235,7 +239,7 @@ describe("POST /webmention", () => {
       const harness = await setup();
       stubSource(LINKING_HTML);
 
-      await post(harness, { source: SOURCE, target: `${SITE}/notes/missing` });
+      await post(harness, { source: SOURCE, target: `${SITE}/articles/missing` });
       await harness.settle();
 
       expect(globalThis.fetch).not.toHaveBeenCalled();

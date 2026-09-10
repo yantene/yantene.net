@@ -1,14 +1,14 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { SessionId, SessionReaction } from "~/backend/domain/session";
-import { NoteSlug } from "~/backend/domain/note";
-import { ReactionEmoji } from "~/backend/domain/note-reaction";
+import { ArticleSlug } from "~/backend/domain/article";
+import { ReactionEmoji } from "~/backend/domain/article-reaction";
 import { Session } from "~/backend/domain/session";
 
 /** KV に置く形。JSON にできる値だけで持つ。 */
 export interface SessionRecord {
   readonly startedOn: string;
   readonly viewedOn?: string;
-  readonly viewedNotes?: readonly string[];
+  readonly viewedArticles?: readonly string[];
   readonly reactions?: readonly SessionReactionRecord[];
 }
 
@@ -30,7 +30,7 @@ export function sessionToRecord(session: Session): SessionRecord {
     ...(session.viewedOn !== undefined && {
       viewedOn: session.viewedOn.toString(),
     }),
-    viewedNotes: session.viewedNotes.map((slug) => slug.toString()),
+    viewedArticles: session.viewedArticles.map((slug) => slug.toString()),
     reactions: session.reactions.map((reaction) => ({
       slug: reaction.slug.toString(),
       emoji: reaction.emoji.toString(),
@@ -50,7 +50,7 @@ export function sessionToRecord(session: Session): SessionRecord {
 export function recordToSession(id: SessionId, value: unknown): Session | undefined {
   if (typeof value !== "object" || value === null) return undefined;
 
-  const { startedOn, viewedOn, viewedNotes, reactions } = value as Record<string, unknown>;
+  const { startedOn, viewedOn, viewedArticles, reactions } = value as Record<string, unknown>;
   if (typeof startedOn !== "string") return undefined;
 
   try {
@@ -58,7 +58,7 @@ export function recordToSession(id: SessionId, value: unknown): Session | undefi
       id,
       startedOn: Temporal.PlainDate.from(startedOn),
       viewedOn: typeof viewedOn === "string" ? Temporal.PlainDate.from(viewedOn) : undefined,
-      viewedNotes: toSlugs(viewedNotes),
+      viewedArticles: toSlugs(viewedArticles),
       reactions: toReactions(reactions),
     });
   } catch {
@@ -89,7 +89,7 @@ function toReactions(value: unknown): readonly SessionReaction[] {
     }
 
     return {
-      slug: NoteSlug.create(slug),
+      slug: ArticleSlug.create(slug),
       emoji: ReactionEmoji.create(emoji),
       reactedOn: Temporal.PlainDate.from(reactedOn),
     };
@@ -102,16 +102,16 @@ function toReactions(value: unknown): readonly SessionReaction[] {
  * ひとつでも読めなければ throw して、記録ごと捨てさせる。読めた要素だけ拾うと、
  * 壊れた記録が「一部だけ正しいもの」として生き残り、次の保存で書き戻されてしまう。
  */
-function toSlugs(value: unknown): readonly NoteSlug[] {
+function toSlugs(value: unknown): readonly ArticleSlug[] {
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
-    throw new TypeError("viewedNotes must be an array");
+    throw new TypeError("viewedArticles must be an array");
   }
 
   return value.map((slug: unknown) => {
     if (typeof slug !== "string") {
-      throw new TypeError("viewedNotes must contain strings");
+      throw new TypeError("viewedArticles must contain strings");
     }
-    return NoteSlug.create(slug);
+    return ArticleSlug.create(slug);
   });
 }

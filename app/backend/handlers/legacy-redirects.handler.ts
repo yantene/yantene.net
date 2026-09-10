@@ -1,9 +1,15 @@
 import { Hono } from "hono";
-import { contentCacheControlFor } from "./notes/content-cache-control";
+import { contentCacheControlFor } from "./articles/content-cache-control";
 import type { Context } from "hono";
+import { assetPrefixOf } from "~/backend/services/article-asset-url";
+import {
+  articlePath,
+  FORMER_ARTICLE_PATH_PREFIX,
+  slugsRedirectedFromFormerPath,
+} from "~/backend/domain/article";
 
 /**
- * 旧サイトの記事スラグ → 現行サイトのノートスラグ。
+ * 旧サイトの記事スラグ → 現行サイトの記事のスラグ。
  *
  * 現行スラグは旧スラグをそのまま移したものではない。`_` を `-` に置換しただけで一致するのは
  * 27 本中 6 本だけで、残りは付け直してある。つまり変換規則では表せないので明示テーブルで持つ。
@@ -16,7 +22,7 @@ import type { Context } from "hono";
  * テストが実装そのものを検証できるよう公開する。
  */
 // 旧記事のスラグを高エントロピーの秘匿情報と誤検知するため、表だけを囲んで無効化する (秘密は含まない)。
-export const noteSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
+export const articleSlugByLegacySlug: ReadonlyMap<string, string> = new Map([
   ["i_bought_arduino", "arduino-one-minute-timer"],
   ["sugoroku_by_c", "sugoroku-in-c"],
   ["one_month_before_the_fe_exam", "one-month-until-fe-exam"],
@@ -52,15 +58,28 @@ const legacyImageDirectoryPattern = /^\d{4}-\d{2}-\d{2}-(?<slug>.+)$/u;
 /**
  * 恒久移転は 308 で返す。301 と違ってメソッドとボディを保持する。旧サイトは静的配信で
  * GET しか来ないため実利上の差はないが、意味の狭いほう (メソッドを書き換えない) を選ぶ。
- * 一時移転の 307 は「元の URL に戻る可能性がある」を意味するのでここでは使えない。
+ * 一時移転の 307 は「元の URL に戻る可能性がある」を意味するので、戻らないものには使えない。
  */
 const PERMANENT_REDIRECT = 308 as const;
 
+/**
+ * 一時移転。`/notes` (一覧) にだけ使う。あの URL は短文の投稿の一覧として戻ってくる場所で、
+ * 308 を返すとブラウザがそれを覚えて、戻ってきた後も記事一覧へ飛ばし続ける。
+ */
+const TEMPORARY_REDIRECT = 307 as const;
+
 function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
-  // ノートの配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
+  // 記事の配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
   // 載せると、認証の壁を越えて未認証クライアントへ配られてしまうため。
   c.header("Cache-Control", contentCacheControlFor(c.env));
   return c.redirect(to, PERMANENT_REDIRECT);
+}
+
+function temporaryRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
+  // 覚えさせない。max-age を付けると 307 でもその間はキャッシュから答えられ、
+  // 「戻ってくる URL」を一時移転にした意味が薄れる。
+  c.header("Cache-Control", "no-store");
+  return c.redirect(to, TEMPORARY_REDIRECT);
 }
 
 /**
@@ -76,34 +95,43 @@ function encodePath(path: string): string {
 }
 
 /**
- * 旧 yantene.net (Jekyll + GitHub Pages) の URL を現行サイトへ恒久リダイレクトする
- * 公開ルータ。認証不要なので index.ts で auth ガードより前にマウントする。
+ * 過去の URL を現行の URL へリダイレクトするルータ。index.ts で BASIC 認証の後ろに
+ * マウントするので、staging では認証を通した相手にだけ答える (どの URL が在るかを
+ * 外に教えない)。過去の URL は 2 世代ある。
  *
- * 旧サイトの URL は外部のリンク・検索結果・フィード購読に残っており、ドメインを
- * 本アプリへ向けた時点で行き先を失う。
+ * **旧 yantene.net (Jekyll + GitHub Pages)。** 外部のリンク・検索結果・フィード購読に
+ * 残っており、ドメインを本アプリへ向けた時点で行き先を失った。
  *
- * - /<legacy-slug>.html                 → /notes/<slug>
+ * - /<legacy-slug>.html                 → /articles/<slug>
  * - /index.html, /profile.html          → / (プロフィールは相当ページが無いため暫定)
- * - /list.html                          → /notes (tag クエリを引き継ぐ)
+ * - /list.html                          → /articles
  * - /atom.xml                           → /feed.xml
- * - /images/<date>-<legacy-slug>/<file> → /api/v1/notes/<slug>/assets/<file>
+ * - /images/<date>-<legacy-slug>/<file> → /api/v1/articles/<slug>/assets/<file>
  *
- * 記事は `/:file{[^/]+[.]html}` のような可変パターンではなく、27 本を静的パスとして
+ * **本アプリで記事を `/notes/<slug>` と呼んでいた頃 (ADR 0032)。** `/notes/` は短文の
+ * 投稿に譲ったので、記事は `/articles/` へ移った。
+ *
+ * - /notes/<slug>, /notes/<slug>.md     → /articles/<slug>, /articles/<slug>.md
+ *   (domain/article/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
+ * - /notes?…                            → /articles?… (307。あの URL は短文の一覧として戻る)
+ *
+ * どちらの世代も、記事は `/:file{[^/]+[.]html}` のような可変パターンではなく静的パスとして
  * 1 本ずつ登録する。ルート直下でカスタム正規表現のパラメータを使うと、Hono の SmartRouter
- * が RegExpRouter を諦めて TrieRouter に落ち、この 27 本のためにアプリ全体のリクエストが
+ * が RegExpRouter を諦めて TrieRouter に落ち、この数十本のためにアプリ全体のリクエストが
  * 遅いマッチャーを通ることになるため。
  *
- * 移転先にクエリ文字列は持ち込まない。旧サイトの記事 URL にクエリは無く、外から付いて
+ * 移転先にクエリ文字列は持ち込まない。過去の記事 URL にクエリは無く、外から付いて
  * くるのは utm 等のトラッキングだけである。計測用に Cloudflare Web Analytics のビーコンは
  * 置いてあるが (ADR 0021。CSP の connect-src にも cloudflareinsights.com がある)、utm を
- * 読むコードはこのアプリのどこにも無い。旧サイトが実際に使っていた /list.html の tag だけは
- * 引き継ぐ。
+ * 読むコードはこのアプリのどこにも無い。例外は `/notes` の一覧で、`?q=` や `?page=` は
+ * つい先日までこのアプリ自身が出していた効くクエリなので、そのまま `/articles` へ渡す。
  */
 export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
-  for (const [legacySlug, slug] of noteSlugByLegacySlug) {
-    router.get(`/${legacySlug}.html`, (c) => permanentRedirect(c, `/notes/${slug}`));
+  for (const [legacySlug, slug] of articleSlugByLegacySlug) {
+    // 2 世代を跨ぐ記事でも、旧サイトからの転送は現行の URL へ直に送る (2 段にしない)。
+    router.get(`/${legacySlug}.html`, (c) => permanentRedirect(c, articlePath(slug)));
   }
 
   router.get("/index.html", (c) => permanentRedirect(c, "/"));
@@ -117,17 +145,32 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
    * 旧サイトの全記事一覧。タグは廃止したので (ADR 0029)、`?tag=` は捨てて一覧の先頭へ
    * 送る。効かないクエリを引き継ぐと、308 がブラウザに覚えられて死んだクエリが残る。
    */
-  router.get("/list.html", (c) => permanentRedirect(c, "/notes"));
+  router.get("/list.html", (c) => permanentRedirect(c, "/articles"));
 
   // 記事に紐付く画像。現行サイトではアセット API が配信する。表に無いディレクトリは
   // 素通りさせ、通常の 404 に委ねる。
   router.get("/images/:directory/:file{.+}", (c, next) => {
     const legacySlug = legacyImageDirectoryPattern.exec(c.req.param("directory"))?.groups?.slug;
-    const slug = legacySlug === undefined ? undefined : noteSlugByLegacySlug.get(legacySlug);
+    const slug = legacySlug === undefined ? undefined : articleSlugByLegacySlug.get(legacySlug);
     if (slug === undefined) return next();
 
-    return permanentRedirect(c, `/api/v1/notes/${slug}/assets/${encodePath(c.req.param("file"))}`);
+    return permanentRedirect(c, `${assetPrefixOf(slug)}${encodePath(c.req.param("file"))}`);
   });
+
+  for (const slug of slugsRedirectedFromFormerPath) {
+    const from = `${FORMER_ARTICLE_PATH_PREFIX}${slug}`;
+    /*
+     * 末尾のスラッシュ付きも受ける。ページのルータは付いていても同じ記事に当てていたので、
+     * その形で外に残ったリンクもある。POST も受けるのは、改名前に開いたままのページの
+     * リアクションのフォーム (JS 無しの `<Form method="post">`) が旧 URL へ送るため。
+     * 308 はメソッドと本文を保つので、移転先の action がそのまま受ける。
+     */
+    router.on(["GET", "POST"], [from, `${from}/`], (c) => permanentRedirect(c, articlePath(slug)));
+    // 記事ページが `Link: rel="alternate"` で広告していた原文 Markdown の URL (ADR 0009)。
+    router.get(`${from}.md`, (c) => permanentRedirect(c, `${articlePath(slug)}.md`));
+  }
+
+  router.get("/notes", (c) => temporaryRedirect(c, `/articles${new URL(c.req.url).search}`));
 
   return router;
 }

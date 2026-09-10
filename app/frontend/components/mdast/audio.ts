@@ -11,7 +11,7 @@
  */
 
 /** アセット API のパス。resolveAssetUrl が組み立てる形と対にする。 */
-const assetPathPattern = /^\/api\/v1\/notes\/[^/]+\/assets\/.+$/;
+const assetPathPattern = /^\/api\/v1\/articles\/[^/]+\/assets\/.+$/;
 
 /**
  * 音源として通してよい src なら true。
@@ -20,6 +20,6 @@ const assetPathPattern = /^\/api\/v1\/notes\/[^/]+\/assets\/.+$/;
  * 届かない。だから本文にはルート相対の絶対パスが直接書かれている前提で見る。
  * 相対パス (`./song.opus`) は解決されないまま届くので、ここで落とす。
  */
-export function isNoteAssetSrc(src: string): boolean {
+export function isArticleAssetSrc(src: string): boolean {
   return assetPathPattern.test(src);
 }

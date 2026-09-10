@@ -18,7 +18,7 @@ const schemePattern = /^[a-z][a-z0-9+.-]*:/i;
  * 単体では基準が無く読めないので false になる。
  */
 export function isHttpUrl(url: string): boolean {
-  // 相対 URL は throw させずに弾く。本文のリンクは内部への参照 (`#fn-1` や `/notes/x`)
+  // 相対 URL は throw させずに弾く。本文のリンクは内部への参照 (`#fn-1` や `/articles/x`)
   // のほうが多く、そのたびに例外を作るのは無駄が大きい。
   if (!schemePattern.test(url)) return false;
   try {

@@ -46,13 +46,20 @@ export interface ParsedMention {
  * だけで、こちらの記事に他人の名前で行を作れてしまう。
  *
  * @param baseUrl 相対リンクの解決基準 (転送を追い切ったあとの source の URL)。
+ * @param targets 記事が応える URL の一覧 (`WebmentionRequest.targets`)。どれか 1 つを
+ *   リンクしていれば足りる。送り手が届け出た表記に限ると、正規の URL を張っているページを
+ *   旧 URL 宛てで届け出るだけで「リンクが無い」と判定でき、保存済みの行を消させられる。
  */
 export function hasLinkToTarget(
   html: string,
   baseUrl: WebmentionUrl,
-  target: WebmentionUrl,
+  targets: readonly WebmentionUrl[],
 ): boolean {
-  return extractLinkedUrls(html, baseUrl).some((url) => url.pointsToSameDocument(target));
+  return extractLinkedUrls(html, baseUrl).some((url) => pointsToAny(url, targets));
+}
+
+function pointsToAny(url: WebmentionUrl, targets: readonly WebmentionUrl[]): boolean {
+  return targets.some((target) => url.pointsToSameDocument(target));
 }
 
 /**
@@ -64,11 +71,11 @@ export function hasLinkToTarget(
 export function readMention(
   html: string,
   baseUrl: WebmentionUrl,
-  target: WebmentionUrl,
+  targets: readonly WebmentionUrl[],
 ): ParsedMention {
   const document = parseDocument(html, baseUrl);
   const entries = collectEntries(document.items);
-  const entry = pickEntry(entries, baseUrl, target);
+  const entry = pickEntry(entries, baseUrl, targets);
 
   if (entry === undefined) {
     return {
@@ -80,7 +87,7 @@ export function readMention(
   }
 
   return {
-    type: typeOf(entry, target) ?? WebmentionType.mention(),
+    type: typeOf(entry, targets) ?? WebmentionType.mention(),
     author: authorOf(entry, document),
     content: contentOf(entry),
     publishedAt: publishedAtOf(entry),
@@ -123,22 +130,22 @@ function collectEntries(roots: readonly Mf2Root[]): Mf2Root[] {
 function pickEntry(
   entries: readonly Mf2Root[],
   baseUrl: WebmentionUrl,
-  target: WebmentionUrl,
+  targets: readonly WebmentionUrl[],
 ): Mf2Root | undefined {
   return (
-    entries.find((entry) => typeOf(entry, target) !== undefined) ??
+    entries.find((entry) => typeOf(entry, targets) !== undefined) ??
     entries.find((entry) => {
       const html = contentHtmlOf(entry);
-      return html !== undefined && hasLinkToTarget(html, baseUrl, target);
+      return html !== undefined && hasLinkToTarget(html, baseUrl, targets);
     }) ??
     (entries.length === 1 ? entries.at(0) : undefined)
   );
 }
 
 /** target を名指ししているプロパティから種別を決める。名指しが無ければ undefined。 */
-function typeOf(entry: Mf2Root, target: WebmentionUrl): WebmentionType | undefined {
+function typeOf(entry: Mf2Root, targets: readonly WebmentionUrl[]): WebmentionType | undefined {
   const hit = typeByProperty.find(([property]) =>
-    propertyUrls(entry, property).some((url) => url.pointsToSameDocument(target)),
+    propertyUrls(entry, property).some((url) => pointsToAny(url, targets)),
   );
   return hit?.[1]();
 }

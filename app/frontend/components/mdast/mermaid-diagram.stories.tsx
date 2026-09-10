@@ -25,7 +25,7 @@ const sequence = `sequenceDiagram
   participant 読者
   participant Worker
   participant R2
-  読者->>Worker: GET /notes/foo
+  読者->>Worker: GET /articles/foo
   Worker->>R2: MDAST を読む
   R2-->>Worker: MDAST
   Worker-->>読者: SSR した HTML`;
@@ -37,10 +37,10 @@ const meta: Meta<typeof MermaidDiagram> = {
   title: "Mdast/MermaidDiagram",
   component: MermaidDiagram,
   parameters: { layout: "padded" },
-  // 図の余白と溢れの扱いは本文 (note-prose) の中でしか当たらない。
+  // 図の余白と溢れの扱いは本文 (mdast-prose) の中でしか当たらない。
   decorators: [
     (Story) => (
-      <div className="note-prose prose max-w-none">
+      <div className="mdast-prose prose max-w-none">
         <Story />
       </div>
     ),

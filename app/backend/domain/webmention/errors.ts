@@ -16,7 +16,7 @@ export class SameSourceAndTargetError extends WebmentionRejectedError {
   readonly name = "SameSourceAndTargetError";
 }
 
-/** target がこのサイトのノート URL (`/notes/<slug>`) でない。 */
+/** target がこのサイトの記事 URL (`/articles/<slug>`) でない。 */
 export class TargetNotOnThisSiteError extends WebmentionRejectedError {
   readonly name = "TargetNotOnThisSiteError";
 }
@@ -26,9 +26,9 @@ export class SelfMentionNotAcceptedError extends WebmentionRejectedError {
   readonly name = "SelfMentionNotAcceptedError";
 }
 
-/** target のスラグに対応するノートが無い。 */
-export class TargetNoteNotFoundError extends WebmentionRejectedError {
-  readonly name = "TargetNoteNotFoundError";
+/** target のスラグに対応する記事が無い。 */
+export class TargetArticleNotFoundError extends WebmentionRejectedError {
+  readonly name = "TargetArticleNotFoundError";
 }
 
 /** 種別として解釈できない文字列。保存済みの行を読み戻すときの破損検知に使う。 */

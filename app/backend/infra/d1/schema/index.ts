@@ -1,7 +1,7 @@
 export { linkCards } from "./link-cards";
-export { noteEmbeddings } from "./note-embeddings";
-export { noteReactions } from "./note-reactions";
-export { noteSimilarities } from "./note-similarities";
-export { notes } from "./notes";
+export { articleEmbeddings } from "./article-embeddings";
+export { articleReactions } from "./article-reactions";
+export { articleSimilarities } from "./article-similarities";
+export { articles } from "./articles";
 export { webmentionBlocks } from "./webmention-blocks";
 export { webmentions } from "./webmentions";

@@ -19,9 +19,13 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 - Celestim（天体アニメーション）は天体へのロマンから
 - 装飾は控えめだが、ところどころに遊び心を入れる
 
-## コアドメイン: ノート (Note)
+## コアドメイン: 記事 (article)
 
-ノートは Markdown 形式の記事で、エッセイ・技術記事・その他の発信を包含する。
+記事は Markdown 形式の長文で、エッセイ・技術記事・その他の発信を包含する。URL は
+`/articles/<slug>`、正本の配置は `articles/<slug>.md`、コードと D1 / R2 / KV の中でも
+`Article` / `articles` で通す ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md) /
+[ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
+`note` は表題の無い短文の投稿 (#412) のために空けてある名前で、記事の意味では使わない。
 
 - スラグ (slug) ベースの URL ルーティング
 - Markdown 本文 + フロントマター（メタデータ）
@@ -34,10 +38,10 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 手元で Markdown を書き、コンテンツ正本のリポジトリ (`yantene/notes`) に `git push` する。
 その後 `POST /api/v1/refresh` を叩くと D1 / R2 へ同期される。管理画面は設けない。
 
-### 実装変更を既存ノートに反映するとき (force refresh)
+### 実装変更を既存記事に反映するとき (force refresh)
 
 `POST /api/v1/refresh` の変更検出は **md + アセットのハッシュ**で行う。そのため
-「MDAST の作り方を変えた」といった**実装側の変更は、通常の refresh では既存ノートに
+「MDAST の作り方を変えた」といった**実装側の変更は、通常の refresh では既存記事に
 反映されない** (ハッシュが変わらないので全件スキップされる)。
 
 MDAST の生成内容や、MDAST から導くメタデータ (要約など) の作り方を変えたら、
@@ -52,14 +56,14 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 - 画像の width/height 埋め込み ([#99](https://github.com/yantene/yantene.net/issues/99))
 - 要約から生 HTML を除外 ([#112](https://github.com/yantene/yantene.net/issues/112))
 - 原文 Markdown の R2 キャッシュ ([#106](https://github.com/yantene/yantene.net/issues/106))。
-  force refresh を流すまで `/notes/<slug>.md` は 500 になる (fail-loud)
+  force refresh を流すまで `/articles/<slug>.md` は 500 になる (fail-loud)
 - 数式の MathML 埋め込み ([#174](https://github.com/yantene/yantene.net/issues/174))。
-  force refresh を流すまで既存ノートの `$...$` は素の文字列のまま出る
+  force refresh を流すまで既存記事の `$...$` は素の文字列のまま出る
 - 本文のむき出し URL のリンクカード ([#172](https://github.com/yantene/yantene.net/issues/172))。
   カードの取得は「変更のあった記事が参照する URL」と「期限切れの既存カード」を対象にするので、
   導入直後は既存記事のリンクが 1 つもカードにならない。一度 force refresh を流すこと
 - 数式の変換を Temml へ移した ([#208](https://github.com/yantene/yantene.net/issues/208))。
-  force refresh を流すまで、既存ノートの数式は KaTeX が組んだ MathML のまま出る
+  force refresh を流すまで、既存記事の数式は KaTeX が組んだ MathML のまま出る
   (関数名の後ろが詰まる)
 - リンクカードの絵の取り逃しを覚えるようにした ([#255](https://github.com/yantene/yantene.net/issues/255))。
   既存のカードは「取り逃していない」ものとして入っているので、いま絵の欠けているカードは
@@ -74,10 +78,39 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   ([#322](https://github.com/yantene/yantene.net/issues/322))。R2 の置き場を空けたければ
   手で消すこと。
 
-- 関連ノートを本文のベクトルで並べるようにした ([ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md))。
+- 関連記事を本文のベクトルで並べるようにした ([ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md))。
   ベクトルを作るのは「変更のあった記事」だけなので、**導入直後は既存記事のベクトルが 1 本も
-  入らない**。関連ノートが全記事で空になるので、一度 force refresh を流すこと。
+  入らない**。関連記事が全記事で空になるので、一度 force refresh を流すこと。
   1 回で作り直せるのは 30 本までで、溢れた分は次の refresh に回る。
+- 埋め込みモデルを差し替えた ([ADR 0030](../../docs/adr/0030-switch-embedding-model-to-qwen3.md))。
+  **force は要らない。** `article_embeddings.model` の列が違えば通常の refresh が作り直す。ただし
+  1 回 30 本までなので、**記事数 ÷ 30 を切り上げた回数**だけ通常の refresh を流すこと。揃うまで
+  近さの書き直しは走らず、前のモデルの並びが出続ける。結果の `embeddings.deferred` が 0 になり
+  `embeddings.rewrittenPairs` が 0 以外になったら揃っている。`failed` が空でなければもう一度。
+
+  ```bash
+  gh workflow run refresh.yml -R yantene/notes --ref staging   # staging。production は --ref main
+  ```
+
+- 記事の URL とアセット API を `/notes` から `/articles` へ移した
+  ([ADR 0032](../../docs/adr/0032-call-long-form-posts-articles.md))。**force は要らない。**
+  正本側で `notes/` を `articles/` に動かすと、ハッシュに正本のパスが入っているので通常の
+  refresh が全記事を作り直す (D1 のカバー画像 URL と、R2 の MDAST に埋まったアセット URL の
+  両方)。動かして refresh が走るまでは、記事中の画像と音源とカバー画像が 404 になる。
+  動かす前に叩いた refresh は `articles/*.md` が無いので全件削除のガードで止まる (記事は
+  消えない)。全記事のハッシュが変わるので埋め込みも作り直しになり、1 回 30 本までなので
+  **記事数 ÷ 30 を切り上げた回数**だけ refresh を流すこと。
+
+  refresh では直らないものが 2 つある。本文に**ルート相対で直書きした** `/notes/<slug>` の
+  記事間リンクと、raw HTML の `<source src="/api/v1/notes/...">`。どちらも正本の Markdown を
+  書き換える (`](/notes/` → `](/articles/`、`/api/v1/notes/` → `/api/v1/articles/`)。
+
+- D1 の表と R2 のキーを `notes` から `articles` に改めた
+  ([ADR 0033](../../docs/adr/0033-rename-note-to-article-in-storage-and-code.md))。
+  表は migration が改名するので、force が要るのは **R2 の写しを `articles/<slug>/` に
+  移すため**。旧キー `notes/<slug>/` は読まないので、写し直すまで記事の原文と MDAST は
+  見つからない。写し直しても旧キーの写しは消えないので、R2 の置き場を空けたければ手で消す
+  (OG 画像の `og/notes/` も同じ)。
 
 ## データモデルとストレージ戦略
 
@@ -85,14 +118,14 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・画像のキャッシュを担う。
 設計判断の詳細は [ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) を参照。
 
-- 正本 (GitHub): Markdown 本文 (`notes/<slug>.md`) + 画像アセット (`notes/<slug>/<filename>`)
+- 正本 (GitHub): Markdown 本文 (`articles/<slug>.md`) + 画像アセット (`articles/<slug>/<filename>`)
 - D1: メタデータインデックス (スラグ、タイトル、公開日、更新日、要約など)
 - R2: 原文 Markdown キャッシュ + パース済み MDAST キャッシュ + 画像キャッシュ
 
 ### フロントマターでメタデータ管理
 
 Markdown ファイル自体にメタデータを持たせる。vfile-matter でパースし、
-NoteTitle / ImageUrl 等の VO に変換する。
+ArticleTitle / ImageUrl 等の VO に変換する。
 
 ```yaml
 ---
@@ -108,7 +141,7 @@ visibility: private # 任意。既定は公開
 
 `visibility: private` を書いた記事は同期しない。D1 にも R2 にも載らないため、一覧・
 タグ・検索・フィード・sitemap・OGP・原文 Markdown のどこにも現れず、URL を直打ちしても
-404 になる。既に同期済みの記事に後から書いた場合は、正本から消えたノートと同じ経路で
+404 になる。既に同期済みの記事に後から書いた場合は、正本から消えた記事と同じ経路で
 D1 と R2 から掃除される。
 
 配信側に除外条件を書き足す方式は採らない。経路が増えるたびに書き漏らし、そのとき漏れる
@@ -119,8 +152,8 @@ D1 と R2 から掃除される。
 つかないため。それでも `unpublished` に数えないのは、`visibility: pubic` と打ち間違えた
 記事は隠すと決めた記事ではないからで、綴りの誤りは誤りとして挙げる。
 
-公開範囲の判定のために原文を読むのは 1 ノートにつき 1 回。contentHash が一致するノートは
-読まずに飛ばす。一致するのは前回同期できた = 前回は公開だったノートに限られ、`visibility`
+公開範囲の判定のために原文を読むのは 1 記事につき 1 回。contentHash が一致する記事は
+読まずに飛ばす。一致するのは前回同期できた = 前回は公開だった記事に限られ、`visibility`
 を書き換えればハッシュも変わるので、公開 → 非公開の切り替えは必ず拾える。
 
 ### summary は MDAST から自動抽出
@@ -171,7 +204,7 @@ refresh の結果では `kept` (古い中身のまま持ちこたえた) と `fa
 ### 画像はアセット API 経由で配信
 
 Markdown 内の相対パス画像 URL (`./image.png`) を
-`/api/v1/notes/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
+`/api/v1/articles/<slug>/assets/<path>` に解決する。正本の直接 URL を露出させない。
 
 ### 数式は refresh 時に MathML へ組む
 
@@ -180,7 +213,7 @@ MathML 出力で組んで MDAST に埋める**。描画側は埋まった MathML
 ライブラリは送らない。設計判断の詳細は [ADR 0013](../../docs/adr/0013-math-as-mathml-at-refresh-time.md) を参照。
 
 - KaTeX の既定の HTML 出力は使わない。inline `style` で位置を指定するため CSP 下で崩れる
-- 読めない LaTeX は refresh がそのノートをスキップし、理由を返す (fail-loud)
+- 読めない LaTeX は refresh がその記事をスキップし、理由を返す (fail-loud)
 - `$` は数式の開始と見なされる。`$100 と $200` のような書き方は数式になってしまう
 
 ### Mermaid のコードフェンスはブラウザで図になる
@@ -193,9 +226,9 @@ refresh では何も変換しないので、MDAST は素の `code` ノードの�
 - 組めなかったソースは、書いたままのコードブロックとして残る (記事は壊れない)
 - 図が出るまでに一拍あり、JavaScript が動かない環境とクローラーにはソースが届く
 
-### 原文は `/notes/<slug>.md` で取れる
+### 原文は `/articles/<slug>.md` で取れる
 
-記事ページ (`/notes/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
+記事ページ (`/articles/<slug>`) の URL 末尾に `.md` を付けると、正本の Markdown を
 **そのまま** (フロントマター込み・画像の相対パスも書き換えない) 返す。R2 の原文キャッシュ
 から配信し、Hono 側で完結させる (React Router には委譲しない)。設計判断の詳細は
 [ADR 0009](../../docs/adr/0009-serve-note-source-markdown-verbatim.md) を参照。
@@ -203,7 +236,7 @@ refresh では何も変換しないので、MDAST は素の `code` ノードの�
 **拡張子なしでも `Accept` で名指しすれば同じものが返る。**
 
 ```bash
-curl -H 'Accept: text/markdown' https://yantene.net/notes/<slug>
+curl -H 'Accept: text/markdown' https://yantene.net/articles/<slug>
 ```
 
 `text/markdown` の q 値が `text/html` のそれを厳密に上回ったときだけ原文になる。ブラウザの
@@ -211,21 +244,21 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
 化けることはない。判定と、同じ URL が 2 表現を持つことのキャッシュの扱いは
 [ADR 0020](../../docs/adr/0020-negotiate-note-source-markdown-on-accept.md) を参照。
 
-## 関連ノートは本文のベクトルで並ぶ
+## 関連記事は本文のベクトルで並ぶ
 
-記事ページの関連ノートは、共通するタグの数ではなく**本文から作ったベクトルの近さ**で
+記事ページの関連記事は、共通するタグの数ではなく**本文から作ったベクトルの近さ**で
 並べる。ベクトルは refresh のときに作って D1 に置き、読み手のリクエストは外部に触らない。
 設計判断の詳細は [ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md) を参照。
 
 - 近さは**上位 N 件に切らずにペアのまま**持つ。切って保存すると、後から書いた記事が
-  古い記事の関連ノートに永久に出てこない (refresh は変更のあった記事しか処理しない)
-- ベクトルを作れなかった記事は、**前回のベクトルと近さがそのまま残る**。関連ノートは
+  古い記事の関連記事に永久に出てこない (refresh は変更のあった記事しか処理しない)
+- ベクトルを作れなかった記事は、**前回のベクトルと近さがそのまま残る**。関連記事は
   前の並びで出るので、見た目は壊れない
-- `note_similarities` は記事数の 2 乗で増える。57 本で 3,192 行、1,000 本で 999,000 行
+- `article_similarities` は記事数の 2 乗で増える。57 本で 3,192 行、1,000 本で 999,000 行
 
 ## 補助ドメイン
 
-- 将来的な機能追加はノートを中心に拡張する
+- 将来的な機能追加は記事を中心に拡張する
 
 ## Webmention
 
@@ -265,7 +298,7 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 ### 見るのは Web Analytics の素の画面
 
 数を見るのは Cloudflare ダッシュボードの Web Analytics そのもの。**チャートは組まない。**
-`Path` で `/notes/` に絞り、`Exclude Bots` を付ければ、この計測を入れた目的 (どの記事が
+`Path` で `/articles/` に絞り、`Exclude Bots` を付ければ、この計測を入れた目的 (どの記事が
 読まれ、どこから来たか) は素の画面で足りる。Country / Host / Path / Referer / Device type /
 Browser / OS / Navigation type で絞れる。
 
