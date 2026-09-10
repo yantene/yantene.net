@@ -93,7 +93,7 @@ describe("parseTreeResponse", () => {
   it("keeps every entry with its name, hash and type", () => {
     const json = {
       result: [
-        { name: "notes", mode: "40000", hash: "t2", type: "tree" },
+        { name: "articles", mode: "40000", hash: "t2", type: "tree" },
         { name: "README.md", mode: "100644", hash: "b1", type: "blob" },
         { name: "run.sh", mode: "100755", hash: "b2", type: "exec" },
       ],
@@ -102,7 +102,7 @@ describe("parseTreeResponse", () => {
       messages: [],
     };
     expect(parseTreeResponse(json)).toEqual([
-      { name: "notes", hash: "t2", type: "tree" },
+      { name: "articles", hash: "t2", type: "tree" },
       { name: "README.md", hash: "b1", type: "blob" },
       { name: "run.sh", hash: "b2", type: "exec" },
     ]);
@@ -188,9 +188,9 @@ describe("ArtifactsContentStore", () => {
       [`${BASE}/tree/root`]: () =>
         envelope([
           { name: "README.md", mode: "100644", hash: "b0", type: "blob" },
-          { name: "notes", mode: "40000", hash: "t-notes", type: "tree" },
+          { name: "articles", mode: "40000", hash: "t-articles", type: "tree" },
         ]),
-      [`${BASE}/tree/t-notes`]: () =>
+      [`${BASE}/tree/t-articles`]: () =>
         envelope([
           { name: "a.md", mode: "100644", hash: "b1", type: "blob" },
           { name: "a", mode: "40000", hash: "t-a", type: "tree" },
@@ -204,8 +204,8 @@ describe("ArtifactsContentStore", () => {
 
     expect(entries).toEqual([
       { path: "README.md", hash: "b0" },
-      { path: "notes/a.md", hash: "b1" },
-      { path: "notes/a/cover.png", hash: "b2" },
+      { path: "articles/a.md", hash: "b1" },
+      { path: "articles/a/cover.png", hash: "b2" },
     ]);
     // ブランチの先端は動くので、log はキャッシュを避けて読む。
     const log = calls.find((call) => call.url.includes("/log?"));
@@ -216,10 +216,10 @@ describe("ArtifactsContentStore", () => {
   it("reads a file's raw bytes by path at the branch", async () => {
     const bytes = new Uint8Array([1, 2, 3]);
     const { fetchFn, calls } = routes({
-      [`${BASE}/file?ref=main&path=notes%2Fa.md`]: () => new Response(bytes),
+      [`${BASE}/file?ref=main&path=articles%2Fa.md`]: () => new Response(bytes),
     });
 
-    const result = await store(fetchFn).readFile("notes/a.md");
+    const result = await store(fetchFn).readFile("articles/a.md");
 
     expect(result).toEqual(bytes);
     expect(calls[0]?.init).toMatchObject({ cache: "no-store" });
