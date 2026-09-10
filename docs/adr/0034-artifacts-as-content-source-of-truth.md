@@ -21,9 +21,10 @@ binding からも読める。これでコンテンツも Cloudflare に閉じら
 
 読み取りの手段には制約がある。
 
-- Workers binding (`env.ARTIFACTS`) はリポジトリ管理とトークン発行が主で、**ファイルの
-  中身を読むメソッドが無い**。ツリーやコミットを読むメソッドは文書にあるが、wrangler が
-  生成する型には無い
+- Workers binding (`env.ARTIFACTS`) はリポジトリ管理とトークン発行が主で、**中身を読む
+  メソッドが 1 つも無い**。binding は `create` / `get` / `import` / `list` / `delete`、
+  リポジトリのハンドルは `createToken` / `listTokens` / `revokeToken` / `fork` だけ
+  (wrangler 4.130 が生成する型で確認)。ファイルはおろかツリーもコミットも読めない
 - REST API はツリー・コミット・ファイルを読める。認証は Cloudflare API トークンで、
   リポジトリトークン (git 用) では REST を叩けない。文書がそう分けている
 - push を購読するイベント (`cf.artifacts.repo.pushed`) と、それで Workflow を起こす
@@ -43,9 +44,9 @@ binding からも読める。これでコンテンツも Cloudflare に閉じら
   - Cons: 製品はまだ beta。Worker に API トークンを常駐させる (ただし読み取り専用・
     Artifacts 限定)。Web エディタが無い
 - **案 C: binding で read トークンを発行し、それで REST を読む** — アカウントの API
-  トークンを持たずに済ませる。
-  - Cons: リポジトリトークンは git 操作用で、REST の認証にならない (文書が明記)。
-    binding だけで完結させようにも、中身を読む口が無い。成立しない
+  トークンを持たずに済ませる。短命・読み取り専用・リポジトリ限定のトークンで REST を
+  叩けるなら、案 B より権限が狭くなる。
+  - Cons: **リポジトリトークンは REST の認証にならない (実測)。** 成立しない
 
 ## 決定
 
@@ -100,6 +101,11 @@ refresh が止まるだけで、配信には届かない。
   `tree` / `blob` / `exec` / `symlink` / `gitlink`
 - `file?ref=&path=` は生バイト列を 200 で返し、無いパスは 404
 - **blob ハッシュは手元の `git rev-parse` と一致した。** 変更検出が引き継がれる裏付けになる
+- **リポジトリトークンで REST を叩くと 401 になる** (`{"code":10000,"message":"Authentication
+  error"}`)。`issue-token --scope read` で出したトークンを `Authorization: Bearer` に載せ、
+  `?expires=` を付けた形と落とした形の両方で試して同じ。git の remote に対しては同じ
+  トークンが通るので、**トークンの種類ごとに通る面が分かれている**。案 C が成立しない
+  裏付けで、Worker に置くトークンをこれ以上狭められないことを意味する
 - ルート (9 件) と `articles/` (83 件) のどちらも `result_info` が付かなかった。
   この規模ではツリーの分割は起きない。分割されたら throw する作りは、想定外を静かに
   握り潰さないための保険として残す
