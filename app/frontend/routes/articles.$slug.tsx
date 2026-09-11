@@ -13,6 +13,7 @@ import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { ReadingProgress } from "~/frontend/components/reading-progress/reading-progress";
 import { ArticleActions } from "~/frontend/components/article-actions/article-actions";
 import { ArticleBranches } from "~/frontend/components/article-branches/article-branches";
+import { CurrentSection } from "~/frontend/components/current-section/current-section";
 import { ArticleHeader } from "~/frontend/components/article-header/article-header";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
@@ -172,6 +173,11 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
       */}
       <ReadingProgress />
       <Header />
+      {/*
+        いま読んでいる節の名前。画面上端に固定で出る (携帯のみ)。読む順としてヘッダーの
+        次に来るので、DOM でもここに置く。
+      */}
+      <CurrentSection headings={headings} />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">
           <ArticleHeader
