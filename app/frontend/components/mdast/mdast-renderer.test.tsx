@@ -607,6 +607,82 @@ describe("MdastRenderer: audio", () => {
 });
 
 /*
+ * 見出しの頭に置くリンク。アイコンは HeadingLink が描くので、ここで見られるのは
+ * 「置かれたか」「どこを指しているか」「余計なものが付いていないか」の 3 つ。
+ *
+ * Router の中で描くのは、HeadingLink が react-router の Link を返すため。Link は href を
+ * いまのパスからの絶対パスに直すので、行き先の照合も同じ形で書く。
+ */
+describe("MdastRenderer: 見出しへのリンク", () => {
+  const articlePath = "/articles/foo";
+
+  function renderInRouter(markdown: string): HTMLElement {
+    const router = createMemoryRouter(
+      [{ path: "/articles/:slug", element: <MdastRenderer node={md(markdown)} /> }],
+      { initialEntries: [articlePath] },
+    );
+    return render(<RouterProvider router={router} />).container;
+  }
+
+  /** 見出しの頭に置かれたリンク。 */
+  function headingLink(container: HTMLElement, selector: string): HTMLAnchorElement | null {
+    return container.querySelector<HTMLAnchorElement>(`${selector} > a.heading-link`);
+  }
+
+  it("h2 と h3 の頭に、その見出し自身を指すリンクを置く", () => {
+    const container = renderInRouter("## 節\n\n### 小節\n");
+
+    for (const tag of ["h2", "h3"]) {
+      const heading = container.querySelector(tag);
+      const link = headingLink(container, tag);
+      // 行き先は見出し自身。id は rehype-slug が振ったものをそのまま使う。
+      expect(link?.getAttribute("href")).toBe(`${articlePath}#${heading?.id}`);
+      // 頭に置く。見出しの字は後ろに残る。
+      expect(heading?.firstElementChild).toBe(link);
+    }
+  });
+
+  it("見出しの字を飲み込まない", () => {
+    const container = renderInRouter("## 節\n");
+    expect(container.querySelector("h2")?.textContent).toBe("節");
+  });
+
+  /*
+   * 包む形にすると a が入れ子になり、ブラウザの構文解析が兄弟に開く。サーバーの木と
+   * 食い違って hydration ごと落ちるので、ここは形で固定する。
+   */
+  it("リンクを含む見出しでも、a が入れ子にならない", () => {
+    const container = renderInRouter("## [外](https://example.com/) への道\n");
+    expect(headingLink(container, "h2")?.querySelector("a")).toBeNull();
+    expect(container.querySelector('h2 a[href="https://example.com/"]')).not.toBeNull();
+  });
+
+  it("読み上げにも焦点にも出さない", () => {
+    const container = renderInRouter("## 節\n");
+    const link = headingLink(container, "h2");
+    expect(link?.getAttribute("aria-hidden")).toBe("true");
+    expect(link?.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("h1 と h4 には置かない (目次が拾う深さに揃える)", () => {
+    const container = renderInRouter("# 表題\n\n#### 細目\n");
+    expect(headingLink(container, "h1")).toBeNull();
+    expect(headingLink(container, "h4")).toBeNull();
+  });
+
+  it("press-control は付けない (アイコンが押下で沈まない)", () => {
+    const container = renderInRouter("## 節\n");
+    expect(headingLink(container, "h2")?.className).not.toContain("press-control");
+  });
+
+  it("引用の中の見出しには置かない (目次に出ないものを押せるようにしない)", () => {
+    const container = renderInRouter("> ## 引用の中の節\n");
+    expect(container.querySelector("blockquote h2")).not.toBeNull();
+    expect(container.querySelector("blockquote a.heading-link")).toBeNull();
+  });
+});
+
+/*
  * 本文に差し込む目次 (携帯向け)。位置と、差し込まない場合の切り分けだけを見る。
  * 目次そのものの中身は inline-table-of-contents の側の関心事。
  */

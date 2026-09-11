@@ -247,6 +247,67 @@
 }
 
 /*
+ * 見出しの頭に置く、その見出し自身へのリンク (mdast-renderer.tsx の prependHeadingLinks)。
+ *
+ * 左に溝を空けてぶら下げる。1 行目だけ text-indent で溝のぶん戻すので、折り返した
+ * 2 行目以降も溝の右端から始まり、字の塊の左端が揃う。携帯では見出しがよく折り返すので、
+ * 揃わないと 2 行目がアイコンの下に潜って読みにくい。
+ *
+ * 溝の幅は rem で持つ。em にすると、アイコンを小さくしたぶん子の側の em が縮み、親に
+ * 入れた padding と幅が食い違う。h2 と h3 で同じ幅なのは、アイコンの大きさが深さに
+ * よらず同じだから (`##` と `###` のように字数で幅が変わらない)。
+ */
+.mdast-prose :is(h2, h3) {
+  --heading-link-gutter: 1.5rem;
+  padding-inline-start: var(--heading-link-gutter);
+  text-indent: calc(-1 * var(--heading-link-gutter));
+}
+
+.mdast-prose :is(h2, h3) > a.heading-link {
+  display: inline-block;
+  width: var(--heading-link-gutter);
+  /* 親から継いだ負の字下げを打ち消す。継いだままだとアイコンが溝の外へ出る。 */
+  text-indent: 0;
+  position: relative;
+  text-decoration: none;
+  /* 色は currentColor から作る。テーマを切り替えても地との関係が保たれる。 */
+  color: color-mix(in oklab, currentcolor 30%, transparent);
+  transition: color 0.15s ease;
+}
+
+.mdast-prose :is(h2, h3) > a.heading-link:hover {
+  color: var(--color-primary);
+}
+
+/*
+ * アイコンの大きさは見出しに連動させない。見出しが大きいほど印も大きくなると、
+ * `##` を出していたときと同じで本文より先に目に入る。
+ */
+.heading-link-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  /* 字の中心あたりに置く。baseline のままだと大文字の足元に沈む。 */
+  vertical-align: -0.1em;
+}
+
+/*
+ * 押せる範囲だけを広げる。アイコンが 15px しかないので、そのままでは指で狙えない。
+ * 右へは伸ばさない (見出しの字を選びたいだけの指が印を踏む)。
+ */
+.mdast-prose :is(h2, h3) > a.heading-link::after {
+  content: "";
+  position: absolute;
+  inset-block: -0.55rem;
+  inset-inline: -0.35rem 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdast-prose :is(h2, h3) > a.heading-link {
+    transition: none;
+  }
+}
+
+/*
  * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
