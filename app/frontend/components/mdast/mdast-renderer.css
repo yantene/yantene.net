@@ -269,6 +269,58 @@
 }
 
 /*
+ * 見出しの末尾に置く、その見出し自身へのリンク (mdast-renderer.tsx の appendHeadingLinks)。
+ *
+ * 頭ではなく末尾なのは、頭に置くとアイコンのぶんだけ見出しの字が本文より右へずれるため。
+ * 溝を空けて 1 行目を戻すと見出しの中では揃うが、今度は見出しの塊ごと本文からずれる。
+ * 末尾なら、1 行目も折り返した行も本文と同じ位置から始まる。
+ *
+ * 外側の余白へぶら下げても揃うが、ページの左右の余白が 24px しかないので、携帯では
+ * 15px のアイコンが画面の縁にへばりつく。
+ */
+.mdast-prose :is(h2, h3) > a.heading-link {
+  display: inline-block;
+  margin-inline-start: 0.45rem;
+  position: relative;
+  text-decoration: none;
+  /* 色は currentColor から作る。テーマを切り替えても地との関係が保たれる。 */
+  color: color-mix(in oklab, currentcolor 30%, transparent);
+  transition: color 0.15s ease;
+}
+
+.mdast-prose :is(h2, h3) > a.heading-link:hover {
+  color: var(--color-primary);
+}
+
+/*
+ * アイコンの大きさは見出しに連動させない。見出しが大きいほど印も大きくなると、
+ * `##` を出していたときと同じで本文より先に目に入る。
+ */
+.heading-link-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  /* 字の中心あたりに置く。baseline のままだと大文字の足元に沈む。 */
+  vertical-align: -0.1em;
+}
+
+/*
+ * 押せる範囲だけを広げる。アイコンが 15px しかないので、そのままでは指で狙えない。
+ * 左へは伸ばさない (見出しの字を選びたいだけの指が印を踏む)。行末の余りへ伸ばす。
+ */
+.mdast-prose :is(h2, h3) > a.heading-link::after {
+  content: "";
+  position: absolute;
+  inset-block: -0.55rem;
+  inset-inline: 0 -0.45rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdast-prose :is(h2, h3) > a.heading-link {
+    transition: none;
+  }
+}
+
+/*
  * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
