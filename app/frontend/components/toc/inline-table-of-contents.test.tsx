@@ -37,7 +37,7 @@ describe("InlineTableOfContents", () => {
     ]);
   });
 
-  it("h3 は拾わない (流れの中に置く目次で階層まで出すと本編の前に画面が埋まる)", () => {
+  it("h3 も並べる。字を下げて節の中だと分かるようにする", () => {
     const container = renderToc([
       section("a", "ひとつ"),
       subsection("a-1", "その中"),
@@ -45,14 +45,22 @@ describe("InlineTableOfContents", () => {
     ]);
     expect([...container.querySelectorAll("a")].map((link) => link.textContent)).toEqual([
       "ひとつ",
+      "その中",
       "ふたつ",
     ]);
+    // 字下げは h3 にだけ付く。
+    expect(
+      [...container.querySelectorAll("a")].map((link) =>
+        link.className.includes("inline-toc-link-sub"),
+      ),
+    ).toEqual([false, true, false]);
   });
 
   /*
    * 見出しの総数で数えると、h3 だけが多い記事で 1 項目の目次が出る。押せる場所が
    * 増えるだけで全体像を伝えないので、節の数で数える。
    */
+  /* 出し止めは節 (h2) の数で決める。h3 がいくつあっても節が 1 つなら出さない。 */
   it("節が 1 つなら、h3 がいくつあっても描かない", () => {
     const container = renderToc([
       section("a", "ひとつ"),
