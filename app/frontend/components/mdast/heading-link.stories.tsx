@@ -7,16 +7,16 @@ const meta: Meta<typeof HeadingLink> = {
   args: { anchor: "section" },
   decorators: [
     /*
-     * 本文の見出しの頭に置かれる前提の大きさと色なので、見出しの中に入れて見る。
-     * 溝へのぶら下げは mdast-prose 側の指定が持っている。
+     * 本文の見出しの末尾に置かれる前提の大きさと色なので、見出しの中に入れて見る。
+     * 末尾に置くのは、頭だと見出しの字が本文より右へずれるため。
      */
     (Story) => (
       <div className="mdast-prose prose max-w-none bg-base-100 p-6">
         <h2 id="section">
-          <Story />
           「よく読まれている」を、どう決めるか
+          <Story />
         </h2>
-        <p>本文。アイコンは見出しの左の溝にぶら下がり、字の左端は 1 行目も 2 行目も揃う。</p>
+        <p>本文。見出しの字は 1 行目も折り返した行も、この本文と同じ位置から始まる。</p>
       </div>
     ),
   ],

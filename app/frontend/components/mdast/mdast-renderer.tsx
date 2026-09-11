@@ -404,9 +404,16 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
 }
 
 /**
- * 見出しの頭に、その見出し自身へのリンクを差し込む。
+ * 見出しの末尾に、その見出し自身へのリンクを足す。
  *
  * 節の在り処を URL として持ち帰るためのもの。中身は HeadingLink が描く。
+ *
+ * **頭ではなく末尾に置く。** 頭に置くと、アイコンのぶんだけ見出しの字が本文より右へ
+ * ずれる。溝を空けて 1 行目を戻せば見出しの中では揃うが、今度は見出しの塊ごと本文から
+ * ずれる。末尾なら、1 行目も折り返した行も本文と同じ位置から始まる。
+ *
+ * 外側の余白へぶら下げる形でも揃うが、ページの左右の余白が 24px しかないので、携帯では
+ * 15px のアイコンが画面の縁にへばりつく (端から 1.6px)。
  *
  * **見出しを丸ごと包まない。** 包む形にすると、リンクや脚注を含む見出し
  * (`## [foo](...)` や `## 節[^1]`) で a が入れ子になる。HTML の構文解析は入れ子の a を
@@ -424,7 +431,7 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
  * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ理由)。足すのはこちらが
  * 見つけた見出しだけなので、本文の生 HTML からこの形を騙って書くことはできない。
  */
-function prependHeadingLinks(tree: HastRoot): void {
+function appendHeadingLinks(tree: HastRoot): void {
   for (const node of tree.children) {
     if (node.type !== "element") continue;
     if (!LINKED_HEADING_TAGS.has(node.tagName)) continue;
@@ -439,7 +446,7 @@ function prependHeadingLinks(tree: HastRoot): void {
       properties: { anchor: id },
       children: [],
     };
-    node.children = [link, ...node.children];
+    node.children = [...node.children, link];
   }
 }
 
@@ -502,7 +509,7 @@ export function MdastRenderer({
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
-    prependHeadingLinks(transformed);
+    appendHeadingLinks(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
