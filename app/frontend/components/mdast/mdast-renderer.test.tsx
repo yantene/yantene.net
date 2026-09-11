@@ -605,3 +605,82 @@ describe("MdastRenderer: audio", () => {
     expect(html).not.toContain("<audio");
   });
 });
+
+/*
+ * 見出しのパーマリンク。`##` の字は CSS が出すので、ここで見られるのは「置かれたか」
+ * 「どこを指しているか」「余計なものが付いていないか」の 3 つ。
+ *
+ * Router の中で描くのは、href が `#` 始まりで Anchor が Link に通すため (ページ内
+ * アンカーの describe と同じ理由)。Link は href をいまのパスからの絶対パスに直すので、
+ * 行き先の照合も同じ形で書く。
+ */
+describe("MdastRenderer: 見出しのパーマリンク", () => {
+  const articlePath = "/articles/foo";
+
+  function renderInRouter(markdown: string): HTMLElement {
+    const router = createMemoryRouter(
+      [{ path: "/articles/:slug", element: <MdastRenderer node={md(markdown)} /> }],
+      { initialEntries: [articlePath] },
+    );
+    return render(<RouterProvider router={router} />).container;
+  }
+
+  /** 見出しの頭に置かれたリンク。CSS が出す `##` はここには現れない。 */
+  function headingAnchor(container: HTMLElement, selector: string): HTMLAnchorElement | null {
+    return container.querySelector<HTMLAnchorElement>(`${selector} > a.heading-anchor`);
+  }
+
+  it("h2 と h3 の頭に、その見出し自身を指すリンクを置く", () => {
+    const container = renderInRouter("## 節\n\n### 小節\n");
+
+    for (const tag of ["h2", "h3"]) {
+      const heading = container.querySelector(tag);
+      const anchor = headingAnchor(container, tag);
+      // 行き先は見出し自身。id は rehype-slug が振ったものをそのまま使う。
+      expect(anchor?.getAttribute("href")).toBe(`${articlePath}#${heading?.id}`);
+      // 頭に置く。見出しの字は後ろに残る。
+      expect(heading?.firstElementChild).toBe(anchor);
+    }
+  });
+
+  it("見出しの字を飲み込まない (リンクは空のまま)", () => {
+    const container = renderInRouter("## 節\n");
+    expect(headingAnchor(container, "h2")?.textContent).toBe("");
+    expect(container.querySelector("h2")?.textContent).toBe("節");
+  });
+
+  /*
+   * 包む形にすると a が入れ子になり、ブラウザの構文解析が兄弟に開く。サーバーの木と
+   * 食い違って hydration ごと落ちるので、ここは形で固定する。
+   */
+  it("リンクを含む見出しでも、a が入れ子にならない", () => {
+    const container = renderInRouter("## [外](https://example.com/) への道\n");
+    const anchor = headingAnchor(container, "h2");
+    expect(anchor?.querySelector("a")).toBeNull();
+    expect(container.querySelector('h2 a[href="https://example.com/"]')).not.toBeNull();
+  });
+
+  it("読み上げにも焦点にも出さない", () => {
+    const container = renderInRouter("## 節\n");
+    const anchor = headingAnchor(container, "h2");
+    expect(anchor?.getAttribute("aria-hidden")).toBe("true");
+    expect(anchor?.getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("h1 と h4 には置かない (目次が拾う深さに揃える)", () => {
+    const container = renderInRouter("# 表題\n\n#### 細目\n");
+    expect(headingAnchor(container, "h1")).toBeNull();
+    expect(headingAnchor(container, "h4")).toBeNull();
+  });
+
+  it("press-control は付けない (`##` が押下で沈まない)", () => {
+    const container = renderInRouter("## 節\n");
+    expect(headingAnchor(container, "h2")?.className).not.toContain("press-control");
+  });
+
+  it("引用の中の見出しには置かない (目次に出ないものを押せるようにしない)", () => {
+    const container = renderInRouter("> ## 引用の中の節\n");
+    expect(container.querySelector("blockquote h2")).not.toBeNull();
+    expect(container.querySelector("blockquote a.heading-anchor")).toBeNull();
+  });
+});

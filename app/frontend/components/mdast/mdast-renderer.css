@@ -247,6 +247,54 @@
 }
 
 /*
+ * 見出しのパーマリンク。
+ *
+ * 字は CSS が出す。Markdown の原文の `##` は見出しの深さとして既に消費されて消えて
+ * いるので、ここで出しているのはその深さを字に戻したもの。書いた形と出る形が揃うので、
+ * 記事の構造がそのまま読める。
+ *
+ * 要素そのものは空のリンクで、見出しの頭に置かれている (mdast-renderer.tsx の
+ * prependHeadingAnchors)。見出しを丸ごと包まないのは、リンクや脚注を含む見出しで
+ * a が入れ子になるため。aria-hidden なので、この字が読み上げに出ることもない。
+ */
+.mdast-prose :is(h2, h3) > a.heading-anchor {
+  /*
+   * 指で押せる幅を持たせるため、字の後ろの空きは padding で取る (content の中に空白を
+   * 置くと、押せない隙間になる)。見出しの左端は動かさない。ぶら下げると、狭い画面では
+   * 画面の外に出る。
+   */
+  display: inline-block;
+  padding-right: 0.35em;
+  padding-block: 0.15em;
+  text-decoration: none;
+  /*
+   * 字は薄く置く。読むのは見出しであって `##` ではない。currentColor から作るので、
+   * テーマを切り替えても地との関係が保たれる。
+   */
+  color: color-mix(in oklab, currentcolor 28%, transparent);
+  transition: color 0.15s ease;
+}
+
+.mdast-prose :is(h2, h3) > a.heading-anchor:hover {
+  color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdast-prose :is(h2, h3) > a.heading-anchor {
+    transition: none;
+  }
+}
+
+/* 深さを字に戻す。 */
+.mdast-prose h2 > a.heading-anchor::before {
+  content: "##";
+}
+
+.mdast-prose h3 > a.heading-anchor::before {
+  content: "###";
+}
+
+/*
  * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
