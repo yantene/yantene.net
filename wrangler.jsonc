@@ -9,16 +9,19 @@
   },
   "vars": {
     "APP_ENV": "development",
-    // コンテンツ正本をどちらから読むか (ADR 0034)。無い値・知らない値なら refresh が
-    // throw する (fail-loud)。secret を置いたら "artifacts" に切り替える (#401)。
+    // どちらのコンテンツリポジトリを読むか (ADR 0034)。無い値・知らない値なら refresh が
+    // throw する (fail-loud)。手元には Artifacts の secret を置かないので github のまま
+    // (読むには .dev.vars に ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN が要る)。
     "CONTENT_SOURCE": "github",
-    // Cloudflare Artifacts (これからの正本) の参照。アカウント ID と API トークン
-    // (Artifacts > Read) は secret で与える: ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
+    // Cloudflare Artifacts (これからのコンテンツリポジトリ) の参照。アカウント ID と
+    // API トークン (Artifacts > Read) は secret で与える:
+    // ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
     "ARTIFACTS_NAMESPACE": "yantene",
     // 手元から production のリポジトリを読まないよう staging 側を指す。
     "ARTIFACTS_REPO": "yantene-staging",
     "ARTIFACTS_BRANCH": "main",
-    // GitHub リポジトリ (いまの正本) の参照。GITHUB_TOKEN は secret で与える。
+    // GitHub リポジトリ (いまのコンテンツリポジトリ) の参照。
+    // GITHUB_TOKEN は secret で与える。
     "GITHUB_OWNER": "yantene",
     "GITHUB_REPO": "notes",
     "GITHUB_BRANCH": "main",
@@ -63,9 +66,7 @@
       ],
       "vars": {
         "APP_ENV": "staging",
-        // secret (ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN) を置いたら
-        // "artifacts" に切り替える (#401)。
-        "CONTENT_SOURCE": "github",
+        "CONTENT_SOURCE": "artifacts",
         "ARTIFACTS_NAMESPACE": "yantene",
         // 環境ごとに別のリポジトリを読む。push の購読は 1 リポジトリに 1 つしか
         // 張れないので、同じリポジトリを両環境から自動同期できない。
@@ -102,9 +103,10 @@
         "consumers": [
           {
             "queue": "yantene-staging-content-events",
-            // **同時に走らせない。** refresh は「正本のいまの姿」を D1 / R2 に写す処理なので、
-            // 並行させると先に読んだ側が後から書き、古い姿で固まる。直列なら 2 回目は
-            // 1 回目が書き終わってから最新を読み直すので、最後の push が必ず反映される。
+            // **同時に走らせない。** refresh は「コンテンツリポジトリのいまの姿」を
+            // D1 / R2 に写す処理なので、並行させると先に読んだ側が後から書き、古い姿で
+            // 固まる。直列なら 2 回目は 1 回目が書き終わってから最新を読み直すので、
+            // 最後の push が必ず反映される。
             "max_concurrency": 1,
             "max_batch_size": 10,
             "max_batch_timeout": 5,
@@ -160,9 +162,10 @@
         "consumers": [
           {
             "queue": "yantene-production-content-events",
-            // **同時に走らせない。** refresh は「正本のいまの姿」を D1 / R2 に写す処理なので、
-            // 並行させると先に読んだ側が後から書き、古い姿で固まる。直列なら 2 回目は
-            // 1 回目が書き終わってから最新を読み直すので、最後の push が必ず反映される。
+            // **同時に走らせない。** refresh は「コンテンツリポジトリのいまの姿」を
+            // D1 / R2 に写す処理なので、並行させると先に読んだ側が後から書き、古い姿で
+            // 固まる。直列なら 2 回目は 1 回目が書き終わってから最新を読み直すので、
+            // 最後の push が必ず反映される。
             "max_concurrency": 1,
             "max_batch_size": 10,
             "max_batch_timeout": 5,
