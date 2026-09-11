@@ -3,8 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { TocHeadingsContext } from "./toc-context";
 
-/** これ未満の見出し数なら目次を出さない (右カラムの目次と揃える)。 */
-const MIN_HEADINGS = 2;
+/**
+ * これ未満の節数なら目次を出さない。
+ *
+ * 数えるのは h2 だけ。右カラムの目次は見出しの総数で数えるが、こちらは h3 を出さない
+ * ので、同じ数え方にすると「h2 が 1 つ + h3 が 3 つ」の記事で 1 項目だけの目次が出る。
+ * 1 項目の目次は、押せる場所が増えるだけで全体像を伝えない。
+ */
+const MIN_SECTIONS = 2;
 
 /**
  * 本文に差し込む目次。最初の h2 の直前に置かれる (mdast-renderer.tsx が差し込む)。
@@ -23,10 +29,8 @@ export function InlineTableOfContents(): React.JSX.Element | null {
   const { t } = useTranslation();
   const headings = use(TocHeadingsContext);
 
-  if (headings.length < MIN_HEADINGS) return null;
-
   const sections = headings.filter((heading) => heading.level === 2);
-  if (sections.length === 0) return null;
+  if (sections.length < MIN_SECTIONS) return null;
 
   return (
     <details className="inline-toc lg:hidden">

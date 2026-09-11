@@ -40,11 +40,16 @@ export const Default: Story = {
   ],
 };
 
-/** h3 は拾わない。流れの中に置く目次で階層まで出すと、本編の前に画面が埋まる。 */
-export const OnlyOneSection: Story = {
+/**
+ * 節が 1 つしかない記事では描かない。h3 がいくつあっても同じで、1 項目の目次は
+ * 押せる場所が増えるだけで全体像を伝えない。
+ */
+export const SingleSection: Story = {
   decorators: [
     (Story) => (
-      <TocHeadingsContext value={headings.slice(0, 1)}>
+      <TocHeadingsContext
+        value={headings.filter((heading) => heading.level === 3 || heading.id === "intro")}
+      >
         <Story />
       </TocHeadingsContext>
     ),
