@@ -1,6 +1,7 @@
 import { use } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { InlineTocRegistry } from "./inline-toc-registry";
 import { TocHeadingsContext } from "./toc-context";
 
 /**
@@ -31,13 +32,18 @@ const MIN_SECTIONS = 2;
 export function InlineTableOfContents(): React.JSX.Element | null {
   const { t } = useTranslation();
   const headings = use(TocHeadingsContext);
+  /*
+   * 自分の要素を預ける。節名バーが「ここを通り過ぎたか」を見張るのに使う。描かれなければ
+   * 預けるものが無いので、バーも出ない。
+   */
+  const register = use(InlineTocRegistry);
 
   // 出し止めは節 (h2) の数で決める。並べるのは h3 を含む全部。
   const sectionCount = headings.filter((heading) => heading.level === 2).length;
   if (sectionCount < MIN_SECTIONS) return null;
 
   return (
-    <nav className="inline-toc lg:hidden" aria-label={t("articles.toc")}>
+    <nav className="inline-toc lg:hidden" aria-label={t("articles.toc")} ref={register}>
       {/* 見出しを添える。本文の流れに置くので、字の並びだけでは何の一覧か読めない。 */}
       <p className="inline-toc-heading">{t("articles.toc")}</p>
       <ul className="inline-toc-list">

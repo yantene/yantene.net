@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { data, Link, redirect } from "react-router";
 import type { Route } from "./+types/articles.$slug";
@@ -15,6 +16,7 @@ import { ArticleActions } from "~/frontend/components/article-actions/article-ac
 import { ArticleBranches } from "~/frontend/components/article-branches/article-branches";
 import { CurrentSection } from "~/frontend/components/current-section/current-section";
 import { ArticleHeader } from "~/frontend/components/article-header/article-header";
+import { InlineTocRegistry } from "~/frontend/components/toc/inline-toc-registry";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
@@ -146,6 +148,16 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
   const { t } = useTranslation();
   const { copyright } = loaderData;
 
+  /*
+   * 差し込み目次の要素を受け取り、節名バーへ渡す。バーは「目次を通り過ぎたら出る」作りで、
+   * 目次は本文の中 (MdastRenderer が差し込む) に居る。両方を描くのはここだけなので、
+   * 受け渡しの持ち主もここになる。
+   *
+   * 見つからなかったときの早期 return より前で呼ぶこと。フックは常に同じ順で呼ぶ必要が
+   * ある (記事の有無で数が変わってはいけない)。
+   */
+  const [tocElement, setTocElement] = useState<HTMLElement | null>(null);
+
   if (!loaderData.found) {
     return (
       <AppLayout>
@@ -177,7 +189,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
         いま読んでいる節の名前。画面上端に固定で出る (携帯のみ)。読む順としてヘッダーの
         次に来るので、DOM でもここに置く。
       */}
-      <CurrentSection headings={headings} />
+      <CurrentSection headings={headings} tocElement={tocElement} />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">
           <ArticleHeader
@@ -203,13 +215,15 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             headings は本文に差し込む目次のため (右カラムに目次を出せない幅の代わり)。
             差し込み先を決められるのは hast を組む側だけなので、ここから渡す。
           */}
-          <MdastRenderer
-            node={mdast}
-            linkCards={linkCards}
-            headings={headings}
-            className="e-content"
-            siteOrigin={origin}
-          />
+          <InlineTocRegistry value={setTocElement}>
+            <MdastRenderer
+              node={mdast}
+              linkCards={linkCards}
+              headings={headings}
+              className="e-content"
+              siteOrigin={origin}
+            />
+          </InlineTocRegistry>
           <ArticleActions
             placement="bottom"
             reactions={reactions.reactions}

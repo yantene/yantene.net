@@ -1,4 +1,5 @@
 import { act } from "@testing-library/react";
+import { useState } from "react";
 import { createRoutesStub } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CurrentSection } from "./current-section";
@@ -121,8 +122,13 @@ afterEach(() => {
 });
 
 function renderBar(list: readonly TocHeading[] = headings): HTMLElement {
+  // 差し込み目次の要素は、本番ではページが文脈越しに受け取って渡す。ここでは DOM から取る。
+  const toc = document.querySelector<HTMLElement>(".inline-toc");
   const Stub = createRoutesStub([
-    { path: "/articles/:slug", Component: () => <CurrentSection headings={list} /> },
+    {
+      path: "/articles/:slug",
+      Component: () => <CurrentSection headings={list} tocElement={toc} />,
+    },
   ]);
   return renderWithI18n(<Stub initialEntries={["/articles/foo"]} />, { router: false }).container;
 }
@@ -208,6 +214,42 @@ describe("CurrentSection", () => {
     // 見張る先が無いので、そもそも見張り手が作られない。
     expect(observers.some((o) => o.rootMargin === "-64px 0px 0px 0px")).toBe(false);
     expect(shownSection(container)).toBeNull();
+  });
+
+  /*
+   * 目次のある記事から無い記事へ移ったときに「通り過ぎた」が残ると、目次が無いのに
+   * バーだけが出る。見張る先が入れ替わったところで倒れることを固定する。
+   */
+  it("見張る先が入れ替わったら、通り過ぎた状態を持ち越さない", () => {
+    function Harness(): React.JSX.Element {
+      const [toc, setToc] = useState<HTMLElement | null>(() =>
+        document.querySelector<HTMLElement>(".inline-toc"),
+      );
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setToc(null);
+            }}
+          >
+            目次を外す
+          </button>
+          <CurrentSection headings={headings} tocElement={toc} />
+        </>
+      );
+    }
+
+    const { container } = renderWithI18n(<Harness />);
+    setPassedToc(true);
+    setBand(["intro"]);
+    expect(container.querySelector(".current-section-name")).not.toBeNull();
+
+    // 目次が無くなった (= 目次の出ない記事へ移った) ことにする。
+    act(() => {
+      container.querySelector<HTMLButtonElement>("button")?.click();
+    });
+    expect(container.querySelector(".current-section-name")).toBeNull();
   });
 
   it("見出しが無ければ出ない", () => {
