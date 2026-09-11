@@ -13,6 +13,7 @@ import { isArticleAssetSrc } from "./audio";
 import { CodeBlock } from "./code-block";
 import { normalizeEmbedSrc } from "./embed";
 import { DEFAULT_EMBED_TITLE, EmbedFrame } from "./embed-frame";
+import { HeadingLink } from "./heading-link";
 import { isExternalHref } from "./href";
 import { LightboxImage } from "./lightbox-image";
 import { LINK_CARD_TAG, LinkCardsContext } from "./link-card-context";
@@ -32,6 +33,17 @@ const MERMAID_TAG = "mermaid-diagram";
 
 /** Mermaid のコードブロックを表すクラス。```mermaid のフェンスから付く。 */
 const MERMAID_CLASS = "language-mermaid";
+
+/** 見出しの頭に置くリンクを表す、本文には現れない要素名。 */
+const HEADING_LINK_TAG = "heading-link";
+
+/**
+ * リンクを付ける見出し。
+ *
+ * 目次が拾うのと同じ h2 / h3 に揃える (toc-headings.ts)。h4 以降まで付けると、節の
+ * 切れ目ではなく段落の見出しにまでアイコンが並んで地の文が読みにくい。
+ */
+const LINKED_HEADING_TAGS: ReadonlySet<string> = new Set(["h2", "h3"]);
 
 /*
  * sanitize に iframe を通す。本文には生の iframe (YouTube の埋め込み) が書かれており、
@@ -391,6 +403,46 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
   });
 }
 
+/**
+ * 見出しの頭に、その見出し自身へのリンクを差し込む。
+ *
+ * 節の在り処を URL として持ち帰るためのもの。中身は HeadingLink が描く。
+ *
+ * **見出しを丸ごと包まない。** 包む形にすると、リンクや脚注を含む見出し
+ * (`## [foo](...)` や `## 節[^1]`) で a が入れ子になる。HTML の構文解析は入れ子の a を
+ * 兄弟に開いてしまうので、サーバーが組んだ木とブラウザが読んだ木が食い違い、
+ * hydration ごと落ちる。頭に 1 つ足すだけなら、中身が何であっても形は変わらない。
+ *
+ * **applyElementTransforms より後に呼ぶこと。** 先に足すと transformAnchor がこの
+ * リンクにも press-control を足し、アイコンが押下のたびに沈む。本文のリンクに手応えを
+ * 与えるための仕掛けで、行の頭の印に当てるものではない。
+ *
+ * 見るのは根の直下だけ。目次の抽出 (toc-headings.ts) が同じところしか見ておらず、
+ * 引用やリストの中の見出しに独りでにリンクが付くと、目次に出ないものだけが押せる
+ * という食い違いになる。
+ *
+ * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ理由)。足すのはこちらが
+ * 見つけた見出しだけなので、本文の生 HTML からこの形を騙って書くことはできない。
+ */
+function prependHeadingLinks(tree: HastRoot): void {
+  for (const node of tree.children) {
+    if (node.type !== "element") continue;
+    if (!LINKED_HEADING_TAGS.has(node.tagName)) continue;
+
+    const { id } = node.properties;
+    // id の無い見出し (rehype-slug は字を持たない見出しに振らない) は行き先が無い。
+    if (typeof id !== "string" || id === "") continue;
+
+    const link: Element = {
+      type: "element",
+      tagName: HEADING_LINK_TAG,
+      properties: { anchor: id },
+      children: [],
+    };
+    node.children = [link, ...node.children];
+  }
+}
+
 export interface MdastRendererProps {
   /** レンダリング対象の MDAST (Markdown AST) ルート。 */
   readonly node: MdastRoot;
@@ -450,6 +502,7 @@ export function MdastRenderer({
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
+    prependHeadingLinks(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
@@ -463,6 +516,7 @@ export function MdastRenderer({
         [LINK_CARD_TAG]: LinkCardSlot,
         [ALERT_TAG_NAME]: Alert,
         [MERMAID_TAG]: MermaidDiagram,
+        [HEADING_LINK_TAG]: HeadingLink,
       },
     }) as React.JSX.Element;
   }, [node, transformImageUrl, cardsByUrl, siteOrigin]);
