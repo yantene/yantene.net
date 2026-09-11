@@ -1,0 +1,73 @@
+import { createRoutesStub } from "react-router";
+import { describe, expect, it } from "vitest";
+import { InlineTableOfContents } from "./inline-table-of-contents";
+import { TocHeadingsContext } from "./toc-context";
+import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n();
+
+/** 見出しの列を与えて描く。Link を使うので Router の中で。 */
+function renderToc(headings: readonly TocHeading[]): HTMLElement {
+  const Stub = createRoutesStub([
+    {
+      path: "/articles/:slug",
+      Component: () => (
+        <TocHeadingsContext value={headings}>
+          <InlineTableOfContents />
+        </TocHeadingsContext>
+      ),
+    },
+  ]);
+  return renderWithI18n(<Stub initialEntries={["/articles/foo"]} />, { router: false }).container;
+}
+
+const section = (id: string, text: string): TocHeading => ({ id, text, level: 2 });
+const subsection = (id: string, text: string): TocHeading => ({ id, text, level: 3 });
+
+describe("InlineTableOfContents", () => {
+  it("節を並べる", () => {
+    const container = renderToc([section("a", "ひとつ"), section("b", "ふたつ")]);
+    const links = [...container.querySelectorAll("a")];
+    expect(links.map((link) => link.textContent)).toEqual(["ひとつ", "ふたつ"]);
+    // Link がいまのパスからの絶対パスに直す。行き先は本文の見出しの id。
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/articles/foo#a",
+      "/articles/foo#b",
+    ]);
+  });
+
+  it("h3 は拾わない (流れの中に置く目次で階層まで出すと本編の前に画面が埋まる)", () => {
+    const container = renderToc([
+      section("a", "ひとつ"),
+      subsection("a-1", "その中"),
+      section("b", "ふたつ"),
+    ]);
+    expect([...container.querySelectorAll("a")].map((link) => link.textContent)).toEqual([
+      "ひとつ",
+      "ふたつ",
+    ]);
+  });
+
+  /*
+   * 見出しの総数で数えると、h3 だけが多い記事で 1 項目の目次が出る。押せる場所が
+   * 増えるだけで全体像を伝えないので、節の数で数える。
+   */
+  it("節が 1 つなら、h3 がいくつあっても描かない", () => {
+    const container = renderToc([
+      section("a", "ひとつ"),
+      subsection("a-1", "その中"),
+      subsection("a-2", "その次"),
+    ]);
+    expect(container.querySelector("details")).toBeNull();
+  });
+
+  it("見出しが無ければ描かない", () => {
+    expect(renderToc([]).querySelector("details")).toBeNull();
+  });
+
+  it("既定では畳んである", () => {
+    const container = renderToc([section("a", "ひとつ"), section("b", "ふたつ")]);
+    expect(container.querySelector("details")?.hasAttribute("open")).toBe(false);
+  });
+});
