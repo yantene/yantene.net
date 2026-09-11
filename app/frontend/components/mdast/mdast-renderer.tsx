@@ -20,13 +20,19 @@ import { LINK_CARD_TAG, LinkCardsContext } from "./link-card-context";
 import { LinkCardSlot } from "./link-card-slot";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import { MermaidDiagram } from "./mermaid-diagram";
+import { InlineTableOfContents } from "~/frontend/components/toc/inline-table-of-contents";
+import { TOC_TAG, TocHeadingsContext } from "~/frontend/components/toc/toc-context";
 import type { Element, ElementContent, Root as HastRoot, RootContent } from "hast";
 import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
+import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import { ALERT_TAG_NAME } from "~/backend/services/article-content-parser";
 import { withLowercaseScheme } from "~/lib/http-url";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
+
+/** 見出しを渡さなかったときの既定値。毎回新しい配列を作ると文脈が無駄に揺れる。 */
+const EMPTY_HEADINGS: readonly TocHeading[] = [];
 
 /** 図に差し替えるコードブロックを包む、本文には現れない要素名。 */
 const MERMAID_TAG = "mermaid-diagram";
@@ -404,6 +410,32 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
 }
 
 /**
+ * 本文に目次の差し込み口を空ける。置くのは最初の h2 の直前。
+ *
+ * リード文 → 目次 → 本編、という順になる。本文の頭に置くと、読み始める前に目次を
+ * 読ませることになり、書き出しの一行が目次の下に隠れる。
+ *
+ * h2 が 1 つも無ければ何もしない。差し込み先が無いというだけでなく、節に割れていない
+ * 記事に目次を出しても指せるものが無い。h3 だけで書かれた記事もここでは出ないが、
+ * それは目次の要る長さの記事が h2 を使わずに書かれたということで、直すのは本文の側。
+ *
+ * 見るのは根の直下だけ。引用やリストの中の h2 を数えると、目次が指せない位置
+ * (toc-headings.ts が拾わない見出し) に差し込み口が空く。
+ *
+ * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ)。TOC_TAG を allowlist に
+ * 足さずに済むので、本文の生 HTML からこの要素を騙って書くことができない。
+ */
+function insertInlineToc(tree: HastRoot): void {
+  const index = tree.children.findIndex(
+    (child) => child.type === "element" && child.tagName === "h2",
+  );
+  if (index < 0) return;
+
+  const slot: Element = { type: "element", tagName: TOC_TAG, properties: {}, children: [] };
+  tree.children = tree.children.toSpliced(index, 0, slot);
+}
+
+/**
  * 見出しの末尾に、その見出し自身へのリンクを足す。
  *
  * 節の在り処を URL として持ち帰るためのもの。中身は HeadingLink が描く。
@@ -468,6 +500,17 @@ export interface MdastRendererProps {
    */
   readonly linkCards?: LinkCardMap;
   /**
+   * 本文に差し込む目次の見出し (サーバー側で抽出したもの)。
+   *
+   * 渡さなければ差し込まない。右カラムに目次を出せる幅では、本文の中にもう 1 つ置く
+   * 必要が無いので、出し分けは CSS が持つ (inline-table-of-contents.css)。
+   *
+   * リンクカードと同じく、hast に運べるのは印だけなので中身は文脈に載せる。描画の
+   * 途中に React の要素を差し込むには hast の段で位置を決めるしかなく、その位置を
+   * 知っているのはここだけ。
+   */
+  readonly headings?: readonly TocHeading[];
+  /**
    * このサイトの出どころ (`https://yantene.net` 等)。
    *
    * 本文に絶対 URL で書かれた自分のサイトへのリンクを、内部として扱うために使う。
@@ -485,9 +528,17 @@ export function MdastRenderer({
   transformImageUrl,
   className,
   linkCards,
+  headings,
   siteOrigin,
 }: MdastRendererProps): React.JSX.Element {
   const cardsByUrl = useMemo(() => new Map(Object.entries(linkCards ?? {})), [linkCards]);
+
+  /*
+   * 差し込むかどうかだけを取り出しておく。見出しの列そのものを木の組み直しの依存に
+   * すると、loader が毎回作り直す配列で本文が丸ごと組み直される。中身は文脈で渡すので、
+   * 木のほうが知る必要があるのは「差し込み口を空けるか」の一点しかない。
+   */
+  const hasToc = (headings?.length ?? 0) > 0;
 
   const content = useMemo(() => {
     // カードにするのは、中身が揃っている URL の段落だけ。表に無ければ素のリンクのまま
@@ -510,6 +561,11 @@ export function MdastRenderer({
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
     appendHeadingLinks(transformed);
+    /*
+     * 差し込み口は見出しにリンクを足した後に空ける。どちらも根の直下しか見ないので順に
+     * 依存は無いが、目次の印を数えないで済むぶん、この順のほうが読みやすい。
+     */
+    if (hasToc) insertInlineToc(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
@@ -523,14 +579,17 @@ export function MdastRenderer({
         [LINK_CARD_TAG]: LinkCardSlot,
         [ALERT_TAG_NAME]: Alert,
         [MERMAID_TAG]: MermaidDiagram,
+        [TOC_TAG]: InlineTableOfContents,
         [HEADING_LINK_TAG]: HeadingLink,
       },
     }) as React.JSX.Element;
-  }, [node, transformImageUrl, cardsByUrl, siteOrigin]);
+  }, [node, transformImageUrl, cardsByUrl, hasToc, siteOrigin]);
 
   return (
     <article className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>
-      <LinkCardsContext value={cardsByUrl}>{content}</LinkCardsContext>
+      <LinkCardsContext value={cardsByUrl}>
+        <TocHeadingsContext value={headings ?? EMPTY_HEADINGS}>{content}</TocHeadingsContext>
+      </LinkCardsContext>
     </article>
   );
 }

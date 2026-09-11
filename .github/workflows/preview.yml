@@ -1,0 +1,117 @@
+# ブランチから staging に preview を上げる。
+#
+# deploy-preview.yml が走るのは PR のときだけで、alias も pr-<番号> に固定されている。
+# そのため「複数の PR を合わせた姿を見たい」「まだ PR にしていないブランチを触りたい」
+# ときに、確認のためだけの PR を立てることになっていた。CI が 11 ジョブ走り、PR 一覧に
+# 残り、中身を表さない alias が付く。
+#
+# 起動の口を 2 つ持たせてある。
+#
+# - `preview/<名前>` に push する: そのまま上がる。alias は `<名前>` になる。
+#   push で起動するワークフローは押したブランチのファイルが走るので、この仕掛け自体が
+#   main に入っていなくても動く
+# - 画面から起動する (workflow_dispatch): ブランチ名を preview/ に変えたくないときや、
+#   alias を別に付けたいとき。**既定ブランチにこのファイルが無いと口が出ない**
+#
+# **staging.yantene.net が出すものは動かない。** 打つのは versions upload だけで、
+# 配信を切り替える versions deploy は打たない。
+name: Preview
+
+on:
+  push:
+    branches:
+      - "preview/**"
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: "Preview alias (英小文字・数字・ハイフン。URL の頭に出る)"
+        required: true
+        type: string
+
+# 同じ alias を立て続けに上げたときは、後から押したほうだけを通す。
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.alias || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # alias は URL のホスト名の一部になる。wrangler 側でも弾かれるが、弾かれ方が
+      # 分かりにくいので、読める形で先に止める。
+      #
+      # push から来たときはブランチ名の preview/ から後ろを使う。スラッシュを含む名前
+      # (preview/foo/bar) はホスト名に使えないので、ここで落として名付け直させる。
+      - name: Resolve alias
+        id: alias
+        env:
+          INPUT_ALIAS: ${{ inputs.alias }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "$INPUT_ALIAS" ]; then
+            ALIAS="$INPUT_ALIAS"
+          else
+            ALIAS="${REF_NAME#preview/}"
+          fi
+
+          if [[ ! "$ALIAS" =~ ^[a-z0-9][a-z0-9-]{0,26}[a-z0-9]$ ]]; then
+            echo "alias に使えるのは英小文字・数字・ハイフンで、2〜28 文字。"
+            echo "先頭と末尾はハイフン以外にすること。"
+            echo "受け取った値: $ALIAS"
+            exit 1
+          fi
+          echo "value=$ALIAS" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup
+
+      - name: Build
+        run: CLOUDFLARE_ENV=staging pnpm run build
+
+      # migration は当てない。当てる先は staging の共有 DB で、確認のために上げた版の
+      # 都合でスキーマを動かすと staging.yantene.net を見ている側に影響する。
+      # migration を含むブランチは今までどおり PR の deploy-preview.yml に任せること。
+      - name: Upload preview version
+        id: preview
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: versions upload --env staging --preview-alias ${{ steps.alias.outputs.value }}
+
+      # 起動した本人がログを開かずに URL を読めるように、ジョブの要約に出す。
+      # PR が無いのでコメントの貼り先が無い。
+      - name: Summarize
+        if: always()
+        env:
+          WRANGLER_OUTPUT: ${{ steps.preview.outputs.command-output }}
+          ALIAS: ${{ steps.alias.outputs.value }}
+        run: |
+          URL=$(printf '%s' "$WRANGLER_OUTPUT" \
+            | grep -oE 'Version Preview Alias URL:[[:space:]]+https://[^[:space:]]+' \
+            | grep -oE 'https://.*' | head -1)
+          {
+            echo "## Preview"
+            echo
+            echo "- ref: \`${{ github.ref_name }}\`"
+            echo "- alias: \`$ALIAS\`"
+            if [ -n "$URL" ]; then
+              echo "- URL: $URL"
+            else
+              echo "- URL: 取れなかった (下のログを見ること)"
+            fi
+            echo
+            echo "<details><summary>Wrangler Output</summary>"
+            echo
+            echo '```'
+            printf '%s\n' "$WRANGLER_OUTPUT"
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"

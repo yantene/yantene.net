@@ -1,0 +1,73 @@
+/*
+ * 記事をどこまで読んだかを示す、画面上端の細い帯。
+ *
+ * 出すのは携帯だけにする。PC には右カラムの目次と scroll-spy があり、いま読んでいる
+ * 節が名前で分かる。同じことを二度言う必要はない。
+ *
+ * 進み具合は CSS の scroll-driven animation が持つ。JS でスクロール量を読んで幅に流す
+ * のが世間の書き方だが、規約 (architecture.md) が連続値を `style` 属性へ流すことを
+ * 禁じているため採れない。scroll-driven animation なら JS もインライン style も要らず、
+ * 進行がコンポジタ側で閉じるのでスクロールの手触りにも触らない。
+ *
+ * 動きを減らす設定でも出したままにする。ここで動くのは読み手が自分で起こしたスクロール
+ * そのものであって、こちらが勝手に始める動きではない。止めると位置が分からなくなる
+ * だけで、得るものが無い。
+ */
+
+.reading-progress {
+  /*
+   * 既定は出さない。scroll-driven animation の無いブラウザで `animation-timeline` が
+   * 無視されると、時間の指定を持たない `both` の指定が終端の姿 — 満タンの帯 — で
+   * 固まってしまう。読み終えていないのに読み終えたと言う帯が出るくらいなら、何も
+   * 出ないほうがよい。下の @supports が、進み具合を出せると分かったときだけ開ける。
+   */
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  /* 右カラムの目次が現れる幅 (Tailwind の lg) より狭いときだけ。 */
+  @media (width < 64rem) {
+    .reading-progress {
+      display: block;
+      position: fixed;
+      inset-inline: 0;
+      top: 0;
+      /*
+       * sticky ヘッダー (z-50) より手前、遷移中の帯 (z-100) より奥。遷移が始まったら
+       * あちらが上から覆うので、線が 2 本並ぶことがない。読んだ量を指す帯は、遷移が
+       * 終わって新しいページが出るまで意味を持たないので、隠れて困らない。
+       */
+      z-index: 60;
+      height: 2px;
+      /* 帯の下にあるものを押せなくしない。 */
+      pointer-events: none;
+    }
+
+    .reading-progress-bar {
+      display: block;
+      height: 100%;
+      background: var(--color-primary);
+      /* 左端を軸に伸ばす。width を動かすとレイアウトが毎フレーム走る。 */
+      transform: scaleX(0);
+      transform-origin: left center;
+      animation: reading-progress-fill linear both;
+      /*
+       * 文書そのもののスクロールに繋ぐ。記事本文だけを測る view-timeline も書けるが、
+       * 帯は本文の子孫ではないので timeline-scope を共通の祖先に置く必要があり、
+       * 対応の幅がもう一段狭くなる。末尾の関連記事とフッターのぶんだけ早く満ちる
+       * ずれは、2px の帯が伝える粗さの中に収まる。
+       */
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+
+@keyframes reading-progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}

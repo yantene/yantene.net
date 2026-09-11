@@ -31,7 +31,10 @@
 @import "./components/mdast/embed-frame.css";
 @import "./components/mdast/lightbox-image.css";
 @import "./components/mdast/mdast-renderer.css";
+@import "./components/toc/inline-table-of-contents.css";
+@import "./components/current-section/current-section.css";
 @import "./components/navigation-progress/navigation-progress.css";
+@import "./components/reading-progress/reading-progress.css";
 @import "./components/article-actions/article-actions.css";
 @import "./components/webmention/webmention-list.css";
 @import "./components/article-header/article-header.css";
@@ -127,5 +130,24 @@
     text-rendering: optimizeLegibility;
     /* スクロールバー領域を常に確保し、ページ間で中央寄せが左右にズレないようにする。 */
     scrollbar-gutter: stable;
+  }
+
+  /*
+   * 見出しのパーマリンクや目次でページ内を移るとき、飛ぶのではなく滑らせる。
+   *
+   * どこからどこへ移ったのかが見えるようにするためのもの。いきなり別の場所が映ると、
+   * 移ったのか別のページに来たのかが読み手には分からない。
+   *
+   * **html に据え置きにはしない。** `<ScrollRestoration>` はページ遷移でも戻る操作でも
+   * window.scrollTo を呼ぶので、据え置きにするとそちらまで滑る (lib/smooth-hash-scroll.ts)。
+   * 印が立つのは、ページの中を指すリンクが押されてから滑り終えるまでの間だけ。
+   *
+   * 動きを減らす設定では素の飛び方に戻す。ここで動くのは読み手が起こしたものだが、
+   * 画面いっぱいが流れる動きなので、酔いを訴える向きには重い。
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-smooth-scroll] {
+      scroll-behavior: smooth;
+    }
   }
 }
