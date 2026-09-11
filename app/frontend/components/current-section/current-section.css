@@ -92,6 +92,13 @@
     color: color-mix(in oklab, currentcolor 65%, transparent);
   }
 
+  /* h3 は字を下げ、少し小さくして節の中だと分かるようにする (差し込み目次と揃える)。 */
+  .current-section-link-sub {
+    padding-left: 2.5rem;
+    font-size: 0.8125rem;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
+  }
+
   .current-section-link-active {
     color: var(--color-primary);
     font-weight: 700;
