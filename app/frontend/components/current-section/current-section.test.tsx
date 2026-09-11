@@ -18,7 +18,7 @@ const headings: TocHeading[] = [
  * のは「どの交差の組み合わせで何が出るか」なので、交差をこちらから起こせる代役に置き換える。
  *
  * 見張り手は 2 つあり、rootMargin で見分ける。現在地 (use-active-heading) は上部 20% の帯、
- * 本文に入ったか (use-entered-body) はヘッダーの下端。
+ * 差し込み目次を通り過ぎたか (use-scrolled-past) はヘッダーの下端。
  */
 interface FakeObserver {
   readonly rootMargin: string;
@@ -55,8 +55,8 @@ function setBand(activeIds: readonly string[]): void {
   });
 }
 
-/** 本文に入ったかの見張り手に「最初の節を通り過ぎた / まだ手前」と伝える。 */
-function setPassedFirstSection(passed: boolean): void {
+/** 通り過ぎたかの見張り手に「差し込み目次を通り過ぎた / まだ手前」と伝える。 */
+function setPassedToc(passed: boolean): void {
   const observer = observerFor("-64px 0px 0px 0px");
   act(() => {
     observer.callback(
@@ -102,7 +102,12 @@ beforeEach(() => {
   );
 
   // 現在地の見張り手は本文の見出しを document から拾う。無いと何も見張らずに降りる。
+  /*
+   * 差し込み目次を置く。バーはこれを通り過ぎたところで出るので、無いと見張る先が無い。
+   * 現在地の見張り手が拾う本文の見出しも一緒に置く。
+   */
   document.body.innerHTML = `
+    <nav class="inline-toc"></nav>
     <article class="mdast-prose">
       <h2 id="intro">はじめに</h2>
       <h2 id="why">なぜ自作するか</h2>
@@ -128,28 +133,28 @@ function shownSection(container: HTMLElement): string | null {
 }
 
 describe("CurrentSection", () => {
-  it("最初の節を通り過ぎるまで出ない", () => {
+  it("差し込み目次を通り過ぎるまで出ない", () => {
     const container = renderBar();
     setBand(["intro"]);
     expect(shownSection(container)).toBeNull();
 
-    setPassedFirstSection(true);
+    setPassedToc(true);
     expect(shownSection(container)).toBe("はじめに");
   });
 
-  it("上に戻ると消える (表題が見えている画面に節名を出さない)", () => {
+  it("上に戻ると消える (目次が見えている画面に節名を出さない)", () => {
     const container = renderBar();
     setBand(["intro"]);
-    setPassedFirstSection(true);
+    setPassedToc(true);
     expect(shownSection(container)).toBe("はじめに");
 
-    setPassedFirstSection(false);
+    setPassedToc(false);
     expect(shownSection(container)).toBeNull();
   });
 
   it("節をまたぐと名前が入れ替わる", () => {
     const container = renderBar();
-    setPassedFirstSection(true);
+    setPassedToc(true);
     setBand(["intro"]);
     expect(shownSection(container)).toBe("はじめに");
 
@@ -162,15 +167,46 @@ describe("CurrentSection", () => {
    */
   it("h3 を読んでいるときは、抱えている h2 の名前が出る", () => {
     const container = renderBar();
-    setPassedFirstSection(true);
+    setPassedToc(true);
     setBand(["why-detail"]);
     expect(shownSection(container)).toBe("なぜ自作するか");
   });
 
   it("節が 1 つしかなければ出ない (名前を出しても行き先が無い)", () => {
     const container = renderBar([{ id: "intro", text: "はじめに", level: 2 }]);
-    setPassedFirstSection(true);
+    setPassedToc(true);
     setBand(["intro"]);
+    expect(shownSection(container)).toBeNull();
+  });
+
+  it("一覧には h3 も並ぶ (節の中のどこに何があるかが分かるように)", () => {
+    const container = renderBar();
+    setPassedToc(true);
+    setBand(["intro"]);
+    // React の state 更新を流すため act で囲む (素の click では一覧が開かない)。
+    act(() => {
+      container.querySelector<HTMLButtonElement>(".current-section-summary")?.click();
+    });
+
+    const links = [...container.querySelectorAll(".current-section-link")];
+    expect(links.map((link) => link.textContent)).toEqual([
+      "はじめに",
+      "なぜ自作するか",
+      "既存サービスとの比較",
+    ]);
+    // 字下げは h3 にだけ付く。
+    expect(links.map((link) => link.className.includes("current-section-link-sub"))).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  it("差し込み目次が無ければ出ない (代わりになるものが無い)", () => {
+    document.querySelector(".inline-toc")?.remove();
+    const container = renderBar();
+    // 見張る先が無いので、そもそも見張り手が作られない。
+    expect(observers.some((o) => o.rootMargin === "-64px 0px 0px 0px")).toBe(false);
     expect(shownSection(container)).toBeNull();
   });
 
