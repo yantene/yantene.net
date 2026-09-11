@@ -1,65 +1,12 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { toSections } from "./sections";
+import { useActiveHeading } from "./use-active-heading";
+import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 
-export interface TocHeading {
-  readonly id: string;
-  readonly text: string;
-  readonly level: 2 | 3;
-}
-
-interface Section {
-  readonly heading: TocHeading;
-  readonly children: readonly TocHeading[];
-}
+export type { TocHeading };
 
 /** これ未満の見出し数なら目次を出さない。 */
 const MIN_HEADINGS = 2;
-
-/** フラットな見出し列を h2 セクション (+ 配下 h3) にまとめる。 */
-function toSections(headings: readonly TocHeading[]): readonly Section[] {
-  const sections: { heading: TocHeading; children: TocHeading[] }[] = [];
-  for (const heading of headings) {
-    const last = sections.at(-1);
-    // h3 は直前のセクション配下に。h2 (または先頭の h3) は新しいセクションを開く。
-    if (heading.level === 3 && last !== undefined) {
-      last.children.push(heading);
-    } else {
-      sections.push({ heading, children: [] });
-    }
-  }
-  return sections;
-}
-
-/**
- * scroll-spy: 本文の見出し要素を IntersectionObserver で監視し、ビューポート上部に
- * 到達している最初の見出しを active にする。何も交差していないときは直前の値を保つ。
- */
-function useActiveHeading(headings: readonly TocHeading[]): string {
-  const [activeId, setActiveId] = useState("");
-  useEffect(() => {
-    if (headings.length === 0) return;
-    const elements = [
-      ...document.querySelectorAll<HTMLElement>(".mdast-prose h2, .mdast-prose h3"),
-    ].filter((element) => element.id.length > 0);
-    if (elements.length === 0) return;
-
-    const visibility = new Map<string, boolean>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          visibility.set(entry.target.id, entry.isIntersecting);
-        }
-        const firstVisible = headings.find((heading) => visibility.get(heading.id) === true);
-        if (firstVisible !== undefined) setActiveId(firstVisible.id);
-      },
-      // ビューポート上部 20% のバンドに入った見出しを「現在地」とみなす。
-      { rootMargin: "0px 0px -80% 0px" },
-    );
-    for (const element of elements) observer.observe(element);
-    return () => observer.disconnect();
-  }, [headings]);
-  return activeId;
-}
 
 interface TableOfContentsProps {
   /** 見出しラベル ("目次" 等・i18n で外から渡す)。 */
