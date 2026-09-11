@@ -6,17 +6,17 @@ import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 import { sectionOf, toSections } from "~/frontend/components/toc/sections";
 import { useActiveHeading } from "~/frontend/components/toc/use-active-heading";
 
-/**
- * 差し込み目次を指す選び方。これを通り過ぎたらバーが出る。
- *
- * 別のコンポーネントの class 名に依っている。位置ではなく「目次そのもの」を見張りたく、
- * 目次は本文の中 (MdastRenderer が差し込む) に居るので、DOM から引くしかない。
- */
-const INLINE_TOC_SELECTOR = ".inline-toc";
-
 interface CurrentSectionProps {
   /** サーバー側で抽出した見出し (rehype-slug と一致する id 付き)。 */
   readonly headings: readonly TocHeading[];
+  /**
+   * 差し込み目次の要素。これを通り過ぎたらバーが出る。
+   *
+   * 目次は本文の中 (MdastRenderer が差し込む) に居るので、ページが文脈で登録の口を降ろし、
+   * 受け取った要素をここへ渡す (components/toc/inline-toc-registry.ts)。渡されなければ
+   * バーは出ない。
+   */
+  readonly tocElement: HTMLElement | null;
 }
 
 /**
@@ -31,19 +31,21 @@ interface CurrentSectionProps {
  * 目次に触れられないので、どこからでも構造へ帰れる入口をここが兼ねる。
  *
  * 出始めるのは、その差し込み目次を通り過ぎたとき。目次が画面から消えた時点でバーが
- * 代わりになる、という受け渡しにしてある。**目次の class 名 (.inline-toc) に依っている**
- * ので、あちらを改名したらここも直すこと。目次の出ない記事ではバーも出ない (代わりに
+ * 代わりになる、という受け渡しにしてある。目次の出ない記事ではバーも出ない (代わりに
  * なるものが無いので、出しても一覧が空振りする)。
  *
  * 出るのは JS が動く環境だけ。何も出なくても記事は読めるので、落とし所として許す。
  */
-export function CurrentSection({ headings }: CurrentSectionProps): React.JSX.Element | null {
+export function CurrentSection({
+  headings,
+  tocElement,
+}: CurrentSectionProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
 
   const sections = toSections(headings);
   const activeId = useActiveHeading(headings);
-  const hasPassedToc = useScrolledPast(INLINE_TOC_SELECTOR);
+  const hasPassedToc = useScrolledPast(tocElement);
 
   const current = sectionOf(sections, activeId);
   // 節が 1 つしかない記事では名前を出しても行き先が無い。出さない。

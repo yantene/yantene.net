@@ -1,6 +1,7 @@
 import { createRoutesStub } from "react-router";
 import { describe, expect, it } from "vitest";
 import { InlineTableOfContents } from "./inline-table-of-contents";
+import { InlineTocRegistry } from "./inline-toc-registry";
 import { TocHeadingsContext } from "./toc-context";
 import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 import { withI18n } from "~/frontend/lib/test-render";
@@ -26,6 +27,34 @@ const section = (id: string, text: string): TocHeading => ({ id, text, level: 2 
 const subsection = (id: string, text: string): TocHeading => ({ id, text, level: 3 });
 
 describe("InlineTableOfContents", () => {
+  /*
+   * 節名バーは「目次を通り過ぎたか」を見張るために、この要素を受け取る。預けるのをやめても
+   * 型は通り、目次そのものは描かれ続けるので、バーが静かに出なくなるだけになる。形で固定する。
+   */
+  it("自分の要素を預ける (節名バーが見張る先になる)", () => {
+    let registered: HTMLElement | null = null;
+    const Stub = createRoutesStub([
+      {
+        path: "/articles/:slug",
+        Component: () => (
+          <InlineTocRegistry
+            value={(element) => {
+              registered = element;
+            }}
+          >
+            <TocHeadingsContext value={[section("a", "ひとつ"), section("b", "ふたつ")]}>
+              <InlineTableOfContents />
+            </TocHeadingsContext>
+          </InlineTocRegistry>
+        ),
+      },
+    ]);
+    const { container } = renderWithI18n(<Stub initialEntries={["/articles/foo"]} />, {
+      router: false,
+    });
+    expect(registered).toBe(container.querySelector("nav.inline-toc"));
+  });
+
   it("節を並べる", () => {
     const container = renderToc([section("a", "ひとつ"), section("b", "ふたつ")]);
     const links = [...container.querySelectorAll("a")];

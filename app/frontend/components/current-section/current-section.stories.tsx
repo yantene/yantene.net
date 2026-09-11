@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CurrentSection } from "./current-section";
 import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -21,26 +22,33 @@ const meta: Meta<typeof CurrentSection> = {
      *
      * Storybook の枠は狭いので、既定で携帯幅の条件を満たす。
      */
-    (Story) => (
-      <div className="bg-base-100 p-6">
-        <Story />
-        {/* バーは差し込み目次を通り過ぎたところで出るので、見張る先を置く。 */}
-        <nav className="inline-toc" aria-label="目次">
-          <p className="inline-toc-heading">目次</p>
-        </nav>
-        <article className="mdast-prose">
-          <h2 id="intro">はじめに</h2>
-          <p className="h-[60vh]">本文。</p>
-          <h2 id="why">なぜ自作するか</h2>
-          <h3 id="why-detail">既存サービスとの比較</h3>
-          <p className="h-[60vh]">本文。</p>
-          <h2 id="design">設計の方針</h2>
-          <p className="h-[60vh]">本文。</p>
-          <h2 id="closing">おわりに</h2>
-          <p className="h-[60vh]">本文。</p>
-        </article>
-      </div>
-    ),
+    (Story, context) => {
+      /*
+       * 本番ではページが目次の要素を受け取ってバーへ渡す。ストーリーでも同じ受け渡しを
+       * 作らないと、渡す相手が無いまま帯が出ないだけの絵になる。
+       */
+      const [toc, setToc] = useState<HTMLElement | null>(null);
+      return (
+        <div className="bg-base-100 p-6">
+          <Story args={{ ...context.args, tocElement: toc }} />
+          {/* バーは差し込み目次を通り過ぎたところで出る。見張る先として置く。 */}
+          <nav className="inline-toc" aria-label="目次" ref={setToc}>
+            <p className="inline-toc-heading">目次</p>
+          </nav>
+          <article className="mdast-prose">
+            <h2 id="intro">はじめに</h2>
+            <p className="h-[60vh]">本文。</p>
+            <h2 id="why">なぜ自作するか</h2>
+            <h3 id="why-detail">既存サービスとの比較</h3>
+            <p className="h-[60vh]">本文。</p>
+            <h2 id="design">設計の方針</h2>
+            <p className="h-[60vh]">本文。</p>
+            <h2 id="closing">おわりに</h2>
+            <p className="h-[60vh]">本文。</p>
+          </article>
+        </div>
+      );
+    },
   ],
 };
 
