@@ -10,6 +10,7 @@ import { applyReaction, parseReactionEmoji } from "~/backend/handlers/articles/r
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
+import { ReadingProgress } from "~/frontend/components/reading-progress/reading-progress";
 import { ArticleActions } from "~/frontend/components/article-actions/article-actions";
 import { ArticleBranches } from "~/frontend/components/article-branches/article-branches";
 import { ArticleHeader } from "~/frontend/components/article-header/article-header";
@@ -165,6 +166,11 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
 
   return (
     <AppLayout>
+      {/*
+        読んだ量を指す帯。記事ページにだけ置く。一覧やトップは読み進めるものではなく、
+        どこまで来たかを指しても伝わるものが無い。
+      */}
+      <ReadingProgress />
       <Header />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
         <main className="w-full min-w-0 max-w-3xl h-entry">

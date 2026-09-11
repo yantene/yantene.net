@@ -32,6 +32,7 @@
 @import "./components/mdast/lightbox-image.css";
 @import "./components/mdast/mdast-renderer.css";
 @import "./components/navigation-progress/navigation-progress.css";
+@import "./components/reading-progress/reading-progress.css";
 @import "./components/article-actions/article-actions.css";
 @import "./components/webmention/webmention-list.css";
 @import "./components/article-header/article-header.css";
