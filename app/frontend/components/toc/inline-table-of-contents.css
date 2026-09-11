@@ -1,0 +1,83 @@
+/*
+ * 本文に差し込む目次 (携帯向け)。
+ *
+ * 本文の流れの中に置くので、囲いは細くする。地を塗って箱にすると、読み始めと本編の
+ * 間に壁ができる。左に線を 1 本引いて、地の文とは別のものだとだけ伝える。
+ */
+
+.inline-toc {
+  margin: 2em 0;
+  border-left: 2px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
+  padding-left: 1rem;
+}
+
+/*
+ * 見出しの札。項目より小さくし、字間を開けて「札」に見せる。同じ大きさだと一覧の
+ * 1 行目のように読める。
+ */
+.inline-toc-heading {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklab, currentcolor 85%, transparent);
+}
+
+.inline-toc-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+/*
+ * 本文の ul に効く飾り (mdast-prose の中黒や字下げ) を打ち消す。目次は本文の中に
+ * 置かれるので、地の文の箇条書きと同じ体裁で組まれてしまう。
+ */
+.mdast-prose .inline-toc-heading {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.mdast-prose .inline-toc-list,
+.mdast-prose .inline-toc-list > li {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.mdast-prose .inline-toc-list > li::marker,
+.mdast-prose .inline-toc-list > li::before {
+  content: none;
+}
+
+/*
+ * 色の濃さは読めることから決める。
+ *
+ * 本文の中に置かれるので、currentColor には prose の 85% が既に掛かっている。そのうえ
+ * さらに薄めると地との対比が落ちる。実測 (Chromium、白地) では 65% で 3.58、75% で 4.63。
+ * WCAG AA の 4.5 を下回らないよう 85% (6.04) に置く。h3 は 75% (4.63) まで。
+ */
+.inline-toc-link {
+  display: block;
+  padding: 0.35rem 0;
+  color: color-mix(in oklab, currentcolor 85%, transparent);
+  text-decoration: none;
+  /* 指で押せる高さを確保する。字だけだと 1 行 20px 程度にしかならない。 */
+  min-height: 1.75rem;
+}
+
+.inline-toc-link:hover {
+  color: var(--color-primary);
+}
+
+/*
+ * h3 は字を下げ、少し小さくして節の中だと分かるようにする。
+ *
+ * 階層は字下げと大きさで示し、薄さには頼らない。薄さで示すと、下の階層ほど読めなくなる。
+ */
+.inline-toc-link-sub {
+  padding-left: 1rem;
+  font-size: 0.8125rem;
+  color: color-mix(in oklab, currentcolor 75%, transparent);
+}
