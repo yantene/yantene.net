@@ -631,27 +631,22 @@ describe("MdastRenderer: 本文に差し込む目次", () => {
     return render(<RouterProvider router={router} />).container;
   }
 
-  /** 目次の入れ物。閉じた details として描かれる。 */
+  /** 目次の入れ物。 */
   function toc(container: HTMLElement): HTMLElement | null {
-    return container.querySelector<HTMLElement>("details.inline-toc");
+    return container.querySelector<HTMLElement>("nav.inline-toc");
   }
 
   it("最初の h2 の直前に入る (リード文の後・本編の前)", () => {
     const container = renderInRouter("リード文\n\n## ひとつ\n\n本編\n\n## ふたつ\n");
-    const details = toc(container);
-    expect(details).not.toBeNull();
+    const inserted = toc(container);
+    expect(inserted).not.toBeNull();
 
     // 直後の兄弟が最初の h2 であること。位置を index で数えると差し込みの実装に縛られる。
-    expect(details?.nextElementSibling?.tagName).toBe("H2");
-    expect(details?.nextElementSibling?.textContent).toBe("ひとつ");
+    expect(inserted?.nextElementSibling?.tagName).toBe("H2");
+    expect(inserted?.nextElementSibling?.textContent).toBe("ひとつ");
 
     // 手前にはリード文が残る。本文の頭に置くと書き出しの一行が目次の下に隠れる。
-    expect(details?.previousElementSibling?.tagName).toBe("P");
-  });
-
-  it("既定では畳んである", () => {
-    const container = renderInRouter("## ひとつ\n\n## ふたつ\n");
-    expect(toc(container)?.hasAttribute("open")).toBe(false);
+    expect(inserted?.previousElementSibling?.tagName).toBe("P");
   });
 
   it("h2 が無ければ差し込まない", () => {

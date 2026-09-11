@@ -29,7 +29,7 @@ const meta: Meta<typeof InlineTableOfContents> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** 既定は畳んだ姿。本文の流れを切らないようにしてある。 */
+/** 畳まずに置く。読み始める前に構造が見えることが目的なので、開く手間を挟まない。 */
 export const Default: Story = {
   decorators: [
     (Story) => (

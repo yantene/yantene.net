@@ -59,15 +59,21 @@ describe("InlineTableOfContents", () => {
       subsection("a-1", "その中"),
       subsection("a-2", "その次"),
     ]);
-    expect(container.querySelector("details")).toBeNull();
+    expect(container.querySelector("nav.inline-toc")).toBeNull();
   });
 
   it("見出しが無ければ描かない", () => {
-    expect(renderToc([]).querySelector("details")).toBeNull();
+    expect(renderToc([]).querySelector("nav.inline-toc")).toBeNull();
   });
 
-  it("既定では畳んである", () => {
+  /*
+   * 畳まない。読み始める前に構造を見せるためのものなので、開くひと手間を挟むと
+   * 置いている意味が薄れる。読み進めてからの入口は上端の節名バーが別に持っている。
+   */
+  it("畳まずに、見出しを添えて出す", () => {
     const container = renderToc([section("a", "ひとつ"), section("b", "ふたつ")]);
-    expect(container.querySelector("details")?.hasAttribute("open")).toBe(false);
+    expect(container.querySelector("details")).toBeNull();
+    expect(container.querySelector(".inline-toc-heading")?.textContent).toBe("目次");
+    expect(container.querySelectorAll("a")).toHaveLength(2);
   });
 });

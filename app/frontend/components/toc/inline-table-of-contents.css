@@ -11,38 +11,11 @@
   padding-left: 1rem;
 }
 
-.inline-toc-summary {
-  /*
-   * 既定の三角は伏せて、開閉の向きは下の矢印で出す。字と三角の間隔がブラウザごとに
-   * 違い、字の左端が揃わないため。
-   */
-  list-style: none;
-  cursor: pointer;
+.inline-toc-heading {
+  margin: 0;
   font-size: 0.875rem;
   font-weight: 700;
   color: color-mix(in oklab, currentcolor 70%, transparent);
-}
-
-/* WebKit は list-style を見ないので、こちらの印も伏せる。 */
-.inline-toc-summary::-webkit-details-marker {
-  display: none;
-}
-
-.inline-toc-summary::after {
-  content: "▾";
-  display: inline-block;
-  margin-left: 0.5em;
-  transition: transform 0.2s ease;
-}
-
-.inline-toc[open] > .inline-toc-summary::after {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .inline-toc-summary::after {
-    transition: none;
-  }
 }
 
 .inline-toc-list {
@@ -56,6 +29,11 @@
  * 本文の ul に効く飾り (mdast-prose の中黒や字下げ) を打ち消す。目次は本文の中に
  * 置かれるので、地の文の箇条書きと同じ体裁で組まれてしまう。
  */
+.mdast-prose .inline-toc-heading {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .mdast-prose .inline-toc-list,
 .mdast-prose .inline-toc-list > li {
   margin-left: 0;
