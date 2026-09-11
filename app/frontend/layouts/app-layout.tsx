@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import type { ReactNode } from "react";
 import { NavigationProgress } from "~/frontend/components/navigation-progress/navigation-progress";
+import { useSmoothHashScroll } from "~/frontend/lib/smooth-hash-scroll";
 
 interface AppLayoutProps {
   readonly children: ReactNode;
@@ -15,6 +16,12 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
    */
   const navigation = useNavigation();
   const isPending = navigation.state !== "idle";
+
+  /*
+   * ページの中を移るスクロールだけを滑らせる。目次・見出しのパーマリンク・脚注と
+   * 入口が散らばっているので、全ページが通るここで 1 度だけ受ける。
+   */
+  useSmoothHashScroll();
 
   /*
    * 支援技術には aria-busy で状態だけを伝える。帯より速く終わる遷移も含めて常に正しく、
