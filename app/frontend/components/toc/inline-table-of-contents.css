@@ -1,0 +1,82 @@
+/*
+ * 本文に差し込む目次 (携帯向け)。
+ *
+ * 本文の流れの中に置くので、囲いは細くする。地を塗って箱にすると、読み始めと本編の
+ * 間に壁ができる。左に線を 1 本引いて、地の文とは別のものだとだけ伝える。
+ */
+
+.inline-toc {
+  margin: 2em 0;
+  border-left: 2px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
+  padding-left: 1rem;
+}
+
+.inline-toc-summary {
+  /*
+   * 既定の三角は伏せて、開閉の向きは下の矢印で出す。字と三角の間隔がブラウザごとに
+   * 違い、字の左端が揃わないため。
+   */
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: color-mix(in oklab, currentcolor 70%, transparent);
+}
+
+/* WebKit は list-style を見ないので、こちらの印も伏せる。 */
+.inline-toc-summary::-webkit-details-marker {
+  display: none;
+}
+
+.inline-toc-summary::after {
+  content: "▾";
+  display: inline-block;
+  margin-left: 0.5em;
+  transition: transform 0.2s ease;
+}
+
+.inline-toc[open] > .inline-toc-summary::after {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-toc-summary::after {
+    transition: none;
+  }
+}
+
+.inline-toc-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+/*
+ * 本文の ul に効く飾り (mdast-prose の中黒や字下げ) を打ち消す。目次は本文の中に
+ * 置かれるので、地の文の箇条書きと同じ体裁で組まれてしまう。
+ */
+.mdast-prose .inline-toc-list,
+.mdast-prose .inline-toc-list > li {
+  margin-left: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.mdast-prose .inline-toc-list > li::marker,
+.mdast-prose .inline-toc-list > li::before {
+  content: none;
+}
+
+.inline-toc-link {
+  display: block;
+  padding: 0.35rem 0;
+  color: color-mix(in oklab, currentcolor 65%, transparent);
+  text-decoration: none;
+  /* 指で押せる高さを確保する。字だけだと 1 行 20px 程度にしかならない。 */
+  min-height: 1.75rem;
+}
+
+.inline-toc-link:hover {
+  color: var(--color-primary);
+}

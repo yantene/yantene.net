@@ -605,3 +605,72 @@ describe("MdastRenderer: audio", () => {
     expect(html).not.toContain("<audio");
   });
 });
+
+/*
+ * 本文に差し込む目次 (携帯向け)。位置と、差し込まない場合の切り分けだけを見る。
+ * 目次そのものの中身は inline-table-of-contents の側の関心事。
+ */
+describe("MdastRenderer: 本文に差し込む目次", () => {
+  const headings = [
+    { id: "one", text: "ひとつ", level: 2 },
+    { id: "two", text: "ふたつ", level: 2 },
+  ] as const;
+
+  function renderInRouter(markdown: string, withHeadings = true): HTMLElement {
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/articles/:slug",
+          element: (
+            <MdastRenderer node={md(markdown)} headings={withHeadings ? headings : undefined} />
+          ),
+        },
+      ],
+      { initialEntries: ["/articles/foo"] },
+    );
+    return render(<RouterProvider router={router} />).container;
+  }
+
+  /** 目次の入れ物。閉じた details として描かれる。 */
+  function toc(container: HTMLElement): HTMLElement | null {
+    return container.querySelector<HTMLElement>("details.inline-toc");
+  }
+
+  it("最初の h2 の直前に入る (リード文の後・本編の前)", () => {
+    const container = renderInRouter("リード文\n\n## ひとつ\n\n本編\n\n## ふたつ\n");
+    const details = toc(container);
+    expect(details).not.toBeNull();
+
+    // 直後の兄弟が最初の h2 であること。位置を index で数えると差し込みの実装に縛られる。
+    expect(details?.nextElementSibling?.tagName).toBe("H2");
+    expect(details?.nextElementSibling?.textContent).toBe("ひとつ");
+
+    // 手前にはリード文が残る。本文の頭に置くと書き出しの一行が目次の下に隠れる。
+    expect(details?.previousElementSibling?.tagName).toBe("P");
+  });
+
+  it("既定では畳んである", () => {
+    const container = renderInRouter("## ひとつ\n\n## ふたつ\n");
+    expect(toc(container)?.hasAttribute("open")).toBe(false);
+  });
+
+  it("h2 が無ければ差し込まない", () => {
+    const container = renderInRouter("### 小節だけ\n\n本文\n");
+    expect(toc(container)).toBeNull();
+  });
+
+  it("見出しを渡さなければ差し込まない (右カラムに目次を出せる幅の描画)", () => {
+    const container = renderInRouter("## ひとつ\n\n## ふたつ\n", false);
+    expect(toc(container)).toBeNull();
+  });
+
+  it("引用の中の h2 は差し込み先にしない", () => {
+    const container = renderInRouter("> ## 引用の中\n\n本文\n");
+    expect(toc(container)).toBeNull();
+  });
+
+  it("最初の h2 の手前にリンクカードや図があっても、位置がずれない", () => {
+    const container = renderInRouter("```mermaid\ngraph TD;\n```\n\n## ひとつ\n\n## ふたつ\n");
+    expect(toc(container)?.nextElementSibling?.tagName).toBe("H2");
+  });
+});

@@ -187,9 +187,14 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             url={`${origin}/articles/${article.slug}`}
             title={article.title}
           />
+          {/*
+            headings は本文に差し込む目次のため (右カラムに目次を出せない幅の代わり)。
+            差し込み先を決められるのは hast を組む側だけなので、ここから渡す。
+          */}
           <MdastRenderer
             node={mdast}
             linkCards={linkCards}
+            headings={headings}
             className="e-content"
             siteOrigin={origin}
           />
