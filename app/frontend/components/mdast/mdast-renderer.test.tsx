@@ -624,12 +624,12 @@ describe("MdastRenderer: 見出しへのリンク", () => {
     return render(<RouterProvider router={router} />).container;
   }
 
-  /** 見出しの頭に置かれたリンク。 */
+  /** 見出しの末尾に置かれたリンク。 */
   function headingLink(container: HTMLElement, selector: string): HTMLAnchorElement | null {
     return container.querySelector<HTMLAnchorElement>(`${selector} > a.heading-link`);
   }
 
-  it("h2 と h3 の頭に、その見出し自身を指すリンクを置く", () => {
+  it("h2 と h3 の末尾に、その見出し自身を指すリンクを置く", () => {
     const container = renderInRouter("## 節\n\n### 小節\n");
 
     for (const tag of ["h2", "h3"]) {
@@ -637,8 +637,11 @@ describe("MdastRenderer: 見出しへのリンク", () => {
       const link = headingLink(container, tag);
       // 行き先は見出し自身。id は rehype-slug が振ったものをそのまま使う。
       expect(link?.getAttribute("href")).toBe(`${articlePath}#${heading?.id}`);
-      // 頭に置く。見出しの字は後ろに残る。
-      expect(heading?.firstElementChild).toBe(link);
+      /*
+       * 末尾に置く。頭に置くとアイコンのぶんだけ見出しの字が本文より右へずれるので、
+       * 位置は形で固定する。
+       */
+      expect(heading?.lastElementChild).toBe(link);
     }
   });
 
