@@ -11,11 +11,16 @@
   padding-left: 1rem;
 }
 
+/*
+ * 見出しの札。項目より小さくし、字間を開けて「札」に見せる。同じ大きさだと一覧の
+ * 1 行目のように読める。
+ */
 .inline-toc-heading {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  color: color-mix(in oklab, currentcolor 70%, transparent);
+  letter-spacing: 0.04em;
+  color: color-mix(in oklab, currentcolor 85%, transparent);
 }
 
 .inline-toc-list {
@@ -46,10 +51,17 @@
   content: none;
 }
 
+/*
+ * 色の濃さは読めることから決める。
+ *
+ * 本文の中に置かれるので、currentColor には prose の 85% が既に掛かっている。そのうえ
+ * さらに薄めると地との対比が落ちる。実測 (Chromium、白地) では 65% で 3.58、75% で 4.63。
+ * WCAG AA の 4.5 を下回らないよう 85% (6.04) に置く。h3 は 75% (4.63) まで。
+ */
 .inline-toc-link {
   display: block;
   padding: 0.35rem 0;
-  color: color-mix(in oklab, currentcolor 65%, transparent);
+  color: color-mix(in oklab, currentcolor 85%, transparent);
   text-decoration: none;
   /* 指で押せる高さを確保する。字だけだと 1 行 20px 程度にしかならない。 */
   min-height: 1.75rem;
@@ -59,9 +71,13 @@
   color: var(--color-primary);
 }
 
-/* h3 は字を下げ、少し小さくして節の中だと分かるようにする。 */
+/*
+ * h3 は字を下げ、少し小さくして節の中だと分かるようにする。
+ *
+ * 階層は字下げと大きさで示し、薄さには頼らない。薄さで示すと、下の階層ほど読めなくなる。
+ */
 .inline-toc-link-sub {
   padding-left: 1rem;
   font-size: 0.8125rem;
-  color: color-mix(in oklab, currentcolor 50%, transparent);
+  color: color-mix(in oklab, currentcolor 75%, transparent);
 }
