@@ -33,6 +33,17 @@ const MERMAID_TAG = "mermaid-diagram";
 /** Mermaid のコードブロックを表すクラス。```mermaid のフェンスから付く。 */
 const MERMAID_CLASS = "language-mermaid";
 
+/** 見出しを包むパーマリンクに付けるクラス。`##` の字は CSS が出す。 */
+const HEADING_ANCHOR_CLASS = "heading-anchor";
+
+/**
+ * パーマリンクを付ける見出し。
+ *
+ * 目次が拾うのと同じ h2 / h3 に揃える (toc-headings.ts)。h4 以降まで付けると、
+ * 節の切れ目ではなく段落の見出しにまで `####` が並んで地の文が読みにくくなる。
+ */
+const ANCHORED_HEADING_TAGS: ReadonlySet<string> = new Set(["h2", "h3"]);
+
 /*
  * sanitize に iframe を通す。本文には生の iframe (YouTube の埋め込み) が書かれており、
  * これを落とすと動画が跡形もなく消える。
@@ -391,6 +402,47 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
   });
 }
 
+/**
+ * 見出しの中身を、その見出し自身へのリンクで包む。
+ *
+ * 押した節の在り処を URL として持ち帰れるようにするためのもので、`##` / `###` の字は
+ * CSS が `::before` で出す (mdast-renderer.css)。id は rehype-slug が既に振っている。
+ *
+ * `<a href="#...">` になるので、描画では Anchor が react-router の Link に通す。素の
+ * `<a>` のままだと `<ScrollRestoration>` がブラウザのハッシュジャンプを打ち消して
+ * スクロールしない (#268 と同じ)。
+ *
+ * **applyElementTransforms より後に呼ぶこと。** 先に包むと transformAnchor がこの
+ * リンクにも press-control を足し、見出しが押下のたびに沈む。本文のリンクに手応えを
+ * 与えるための仕掛けで、行そのものである見出しに当てるものではない。
+ *
+ * 見るのは根の直下だけ。目次の抽出 (toc-headings.ts) が同じところしか見ておらず、
+ * 引用やリストの中の見出しに独りでにリンクが付くと、目次に出ないものだけが押せる
+ * という食い違いになる。
+ *
+ * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ理由)。包むのはこちらが
+ * 見つけた見出しだけなので、本文の生 HTML からこの形を騙って書くことはできない。
+ */
+function wrapHeadingsWithAnchor(tree: HastRoot): void {
+  for (const node of tree.children) {
+    if (node.type !== "element") continue;
+    if (!ANCHORED_HEADING_TAGS.has(node.tagName)) continue;
+
+    const { id } = node.properties;
+    // id の無い見出し (rehype-slug は空の見出しに振らない) は行き先が無いので包まない。
+    if (typeof id !== "string" || id === "") continue;
+
+    node.children = [
+      {
+        type: "element",
+        tagName: "a",
+        properties: { href: `#${id}`, className: [HEADING_ANCHOR_CLASS] },
+        children: node.children,
+      },
+    ];
+  }
+}
+
 export interface MdastRendererProps {
   /** レンダリング対象の MDAST (Markdown AST) ルート。 */
   readonly node: MdastRoot;
@@ -450,6 +502,7 @@ export function MdastRenderer({
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
+    wrapHeadingsWithAnchor(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
