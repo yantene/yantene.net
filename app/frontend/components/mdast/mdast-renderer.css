@@ -257,22 +257,52 @@
  * prependHeadingAnchors)。見出しを丸ごと包まないのは、リンクや脚注を含む見出しで
  * a が入れ子になるため。aria-hidden なので、この字が読み上げに出ることもない。
  */
+/*
+ * 見出しの左に溝を空け、そこに印をぶら下げる。
+ *
+ * 印は溝の中に収まり、見出しの字は溝の右端から始まる。1 行目だけ text-indent で溝のぶん
+ * 戻すので、折り返した 2 行目以降も同じ位置から始まり、字の塊の左端が揃う。携帯では
+ * 見出しがよく折り返すので、揃わないと 2 行目が印の下に潜って読みにくい。
+ *
+ * 溝の幅は rem で持つ。em にすると、印を小さくしたぶんだけ子の側の em が縮み、親に
+ * 入れた padding と印の幅が食い違う。h2 と h3 で同じ幅にしてあるのは、深さが変わっても
+ * 見出しの字の左端を動かさないため (`###` のほうが 1 字ぶん長いので、溝の中では
+ * 右へ伸びる)。
+ */
+.mdast-prose :is(h2, h3) {
+  --heading-anchor-gutter: 1.75rem;
+  padding-inline-start: var(--heading-anchor-gutter);
+  text-indent: calc(-1 * var(--heading-anchor-gutter));
+}
+
 .mdast-prose :is(h2, h3) > a.heading-anchor {
-  /*
-   * 指で押せる幅を持たせるため、字の後ろの空きは padding で取る (content の中に空白を
-   * 置くと、押せない隙間になる)。見出しの左端は動かさない。ぶら下げると、狭い画面では
-   * 画面の外に出る。
-   */
   display: inline-block;
-  padding-right: 0.35em;
-  padding-block: 0.15em;
-  text-decoration: none;
+  width: var(--heading-anchor-gutter);
+  /* 親から継いだ負の字下げを打ち消す。継いだままだと印そのものが溝の外へ出る。 */
+  text-indent: 0;
+  position: relative;
   /*
-   * 字は薄く置く。読むのは見出しであって `##` ではない。currentColor から作るので、
-   * テーマを切り替えても地との関係が保たれる。
+   * 小さく、細く置く。読むのは見出しであって `##` ではない。見出しの太さ (700) を
+   * 継ぐと、字が小さくても目に刺さる。
    */
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1;
+  text-decoration: none;
+  /* 色は currentColor から作る。テーマを切り替えても地との関係が保たれる。 */
   color: color-mix(in oklab, currentcolor 28%, transparent);
   transition: color 0.15s ease;
+}
+
+/*
+ * 押せる範囲だけを広げる。字が 12px しかないので、そのままでは指で狙えない。
+ * 右へは伸ばさない (見出しの字の上に重ねると、字を選びたいだけの指が印を踏む)。
+ */
+.mdast-prose :is(h2, h3) > a.heading-anchor::after {
+  content: "";
+  position: absolute;
+  inset-block: -0.55rem;
+  inset-inline: -0.35rem 0;
 }
 
 .mdast-prose :is(h2, h3) > a.heading-anchor:hover {
