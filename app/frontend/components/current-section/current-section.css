@@ -40,7 +40,11 @@
     border: none;
     font-size: 0.8125rem;
     text-align: start;
-    color: color-mix(in oklab, currentcolor 70%, transparent);
+    /*
+     * 濃さは読めることから決める。実測 (Chromium、白地) で 65% が 4.83、75% が 6.63。
+     * WCAG AA の 4.5 を下回らないところに置く。
+     */
+    color: color-mix(in oklab, currentcolor 75%, transparent);
     cursor: pointer;
   }
 
@@ -89,14 +93,17 @@
     padding: 0.5rem 1.5rem;
     font-size: 0.875rem;
     text-decoration: none;
-    color: color-mix(in oklab, currentcolor 65%, transparent);
+    color: color-mix(in oklab, currentcolor 75%, transparent);
   }
 
-  /* h3 は字を下げ、少し小さくして節の中だと分かるようにする (差し込み目次と揃える)。 */
+  /*
+   * h3 は字を下げ、少し小さくして節の中だと分かるようにする (差し込み目次と揃える)。
+   * 階層は字下げと大きさで示し、薄さには頼らない (下の階層ほど読めなくなるため)。
+   */
   .current-section-link-sub {
     padding-left: 2.5rem;
     font-size: 0.8125rem;
-    color: color-mix(in oklab, currentcolor 50%, transparent);
+    color: color-mix(in oklab, currentcolor 65%, transparent);
   }
 
   .current-section-link-active {
