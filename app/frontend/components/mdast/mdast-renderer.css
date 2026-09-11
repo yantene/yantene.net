@@ -249,52 +249,49 @@
 /*
  * 見出しのパーマリンク。
  *
- * 見出しの中身はまるごとリンクで包んである (mdast-renderer.tsx の
- * wrapHeadingsWithAnchor)。字だけを見ると Markdown の原文がそのまま残っているように
- * 見えるが、原文の `##` は見出しの深さとして既に消費されており、ここで出しているのは
- * その深さを字に戻したもの。書いた形と出る形が揃うので、記事の構造がそのまま読める。
+ * 字は CSS が出す。Markdown の原文の `##` は見出しの深さとして既に消費されて消えて
+ * いるので、ここで出しているのはその深さを字に戻したもの。書いた形と出る形が揃うので、
+ * 記事の構造がそのまま読める。
  *
- * リンクであることは色では言わない。見出しは行そのものなので、リンク色にすると
- * 本文の中で見出しだけが浮く。押せることは `##` の側の色が変わることで伝える。
+ * 要素そのものは空のリンクで、見出しの頭に置かれている (mdast-renderer.tsx の
+ * prependHeadingAnchors)。見出しを丸ごと包まないのは、リンクや脚注を含む見出しで
+ * a が入れ子になるため。aria-hidden なので、この字が読み上げに出ることもない。
  */
 .mdast-prose :is(h2, h3) > a.heading-anchor {
-  color: inherit;
-  text-decoration: none;
-}
-
-.mdast-prose :is(h2, h3) > a.heading-anchor::before {
   /*
-   * 字は薄く置く。読むのは見出しであって `##` ではない。
-   *
-   * currentColor から作るので、テーマを切り替えても地との関係が保たれる。
+   * 指で押せる幅を持たせるため、字の後ろの空きは padding で取る (content の中に空白を
+   * 置くと、押せない隙間になる)。見出しの左端は動かさない。ぶら下げると、狭い画面では
+   * 画面の外に出る。
+   */
+  display: inline-block;
+  padding-right: 0.35em;
+  padding-block: 0.15em;
+  text-decoration: none;
+  /*
+   * 字は薄く置く。読むのは見出しであって `##` ではない。currentColor から作るので、
+   * テーマを切り替えても地との関係が保たれる。
    */
   color: color-mix(in oklab, currentcolor 28%, transparent);
   transition: color 0.15s ease;
 }
 
-.mdast-prose :is(h2, h3) > a.heading-anchor:hover::before {
+.mdast-prose :is(h2, h3) > a.heading-anchor:hover {
   color: var(--color-primary);
 }
 
-/*
- * 深さを字に戻す。
- *
- * `content` の `/ ""` は読み上げに渡す代わりの字で、目には `##` が見えるが支援技術
- * には空として届く。見出しの深さは h2 / h3 という要素そのものが既に伝えており、
- * そのうえで「シャープ、シャープ」と読まれても意味が増えない。
- *
- * 代わりの字を書ける前の解釈系では、この宣言ごと落ちる。落ちたときに `##` が消えて
- * しまわないよう、代わりの字を持たない宣言を手前に置いて重ねてある。読み上げに
- * `##` が混じるのは、字が消えるより軽い。
- */
+@media (prefers-reduced-motion: reduce) {
+  .mdast-prose :is(h2, h3) > a.heading-anchor {
+    transition: none;
+  }
+}
+
+/* 深さを字に戻す。 */
 .mdast-prose h2 > a.heading-anchor::before {
-  content: "## ";
-  content: "## " / "";
+  content: "##";
 }
 
 .mdast-prose h3 > a.heading-anchor::before {
-  content: "### ";
-  content: "### " / "";
+  content: "###";
 }
 
 /*

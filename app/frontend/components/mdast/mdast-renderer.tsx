@@ -403,43 +403,57 @@ function wrapMermaidBlocks(node: HastRoot | RootContent): void {
 }
 
 /**
- * 見出しの中身を、その見出し自身へのリンクで包む。
+ * 見出しの頭に、その見出し自身を指すリンクを差し込む。
  *
  * 押した節の在り処を URL として持ち帰れるようにするためのもので、`##` / `###` の字は
  * CSS が `::before` で出す (mdast-renderer.css)。id は rehype-slug が既に振っている。
+ *
+ * **見出しを丸ごと包まない。** 包む形にすると、リンクや脚注を含む見出し
+ * (`## [foo](...)` や `## 節[^1]`) で a が入れ子になる。HTML の構文解析は入れ子の a を
+ * 兄弟に開いてしまうので、サーバーが組んだ木とブラウザが読んだ木が食い違い、
+ * hydration ごと落ちる。頭に 1 つ足すだけなら、中身が何であっても形は変わらない。
  *
  * `<a href="#...">` になるので、描画では Anchor が react-router の Link に通す。素の
  * `<a>` のままだと `<ScrollRestoration>` がブラウザのハッシュジャンプを打ち消して
  * スクロールしない (#268 と同じ)。
  *
- * **applyElementTransforms より後に呼ぶこと。** 先に包むと transformAnchor がこの
- * リンクにも press-control を足し、見出しが押下のたびに沈む。本文のリンクに手応えを
- * 与えるための仕掛けで、行そのものである見出しに当てるものではない。
+ * 読み上げには出さない。字を持たないリンクなので名前を与えないと使えないものになるが、
+ * 名前を付けたところで見出しごとに「〜へのリンク」が並ぶだけで、見出しそのものを
+ * 辿れる支援技術には要らない。焦点も配らない (aria-hidden な要素に焦点が行くと、
+ * どこに居るのか分からなくなる)。節を指す URL は目次からも取れる。
+ *
+ * **applyElementTransforms より後に呼ぶこと。** 先に足すと transformAnchor がこの
+ * リンクにも press-control を足し、`##` が押下のたびに沈む。本文のリンクに手応えを
+ * 与えるための仕掛けで、行の頭の印に当てるものではない。
  *
  * 見るのは根の直下だけ。目次の抽出 (toc-headings.ts) が同じところしか見ておらず、
  * 引用やリストの中の見出しに独りでにリンクが付くと、目次に出ないものだけが押せる
  * という食い違いになる。
  *
- * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ理由)。包むのはこちらが
+ * sanitize は既に通ったあとで呼ぶ (wrapMermaidBlocks と同じ理由)。足すのはこちらが
  * 見つけた見出しだけなので、本文の生 HTML からこの形を騙って書くことはできない。
  */
-function wrapHeadingsWithAnchor(tree: HastRoot): void {
+function prependHeadingAnchors(tree: HastRoot): void {
   for (const node of tree.children) {
     if (node.type !== "element") continue;
     if (!ANCHORED_HEADING_TAGS.has(node.tagName)) continue;
 
     const { id } = node.properties;
-    // id の無い見出し (rehype-slug は空の見出しに振らない) は行き先が無いので包まない。
+    // id の無い見出し (rehype-slug は空の見出しに振らない) は行き先が無いので足さない。
     if (typeof id !== "string" || id === "") continue;
 
-    node.children = [
-      {
-        type: "element",
-        tagName: "a",
-        properties: { href: `#${id}`, className: [HEADING_ANCHOR_CLASS] },
-        children: node.children,
+    const anchor: Element = {
+      type: "element",
+      tagName: "a",
+      properties: {
+        href: `#${id}`,
+        className: [HEADING_ANCHOR_CLASS],
+        ariaHidden: "true",
+        tabIndex: -1,
       },
-    ];
+      children: [],
+    };
+    node.children = [anchor, ...node.children];
   }
 }
 
@@ -502,7 +516,7 @@ export function MdastRenderer({
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
     wrapMermaidBlocks(transformed);
-    wrapHeadingsWithAnchor(transformed);
+    prependHeadingAnchors(transformed);
 
     return toJsxRuntime(transformed, {
       Fragment,
