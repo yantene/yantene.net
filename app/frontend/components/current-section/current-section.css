@@ -1,0 +1,127 @@
+/*
+ * いま読んでいる節の名前を出す帯 (携帯向け)。
+ *
+ * ヘッダーの下に固定で置く。ヘッダーは sticky で常に居るので、その下端 (4rem) が
+ * この帯の上端になる。
+ *
+ * 出すのは携帯だけ。PC には右カラムの目次があり、scroll-spy が現在の節を強調しているので、
+ * 同じことを 2 か所で言うことになる。
+ */
+
+.current-section {
+  display: none;
+}
+
+@media (width < 64rem) {
+  .current-section {
+    display: block;
+    position: fixed;
+    inset-inline: 0;
+    top: 4rem;
+    /*
+     * ヘッダー (z-50) の下。ヘッダーが地平線 (::after) と翳り (::before) を自分の下端に
+     * 描いているので、そちらを上に通す。帯の上端がわずかに翳るが、ヘッダーから続いている
+     * ように見えるぶんには都合がよい。
+     */
+    z-index: 40;
+    background: var(--color-base-100);
+    border-bottom: 1px solid var(--color-base-300);
+  }
+
+  .current-section-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    /* 指で押せる高さ。字は小さいが、帯ごと押せるので的は画面の幅いっぱいある。 */
+    min-height: 2.25rem;
+    padding: 0 1.5rem;
+    background: none;
+    border: none;
+    font-size: 0.8125rem;
+    text-align: start;
+    /*
+     * 濃さは読めることから決める。実測 (Chromium、白地) で 65% が 4.83、75% が 6.63。
+     * WCAG AA の 4.5 を下回らないところに置く。
+     */
+    color: color-mix(in oklab, currentcolor 75%, transparent);
+    cursor: pointer;
+  }
+
+  /* 節名は 1 行に留める。2 行になると帯の高さが変わり、本文が跳ねる。 */
+  .current-section-name {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .current-section-caret {
+    flex-shrink: 0;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-right: 1.5px solid currentcolor;
+    border-bottom: 1.5px solid currentcolor;
+    /* 下向きの山。開くと上を向く。 */
+    transform: rotate(45deg) translate(-0.1em, -0.1em);
+    transition: transform 0.2s ease;
+  }
+
+  .current-section-summary[aria-expanded="true"] .current-section-caret {
+    transform: rotate(-135deg) translate(-0.1em, -0.1em);
+  }
+
+  .current-section-list {
+    margin: 0;
+    padding: 0.25rem 0 0.5rem;
+    list-style: none;
+    background: var(--color-base-100);
+    border-top: 1px solid var(--color-base-300);
+    /*
+     * 節が多い記事でも画面に収める。帯とヘッダーのぶんを引いた高さまで。
+     * dvh を使うのは、携帯のアドレスバーが伸び縮みしても収まりを保つため。
+     */
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+    /* 帯の外に出るので、本文の上に載っていることが分かる影を付ける。 */
+    box-shadow: 0 0.5rem 1rem -0.5rem rgb(0 0 0 / 0.15);
+  }
+
+  .current-section-link {
+    display: block;
+    min-height: 2.25rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.875rem;
+    text-decoration: none;
+    color: color-mix(in oklab, currentcolor 75%, transparent);
+  }
+
+  /*
+   * h3 は字を下げ、少し小さくして節の中だと分かるようにする (差し込み目次と揃える)。
+   * 階層は字下げと大きさで示し、薄さには頼らない (下の階層ほど読めなくなるため)。
+   */
+  .current-section-link-sub {
+    padding-left: 2.5rem;
+    font-size: 0.8125rem;
+    color: color-mix(in oklab, currentcolor 65%, transparent);
+  }
+
+  .current-section-link-active {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  /*
+   * 帯のぶん、見出しの止まる位置を下げる。下げないと、パーマリンクや目次で飛んだ見出しが
+   * 帯の裏に隠れる。ヘッダー 4rem + 帯 2.25rem + 余白。
+   */
+  .mdast-prose :is(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: 7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .current-section-caret {
+    transition: none;
+  }
+}
