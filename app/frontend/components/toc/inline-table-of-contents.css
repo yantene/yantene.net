@@ -58,3 +58,10 @@
 .inline-toc-link:hover {
   color: var(--color-primary);
 }
+
+/* h3 は字を下げ、少し小さくして節の中だと分かるようにする。 */
+.inline-toc-link-sub {
+  padding-left: 1rem;
+  font-size: 0.8125rem;
+  color: color-mix(in oklab, currentcolor 50%, transparent);
+}
