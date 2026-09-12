@@ -102,6 +102,18 @@
             "max_batch_size": 10,
             "max_batch_timeout": 5,
             "max_retries": 3,
+            // 3 回落ちたメッセージの行き先。ここが無いと黙って消え、push しても同期
+            // されないことに誰も気づけない (ADR 0035)。
+            "dead_letter_queue": "yantene-staging-content-events-dlq",
+          },
+          {
+            // 落ちた push を記録に残すだけの consumer。同期はやり直さない。
+            // 名前の末尾 "-dlq" で workers/app.ts が振り分ける。
+            "queue": "yantene-staging-content-events-dlq",
+            "max_concurrency": 1,
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 0,
           },
         ],
       },
@@ -157,6 +169,18 @@
             "max_batch_size": 10,
             "max_batch_timeout": 5,
             "max_retries": 3,
+            // 3 回落ちたメッセージの行き先。ここが無いと黙って消え、push しても同期
+            // されないことに誰も気づけない (ADR 0035)。
+            "dead_letter_queue": "yantene-production-content-events-dlq",
+          },
+          {
+            // 落ちた push を記録に残すだけの consumer。同期はやり直さない。
+            // 名前の末尾 "-dlq" で workers/app.ts が振り分ける。
+            "queue": "yantene-production-content-events-dlq",
+            "max_concurrency": 1,
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 0,
           },
         ],
       },
