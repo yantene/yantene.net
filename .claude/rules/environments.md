@@ -77,10 +77,16 @@ preview デプロイは staging の Worker に**バージョンだけ上げて�
 pnpm exec wrangler secret put ADMIN_REGISTRATION_TOKEN --env production
 ```
 
-値は長い乱数にする (`openssl rand -base64 32`)。**置かないと `/admin` の登録の経路が
-閉じる** (404 になる。fail-loud)。登録済みの passkey が 1 本でもあれば、追加の登録には
-サインインが要るのでこの値は使われない。端末をすべて失ったときだけ、表を空にして
-やり直すのに再び要る。
+値は長い乱数にする (`openssl rand -base64 32`)。**置かないと bootstrap の経路が閉じる**
+(`/admin` の登録が 404 になる。fail-loud)。
+
+登録済みの passkey が 1 本でもあれば、追加の登録はサインインが条件になるのでこの値は
+見ない。**それでも消さないこと。** 端末をすべて失って表を空にしたとき、復旧に再び要る。
+
+```bash
+pnpm exec wrangler d1 execute yantene-production --env production --remote --command \
+  "DELETE FROM admin_credentials;"
+```
 
 ⚠️ **passkey は環境ごとに登録する。** `yantene.net` / `staging.yantene.net` /
 `localhost` は WebAuthn から見て別の RP なので、手元で登録した passkey で production に

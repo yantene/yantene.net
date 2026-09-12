@@ -8,7 +8,6 @@ import type {
   IAdminSessionCommandRepository,
   IAdminSessionQueryRepository,
   IPasskeyCeremonyCommandRepository,
-  IPasskeyCeremonyQueryRepository,
   IPasskeyVerifier,
   RegistrationResponse,
 } from "~/backend/domain/admin";
@@ -93,7 +92,6 @@ export interface AdminAuthDependencies {
   readonly credentialCommand: IAdminCredentialCommandRepository;
   readonly sessionQuery: IAdminSessionQueryRepository;
   readonly sessionCommand: IAdminSessionCommandRepository;
-  readonly ceremonyQuery: IPasskeyCeremonyQueryRepository;
   readonly ceremonyCommand: IPasskeyCeremonyCommandRepository;
   readonly verifier: IPasskeyVerifier;
 }
@@ -226,6 +224,22 @@ export class AdminAuthService {
     const session = await this.deps.sessionQuery.findById(id);
     if (session === undefined) return undefined;
 
+    /*
+     * **入るのに使った鍵がまだ在ることを、要求のたびに確かめる。**
+     *
+     * 鍵を取り消す目的は「その端末から入れなくする」ことなので、すでに開いている
+     * セッションが生き延びては意味が無い。しかもこのセッションは触るたびに期限が
+     * 延びるので、使い続けられている限り永遠に切れない。取り消しがいちばん要るのは
+     * 端末を失ったときで、そのときまさに相手は使い続けている。
+     *
+     * 管理者の要求は多くないので、1 回の読み足しは払ってよい。
+     */
+    const credential = await this.deps.credentialQuery.findById(session.credentialId);
+    if (credential === undefined) {
+      await this.deps.sessionCommand.remove(session.id);
+      return undefined;
+    }
+
     const touched = session.withSeen(at);
     await this.deps.sessionCommand.save(touched);
     return touched;
@@ -248,7 +262,14 @@ export class AdminAuthService {
    */
   async assertRegistrationAllowed(params: {
     presentedToken: string | undefined;
-    registrationToken: string;
+    /**
+     * 登録用の secret を読む。**bootstrap の枝に入ったときだけ呼ぶ。**
+     *
+     * 無ければ送出する関数を渡してよい。先に呼ばないのは、secret を消したあとの
+     * 環境でサインイン中の追加登録まで閉じてしまうため。**復旧用の端末を足す手段が
+     * secret の有無に縛られてはいけない。**
+     */
+    readRegistrationToken: () => string;
     session: AdminSession | undefined;
   }): Promise<void> {
     if (params.session !== undefined) return;
@@ -259,7 +280,7 @@ export class AdminAuthService {
     }
     if (
       params.presentedToken === undefined ||
-      !(await equalsSecret(params.presentedToken, params.registrationToken))
+      !(await equalsSecret(params.presentedToken, params.readRegistrationToken()))
     ) {
       throw new RegistrationNotAllowedError("the registration token does not match");
     }
@@ -279,13 +300,15 @@ export class AdminAuthService {
     purpose: "registration" | "authentication",
   ): Promise<Challenge> {
     const challenge = readChallenge(clientDataJSON);
-    const ceremony = await this.deps.ceremonyQuery.find(challenge);
-    // 成否によらず捨てる。引き当てられなかったときも、念のため消しておく。
-    await this.deps.ceremonyCommand.consume(challenge);
+
+    // **取り出しと削除は 1 手。** 読んでから消す形だと、同じ応答を同時に 2 回
+    // 送られたときに両方が通る。
+    const ceremony = await this.deps.ceremonyCommand.consume(challenge);
 
     if (ceremony === undefined) {
       throw new CeremonyExpiredError("this challenge was never issued, or has already been used");
     }
+    // 種類が違っても消えたままにする。戻すと、同じチャレンジで何度も試せる。
     if (ceremony.purpose !== purpose) {
       throw new CeremonyMismatchError(`this challenge was issued for ${ceremony.purpose}`);
     }

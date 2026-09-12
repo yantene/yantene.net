@@ -12,7 +12,13 @@ export const ADMIN_SESSION_LIFETIME_DAYS = 14;
 
 interface AdminSessionFields {
   readonly id: AdminSessionId;
-  /** どの passkey で入ったか。鍵を取り消したときに、その鍵のセッションを畳むために持つ。 */
+  /**
+   * どの passkey で入ったか。
+   *
+   * 要求のたびにこの鍵がまだ在るかを確かめ、取り消されていればセッションを畳む
+   * (AdminAuthService.touchSession)。触るたびに期限が延びるので、畳まなければ
+   * 取り消した鍵のセッションが永遠に生き続ける。
+   */
   readonly credentialId: CredentialId;
   readonly startedAt: Temporal.Instant;
   readonly lastSeenAt: Temporal.Instant;

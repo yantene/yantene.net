@@ -9,5 +9,4 @@ export * from "./challenge.vo";
 export * from "./credential-id.vo";
 export * from "./errors";
 export * from "./passkey-ceremony.command-repository.interface";
-export * from "./passkey-ceremony.query-repository.interface";
 export * from "./passkey-verifier.interface";

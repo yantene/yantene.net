@@ -5,9 +5,12 @@ import type { AdminCredentialView } from "~/backend/handlers/admin/pages.handler
 /**
  * 登録した passkey の一覧。
  *
- * 取り消しは**最後の 1 本にはさせない**。取り消すと誰も入れなくなり、D1 を手で
- * 触るまで復帰できない (ADR 0036)。サーバー側でも同じ判定をしていて、ここは
- * その前に説明を出すためのもの。
+ * 取り消させないものが 2 つある。**サーバー側でも同じ判定をしていて**、ここは押す前に
+ * 理由を出すためのもの。
+ *
+ * - **最後の 1 本** — 取り消すと誰も入れなくなり、D1 を手で触るまで復帰できない
+ * - **いま使っている鍵** — 取り消すとその場でこのセッションが畳まれる。別の端末から
+ *   取り消すのが本来の使い方なので、自分の足を撃たせない (ADR 0036)
  */
 export function CredentialList({
   credentials,
@@ -75,7 +78,7 @@ export function CredentialList({
                 onClick={() => {
                   revoke(credential.id);
                 }}
-                disabled={isLastOne}
+                disabled={isLastOne || credential.current}
                 className="press-control mt-2 rounded border border-border px-3 py-1 text-xs transition-colors hover:text-error disabled:opacity-50"
               >
                 {t("admin.credentials.revoke")}
@@ -84,6 +87,11 @@ export function CredentialList({
               {isLastOne && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("admin.credentials.revokeLast")}
+                </p>
+              )}
+              {!isLastOne && credential.current && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("admin.credentials.revokeCurrent")}
                 </p>
               )}
               {failedId === credential.id && (

@@ -1,5 +1,6 @@
 export { adminCredentials } from "./admin-credentials";
 export { linkCards } from "./link-cards";
+export { passkeyCeremonies } from "./passkey-ceremonies";
 export { articleEmbeddings } from "./article-embeddings";
 export { articleReactions } from "./article-reactions";
 export { articleSimilarities } from "./article-similarities";

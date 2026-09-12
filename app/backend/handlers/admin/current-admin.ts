@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { readAdminSessionId } from "./admin-session-cookie";
-import { resolveAdminAuthService } from "./resolve-admin-auth";
+import { resolveAdminAuthService, shouldUseSecureCookie } from "./resolve-admin-auth";
 import type { AdminSession } from "~/backend/domain/admin";
 
 /**
@@ -14,7 +14,9 @@ import type { AdminSession } from "~/backend/domain/admin";
  * (architecture.md)。
  */
 export async function currentAdmin(env: Env, request: Request): Promise<AdminSession | undefined> {
-  const id = readAdminSessionId(request.headers.get("Cookie"));
+  const id = readAdminSessionId(request.headers.get("Cookie"), {
+    secure: shouldUseSecureCookie(env),
+  });
   if (id === undefined) return undefined;
 
   return resolveAdminAuthService(env).touchSession(id, Temporal.Now.instant());

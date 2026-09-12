@@ -92,6 +92,13 @@
       "when": 1789198851299,
       "tag": "0012_create_admin_credentials_table",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789200800096,
+      "tag": "0013_create_passkey_ceremonies_table",
+      "breakpoints": true
     }
   ]
 }

@@ -122,6 +122,7 @@
       "deviceLabel": "この端末だけの鍵",
       "revoke": "取り消す",
       "revokeLast": "最後の 1 本は取り消せません。先にもう 1 本登録してください。",
+      "revokeCurrent": "いま使っている鍵は取り消せません。別の端末から取り消してください。",
       "revokeFailed": "取り消せませんでした。"
     },
     "register": {

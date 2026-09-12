@@ -17,6 +17,7 @@ import {
   AdminAuthError,
   CredentialAlreadyRegisteredError,
   CredentialId,
+  InvalidCredentialIdError,
   RegistrationClosedError,
   RegistrationNotAllowedError,
 } from "~/backend/domain/admin";
@@ -56,7 +57,7 @@ export const createAdminAuthRouter = (): Hono<{ Bindings: Env }> => {
       const service = resolveAdminAuthService(c.env);
       await service.assertRegistrationAllowed({
         presentedToken: readPresentedRegistrationToken(c),
-        registrationToken: readRegistrationToken(c.env),
+        readRegistrationToken: () => readRegistrationToken(c.env),
         session: await currentAdmin(c.env, c.req.raw),
       });
 
@@ -70,7 +71,7 @@ export const createAdminAuthRouter = (): Hono<{ Bindings: Env }> => {
       const service = resolveAdminAuthService(c.env);
       await service.assertRegistrationAllowed({
         presentedToken: readPresentedRegistrationToken(c),
-        registrationToken: readRegistrationToken(c.env),
+        readRegistrationToken: () => readRegistrationToken(c.env),
         session: await currentAdmin(c.env, c.req.raw),
       });
 
@@ -121,7 +122,9 @@ export const createAdminAuthRouter = (): Hono<{ Bindings: Env }> => {
   });
 
   app.delete("/admin/session", async (c) => {
-    const id = readAdminSessionId(c.req.raw.headers.get("Cookie"));
+    const id = readAdminSessionId(c.req.raw.headers.get("Cookie"), {
+      secure: shouldUseSecureCookie(c.env),
+    });
     if (id !== undefined) await resolveAdminAuthService(c.env).logout(id);
 
     // cookie は識別子の有無によらず捨てさせる。読めない値が残り続けないようにする。
@@ -166,7 +169,18 @@ export const createAdminAuthRouter = (): Hono<{ Bindings: Env }> => {
     if (session === undefined) return unauthorized();
 
     return guard(c, async () => {
-      const id = CredentialId.create(c.req.param("id"));
+      const id = readCredentialId(c.req.param("id"));
+
+      // **いま使っている鍵は取り消させない。** 取り消すと、その場でこのセッションが
+      // 畳まれる (touchSession が鍵の存在を確かめる)。別の端末から取り消すのが
+      // 本来の使い方なので、自分の足を撃たせない。
+      if (id.equals(session.credentialId)) {
+        return createProblemResponse(
+          httpStatus.CONFLICT,
+          "Conflict",
+          "the passkey you are signed in with cannot be revoked; use another device",
+        );
+      }
 
       // 最後の 1 本は取り消させない。取り消すと誰も入れなくなり、D1 を手で
       // 触るまで復帰できない (ADR 0036)。
@@ -199,6 +213,9 @@ async function guard(
   try {
     return await work();
   } catch (error) {
+    if (error instanceof BadRequestError) {
+      return createProblemResponse(httpStatus.BAD_REQUEST, "Bad Request", error.message);
+    }
     if (error instanceof RegistrationClosedError) {
       // 経路そのものを隠す。開いていないことを知らせる必要が無い。
       return notFoundResponse();
@@ -224,6 +241,27 @@ async function guard(
     }
     throw error;
   }
+}
+
+/**
+ * URL の credential id を読む。読めなければ 400 に落とす。
+ *
+ * `CredentialId.create` が送出するのは `InvalidCredentialIdError` で、これは
+ * `AdminAuthError` ではないので `guard` が畳まない。そのままだと 500 になり、
+ * 他の応答 (RFC 9457) と形が揃わない。
+ */
+function readCredentialId(raw: string): CredentialId {
+  try {
+    return CredentialId.create(raw);
+  } catch (error) {
+    if (error instanceof InvalidCredentialIdError) throw new BadRequestError(error.message);
+    throw error;
+  }
+}
+
+/** 要求の形が読めない。401 ではなく 400 で返す (認証の可否とは別の話)。 */
+class BadRequestError extends Error {
+  readonly name = "BadRequestError";
 }
 
 function unauthorized(): Response {

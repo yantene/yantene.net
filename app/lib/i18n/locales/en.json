@@ -122,6 +122,7 @@
       "deviceLabel": "device-bound key",
       "revoke": "Revoke",
       "revokeLast": "The last passkey cannot be revoked. Register another one first.",
+      "revokeCurrent": "The passkey you are signed in with cannot be revoked. Use another device.",
       "revokeFailed": "Could not revoke it."
     },
     "register": {

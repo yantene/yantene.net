@@ -3,12 +3,11 @@ import { RegistrationClosedError } from "~/backend/domain/admin";
 import {
   D1AdminCredentialCommandRepository,
   D1AdminCredentialQueryRepository,
+  D1PasskeyCeremonyCommandRepository,
 } from "~/backend/infra/d1/repositories";
 import {
   KvAdminSessionCommandRepository,
   KvAdminSessionQueryRepository,
-  KvPasskeyCeremonyCommandRepository,
-  KvPasskeyCeremonyQueryRepository,
 } from "~/backend/infra/kv/repositories";
 import { WebCryptoPasskeyVerifier } from "~/backend/infra/webauthn/web-crypto-passkey-verifier";
 
@@ -23,8 +22,7 @@ export function resolveAdminAuthService(env: Env): AdminAuthService {
     credentialCommand: new D1AdminCredentialCommandRepository(env.D1),
     sessionQuery: new KvAdminSessionQueryRepository(env.SESSIONS),
     sessionCommand: new KvAdminSessionCommandRepository(env.SESSIONS),
-    ceremonyQuery: new KvPasskeyCeremonyQueryRepository(env.SESSIONS),
-    ceremonyCommand: new KvPasskeyCeremonyCommandRepository(env.SESSIONS),
+    ceremonyCommand: new D1PasskeyCeremonyCommandRepository(env.D1),
     verifier: new WebCryptoPasskeyVerifier(),
   });
 }

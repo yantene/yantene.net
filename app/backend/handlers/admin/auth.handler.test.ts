@@ -6,7 +6,7 @@
  * そのまま通す node で走らせる。
  */
 import { beforeEach, describe, expect, it } from "vitest";
-import { ADMIN_SESSION_COOKIE } from "./admin-session-cookie";
+import { adminSessionCookieName } from "./admin-session-cookie";
 import { FakeAuthenticator } from "~/backend/infra/webauthn/test-helper";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
@@ -14,6 +14,8 @@ import { createTestApp } from "~/backend/test-app";
 
 const ORIGIN = "https://yantene.net";
 const RP_ID = "yantene.net";
+const COOKIE_NAME = adminSessionCookieName(true);
+
 const TOKEN = "bootstrap-token-that-is-long-enough";
 
 interface Harness {
@@ -55,7 +57,7 @@ async function call(
   );
 
   const issued = response.headers.get("set-cookie");
-  if (issued !== null && issued.includes(ADMIN_SESSION_COOKIE)) {
+  if (issued !== null && issued.includes(COOKIE_NAME)) {
     harness.cookie = issued.split(";", 1)[0] ?? "";
   }
   return response;
@@ -162,6 +164,21 @@ describe("登録 (bootstrap)", () => {
     expect((await register(harness, second, {})).status).toBe(201);
   });
 
+  it("secret を消したあとでも、サインイン中なら追加登録できる", async () => {
+    // bootstrap が済んだら secret は要らない、と .dev.vars.example にも書いてある。
+    // **書いたとおりに消したら復旧用の端末を足せなくなる**のでは話が合わない。
+    const harness = setup();
+    await register(harness, authenticator, { token: TOKEN });
+    await signIn(harness, authenticator);
+
+    const withoutToken: Harness = {
+      env: { ...harness.env, ADMIN_REGISTRATION_TOKEN: undefined } as unknown as Env,
+      cookie: harness.cookie,
+    };
+    const second = await FakeAuthenticator.create({ rpId: RP_ID, origin: ORIGIN });
+    expect((await register(withoutToken, second, {})).status).toBe(201);
+  });
+
   it("同じ鍵を 2 度登録したら断る", async () => {
     const harness = setup();
     await register(harness, authenticator, { token: TOKEN });
@@ -193,7 +210,7 @@ describe("ログイン", () => {
     expect(response.status).toBe(200);
 
     const cookie = response.headers.get("set-cookie") ?? "";
-    expect(cookie).toContain(`${ADMIN_SESSION_COOKIE}=`);
+    expect(cookie).toContain(`${COOKIE_NAME}=`);
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Strict");
   });
@@ -202,8 +219,13 @@ describe("ログイン", () => {
     const harness = setup();
     await register(harness, authenticator, { token: TOKEN });
     const response = await signIn(harness, authenticator);
-    // "session=" ではなく "admin-session=" で始まること。
-    expect(response.headers.get("set-cookie")).toMatch(/^admin-session=/);
+    // 読み手の "session=" と混ざらないこと。併せて __Host- 前置が付くこと
+    // (他のホストから置き換えられないようにするため)。
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(cookie).toMatch(/^__Host-admin-session=/);
+    expect(cookie).toContain("Secure");
+    expect(cookie).toContain("Path=/");
+    expect(cookie).not.toContain("Domain=");
   });
 
   it("登録していない鍵ではログインできない", async () => {
@@ -345,12 +367,66 @@ describe("セッション", () => {
 
   it("読めないセッション識別子はログインしていない扱いになる", async () => {
     const harness = setup();
-    harness.cookie = `${ADMIN_SESSION_COOKIE}=not-a-valid-id`;
+    harness.cookie = `${COOKIE_NAME}=not-a-valid-id`;
     expect((await call(harness, "/api/v1/admin/credentials", { method: "GET" })).status).toBe(401);
   });
 });
 
 describe("鍵の取り消し", () => {
+  it("取り消した鍵で開いていたセッションは、その場で畳まれる", async () => {
+    // 取り消しがいちばん要るのは端末を失ったときで、そのとき相手はセッションを
+    // 使い続けている。**触るたびに期限が延びるので、畳まないと永遠に切れない。**
+    const harness = setup();
+    await register(harness, authenticator, { token: TOKEN });
+    await signIn(harness, authenticator);
+
+    const second = await FakeAuthenticator.create({ rpId: RP_ID, origin: ORIGIN });
+    await register(harness, second, {});
+
+    // 失くした端末 (second) のセッションを別に開く。
+    const lost: Harness = { env: harness.env, cookie: "" };
+    expect((await signIn(lost, second)).status).toBe(200);
+    expect((await call(lost, "/api/v1/admin/credentials", { method: "GET" })).status).toBe(200);
+
+    // 手元の端末から取り消す。
+    const revoked = await call(
+      harness,
+      `/api/v1/admin/credentials/${second.credentialIdBase64Url}`,
+      { method: "DELETE" },
+    );
+    expect(revoked.status).toBe(200);
+
+    // 失くした端末のセッションはもう通らない。
+    expect((await call(lost, "/api/v1/admin/credentials", { method: "GET" })).status).toBe(401);
+  });
+
+  it("いま使っている鍵は取り消せない", async () => {
+    const harness = setup();
+    await register(harness, authenticator, { token: TOKEN });
+    await signIn(harness, authenticator);
+    const second = await FakeAuthenticator.create({ rpId: RP_ID, origin: ORIGIN });
+    await register(harness, second, {});
+
+    const response = await call(
+      harness,
+      `/api/v1/admin/credentials/${authenticator.credentialIdBase64Url}`,
+      { method: "DELETE" },
+    );
+    expect(response.status).toBe(409);
+  });
+
+  it("読めない credential id は 400 にする (500 にしない)", async () => {
+    const harness = setup();
+    await register(harness, authenticator, { token: TOKEN });
+    await signIn(harness, authenticator);
+
+    const response = await call(harness, "/api/v1/admin/credentials/not%21valid", {
+      method: "DELETE",
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get("content-type")).toContain("application/problem+json");
+  });
+
   it("最後の 1 本は取り消せない", async () => {
     const harness = setup();
     await register(harness, authenticator, { token: TOKEN });
@@ -364,7 +440,7 @@ describe("鍵の取り消し", () => {
     expect(response.status).toBe(409);
   });
 
-  it("2 本あれば取り消せる", async () => {
+  it("いま使っていない鍵は取り消せる", async () => {
     const harness = setup();
     await register(harness, authenticator, { token: TOKEN });
     await signIn(harness, authenticator);
