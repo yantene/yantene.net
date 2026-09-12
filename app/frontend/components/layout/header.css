@@ -94,9 +94,16 @@
   color: var(--color-primary);
 }
 
+/*
+ * いま選ばれている側。**塗るのは無彩色で。**
+ *
+ * primary で塗っていたときは、ヘッダーで最も濃い色がここに来ていた。表示する言語は
+ * 一度決めたらほとんど触らない設定で、いちばん目立ってよいのは検索のほう。重みの順を
+ * 優先度の順に合わせる。
+ */
 .locale-switch-option[aria-current="true"] {
-  background-color: var(--color-primary);
-  color: var(--color-primary-content);
+  background-color: var(--color-base-300);
+  color: var(--color-base-content);
 }
 
 /*

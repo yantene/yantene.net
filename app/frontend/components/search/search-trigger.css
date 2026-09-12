@@ -39,6 +39,27 @@
   margin-inline-start: 0.75rem;
 }
 
+/*
+ * 広い画面では幅を取って、ヘッダーで唯一の「面」にする。
+ *
+ * 中身なりの幅 (160px ほど) にしておくと、ナビの字や出ていく先の絵と同じ重さになり、
+ * どれが主役なのか読めない。検索はヘッダーで最もよく使う道具なので、視覚的な重みも
+ * ここで最大にする。
+ *
+ * 鍵は右端へ寄せる。左に「検索」、右に近道、という置き方にすると、広げた幅が
+ * 間延びではなく入力欄の見立てとして働く。
+ */
+@media (width >= 64rem) {
+  .search-trigger {
+    width: 16rem;
+    justify-content: flex-start;
+  }
+
+  .search-trigger-keys {
+    margin-inline-start: auto;
+  }
+}
+
 .search-trigger-keys kbd {
   min-width: 1.25rem;
   padding: 0.0625rem 0.25rem;

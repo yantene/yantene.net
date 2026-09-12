@@ -82,7 +82,21 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
             上下の余白は 12px。ロゴが 40px あるので、16px だと帯が 72px に育つ。検索欄 (32px) と
             ロゴのどちらが来ても帯が 64px に収まる値にしてある。
           */}
-          <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-3">
+          {/*
+            帯は 3 つの島でできている — ロゴ / 行き先 / 道具。
+
+            **島の間は justify-between に空けさせる。** 余りを 2 等分するので、幅が
+            変わっても島の切れ目が同じ割合で残る。並びの意味が読めるのは間隔の差で、
+            全部を等間隔に並べると 11 個の鎖に見える (それが最初の形だった)。
+
+            島の中の間隔は外より必ず狭くする。いまは 島間 (余りの半分) > ナビ 24px >
+            道具 16px > 出ていく先 8px。この順を崩すとグループが読めなくなる。
+
+            **幅は 6xl。** 一覧やトップの本文 (5xl) より 64px 広いが、記事ページの本文と
+            目次を収める器が 6xl なので、いちばん長く見る画面ではロゴの左端と本文の左端が
+            揃う。5xl に合わせると島の間が 66px まで詰まり、3 つに分けた意味が薄れる。
+          */}
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
             {/*
               ロゴがホームへのリンクを兼ねる (ナビに Home を置かない)。絵はキャラクターと
               ロゴタイプを並べた一枚で、ヒーローがロゴタイプだけを大きく出すのと対になる。
@@ -97,34 +111,43 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               高さ 40px は、キャラクターの顔が読める最小と、14px のナビ・32px の検索欄に対して
               重くならない最大の間で取った値。素材の字間はこの大きさで見て決めてある。
             */}
-            {showLogo && (
-              <Link
-                to="/"
-                className={`press-control inline-flex shrink-0 items-center text-foreground${isTransparent ? " site-header-logo-halo" : ""}`}
-              >
-                <Logo className="h-10 w-auto" aria-hidden="true" />
-                <span className="sr-only">やんてね</span>
-              </Link>
-            )}
+            {/*
+              **場所はロゴを伏せるページ (トップ) でも空けておく。** 畳むと余りの分け方が
+              変わってナビが左へずれ、ページごとにナビの位置が動く。幅はロゴの絵の実寸
+              (40px の高さで 128px) に合わせてある。絵を差し替えたらここも合わせること。
+
+              高さも同じ理由で持たせる。伏せたページだけ帯が 8px 低くなり、トップと
+              下層で帯の厚みが変わっていた。
+            */}
+            <div className="flex h-10 w-32 shrink-0 items-center">
+              {showLogo && (
+                <Link
+                  to="/"
+                  className={`press-control inline-flex items-center text-foreground${isTransparent ? " site-header-logo-halo" : ""}`}
+                >
+                  <Logo className="h-10 w-auto" aria-hidden="true" />
+                  <span className="sr-only">やんてね</span>
+                </Link>
+              )}
+            </div>
 
             {/*
-              右の一群は ml-auto で押しやる。justify-between だとロゴを伏せたページ (トップ)
-              で残った一群が左端へ寄ってしまい、ページごとにナビの位置が変わる。
-            */}
-            <div
-              className={`ml-auto flex items-center gap-3 sm:gap-4${isTransparent ? " text-halo" : ""}`}
-            >
-              {/*
-                広い画面には全部を並べ、狭い画面では検索とハンバーガーだけを残して
-                ドロワーへ送る (SiteMenu)。境目を lg に置いてあるのは、ナビ 4 つ・
-                検索・言語・出ていく先 5 つを一列に並べると 1000px 近く要るため。
-              */}
-              <SiteNav
-                className="hidden lg:block"
-                listClassName="flex items-center gap-6"
-                linkClassName={navLinkClassName}
-              />
+              広い画面には全部を並べ、狭い画面では検索とハンバーガーだけを残して
+              ドロワーへ送る (SiteMenu)。境目を lg に置いてあるのは、ナビ 4 つ・
+              検索・言語・出ていく先 5 つを一列に並べると 1000px 近く要るため。
 
+              ここが `display: none` になると島が 2 つに減り、余りは残る 2 島の間へ
+              まとめて流れる (justify-between のまま帳尻が合う)。
+            */}
+            <SiteNav
+              className={`hidden lg:block${isTransparent ? " text-halo" : ""}`}
+              listClassName="flex items-center gap-6"
+              linkClassName={navLinkClassName}
+            />
+
+            <div
+              className={`flex shrink-0 items-center gap-3 sm:gap-4${isTransparent ? " text-halo" : ""}`}
+            >
               <SearchTrigger
                 onOpen={() => {
                   setSearchOpen(true);
@@ -140,8 +163,12 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
                 <LocaleSwitch />
               </div>
 
+              {/*
+                出ていく先は 5 つ並ぶので、島の中でさらに 1 つの塊に見えるところまで詰める
+                (8px)。隣の言語の切り替えとの 16px より狭いことが、塊の境目を作っている。
+              */}
               <SocialLinks
-                className="hidden items-center gap-3 lg:flex"
+                className="hidden items-center gap-2 lg:flex"
                 linkClassName={socialLinkClassName}
               />
 
