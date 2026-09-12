@@ -165,15 +165,6 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               />
 
               {/*
-                読み終えた後も繋がっていられる手。**帯に置くのはここだけ**で、フッターには
-                置いていない (一覧の見出し脇にあるのは、その一覧に対応するフィードを指す
-                別の導線)。ソーシャルメディアへの導線は帯に置かない — あれは「誰か」の
-                情報で、行き先と道具を並べる場所には属さない。ヒーローと、いずれ
-                プロフィール (#413) が持つ。
-              */}
-              <FeedIconLink className={`hidden lg:inline-flex ${iconLinkClassName}`} />
-
-              {/*
                 出し隠しは囲みの側で行う。LocaleSwitch 自身は自前の CSS で display を
                 決めており (header.css)、素の CSS は Tailwind の層より後に読まれるので、
                 `hidden` を直接載せても効かない。
@@ -181,6 +172,18 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               <div className="hidden lg:block">
                 <LocaleSwitch />
               </div>
+
+              {/*
+                読み終えた後も繋がっていられる手。**帯に置くのはここだけ**で、フッターには
+                置いていない (一覧の見出し脇にあるのは、その一覧に対応するフィードを指す
+                別の導線)。ソーシャルメディアへの導線は帯に置かない — あれは「誰か」の
+                情報で、行き先と道具を並べる場所には属さない。ヒーローと、いずれ
+                プロフィール (#413) が持つ。
+
+                並びの終端に置く。出ていく先を指すものなので、ページの中を動かす道具
+                (検索・表示する言語) を通り過ぎた先にあるのが素直な順になる。
+              */}
+              <FeedIconLink className={`hidden lg:inline-flex ${iconLinkClassName}`} />
 
               <SiteMenu className="lg:hidden" />
             </div>
