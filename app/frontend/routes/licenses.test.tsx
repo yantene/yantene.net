@@ -34,7 +34,8 @@ async function renderPage(): Promise<void> {
   renderWithI18n(<Stub initialEntries={["/licenses"]} />, { router: false });
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
-  await screen.findByRole("heading", { name: "ライセンス表示" });
+  // 場所の名前は日本語モードでも英語のまま (app/lib/i18n/locales/locales.test.ts)。
+  await screen.findByRole("heading", { name: "Open source licenses" });
 }
 
 describe("ライセンスのページ", () => {

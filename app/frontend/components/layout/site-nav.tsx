@@ -15,7 +15,13 @@ import { Link, useLocation } from "react-router";
  */
 export interface SiteNavItem {
   readonly to: string;
-  /** 翻訳キー。字は日英で入れ替わる。 */
+  /**
+   * 翻訳キー。**字は日英どちらでも英語のまま。**
+   *
+   * 場所の名前は訳さない (app/lib/i18n/locales/locales.test.ts に線引きがある)。
+   * それでも直書きせず翻訳リソースを通すのは、見出しやページの題と同じ字を引くため。
+   * ここに `"Articles"` と書くと、`/articles` の見出しと 2 か所で持つことになる。
+   */
   readonly labelKey: string;
 }
 

@@ -116,7 +116,7 @@ describe("Header の作り", () => {
   it("検索の入口は、押せなくても一覧へ行けるリンクになっている", () => {
     renderWithI18n(<Header />);
 
-    expect(screen.getAllByRole("link", { name: "検索" })[0]).toHaveAttribute("href", "/articles");
+    expect(screen.getAllByRole("link", { name: "Search" })[0]).toHaveAttribute("href", "/articles");
   });
 
   it("表示する言語は、JavaScript 無しでも切り替わるフォームで送る", () => {

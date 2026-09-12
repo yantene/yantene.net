@@ -71,7 +71,7 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           */}
           {popular.length > 0 && (
             <div className="mb-16">
-              <h2 className="text-2xl font-bold">{t("home.popularArticles")}</h2>
+              <h2 className="text-2xl font-bold">{t("home.popular")}</h2>
               <div className="mt-8">
                 <ArticleTimeline articles={popular} ranked />
               </div>
@@ -79,7 +79,7 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           )}
 
           <div>
-            <h2 className="text-2xl font-bold">{t("home.recentArticles")}</h2>
+            <h2 className="text-2xl font-bold">{t("home.latest")}</h2>
             <div className="mt-8">
               <ArticleTimeline articles={recent} groupByYear />
             </div>

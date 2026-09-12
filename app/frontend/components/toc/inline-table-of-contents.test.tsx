@@ -110,7 +110,8 @@ describe("InlineTableOfContents", () => {
   it("畳まずに、見出しを添えて出す", () => {
     const container = renderToc([section("a", "ひとつ"), section("b", "ふたつ")]);
     expect(container.querySelector("details")).toBeNull();
-    expect(container.querySelector(".inline-toc-heading")?.textContent).toBe("目次");
+    // 場所の名前は日本語モードでも英語のまま (app/lib/i18n/locales/locales.test.ts)。
+    expect(container.querySelector(".inline-toc-heading")?.textContent).toBe("Contents");
     expect(container.querySelectorAll("a")).toHaveLength(2);
   });
 });
