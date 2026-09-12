@@ -1,5 +1,6 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { getApp } from "~/backend";
+import { handleRefreshDeadLetter } from "~/backend/handlers/articles/refresh-dead-letter.handler";
 import { handleRefreshQueue } from "~/backend/handlers/articles/refresh-queue.handler";
 import {
   cloudflareContext,
@@ -24,8 +25,15 @@ const app = getApp(async (request, env, ctx, nonce) => {
   return requestHandler(request, context);
 });
 
+/** 再試行を使い切ったメッセージが回される queue の名前の末尾 (wrangler.jsonc の dead_letter_queue)。 */
+const DEAD_LETTER_SUFFIX = "-dlq";
+
 export default {
   fetch: app.fetch.bind(app),
   // コンテンツリポジトリへの push を受けて同期する (Artifacts の event subscription → Queue)。
-  queue: handleRefreshQueue,
+  // 同じ Worker が dead letter queue も受けるので、どちらから来たかを名前で振り分ける。
+  queue: (batch: MessageBatch, env: Env) =>
+    batch.queue.endsWith(DEAD_LETTER_SUFFIX)
+      ? handleRefreshDeadLetter(batch, env)
+      : handleRefreshQueue(batch, env),
 } satisfies ExportedHandler<Env>;

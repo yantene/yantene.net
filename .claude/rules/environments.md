@@ -60,6 +60,12 @@ pnpm exec wrangler secret put ARTIFACTS_API_TOKEN --env production
 権限はアカウント単位なので、**1 本を全環境で使い回してよい**。読み取り専用で、読める中身は
 公開されているサイトそのものなので、環境ごとに分ける実益が無い。
 
+⚠️ **最新バージョンが配信中でないと secret を編集できない** (`code: 10215`)。PR の
+preview デプロイは staging の Worker に**バージョンだけ上げて配信はしない**ので、PR が
+開いている間、staging の secret の追加・削除はこれで弾かれる。main のデプロイが走った
+直後の窓で叩くか、ダッシュボードから触ること。production には preview が飛ばないので
+この問題は出ない。
+
 手元 (development) も同じ 2 つが要る。`.dev.vars.example` を `.dev.vars` に写して埋める。
 手元の作業ツリーを読めるようにしてこれを不要にするのは
 [#461](https://github.com/yantene/yantene.net/issues/461)。
@@ -120,11 +126,20 @@ printf 'protocol=https\nhost=%s.artifacts.cloudflare.net\npath=git/yantene/%s.gi
 ### 1''. push で同期が走るようにする
 
 push を Queue に流し、Worker の `queue()` が受けて同期する (ADR 0035)。Queue は環境ごとに
-1 つ。名前は `wrangler.jsonc` の `queues.consumers` が指している。
+2 つ。名前は `wrangler.jsonc` の `queues.consumers` が指している。
 
 ```bash
 pnpm exec wrangler queues create yantene-production-content-events
+pnpm exec wrangler queues create yantene-production-content-events-dlq
 ```
+
+`-dlq` のほうは、再試行を 3 回使い切ったメッセージの行き先。ここが無いと落ちた push が
+黙って消え、**push しても同期されていないことに誰も気づけない**。同じ Worker が受けて
+`error` で記録に残すだけで、同期はやり直さない (次の push が最新の姿に揃えるため)。
+気づく手立てはこの記録なので、見るのは Workers Logs か `wrangler tail`。
+
+⚠️ **Queue は deploy より先に作ること。** 無いと `wrangler deploy` が consumer を
+解決できずに失敗する。
 
 購読は **wrangler では張れない** (リポジトリを指す `source.namespace` / `source.repo_name` を
 渡すオプションが CLI に無い)。REST を直接叩く。`queue_id` は `wrangler queues list` で引く。
