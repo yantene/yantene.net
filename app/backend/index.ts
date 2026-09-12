@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { NONCE, secureHeaders, type SecureHeadersVariables } from "hono/secure-headers";
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
+import { createLocaleRouter } from "./handlers/locale.handler";
 import { createLinkCardAssetsRouter } from "./handlers/link-cards/assets.handler";
 import { createArticleAssetsRouter } from "./handlers/articles/assets.handler";
 import { createArticleDetailApiRouter } from "./handlers/articles/detail.handler";
@@ -169,6 +170,10 @@ export const getApp = (
   // Webmention の受け口 (POST /webmention)。記事詳細ページの
   // <link rel="webmention"> が広告している先。
   app.route("/", createWebmentionRouter());
+
+  // 表示するロケールを選ぶ受け口 (POST /locale)。ヘッダーの切り替えが送る先で、
+  // cookie を置いて元のページへ戻すだけ。ページではないので React Router へ委譲しない。
+  app.route("/", createLocaleRouter());
 
   // 上記以外はすべて React Router のページルーティングに委ねる。
   app.all("*", async (c) => {

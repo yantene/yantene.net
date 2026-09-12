@@ -50,8 +50,11 @@ export const TransparentWithoutLogo: Story = {
 };
 
 /*
- * 検索フォームを畳む幅の姿。Articles の字と検索欄が消え、同じ /articles を指す虫眼鏡だけが
- * 残ることを確かめる。同じ行き先のリンクを 2 つ並べた回帰 (#154) を見張る場所。
+ * ナビを畳む幅の姿。ロゴ・検索の絵・ハンバーガーだけが残り、行き先と表示言語と
+ * 出ていく先はドロワーへ移る (SiteMenu)。
+ *
+ * 見張るのは、同じ行き先が 2 つ出ていないこと。帯とドロワーは同じ表を読んでいるので
+ * (site-nav.tsx)、片方だけを直して二重になる回帰 (#154) はここに出る。
  */
 export const SolidNarrow: Story = {
   args: {
@@ -59,6 +62,21 @@ export const SolidNarrow: Story = {
   },
   globals: {
     viewport: { value: "mobile1", isRotated: false },
+  },
+};
+
+/*
+ * ナビ・検索・表示言語・出ていく先が一列に収まる幅の姿。
+ *
+ * 境目は lg (1024px)。Storybook の既定 (responsive) では iframe の幅次第で
+ * 畳まれることがあるので、広い幅を明示しておく。
+ */
+export const SolidWide: Story = {
+  args: {
+    variant: "solid",
+  },
+  globals: {
+    viewport: { value: "desktop", isRotated: false },
   },
 };
 

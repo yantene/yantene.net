@@ -27,6 +27,8 @@
 @import "./components/layout/footer.css";
 @import "./components/link-card/link-card.css";
 @import "./components/layout/header.css";
+@import "./components/search/search-trigger.css";
+@import "./components/search/command-palette.css";
 @import "./components/mdast/code-block.css";
 @import "./components/mdast/embed-frame.css";
 @import "./components/mdast/lightbox-image.css";

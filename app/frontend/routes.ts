@@ -11,6 +11,16 @@ export default [
   route("articles", "routes/articles.tsx"),
   route("articles/:slug", "routes/articles.$slug.tsx"),
 
+  /*
+   * ヘッダーのナビが指している、まだ中身の無い 3 つ。
+   *
+   * 「準備中」の一文だけを置いてある。ナビに並べておきながら 404 に落とすと、
+   * サイトが壊れているように見えるため。中身が入るのは #413 / #412 / #415。
+   */
+  route("about", "routes/about.tsx"),
+  route("notes", "routes/notes.tsx"),
+  route("slides", "routes/slides.tsx"),
+
   // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
   route("licenses", "routes/licenses.tsx"),
 ] satisfies RouteConfig;

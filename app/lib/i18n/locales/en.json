@@ -11,7 +11,13 @@
     "viewAll": "View all"
   },
   "navigation": {
-    "loading": "Loading"
+    "loading": "Loading",
+    "siteNavLabel": "Site",
+    "menuLabel": "Menu",
+    "about": "About",
+    "articles": "Articles",
+    "notes": "Notes",
+    "slides": "Slides"
   },
   "feed": {
     "label": "Feed"
@@ -48,7 +54,14 @@
     "title": "Search",
     "placeholder": "Type keywords",
     "empty": "No matching articles.",
-    "resultsFor": "Results for \"{{query}}\" — {{count}}"
+    "resultsFor": "Results for \"{{query}}\" — {{count}}",
+    "searching": "Searching…",
+    "failed": "Could not search. Please try again.",
+    "hint": "Search articles by title and body.",
+    "seeAll": "See all results",
+    "hintMove": "to move",
+    "hintOpen": "to open",
+    "hintClose": "to close"
   },
   "share": {
     "title": "Share",
@@ -95,5 +108,14 @@
       "lead": "This site uses plenty of other open source software as well. What it is, and which versions, is listed in package.json in the repository.",
       "linkLabel": "yantene/yantene.net"
     }
+  },
+  "locale": {
+    "label": "Display language"
+  },
+  "comingSoon": {
+    "badge": "Coming soon",
+    "about": "A profile, and what I have been up to.",
+    "notes": "Short posts, the kind that do not need a title.",
+    "slides": "Slides from talks, and the decks that never became one."
   }
 }

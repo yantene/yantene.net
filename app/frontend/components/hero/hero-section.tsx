@@ -1,49 +1,10 @@
-import { SiBluesky, SiDiscord, SiGithub, SiMastodon, SiX } from "react-icons/si";
 import { Celestim } from "./celestim";
 import { Cityscape } from "./cityscape";
 import { clockOriginClassName } from "./clock-origin";
 import { TimeScrubber } from "./time-scrubber";
 import type { ClockOrigin } from "./clock-origin";
 import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
-
-/*
- * 出ていく先。
- *
- * `isMe` は「これは自分のアカウントである」という主張 (`rel="me"`) を出すかどうか。
- * **主張は相手側からの相互リンクがあって初めて成り立つ**ので、プロフィールに
- * yantene.net を書いてあるものだけに付ける。書いていない先に付けると、確かめた側から
- * 見て嘘になる。
- *
- * Discord は公開プロフィールに相互リンクを置けないため付けない。X は Bridgy が
- * 2023 年に対応を終えており、反応を持ち帰る先にならないので今は付けない。
- */
-const socialLinks = [
-  {
-    label: "GitHub",
-    href: "https://github.com/yantene",
-    icon: SiGithub,
-    isMe: true,
-  },
-  { label: "X", href: "https://x.com/yantene", icon: SiX, isMe: false },
-  {
-    label: "Bluesky",
-    href: "https://bsky.app/profile/yantene.net",
-    icon: SiBluesky,
-    isMe: true,
-  },
-  {
-    label: "Mastodon",
-    href: "https://mastodon.social/@yantene",
-    icon: SiMastodon,
-    isMe: true,
-  },
-  {
-    label: "Discord",
-    href: "https://discord.com/users/yantene",
-    icon: SiDiscord,
-    isMe: false,
-  },
-] as const;
+import { SocialLinks } from "~/frontend/components/social/social-links";
 
 interface HeroSectionProps {
   /**
@@ -124,20 +85,11 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
           ラップトップと、おいしいごはんと、あとは大切な人たちがいればだいたい幸せです。
         </p>
 
-        <div className="mt-1 flex items-center gap-5">
-          {socialLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              target="_blank"
-              rel={link.isMe ? "me noopener noreferrer" : "noopener noreferrer"}
-              className="press-control text-2xl text-foreground/85 transition-colors hover:text-primary"
-              title={link.label}
-            >
-              <link.icon />
-            </a>
-          ))}
-        </div>
+        {/* 表はヘッダーと共有する (components/social/social-links.tsx)。 */}
+        <SocialLinks
+          className="mt-1 flex items-center gap-5"
+          linkClassName="press-control inline-flex text-2xl text-foreground/85 transition-colors hover:text-primary"
+        />
       </div>
 
       {/* 地平線の上を歩く人と、掴んで時間を進められる目盛り。 */}

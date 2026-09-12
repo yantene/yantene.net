@@ -17,10 +17,21 @@ void i18nInstance.use(initReactI18next).init({
 
 const preview: Preview = {
   decorators: [
-    // Header / NoteCard / TableOfContents などが react-router の Link を使うため、
-    // Router コンテキストを与える。
-    (Story) => (
-      <MemoryRouter>
+    /*
+     * Header / ArticleTimeline / TableOfContents などが react-router の Link を使うため、
+     * Router コンテキストを与える。
+     *
+     * どこを見ているかは `initialEntries` で差し替えられる。現在地の印 (SiteNav の
+     * aria-current) のように、「いま開いている URL」で見え方が変わるものがあるため。
+     * **入れ子にはできない** ので (React Router は Router の二重化を例外にする)、
+     * 差し替えはここ 1 か所で行う。
+     *
+     * ```ts
+     * export const Story = { parameters: { initialEntries: ["/articles/foo"] } };
+     * ```
+     */
+    (Story, context) => (
+      <MemoryRouter initialEntries={context.parameters.initialEntries ?? ["/"]}>
         <I18nextProvider i18n={i18nInstance}>
           <Story />
         </I18nextProvider>

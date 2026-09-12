@@ -45,3 +45,157 @@
   filter: drop-shadow(0 1px 3px rgb(255 255 255 / 0.7))
     drop-shadow(0 1px 8px rgb(255 255 255 / 0.5));
 }
+
+/*
+ * いま見ている行き先。
+ *
+ * 色だけでは足りない (色を見分けられない読み手がいる) ので、下に線も引く。線は
+ * 常に場所を取らせる形ではなく、現在地にだけ出す — ナビは 4 項目しかなく、
+ * 出たり消えたりで行が動くほどの高さではない。
+ */
+.site-nav-current {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+/*
+ * 表示する言語の切り替え。
+ *
+ * 2 つしかないので、開いて選ばせずに両方を出したままにする。いま選ばれている側を
+ * 塗り、もう片方を地のままにして、押せば入れ替わることが形で分かるようにする。
+ */
+.locale-switch {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-base-300);
+  border-radius: 9999px;
+  /* 透過ヘッダーでは動く空の上に載る。地を敷かないと字が沈む。 */
+  background-color: color-mix(in oklab, var(--color-base-100) 85%, transparent);
+}
+
+.locale-switch-option {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  cursor: pointer;
+}
+
+.locale-switch-option + .locale-switch-option {
+  border-inline-start: 1px solid var(--color-base-300);
+}
+
+.locale-switch-option:hover {
+  color: var(--color-primary);
+}
+
+.locale-switch-option[aria-current="true"] {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+/*
+ * 狭い画面のドロワー。
+ *
+ * 器は `<details>`。**位置決めのための `position` をここに置かないこと。** 開いた板は
+ * ヘッダーの帯いっぱいに広げたいので、囲みではなくヘッダー (sticky / absolute) を
+ * 基準にして置いている。ここに `position: relative` を足すと、板がハンバーガーの
+ * 幅まで縮む。
+ */
+.site-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 指で押せる大きさ。絵そのものは 1.5rem しかない。 */
+  width: 2.75rem;
+  height: 2.75rem;
+  /* 広げたぶんを負の余白で相殺する。見た目の位置は帯の端に揃えたままにする。 */
+  margin-inline-end: -0.625rem;
+  border-radius: 0.75rem;
+  color: inherit;
+  cursor: pointer;
+  /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
+  list-style: none;
+}
+
+.site-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.site-menu-icon {
+  font-size: 1.5rem;
+}
+
+/* 開いているときだけ「閉じる」の絵に差し替える。JavaScript は要らない。 */
+.site-menu-icon-opened {
+  display: none;
+}
+
+.site-menu[open] .site-menu-icon-closed {
+  display: none;
+}
+
+.site-menu[open] .site-menu-icon-opened {
+  display: block;
+}
+
+.site-menu-panel {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  /*
+   * 横の余白は、帯の px-6 (1.5rem) から行の内側の余白 (0.5rem) を引いた値。こうすると
+   * ドロワーの字の左端が、帯のロゴの左端と揃う。
+   */
+  padding: 0.75rem 1rem 1.25rem;
+  border-block-end: 1px solid var(--color-base-300);
+  /* トップでは動く空の上に降りてくる。透かすと字が読めない。 */
+  background-color: var(--color-base-100);
+  box-shadow: 0 16px 32px rgb(11 18 33 / 0.12);
+}
+
+.site-menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.site-menu-link {
+  display: flex;
+  align-items: center;
+  /* 指で押せる高さ。字の大きさだけだと 44px に届かない。 */
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-base-content);
+}
+
+.site-menu-link:hover {
+  color: var(--color-primary);
+}
+
+.site-menu-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-base-300);
+}
+
+.site-menu-social {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
