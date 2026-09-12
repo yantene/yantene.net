@@ -36,3 +36,8 @@ debug-storybook.log
 
 # postinstall が node_modules から作り直す (scripts/copy-emoji-svg.mjs)
 public/emoji/svg/
+
+# コンテンツリポジトリ (Cloudflare Artifacts) の作業用 clone。
+# ここで記事を書き、artifacts-production / artifacts-staging へ push する。
+# 別リポジトリなので、このリポジトリの履歴にも lint / 整形の対象にも入れない。
+/content/
