@@ -44,10 +44,8 @@ pnpm exec wrangler secret put REFRESH_SECRET --env production  # 同期エンド
 `REFRESH_SECRET` が無いと `POST /api/v1/refresh` を叩けず、**記事が 1 件も入らないまま
 公開される**。
 
-コンテンツリポジトリの読み取りに要る secret は `CONTENT_SOURCE` (wrangler.jsonc の vars) がどちらを
-指すかで変わる ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
-
-`artifacts` の環境。
+コンテンツリポジトリ (Cloudflare Artifacts) の読み取りに要る secret
+([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
 
 ```bash
 pnpm exec wrangler secret put ARTIFACTS_ACCOUNT_ID --env production
@@ -59,13 +57,12 @@ pnpm exec wrangler secret put ARTIFACTS_API_TOKEN --env production
 持たせると Worker が漏れたときにコンテンツリポジトリを消せる。wrangler の OAuth トークンを流用しないこと
 (スコープが広すぎる)。
 
-`github` の環境。コンテンツリポジトリ側からも refresh を叩けるようにする (staging とは
-別の値にすること)。
+権限はアカウント単位なので、**1 本を全環境で使い回してよい**。読み取り専用で、読める中身は
+公開されているサイトそのものなので、環境ごとに分ける実益が無い。
 
-```bash
-pnpm exec wrangler secret put GITHUB_TOKEN --env production
-gh secret set PRODUCTION_REFRESH_SECRET -R yantene/notes
-```
+手元 (development) も同じ 2 つが要る。`.dev.vars.example` を `.dev.vars` に写して埋める。
+手元の作業ツリーを読めるようにしてこれを不要にするのは
+[#461](https://github.com/yantene/yantene.net/issues/461)。
 
 ### 1'. Artifacts のリポジトリを用意する
 
@@ -102,13 +99,21 @@ git -c http.extraHeader="Authorization: Bearer <token>" push <remote> main
 毎回 `-c` を打ちたくなければ、git 標準の credential helper に食わせる (Artifacts は
 Basic 認証も受けるので、`?expires=` を落とした値をパスワード欄に入れる)。
 
+⚠️ **先に `credential.useHttpPath` を立てること。** トークンは**リポジトリ単位**の
+スコープで、staging のトークンで production には push できない。既定では credential は
+ホスト単位で引かれるので、2 本を続けて入れると**後から入れたほうが前のを上書きし、
+片方の push が 403 で落ちる**。
+
 ```bash
-printf 'protocol=https\nhost=%s.artifacts.cloudflare.net\nusername=x\npassword=%s\n' \
-  "<account-id>" "${TOKEN%%\?expires=*}" | git credential approve
+git config credential.helper libsecret   # 平文で置きたくないので keyring に入れる
+git config credential.useHttpPath true   # リポジトリごとに別のトークンを持たせる
+
+printf 'protocol=https\nhost=%s.artifacts.cloudflare.net\npath=git/yantene/%s.git\nusername=x\npassword=%s\n\n' \
+  "<account-id>" "<repo>" "${TOKEN%%\?expires=*}" | git credential approve
 ```
 
-GitHub からの取り込みは公開リポジトリしか受けないので、private の `yantene/notes` は
-手元の clone から push して移す。
+入れたら `git ls-remote <remote>` が `-c http.extraHeader` 無しで通ることを、
+**環境ごとに**確かめる。片方だけ通るなら上書きしている。
 
 ⚠️ **トークンは必ず期限が切れる (最長 1 年)。** 切れたら `issue-token` で取り直す。
 
@@ -167,11 +172,8 @@ pnpm exec wrangler r2 object put yantene-production/og/fonts/noto-sans-jp-700-fu
 
 ### 4. コンテンツを投入する
 
-`CONTENT_SOURCE` が `github` の環境は、`yantene/notes` の refresh ワークフローを対象
-ブランチで実行する (main → production、staging → staging)。
-
-`artifacts` の環境は、その環境のリポジトリの `main` へ push すれば同期が走る (1'')。
-手で叩きたいとき (実装を変えて既存の記事に反映させるとき) は force を付ける。
+その環境のリポジトリの `main` へ push すれば同期が走る (1'')。手で叩きたいとき
+(実装を変えて既存の記事に反映させるとき) は force を付ける。
 
 ```bash
 curl -X POST "https://yantene.net/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"

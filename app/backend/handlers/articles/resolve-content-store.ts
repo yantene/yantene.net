@@ -1,33 +1,28 @@
 import type { IContentStore } from "~/backend/domain/content";
 import { ArtifactsContentStore } from "~/backend/infra/artifacts/artifacts-content-store";
-import { GitHubContentStore } from "~/backend/infra/github/github-content-store";
 
 /**
  * Composition Root: env からコンテンツリポジトリの設定を解決して {@link IContentStore} を生成する。
  *
- * どちらのコンテンツリポジトリを読むかは wrangler.jsonc の var `CONTENT_SOURCE` で環境ごとに決める
+ * どのコンテンツリポジトリを読むかは wrangler.jsonc の var `CONTENT_SOURCE` で環境ごとに決める
  * (ADR 0034)。存在ベースのフォールバック (secret があれば有効) は採らず、値が無いか
  * 知らない値なら throw する (fail-loud)。
  *
  * - `artifacts`: Cloudflare Artifacts。namespace / repo / branch は vars
  *   (`ARTIFACTS_NAMESPACE` / `ARTIFACTS_REPO` / `ARTIFACTS_BRANCH`)、アカウント ID と
  *   API トークンは secret (`ARTIFACTS_ACCOUNT_ID` / `ARTIFACTS_API_TOKEN`)。
- * - `github`: GitHub リポジトリ。production を切り替えるまでの間だけ残す。owner / repo /
- *   branch は vars (`GITHUB_OWNER` / `GITHUB_REPO` / `GITHUB_BRANCH`)、トークンは
- *   secret (`GITHUB_TOKEN`)。
+ *
+ * いま読める先は Artifacts だけだが、分岐は残してある。手元の作業ツリーを読む `local` を
+ * 足す先 (#461) がここになる。
  */
 export function resolveContentStore(env: Env): IContentStore {
   const source: string = env.CONTENT_SOURCE;
-  switch (source) {
-    case "artifacts":
-      return resolveArtifacts(env);
-    case "github":
-      return resolveGitHub(env);
-    default:
-      throw new Error(
-        `CONTENT_SOURCE must be "artifacts" or "github" to read content (got ${JSON.stringify(source)}).`,
-      );
+  if (source !== "artifacts") {
+    throw new Error(
+      `CONTENT_SOURCE must be "artifacts" to read content (got ${JSON.stringify(source)}).`,
+    );
   }
+  return resolveArtifacts(env);
 }
 
 function resolveArtifacts(env: Env): IContentStore {
@@ -38,16 +33,6 @@ function resolveArtifacts(env: Env): IContentStore {
     namespace: env.ARTIFACTS_NAMESPACE,
     repo: env.ARTIFACTS_REPO,
     branch: env.ARTIFACTS_BRANCH,
-    getAuthToken: () => Promise.resolve(token),
-  });
-}
-
-function resolveGitHub(env: Env): IContentStore {
-  const token = readSecret(env, "GITHUB_TOKEN");
-  return new GitHubContentStore({
-    owner: env.GITHUB_OWNER,
-    repo: env.GITHUB_REPO,
-    branch: env.GITHUB_BRANCH,
     getAuthToken: () => Promise.resolve(token),
   });
 }

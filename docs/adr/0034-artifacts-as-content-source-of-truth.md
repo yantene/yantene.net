@@ -1,6 +1,6 @@
 # 0034. コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-11
 - Deciders: @yantene
 
@@ -76,9 +76,9 @@ binding からも読める。これでコンテンツも Cloudflare に閉じら
 - **認証は Cloudflare API トークン。** 権限は Artifacts > Read だけに絞り、secret
   (`ARTIFACTS_API_TOKEN`) で与える。アカウント ID も secret (`ARTIFACTS_ACCOUNT_ID`)。
   namespace / repo / branch は wrangler の vars。**未設定なら静かに劣化させず throw する**
-- **どのコンテンツリポジトリを読むかは var `CONTENT_SOURCE` で環境ごとに決める** (`artifacts` / `github`)。
-  production を切り替えるまでの間、`GitHubContentStore` を残して選べるようにする。
-  値が無いか知らない値なら throw する。secret の有無で黙って切り替えることはしない
+- **どのコンテンツリポジトリを読むかは var `CONTENT_SOURCE` で環境ごとに決める。** いま読める先は
+  `artifacts` だけだが、実装を差し替える口として分岐を残す。値が無いか知らない値なら
+  throw する。secret の有無で黙って切り替えることはしない
 - **Workers binding (`artifacts`) は付けない。** 読み取りに要らず、アカウントで Artifacts が
   有効でないとデプロイ自体が通らなくなる。binding を要する機能 (push イベント、Worker
   からの書き込み) を足すときに付ける
@@ -119,23 +119,20 @@ refresh が止まるだけで、配信には届かない。
 - 良い面: コンテンツまで Cloudflare に閉じる。`git push` のワークフローは変わらない。読み取り経路が
   1 つになり、形が OpenAPI で確定している。変更検出のハッシュが引き継がれる
 - 悪い面・トレードオフ: beta への依存。GitHub の Web エディタが無くなり、手元に clone が
-  無い場所から直せない。push から refresh までが自動で繋がっていない (GitHub Actions は
-  Artifacts の push を知らない) ので、当面は push のあと `POST /api/v1/refresh` を手で叩く。
-  Worker に API トークンを常駐させる (読み取り専用・Artifacts 限定)
-- 移行中の状態: `CONTENT_SOURCE` は 3 環境とも `github` で出す。staging の secret
-  (`ARTIFACTS_ACCOUNT_ID` / `ARTIFACTS_API_TOKEN`) を置いてから staging を `artifacts` に
-  切り替え、実 API と突き合わせてから production を切り替える。GitHub を落とすのはその後
+  無い場所から直せない。Worker に API トークンを常駐させる (読み取り専用・Artifacts 限定)
+- push から refresh は Queue で繋がっている ([0035](0035-refresh-on-push-through-a-queue.md))。
+  `POST /api/v1/refresh` は手で叩くためだけに残る (実装を変えて既存の記事に反映させるとき)
 - 検証方法: `artifacts-content-store.test.ts` が fetch モックでツリーの辿り方・ファイル読み取り・
   分割応答と空ブランチの拒否・トークンの使い回しを固定する。`resolve-content-store.test.ts`
-  が `CONTENT_SOURCE` の切り替えと、secret 欠落・未知の値での throw を固定する
+  が `CONTENT_SOURCE` が `artifacts` のときの組み立てと、secret 欠落・未知の値での throw を
+  固定する
 
 ## 参考 / More Information
 
 - 実装: `app/backend/infra/artifacts/artifacts-content-store.ts` /
   `app/backend/handlers/articles/resolve-content-store.ts`
 - [0003](0003-clean-architecture-and-cqrs.md) /
-  [0004](0004-github-as-content-source-of-truth.md) (いまのコンテンツリポジトリ。production を
-  切り替えたときに Deprecated にする)
+  [0004](0004-github-as-content-source-of-truth.md) (この ADR が置き換えた前の置き場)
 - [#401](https://github.com/yantene/yantene.net/issues/401)
 - [Cloudflare Artifacts REST API](https://developers.cloudflare.com/artifacts/api/rest-api/) /
   [Authentication](https://developers.cloudflare.com/artifacts/guides/authentication/) /

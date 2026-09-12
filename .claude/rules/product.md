@@ -38,16 +38,16 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 手元で Markdown を書き、コンテンツリポジトリに `git push` する。**push を合図に D1 / R2 へ
 同期される。** 管理画面は設けない。
 
-コンテンツリポジトリは GitHub (`yantene/notes`) から Cloudflare Artifacts へ移す途中で、
-どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が決める
-([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
-**staging と production は `artifacts`。** development だけ `github` のまま
-(手元に Artifacts の secret を置かないため)。`CONTENT_SOURCE` ごと落とすのは #401 の掃除で。
+コンテンツリポジトリは Cloudflare Artifacts に置く
+([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。環境ごとに
+リポジトリを分け (`yantene/yantene-production` / `yantene/yantene-staging`)、どちらも
+`main` だけを見る。どれを読むかは `wrangler.jsonc` の vars
+(`CONTENT_SOURCE` / `ARTIFACTS_REPO`) が決める。**3 環境とも `artifacts`。**
+手元の作業ツリーを読む `local` を足すのは
+[#461](https://github.com/yantene/yantene.net/issues/461)。
 
-- `github` の環境: `yantene/notes` に push すると、あちらのワークフローが refresh を叩く
-- `artifacts` の環境: 環境ごとのリポジトリ (`yantene/yantene-production` /
-  `yantene/yantene-staging`) に push すると、その push が Queue に流れて同期が走る
-  ([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))
+その環境のリポジトリの `main` に push すると、push が Queue に流れて同期が走る
+([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))。
 
 同期は**同時に 2 つ走らない**。立て続けに push しても、最後に走った同期が最新の中身を
 読むので、リポジトリの最新の姿が必ず D1 / R2 に載って終わる。
@@ -103,7 +103,7 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   `embeddings.rewrittenPairs` が 0 以外になったら揃っている。`failed` が空でなければもう一度。
 
   ```bash
-  gh workflow run refresh.yml -R yantene/notes --ref staging   # staging。production は --ref main
+  curl -X POST "<origin>/api/v1/refresh" -H "X-Refresh-Token: <secret>"
   ```
 
 - 記事の URL とアセット API を `/notes` から `/articles` へ移した
@@ -128,10 +128,9 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
 
 ## データモデルとストレージ戦略
 
-コンテンツリポジトリはリポジトリ 1 つ (いまは GitHub の `yantene/notes`、移行先は Cloudflare
-Artifacts) に置く。D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み MDAST・
-画像のキャッシュを担う。設計判断の詳細は
-[ADR 0004](../../docs/adr/0004-github-as-content-source-of-truth.md) と
+コンテンツリポジトリは環境ごとに 1 つ (Cloudflare Artifacts の `yantene/yantene-production` /
+`yantene/yantene-staging`)。D1 はメタデータのインデックス、R2 は原文 Markdown・パース済み
+MDAST・画像のキャッシュを担う。設計判断の詳細は
 [ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md) を参照。
 
 - コンテンツリポジトリ: Markdown 本文 (`articles/<slug>.md`) + 画像アセット (`articles/<slug>/<filename>`)

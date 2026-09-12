@@ -1,6 +1,6 @@
 # 0035. コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-11
 - Deciders: @yantene
 
@@ -39,8 +39,8 @@ refresh は「コンテンツリポジトリのいまの姿を D1 / R2 に写す
 - **1 バッチにつき同期は多くても 1 回。** 立て続けの push は 1 回にまとまる。refresh は
   いまの姿に揃える処理なので、まとめても取りこぼさない
 - **`max_concurrency` は 1。** ここが肝で、下に理由を書く
-- **読んでいるコンテンツリポジトリが Artifacts でない環境では何もしない。** `CONTENT_SOURCE` が `github`
-  のときに走らせると、Artifacts の push を合図に GitHub の中身を同期することになる
+- **読んでいるコンテンツリポジトリが Artifacts でない環境では何もしない。** そこで走らせると、
+  Artifacts の push を合図に別の場所の中身を同期することになる
 - **落ちたら ack せずに投げ返す。** Queue が再試行する (`max_retries` は 3)
 
 ### 購読はリポジトリに 1 つだけ
@@ -102,8 +102,8 @@ force が古い姿で上書きしうる。**force を流すときは push を重
   気づく仕組み (dead letter queue か通知) は別に要る
 - 悪い面: 直列化が効くのは Queue を通る同期だけ。手で叩く force refresh と push が
   重なると、古い姿で固まりうる (上記)
-- 運用: これが動いたら、`yantene/notes` の `refresh.yml` と GitHub secret の
-  `PRODUCTION_REFRESH_SECRET` / `STAGING_REFRESH_SECRET` は死ぬ
+- 運用: `yantene/notes` の `refresh.yml` と GitHub secret の
+  `PRODUCTION_REFRESH_SECRET` / `STAGING_REFRESH_SECRET` は要らなくなった
 - 検証方法: `refresh-queue.handler.test.ts` が、読んでいるブランチへの push でだけ走ること、
   バッチをまとめて 1 回にすること、コンテンツリポジトリが Artifacts でない環境で何もしないこと、
   形の読めない push イベントを捨てずに同期へ倒すこと、落ちたら ack しないことを固定する

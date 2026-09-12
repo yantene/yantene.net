@@ -136,11 +136,11 @@ describe("handleRefreshQueue", () => {
     expect(runRefreshMock).toHaveBeenCalledTimes(1);
   });
 
-  /* Artifacts を読んでいない環境で走らせると、push を合図に GitHub の中身を同期してしまう。 */
+  /* Artifacts を読んでいない環境で走らせると、push を合図に別の場所の中身を同期してしまう。 */
   it("does nothing when the content source is not artifacts", async () => {
     const { batch: b, ackAll } = batch([pushEvent("refs/heads/main")]);
 
-    await handleRefreshQueue(b, env({ CONTENT_SOURCE: "github" }));
+    await handleRefreshQueue(b, env({ CONTENT_SOURCE: "local" }));
 
     expect(runRefreshMock).not.toHaveBeenCalled();
     expect(ackAll).toHaveBeenCalled();

@@ -9,22 +9,16 @@
   },
   "vars": {
     "APP_ENV": "development",
-    // どちらのコンテンツリポジトリを読むか (ADR 0034)。無い値・知らない値なら refresh が
-    // throw する (fail-loud)。手元には Artifacts の secret を置かないので github のまま
-    // (読むには .dev.vars に ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN が要る)。
-    "CONTENT_SOURCE": "github",
-    // Cloudflare Artifacts (これからのコンテンツリポジトリ) の参照。アカウント ID と
+    // どのコンテンツリポジトリを読むか (ADR 0034)。無い値・知らない値なら refresh が
+    // throw する (fail-loud)。手元の作業ツリーを読む "local" を足すのは #461。
+    "CONTENT_SOURCE": "artifacts",
+    // Cloudflare Artifacts (コンテンツリポジトリ) の参照。アカウント ID と
     // API トークン (Artifacts > Read) は secret で与える:
     // ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
     "ARTIFACTS_NAMESPACE": "yantene",
     // 手元から production のリポジトリを読まないよう staging 側を指す。
     "ARTIFACTS_REPO": "yantene-staging",
     "ARTIFACTS_BRANCH": "main",
-    // GitHub リポジトリ (いまのコンテンツリポジトリ) の参照。
-    // GITHUB_TOKEN は secret で与える。
-    "GITHUB_OWNER": "yantene",
-    "GITHUB_REPO": "notes",
-    "GITHUB_BRANCH": "main",
   },
   // Workers AI: 記事のベクトル (関連ノートの並び)。モデルは infra 側が持つ。
   "ai": {
@@ -72,9 +66,6 @@
         // 張れないので、同じリポジトリを両環境から自動同期できない。
         "ARTIFACTS_REPO": "yantene-staging",
         "ARTIFACTS_BRANCH": "main",
-        "GITHUB_OWNER": "yantene",
-        "GITHUB_REPO": "notes",
-        "GITHUB_BRANCH": "staging",
       },
       "ai": {
         "binding": "AI",
@@ -130,9 +121,6 @@
         "ARTIFACTS_NAMESPACE": "yantene",
         "ARTIFACTS_REPO": "yantene-production",
         "ARTIFACTS_BRANCH": "main",
-        "GITHUB_OWNER": "yantene",
-        "GITHUB_REPO": "notes",
-        "GITHUB_BRANCH": "main",
       },
       "ai": {
         "binding": "AI",

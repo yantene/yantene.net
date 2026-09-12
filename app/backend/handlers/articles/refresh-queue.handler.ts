@@ -66,8 +66,9 @@ function skippedTypes(messages: MessageBatch["messages"]): readonly string[] {
  * refresh はコンテンツリポジトリの「いまの姿」を D1 / R2 に揃える処理で、コミットを 1 つずつ辿るのでは
  * ないため、まとめても取りこぼさない。
  *
- * 読んでいるコンテンツリポジトリが Artifacts でない環境 (`CONTENT_SOURCE` が `github`) では何もしない。
- * そこで走らせても、Artifacts の push を合図に GitHub の中身を同期することになる。
+ * 読んでいるコンテンツリポジトリが Artifacts でない環境では何もしない。そこで走らせても、
+ * Artifacts の push を合図に別の場所の中身を同期することになる (手元の作業ツリーを読む
+ * `local` を足したとき。#461)。
  *
  * 失敗したら ack せずに投げ返す。Queue が再試行する。
  */

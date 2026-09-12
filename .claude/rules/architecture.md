@@ -64,7 +64,6 @@ app/
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
 │   │   ├── kv/                 # KV 実装 (読み手のセッション)
 │   │   ├── artifacts/          # コンテンツリポジトリ (Cloudflare Artifacts) の実装 (ADR 0034)
-│   │   ├── github/             # コンテンツリポジトリ (GitHub リポジトリ)。切り替えまで残す
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── articles/           # 記事の API ルータ + ページ用ローダ (loadXxxPage)
