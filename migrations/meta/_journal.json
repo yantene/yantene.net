@@ -85,6 +85,13 @@
       "when": 1788971908697,
       "tag": "0011_rename_notes_to_articles",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789198851299,
+      "tag": "0012_create_admin_credentials_table",
+      "breakpoints": true
     }
   ]
 }

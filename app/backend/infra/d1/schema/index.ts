@@ -1,3 +1,4 @@
+export { adminCredentials } from "./admin-credentials";
 export { linkCards } from "./link-cards";
 export { articleEmbeddings } from "./article-embeddings";
 export { articleReactions } from "./article-reactions";

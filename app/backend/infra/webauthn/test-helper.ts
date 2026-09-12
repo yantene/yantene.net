@@ -195,6 +195,11 @@ export class FakeAuthenticator {
     return es256CoseKey(this.jwk);
   }
 
+  /** 応答や API に出てくる形の credential id。 */
+  get credentialIdBase64Url(): string {
+    return toBase64Url(this.credentialId);
+  }
+
   clientDataJson(type: "webauthn.create" | "webauthn.get", challenge: string): Uint8Array {
     return new TextEncoder().encode(
       JSON.stringify({ type, challenge, origin: this.origin, crossOrigin: false }),
