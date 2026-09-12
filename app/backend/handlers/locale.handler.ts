@@ -14,20 +14,25 @@ import { createProblemResponse } from "~/lib/problem-details";
 /** 戻り先を決められなかったときの行き先。 */
 const FALLBACK_RETURN_TO = "/";
 
-/** 制御文字の境目。可視文字は 0x20 (空白) から始まり、0x7f は DEL。 */
-const FIRST_VISIBLE_CODE_POINT = 0x20;
-const DELETE_CODE_POINT = 0x7f;
+/** ヘッダーに載せられる文字の範囲。空白 (0x20) から `~` (0x7e) まで。 */
+const FIRST_PRINTABLE_CODE_POINT = 0x20;
+const LAST_PRINTABLE_CODE_POINT = 0x7e;
 
 /**
  * ヘッダーに載せられない文字を含むか。
  *
- * `Location` に改行が混ざると応答が分割される (レスポンス分割)。いまの Workers は
- * 不正な値で例外を投げるので分割はされないが、そこに頼らず手前で落とす。
+ * 落とすものが 2 種類ある。**制御文字**は `Location` に改行が混ざると応答が分割される
+ * ため (レスポンス分割)。**0x7e を越える文字**はヘッダーの値が ByteString で、
+ * 255 を越える符号位置の変換がそこで例外になるため — 手前で落とさないと、
+ * `/記事` のような値を送られただけで 500 になる。
+ *
+ * ブラウザから送られてくる `location.pathname` は百分率符号化済みなので、素の
+ * フォームがここで落ちることはない。
  */
-function hasControlCharacter(value: string): boolean {
+function hasUnsafeHeaderCharacter(value: string): boolean {
   for (const character of value) {
     const code = character.codePointAt(0) ?? 0;
-    if (code < FIRST_VISIBLE_CODE_POINT || code === DELETE_CODE_POINT) return true;
+    if (code < FIRST_PRINTABLE_CODE_POINT || code > LAST_PRINTABLE_CODE_POINT) return true;
   }
   return false;
 }
@@ -46,7 +51,7 @@ export function safeReturnTo(raw: string | undefined): string {
   if (raw === undefined || raw.length === 0) return FALLBACK_RETURN_TO;
   if (!raw.startsWith("/")) return FALLBACK_RETURN_TO;
   if (raw.startsWith("//") || raw.startsWith("/\\")) return FALLBACK_RETURN_TO;
-  if (hasControlCharacter(raw)) return FALLBACK_RETURN_TO;
+  if (hasUnsafeHeaderCharacter(raw)) return FALLBACK_RETURN_TO;
   return raw;
 }
 
@@ -73,6 +78,19 @@ export function buildLocaleCookie(
   ].join("; ");
 }
 
+function badRequest(detail: string): Response {
+  return createProblemResponse(httpStatus.BAD_REQUEST, "Bad Request", detail);
+}
+
+/** 本文をフォームとして読む。読めなければ null (投げさせない)。 */
+async function readForm(request: Request): Promise<FormData | null> {
+  try {
+    return await request.formData();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * ロケールを選ぶ受け口。POST /locale。
  *
@@ -87,7 +105,14 @@ export function createLocaleRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.post(localePath, async (c) => {
-    const form = await c.req.formData();
+    /*
+     * 読めない本文はここで落とす。`formData()` は JSON や空の本文で投げるので、
+     * 握らないと `onError` まで転がって 500 になる。**押した人の側の間違いを
+     * こちらの故障として報せない。**
+     */
+    const form = await readForm(c.req.raw);
+    if (form === null) return badRequest("The request body could not be read as a form.");
+
     const requested = form.get(localeField);
 
     /*
@@ -95,11 +120,7 @@ export function createLocaleRouter(): Hono<{ Bindings: Env }> {
      * 「押しても英語のまま」という形でだけ壊れ、誰も原因に辿り着けない (fail-loud)。
      */
     if (typeof requested !== "string" || !isSupportedLocale(requested)) {
-      return createProblemResponse(
-        httpStatus.BAD_REQUEST,
-        "Bad Request",
-        "The requested locale is not supported.",
-      );
+      return badRequest("The requested locale is not supported.");
     }
 
     // ファイルが送られてくれば File になる。文字列でなければ「言ってこなかった」と扱う。

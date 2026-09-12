@@ -54,6 +54,16 @@ describe("safeReturnTo", () => {
   it("ヘッダーに載せられない制御文字を含むものは落とす", () => {
     expect(safeReturnTo("/articles\r\nSet-Cookie: a=b")).toBe("/");
   });
+
+  /*
+   * ヘッダーの値は ByteString で、255 を越える符号位置はそこで例外になる。手前で
+   * 落とさないと、`/記事` を送られただけで応答の組み立てが落ちて 500 になる。
+   * 素のフォームからは百分率符号化済みの値しか来ないので、これで困る経路は無い。
+   */
+  it("ASCII の外の文字を含むものも落とす (ヘッダーに載らない)", () => {
+    expect(safeReturnTo("/記事")).toBe("/");
+    expect(safeReturnTo("/articles?q=%E8%A8%98%E4%BA%8B")).toBe("/articles?q=%E8%A8%98%E4%BA%8B");
+  });
 });
 
 /*
@@ -112,6 +122,24 @@ describe("POST /locale", () => {
 
   it("ロケールを言ってこなければ 400", async () => {
     expect((await post({ [localeReturnToField]: "/" })).status).toBe(400);
+  });
+
+  /*
+   * フォームとして読めない本文も 400。握らないと `formData()` の例外が onError まで
+   * 転がって 500 になり、**押した人の側の間違いをこちらの故障として報せる**ことになる。
+   */
+  it("フォームとして読めない本文は 400", async () => {
+    const response = await createTestApp().request(
+      localePath,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      },
+      env("production"),
+    );
+
+    expect(response.status).toBe(400);
   });
 
   it("外へ飛ばそうとする戻り先は、切り替えは通したうえでトップに落とす", async () => {

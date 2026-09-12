@@ -3,7 +3,7 @@ import type { Preview, Renderer } from "@storybook/react";
 import i18next from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { MemoryRouter } from "react-router";
-import { INITIAL_VIEWPORTS } from "storybook/viewport";
+import { INITIAL_VIEWPORTS, MINIMAL_VIEWPORTS } from "storybook/viewport";
 import resources from "../app/lib/i18n/locales";
 import "../app/frontend/app.css";
 
@@ -56,8 +56,13 @@ const preview: Preview = {
      * 画面幅の選択肢を登録する。既定は responsive のままなので、指定したストーリーだけが
      * 狭い幅で描かれる。Tailwind の sm: は viewport の media query なので、装飾の div を
      * 細くしても出し分けは再現できず、iframe ごと狭める必要がある。
+     *
+     * **2 つとも登録する。** 実機の名前 (`iphonex` など) は INITIAL に、素の名前
+     * (`mobile1` / `tablet` / `desktop`) は MINIMAL にしかない。片方だけだと、
+     * もう片方の名前を指したストーリーは**黙って既定の幅で描かれる** — 狭い幅の
+     * 出し分けを見張るつもりのストーリーが、何も見張らなくなる。
      */
-    viewport: { options: INITIAL_VIEWPORTS },
+    viewport: { options: { ...MINIMAL_VIEWPORTS, ...INITIAL_VIEWPORTS } },
   },
 };
 
