@@ -70,6 +70,23 @@ preview デプロイは staging の Worker に**バージョンだけ上げて�
 手元の作業ツリーを読めるようにしてこれを不要にするのは
 [#461](https://github.com/yantene/yantene.net/issues/461)。
 
+管理者の最初の passkey を登録するのに要る secret
+([ADR 0036](../../docs/adr/0036-authenticate-admin-with-passkey.md))。
+
+```bash
+pnpm exec wrangler secret put ADMIN_REGISTRATION_TOKEN --env production
+```
+
+値は長い乱数にする (`openssl rand -base64 32`)。**置かないと `/admin` の登録の経路が
+閉じる** (404 になる。fail-loud)。登録済みの passkey が 1 本でもあれば、追加の登録には
+サインインが要るのでこの値は使われない。端末をすべて失ったときだけ、表を空にして
+やり直すのに再び要る。
+
+⚠️ **passkey は環境ごとに登録する。** `yantene.net` / `staging.yantene.net` /
+`localhost` は WebAuthn から見て別の RP なので、手元で登録した passkey で production に
+入ることはできない。揃えようとして RP ID を親ドメインに広げないこと (署名が効く範囲が
+必要以上に広がる)。
+
 ### 1'. Artifacts のリポジトリを用意する
 
 `CONTENT_SOURCE` が `artifacts` を指す環境で要る。namespace と repo の名前は

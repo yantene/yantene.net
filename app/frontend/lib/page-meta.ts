@@ -56,6 +56,13 @@ export interface PageMetaInput {
    * 400 へ歩かせるだけになる。
    */
   readonly webmentionPath?: string;
+  /**
+   * 検索エンジンに載せないページ。`"noindex"` を渡したときだけ robots の meta を出す。
+   *
+   * 出すのは `noindex, nofollow` の対で、併せてハンドラ側が `X-Robots-Tag` も付ける。
+   * meta だけだと、HTML を描かない応答 (原文 Markdown・OG 画像) に効かない。
+   */
+  readonly robots?: "noindex";
 }
 
 /**
@@ -75,6 +82,7 @@ export function buildPageMeta({
   jsonLd,
   feed,
   webmentionPath,
+  robots,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   /*
@@ -113,6 +121,11 @@ export function buildPageMeta({
     { name: "twitter:description", content: resolvedDescription },
     { name: "twitter:image", content: image },
   ];
+
+  if (robots === "noindex") {
+    // canonical より前でも後でもよいが、まとめて出すと読みやすいのでここに置く。
+    descriptors.push({ name: "robots", content: "noindex, nofollow" });
+  }
 
   if (feed !== undefined) {
     descriptors.push({

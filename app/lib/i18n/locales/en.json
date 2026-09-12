@@ -95,5 +95,46 @@
       "lead": "This site uses plenty of other open source software as well. What it is, and which versions, is listed in package.json in the repository.",
       "linkLabel": "yantene/yantene.net"
     }
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "A screen only the site owner uses.",
+    "signIn": {
+      "title": "Sign in",
+      "lead": "Sign in with a registered passkey. There is no password.",
+      "action": "Sign in with a passkey",
+      "pending": "Waiting for your authenticator…",
+      "failed": "Could not sign in. Check that this passkey is registered.",
+      "cancelled": "Cancelled.",
+      "unsupported": "This browser does not support passkeys."
+    },
+    "signOut": {
+      "action": "Sign out"
+    },
+    "credentials": {
+      "title": "Registered passkeys",
+      "empty": "None registered yet.",
+      "current": "in use now",
+      "createdAt": "Registered",
+      "lastUsedAt": "Last used",
+      "neverUsed": "never used",
+      "syncedLabel": "synced key",
+      "deviceLabel": "device-bound key",
+      "revoke": "Revoke",
+      "revokeLast": "The last passkey cannot be revoked. Register another one first.",
+      "revokeFailed": "Could not revoke it."
+    },
+    "register": {
+      "title": "Register a passkey",
+      "lead": "Register per device. Local, staging and production each need their own.",
+      "labelField": "Name for this key",
+      "labelPlaceholder": "Touch ID on the MacBook",
+      "tokenField": "Registration token",
+      "tokenHelp": "Only needed for the first passkey. After that, signing in is enough.",
+      "action": "Register a passkey",
+      "failed": "Could not register it.",
+      "duplicate": "This passkey is already registered.",
+      "notAllowed": "Registration is not allowed right now. Sign in, or check the registration token."
+    }
   }
 }

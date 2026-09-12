@@ -173,6 +173,38 @@ describe("buildPageMeta", () => {
     });
   });
 
+  /*
+   * 検索エンジンに載せないページの印。渡されなかったときに何も足さないことを
+   * 必ず押さえる。全ページが通る経路で、ここを取り違えると公開中の記事が
+   * noindex になる (jsonLd で「渡さないページが全部 500」を出した前科がある)。
+   */
+  it("omits the robots meta when it is not asked for", () => {
+    for (const pathname of ["/", "/articles", "/articles/foo", "/licenses"]) {
+      const meta = buildPageMeta({ locale: "ja", origin, pathname });
+
+      expect(meta.some((d) => (d as Record<string, unknown>).name === "robots")).toBe(false);
+    }
+  });
+
+  it("emits the robots meta when noindex is asked for", () => {
+    const meta = buildPageMeta({ locale: "ja", origin, pathname, robots: "noindex" });
+
+    expect(meta).toContainEqual({ name: "robots", content: "noindex, nofollow" });
+  });
+
+  it("still emits the full set alongside noindex", () => {
+    // noindex のページでも title と canonical は出す。描かないと、管理画面の
+    // タブが無題になり、開いているページが分からなくなる。
+    const meta = buildPageMeta({ locale: "ja", origin, pathname, robots: "noindex" });
+
+    expect(meta).toContainEqual({
+      tagName: "link",
+      rel: "canonical",
+      href: `${origin}${pathname}`,
+    });
+    expect(meta.some((d) => "title" in (d as Record<string, unknown>))).toBe(true);
+  });
+
   it("marks article pages with og:type article", () => {
     expect(
       find(
