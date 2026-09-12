@@ -49,6 +49,28 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 その環境のリポジトリの `main` に push すると、push が Queue に流れて同期が走る
 ([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))。
 
+### 手元の作業用 clone は `content/`
+
+このリポジトリの `content/` に production のリポジトリを clone して書く。**別リポジトリなので
+`.gitignore` に入れてあり**、このリポジトリの履歴にも lint / 整形の対象にも入らない。
+
+```bash
+git -c credential.helper=libsecret -c credential.useHttpPath=true \
+  clone https://<account-id>.artifacts.cloudflare.net/git/yantene/yantene-production.git content
+git -C content config credential.helper libsecret
+git -C content config credential.useHttpPath true
+git -C content remote rename origin artifacts-production
+git -C content remote add artifacts-staging \
+  https://<account-id>.artifacts.cloudflare.net/git/yantene/yantene-staging.git
+```
+
+書いたら `git -C content push artifacts-production main`。**これが記事を出す唯一の経路。**
+`credential.useHttpPath` が要る理由は environments.md を参照。
+
+staging のリポジトリは production の写しとして揃えておく (`push artifacts-staging main`)。
+記事を確かめるために staging へ先に上げる運用は採らない
+([#437](https://github.com/yantene/yantene.net/issues/437))。
+
 同期は**同時に 2 つ走らない**。立て続けに push しても、最後に走った同期が最新の中身を
 読むので、リポジトリの最新の姿が必ず D1 / R2 に載って終わる。
 
@@ -161,6 +183,11 @@ D1 と R2 から掃除される。
 
 配信側に除外条件を書き足す方式は採らない。経路が増えるたびに書き漏らし、そのとき漏れる
 のは「見せたくないもの」になる。同期しなければ後段はすべて自動的に見えなくなる。
+
+**書きかけの記事はこれで置いておく。** 題と計画だけ書いて `visibility: private` で
+push すれば、コンテンツリポジトリに寝たまま何も起きない。書き上げたら 1 行消して push する。
+ただし同期されない以上、**手元でも見えない**。下書きを読む手立ては
+[#437](https://github.com/yantene/yantene.net/issues/437) で用意する。
 
 `visibility` を書かなければ公開。`public` / `private` のどちらとも読めない値は、公開せず
 スキップとして報告する。公開しないのは、誤って公開する方が誤って隠すより取り返しが
