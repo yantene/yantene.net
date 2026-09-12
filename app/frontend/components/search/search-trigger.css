@@ -13,7 +13,7 @@
   height: 2rem;
   padding-inline: 0.75rem;
   border: 1px solid var(--color-base-300);
-  border-radius: 9999px;
+  border-radius: var(--control-radius);
   /* 透過ヘッダーでは夜の空が下に来る。地を薄くしすぎると字が沈む。 */
   background-color: color-mix(in oklab, var(--color-base-100) 90%, transparent);
   font-size: 0.8125rem;

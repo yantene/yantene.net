@@ -46,3 +46,31 @@ export function FeedLink({
     </a>
   );
 }
+
+interface FeedIconLinkProps {
+  /** 大きさと色。置き場所で地の色が違うので呼ぶ側が渡す。 */
+  readonly className: string;
+}
+
+/**
+ * 絵だけのフィードの導線。ヘッダーとドロワーに置く。
+ *
+ * 字を伴う {@link FeedLink} と分けてあるのは、真偽値の prop で見た目を切り替えると
+ * 呼び出し側から何が出るのか読めなくなるため (rules/architecture.md)。行き先と
+ * `type` は同じものを使う。
+ */
+export function FeedIconLink({ className }: FeedIconLinkProps): React.JSX.Element {
+  const { t } = useTranslation();
+
+  return (
+    <a
+      href="/feed.xml"
+      type="application/atom+xml"
+      aria-label={t("feed.label")}
+      title={t("feed.label")}
+      className={className}
+    >
+      <HiOutlineRss aria-hidden="true" />
+    </a>
+  );
+}

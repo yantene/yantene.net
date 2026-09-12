@@ -4,9 +4,9 @@ import { LocaleSwitch } from "./locale-switch";
 import { SiteMenu } from "./site-menu";
 import { SiteNav } from "./site-nav";
 import Logo from "~/frontend/assets/yantene-logo.svg?react";
+import { FeedIconLink } from "~/frontend/components/feed/feed-link";
 import { CommandPalette } from "~/frontend/components/search/command-palette";
 import { SearchTrigger } from "~/frontend/components/search/search-trigger";
-import { SocialLinks } from "~/frontend/components/social/social-links";
 
 type HeaderProps = {
   readonly variant?: "solid" | "transparent";
@@ -70,9 +70,13 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
   const navLinkClassName = `press-control text-sm font-medium transition-colors hover:text-primary ${inkClassName}`;
   /*
    * 絵は 2rem の箱に入れる。検索の押し場所と表示する言語の切り替えが同じ高さなので、
-   * 道具の島の 3 つが 1 本の線で揃う。指で押せる幅も少しだけ稼げる。
+   * 道具の島が 1 本の線で揃う。指で押せる幅も少しだけ稼げる。
+   *
+   * **display はここに入れない。** 出し隠しは使う側が `hidden lg:inline-flex` で載せる。
+   * 同じ層の display の指定を 2 つ並べると、勝つのはクラスの並び順ではなく生成された
+   * CSS の順になり、どちらが効くのか読めなくなる。
    */
-  const socialLinkClassName = `press-control inline-flex h-8 items-center text-lg transition-colors hover:text-primary ${inkClassName}`;
+  const iconLinkClassName = `press-control h-8 w-8 items-center justify-center text-lg transition-colors hover:text-primary ${inkClassName}`;
 
   return (
     <>
@@ -159,6 +163,15 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               />
 
               {/*
+                読み終えた後も繋がっていられる手。**帯に置くのはここだけ**で、フッターには
+                置いていない (一覧の見出し脇にあるのは、その一覧に対応するフィードを指す
+                別の導線)。ソーシャルメディアへの導線は帯に置かない — あれは「誰か」の
+                情報で、行き先と道具を並べる場所には属さない。ヒーローと、いずれ
+                プロフィール (#413) が持つ。
+              */}
+              <FeedIconLink className={`hidden lg:inline-flex ${iconLinkClassName}`} />
+
+              {/*
                 出し隠しは囲みの側で行う。LocaleSwitch 自身は自前の CSS で display を
                 決めており (header.css)、素の CSS は Tailwind の層より後に読まれるので、
                 `hidden` を直接載せても効かない。
@@ -166,16 +179,6 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               <div className="hidden lg:block">
                 <LocaleSwitch />
               </div>
-
-              {/*
-                出ていく先は 5 つ並ぶので、検索・表示する言語と同じ形の器に入れて 1 つの塊に
-                する (見た目は header.css の .header-social)。器で揃えるのは、銘柄の絵の
-                縦の実寸がばらばらで、絵の側では揃えようがないため。
-              */}
-              <SocialLinks
-                className="header-social hidden items-center gap-2.5 lg:flex"
-                linkClassName={socialLinkClassName}
-              />
 
               <SiteMenu className="lg:hidden" />
             </div>
