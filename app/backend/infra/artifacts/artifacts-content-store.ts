@@ -56,7 +56,7 @@ export interface ArtifactsTreeEntry {
  *   変更検出 (D1 の contentHash) はそのまま引き継げる。
  * - readFile: `file?ref=<branch>&path=<path>` で生バイト列を受ける。
  *
- * ドメイン・refresh・D1 / R2 はコンテンツリポジトリの種類を知らないので、GitHub 実装との差し替えは
+ * ドメイン・refresh・D1 / R2 はコンテンツリポジトリの種類を知らないので、別の実装との差し替えは
  * Composition Root (`resolveContentStore`) だけで済む。
  */
 export class ArtifactsContentStore implements IContentStore {
