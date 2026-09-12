@@ -168,11 +168,12 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               </div>
 
               {/*
-                出ていく先は 5 つ並ぶので、島の中でさらに 1 つの塊に見えるところまで詰める
-                (8px)。隣の言語の切り替えとの 16px より狭いことが、塊の境目を作っている。
+                出ていく先は 5 つ並ぶので、検索・表示する言語と同じ形の器に入れて 1 つの塊に
+                する (見た目は header.css の .header-social)。器で揃えるのは、銘柄の絵の
+                縦の実寸がばらばらで、絵の側では揃えようがないため。
               */}
               <SocialLinks
-                className="hidden items-center gap-2 lg:flex"
+                className="header-social hidden items-center gap-2.5 lg:flex"
                 linkClassName={socialLinkClassName}
               />
 
