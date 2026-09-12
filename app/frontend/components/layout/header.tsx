@@ -69,14 +69,16 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
   const inkClassName = isTransparent ? "text-foreground/80" : "text-muted-foreground";
   const navLinkClassName = `press-control text-sm font-medium transition-colors hover:text-primary ${inkClassName}`;
   /*
-   * 絵は 2rem の箱に入れる。検索の押し場所と表示する言語の切り替えが同じ高さなので、
-   * 道具の島が 1 本の線で揃う。指で押せる幅も少しだけ稼げる。
+   * 器は検索・表示する言語と同じもの (header.css の .header-icon-link)。
+   *
+   * 字を 1 段大きく (text-xl) してあるのは、RSS の印が箱の 62.5% しか塗らないため。
+   * 隣の虫眼鏡 (81%) と同じ字の大きさにすると、印だけが small に見える。
    *
    * **display はここに入れない。** 出し隠しは使う側が `hidden lg:inline-flex` で載せる。
    * 同じ層の display の指定を 2 つ並べると、勝つのはクラスの並び順ではなく生成された
    * CSS の順になり、どちらが効くのか読めなくなる。
    */
-  const iconLinkClassName = `press-control h-8 w-8 items-center justify-center text-lg transition-colors hover:text-primary ${inkClassName}`;
+  const iconLinkClassName = `header-icon-link press-control items-center justify-center text-xl transition-colors hover:text-primary ${inkClassName}`;
 
   return (
     <>

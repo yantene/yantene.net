@@ -69,19 +69,29 @@
 .locale-switch {
   display: inline-flex;
   align-items: stretch;
-  /*
-   * 高さは検索の押し場所と同じ 2rem。
-   *
-   * 字なりの高さ (24px) にしておくと、隣の検索 (32px) と 8px ずれる。どちらも同じ
-   * 丸みのピルなので、並べたときにこの差が「揃っていない」として目に付く。
-   * 出ていく先の絵も同じ 2rem の箱に入れてあり (header.tsx)、道具の島は 1 本の線で揃う。
-   */
-  height: 2rem;
+  /* 器は帯の操作子の共通のもの (interaction.css)。 */
+  height: var(--control-height);
   overflow: hidden;
-  border: 1px solid var(--color-base-300);
+  border: var(--control-border);
   border-radius: var(--control-radius);
-  /* 透過ヘッダーでは動く空の上に載る。地を敷かないと字が沈む。 */
-  background-color: color-mix(in oklab, var(--color-base-100) 85%, transparent);
+  background-color: var(--control-surface);
+}
+
+/*
+ * 絵だけの操作子。いまはフィードの導線。
+ *
+ * **器を与える。** 左右が縁付きの箱なのに 1 つだけ裸で置くと、そこだけ浮いて見える。
+ * RSS の印は箱の 62.5% しか塗らず (虫眼鏡は 81%)、しかも四分円が左下に寄った形なので、
+ * 裸のままだと右上の空きが余計に目立つ。
+ *
+ * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:inline-flex が持つ。
+ */
+.header-icon-link {
+  width: var(--control-height);
+  height: var(--control-height);
+  border: var(--control-border);
+  border-radius: var(--control-radius);
+  background-color: var(--control-surface);
 }
 
 .locale-switch-option {
