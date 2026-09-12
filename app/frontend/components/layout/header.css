@@ -68,7 +68,15 @@
  */
 .locale-switch {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
+  /*
+   * 高さは検索の押し場所と同じ 2rem。
+   *
+   * 字なりの高さ (24px) にしておくと、隣の検索 (32px) と 8px ずれる。どちらも同じ
+   * 丸みのピルなので、並べたときにこの差が「揃っていない」として目に付く。
+   * 出ていく先の絵も同じ 2rem の箱に入れてあり (header.tsx)、道具の島は 1 本の線で揃う。
+   */
+  height: 2rem;
   overflow: hidden;
   border: 1px solid var(--color-base-300);
   border-radius: 9999px;
@@ -77,11 +85,14 @@
 }
 
 .locale-switch-option {
-  padding: 0.125rem 0.5rem;
+  /* 字は箱の中で上下中央に。縦の padding で高さを作らない (上の height が決める)。 */
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 0.625rem;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  line-height: 1.6;
+  line-height: 1;
   color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
   cursor: pointer;
 }

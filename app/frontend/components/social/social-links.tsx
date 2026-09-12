@@ -73,8 +73,12 @@ interface SocialLinksProps {
 export function SocialLinks({ className, linkClassName }: SocialLinksProps): React.JSX.Element {
   return (
     <ul className={className}>
+      {/*
+        項目は `flex`。既定の `<li>` は中に行ボックスを作るので、絵がベースラインに乗って
+        **下にディセンダ分の空きが残る**。並べたときに絵だけが 3px ほど上へ浮いて見える。
+      */}
       {socialLinks.map((link) => (
-        <li key={link.label}>
+        <li key={link.label} className="flex">
           <a
             href={link.href}
             target="_blank"

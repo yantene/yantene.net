@@ -68,7 +68,11 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
   // 夜側でコントラストが 4.5:1 を割るため、濃いめの色に切り替える。
   const inkClassName = isTransparent ? "text-foreground/80" : "text-muted-foreground";
   const navLinkClassName = `press-control text-sm font-medium transition-colors hover:text-primary ${inkClassName}`;
-  const socialLinkClassName = `press-control inline-flex text-lg transition-colors hover:text-primary ${inkClassName}`;
+  /*
+   * 絵は 2rem の箱に入れる。検索の押し場所と表示する言語の切り替えが同じ高さなので、
+   * 道具の島の 3 つが 1 本の線で揃う。指で押せる幅も少しだけ稼げる。
+   */
+  const socialLinkClassName = `press-control inline-flex h-8 items-center text-lg transition-colors hover:text-primary ${inkClassName}`;
 
   return (
     <>
