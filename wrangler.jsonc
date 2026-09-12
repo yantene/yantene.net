@@ -126,8 +126,7 @@
       ],
       "vars": {
         "APP_ENV": "production",
-        // staging で Artifacts の経路を確かめてから "artifacts" に切り替える (#401)。
-        "CONTENT_SOURCE": "github",
+        "CONTENT_SOURCE": "artifacts",
         "ARTIFACTS_NAMESPACE": "yantene",
         "ARTIFACTS_REPO": "yantene-production",
         "ARTIFACTS_BRANCH": "main",

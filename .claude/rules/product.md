@@ -41,8 +41,8 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 コンテンツリポジトリは GitHub (`yantene/notes`) から Cloudflare Artifacts へ移す途中で、
 どちらを読むかは `wrangler.jsonc` の var `CONTENT_SOURCE` が決める
 ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。
-**いまは staging だけ `artifacts`。** development と production は `github` のまま。
-staging で push からの同期を確かめてから production を切り替える (#401)。
+**staging と production は `artifacts`。** development だけ `github` のまま
+(手元に Artifacts の secret を置かないため)。`CONTENT_SOURCE` ごと落とすのは #401 の掃除で。
 
 - `github` の環境: `yantene/notes` に push すると、あちらのワークフローが refresh を叩く
 - `artifacts` の環境: 環境ごとのリポジトリ (`yantene/yantene-production` /
