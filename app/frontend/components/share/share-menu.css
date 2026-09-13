@@ -12,14 +12,35 @@
   margin-top: 2.5rem;
 }
 
+/*
+ * 畳んだ状態の押し場所。
+ *
+ * **寸法は隣のリアクションのチップに揃える** (高さ・丸み・縁・字の大きさ・左右の余白)。
+ * 揃える理由は 2 つある。
+ *
+ * 1. **高さは指の大きさの話で、機能の種類とは関係がない。** 44px はこのリポジトリが
+ *    他の押し場所 (ドロワーの行・共有の一覧・リアクションのチップ) でも守っている下限で、
+ *    ここだけ 32px だと漏れる
+ * 2. 縁を外して字だけにしてみたが、**押せるものに見えなくなった。** 44px の行に小さな
+ *    字が 1 つ浮いているだけになり、隣の縁付きのチップと較べて「置き忘れ」に見える
+ *
+ * 種類の違い (あちらはこの記事に手を残す、こちらは外へ持ち出す) は、**間隔と中身で出す**
+ * — リアクションとの間だけ広く空け、数を持たない。Zenn が いいね / ブックマーク / 共有を
+ * 同じ高さで並べて罫線で区切るのと同じ考え方で、**大きさの差では表さない**。
+ * dev.to と note は縁そのものを持たせないが、あちらは字を伴わない絵だけの並びで、
+ * 「Share」の字を出すこの形には移せない (見える名前は訳さない対象でもある)。
+ */
 .share-menu-trigger {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
+  /* 指で押せる高さ。字の大きさだけでは 44px に届かない (reaction-chip と同じ理由)。 */
+  min-height: 2.75rem;
+  padding-inline: 0.875rem;
   border: 1px solid var(--color-base-300);
   border-radius: 9999px;
-  font-size: 0.8125rem;
+  background-color: var(--color-base-100);
+  font-size: 0.875rem;
   line-height: 1.5;
   color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
   cursor: pointer;
