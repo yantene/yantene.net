@@ -1,5 +1,5 @@
 export { ArticleNotFoundError } from "./errors";
-export { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
+export { ImageUrl, InvalidImageUrlError } from "~/backend/domain/shared";
 export { InvalidArticleSlugError, ArticleSlug } from "./article-slug.vo";
 export { InvalidArticleTitleError, ArticleTitle } from "./article-title.vo";
 export { Article } from "./article.entity";

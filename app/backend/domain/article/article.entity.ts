@@ -1,9 +1,8 @@
-import type { ImageUrl } from "./image-url.vo";
 import type { ArticleSlug } from "./article-slug.vo";
 import type { ArticleTitle } from "./article-title.vo";
 import type { ArticleStatus } from "./article-status";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
+import type { EntityId, ImageUrl, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type ArticleId = EntityId<"Article">;
 
