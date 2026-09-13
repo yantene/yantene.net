@@ -18,11 +18,17 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {};
 
-/* 透過ヘッダーに載せた姿。動く空の上でも字が沈まないことを確かめる。 */
+/*
+ * 透過ヘッダーに載せた姿。動く空の上でも字が沈まないことを確かめる。
+ *
+ * **囲みに `site-header-overlay` を着せること。** 選ばれていない側の濃さは
+ * `--header-ink-dim` が決めており、透過ヘッダーだけ 62% から 80% に上げてある
+ * (header.css)。着せないと、空の上で 4.5:1 を割るほうの姿がここに出る。
+ */
 export const OnSky: Story = {
   decorators: [
     (Story) => (
-      <div className="flex h-24 items-center justify-center bg-sky-300">
+      <div className="site-header-overlay flex h-24 items-center justify-center bg-sky-300">
         <Story />
       </div>
     ),

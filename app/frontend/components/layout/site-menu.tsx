@@ -5,11 +5,10 @@ import { useLocation } from "react-router";
 import { LocaleSwitch } from "./locale-switch";
 import { SiteNav } from "./site-nav";
 import { FeedIconLink } from "~/frontend/components/feed/feed-link";
-import { SocialLinks } from "~/frontend/components/social/social-links";
 
-/** ドロワーの足元に並ぶ絵の導線。フィードと出ていく先で同じ見た目にする。 */
+/** ドロワーの足元に置く絵だけの導線。いまはフィード。 */
 const DRAWER_ICON_LINK =
-  "press-control inline-flex h-8 w-8 items-center justify-center text-xl text-muted-foreground transition-colors hover:text-primary";
+  "press-control inline-flex h-8 w-8 items-center justify-center text-lg text-muted-foreground transition-colors hover:text-primary";
 
 interface SiteMenuProps {
   /** 出し隠し。広い画面では帯に直接並べるので、こちらは伏せる。 */
@@ -99,16 +98,16 @@ export function SiteMenu({ className = "" }: SiteMenuProps): React.JSX.Element {
         <SiteNav listClassName="site-menu-list" linkClassName="site-menu-link press-surface" />
 
         {/*
-          足元には表示する言語と、出ていく先を置く。**ソーシャルメディアはここにだけ残す。**
-          帯からは外した (行き先と道具を並べる場所に「誰か」の情報は属さない) が、畳んである
-          この板は「ひととおり」を見る場所なので、狭い画面から辿る道は残しておく。
+          足元には表示する言語とフィードを置く。**帯に並ぶものと過不足なく同じにする。**
+          ドロワーは狭い画面での帯そのものなので、ここにだけある導線を作ると、画面の幅で
+          出来ることが変わる。
+
+          **ソーシャルメディアは置かない。** あれは「誰か」の情報で、行き先と道具を並べる
+          場所には属さない (帯にも無い)。持つのはヒーローと、いずれプロフィール (#413)。
         */}
         <div className="site-menu-foot">
           <LocaleSwitch />
-          <div className="site-menu-links">
-            <FeedIconLink className={DRAWER_ICON_LINK} />
-            <SocialLinks className="site-menu-social" linkClassName={DRAWER_ICON_LINK} />
-          </div>
+          <FeedIconLink className={DRAWER_ICON_LINK} />
         </div>
       </div>
     </details>

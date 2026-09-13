@@ -8,12 +8,14 @@
  * 境目でぼやけているのに合わせて、硬い区切りにしないため。
  */
 
-.site-header {
+.site-header,
+.site-header-overlay {
   /* 街の輪郭と同じ色。空と街の境目がここまで伸びてきている、という見立て。 */
   --horizon-ink: #9488d3;
 }
 
-.site-header::after {
+.site-header::after,
+.site-header-overlay::after {
   content: "";
   position: absolute;
   inset: 100% 0 auto;
@@ -22,7 +24,8 @@
 }
 
 /* 線のすぐ下に、地平線の向こう側のような淡い翳りを落とす。 */
-.site-header::before {
+.site-header::before,
+.site-header-overlay::before {
   content: "";
   position: absolute;
   inset: 100% 0 auto;
@@ -33,6 +36,155 @@
     transparent
   );
   pointer-events: none;
+}
+
+/*
+ * 透過ヘッダー — トップの、動く空の上に載る姿。
+ *
+ * 下層のヘッダーが白地の本文の上に乗る「道具の帯」なのに対し、こちらは絵の中にいる。
+ * しかも地の色は Celestim の周期で回る (水色 → 桃 → 灰 → 暖色)。**面を出すと、どの色の
+ * 上でも貼り付けたシールに見える。**
+ *
+ * そこで器の token をここで差し替える。読むのは検索だけ (search-trigger.css) で、面は
+ * 縁だけに痩せる。完全に裸にはしない — 地も縁も無い「Search」は、ナビの 5 つ目の項目に
+ * 見えてしまい、行き先と道具の区別が消える。
+ *
+ * **ヘッダーから出来ることは変えない。** 変わるのは見た目の語彙だけで、並ぶものの数も
+ * 押したときに起きることも下層と同じ。ロゴだけは読み出すまで畳んであるが (下の
+ * site-header-overlay-mark-in)、そこはヒーローが同じ名前を大きく出している場所で、
+ * 失われる機能が「いまいる場所へ行く」でしかない。
+ */
+.site-header-overlay {
+  --control-surface: transparent;
+  /*
+   * 縁は字と同じ濃紺を薄めて作る。veil を掛けた空は 4 色とも明るいので、濃い側から
+   * 薄めた線なら周期のどこでも見える。白い縁にすると明るい空で消える。
+   */
+  --control-border: 1px solid color-mix(in oklab, var(--color-base-content) 30%, transparent);
+  /*
+   * 弱めた字の濃さ。白地の 62% (= text-muted-foreground) では、veil を掛けた空の
+   * いちばん暗いところ (rgb(192 195 201)) でコントラストが 4.5:1 を割る。
+   */
+  --header-ink-dim: 80%;
+}
+
+/*
+ * トップのヘッダーは、読み出すと下層のヘッダーに変わる。
+ *
+ * 読み出すまでは空の一部で、読み出したら道具の帯になる。ヒーローのロゴタイプが上へ
+ * 抜けるのと入れ替わりに、帯の真ん中へ名前が現れて、下層と同じ姿に落ち着く。
+ *
+ * **1 つの絵を動かして繋ぐことはできない。** ヒーローが出すのはロゴタイプ (字だけ) で、
+ * 帯が出すのはキャラクターを伴った一枚。別の素材なので、入れ替わりで繋ぐ。
+ *
+ * **駆動はスクロールタイムラインだけ。** JavaScript も inline style も要らないので、
+ * 描画のたびに位置を測る仕掛けも、hydration の食い違いも持ち込まない。
+ *
+ * **対応していないブラウザでは 0 秒のアニメーションとして即座に終端へ進む。** つまり
+ * トップのヘッダーは最初から下層と同じ姿 (白い帯 + ロゴ) になる。演出は無くなるが、
+ * 本文が透けた帯の下をくぐって読めなくなる、という壊れ方はしない。**この落とし先を
+ * 崩さないこと。** 逆に倒すと、効果の効かない環境でだけ字が読めなくなる。
+ */
+.site-header-overlay-band,
+.site-header-overlay::before,
+.site-header-overlay::after,
+.site-header-overlay .site-header-mark {
+  animation-timeline: scroll(root block);
+  /*
+   * 「読み出した」と言える量。帯 1 つぶん下がったところから、ヒーローのロゴタイプが
+   * 帯の裏へ入りきるあたりまで。ヒーローの高さは画面幅で変わるが、ロゴタイプの位置は
+   * 上端からの余白 (hero-intro の padding-top) で決まるので、絶対量でよい。
+   */
+  animation-range: 4rem 12rem;
+  animation-fill-mode: both;
+  animation-timing-function: linear;
+}
+
+.site-header-overlay-band {
+  animation-name: site-header-overlay-band-in;
+}
+
+.site-header-overlay::before,
+.site-header-overlay::after {
+  animation-name: site-header-overlay-fade-in;
+}
+
+.site-header-overlay .site-header-mark {
+  animation-name: site-header-overlay-mark-in;
+}
+
+/* 帯の地。下層の bg-white/60 + backdrop-blur-sm と同じ値に着地させる。 */
+@keyframes site-header-overlay-band-in {
+  from {
+    background-color: rgb(255 255 255 / 0);
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    background-color: rgb(255 255 255 / 0.6);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* 地平線。空の中にいるあいだは引かない (空と街の境目はヒーローが持っている)。 */
+@keyframes site-header-overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * 帯の名前。
+ *
+ * **visibility も動かす。** opacity だけだと、見えていないあいだもリンクが焦点を
+ * 受け取れてしまい、タブで辿ると帯の真ん中で焦点が消える (#287 と同じ壊れ方)。
+ * 巻き戻しきった位置 (= トップの頭) では畳んでおく。そこはヒーローが名前を出して
+ * いる場所なので、ホームへの手も要らない。
+ *
+ * 少しだけ上から降りてくる。ヒーローの名前が抜けていった先から現れる、という繋がり。
+ */
+@keyframes site-header-overlay-mark-in {
+  from {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+
+  to {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * 動きを減らす設定では、降りてくる動きだけを落とす。濃さの変化はスクロールに紐づいた
+ * もので、手を止めれば止まる。**落とすと帯が透けたままになり、本文がその下をくぐって
+ * 読めなくなる**ので、こちらは残す。
+ *
+ * 同じ名前の @keyframes をここで定義し直すのではなく、別の名前に差し替える。
+ * 上書きでも効くが、どちらが効いているのかは 2 つの定義を突き合わせないと読めない。
+ */
+@keyframes site-header-overlay-mark-fade-in {
+  from {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  to {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header-overlay .site-header-mark {
+    animation-name: site-header-overlay-mark-fade-in;
+  }
 }
 
 /*
@@ -63,68 +215,94 @@
 /*
  * 表示する言語の切り替え。
  *
- * 2 つしかないので、開いて選ばせずに両方を出したままにする。いま選ばれている側を
- * 塗り、もう片方を地のままにして、押せば入れ替わることが形で分かるようにする。
+ * 2 つしかないので、開いて選ばせずに両方を出したままにする。
+ *
+ * **器は与えない。** 塗り分けたセグメントにしていたときは、帯で 2 番目に重いものが
+ * 「一度決めたらほとんど触らない設定」になっていた。字として置けば、いちばん重いのが
+ * 検索、次がナビ、という順に落ち着く (interaction.css)。
  */
 .locale-switch {
   display: inline-flex;
-  align-items: stretch;
-  /* 器は帯の操作子の共通のもの (interaction.css)。 */
-  height: var(--control-height);
-  overflow: hidden;
-  border: var(--control-border);
-  border-radius: var(--control-radius);
-  background-color: var(--control-surface);
-}
-
-/*
- * 絵だけの操作子。いまはフィードの導線。
- *
- * **器を与える。** 左右が縁付きの箱なのに 1 つだけ裸で置くと、そこだけ浮いて見える。
- * RSS の印は箱の 62.5% しか塗らず (虫眼鏡は 81%)、しかも四分円が左下に寄った形なので、
- * 裸のままだと右上の空きが余計に目立つ。
- *
- * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:inline-flex が持つ。
- */
-.header-icon-link {
-  width: var(--control-height);
-  height: var(--control-height);
-  border: var(--control-border);
-  border-radius: var(--control-radius);
-  background-color: var(--control-surface);
+  align-items: center;
+  /*
+   * 字間は選択肢の側の padding が持つ (下)。**押し代のぶんを負の余白で戻す。**
+   * こうすると的を広げても、隣 (検索・フィード) との間隔と、ドロワーでの左端は動かない。
+   */
+  margin-inline: -0.25rem;
 }
 
 .locale-switch-option {
-  /* 字は箱の中で上下中央に。縦の padding で高さを作らない (上の height が決める)。 */
+  /*
+   * 押せる大きさを持たせる。字は 0.75rem しかなく、裸のままだと 12px 四方ほどの的に
+   * なる。高さは隣の検索と同じ器の高さ、左右は 0.25rem ずつ。
+   *
+   * 左右の padding は的を広げると同時に、2 つの間の字間 (0.25rem + 0.25rem = 8px) も
+   * 作る。島の中でいちばん狭い間隔で、道具どうし (16px) より詰まることで 2 つで 1 組
+   * だと分かる。header.tsx の「島間 > ナビ > 道具 > その中」の順を崩さないこと。
+   */
   display: inline-flex;
   align-items: center;
-  padding-inline: 0.625rem;
-  font-size: 0.6875rem;
+  height: var(--control-height);
+  padding-inline: 0.25rem;
+  /* 2 文字しかないので、字間を少し空けて略号として読ませる。 */
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  /*
+   * 選ばれていない側を弱める。
+   *
+   * **opacity ではなく色で弱める。** opacity にすると press-control の押下の反応
+   * (opacity: 0.6) と同じ軸を取り合って、押しても何も起きていないように見える。
+   */
+  color: color-mix(in oklab, currentColor var(--header-ink-dim, 62%), transparent);
   cursor: pointer;
 }
 
-.locale-switch-option + .locale-switch-option {
-  border-inline-start: 1px solid var(--color-base-300);
+/*
+ * いま選ばれている側。
+ *
+ * **色だけで示さない。** 色を見分けられない読み手に伝わらないので、ナビの現在地
+ * (.site-nav-current) と同じように下線も引く。
+ *
+ * ただし色は primary に寄せず、地の字の色をそのまま使う。primary + 下線はナビが
+ * 「いま見ている場所」に使っている印で、同じ帯の中で同じ印を「いま選んでいる設定」にも
+ * 使うと、どちらが現在地なのか読めなくなる。
+ */
+.locale-switch-option[aria-current="true"] {
+  color: inherit;
+  text-decoration: underline;
+  /*
+   * 線はナビの現在地 (2px) より細く、近く。字が 0.75rem しかないので、同じ太さで引くと
+   * 字より線のほうが目に入る。
+   */
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
 }
 
+/* hover は選ばれている側にも効かせる。上より後に置くこと (詳細度が同じなので順で決まる)。 */
 .locale-switch-option:hover {
   color: var(--color-primary);
 }
 
 /*
- * いま選ばれている側。**塗るのは無彩色で。**
+ * 絵だけの操作子。いまはフィードの導線。
  *
- * primary で塗っていたときは、ヘッダーで最も濃い色がここに来ていた。表示する言語は
- * 一度決めたらほとんど触らない設定で、いちばん目立ってよいのは検索のほう。重みの順を
- * 優先度の順に合わせる。
+ * **器は与えない。** 帯で面を持つのは検索だけ (interaction.css)。縁付きの箱に入れて
+ * いたときは、RSS の印が箱の 62.5% しか塗らず (虫眼鏡は 81%)、しかも四分円が左下に
+ * 寄った形なので、右上の空きが箱の中で目立った。**箱をやめれば余る空きも無くなる**ので、
+ * 字を 1 段大きくして埋める必要もない。
+ *
+ * ここで決めるのは押せる大きさだけ。絵そのものは 1.125rem しかなく、そのままでは指にも
+ * マウスにも小さい。高さを隣の検索と揃えると、縦の位置も一緒に揃う。
+ *
+ * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:inline-flex が持つ。
  */
-.locale-switch-option[aria-current="true"] {
-  background-color: var(--color-base-300);
-  color: var(--color-base-content);
+.header-icon-link {
+  height: var(--control-height);
+  padding-inline: 0.25rem;
+  /* 広げたぶんは負の余白で戻す。絵の右端は帯の右端に揃えたままにする。 */
+  margin-inline-end: -0.25rem;
 }
 
 /*
@@ -220,17 +398,4 @@
   gap: 0.75rem 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-base-300);
-}
-
-/* フィードと出ていく先をひとつの行に並べる入れ物。 */
-.site-menu-links {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.site-menu-social {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
 }

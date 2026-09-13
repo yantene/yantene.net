@@ -18,7 +18,11 @@
   background-color: var(--control-surface);
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  /*
+   * 弱めた字。**透過ヘッダーは --header-ink-dim を差し替えて濃くする** (header.css)。
+   * 白地の 62% のままだと、veil を掛けた空のいちばん暗いところで 4.5:1 を割る。
+   */
+  color: color-mix(in oklab, var(--color-base-content) var(--header-ink-dim, 62%), transparent);
   white-space: nowrap;
 }
 
@@ -60,12 +64,21 @@
   }
 }
 
+/*
+ * 鍵の見立て。
+ *
+ * **器は囲んでいる検索と同じ token から取る** (interaction.css)。白地では縁 + 地を持つ
+ * キーの姿になり、動く空の上では地が落ちて縁だけになる。別々に持たせると、検索が縁だけ
+ * に痩せた透過ヘッダーで、鍵 2 つだけが白い箱として貼り付いて見える。
+ *
+ * 丸みだけは共有しない。0.5rem は 1rem 足らずのこの箱には大きすぎて、角が丸を通り越す。
+ */
 .search-trigger-keys kbd {
   min-width: 1.25rem;
   padding: 0.0625rem 0.25rem;
-  border: 1px solid var(--color-base-300);
+  border: var(--control-border);
   border-radius: 0.25rem;
-  background-color: var(--color-base-100);
+  background-color: var(--control-surface);
   font-family: inherit;
   font-size: 0.625rem;
   line-height: 1.4;

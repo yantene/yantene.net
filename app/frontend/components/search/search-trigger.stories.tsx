@@ -20,11 +20,17 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {};
 
-/* 透過ヘッダーに載せた姿。動く空の上でも字と鍵が沈まないことを確かめる。 */
+/*
+ * 透過ヘッダーに載せた姿。動く空の上でも字と鍵が沈まないことを確かめる。
+ *
+ * **囲みに `site-header-overlay` を着せること。** 器 (縁と地) と弱めた字の濃さは
+ * このクラスが差し替えており (header.css)、着せないと白地の姿が空の上に出る。それは
+ * 実物と違ううえ、いちばん見たい「面を持たない検索が読めるか」が確かめられない。
+ */
 export const OnSky: Story = {
   decorators: [
     (Story) => (
-      <div className="flex h-24 items-center justify-center bg-sky-300">
+      <div className="site-header-overlay flex h-24 items-center justify-center bg-sky-300">
         <Story />
       </div>
     ),
