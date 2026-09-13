@@ -217,8 +217,9 @@ export class AdminAuthService {
   /**
    * セッションを引き、生きていれば期限を引き直して返す。
    *
-   * 引き直しは KV への書き込みになるので、**同じ秒のうちに何度も呼ばれても書かない**
-   * ようにはしていない。管理画面の要求は多くないので、素直に毎回延ばす。
+   * 引き直しは置き場への書き込みになるので、**前回から間が空いたときだけ書く**
+   * (`needsRenewal`)。画面の操作はどれも「叩く → 読み直す」の対で、毎回書くと
+   * 同じ記録に連続して触ることになる。
    */
   async touchSession(id: AdminSessionId, at: Temporal.Instant): Promise<AdminSession | undefined> {
     const session = await this.deps.sessionQuery.findById(id);
@@ -239,6 +240,8 @@ export class AdminAuthService {
       await this.deps.sessionCommand.remove(session.id);
       return undefined;
     }
+
+    if (!session.needsRenewal(at)) return session;
 
     const touched = session.withSeen(at);
     await this.deps.sessionCommand.save(touched);
@@ -265,9 +268,10 @@ export class AdminAuthService {
     /**
      * 登録用の secret を読む。**bootstrap の枝に入ったときだけ呼ぶ。**
      *
-     * 無ければ送出する関数を渡してよい。先に呼ばないのは、secret を消したあとの
-     * 環境でサインイン中の追加登録まで閉じてしまうため。**復旧用の端末を足す手段が
-     * secret の有無に縛られてはいけない。**
+     * 無ければ送出する関数を渡してよい。呼ぶのは「まだ 1 本も無く、サインインも
+     * していない」ところまで来たときだけ。先に呼ぶと、secret を消したあとの環境で
+     * サインイン中の追加登録まで閉じてしまう。**復旧用の端末を足す手段が secret の
+     * 有無に縛られてはいけない。**
      */
     readRegistrationToken: () => string;
     session: AdminSession | undefined;
@@ -278,9 +282,18 @@ export class AdminAuthService {
     if (registered > 0) {
       throw new RegistrationNotAllowedError("sign in before registering another passkey");
     }
+    /*
+     * 示されたものを見る前に、経路そのものが開いているかを先に決める。
+     *
+     * 後回しにすると、secret が無い環境で「何も示さなかった」が 403、「出鱈目を
+     * 示した」が 404 になる。答えが入力で変わるので、外から secret の有無を当てられる
+     * うえ、.dev.vars.example と environments.md の「置かないと 404 になる」とも
+     * 食い違う。
+     */
+    const expected = params.readRegistrationToken();
     if (
       params.presentedToken === undefined ||
-      !(await equalsSecret(params.presentedToken, params.readRegistrationToken()))
+      !(await equalsSecret(params.presentedToken, expected))
     ) {
       throw new RegistrationNotAllowedError("the registration token does not match");
     }

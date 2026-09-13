@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RegisterPasskey } from "./register-passkey";
-import { isPasskeySupported, PasskeyCancelledError, signWithPasskey } from "~/frontend/lib/passkey";
+import { PasskeyCancelledError, signWithPasskey, usePasskeySupport } from "~/frontend/lib/passkey";
 
 /**
  * passkey でサインインする。
@@ -15,6 +15,7 @@ export function AdminSignIn({
   readonly onSignedIn: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation();
+  const supported = usePasskeySupport();
   const [state, setState] = useState<"idle" | "pending" | "failed" | "cancelled">("idle");
 
   const signIn = useCallback(() => {
@@ -41,7 +42,7 @@ export function AdminSignIn({
     })();
   }, [onSignedIn]);
 
-  if (!isPasskeySupported()) {
+  if (!supported) {
     return <p className="mt-8 text-sm text-muted-foreground">{t("admin.signIn.unsupported")}</p>;
   }
 

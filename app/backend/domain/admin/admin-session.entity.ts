@@ -1,6 +1,6 @@
 import type { AdminSessionId } from "./admin-session-id.vo";
 import type { CredentialId } from "./credential-id.vo";
-import type { Temporal } from "@js-temporal/polyfill";
+import { Temporal } from "@js-temporal/polyfill";
 
 /**
  * 管理者のセッションの寿命 (日)。
@@ -9,6 +9,18 @@ import type { Temporal } from "@js-temporal/polyfill";
  * 使える窓がそのまま寿命になるため。使うたびに延ばすので、触り続けている限り切れない。
  */
 export const ADMIN_SESSION_LIFETIME_DAYS = 14;
+
+/**
+ * 触った記録を書き戻す間隔 (分)。
+ *
+ * 寿命が 14 日の持ち回りなので、1 時間に 1 度書き直せば十分に延び続ける。
+ *
+ * **毎回書き戻さないのは、同じ鍵への連続した書き込みになるため。** 画面の操作は
+ * どれも「叩く → 読み直す」の対で、サインインも鍵の取り消しも 100 ミリ秒と
+ * 置かずに 2 度この記録に触る。置き場によっては秒あたりの書き込みに上限があり、
+ * 弾かれるとその要求ごと落ちて、サインインした直後に画面が壊れる。
+ */
+export const ADMIN_SESSION_RENEWAL_INTERVAL_MINUTES = 60;
 
 interface AdminSessionFields {
   readonly id: AdminSessionId;
@@ -69,5 +81,18 @@ export class AdminSession {
   /** 触ったことを書き加えた新しいセッションを返す (非破壊)。 */
   withSeen(at: Temporal.Instant): AdminSession {
     return new AdminSession({ ...this.fields, lastSeenAt: at });
+  }
+
+  /**
+   * 触った記録を書き戻すべきか。前回から間が空いていなければ書かない。
+   *
+   * 書かない回は期限も延びないが、延びるのは書いた時点から 14 日なので、
+   * 持ち回りの窓が最大でもこの間隔ぶんしか縮まらない。
+   */
+  needsRenewal(at: Temporal.Instant): boolean {
+    const renewableAt = this.fields.lastSeenAt.add({
+      minutes: ADMIN_SESSION_RENEWAL_INTERVAL_MINUTES,
+    });
+    return Temporal.Instant.compare(at, renewableAt) >= 0;
   }
 }

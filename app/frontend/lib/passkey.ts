@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { fromBase64Url, toBase64Url } from "~/lib/base64url";
 
 /**
@@ -9,9 +10,29 @@ import { fromBase64Url, toBase64Url } from "~/lib/base64url";
  * なるため、経路を 1 本に揃えてある。
  */
 
+/*
+ * この端末で passkey を使えるか。**描画の中で直に見ない。**
+ *
+ * `PublicKeyCredential` はクライアントにしか無いので、描画時に判定すると SSR が
+ * 必ず「使えない」を描き、ハイドレーションで食い違う (#156 と同じ壊れ方)。
+ * 判定は `useSyncExternalStore` に預けて、ハイドレーションの後に効かせる。
+ *
+ * 引数に無名関数を渡すと購読し直しになるので、関数はモジュールに置いて固定する
+ * (share-menu.tsx と同じ形)。
+ */
+const unsubscribe = (): void => undefined;
+const subscribeToNothing = (): (() => void) => unsubscribe;
+const supportedHere = (): boolean => typeof PublicKeyCredential === "function";
+/*
+ * サーバー側は「使える」に倒す。使える環境のほうが多数で、そちらでは一度も
+ * 書き換えが起きない。使えない環境だけが、ハイドレーションの後に差し替わる。
+ * 逆に倒すと、ほぼ全員が「使えません」を一瞬見ることになる。
+ */
+const supportedOnServer = (): boolean => true;
+
 /** この端末で passkey を使えるか。使えない環境では画面から呼びかけない。 */
-export function isPasskeySupported(): boolean {
-  return typeof PublicKeyCredential === "function";
+export function usePasskeySupport(): boolean {
+  return useSyncExternalStore(subscribeToNothing, supportedHere, supportedOnServer);
 }
 
 /** 利用者が取りやめた (ダイアログを閉じた・触らなかった)。失敗として騒がない。 */

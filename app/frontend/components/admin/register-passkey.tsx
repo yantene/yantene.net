@@ -1,6 +1,6 @@
 import { useCallback, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createPasskey, isPasskeySupported, PasskeyCancelledError } from "~/frontend/lib/passkey";
+import { createPasskey, PasskeyCancelledError, usePasskeySupport } from "~/frontend/lib/passkey";
 import { httpStatus } from "~/lib/constants/http-status";
 
 /**
@@ -18,6 +18,7 @@ export function RegisterPasskey({
   readonly onRegistered: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation();
+  const supported = usePasskeySupport();
   const labelId = useId();
   const tokenId = useId();
   const [label, setLabel] = useState("");
@@ -69,7 +70,7 @@ export function RegisterPasskey({
     })();
   }, [label, onRegistered, token]);
 
-  if (!isPasskeySupported()) {
+  if (!supported) {
     return <p className="text-sm text-muted-foreground">{t("admin.signIn.unsupported")}</p>;
   }
 

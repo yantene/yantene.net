@@ -145,6 +145,15 @@ describe("登録 (bootstrap)", () => {
     expect(response.status).toBe(404);
   });
 
+  /*
+   * 何を示したかで答えが変わらないこと。変わると、外から secret の有無を当てられる。
+   */
+  it("secret が設定されていなければ、何も示さなくても同じ答えを返す", async () => {
+    const harness = setup({ ADMIN_REGISTRATION_TOKEN: undefined });
+    const response = await register(harness, authenticator, {});
+    expect(response.status).toBe(404);
+  });
+
   it("1 本でもあれば、secret だけでは追加登録できない", async () => {
     const harness = setup();
     expect((await register(harness, authenticator, { token: TOKEN })).status).toBe(201);
