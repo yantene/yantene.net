@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { NONCE, secureHeaders, type SecureHeadersVariables } from "hono/secure-headers";
+import { createAdminAuthRouter } from "./handlers/admin/auth.handler";
 import { createFeedRouter } from "./handlers/feed.handler";
 import { createLegacyRedirectRouter } from "./handlers/legacy-redirects.handler";
 import { createLocaleRouter } from "./handlers/locale.handler";
@@ -162,6 +163,11 @@ export const getApp = (
   // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /articles/* は
   // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
   app.route("/articles", createArticleMarkdownRouter());
+
+  // 管理者の認証 (ADR 0036)。passkey の登録・ログイン・ログアウトと鍵の一覧。
+  // ここが「管理者かどうか」を決める唯一の入口で、下書きの閲覧も Web からの編集も
+  // ここで起こしたセッションを見る。
+  app.route("/api/v1", createAdminAuthRouter());
 
   // 記事の同期 (コンテンツリポジトリ → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。

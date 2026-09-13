@@ -62,13 +62,48 @@ pnpm exec wrangler secret put ARTIFACTS_API_TOKEN --env production
 
 ⚠️ **最新バージョンが配信中でないと secret を編集できない** (`code: 10215`)。PR の
 preview デプロイは staging の Worker に**バージョンだけ上げて配信はしない**ので、PR が
-開いている間、staging の secret の追加・削除はこれで弾かれる。main のデプロイが走った
-直後の窓で叩くか、ダッシュボードから触ること。production には preview が飛ばないので
-この問題は出ない。
+開いている間、staging の secret の追加・削除はこれで弾かれる。production には preview が
+飛ばないのでこの問題は出ない。
+
+逃げ道は 3 つある。
+
+1. **マージを待つ。** main のデプロイが走ると最新バージョンが配信中になり、
+   `wrangler secret put` がそのまま通る。いちばん素直
+2. **ダッシュボードから触る**
+3. `wrangler versions secret put <KEY> --env staging` — 配信せずに secret を足した
+   **新しいバージョンを作る**。次のデプロイがこれを引き継ぐ
+
+⚠️ **3 は、すでに上がっているプレビュー版には効かない。** 新しいバージョンを作るだけで、
+PR のプレビュー URL が配信している版は変わらない。**プレビュー URL で secret を要る機能を
+試したいなら、secret を入れたあとに deploy-preview を走らせ直すこと** (空コミットを積むか、
+workflow を re-run する)。
 
 手元 (development) も同じ 2 つが要る。`.dev.vars.example` を `.dev.vars` に写して埋める。
 手元の作業ツリーを読めるようにしてこれを不要にするのは
 [#461](https://github.com/yantene/yantene.net/issues/461)。
+
+管理者の最初の passkey を登録するのに要る secret
+([ADR 0036](../../docs/adr/0036-authenticate-admin-with-passkey.md))。
+
+```bash
+pnpm exec wrangler secret put ADMIN_REGISTRATION_TOKEN --env production
+```
+
+値は長い乱数にする (`openssl rand -base64 32`)。**置かないと bootstrap の経路が閉じる**
+(`/admin` の登録が 404 になる。fail-loud)。
+
+登録済みの passkey が 1 本でもあれば、追加の登録はサインインが条件になるのでこの値は
+見ない。**それでも消さないこと。** 端末をすべて失って表を空にしたとき、復旧に再び要る。
+
+```bash
+pnpm exec wrangler d1 execute yantene-production --env production --remote --command \
+  "DELETE FROM admin_credentials;"
+```
+
+⚠️ **passkey は環境ごとに登録する。** `yantene.net` / `staging.yantene.net` /
+`localhost` は WebAuthn から見て別の RP なので、手元で登録した passkey で production に
+入ることはできない。揃えようとして RP ID を親ドメインに広げないこと (署名が効く範囲が
+必要以上に広がる)。
 
 ### 1'. Artifacts のリポジトリを用意する
 

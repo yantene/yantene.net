@@ -109,6 +109,48 @@
       "linkLabel": "yantene/yantene.net"
     }
   },
+  "admin": {
+    "title": "管理",
+    "description": "管理者だけが使う画面。",
+    "signIn": {
+      "title": "サインイン",
+      "lead": "登録した passkey で入ります。パスワードはありません。",
+      "action": "passkey でサインイン",
+      "pending": "認証器を待っています…",
+      "failed": "サインインできませんでした。登録した passkey かどうか確かめてください。",
+      "cancelled": "取りやめました。",
+      "unsupported": "このブラウザは passkey に対応していません。"
+    },
+    "signOut": {
+      "action": "サインアウト"
+    },
+    "credentials": {
+      "title": "登録した passkey",
+      "empty": "まだ 1 本もありません。",
+      "current": "いま使っている",
+      "createdAt": "登録",
+      "lastUsedAt": "最終使用",
+      "neverUsed": "未使用",
+      "syncedLabel": "同期される鍵",
+      "deviceLabel": "この端末だけの鍵",
+      "revoke": "取り消す",
+      "revokeLast": "最後の 1 本は取り消せません。先にもう 1 本登録してください。",
+      "revokeCurrent": "いま使っている鍵は取り消せません。別の端末から取り消してください。",
+      "revokeFailed": "取り消せませんでした。"
+    },
+    "register": {
+      "title": "passkey を登録する",
+      "lead": "端末ごとに登録します。手元・staging・本番はそれぞれ別に登録が要ります。",
+      "labelField": "この鍵の名前",
+      "labelPlaceholder": "MacBook の Touch ID",
+      "tokenField": "登録用のトークン",
+      "tokenHelp": "最初の 1 本を登録するときだけ要ります。2 本目からはサインインしていれば不要です。",
+      "action": "passkey を登録",
+      "failed": "登録できませんでした。",
+      "duplicate": "この passkey はすでに登録されています。",
+      "notAllowed": "いまは登録できません。サインインするか、登録用のトークンを確かめてください。"
+    }
+  },
   "locale": {
     "label": "表示する言語"
   },

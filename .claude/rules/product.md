@@ -36,7 +36,8 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 ## コンテンツワークフロー
 
 手元で Markdown を書き、コンテンツリポジトリに `git push` する。**push を合図に D1 / R2 へ
-同期される。** 管理画面は設けない。
+同期される。** 記事を出す経路はいまのところこれだけで、Web から書く手立ては
+[#467](https://github.com/yantene/yantene.net/issues/467) で用意する。
 
 コンテンツリポジトリは Cloudflare Artifacts に置く
 ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。環境ごとに
@@ -369,6 +370,29 @@ pnpm exec wrangler d1 execute yantene-production --env production --remote --com
 
 受信の時点でも読み出しの時点でも同じ判定を通すので、**すでに届いていた行も足した時点で
 表に出なくなる**。行そのものは次に再送が来たときに消える。
+
+## 管理者ログイン
+
+`/admin` に **passkey (WebAuthn) で入る**
+([ADR 0036](../../docs/adr/0036-authenticate-admin-with-passkey.md))。パスワードは持たない。
+いまログイン中にできるのは passkey の付け外しだけで、下書きの閲覧
+([#466](https://github.com/yantene/yantene.net/issues/466)) と Web からの編集
+([#467](https://github.com/yantene/yantene.net/issues/467)) がここに乗る。
+
+- **passkey は環境ごとに登録する。** `yantene.net` / `staging.yantene.net` /
+  `localhost` は WebAuthn から見て別の RP なので、手元の鍵で production には入れない
+- **最初の 1 本は `ADMIN_REGISTRATION_TOKEN` を示して登録する。** 1 本でも入ったあとは、
+  追加の登録にサインインが要る。secret を置かなければ登録の経路そのものが閉じる
+- **最後の 1 本は取り消せない。** 取り消すと誰も入れなくなる。端末をすべて失ったときは
+  D1 の表を空にして登録からやり直す
+
+  ```bash
+  pnpm exec wrangler d1 execute yantene-production --env production --remote --command \
+    "DELETE FROM admin_credentials;"
+  ```
+
+- **失敗の応答は理由を区別しない。** どの鍵が登録済みかを外から数えられないようにするため
+- `/admin` は robots.txt の `Disallow` と `noindex` の両方で検索エンジンから外す
 
 ## 読まれ方の計測
 

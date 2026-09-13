@@ -48,6 +48,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0033](0033-rename-note-to-article-in-storage-and-code.md)           | 長文の記事を指す `note` を、保存とコードの名前からも無くす           | Accepted   |
 | [0034](0034-artifacts-as-content-source-of-truth.md)                 | コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む  | Accepted   |
 | [0035](0035-refresh-on-push-through-a-queue.md)                      | コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる  | Accepted   |
+| [0036](0036-authenticate-admin-with-passkey.md)                      | 管理者を passkey で認証し、セッションを KV に置く                    | Accepted   |
 | [0037](0037-switch-locale-through-a-cookie-and-a-server-endpoint.md) | 表示する言語は cookie に預け、切り替えはサーバーの受け口で行う       | Accepted   |
 
 ## 統合した番号
