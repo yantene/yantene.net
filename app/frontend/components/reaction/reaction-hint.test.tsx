@@ -48,7 +48,7 @@ describe("ReactionHint", () => {
 
   it("promotes reacting to a reader who has not dismissed it", () => {
     renderHint();
-    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
+    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみましょう");
   });
 
   it("goes away when closed, and stays away afterwards", async () => {

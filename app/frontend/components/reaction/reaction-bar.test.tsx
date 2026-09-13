@@ -207,7 +207,7 @@ describe("ReactionBar", () => {
     it("shows the hint to someone who has not reacted", () => {
       renderBar({ reactions, mine: null }, true);
 
-      expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
+      expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみましょう");
     });
 
     it("stays quiet for someone who already reacted", () => {

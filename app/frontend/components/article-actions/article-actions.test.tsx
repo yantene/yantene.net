@@ -93,7 +93,7 @@ describe("ArticleActions", () => {
   it("まだ押していない人には記事の下で促しを出す", () => {
     renderActions("bottom", null);
 
-    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみよう");
+    expect(screen.getByRole("note")).toHaveTextContent("匿名でリアクションしてみましょう");
   });
 
   it("記事の上では促さない", () => {
