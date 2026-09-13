@@ -86,7 +86,15 @@ const targets = [
    */
   { label: "/about", path: "/about", expectBodyIncludes: 'class="h-card' },
   /*
-   * ヘッダーのナビが指す残り 2 つ。中身が入るまでは「準備中」の一枚 (#412 / #415)。
+   * `/works` は作品が同期されていれば一覧が立つ (ADR 0042)。
+   *
+   * 見るのは一覧の器の印。`/about` と同じく、**同期されていなければここで落ちる**が、
+   * それは正しい落ち方。`noindex` の側を見ると、中身が入った瞬間に期待を反転しなければ
+   * ならない。
+   */
+  { label: "/works", path: "/works", expectBodyIncludes: 'class="work-list"' },
+  /*
+   * ヘッダーのナビが指す、中身の入る当てがまだ無い 2 つ。「準備中」の一枚 (#412 / #415)。
    *
    * **本文まで見る。** とくに `/notes` は、記事一覧へ 307 で送っていた URL を明け渡した
    * 場所で (ADR 0032)、旧 URL の表 (legacy-redirects.handler.ts) はページ委譲より先に
