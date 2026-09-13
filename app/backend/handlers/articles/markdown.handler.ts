@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
-import { articlePath, ArticleSlug } from "~/backend/domain/article";
+import { articlePath, ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
 import { resolveArticleReadAccess } from "./article-read-access";
 import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
@@ -57,6 +57,9 @@ async function articleSourceResponse(
       // ブラウザで開いたら (可能なら) その場で見せる。保存時のファイル名だけ揃える。
       "Content-Disposition": `inline; filename="${slug.toString()}${MARKDOWN_SUFFIX}"`,
       "Cache-Control": options.cacheControl,
+      // 限定公開は検索エンジンに載せない (ADR 0040)。原文もページと同じ URL の
+      // 別表現なので、こちらにも伝える。
+      ...(shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {}),
       /*
        * 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。下書きが載ると、
        * その先で読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
@@ -89,7 +92,9 @@ async function negotiatedSourceResponse(
     cacheControl: NEGOTIATED_CONTENT_CACHE_CONTROL,
   });
 
-  response.headers.set("Vary", "Accept");
+  // `set` にしない。管理者向けの応答には `Vary: Cookie` が既に載っている
+  // (PRIVATE_CACHE_HEADERS)ので、置き換えると消える。
+  response.headers.append("Vary", "Accept");
   if (response.status === httpStatus.OK && slug !== undefined) {
     response.headers.set("Content-Location", `${articlePath(slug.toString())}${MARKDOWN_SUFFIX}`);
   }

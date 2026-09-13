@@ -17,6 +17,7 @@ import {
   articlePath,
   ArticleNotFoundError,
   ArticleSlug,
+  isReachableByReaders,
   shouldTellRobotsNoindex,
 } from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
@@ -227,8 +228,13 @@ export async function loadArticleDetailPage(
   if (resolved === undefined) return { found: false };
 
   const detail = resolved.detail;
-  // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
-  if (recording !== null) {
+  /*
+   * 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
+   *
+   * **読み手が到達できる記事だけ数える** (ADR 0040)。管理者が下書きを直しながら
+   * 何度も開くと、公開する前から閲覧数と人気スコアが積み上がってしまう。
+   */
+  if (recording !== null && isReachableByReaders(resolved.status)) {
     recordArticleView(env, { id: resolved.articleId, slug: detail.article.slug }, recording);
   }
 

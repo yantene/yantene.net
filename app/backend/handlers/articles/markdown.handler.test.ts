@@ -1,13 +1,15 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createArticleMarkdownRouter } from "./markdown.handler";
+import type { ArticleStatus } from "~/backend/domain/article";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { createTestApp } from "~/backend/test-app";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 
 const helloMarkdown = `---
 title: Hello
@@ -541,5 +543,118 @@ describe("article markdown negotiation (full app)", () => {
     );
 
     expect(res.status).toBe(500);
+  });
+});
+
+/*
+ * 段階ごとの見え方の配線 (ADR 0040)。
+ *
+ * リポジトリの側は article.query-repository.test.ts が固定している。ここで見るのは
+ * **ハンドラが正しい読み取り口を選んでいるか**と、管理者に返す応答が共有キャッシュに
+ * 載らないようになっているか。
+ */
+describe("status ごとの原文の配信 (ADR 0040)", () => {
+  /** 指定した status の記事を D1 と R2 に揃える。 */
+  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ArticleStatus): Promise<void> {
+    await new D1ArticleCommandRepository(d1).upsert(
+      Article.create({
+        slug: ArticleSlug.create("hello"),
+        title: ArticleTitle.create("Hello"),
+        summary: "A summary.",
+        publishedOn: Temporal.PlainDate.from("2026-01-15"),
+        lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
+        status,
+        sourceHash: "h1",
+      }),
+    );
+    await new R2ArticleContentCache(bucket).putSource(ArticleSlug.create("hello"), helloMarkdown);
+  }
+
+  /** ログインしている管理者として振る舞わせる。 */
+  function asAdmin(): void {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "admin@example.test" } as never,
+      admin: true,
+    });
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)("%s は読み手に 404 を返す", async (status) => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWith(d1, bucket, status);
+
+    const app = new Hono<{ Bindings: Env }>();
+    app.route("/articles", createArticleMarkdownRouter());
+    const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+    expect(response.status).toBe(404);
+  });
+
+  it("unlisted は読み手も読めるが noindex を伝える", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWith(d1, bucket, "unlisted");
+
+    const app = new Hono<{ Bindings: Env }>();
+    app.route("/articles", createArticleMarkdownRouter());
+    const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("published に noindex は付けない", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWith(d1, bucket, "published");
+
+    const app = new Hono<{ Bindings: Env }>();
+    app.route("/articles", createArticleMarkdownRouter());
+    const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+    expect(response.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  /*
+   * ここが PR の肝。管理者は下書きを読めるが、その応答は共有キャッシュに載ってはいけない。
+   * 載ると読み手に配られ、載った先で剥がす手立ては無い。
+   */
+  it.each(["withdrawn", "draft", "idea"] as const)(
+    "管理者は %s を読めて、応答は共有キャッシュに載らない",
+    async (status) => {
+      const d1 = createTestD1();
+      const { bucket } = createTestR2();
+      await seedWith(d1, bucket, status);
+      asAdmin();
+
+      const app = new Hono<{ Bindings: Env }>();
+      app.route("/articles", createArticleMarkdownRouter());
+      const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("Vary")).toContain("Cookie");
+    },
+  );
+
+  /** 管理者でない (ADMIN_EMAIL と一致しない) ログイン中の読み手は下書きを読めない。 */
+  it("ログインしていても管理者でなければ draft は 404", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWith(d1, bucket, "draft");
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "reader@example.test" } as never,
+      admin: false,
+    });
+
+    const app = new Hono<{ Bindings: Env }>();
+    app.route("/articles", createArticleMarkdownRouter());
+    const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+    expect(response.status).toBe(404);
   });
 });

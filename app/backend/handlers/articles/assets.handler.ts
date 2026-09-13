@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./content-cache-control";
-import { ArticleSlug } from "~/backend/domain/article";
+import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
 import { resolveArticleReadAccess } from "./article-read-access";
 import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
@@ -47,6 +47,9 @@ export function createArticleAssetsRouter(): Hono<{ Bindings: Env }> {
       headers: {
         "Content-Type": asset.contentType,
         "Cache-Control": contentCacheControlFor(c.env),
+        // 限定公開の絵も検索エンジンに載せない (ADR 0040)。画像検索に出ると、
+        // そこから記事へ辿り着けてしまう。
+        ...(shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {}),
         // 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。
         ...(access.admin ? PRIVATE_CACHE_HEADERS : {}),
       },

@@ -133,6 +133,24 @@ export async function loader({
   return data({ ...base, ...detail }, { headers });
 }
 
+/*
+ * loader が付けたヘッダーを文書の応答まで運ぶ。
+ *
+ * ⚠️ **`headers` を export しないと `Set-Cookie` 以外は捨てられる。** React Router の
+ * `getDocumentHeaders` は、route が `headers` を持たないとき `prependCookies` しか
+ * 呼ばない (react-router の `server-runtime/headers.js`)。`data(..., { headers })`
+ * に載せただけでは届かないので、管理者向けの `Cache-Control: private, no-store` も
+ * 限定公開の `X-Robots-Tag` も黙って消える。
+ */
+export const headers: Route.HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+  const merged = new Headers(parentHeaders);
+  for (const name of ["Cache-Control", "Vary", "X-Robots-Tag"]) {
+    const value = loaderHeaders.get(name);
+    if (value !== null) merged.set(name, value);
+  }
+  return merged;
+};
+
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
 
