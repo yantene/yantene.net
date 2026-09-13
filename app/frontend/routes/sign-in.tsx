@@ -15,8 +15,8 @@ import { signInInvalidParam } from "~/lib/constants/sign-in";
 /*
  * ログインの入口 (ADR 0039)。
  *
- * **ナビには出さない。** 読み手の大半には一生関係が無い。ここへの導線はロゴの連打
- * (#474) か、渡されたリンクから直接。
+ * **ナビには出さない。** 読み手の大半には一生関係が無い。ここへの導線はフッターの
+ * Sign in / Sign out (#491) か、渡されたリンクから直接。
  */
 
 interface SignInData extends PageMetaBase, CopyrightData {
