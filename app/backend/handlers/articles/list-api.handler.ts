@@ -22,7 +22,7 @@ export function createArticlesApiRouter(): Hono<{ Bindings: Env }> {
     );
     const { sortBy, direction } = parseArticleSort(c.req.query("sort-by"), c.req.query("order"));
 
-    const query = new D1ArticleQueryRepository(c.env.D1);
+    const query = D1ArticleQueryRepository.forReaders(c.env.D1);
     const result = await query.list({ limit, offset, sortBy, direction });
     return c.json(toPublicArticleList(result, page, perPage));
   });

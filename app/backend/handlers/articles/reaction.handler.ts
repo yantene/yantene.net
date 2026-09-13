@@ -95,7 +95,7 @@ export async function applyReaction(
   const slug = ArticleSlug.parse(slugParam);
   if (slug === undefined) return undefined;
 
-  const article = await new D1ArticleQueryRepository(env.D1).findBySlug(slug);
+  const article = await D1ArticleQueryRepository.forReaders(env.D1).findBySlug(slug);
   if (article === undefined) return undefined;
 
   const existingId = readSessionId(cookie);

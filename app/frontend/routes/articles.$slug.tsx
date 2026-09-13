@@ -6,6 +6,7 @@ import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { ArticleDetailPageData } from "~/backend/handlers/articles/detail.handler";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
+import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { loadArticleDetailPage } from "~/backend/handlers/articles/detail.handler";
 import { applyReaction, parseReactionEmoji } from "~/backend/handlers/articles/reaction.handler";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -94,7 +95,7 @@ export async function loader({
   // 読み手のセッション識別子を預け直す cookie を応答に載せる (ADR 0011)。
   // React Router は loader が付けた Set-Cookie を、文書・データどちらの応答にも運ぶ。
   const headers = new Headers();
-  const detail = await loadArticleDetailPage(cloudflare.env, params.slug, url.origin, {
+  const detail = await loadArticleDetailPage(cloudflare.env, request, params.slug, url.origin, {
     userAgent: request.headers.get("user-agent"),
     cookie: request.headers.get("cookie"),
     waitUntil: (promise) => {
@@ -114,6 +115,21 @@ export async function loader({
   if (!detail.found) {
     return data({ ...base, ...detail }, { status: 404, headers });
   }
+
+  /*
+   * 管理者に返した応答は共有キャッシュに載せない (ADR 0040)。下書きが載ると、
+   * その先で読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
+   */
+  if (detail.admin) {
+    for (const [name, value] of Object.entries(PRIVATE_CACHE_HEADERS)) {
+      headers.set(name, value);
+    }
+  }
+  // 限定公開は検索エンジンに載せない。meta の robots だけだと、クローラーが本文を
+  // 読む前に判断する経路 (HEAD やヘッダーだけを見る収集) に伝わらない。
+  if (detail.noindex) {
+    headers.set("X-Robots-Tag", "noindex");
+  }
   return data({ ...base, ...detail }, { headers });
 }
 
@@ -129,7 +145,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     });
   }
 
-  const { article, jsonLd } = loaderData;
+  const { article, jsonLd, noindex } = loaderData;
   return buildPageMeta({
     locale,
     origin,
@@ -139,6 +155,8 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     imagePath: `/og/articles/${article.slug}`,
     type: "article",
     jsonLd,
+    // 限定公開は一覧にも検索にも出さないので、検索エンジンにも載せない (ADR 0040)。
+    noindex,
     // 受け取れるのは記事宛だけなので、記事ページでだけ受け口を広告する。
     webmentionPath: WEBMENTION_PATH,
   });

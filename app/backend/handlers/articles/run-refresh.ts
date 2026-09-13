@@ -35,7 +35,7 @@ export async function runRefresh(
   const result = await new ArticlesRefreshService(
     resolveContentStore(env),
     new D1ArticleCommandRepository(env.D1),
-    new D1ArticleQueryRepository(env.D1),
+    D1ArticleQueryRepository.forAdmin(env.D1),
     new R2ArticleContentCache(env.R2),
     new D1ArticleSearchIndex(env.D1),
   ).refresh({ force });
@@ -60,7 +60,7 @@ export async function runRefresh(
     new WorkersAiEmbeddingGenerator(env.AI),
     new D1ArticleEmbeddingCommandRepository(env.D1),
     new D1ArticleEmbeddingQueryRepository(env.D1),
-    new D1ArticleQueryRepository(env.D1),
+    D1ArticleQueryRepository.forAdmin(env.D1),
     new R2ArticleContentCache(env.R2),
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });

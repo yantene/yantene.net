@@ -14,6 +14,7 @@ function article(slug: string, publishedOn: string): Article<IUnpersisted> {
     summary: `summary of ${slug}`,
     publishedOn: Temporal.PlainDate.from(publishedOn),
     lastModifiedOn: Temporal.PlainDate.from(publishedOn),
+    status: "published",
     sourceHash: `hash-${slug}`,
   });
 }

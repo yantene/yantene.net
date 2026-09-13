@@ -21,10 +21,13 @@ async function seedArticle(d1: D1Database, slug: string): Promise<EntityId<"Arti
       summary: "s",
       publishedOn: Temporal.PlainDate.from("2026-01-01"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-01"),
+      status: "published",
       sourceHash: `hash-${slug}`,
     }),
   );
-  const article = await new D1ArticleQueryRepository(d1).findBySlug(ArticleSlug.create(slug));
+  const article = await D1ArticleQueryRepository.forReaders(d1).findBySlug(
+    ArticleSlug.create(slug),
+  );
   if (article?.id === undefined) throw new Error(`failed to seed ${slug}`);
   return article.id;
 }

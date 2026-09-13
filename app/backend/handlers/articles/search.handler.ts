@@ -21,7 +21,7 @@ export function createSearchApiRouter(): Hono<{ Bindings: Env }> {
     const articles =
       query.length === 0
         ? []
-        : await new D1ArticleQueryRepository(c.env.D1).search(query, SEARCH_LIMIT);
+        : await D1ArticleQueryRepository.forReaders(c.env.D1).search(query, SEARCH_LIMIT);
     return c.json({ query, articles: articles.map((article) => toPublicArticle(article)) });
   });
 
@@ -45,6 +45,6 @@ export async function loadSearchPage(
   const results =
     query.length === 0
       ? []
-      : await new D1ArticleQueryRepository(env.D1).search(query, SEARCH_LIMIT);
+      : await D1ArticleQueryRepository.forReaders(env.D1).search(query, SEARCH_LIMIT);
   return { query, articles: results.map((article) => toPublicArticle(article)) };
 }

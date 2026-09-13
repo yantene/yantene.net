@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./content-cache-control";
 import { ArticleSlug } from "~/backend/domain/article";
-import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { resolveArticleReadAccess } from "./article-read-access";
+import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -24,9 +25,13 @@ export function createArticleAssetsRouter(): Hono<{ Bindings: Env }> {
     if (slug === undefined) return notFoundResponse("asset not found");
 
     const path = c.req.param("path");
+    // 管理者なら全 status。**下書きをプレビューするときに絵だけ 404 にならないよう、
+    // ここも記事ページと同じ判定を通す** (ADR 0040)。
+    const access = await resolveArticleReadAccess(c.env, c.req.raw);
+
     // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
     const [article, asset] = await Promise.all([
-      new D1ArticleQueryRepository(c.env.D1).findBySlug(slug),
+      access.query.findBySlug(slug),
       new R2ArticleContentCache(c.env.R2).getAsset(slug, path),
     ]);
 
@@ -42,6 +47,8 @@ export function createArticleAssetsRouter(): Hono<{ Bindings: Env }> {
       headers: {
         "Content-Type": asset.contentType,
         "Cache-Control": contentCacheControlFor(c.env),
+        // 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。
+        ...(access.admin ? PRIVATE_CACHE_HEADERS : {}),
       },
     });
   });

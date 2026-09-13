@@ -140,7 +140,10 @@ Body with an inline image ![alt](./inline.png).
 function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
   service: ArticlesRefreshService;
   command: D1ArticleCommandRepository;
+  /** 全 status が見える口。同期できたかどうかはこちらで見る。 */
   query: D1ArticleQueryRepository;
+  /** 読み手に見えるものだけの口。隠せているかどうかはこちらで見る。 */
+  readerQuery: D1ArticleQueryRepository;
   cache: InMemoryCache;
   content: MockContentStore;
   /** Webmention など、同期の巻き添えを見るために同じ DB を触る用。 */
@@ -148,12 +151,14 @@ function setup(files: Map<string, { hash: string; bytes: Uint8Array }>): {
 } {
   const d1 = createTestD1();
   const command = new D1ArticleCommandRepository(d1);
-  const query = new D1ArticleQueryRepository(d1);
+  // refresh は掃除の判定に全 status が要る (ADR 0040)。
+  const query = D1ArticleQueryRepository.forAdmin(d1);
+  const readerQuery = D1ArticleQueryRepository.forReaders(d1);
   const cache = new InMemoryCache();
   const searchIndex = new D1ArticleSearchIndex(d1);
   const content = new MockContentStore(files);
   const service = new ArticlesRefreshService(content, command, query, cache, searchIndex);
-  return { service, command, query, cache, content, d1 };
+  return { service, command, query, readerQuery, cache, content, d1 };
 }
 
 afterEach(() => {
@@ -842,27 +847,68 @@ lastModifiedOn: 2026-01-15
   });
 });
 
-describe("visibility", () => {
-  const withVisibility = (value: string): string =>
-    `---\ntitle: Secret\npublishedOn: 2026-01-15\nvisibility: ${value}\n---\n\n人に見せたくない話。\n`;
+describe("status", () => {
+  const withStatus = (value: string): string =>
+    `---\ntitle: Secret\npublishedOn: 2026-01-15\nstatus: ${value}\n---\n\nまだ出さない話。\n`;
 
-  it("private の記事は同期しない", async () => {
+  /*
+   * ADR 0040 の中心。**どの段階の記事も D1 と R2 に載る。**
+   *
+   * 同期しない方式だと、取り下げた記事に届いていた Webmention と閲覧数が戻らない。
+   * どちらもコンテンツリポジトリのどこにも無いので、消したら復元できない。
+   */
+  it.each(["draft", "idea", "withdrawn", "unlisted"])("%s の記事も同期する", async (status) => {
     const files = new Map([
-      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("private")) }],
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus(status)) }],
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
     ]);
     const { service, query, cache } = setup(files);
 
     const result = await service.refresh();
-    expect(result.processed).toEqual(["hello"]);
-    expect(result.unpublished).toEqual(["secret"]);
 
-    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
-    expect(cache.sources.has("secret")).toBe(false);
-    expect(cache.mdasts.has("secret")).toBe(false);
+    expect([...result.processed].toSorted()).toEqual(["hello", "secret"]);
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    expect(cache.sources.has("secret")).toBe(true);
+    expect(cache.mdasts.has("secret")).toBe(true);
   });
 
-  it("公開済みの記事を private にすると D1 と R2 から消える", async () => {
+  it.each(["draft", "idea", "withdrawn"])("%s は読み手から URL でも引けない", async (status) => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus(status)) }],
+    ]);
+    const { service, readerQuery } = setup(files);
+
+    await service.refresh();
+
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
+  });
+
+  /** URL を知っていれば読める、が unlisted の定義 (ADR 0040)。 */
+  it("unlisted は読み手も URL で引けるが、一覧には出ない", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus("unlisted")) }],
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, readerQuery } = setup(files);
+
+    await service.refresh();
+
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    const listed = await readerQuery.list({
+      limit: 10,
+      offset: 0,
+      sortBy: "publishedOn",
+      direction: "desc",
+    });
+    expect(listed.articles.map((article) => article.slug.toString())).toEqual(["hello"]);
+    expect(listed.total).toBe(1);
+  });
+
+  /*
+   * 取り下げても消さない。ここが visibility 時代との最大の違いで、閲覧数と届いた
+   * Webmention が残るのはこの一点に懸かっている。
+   */
+  it("公開済みの記事を withdrawn にしても D1 と R2 から消えない", async () => {
     const files = new Map([
       [
         "articles/secret.md",
@@ -872,56 +918,78 @@ describe("visibility", () => {
         },
       ],
     ]);
-    const { service, query, cache } = setup(files);
+    const { service, query, readerQuery, cache } = setup(files);
 
     await service.refresh();
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+
+    files.set("articles/secret.md", { hash: "s2", bytes: bytes(withStatus("withdrawn")) });
+    const result = await service.refresh();
+
+    expect(result.deleted).toEqual([]);
+    // 行も写しも残っている。
     expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
     expect(cache.sources.has("secret")).toBe(true);
-
-    // 同じ slug を private にして再度 refresh
-    files.set("articles/secret.md", {
-      hash: "s2",
-      bytes: bytes(withVisibility("private")),
-    });
-    const result = await service.refresh();
-
-    expect(result.unpublished).toEqual(["secret"]);
-    expect(result.deleted).toEqual(["secret"]);
-    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
-    expect(cache.sources.has("secret")).toBe(false);
+    // 読み手からは見えない。
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
   });
 
-  it("visibility を書かなければ公開する", async () => {
+  it("status を書かなければ公開する", async () => {
     const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
-    const { service, query } = setup(files);
+    const { service, readerQuery } = setup(files);
 
-    const result = await service.refresh();
-    expect(result.unpublished).toEqual([]);
-    expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+    await service.refresh();
+
+    expect(await readerQuery.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
   });
 
-  it("public を明示した記事は公開する", async () => {
+  it("published を明示した記事は公開する", async () => {
     const files = new Map([
-      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("public")) }],
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus("published")) }],
     ]);
-    const { service, query } = setup(files);
+    const { service, readerQuery } = setup(files);
 
     const result = await service.refresh();
+
     expect(result.processed).toEqual(["secret"]);
-    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
   });
 
   it("読めない値は公開せず、綴りの誤りとして報告する", async () => {
     const files = new Map([
-      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility("prvate")) }],
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus("pubished")) }],
     ]);
     const { service, query } = setup(files);
 
     const result = await service.refresh();
-    // 隠すと決めた記事ではないので unpublished には数えない。
-    expect(result.unpublished).toEqual([]);
+
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0]?.path).toBe("articles/secret.md");
+    expect(result.skipped[0]?.reason).toContain("status");
+    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
+  });
+
+  /*
+   * 旧書式が残っていたら読まない。無視して既定の published に倒すと、
+   * `visibility: private` と書いたままの下書きが黙って公開される。
+   */
+  it.each(["private", "public"])("旧書式の visibility: %s が残っていたら弾く", async (value) => {
+    const files = new Map([
+      [
+        "articles/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes(
+            `---\ntitle: Secret\npublishedOn: 2026-01-15\nvisibility: ${value}\n---\n\n本文。\n`,
+          ),
+        },
+      ],
+    ]);
+    const { service, query } = setup(files);
+
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0]?.reason).toContain("visibility");
     expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
   });
@@ -930,7 +998,7 @@ describe("visibility", () => {
    * 綴りの誤りは「隠すと決めた意思」ではないので、公開済みの記事を取り下げる理由にも
    * ならない。書き直すまで前回の内容を出し続ける。
    */
-  it("公開済みの記事の visibility が読めなくなっても消さない", async () => {
+  it("公開済みの記事の status が読めなくなっても消さない", async () => {
     const files = new Map([
       [
         "articles/secret.md",
@@ -940,32 +1008,31 @@ describe("visibility", () => {
         },
       ],
     ]);
-    const { service, query, cache } = setup(files);
+    const { service, readerQuery, cache } = setup(files);
 
     await service.refresh();
-    files.set("articles/secret.md", {
-      hash: "s2",
-      bytes: bytes(withVisibility("prvate")),
-    });
+    files.set("articles/secret.md", { hash: "s2", bytes: bytes(withStatus("pubished")) });
     const result = await service.refresh();
 
     expect(result.skipped).toHaveLength(1);
     expect(result.deleted).toEqual([]);
-    expect(await query.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeDefined();
     expect(cache.sources.has("secret")).toBe(true);
   });
 
   it("大文字や前後の空白を許す", async () => {
     const files = new Map([
-      ["articles/secret.md", { hash: "s1", bytes: bytes(withVisibility('"  PRIVATE  "')) }],
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus('"  DRAFT  "')) }],
     ]);
-    const { service } = setup(files);
+    const { service, query, readerQuery } = setup(files);
 
-    const result = await service.refresh();
-    expect(result.unpublished).toEqual(["secret"]);
+    await service.refresh();
+
+    expect((await query.findBySlug(ArticleSlug.create("secret")))?.status).toBe("draft");
+    expect(await readerQuery.findBySlug(ArticleSlug.create("secret"))).toBeUndefined();
   });
 
-  it("公開範囲を見るために原文を読み直さない", async () => {
+  it("段階を見るために原文を読み直さない", async () => {
     const files = new Map([
       ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
       ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
@@ -997,6 +1064,48 @@ describe("visibility", () => {
     // 読まなかった記事を「コンテンツリポジトリから消えた」と誤認して掃除していないこと。
     expect(result.deleted).toEqual([]);
     expect(await query.findBySlug(ArticleSlug.create("hello"))).toBeDefined();
+  });
+
+  /*
+   * 検索の索引はリポジトリを通らずに引かれるので、絞るのは索引に入れる時点 (ADR 0040)。
+   * 素通りさせると上位 N 件を下書きが埋めてから forReaders が落とし、結果が足りなくなる。
+   */
+  it("published 以外は検索の索引に入れない", async () => {
+    const files = new Map([
+      ["articles/secret.md", { hash: "s1", bytes: bytes(withStatus("draft")) }],
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+    ]);
+    const { service, query } = setup(files);
+
+    await service.refresh();
+
+    expect((await query.search("まだ出さない", 10)).map((a) => a.slug.toString())).toEqual([]);
+  });
+
+  it("公開済みの記事を取り下げると検索の索引から落ちる", async () => {
+    const files = new Map([
+      [
+        "articles/secret.md",
+        {
+          hash: "s1",
+          bytes: bytes("---\ntitle: Secret\npublishedOn: 2026-01-15\n---\n\nさがせる本文。\n"),
+        },
+      ],
+    ]);
+    const { service, query } = setup(files);
+
+    await service.refresh();
+    expect((await query.search("さがせる", 10)).map((a) => a.slug.toString())).toEqual(["secret"]);
+
+    files.set("articles/secret.md", {
+      hash: "s2",
+      bytes: bytes(
+        "---\ntitle: Secret\npublishedOn: 2026-01-15\nstatus: withdrawn\n---\n\nさがせる本文。\n",
+      ),
+    });
+    await service.refresh();
+
+    expect(await query.search("さがせる", 10)).toEqual([]);
   });
 });
 

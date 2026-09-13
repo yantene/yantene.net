@@ -34,6 +34,9 @@ export class D1ArticleCommandRepository implements IArticleCommandRepository {
       imageUrl: article.imageUrl?.toString() ?? null,
       publishedOn: plainDateToIso(article.publishedOn),
       lastModifiedOn: plainDateToIso(article.lastModifiedOn),
+      // status は content に入れる。書き換えたら上書きされてほしい (公開 → 取り下げ、
+      // 下書き → 公開のどちらも、次の refresh でそのまま反映される)。
+      status: article.status,
       sourceHash: article.sourceHash,
       updatedAt: nowUnix,
     };

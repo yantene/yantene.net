@@ -77,7 +77,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     const slug = ArticleSlug.parse(c.req.param("slug"));
     if (slug === undefined) return notFoundResponse("article not found");
 
-    const article = await new D1ArticleQueryRepository(c.env.D1).findBySlug(slug);
+    const article = await D1ArticleQueryRepository.forReaders(c.env.D1).findBySlug(slug);
     if (article === undefined) return notFoundResponse("article not found");
 
     const html = cardHtml({

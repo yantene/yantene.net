@@ -22,6 +22,7 @@ function unpersistedArticle(params: {
     imageUrl: params.imageUrl === undefined ? undefined : ImageUrl.create(params.imageUrl),
     publishedOn: Temporal.PlainDate.from(params.publishedOn ?? "2026-01-15"),
     lastModifiedOn: Temporal.PlainDate.from(params.lastModifiedOn ?? "2026-01-20"),
+    status: "published",
     sourceHash: params.sourceHash ?? "hash-0",
   });
 }
@@ -55,7 +56,7 @@ describe("D1ArticleCommandRepository", () => {
   it("updates in place on slug conflict, keeping the same id", async () => {
     const d1 = createTestD1();
     const cmd = new D1ArticleCommandRepository(d1);
-    const query = new D1ArticleQueryRepository(d1);
+    const query = D1ArticleQueryRepository.forReaders(d1);
 
     const first = await cmd.upsert(unpersistedArticle({ slug: "post", title: "Original" }));
     const second = await cmd.upsert(
@@ -79,7 +80,7 @@ describe("D1ArticleCommandRepository", () => {
   it("deletes an article by slug", async () => {
     const d1 = createTestD1();
     const cmd = new D1ArticleCommandRepository(d1);
-    const query = new D1ArticleQueryRepository(d1);
+    const query = D1ArticleQueryRepository.forReaders(d1);
 
     await cmd.upsert(unpersistedArticle({ slug: "gone", title: "Gone" }));
     await cmd.deleteBySlug(ArticleSlug.create("gone"));
@@ -90,7 +91,7 @@ describe("D1ArticleCommandRepository", () => {
   it("deletes an article by id", async () => {
     const d1 = createTestD1();
     const cmd = new D1ArticleCommandRepository(d1);
-    const query = new D1ArticleQueryRepository(d1);
+    const query = D1ArticleQueryRepository.forReaders(d1);
 
     const saved = await cmd.upsert(unpersistedArticle({ slug: "byid", title: "T" }));
     await cmd.delete(saved.id);

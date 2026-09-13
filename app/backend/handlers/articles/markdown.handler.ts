@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
 import { articlePath, ArticleSlug } from "~/backend/domain/article";
-import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { resolveArticleReadAccess } from "./article-read-access";
+import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";
 import { notFoundResponse } from "~/lib/problem-details";
@@ -27,14 +28,18 @@ function markdownAlternateLink(slug: ArticleSlug): string {
  */
 async function articleSourceResponse(
   env: Env,
+  request: Request,
   slug: ArticleSlug | undefined,
   options: { readonly cacheControl: string },
 ): Promise<Response> {
   if (slug === undefined) return notFoundResponse("article not found");
 
+  // 管理者なら全 status を引く (ADR 0040)。読み手には published + unlisted だけ。
+  const access = await resolveArticleReadAccess(env, request);
+
   // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
   const [article, markdown] = await Promise.all([
-    new D1ArticleQueryRepository(env.D1).findBySlug(slug),
+    access.query.findBySlug(slug),
     new R2ArticleContentCache(env.R2).getSource(slug),
   ]);
 
@@ -52,6 +57,14 @@ async function articleSourceResponse(
       // ブラウザで開いたら (可能なら) その場で見せる。保存時のファイル名だけ揃える。
       "Content-Disposition": `inline; filename="${slug.toString()}${MARKDOWN_SUFFIX}"`,
       "Cache-Control": options.cacheControl,
+      /*
+       * 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。下書きが載ると、
+       * その先で読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
+       *
+       * 後に置いて上のキャッシュ指定を上書きする。管理者かどうかで分かれるのは
+       * ここだけなので、条件を 2 つ書かずに済む。
+       */
+      ...(access.admin ? PRIVATE_CACHE_HEADERS : {}),
     },
   });
 }
@@ -69,9 +82,10 @@ async function articleSourceResponse(
  */
 async function negotiatedSourceResponse(
   env: Env,
+  request: Request,
   slug: ArticleSlug | undefined,
 ): Promise<Response> {
-  const response = await articleSourceResponse(env, slug, {
+  const response = await articleSourceResponse(env, request, slug, {
     cacheControl: NEGOTIATED_CONTENT_CACHE_CONTROL,
   });
 
@@ -116,6 +130,7 @@ export function createArticleMarkdownRouter(): Hono<{ Bindings: Env }> {
     if (file.endsWith(MARKDOWN_SUFFIX)) {
       return articleSourceResponse(
         c.env,
+        c.req.raw,
         ArticleSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length)),
         {
           cacheControl: contentCacheControlFor(c.env),
@@ -140,7 +155,7 @@ export function createArticleMarkdownRouter(): Hono<{ Bindings: Env }> {
       return;
     }
 
-    return negotiatedSourceResponse(c.env, ArticleSlug.parse(file));
+    return negotiatedSourceResponse(c.env, c.req.raw, ArticleSlug.parse(file));
   });
 
   return router;

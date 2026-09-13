@@ -45,6 +45,7 @@ async function setup(): Promise<Harness> {
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-15"),
+      status: "published",
       sourceHash: "hash-0",
     }),
   );

@@ -63,7 +63,9 @@ export function createWebmentionRouter(): Hono<{ Bindings: Env }> {
         siteOrigin: new URL(c.req.url).origin,
       });
 
-      const article = await new D1ArticleQueryRepository(c.env.D1).findBySlug(request.targetSlug);
+      const article = await D1ArticleQueryRepository.forReaders(c.env.D1).findBySlug(
+        request.targetSlug,
+      );
       if (article === undefined) {
         throw new TargetArticleNotFoundError(
           `target article does not exist: ${request.targetSlug.toString()}`,

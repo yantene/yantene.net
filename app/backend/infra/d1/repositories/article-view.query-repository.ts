@@ -1,7 +1,17 @@
-import { asc, desc } from "drizzle-orm";
+import { asc, desc, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type { IArticleViewQueryRepository } from "~/backend/domain/article-view";
+import { articleStatuses, isListedToReaders } from "~/backend/domain/article";
 import { articles } from "~/backend/infra/d1/schema";
+
+/**
+ * 人気順に出してよい status (ADR 0040)。
+ *
+ * この表は記事の読み取り口 (D1ArticleQueryRepository) を通らず D1 を直接引くので、
+ * 絞るのはここ。素通りさせると**上位 N 件を下書きが埋めてから forReaders が落とす**
+ * ことになり、人気順が N 件に足りなくなる。
+ */
+const LISTED_STATUSES = articleStatuses.filter((status) => isListedToReaders(status));
 
 export class D1ArticleViewQueryRepository implements IArticleViewQueryRepository {
   private readonly db;
@@ -26,6 +36,7 @@ export class D1ArticleViewQueryRepository implements IArticleViewQueryRepository
     const rows = await this.db
       .select({ id: articles.id })
       .from(articles)
+      .where(inArray(articles.status, LISTED_STATUSES))
       .orderBy(desc(articles.viewLogScore), desc(articles.publishedOn), asc(articles.id))
       .limit(limit);
 

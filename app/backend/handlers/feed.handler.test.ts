@@ -21,6 +21,7 @@ function unpersistedArticle(params: {
     imageUrl: undefined,
     publishedOn: Temporal.PlainDate.from(params.publishedOn ?? "2026-01-15"),
     lastModifiedOn: Temporal.PlainDate.from(params.lastModifiedOn ?? "2026-01-20"),
+    status: "published",
     sourceHash: "hash-0",
   });
 }

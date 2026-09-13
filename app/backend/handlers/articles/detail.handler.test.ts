@@ -37,6 +37,7 @@ async function seed(d1: D1Database, bucket: R2Bucket): Promise<void> {
       imageUrl: ImageUrl.create("/api/v1/articles/hello/assets/cover.png"),
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
+      status: "published",
       sourceHash: "h1",
     }),
   );
@@ -90,6 +91,7 @@ describe("createArticleDetailApiRouter GET /:slug", () => {
         summary: "s",
         publishedOn: Temporal.PlainDate.from("2026-01-15"),
         lastModifiedOn: Temporal.PlainDate.from("2026-01-15"),
+        status: "published",
         sourceHash: "h2",
       }),
     );

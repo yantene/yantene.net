@@ -1,5 +1,12 @@
 import type { articles } from "~/backend/infra/d1/schema";
-import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import type { ArticleStatus } from "~/backend/domain/article";
+import {
+  ImageUrl,
+  Article,
+  ArticleSlug,
+  ArticleTitle,
+  isArticleStatus,
+} from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
 
@@ -17,8 +24,20 @@ export function rowToArticle(row: typeof articles.$inferSelect): Article {
     imageUrl: row.imageUrl === null ? undefined : ImageUrl.create(row.imageUrl),
     publishedOn: isoToPlainDate(row.publishedOn),
     lastModifiedOn: isoToPlainDate(row.lastModifiedOn),
+    status: toArticleStatus(row.status),
     sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
   });
+}
+
+/**
+ * 保存された status を読む。列は text なので、読めない値が入っていたら破損として扱う。
+ *
+ * **読めない値を「隠す」に倒さない。** 倒すと、破損した行が黙って一覧から消え、
+ * 気づく手立ては「記事が減ったこと」しか無くなる (fail-loud)。
+ */
+function toArticleStatus(value: string): ArticleStatus {
+  if (isArticleStatus(value)) return value;
+  throw new Error(`articles.status has an unreadable value: ${JSON.stringify(value)}`);
 }

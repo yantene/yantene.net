@@ -24,6 +24,17 @@ export const articles = sqliteTable(
     // なり再処理される (書き損じた行が「同じ内容」として素通りしない)。
     sourceHash: text("source_hash").notNull().default(""),
     /*
+     * 記事の段階と公開範囲 (ADR 0040)。`published` / `unlisted` / `withdrawn` /
+     * `draft` / `idea` のいずれか。
+     *
+     * **どの status の記事もこの表に載る。**「同期しない記事」という概念は無く、
+     * 読み手から隠すのは配信の時点で行う (D1ArticleQueryRepository.forReaders)。
+     *
+     * 既定が published なのは、この列を足す前から在る行が公開されていた記事だから。
+     * 書き手が status を省いたときの既定でもある。
+     */
+    status: text("status").notNull().default("published"),
+    /*
      * 読まれた回数と、そこから作る人気の目安。
      *
      * この表が持つのは「何回読まれたか」だけで、誰が読んだかは残らない。読み直しを
@@ -52,5 +63,8 @@ export const articles = sqliteTable(
   (table) => [
     // 人気順は「対数スコアの大きい順に数件」を引くだけなので、この索引で足りる。
     index("articles_view_log_score_idx").on(table.viewLogScore),
+    // 読み手向けの経路はすべて status で絞る。人気順は対数スコアの索引と併せて
+    // 引かれるので、絞り込みが索引無しの全走査にならないようにしておく。
+    index("articles_status_idx").on(table.status),
   ],
 );
