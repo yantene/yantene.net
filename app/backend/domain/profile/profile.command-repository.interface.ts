@@ -3,7 +3,7 @@ import type { IUnpersisted } from "~/backend/domain/shared";
 
 export interface IProfileCommandRepository {
   /**
-   * プロフィールを upsert する。行は常に 1 つで、出ていく先とライフイベントは
+   * プロフィールを upsert する。行は常に 1 つで、出ていく先は
    * 差分を取らずに入れ直す (書き手が並べ替えたときに古い並びが残らない)。
    *
    * 消してから入れるところまでを 1 つの batch にまとめること。途中で落ちて

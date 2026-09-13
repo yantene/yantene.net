@@ -1,4 +1,4 @@
-import type { PublicLifeEvent, PublicProfile } from "~/backend/handlers/profile/profile-view";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 
 /*
  * 見本のプロフィール。
@@ -21,28 +21,3 @@ export const sampleProfile: PublicProfile = {
     { platform: "discord", url: "https://discord.com/users/yantene", isMe: false },
   ],
 };
-
-/** 3 つの粒度 (日・月・年) が並ぶ見本。表示の出し分けを確かめられる。 */
-export const sampleLifeEvents: readonly PublicLifeEvent[] = [
-  {
-    date: "1993-11-18",
-    precision: "day",
-    kind: "birth",
-    title: "生誕",
-    description: "世界の世知辛さに泣きわめく。",
-  },
-  {
-    date: "2012-04",
-    precision: "month",
-    kind: "school-entry",
-    title: "大学入学",
-    description: null,
-  },
-  {
-    date: "2016",
-    precision: "year",
-    kind: "employment",
-    title: "就職",
-    description: "Web 開発者になる。",
-  },
-];

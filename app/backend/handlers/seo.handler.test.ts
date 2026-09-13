@@ -76,7 +76,6 @@ describe("GET /sitemap.xml", () => {
         tagline: Tagline.create("短い自己紹介。"),
         avatarUrl: undefined,
         socials: [],
-        lifeEvents: [],
         sourceHash: "h1",
       }),
     );

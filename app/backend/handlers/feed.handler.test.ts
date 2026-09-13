@@ -189,7 +189,6 @@ describe("書き手の名乗り", () => {
         tagline: Tagline.create("短い自己紹介。"),
         avatarUrl: undefined,
         socials: [],
-        lifeEvents: [],
         sourceHash: "hash-profile",
       }),
     );

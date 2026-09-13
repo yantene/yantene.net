@@ -9,7 +9,6 @@ import { ComingSoon } from "~/frontend/components/coming-soon/coming-soon";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
-import { LifeEventTimeline } from "~/frontend/components/profile/life-event-timeline";
 import { ProfileCard } from "~/frontend/components/profile/profile-card";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
@@ -56,7 +55,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 
 export default function About({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { profile, lifeEvents, mdast, linkCards, copyright, origin } = loaderData;
+  const { profile, mdast, linkCards, copyright, origin } = loaderData;
 
   return (
     <AppLayout>
@@ -78,14 +77,6 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
               置くと「何の本文か」を指さない印だけが残る。
             */}
             <MdastRenderer node={mdast} linkCards={linkCards} siteOrigin={origin} />
-
-            {lifeEvents.length > 0 && (
-              <section className="flex flex-col gap-4">
-                {/* 区画の名前は訳さない (product.md「見える名前は訳さない」)。 */}
-                <h2 className="text-lg font-semibold tracking-tight">{t("profile.timeline")}</h2>
-                <LifeEventTimeline events={lifeEvents} />
-              </section>
-            )}
           </div>
         )}
       </main>

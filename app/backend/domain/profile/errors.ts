@@ -1,5 +1,3 @@
-import { InvalidLifeEventDateError } from "./life-event-date.vo";
-import { InvalidLifeEventError } from "./life-event.vo";
 import { InvalidProfileNameError } from "./profile-name.vo";
 import { InvalidSocialUrlError, UnknownSocialPlatformError } from "./social-account.vo";
 import { InvalidTaglineError } from "./tagline.vo";
@@ -23,8 +21,6 @@ import { InvalidImageUrlError } from "~/backend/domain/shared";
  */
 const profileDataErrors = [
   InvalidImageUrlError,
-  InvalidLifeEventDateError,
-  InvalidLifeEventError,
   InvalidProfileNameError,
   InvalidSocialUrlError,
   InvalidTaglineError,

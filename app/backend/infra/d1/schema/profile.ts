@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 /**
  * 書き手のプロフィール。**常に 1 行**で、主キーは固定値 (`PROFILE_ID`)。
@@ -38,34 +38,4 @@ export const profileSocials = sqliteTable(
     isMe: integer("is_me", { mode: "boolean" }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.profileId, table.position] })],
-);
-
-/**
- * ライフイベント。`/about` のタイムラインに並ぶ。
- *
- * - occurred_on: 並べ替えのための正規化キー ("YYYY-MM-DD")。粒度の足りない桁は 01 で埋める
- * - precision: 書かれた細かさ ("day" / "month" / "year")。表示はこれで出し分け、
- *   `<time dateTime>` には埋める前の値を入れる
- * - position: 保存時に振る並び (日付の古い順。同じ日付なら書いた順)
- * - kind: 出来事の種類。年別アーカイブ (#414) が `birth` / `school-entry` /
- *   `employment` を拾う。閉じた集合にはしない
- */
-export const profileLifeEvents = sqliteTable(
-  "profile_life_events",
-  {
-    profileId: text("profile_id")
-      .notNull()
-      .references(() => profile.id, { onDelete: "cascade" }),
-    position: integer("position").notNull(),
-    occurredOn: text("occurred_on").notNull(),
-    precision: text("precision").notNull(),
-    kind: text("kind").notNull(),
-    title: text("title").notNull(),
-    description: text("description"),
-  },
-  (table) => [
-    primaryKey({ columns: [table.profileId, table.position] }),
-    // 年別アーカイブ (#414) が「その年より前の節目」を引くための索引。
-    index("profile_life_events_occurred_on_idx").on(table.occurredOn),
-  ],
 );

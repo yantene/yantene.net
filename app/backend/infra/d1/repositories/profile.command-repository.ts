@@ -4,7 +4,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { PROFILE_ID } from "~/backend/domain/profile";
-import { profile, profileLifeEvents, profileSocials } from "~/backend/infra/d1/schema";
+import { profile, profileSocials } from "~/backend/infra/d1/schema";
 import { instantToUnix } from "~/backend/infra/d1/temporal";
 
 export class D1ProfileCommandRepository implements IProfileCommandRepository {
@@ -38,15 +38,6 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       url: social.url,
       isMe: social.isMe,
     }));
-    const eventRows = source.lifeEvents.map((event, position) => ({
-      profileId: PROFILE_ID,
-      position,
-      occurredOn: event.date.sortKey,
-      precision: event.date.precision,
-      kind: event.kind,
-      title: event.title,
-      description: event.description ?? null,
-    }));
 
     await this.db.batch([
       this.db
@@ -54,9 +45,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
         .values({ id: PROFILE_ID, createdAt: nowUnix, ...content })
         .onConflictDoUpdate({ target: profile.id, set: content }),
       this.db.delete(profileSocials).where(eq(profileSocials.profileId, PROFILE_ID)),
-      this.db.delete(profileLifeEvents).where(eq(profileLifeEvents.profileId, PROFILE_ID)),
       ...(socialRows.length > 0 ? [this.db.insert(profileSocials).values(socialRows)] : []),
-      ...(eventRows.length > 0 ? [this.db.insert(profileLifeEvents).values(eventRows)] : []),
     ]);
   }
 
@@ -64,7 +53,6 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
   async delete(): Promise<void> {
     await this.db.batch([
       this.db.delete(profileSocials).where(eq(profileSocials.profileId, PROFILE_ID)),
-      this.db.delete(profileLifeEvents).where(eq(profileLifeEvents.profileId, PROFILE_ID)),
       this.db.delete(profile).where(eq(profile.id, PROFILE_ID)),
     ]);
   }

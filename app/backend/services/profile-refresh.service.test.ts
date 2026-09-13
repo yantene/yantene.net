@@ -20,14 +20,6 @@ socials:
   - platform: github
     url: https://github.com/yantene
     isMe: true
-lifeEvents:
-  - date: 1993-11-18
-    kind: birth
-    title: 生誕
-    description: 世界の世知辛さに泣きわめく。
-  - date: 2012-04
-    kind: school-entry
-    title: 大学入学
 ---
 
 長い自己紹介。
@@ -155,7 +147,6 @@ describe("ProfileRefreshService", () => {
     ]);
     expect(profile?.socials.map((social) => social.platform)).toEqual(["github"]);
     expect(profile?.socials[0]?.isMe).toBe(true);
-    expect(profile?.lifeEvents.map((event) => event.title)).toEqual(["生誕", "大学入学"]);
 
     expect(cache.source).toBe(PROFILE_MD);
     expect(cache.assets.get("avatar.png")).toBeDefined();
@@ -275,10 +266,6 @@ describe("読めないプロフィール", () => {
     [
       "知らない platform",
       "---\nname: やんてね\ntagline: あいさつ\nsocials:\n  - platform: myspace\n    url: https://example.com/\n---\n",
-    ],
-    [
-      "日付として読めないライフイベント",
-      "---\nname: やんてね\ntagline: あいさつ\nlifeEvents:\n  - date: きのう\n    kind: birth\n    title: 生誕\n---\n",
     ],
     [
       "顔写真が絶対 URL",

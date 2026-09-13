@@ -18,7 +18,6 @@ async function seedProfile(d1: D1Database): Promise<void> {
       name: ProfileName.create("やんてね"),
       tagline: Tagline.create("東京で Web 開発者をやっています。"),
       socials: [],
-      lifeEvents: [],
       sourceHash: "h1",
     }),
   );

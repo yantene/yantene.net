@@ -1,7 +1,7 @@
-import type { PublicLifeEvent, PublicProfile } from "./profile-view";
+import type { PublicProfile } from "./profile-view";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { Root } from "mdast";
-import { toPublicLifeEvents, toPublicProfile } from "./profile-view";
+import { toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { isProfileDataError } from "~/backend/domain/profile";
 import { errorToContext } from "~/backend/domain/shared";
@@ -12,7 +12,6 @@ import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cac
 export interface AboutPageData {
   /** まだ同期されていなければ null。ページは「準備中」に倒れる。 */
   readonly profile: PublicProfile | null;
-  readonly lifeEvents: readonly PublicLifeEvent[];
   /** 長い自己紹介。プロフィールが無ければ null。 */
   readonly mdast: Root | null;
   /** 長い自己紹介に貼られたむき出しの URL のカード。 */
@@ -59,7 +58,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   ]);
 
   if (profile === undefined) {
-    return { profile: null, lifeEvents: [], mdast: null, linkCards: {}, jsonLd: null };
+    return { profile: null, mdast: null, linkCards: {}, jsonLd: null };
   }
   if (mdast === undefined) {
     // D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。
@@ -69,7 +68,6 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   const publicProfile = toPublicProfile(profile);
   return {
     profile: publicProfile,
-    lifeEvents: toPublicLifeEvents(profile),
     mdast: mdast as Root,
     linkCards: await loadLinkCards(env, mdast as Root),
     jsonLd: {

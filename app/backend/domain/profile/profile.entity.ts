@@ -1,4 +1,3 @@
-import type { LifeEvent } from "./life-event.vo";
 import type { ProfileName } from "./profile-name.vo";
 import type { SocialAccount } from "./social-account.vo";
 import type { Tagline } from "./tagline.vo";
@@ -26,7 +25,6 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
   /** 出ていく先。フロントマターに書いた順に出す。 */
   readonly socials: readonly SocialAccount[];
   /** これまでにあった出来事。日付の古い順 (同じ日付なら書いた順)。 */
-  readonly lifeEvents: readonly LifeEvent[];
   /** コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。 */
   readonly sourceHash: string;
   readonly createdAt: T["createdAt"];
@@ -47,7 +45,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     tagline: Tagline;
     avatarUrl?: ImageUrl;
     socials: readonly SocialAccount[];
-    lifeEvents: readonly LifeEvent[];
     sourceHash: string;
   }): Profile<IUnpersisted> {
     return new Profile({
@@ -56,7 +53,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
       tagline: params.tagline,
       avatarUrl: params.avatarUrl,
       socials: params.socials,
-      lifeEvents: sortByDate(params.lifeEvents),
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -69,7 +65,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     tagline: Tagline;
     avatarUrl: ImageUrl | undefined;
     socials: readonly SocialAccount[];
-    lifeEvents: readonly LifeEvent[];
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -97,10 +92,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     return this.fields.socials;
   }
 
-  get lifeEvents(): readonly LifeEvent[] {
-    return this.fields.lifeEvents;
-  }
-
   get sourceHash(): string {
     return this.fields.sourceHash;
   }
@@ -120,6 +111,3 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
  * 書き手が時系列で書くとは限らないので、出す側で決める。`toSorted` は安定なので、
  * 同じ日付の出来事は書いた順のまま残る (どちらが先かは日付から決められない)。
  */
-function sortByDate(events: readonly LifeEvent[]): readonly LifeEvent[] {
-  return events.toSorted((a, b) => a.date.sortKey.localeCompare(b.date.sortKey));
-}

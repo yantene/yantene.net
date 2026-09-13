@@ -1,14 +1,8 @@
-import type { LifeEvent, SocialAccount } from "~/backend/domain/profile";
+import type { SocialAccount } from "~/backend/domain/profile";
 import type { Root } from "mdast";
 import { MathSyntaxError } from "./latex-to-mathml";
 import { parseMarkdownBody } from "./markdown-body";
-import {
-  LifeEvent as LifeEventVo,
-  LifeEventDate,
-  ProfileName,
-  SocialAccount as SocialAccountVo,
-  Tagline,
-} from "~/backend/domain/profile";
+import { ProfileName, SocialAccount as SocialAccountVo, Tagline } from "~/backend/domain/profile";
 
 /**
  * プロフィールのコンテンツが読めなかった。
@@ -32,7 +26,6 @@ export interface ParsedProfileContent {
    */
   readonly avatar: string | undefined;
   readonly socials: readonly SocialAccount[];
-  readonly lifeEvents: readonly LifeEvent[];
   /** フロントマターを除いた長い自己紹介の MDAST。 */
   readonly mdast: Root;
 }
@@ -59,7 +52,6 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
       tagline: Tagline.create(requireString(frontmatter.tagline, "tagline")),
       avatar: optionalString(frontmatter.avatar, "avatar"),
       socials: readSocials(frontmatter.socials),
-      lifeEvents: readLifeEvents(frontmatter.lifeEvents),
       mdast: parsed.mdast,
     };
   } catch (error) {
@@ -79,25 +71,6 @@ function readSocials(value: unknown): readonly SocialAccount[] {
       platform: requireString(record.platform, `socials[${String(index)}].platform`),
       url: requireString(record.url, `socials[${String(index)}].url`),
       isMe: asBoolean(record.isMe, `socials[${String(index)}].isMe`),
-    });
-  });
-}
-
-function readLifeEvents(value: unknown): readonly LifeEvent[] {
-  if (value === undefined || value === null) return [];
-  return asArray(value, "lifeEvents").map((entry, index) => {
-    const field = `lifeEvents[${String(index)}]`;
-    const record = asRecord(entry, field);
-    if (record.date === undefined || record.date === null) {
-      throw new ProfileContentError(`frontmatter is missing ${field}.date`);
-    }
-    return LifeEventVo.create({
-      // 粒度は値の型ではなく文字列の形で決める (LifeEventDate)。YAML が
-      // `2012` を数値で返すので、ここで型を絞ると年だけの指定が落ちる。
-      date: LifeEventDate.create(record.date),
-      kind: requireString(record.kind, `${field}.kind`),
-      title: requireString(record.title, `${field}.title`),
-      description: optionalString(record.description, `${field}.description`),
     });
   });
 }

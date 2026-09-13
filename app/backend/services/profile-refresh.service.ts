@@ -199,7 +199,6 @@ function buildProfile(
           ? undefined
           : ImageUrl.create(resolveProfileAssetUrl(parsed.avatar)),
       socials: parsed.socials,
-      lifeEvents: parsed.lifeEvents,
       sourceHash: group.contentHash,
     });
   } catch (error) {

@@ -1,14 +1,7 @@
 import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
-import {
-  LifeEvent,
-  LifeEventDate,
-  Profile,
-  ProfileName,
-  SocialAccount,
-  Tagline,
-} from "~/backend/domain/profile";
+import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
 import { ImageUrl } from "~/backend/domain/shared";
 import { D1ProfileCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
@@ -36,13 +29,6 @@ async function seedProfile(d1: D1Database): Promise<void> {
         SocialAccount.create({ platform: "github", url: "https://github.com/yantene", isMe: true }),
         SocialAccount.create({ platform: "x", url: "https://x.com/yantene", isMe: false }),
       ],
-      lifeEvents: [
-        LifeEvent.create({
-          date: LifeEventDate.create("1993-11-18"),
-          kind: "birth",
-          title: "生誕",
-        }),
-      ],
       sourceHash: "h1",
     }),
   );
@@ -60,10 +46,9 @@ describe("loadAboutPage", () => {
     expect(data.profile).toBeNull();
     expect(data.mdast).toBeNull();
     expect(data.jsonLd).toBeNull();
-    expect(data.lifeEvents).toEqual([]);
   });
 
-  it("returns the profile, its body and its life events", async () => {
+  it("returns the profile and its body", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedProfile(d1);
@@ -74,15 +59,6 @@ describe("loadAboutPage", () => {
     expect(data.profile?.name).toBe("やんてね");
     expect(data.profile?.tagline).toEqual(["東京で Web 開発者をやっています。"]);
     expect(data.mdast).toEqual(BODY);
-    expect(data.lifeEvents).toEqual([
-      {
-        date: "1993-11-18",
-        precision: "day",
-        kind: "birth",
-        title: "生誕",
-        description: null,
-      },
-    ]);
   });
 
   /** sameAs に並べるのは、自分のものだと主張できる先だけ (h-card の rel="me" と同じ線引き)。 */
@@ -119,8 +95,7 @@ describe("loadProfile", () => {
     expect(await loadProfile(envWith(createTestD1(), bucket))).toBeNull();
   });
 
-  /** トップと記事末尾が読む短いほう。ライフイベントは運ばない。 */
-  it("returns the short profile without life events", async () => {
+  it("returns the short profile", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedProfile(d1);
@@ -128,7 +103,6 @@ describe("loadProfile", () => {
     const profile = await loadProfile(envWith(d1, bucket));
     expect(profile?.name).toBe("やんてね");
     expect(profile?.socials.map((social) => social.platform)).toEqual(["github", "x"]);
-    expect(profile).not.toHaveProperty("lifeEvents");
   });
 
   /*
