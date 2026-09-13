@@ -15,6 +15,7 @@ import { createRefreshRouter } from "./handlers/articles/refresh.handler";
 import { createSearchApiRouter } from "./handlers/articles/search.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
+import { createSignInRouter } from "./handlers/auth/sign-in.handler";
 import { createWebmentionRouter } from "./handlers/webmention.handler";
 import { createWebmentionAvatarsRouter } from "./handlers/webmentions/avatars.handler";
 import type { MiddlewareHandler } from "hono";
@@ -174,6 +175,10 @@ export const getApp = (
   // 表示するロケールを選ぶ受け口 (POST /locale)。ヘッダーの切り替えが送る先で、
   // cookie を置いて元のページへ戻すだけ。ページではないので React Router へ委譲しない。
   app.route("/", createLocaleRouter());
+
+  // ログインの受け口 (ADR 0039)。リンクを送る・踏まれたリンクを使い切る・ログアウトと、
+  // ログイン中かを返す /api/v1/me。画面 (GET /sign-in など) は React Router 側にある。
+  app.route("/", createSignInRouter());
 
   // 上記以外はすべて React Router のページルーティングに委ねる。
   app.all("*", async (c) => {

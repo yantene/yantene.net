@@ -19,7 +19,31 @@
     // 手元から production のリポジトリを読まないよう staging 側を指す。
     "ARTIFACTS_REPO": "yantene-staging",
     "ARTIFACTS_BRANCH": "main",
+    // ログイン (ADR 0039)。ここに書いたアドレスだけが入れて、管理者として扱われる。
+    "ADMIN_EMAIL": "contact@yantene.net",
+    // マジックリンクの差出人。送信専用のサブドメインで、返信は受け取らない。
+    "MAIL_FROM": "no-reply@send.yantene.net",
   },
+  // Email Sending: マジックリンクの配信 (ADR 0039)。送信元のドメインは
+  // `wrangler email sending enable <domain>` で先に有効にしておくこと。
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
+  // Rate Limiting: ログインの依頼の連打を止める (ADR 0039)。**窓は 10 秒か 60 秒しか
+  // 選べない**ので、担えるのは瞬間的な連打まで。受信箱を埋めさせない側の上限は
+  // 生きているトークンの本数で別に持つ。namespace_id は環境ごとに分ける。
+  "ratelimits": [
+    {
+      "name": "RATE_LIMIT",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 5,
+        "period": 60,
+      },
+    },
+  ],
   // Workers AI: 記事のベクトル (関連ノートの並び)。モデルは infra 側が持つ。
   "ai": {
     "binding": "AI",
@@ -66,7 +90,25 @@
         // 張れないので、同じリポジトリを両環境から自動同期できない。
         "ARTIFACTS_REPO": "yantene-staging",
         "ARTIFACTS_BRANCH": "main",
+        "ADMIN_EMAIL": "contact@yantene.net",
+        // production と差出人を分ける。受信箱でどちらから来たかが分かるように。
+        "MAIL_FROM": "staging@send.yantene.net",
       },
+      "send_email": [
+        {
+          "name": "EMAIL",
+        },
+      ],
+      "ratelimits": [
+        {
+          "name": "RATE_LIMIT",
+          "namespace_id": "1002",
+          "simple": {
+            "limit": 5,
+            "period": 60,
+          },
+        },
+      ],
       "ai": {
         "binding": "AI",
       },
@@ -133,7 +175,24 @@
         "ARTIFACTS_NAMESPACE": "yantene",
         "ARTIFACTS_REPO": "yantene-production",
         "ARTIFACTS_BRANCH": "main",
+        "ADMIN_EMAIL": "contact@yantene.net",
+        "MAIL_FROM": "no-reply@send.yantene.net",
       },
+      "send_email": [
+        {
+          "name": "EMAIL",
+        },
+      ],
+      "ratelimits": [
+        {
+          "name": "RATE_LIMIT",
+          "namespace_id": "1003",
+          "simple": {
+            "limit": 5,
+            "period": 60,
+          },
+        },
+      ],
       "ai": {
         "binding": "AI",
       },
