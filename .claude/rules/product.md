@@ -49,6 +49,25 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 その環境のリポジトリの `main` に push すると、push が Queue に流れて同期が走る
 ([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))。
 
+### 記事の書き方はここに書かない
+
+記事をどう書いてどう出すか (公開フロー、フロントマターの書式、スラグ、文体、推敲) の
+規範は**コンテンツリポジトリ側**にある。
+
+- `content/AGENTS.md` — 書き手の規範
+- `content/.agents/skills/` — 執筆を進める skill 群
+
+ここに置くのは**アプリが記事をどう扱うか**だけ。同期、保存、描画、配信。
+二重に持つと、どちらかが必ず古びる。
+
+`content/` は `.gitignore` に入っているので `CLAUDE.md` から `@` で読み込めない。
+記事を書くときは手で開くこと。
+
+⚠️ **あちらの規範をこちらに当てはめないこと。** たとえば `content/AGENTS.md` の
+「語調」は `## 記事の文体` の下にあり、**記事本文のための規範**である。これを画面の
+文言に当てはめて [#486](https://github.com/yantene/yantene.net/issues/486) を起こした。
+画面の文言の語調は下の「画面の文言は敬体で書く」にある。
+
 ### 手元の作業用 clone は `content/`
 
 このリポジトリの `content/` に production のリポジトリを clone して書く。**別リポジトリなので
@@ -64,10 +83,9 @@ git -C content remote add artifacts-staging \
   https://<account-id>.artifacts.cloudflare.net/git/yantene/yantene-staging.git
 ```
 
-書いたら `git -C content push artifacts-production main`。**これが記事を出す唯一の経路。**
 `credential.useHttpPath` が要る理由は environments.md を参照。
 
-staging のリポジトリは production の写しとして揃えておく (`push artifacts-staging main`)。
+**push の手順と関門 (`scripts/check-publish`) は `content/AGENTS.md` の「公開フロー」。**
 記事を確かめるために staging へ先に上げる運用は採らない
 ([#437](https://github.com/yantene/yantene.net/issues/437))。
 
@@ -161,18 +179,12 @@ MDAST・画像のキャッシュを担う。設計判断の詳細は
 
 ### フロントマターでメタデータ管理
 
-Markdown ファイル自体にメタデータを持たせる。vfile-matter でパースし、
-ArticleTitle / ImageUrl 等の VO に変換する。
+Markdown ファイル自体にメタデータを持たせる。refresh が vfile-matter でパースし、
+ArticleTitle / ImageUrl 等の VO に変換する。**読めない値は記事ごとスキップして報告する**
+(fail-loud)。
 
-```yaml
----
-title: 記事タイトル
-imageUrl: ./cover.png # 相対パス → アセット API URL に解決される
-publishedOn: 2026-01-15
-lastModifiedOn: 2026-01-20
-visibility: private # 任意。既定は公開
----
-```
+**書式は `content/AGENTS.md` の「フロントマター」。** 欄を足すときは両方を直すことになる
+ので、あちらを先に決めてからこちらの VO を足す。
 
 ### 非公開は refresh の時点で弾く
 
@@ -184,10 +196,9 @@ D1 と R2 から掃除される。
 配信側に除外条件を書き足す方式は採らない。経路が増えるたびに書き漏らし、そのとき漏れる
 のは「見せたくないもの」になる。同期しなければ後段はすべて自動的に見えなくなる。
 
-**書きかけの記事はこれで置いておく。** 題と計画だけ書いて `visibility: private` で
-push すれば、コンテンツリポジトリに寝たまま何も起きない。書き上げたら 1 行消して push する。
-ただし同期されない以上、**手元でも見えない**。下書きを読む手立ては
-[#437](https://github.com/yantene/yantene.net/issues/437) で用意する。
+同期されない以上、**private の記事は手元でも見えない**。下書きを読む手立ては
+[#437](https://github.com/yantene/yantene.net/issues/437) で用意する。書きかけをどう
+置いておくかは `content/AGENTS.md` の「書きかけは visibility: private で main に置く」。
 
 `visibility` を書かなければ公開。`public` / `private` のどちらとも読めない値は、公開せず
 スキップとして報告する。公開しないのは、誤って公開する方が誤って隠すより取り返しが
