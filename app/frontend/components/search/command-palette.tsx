@@ -163,11 +163,19 @@ export function CommandPalette({
   }, [trimmed, search]);
 
   /*
-   * 閉じたことを受け取る唯一の場所。
+   * 閉じたことを受け取る場所。
    *
-   * Esc も、暗がりの押下も、行き先を選んだときも、最後は `close` に集まる (親が
-   * `open` を降ろすと、上の effect が `dialog.close()` を呼ぶ)。ここで語を空にして
-   * おかないと、次に開いたときに前回の語と結果が並び、いま探しているものと取り違える。
+   * 暗がりの押下も、行き先を選んだときも、最後はここに集まる (親が `open` を降ろすと、
+   * 上の effect が `dialog.close()` を呼ぶ)。ここで語を空にしておかないと、次に開いた
+   * ときに前回の語と結果が並び、いま探しているものと取り違える。
+   *
+   * ⚠️ **`close` だけに頼らないこと。** Esc で閉じたとき、`cancel` は来るのに `close`
+   * が来ないブラウザがある (Chrome 152 で確認。素の `<dialog>` でも同じなので、この
+   * 部品の作りとは関係ない)。`close` だけを見ていると `open` が降りないまま板だけ
+   * 消えるので、**スクロールの錠が掛かったままになり、次に `⌘K` を押しても開かない**
+   * (親から見れば既に開いている扱いなので、状態が変わらず effect も走らない)。
+   *
+   * 両方から呼ばれても困らない。語を空にするのも `onClose` も、2 度やって変わらない。
    */
   const handleDialogClose = (): void => {
     setQuery("");
@@ -225,6 +233,8 @@ export function CommandPalette({
       className="command-palette"
       aria-label={t("search.title")}
       onClose={handleDialogClose}
+      /* Esc。既定の動き (板を閉じる) は止めない — 止めると Esc で閉じられなくなる。 */
+      onCancel={handleDialogClose}
       onClick={(event) => {
         // 中身への押下では target が中の要素になる。暗がりのときだけ一致する。
         if (event.target === dialogRef.current) onClose();
