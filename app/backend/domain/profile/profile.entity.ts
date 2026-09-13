@@ -24,7 +24,6 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
   readonly avatarUrl: ImageUrl | undefined;
   /** 出ていく先。フロントマターに書いた順に出す。 */
   readonly socials: readonly SocialAccount[];
-  /** これまでにあった出来事。日付の古い順 (同じ日付なら書いた順)。 */
   /** コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。 */
   readonly sourceHash: string;
   readonly createdAt: T["createdAt"];
@@ -104,10 +103,3 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     return this.fields.updatedAt;
   }
 }
-
-/**
- * 日付の古い順に並べる。
- *
- * 書き手が時系列で書くとは限らないので、出す側で決める。`toSorted` は安定なので、
- * 同じ日付の出来事は書いた順のまま残る (どちらが先かは日付から決められない)。
- */
