@@ -90,7 +90,8 @@ function encodePath(path: string): string {
  * 残っており、ドメインを本アプリへ向けた時点で行き先を失った。
  *
  * - /<legacy-slug>.html                 → /articles/<slug>
- * - /index.html, /profile.html          → / (プロフィールは相当ページが無いため暫定)
+ * - /index.html                         → /
+ * - /profile.html                       → /about
  * - /list.html                          → /articles
  * - /atom.xml                           → /feed.xml
  * - /images/<date>-<legacy-slug>/<file> → /api/v1/articles/<slug>/assets/<file>
@@ -126,8 +127,8 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/index.html", (c) => permanentRedirect(c, "/"));
 
-  // プロフィールは現行サイトに相当ページが無い。行き止まりにはせずトップへ送る。
-  router.get("/profile.html", (c) => permanentRedirect(c, "/"));
+  // プロフィールは `/about` が引き継いだ (#413)。それまではトップへ送っていた。
+  router.get("/profile.html", (c) => permanentRedirect(c, "/about"));
 
   router.get("/atom.xml", (c) => permanentRedirect(c, "/feed.xml"));
 
