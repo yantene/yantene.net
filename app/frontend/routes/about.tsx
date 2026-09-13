@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import type { Route } from "./+types/about";
 import type { AboutPageData } from "~/backend/handlers/profile/pages.handler";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
@@ -10,6 +11,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { ProfileCard } from "~/frontend/components/profile/profile-card";
+import { WorkList } from "~/frontend/components/work/work-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
@@ -55,7 +57,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 
 export default function About({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { profile, mdast, linkCards, copyright, origin } = loaderData;
+  const { profile, mdast, linkCards, works, copyright, origin } = loaderData;
 
   return (
     <AppLayout>
@@ -77,6 +79,30 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
               置くと「何の本文か」を指さない印だけが残る。
             */}
             <MdastRenderer node={mdast} linkCards={linkCards} siteOrigin={origin} />
+
+            {/*
+              作ったもの。**自己紹介の本文より後に置く。**
+
+              本文が「自分は何者か」で、こちらは「何を作ったか」。先に作品を並べると、
+              読み手が最初に受け取るのが成果物の一覧になる。
+
+              出すのはフロントマターの概要までで、詳しい説明は `/works/<slug>` にある。
+              1 件も無ければ節ごと出さない (空の見出しは置かない)。
+
+              **「すべて見る」は置かない。** ここに出ているのが全部なので、続きがあると
+              言うことになる。行き先としての `/works` は見出し自身が持つ (ナビからも
+              直接行ける)。
+            */}
+            {works.length > 0 && (
+              <section className="flex flex-col gap-6">
+                <h2 className="text-xl font-bold tracking-tight">
+                  <Link to="/works" className="press-control transition-colors hover:text-primary">
+                    {t("works.heading")}
+                  </Link>
+                </h2>
+                <WorkList works={works} />
+              </section>
+            )}
           </div>
         )}
       </main>

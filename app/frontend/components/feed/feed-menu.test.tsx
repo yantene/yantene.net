@@ -83,18 +83,22 @@ describe("FeedMenuList (ドロワー)", () => {
 
 describe("フィードの種別とサイトの行き先", () => {
   /*
-   * 種別はサイトの行き先と 1 対 1。**ナビに足した行き先はフィードにも要る** — 片方に
-   * だけあると、読めるのに購読できない (あるいはその逆の) 場所が生まれる。
+   * 時系列に並ぶものを置く場所は、ナビの行き先とフィードの種別が 1 対 1。**そちらに
+   * 足した行き先はフィードにも要る** — 片方にだけあると、読めるのに購読できない
+   * (あるいはその逆の) 場所が生まれる。
    *
-   * About だけは持たない。時系列に並ぶものが無いページなので、購読しても何も届かない。
+   * 時系列で増えない 2 つは持たない。`/about` は 1 枚しか無く、`/works` は書き手が
+   * 手で並べたものなので、どちらも購読しても何も届かない (ADR 0042)。
    */
-  it("`all` を除くと、ナビの行き先とちょうど対応する (About を除く)", () => {
+  const timelessPaths = new Set(["/about", "/works"]);
+
+  it("`all` を除くと、時系列の行き先とちょうど対応する", () => {
     const feedTargets = feedIdentities
       .filter((identity) => identity.kind !== "all")
       .map((identity) => identity.alternatePath);
 
     expect(feedTargets).toEqual(
-      siteNavItems.map((item) => item.to).filter((to) => to !== "/about"),
+      siteNavItems.map((item) => item.to).filter((to) => !timelessPaths.has(to)),
     );
   });
 });

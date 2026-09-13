@@ -106,7 +106,7 @@ describe("Header の作り", () => {
     const destinations = navigations.map((navigation) =>
       [...navigation.querySelectorAll("a")].map((link) => link.getAttribute("href")),
     );
-    expect(destinations[0]).toEqual(["/about", "/articles", "/notes", "/slides"]);
+    expect(destinations[0]).toEqual(["/about", "/articles", "/notes", "/slides", "/works"]);
     expect(destinations[1]).toEqual(destinations[0]);
   });
 

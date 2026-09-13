@@ -131,9 +131,9 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps): Rea
           題は訳さない (場所の名前。locales.test.ts に線引きがある)。説明のほうは
           読み手に語りかける文なので訳す。
         */}
-        <header className="articles-intro">
-          <h1 className="articles-heading">{t("articles.heading")}</h1>
-          <p className="articles-lead">{t("articles.lead")}</p>
+        <header className="page-intro">
+          <h1 className="page-heading">{t("articles.heading")}</h1>
+          <p className="page-lead">{t("articles.lead")}</p>
         </header>
 
         {/*

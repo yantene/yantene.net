@@ -1,0 +1,40 @@
+/*
+ * 一覧ページの名乗り。「ここは何の場所か」を本文より先に出す。
+ *
+ * `/articles` と `/works` が共有する。**書き写さない。** 同じ役の見出しが場所ごとに
+ * 違う大きさで出ると、サイトの中で「一覧の題」が何を指すのかが揺れる。
+ */
+
+/* 本文より先に、たっぷり空けて置く。 */
+.page-intro {
+  margin-bottom: 2.5rem;
+}
+
+.page-heading {
+  font-size: 2.25rem;
+  font-weight: 700;
+  /* 欧文の見出しなので字間を少し詰める。大きくするほど空いて見えるため。 */
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-base-content);
+}
+
+@media (width >= 48rem) {
+  .page-heading {
+    font-size: 3rem;
+  }
+}
+
+/*
+ * 名乗りに続く一文。**題のすぐ下に、題より弱く置く。**
+ *
+ * 幅を絞るのは読みやすさのため。記事一覧の器は 5xl (64rem) あり、そのまま流すと
+ * 1 行が長くなりすぎて次の行頭を見失う。
+ */
+.page-lead {
+  max-width: 40rem;
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}

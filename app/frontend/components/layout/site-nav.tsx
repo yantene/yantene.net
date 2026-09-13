@@ -9,9 +9,14 @@ import { Link, useLocation } from "react-router";
  *
  * Home を置かないのは、ロゴがその役を兼ねているため (header.tsx)。
  *
- * `/about` (#413) `/notes` (#412) `/slides` (#415) はまだ中身が無く、いまは「準備中」の
- * 一文だけを置いたページに繋がっている。**それでもナビには出す。** サイトが何を置く
- * 場所なのかは、置き終わる前から読み手に見えていてよい。
+ * `/notes` (#412) `/slides` (#415) はまだ中身が無く、いまは「準備中」の一文だけを
+ * 置いたページに繋がっている。**それでもナビには出す。** サイトが何を置く場所なのかは、
+ * 置き終わる前から読み手に見えていてよい。`/about` と `/works` も、コンテンツが
+ * まだ同期されていない間は同じ姿になる。
+ *
+ * **フィードのある種別だけを並べているのではない。** `/works` にフィードは無い
+ * (作ったものは購読するものではない。ADR 0042)。ナビは「この場所には何があるか」を
+ * 示すもので、購読の口があるかとは別。
  */
 export interface SiteNavItem {
   readonly to: string;
@@ -30,6 +35,7 @@ export const siteNavItems: readonly SiteNavItem[] = [
   { to: "/articles", labelKey: "navigation.articles" },
   { to: "/notes", labelKey: "navigation.notes" },
   { to: "/slides", labelKey: "navigation.slides" },
+  { to: "/works", labelKey: "navigation.works" },
 ];
 
 /**

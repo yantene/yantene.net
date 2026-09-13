@@ -17,7 +17,8 @@
     "about": "About",
     "articles": "Articles",
     "notes": "Notes",
-    "slides": "Slides"
+    "slides": "Slides",
+    "works": "Works"
   },
   "feed": {
     "label": "Feed",
@@ -51,6 +52,17 @@
     },
     "actionsTop": "React to and share this article (top)",
     "actionsBottom": "React to and share this article (bottom)"
+  },
+  "works": {
+    "title": "Works",
+    "heading": "Works",
+    "lead": "Things I have made. Some are still running, some were only ever mine.",
+    "notFound": {
+      "title": "Work not found",
+      "heading": "Work not found",
+      "description": "The work you are looking for does not exist or is no longer available.",
+      "backToList": "Back to works"
+    }
   },
   "search": {
     "title": "Search",
@@ -132,6 +144,7 @@
     "badge": "Coming soon",
     "about": "A profile, and what I have been up to.",
     "notes": "Short posts, the kind that do not need a title.",
-    "slides": "Slides from talks, and the decks that never became one."
+    "slides": "Slides from talks, and the decks that never became one.",
+    "works": "Things I have made, and why I made them."
   }
 }

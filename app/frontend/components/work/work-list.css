@@ -1,0 +1,66 @@
+/*
+ * 作ったものの並び。`/works` と `/about` の両方で使う。
+ *
+ * 記事の一覧 (article-timeline) は日付を軸にした時系列なので、左に日付の柱が立つ。
+ * こちらは時系列ではないので柱を持たない。項目どうしの区切りだけを置き、名前 → 概要
+ * → 在り処の縦の並びで読ませる。
+ */
+
+.work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/*
+ * 1 件。**罫線は項目の下に引く。**
+ *
+ * 上に引くと、見出しのすぐ下に線が来て、見出しと一覧が切り離されて見える。
+ * 最後の 1 件だけ線を落とすのは、一覧の下端に何も無い線が残らないようにするため。
+ */
+.work-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent);
+}
+
+.work-list-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/*
+ * 作品の名前。**一覧の中でいちばん強い字。**
+ *
+ * 記事の題 (article-timeline-item の h3) と同じ役なので、大きさもそこに揃える。
+ * 揃えないと、同じ「一覧の 1 件の名前」が場所によって違う重みで出ることになる。
+ */
+.work-list-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-base-content);
+}
+
+.work-list-summary {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+}
+
+/*
+ * 作品そのものの在り処。**概要より弱く、等幅で置く。**
+ *
+ * URL は読ませる文ではなく識別子なので、字送りの揃った書体のほうが拾いやすい。
+ * 長い URL は折り返す (携帯で横にはみ出させない)。
+ */
+.work-list-url {
+  align-self: flex-start;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
