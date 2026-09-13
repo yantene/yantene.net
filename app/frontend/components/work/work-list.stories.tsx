@@ -38,7 +38,7 @@ export const LongText: Story = {
         slug: "infoholick",
         name: "infoholick",
         summary:
-          "読んだものを覚えておくやつ。RSS も Web ページも同じ棚に入れて、後から辿り直せるようにしてある。",
+          "読んだものを覚えておくやつ。フィードも Web ページも同じ棚に入れて、後から辿り直せるようにしてある。",
         url: "https://github.com/yantene/infoholick/blob/main/docs/design/very-long-document-name.md",
       },
     ],
