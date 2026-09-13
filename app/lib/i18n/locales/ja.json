@@ -92,6 +92,19 @@
     "heading": "Responses",
     "openSource": "出典を開く"
   },
+  "signIn": {
+    "title": "Sign in",
+    "lead": "メールアドレスを入れると、ログイン用のリンクが届く。",
+    "emailLabel": "メールアドレス",
+    "submit": "リンクを送る",
+    "invalid": "メールアドレスの形になっていない。打ち間違いを直してもう一度。",
+    "sent": "リンクを送った。メールを確かめてほしい。届いていなければ迷惑メールの方も見てみて。",
+    "sentNote": "リンクは 15 分で切れる。一度使うと無効になる。",
+    "confirm": "このブラウザでログインする。下を押すと入れる。",
+    "confirmAction": "ログインする",
+    "expired": "このリンクはもう使えない。15 分で切れるか、一度使うと無効になる。",
+    "retry": "もう一度リンクを送る"
+  },
   "footer": {
     "navLabel": "フッター",
     "licenses": "Open source licenses"

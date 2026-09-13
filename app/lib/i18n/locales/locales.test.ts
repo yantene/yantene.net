@@ -36,6 +36,7 @@ const untranslatedNames = [
   "search.title",
   "share.title",
   "webmention.heading",
+  "signIn.title",
   "footer.licenses",
   "licenses.title",
   "licenses.licenseLabel",

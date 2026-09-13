@@ -159,6 +159,38 @@ curl -sS -X POST \
 **イベント名は `pushed`。** メッセージ本体の `type` は `cf.artifacts.repo.pushed` だが、
 購読を作るときに渡すのは接頭辞の無いほう。
 
+### 1'''. メールの送信元ドメインを有効にする
+
+マジックリンクの配信 ([ADR 0039](../../docs/adr/0039-sign-in-with-a-magic-link.md)) に要る。
+**`send_email` バインディングを置いただけでは送れない。** 送信元のドメインを先に
+Email Sending へ載せること。
+
+**デプロイ自体は有効にする前でも通る** (PR #483 の `deploy` で確認)。落ちるのは送る
+瞬間だけで、`error` として記録に残る。つまり**順序は問わない**が、有効にするまで
+リンクは届かない。
+
+```bash
+pnpm exec wrangler email sending list                 # いま有効なドメイン
+pnpm exec wrangler email sending enable send.yantene.net
+```
+
+⚠️ **DNS を書き換える。** SPF と DKIM のレコードがそのサブドメインに入る。
+**apex (`yantene.net`) には触らない**ので、`contact@yantene.net` の受信
+(Email Routing の MX) は影響を受けない。
+
+⚠️ **既に何か入っているサブドメインを選ばないこと。** 別の送信基盤の SPF が
+残っていると、`include:` が競合して両方の到達率が落ちる。選ぶ前に必ず引くこと。
+
+```bash
+dig +short TXT <候補のサブドメイン>
+```
+
+差出人のアドレスは `wrangler.jsonc` の vars (`MAIL_FROM`) が持つ。有効にしたドメインの
+**どのローカル部でも使える**ので、環境ごとに変えて受信箱で見分けられるようにしてある。
+
+DMARC は apex の 1 本 (`_dmarc.yantene.net`) がサブドメインにも効く。Cloudflare が
+入れる DKIM は送信元のサブドメインに揃うので、relaxed 整合で通る。
+
 ### 2. KV namespace を作る
 
 読み手のセッション (ADR 0011) を置く先。作って、返ってきた id を `wrangler.jsonc` の

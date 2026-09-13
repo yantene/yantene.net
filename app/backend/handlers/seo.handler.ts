@@ -67,7 +67,9 @@ ${[...staticUrls, ...articleUrls].join("\n")}
     const isPrivate = Boolean(c.env.BASIC_AUTH_USER);
     const body = isPrivate
       ? "User-agent: *\nDisallow: /\n"
-      : `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
+      : // ログインの入口はクロールさせない。中身ではないので検索結果に出す意味が無い。
+        // ページ側の `noindex` と対で置く (ADR 0039)。
+        `User-agent: *\nAllow: /\nDisallow: /sign-in\n\nSitemap: ${origin}/sitemap.xml\n`;
     return c.body(body, 200, {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=3600",

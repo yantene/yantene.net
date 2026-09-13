@@ -23,4 +23,14 @@ export default [
 
   // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
   route("licenses", "routes/licenses.tsx"),
+
+  /*
+   * ログイン (ADR 0039)。**ナビには出さない。**
+   *
+   * 受け口 (POST /sign-in、GET /sign-in/callback、POST /sign-in/confirm、
+   * POST /sign-out) は Hono 側が先に応答するので、ここには現れない。
+   */
+  route("sign-in", "routes/sign-in.tsx"),
+  route("sign-in/sent", "routes/sign-in.sent.tsx"),
+  route("sign-in/confirm", "routes/sign-in.confirm.tsx"),
 ] satisfies RouteConfig;
