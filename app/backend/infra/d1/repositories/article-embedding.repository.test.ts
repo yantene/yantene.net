@@ -6,6 +6,7 @@ import { D1ArticleCommandRepository } from "./article.command-repository";
 import { D1ArticleQueryRepository } from "./article.query-repository";
 import type { ArticleEmbedding } from "~/backend/domain/article-embedding";
 import type { EntityId } from "~/backend/domain/shared";
+import type { ArticleStatus } from "~/backend/domain/article";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { EmbeddingVector } from "~/backend/domain/article-embedding";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
@@ -13,7 +14,11 @@ import { createTestD1 } from "~/backend/infra/d1/test-helper";
 const MODEL = "@cf/pfnet/plamo-embedding-1b";
 
 /** 記事を 1 本入れて、採番された id を返す。近さの行は外部キーで実在する記事を要求する。 */
-async function seedArticle(d1: D1Database, slug: string): Promise<EntityId<"Article">> {
+async function seedArticle(
+  d1: D1Database,
+  slug: string,
+  status: ArticleStatus = "published",
+): Promise<EntityId<"Article">> {
   await new D1ArticleCommandRepository(d1).upsert(
     Article.create({
       slug: ArticleSlug.create(slug),
@@ -21,13 +26,12 @@ async function seedArticle(d1: D1Database, slug: string): Promise<EntityId<"Arti
       summary: "s",
       publishedOn: Temporal.PlainDate.from("2026-01-01"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-01"),
-      status: "published",
+      status,
       sourceHash: `hash-${slug}`,
     }),
   );
-  const article = await D1ArticleQueryRepository.forReaders(d1).findBySlug(
-    ArticleSlug.create(slug),
-  );
+  // 隠す status も引けるよう forAdmin で採番を読む。
+  const article = await D1ArticleQueryRepository.forAdmin(d1).findBySlug(ArticleSlug.create(slug));
   if (article?.id === undefined) throw new Error(`failed to seed ${slug}`);
   return article.id;
 }
@@ -96,6 +100,40 @@ describe("D1ArticleEmbedding リポジトリ", () => {
     expect(await query.findRelatedSlugs(ArticleSlug.create("a"), 6)).toEqual(["b"]);
     // 片方向だけだと、後から書いた記事が古い記事の関連記事に出てこない。
     expect(await query.findRelatedSlugs(ArticleSlug.create("b"), 6)).toEqual(["a"]);
+  });
+
+  /*
+   * ベクトルと近さは全 status の間で作られる (refresh は forAdmin で引く)。
+   * ここで絞らずに読み取り口の側だけで落とすと、**上位 N 件を下書きが埋めてから
+   * forReaders が落とす**ので、公開記事の関連記事が N 件に足りなくなる (ADR 0040)。
+   */
+  it.each(["draft", "idea", "withdrawn", "unlisted"] as const)(
+    "%s は関連記事に出さない",
+    async (status) => {
+      const a = await seedArticle(d1, "a");
+      const hidden = await seedArticle(d1, "hidden", status);
+      const shown = await seedArticle(d1, "shown");
+      await command.replaceAllSimilarities([
+        // 隠す相手のほうが近い。切る前に落とさないと、公開記事が押し出される。
+        { articleId: a, otherArticleId: hidden, similarity: 0.99 },
+        { articleId: a, otherArticleId: shown, similarity: 0.1 },
+      ]);
+
+      expect(await query.findRelatedSlugs(ArticleSlug.create("a"), 6)).toEqual(["shown"]);
+    },
+  );
+
+  it("隠す相手が limit を食わない", async () => {
+    const a = await seedArticle(d1, "a");
+    const drafts = await Promise.all(["d1", "d2"].map((slug) => seedArticle(d1, slug, "draft")));
+    const shown = await Promise.all(["s1", "s2"].map((slug) => seedArticle(d1, slug)));
+    await command.replaceAllSimilarities([
+      ...drafts.map((id, i) => ({ articleId: a, otherArticleId: id, similarity: 0.9 - i * 0.01 })),
+      ...shown.map((id, i) => ({ articleId: a, otherArticleId: id, similarity: 0.5 - i * 0.01 })),
+    ]);
+
+    // limit 2 を下書きが埋めていたら、ここが空になる。
+    expect(await query.findRelatedSlugs(ArticleSlug.create("a"), 2)).toEqual(["s1", "s2"]);
   });
 
   it("近い順に返し、limit で切る", async () => {

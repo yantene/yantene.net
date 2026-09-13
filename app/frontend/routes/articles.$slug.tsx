@@ -117,10 +117,13 @@ export async function loader({
   }
 
   /*
-   * 管理者に返した応答は共有キャッシュに載せない (ADR 0040)。下書きが載ると、
-   * その先で読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
+   * 管理者にしか見えない記事は共有キャッシュに載せない (ADR 0040)。載ると、その先で
+   * 読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
+   *
+   * `admin` ではなく `privateResponse` を見る。読み手も URL で辿り着ける記事なら、
+   * 管理者が見ていても中身は同じなので遠ざける理由が無い。
    */
-  if (detail.admin) {
+  if (detail.privateResponse) {
     for (const [name, value] of Object.entries(PRIVATE_CACHE_HEADERS)) {
       headers.set(name, value);
     }

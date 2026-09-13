@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
 import { articlePath, ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
-import { resolveArticleReadAccess } from "./article-read-access";
-import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
+import { privateCacheHeadersFor, resolveArticleReadAccess } from "./article-read-access";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";
 import { notFoundResponse } from "~/lib/problem-details";
@@ -61,13 +60,12 @@ async function articleSourceResponse(
       // 別表現なので、こちらにも伝える。
       ...(shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {}),
       /*
-       * 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。下書きが載ると、
-       * その先で読み手に配られる。載った写しを剥がす手立ては無いので、載せない。
+       * 管理者にしか見えない記事の原文は共有キャッシュに載せない (ADR 0040)。
+       * 載ると、その先で読み手に配られる。載った写しを剥がす手立ては無い。
        *
-       * 後に置いて上のキャッシュ指定を上書きする。管理者かどうかで分かれるのは
-       * ここだけなので、条件を 2 つ書かずに済む。
+       * 後に置いて上のキャッシュ指定を上書きする。
        */
-      ...(access.admin ? PRIVATE_CACHE_HEADERS : {}),
+      ...privateCacheHeadersFor(access, article.status),
     },
   });
 }

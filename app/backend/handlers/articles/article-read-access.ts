@@ -1,4 +1,6 @@
-import { currentAccount } from "~/backend/handlers/auth/current-account";
+import type { ArticleStatus } from "~/backend/domain/article";
+import { isReachableByReaders } from "~/backend/domain/article";
+import { currentAccount, PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** 記事を 1 本引くときの読み取り口と、それが管理者向けかどうか。 */
@@ -37,4 +39,34 @@ export async function resolveArticleReadAccess(
       : D1ArticleQueryRepository.forReaders(env.D1),
     admin,
   };
+}
+
+/**
+ * その応答を共有キャッシュから遠ざけるか (ADR 0040)。
+ *
+ * **管理者であることだけでは決めない。** 読み手も URL で辿り着ける記事
+ * (`published` / `unlisted`) の応答は、管理者が見ていても読み手が見るものと同じ中身
+ * なので、載って困るものが無い。ここで一律に `no-store` を付けると、管理者が公開済みの
+ * 記事を開くだけで**その記事の画像を毎回落とし直す**ことになる。
+ *
+ * 遠ざけるのは、管理者にしか見えない中身を返したときだけ。
+ */
+export function shouldKeepResponsePrivate(
+  access: ArticleReadAccess,
+  status: ArticleStatus,
+): boolean {
+  return access.admin && !isReachableByReaders(status);
+}
+
+/**
+ * {@link shouldKeepResponsePrivate} が真のときだけ `PRIVATE_CACHE_HEADERS` を返す。
+ *
+ * Response を直に組む経路 (原文・アセット・JSON API) 用。ページの loader は
+ * ヘッダーを別に組むので、あちらは述語のほうを使う。
+ */
+export function privateCacheHeadersFor(
+  access: ArticleReadAccess,
+  status: ArticleStatus,
+): Readonly<Record<string, string>> {
+  return shouldKeepResponsePrivate(access, status) ? PRIVATE_CACHE_HEADERS : {};
 }

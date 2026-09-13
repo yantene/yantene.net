@@ -2,8 +2,11 @@ import { Hono } from "hono";
 import { toArticleDetail } from "./article-detail-view";
 import { buildPayload, type ReactionsPayload } from "./reaction.handler";
 import { extractHeadings } from "./toc-headings";
-import { resolveArticleReadAccess } from "./article-read-access";
-import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
+import {
+  privateCacheHeadersFor,
+  resolveArticleReadAccess,
+  shouldKeepResponsePrivate,
+} from "./article-read-access";
 import { recordArticleView, type ArticleViewRecording } from "./view-recording";
 import type { ArticleDetail, PublicArticleMeta } from "./article-detail-view";
 import type { ArticleReadAccess } from "./article-read-access";
@@ -117,8 +120,8 @@ export function createArticleDetailApiRouter(): Hono<{ Bindings: Env }> {
     const access = await resolveArticleReadAccess(c.env, c.req.raw);
     const resolved = await resolveDetail(c.env, access, slugParam);
     if (resolved === undefined) throw new ArticleNotFoundError(slugParam);
-    // 管理者に返す応答は共有キャッシュに載せない (ADR 0040)。
-    return c.json(resolved.detail, access.admin ? { headers: PRIVATE_CACHE_HEADERS } : undefined);
+    // 管理者にしか見えない記事は共有キャッシュに載せない (ADR 0040)。
+    return c.json(resolved.detail, { headers: privateCacheHeadersFor(access, resolved.status) });
   });
 
   return router;
@@ -169,11 +172,16 @@ export type ArticleDetailPageData =
        * クローラーはそもそも辿り着けない。
        */
       readonly noindex: boolean;
-      /**
-       * 管理者として引いたか。**真なら応答に `PRIVATE_CACHE_HEADERS` を付けること。**
-       * 判断は loader が行う (ヘッダーを付けられるのはあちら)。
-       */
+      /** 管理者として引いたか。 */
       readonly admin: boolean;
+      /**
+       * この応答を共有キャッシュから遠ざけるか。**真なら loader が
+       * `PRIVATE_CACHE_HEADERS` を付ける** (ヘッダーを付けられるのはあちら)。
+       *
+       * `admin` と一致しない。読み手も URL で辿り着ける記事なら、管理者が見ていても
+       * 中身は同じなので遠ざける理由が無い (`privateCacheHeadersFor`)。
+       */
+      readonly privateResponse: boolean;
       /**
        * 押されているリアクションと、この読み手が押しているもの。
        *
@@ -238,8 +246,14 @@ export async function loadArticleDetailPage(
     recordArticleView(env, { id: resolved.articleId, slug: detail.article.slug }, recording);
   }
 
-  // **関連記事は管理者でも読み手向けで固定する。** 下書きを関連記事として並べたい
-  // わけではないし、関連の近さは published の間でしか書き直していない。
+  /*
+   * **関連記事は管理者でも読み手向けで固定する。** 下書きを関連記事として並べたい
+   * わけではない。
+   *
+   * 近さ (article_similarities) は全 status の間で書き直されるので、絞るのは
+   * D1ArticleEmbeddingQueryRepository.findRelatedSlugs の側。あちらで絞らずに
+   * ここだけで落とすと、上位 N 件を下書きが埋めたぶん関連記事が短くなる。
+   */
   const query = D1ArticleQueryRepository.forReaders(env.D1);
   const slug = ArticleSlug.create(detail.article.slug);
   const [related, reactions, webmentions, blockedHosts] = await Promise.all([
@@ -274,6 +288,7 @@ export async function loadArticleDetailPage(
     headings: extractHeadings(mdast),
     noindex: shouldTellRobotsNoindex(resolved.status),
     admin: access.admin,
+    privateResponse: shouldKeepResponsePrivate(access, resolved.status),
     reactions,
     jsonLd: {
       "@context": "https://schema.org",

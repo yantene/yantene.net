@@ -350,9 +350,14 @@ function asOptionalString(value: unknown): string | undefined {
  * 書いていなければ `published`。読めない値は {@link StatusValueError} を送出する。
  *
  * **旧書式の `visibility` が残っていたらエラーにする。** 無視して既定の `published` に
- * 倒すと、`visibility: private` と書いたままの下書きが黙って公開される。書式を移し
- * 忘れたことは、記事が出ないことで気づけばよい。値が何であっても (`public` でも)
- * 同じく弾く — 綴りを見て倒し方を変えると、倒し方の一覧が次の漏れになる。
+ * 倒すと、`visibility: private` と書いたままの下書きが黙って公開される。値が何であっても
+ * (`public` でも) 同じく弾く — 綴りを見て倒し方を変えると、倒し方の一覧が次の漏れになる。
+ *
+ * ⚠️ **気づき方が 2 通りある。** まだ同期していない記事は出てこないので分かるが、
+ * **既に D1 に載っている記事は前の中身のまま配信され続ける** (migration の既定で
+ * `status = 'published'` が入っているため)。画面は正常に見えるのに更新だけが
+ * 反映されなくなるので、気づく手立ては refresh の応答の `skipped` しか無い。
+ * コンテンツリポジトリ側の書き換えは、取りこぼさず一度に済ませること。
  */
 function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
   if ("visibility" in rawMatter) {

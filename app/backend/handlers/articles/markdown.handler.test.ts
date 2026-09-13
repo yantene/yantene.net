@@ -641,6 +641,28 @@ describe("status ごとの原文の配信 (ADR 0040)", () => {
     },
   );
 
+  /*
+   * **管理者であることだけでは共有キャッシュから遠ざけない。** 読み手も URL で
+   * 辿り着ける記事なら中身は同じなので、遠ざける理由が無い。一律に付けると、
+   * 管理者が公開済みの記事を開くたびに画像を落とし直すことになる。
+   */
+  it.each(["published", "unlisted"] as const)(
+    "管理者が %s を読んでも共有キャッシュから遠ざけない",
+    async (status) => {
+      const d1 = createTestD1();
+      const { bucket } = createTestR2();
+      await seedWith(d1, bucket, status);
+      asAdmin();
+
+      const app = new Hono<{ Bindings: Env }>();
+      app.route("/articles", createArticleMarkdownRouter());
+      const response = await app.request("/articles/hello.md", {}, env(d1, bucket));
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).not.toBe("private, no-store");
+    },
+  );
+
   /** 管理者でない (ADMIN_EMAIL と一致しない) ログイン中の読み手は下書きを読めない。 */
   it("ログインしていても管理者でなければ draft は 404", async () => {
     const d1 = createTestD1();
