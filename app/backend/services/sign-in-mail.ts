@@ -36,7 +36,7 @@ const copy: Record<SupportedLocale, SignInMailCopy> = {
     lead: "Open the link below to sign in to yantene.net.",
     action: "Sign in",
     fallback: "If the link does not open, paste this URL into your browser.",
-    expiry: "This link stops working in 15 minutes, and once it is used.",
+    expiry: "The link stops working after 15 minutes, or once it is used.",
     unsolicited:
       "If you did not ask for this, throw this message away. Nothing happens unless the link is opened.",
   },
