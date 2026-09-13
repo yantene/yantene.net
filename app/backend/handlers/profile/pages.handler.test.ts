@@ -2,8 +2,12 @@ import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
+import { Work, WorkName, WorkSlug, WorkSummary } from "~/backend/domain/work";
 import { ImageUrl } from "~/backend/domain/shared";
-import { D1ProfileCommandRepository } from "~/backend/infra/d1/repositories";
+import {
+  D1ProfileCommandRepository,
+  D1WorkCommandRepository,
+} from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
@@ -46,6 +50,47 @@ describe("loadAboutPage", () => {
     expect(data.profile).toBeNull();
     expect(data.mdast).toBeNull();
     expect(data.jsonLd).toBeNull();
+  });
+
+  /*
+   * ページごと「準備中」の一枚に倒れるので、作品だけ返しても出る場所が無い。
+   * `noindex` を立てたページに中身がある、というちぐはぐも作らない。
+   */
+  it("returns no works while the profile is missing", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await new D1WorkCommandRepository(d1).upsert(
+      Work.create({
+        slug: WorkSlug.create("infoholick"),
+        name: WorkName.create("infoholick"),
+        summary: WorkSummary.create("読んだものを覚えておくやつ。"),
+        position: 0,
+        sourceHash: "h1",
+      }),
+    );
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+    expect(data.profile).toBeNull();
+    expect(data.works).toEqual([]);
+  });
+
+  it("returns the works alongside the profile", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+    await new D1WorkCommandRepository(d1).upsert(
+      Work.create({
+        slug: WorkSlug.create("infoholick"),
+        name: WorkName.create("infoholick"),
+        summary: WorkSummary.create("読んだものを覚えておくやつ。"),
+        position: 0,
+        sourceHash: "h1",
+      }),
+    );
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+    expect(data.works.map((work) => work.slug)).toEqual(["infoholick"]);
   });
 
   it("returns the profile and its body", async () => {

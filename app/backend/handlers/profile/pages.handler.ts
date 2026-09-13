@@ -21,8 +21,9 @@ export interface AboutPageData {
   /**
    * 作ったもの。本文ではなくフロントマターの概要を並べる。
    *
-   * **プロフィールとは独立に出す。** 作品は自己紹介の一部ではなく、それ自体が
-   * 行き先を持つもの (`/works/<slug>`) なので、プロフィールが無いときも空にしない。
+   * **プロフィールが無ければ空。** ページごと「準備中」の一枚に倒れるので、ここだけ
+   * 中身を返しても出る場所が無い。`noindex` を立てたページに中身がある、という
+   * ちぐはぐも作らない。作品そのものは `/works` が独立に出す。
    */
   readonly works: readonly PublicWork[];
   readonly jsonLd: Record<string, unknown> | null;
@@ -68,7 +69,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   ]);
 
   if (profile === undefined) {
-    return { profile: null, mdast: null, linkCards: {}, works, jsonLd: null };
+    return { profile: null, mdast: null, linkCards: {}, works: [], jsonLd: null };
   }
   if (mdast === undefined) {
     // D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。
