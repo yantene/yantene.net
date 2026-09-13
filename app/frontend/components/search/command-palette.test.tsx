@@ -33,7 +33,7 @@ describe("CommandPalette", () => {
   it("開いた直後は、何を探せる場所なのかだけを出す", () => {
     open(findAll);
 
-    expect(screen.getByRole("status")).toHaveTextContent("記事の題と本文から探す。");
+    expect(screen.getByRole("status")).toHaveTextContent("記事の題と本文から探します。");
     expect(screen.queryAllByRole("option")).toHaveLength(0);
   });
 
@@ -89,7 +89,7 @@ describe("CommandPalette", () => {
     await type("みつからない");
 
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("一致する記事がない。");
+      expect(screen.getByRole("status")).toHaveTextContent("一致する記事がありません。");
     });
     expect(screen.getByRole("link", { name: "すべての結果を見る" })).toHaveAttribute(
       "href",
@@ -107,7 +107,7 @@ describe("CommandPalette", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent(
-        "検索できなかった。もう一度試してほしい。",
+        "検索できませんでした。もう一度お試しください。",
       );
     });
   });
