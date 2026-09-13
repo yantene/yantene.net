@@ -99,6 +99,13 @@
       "when": 1789200800096,
       "tag": "0013_create_passkey_ceremonies_table",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1789281136047,
+      "tag": "0014_drop_admin_and_passkey_tables",
+      "breakpoints": true
     }
   ]
 }

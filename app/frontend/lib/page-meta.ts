@@ -59,22 +59,11 @@ export interface PageMetaInput {
   /**
    * 検索結果に出さないか。
    *
-   * 中身がまだ無いページ (「準備中」だけを置いたもの) と、管理者しか使わない画面に立てる。
-   * sitemap には元々載せていないが、載せていないことと「拾わないでほしい」ことは別で、
-   * リンクを辿って来たクローラーには伝わらない。
+   * 中身がまだ無いページ (「準備中」だけを置いたもの) に立てる。sitemap には元々
+   * 載せていないが、載せていないことと「拾わないでほしい」ことは別で、リンクを
+   * 辿って来たクローラーには伝わらない。
    */
   readonly noindex?: boolean;
-  /**
-   * `noindex` に加えて、このページから先のリンクも辿らせないか。
-   *
-   * 「準備中」のページには立てない。拾ってほしくないのはそのページだけで、ここから先の
-   * リンク (ヘッダーのナビ) は辿ってもらってよい。管理画面のように、その先ごと隠したい
-   * ページにだけ立てる。
-   *
-   * meta だけでは HTML を描かない応答 (原文 Markdown・OG 画像) に効かないので、
-   * ハンドラ側で `X-Robots-Tag` も併せて付ける。
-   */
-  readonly nofollow?: boolean;
 }
 
 /**
@@ -95,7 +84,6 @@ export function buildPageMeta({
   feed,
   webmentionPath,
   noindex = false,
-  nofollow = false,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   /*
@@ -154,7 +142,11 @@ export function buildPageMeta({
   }
 
   if (noindex) {
-    descriptors.push({ name: "robots", content: nofollow ? "noindex, nofollow" : "noindex" });
+    /*
+     * `nofollow` は付けない。拾ってほしくないのはこのページだけで、ここから先の
+     * リンク (ヘッダーのナビ) は辿ってもらってよい。
+     */
+    descriptors.push({ name: "robots", content: "noindex" });
   }
 
   if (jsonLd !== undefined) {

@@ -1,7 +1,4 @@
-export { D1AdminCredentialCommandRepository } from "./admin-credential.command-repository";
-export { D1AdminCredentialQueryRepository } from "./admin-credential.query-repository";
 export { D1LinkCardCommandRepository } from "./link-card.command-repository";
-export { D1PasskeyCeremonyCommandRepository } from "./passkey-ceremony.command-repository";
 export { D1LinkCardQueryRepository } from "./link-card.query-repository";
 export { D1ArticleCommandRepository } from "./article.command-repository";
 export { D1ArticleEmbeddingCommandRepository } from "./article-embedding.command-repository";

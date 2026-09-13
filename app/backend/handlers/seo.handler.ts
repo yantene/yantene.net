@@ -67,9 +67,7 @@ ${[...staticUrls, ...articleUrls].join("\n")}
     const isPrivate = Boolean(c.env.BASIC_AUTH_USER);
     const body = isPrivate
       ? "User-agent: *\nDisallow: /\n"
-      : // 管理画面はクロールさせない。ログインしていなければ何も見えないが、
-        // 検索結果に現れる意味も無い。ページ側の meta robots と対で置く。
-        `User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: ${origin}/sitemap.xml\n`;
+      : `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
     return c.body(body, 200, {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=3600",
