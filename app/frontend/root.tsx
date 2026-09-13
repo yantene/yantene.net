@@ -94,13 +94,20 @@ export const links: Route.LinksFunction = () => [
   // iOS はホーム画面に置くときに manifest ではなくこれを見る。
   { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
   { rel: "manifest", href: "/manifest.webmanifest" },
-  // 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
-  // フィード本体の <title> がずれる。
+  /*
+   * 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
+   * フィード本体の <title> がずれる。
+   *
+   * **これは全ページに出る。消えない。** 種別ごとのページ (`/articles` など) が
+   * buildPageMeta の feed でもう 1 本足すので、そこでは rel=alternate が 2 本並ぶ —
+   * 「サイト全体」と「この場所のぶん」。リーダーの自動検出には両方が出るので、
+   * 名前で選んでもらう (だから feedIdentities は種別ごとに違う title を名乗る)。
+   */
   {
     rel: "alternate",
     type: "application/atom+xml",
-    title: feedIdentity().title,
-    href: feedIdentity().path,
+    title: feedIdentity("all").title,
+    href: feedIdentity("all").path,
   },
 ];
 

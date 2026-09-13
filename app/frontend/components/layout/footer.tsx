@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineScale } from "react-icons/hi2";
 import { Link } from "react-router";
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
-import { INLINE_ICON_LINK } from "~/frontend/components/feed/feed-link";
 
 interface FooterProps {
   /**
@@ -61,13 +60,11 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
             あるときは帰属をまとめた場所へのリンクで条件を満たせると定めている
             (4.0 の 3(a)(2))。足元に全部を並べるより、リンク 1 本のほうが読める。
           */}
-          {/*
-            見た目はフィードの導線と同じものを使う (INLINE_ICON_LINK)。並んで置くので、
-            間隔や下線が片方だけ変わると行が不揃いになる。書き写すと黙ってズレるため、
-            揃っていることをコメントではなく共有で担保する。
-            絵の意味は文字が持つので、読み上げには渡さない。
-          */}
-          <Link to="/licenses" className={`${INLINE_ICON_LINK} text-xs text-foreground/80`}>
+          {/* 絵の意味は文字が持つので、読み上げには渡さない。 */}
+          <Link
+            to="/licenses"
+            className="press-control inline-flex items-center gap-1.5 text-xs text-foreground/80 underline-offset-4 transition-colors hover:text-primary hover:underline"
+          >
             <HiOutlineScale aria-hidden="true" />
             {t("footer.licenses")}
           </Link>

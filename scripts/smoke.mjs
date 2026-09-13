@@ -11,6 +11,23 @@
  * BASIC 認証が無い環境 (production) では SMOKE_USER / SMOKE_PASS を省略する。
  */
 import { Buffer } from "node:buffer";
+import { readFileSync } from "node:fs";
+
+/**
+ * 公開しているフィードの行き先を `app/lib/feed.ts` から読む。
+ *
+ * このスクリプトは素の .mjs なので TypeScript を import できない。書き写すと、種別を
+ * 足したときにここだけ古びて**新しいフィードが誰にも叩かれないまま公開される**ので、
+ * 原文から拾う。見つからなければ黙って 0 本にせず落とす (fail-loud)。
+ *
+ * `alternatePath:` には当たらない (行頭の空白の直後が `path:` であることを見ている)。
+ */
+function feedPaths() {
+  const source = readFileSync("app/lib/feed.ts", "utf8");
+  const paths = [...source.matchAll(/^\s+path: "([^"]+)"/gmu)].map((match) => match[1]);
+  if (paths.length === 0) throw new Error("app/lib/feed.ts からフィードの行き先を読めなかった");
+  return paths;
+}
 
 const base = process.env.SMOKE_BASE ?? process.argv[2];
 if (base === undefined || base.length === 0) {
@@ -95,7 +112,7 @@ const targets = [
     headers: { Accept: "text/markdown" },
     expectContentType: "application/problem+json",
   },
-  "/feed.xml",
+  ...feedPaths(),
   "/sitemap.xml",
   "/robots.txt",
   "/og/default",

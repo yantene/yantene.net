@@ -308,6 +308,8 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
   中身の無いうちは `noindex` を立てて検索結果には出さない
 - 狭い画面ではロゴ・検索・ハンバーガーだけを帯に残し、残りはドロワーに畳む。
   器は `<details>` なので JavaScript が動かなくても開く
+- **ドロワーからも帯と同じ行き先に届く。** ただしドロワー自身が `<details>` なので、
+  その中では更に畳まない (フィードも表示する言語も平らに並べる)
 
 ### 検索は `⌘K` / `Ctrl+K` で開く
 
@@ -317,14 +319,17 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
 - **`Ctrl+K` は Chrome の既定 (アドレス欄で検索) と重なる。** `keydown` で
   `preventDefault` してページ側が先に取るので、GNU/Linux と Windows でも開く
 - 字を打っている最中 (入力欄に焦点があるとき) は奪わない
-- JavaScript が動かない環境では、押し場所が素のリンクとして `/articles` へ連れて行く。
-  検索の本体は一覧ページのほうで、パレットはその近道
+- **検索の手立てはこれだけ。** 一覧 (`/articles`) に検索欄は置いていない。JavaScript が
+  動かない環境では、押し場所が素のリンクとして `/articles` へ連れて行くが、そこは
+  「全部を辿る」ページであって探す場所ではない
+- `/articles?q=...` の結果表示は残してある。パレットの「すべての結果を見る」の行き先で、
+  絞り直すにはパレットを開き直す
 - いまの行き先は記事だけ。3 種別の横断は #417
 
 ### 見える名前は訳さない
 
 **場所と区画の名前は、日本語モードでも英語のまま出す。** About / Articles / Notes /
-Slides / Popular / Latest / Contents / Related articles / Responses / Feed /
+Slides / Popular / Latest / Contents / Related articles / Responses / Feed / All /
 Open source licenses / Search / Share がそれにあたる。
 
 - 名前を訳すと、同じ場所が言語によって別の名前で呼ばれることになる (URL は
@@ -338,13 +343,42 @@ Open source licenses / Search / Share がそれにあたる。
 
 ### 表示する言語は読み手が選ぶ
 
-ヘッダーの EN / JA で切り替える。選ぶと `locale` cookie に 1 年預かり、元のページへ
+ヘッダーの globe の絵を押すと開く。選ぶと `locale` cookie に 1 年預かり、元のページへ
 戻る。設計判断の詳細は
 [ADR 0037](../../docs/adr/0037-switch-locale-through-a-cookie-and-a-server-endpoint.md) を参照。
 
+- **畳んである。** 一度選べば 1 年残るので、帯で常に場所を取らせない。EN / JA を
+  出したままにしていたときは、帯で 2 番目に目立つものが「一度決めたらほとんど触らない
+  設定」になっていた
 - 選ばなければ `Accept-Language` で決まる (既定は英語)
 - **切り替わるのは UI の文言だけ。** 記事の本文は日本語のまま
-- JavaScript が動かなくても切り替わる (素のフォームで `POST /locale` に送る)
+- JavaScript が動かなくても切り替わる (器は `<details>`、送るのは素のフォームで
+  `POST /locale`)
+
+### フィードは種別ごとに分かれている
+
+ヘッダーの RSS の絵を押すと、All / Articles / Notes / Slides から選べる。設計判断の
+詳細は [ADR 0038](../../docs/adr/0038-split-feeds-by-content-kind.md) を参照。
+
+| 種別     | 行き先               | 中身                 |
+| -------- | -------------------- | -------------------- |
+| All      | `/feed.xml`          | サイトに出るもの全部 |
+| Articles | `/feed/articles.xml` | 記事                 |
+| Notes    | `/feed/notes.xml`    | **まだ空** (#412)    |
+| Slides   | `/feed/slides.xml`   | **まだ空** (#415)    |
+
+- **中身の無い種別も購読先として実在させる** (entry 0 件の Atom)。ナビが行き先を先に
+  見せているのと同じ理屈で、いま購読しておけば中身が入った時点で届く。後から URL を
+  生やすと、その時点で購読している人が誰もいない状態から始まる
+- **Notes / Slides が埋まるまで、All と Articles の中身は同じ。** 両方を購読すると
+  同じものが 2 回届く
+- ⚠️ **種別ごとのフィードは `/feed/` の下に置くこと。** `/articles/feed.xml` のように
+  `/articles/:file` (原文 Markdown) と同じ位置に静的なパスを足すと、Hono の SmartRouter が
+  RegExpRouter を諦めて TrieRouter に落ち、アプリ全体のリクエストが遅いマッチャーを通る。
+  登録の順を入れ替えても直らない。`markdown.handler.test.ts` が見張っている
+- **`/feed.xml` は動かさない。** 既に購読されている URL なので、動かすとリーダーの手元で
+  購読が切れる
+- 帯に置くのはここだけ。フッターにも一覧の見出し脇にも出さない
 
 ## 補助ドメイン
 

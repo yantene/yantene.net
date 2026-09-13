@@ -9,6 +9,7 @@ import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
+import { feedIdentity } from "~/lib/feed";
 
 /*
  * 発表で使ったスライドと、その置き場所。
@@ -34,6 +35,11 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     pathname: location.pathname,
     title: translations.navigation.slides,
     description: translations.comingSoon.slides,
+    /*
+     * 中身はまだ無いが、フィードは実在する (entry 0 件の Atom)。ここで名指ししておくと、
+     * いま購読しておいた人に、中身が入った時点で届く。
+     */
+    feed: { path: feedIdentity("slides").path, title: feedIdentity("slides").title },
     // 中身が無いうちは検索結果に出さない。
     noindex: true,
   });

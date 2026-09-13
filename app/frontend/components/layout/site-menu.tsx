@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { HiBars3, HiXMark } from "react-icons/hi2";
 import { useLocation } from "react-router";
 import { LocaleSwitch } from "./locale-switch";
 import { SiteNav } from "./site-nav";
-import { FeedIconLink } from "~/frontend/components/feed/feed-link";
-
-/** ドロワーの足元に置く絵だけの導線。いまはフィード。 */
-const DRAWER_ICON_LINK =
-  "press-control inline-flex h-8 w-8 items-center justify-center text-lg text-muted-foreground transition-colors hover:text-primary";
+import { FeedMenuList } from "~/frontend/components/feed/feed-menu";
+import { useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
 
 interface SiteMenuProps {
   /** 出し隠し。広い画面では帯に直接並べるので、こちらは伏せる。 */
@@ -24,22 +21,13 @@ interface SiteMenuProps {
  *
  * JavaScript が動くときは、そこに 3 つだけ足す — 遷移したら畳む・Esc で畳む・
  * 外を押したら畳む。どれも「開いたまま置き去りにしない」ためのもので、無くても
- * 操作は最後まで通る。
+ * 操作は最後まで通る。後ろの 2 つは帯の他の開閉と共通 (useDismissableDetails)。
  */
 export function SiteMenu({ className = "" }: SiteMenuProps): React.JSX.Element {
   const { t } = useTranslation();
   const location = useLocation();
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-
-  /*
-   * 開閉は DOM の側に持たせたまま触る。`open` を描画で渡すと、JavaScript の無い
-   * 環境で開けなくなる (React が閉じた状態を描き直してしまう)。
-   */
-  const closeMenu = useCallback((): void => {
-    const details = detailsRef.current;
-    if (details === null || !details.open) return;
-    details.open = false;
-  }, []);
+  /* Esc と外押しで畳むぶんは、帯の他の開閉 (フィード・表示する言語) と同じものを使う。 */
+  const { ref: detailsRef, close: closeMenu } = useDismissableDetails();
 
   /*
    * 行き先を選んだら畳む。`<Link>` の遷移ではページが読み直されないので、放っておくと
@@ -57,30 +45,6 @@ export function SiteMenu({ className = "" }: SiteMenuProps): React.JSX.Element {
     shownPathRef.current = currentPath;
     closeMenu();
   }, [currentPath, closeMenu]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") closeMenu();
-    };
-    /*
-     * 外を押したら畳む。`click` ではなく `pointerdown` で受けるのは、押し始めた
-     * 場所で判断するため。押している間にドロワーが閉じると、`click` の時点では
-     * 中の要素が消えていて「外を押した」と誤って読める。
-     */
-    const handlePointerDown = (event: PointerEvent): void => {
-      const details = detailsRef.current;
-      if (details === null || !details.open) return;
-      if (event.target instanceof Node && details.contains(event.target)) return;
-      closeMenu();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [closeMenu]);
 
   return (
     <details ref={detailsRef} className={`site-menu ${className}`}>
@@ -102,12 +66,16 @@ export function SiteMenu({ className = "" }: SiteMenuProps): React.JSX.Element {
           ドロワーは狭い画面での帯そのものなので、ここにだけある導線を作ると、画面の幅で
           出来ることが変わる。
 
+          **畳んだ中で更に畳まない。** 帯では絵を押して開く形 (LocaleMenu / FeedMenu) だが、
+          ここは既に `<details>` の中なので、入れ子の開閉にすると開くのに 2 手かかり、
+          支援技術にもそのまま伝わる。行き先は同じ表から引くので、出来ることは変わらない。
+
           **ソーシャルメディアは置かない。** あれは「誰か」の情報で、行き先と道具を並べる
           場所には属さない (帯にも無い)。持つのはヒーローと、いずれプロフィール (#413)。
         */}
         <div className="site-menu-foot">
+          <FeedMenuList />
           <LocaleSwitch />
-          <FeedIconLink className={DRAWER_ICON_LINK} />
         </div>
       </div>
     </details>

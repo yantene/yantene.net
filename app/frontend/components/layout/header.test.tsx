@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { Header } from "./header";
 import { withI18n } from "~/frontend/lib/test-render";
+import { feedIdentities } from "~/lib/feed";
 
 const renderWithI18n = withI18n();
 
@@ -125,5 +126,36 @@ describe("Header の作り", () => {
     const form = screen.getAllByRole("form", { name: "表示する言語" })[0];
     expect(form).toHaveAttribute("method", "post");
     expect(form).toHaveAttribute("action", "/locale");
+  });
+
+  /*
+   * 帯の開閉 (フィード・表示する言語) とドロワーは、どれも `<details>`。JavaScript が
+   * 動かない環境でも開けるようにするためで、`<dialog>` や自前の開閉状態にすると、
+   * その環境では押しても何も起きない飾りになる。
+   */
+  it("帯の畳んだ道具は、JavaScript 無しでも開ける器で作る", () => {
+    const { container } = renderWithI18n(<Header />);
+
+    // フィード・表示する言語・ドロワーの 3 つ。
+    expect(container.querySelectorAll("details")).toHaveLength(3);
+  });
+
+  /*
+   * 帯とドロワーで出来ることを変えない。ドロワーは狭い画面での帯そのものなので、
+   * 片方にだけある導線を作ると、画面の幅で購読できるものが変わる。
+   */
+  it("フィードの行き先は帯とドロワーで揃っている", () => {
+    renderWithI18n(<Header />);
+
+    const feedHrefs = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"))
+      .filter((href) => href !== null && href.startsWith("/feed"));
+
+    // 4 種別 × (帯 + ドロワー)。
+    expect(feedHrefs).toHaveLength(feedIdentities.length * 2);
+    const band = feedHrefs.slice(0, feedIdentities.length);
+    expect(band).toEqual(feedIdentities.map((identity) => identity.path));
+    expect(feedHrefs.slice(feedIdentities.length)).toEqual(band);
   });
 });

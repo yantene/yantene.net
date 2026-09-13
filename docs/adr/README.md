@@ -50,6 +50,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0035](0035-refresh-on-push-through-a-queue.md)                      | コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる  | Accepted   |
 | [0036](0036-authenticate-admin-with-passkey.md)                      | 管理者を passkey で認証し、セッションを KV に置く                    | Deprecated |
 | [0037](0037-switch-locale-through-a-cookie-and-a-server-endpoint.md) | 表示する言語は cookie に預け、切り替えはサーバーの受け口で行う       | Accepted   |
+| [0038](0038-split-feeds-by-content-kind.md)                          | フィードを種別ごとに分け、`/feed/` の下に並べる                      | Accepted   |
 
 ## 統合した番号
 
