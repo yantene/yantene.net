@@ -62,7 +62,8 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     title: admin.title,
     description: admin.description,
     // 検索結果に出す意味が無い。robots.txt の Disallow と対で置く。
-    robots: "noindex",
+    noindex: true,
+    nofollow: true,
   });
 };
 

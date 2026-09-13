@@ -57,12 +57,24 @@ export interface PageMetaInput {
    */
   readonly webmentionPath?: string;
   /**
-   * 検索エンジンに載せないページ。`"noindex"` を渡したときだけ robots の meta を出す。
+   * 検索結果に出さないか。
    *
-   * 出すのは `noindex, nofollow` の対で、併せてハンドラ側が `X-Robots-Tag` も付ける。
-   * meta だけだと、HTML を描かない応答 (原文 Markdown・OG 画像) に効かない。
+   * 中身がまだ無いページ (「準備中」だけを置いたもの) と、管理者しか使わない画面に立てる。
+   * sitemap には元々載せていないが、載せていないことと「拾わないでほしい」ことは別で、
+   * リンクを辿って来たクローラーには伝わらない。
    */
-  readonly robots?: "noindex";
+  readonly noindex?: boolean;
+  /**
+   * `noindex` に加えて、このページから先のリンクも辿らせないか。
+   *
+   * 「準備中」のページには立てない。拾ってほしくないのはそのページだけで、ここから先の
+   * リンク (ヘッダーのナビ) は辿ってもらってよい。管理画面のように、その先ごと隠したい
+   * ページにだけ立てる。
+   *
+   * meta だけでは HTML を描かない応答 (原文 Markdown・OG 画像) に効かないので、
+   * ハンドラ側で `X-Robots-Tag` も併せて付ける。
+   */
+  readonly nofollow?: boolean;
 }
 
 /**
@@ -82,7 +94,8 @@ export function buildPageMeta({
   jsonLd,
   feed,
   webmentionPath,
-  robots,
+  noindex = false,
+  nofollow = false,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   /*
@@ -122,11 +135,6 @@ export function buildPageMeta({
     { name: "twitter:image", content: image },
   ];
 
-  if (robots === "noindex") {
-    // canonical より前でも後でもよいが、まとめて出すと読みやすいのでここに置く。
-    descriptors.push({ name: "robots", content: "noindex, nofollow" });
-  }
-
   if (feed !== undefined) {
     descriptors.push({
       tagName: "link",
@@ -143,6 +151,10 @@ export function buildPageMeta({
       rel: "webmention",
       href: `${origin}${webmentionPath}`,
     });
+  }
+
+  if (noindex) {
+    descriptors.push({ name: "robots", content: nofollow ? "noindex, nofollow" : "noindex" });
   }
 
   if (jsonLd !== undefined) {

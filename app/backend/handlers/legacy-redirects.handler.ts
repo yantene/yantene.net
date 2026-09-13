@@ -62,24 +62,11 @@ const legacyImageDirectoryPattern = /^\d{4}-\d{2}-\d{2}-(?<slug>.+)$/u;
  */
 const PERMANENT_REDIRECT = 308 as const;
 
-/**
- * 一時移転。`/notes` (一覧) にだけ使う。あの URL は短文の投稿の一覧として戻ってくる場所で、
- * 308 を返すとブラウザがそれを覚えて、戻ってきた後も記事一覧へ飛ばし続ける。
- */
-const TEMPORARY_REDIRECT = 307 as const;
-
 function permanentRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
   // 記事の配信と同じ規則に揃える。BASIC 認証が有効な環境 (staging) で共有キャッシュに
   // 載せると、認証の壁を越えて未認証クライアントへ配られてしまうため。
   c.header("Cache-Control", contentCacheControlFor(c.env));
   return c.redirect(to, PERMANENT_REDIRECT);
-}
-
-function temporaryRedirect(c: Context<{ Bindings: Env }>, to: string): Response {
-  // 覚えさせない。max-age を付けると 307 でもその間はキャッシュから答えられ、
-  // 「戻ってくる URL」を一時移転にした意味が薄れる。
-  c.header("Cache-Control", "no-store");
-  return c.redirect(to, TEMPORARY_REDIRECT);
 }
 
 /**
@@ -113,7 +100,11 @@ function encodePath(path: string): string {
  *
  * - /notes/<slug>, /notes/<slug>.md     → /articles/<slug>, /articles/<slug>.md
  *   (domain/article/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
- * - /notes?…                            → /articles?… (307。あの URL は短文の一覧として戻る)
+ *
+ * **一覧の `/notes` はここには無い。** 記事一覧へ 307 で送っていたが、あの URL は短文の
+ * 投稿の一覧として戻ってくる場所で (ADR 0032 がそのために 308 を避けていた)、いまは
+ * ページのルートが持っている (#412 の中身が入るまでは「準備中」の一枚)。ここに残すと、
+ * Hono がページ委譲より先に応えるので、直に開いたときだけ記事一覧へ飛ぶ。
  *
  * どちらの世代も、記事は `/:file{[^/]+[.]html}` のような可変パターンではなく静的パスとして
  * 1 本ずつ登録する。ルート直下でカスタム正規表現のパラメータを使うと、Hono の SmartRouter
@@ -123,8 +114,7 @@ function encodePath(path: string): string {
  * 移転先にクエリ文字列は持ち込まない。過去の記事 URL にクエリは無く、外から付いて
  * くるのは utm 等のトラッキングだけである。計測用に Cloudflare Web Analytics のビーコンは
  * 置いてあるが (ADR 0021。CSP の connect-src にも cloudflareinsights.com がある)、utm を
- * 読むコードはこのアプリのどこにも無い。例外は `/notes` の一覧で、`?q=` や `?page=` は
- * つい先日までこのアプリ自身が出していた効くクエリなので、そのまま `/articles` へ渡す。
+ * 読むコードはこのアプリのどこにも無い。
  */
 export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
@@ -169,8 +159,6 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
     // 記事ページが `Link: rel="alternate"` で広告していた原文 Markdown の URL (ADR 0009)。
     router.get(`${from}.md`, (c) => permanentRedirect(c, `${articlePath(slug)}.md`));
   }
-
-  router.get("/notes", (c) => temporaryRedirect(c, `/articles${new URL(c.req.url).search}`));
 
   return router;
 }

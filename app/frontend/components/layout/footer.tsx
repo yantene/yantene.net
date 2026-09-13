@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineScale } from "react-icons/hi2";
 import { Link } from "react-router";
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
-import { FeedLink, INLINE_ICON_LINK } from "~/frontend/components/feed/feed-link";
+import { INLINE_ICON_LINK } from "~/frontend/components/feed/feed-link";
 
 interface FooterProps {
   /**
@@ -47,15 +47,15 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
           Copyright &copy; {formatCopyrightYears(copyright)} やんてね All rights reserved.
         </p>
         {/*
-          全ページの足元に置く常設の導線。読み終えて出ていく場所が、この先も
-          繋がっていられること (フィード) と、何の上に立っているか (ライセンス) を示す。
+          全ページの足元に置く常設の導線。読み終えて出ていく場所に、何の上に立っているかを
+          示す。**フィードはここには置かない。** 帯 (ヘッダー) が持っていて、足元にもう一度
+          出すと同じ行き先が 1 ページに 2 つ並ぶ。
         */}
         {/*
           名前を与える。ヘッダーにも nav があるので、無名のままだと支援技術の
           ランドマーク一覧に「navigation」が 2 つ並び、どちらがどこか区別できない。
         */}
         <nav aria-label={t("footer.navLabel")} className="site-footer-links">
-          <FeedLink className="text-xs text-foreground/80" />
           {/*
             絵文字と書体の帰属はライセンスのページが持つ。CC BY 4.0 は、媒体の都合が
             あるときは帰属をまとめた場所へのリンクで条件を満たせると定めている

@@ -12,43 +12,44 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 
 ## 一覧
 
-| #                                                            | タイトル                                                             | Status     |
-| ------------------------------------------------------------ | -------------------------------------------------------------------- | ---------- |
-| [0001](0001-record-architecture-decisions.md)                | アーキテクチャ決定を ADR として記録する                              | Accepted   |
-| [0002](0002-value-objects-at-repository-boundaries.md)       | リポジトリ境界では Value Object / ブランド型で受け渡す               | Accepted   |
-| [0003](0003-clean-architecture-and-cqrs.md)                  | Clean Architecture (DIP) と CQRS を採用する                          | Accepted   |
-| [0004](0004-github-as-content-source-of-truth.md)            | コンテンツリポジトリを GitHub に置き、D1 / R2 をキャッシュにする     | Deprecated |
-| [0005](0005-mdast-over-html-rendering.md)                    | Markdown を HTML ではなく MDAST でフロントエンドに渡す               | Accepted   |
-| [0006](0006-react-router-framework-mode.md)                  | ページ描画は React Router のフレームワークモードに任せる             | Accepted   |
-| [0007](0007-strict-csp-outside-development.md)               | CSP は development でのみ外し、script-src は厳格・style-src は緩める | Accepted   |
-| [0008](0008-interactive-day-clock-via-web-animations-api.md) | 時間の表現を Web Animations API で操作可能にする                     | Accepted   |
-| [0009](0009-serve-note-source-markdown-verbatim.md)          | ノートの原文 Markdown を R2 から verbatim で配信する                 | Accepted   |
-| [0010](0010-hand-written-service-worker-without-precache.md) | Service Worker を手書きし、先回りして蓄えない                        | Accepted   |
-| [0011](0011-reader-session-in-kv.md)                         | 読み手のセッションを KV に置き、同じ日の読み直しを数えない           | Accepted   |
-| [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションは一人 1 つに限り、Twemoji はその UI にだけ当てる        | Accepted   |
-| [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に Temml で MathML へ組み、MDAST に埋めて配る       | Accepted   |
-| [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす        | Accepted   |
-| [0012](0012-emoji-reactions-with-twemoji.md)                 | リアクションは一人 1 つに限り、Twemoji はその UI にだけ当てる        | Accepted   |
-| [0016](0016-receive-webmentions-in-house.md)                 | Webmention の受信を自前で実装し、検証は非同期に回す                  | Accepted   |
-| [0017](0017-webfonts-from-google-fonts.md)                   | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く        | Accepted   |
-| [0013](0013-math-as-mathml-at-refresh-time.md)               | 数式は refresh 時に Temml で MathML へ組み、MDAST に埋めて配る       | Accepted   |
-| [0007](0007-strict-csp-outside-development.md)               | CSP は development でのみ外し、script-src は厳格・style-src は緩める | Accepted   |
-| [0020](0020-negotiate-note-source-markdown-on-accept.md)     | `/notes/<slug>` は Accept を見て原文 Markdown を返す                 | Accepted   |
-| [0021](0021-measure-reading-with-web-analytics-beacon.md)    | 閲覧は Web Analytics のビーコンで数え、script-src を 1 つ開く        | Accepted   |
-| [0022](0022-bake-midi-into-opus-and-serve-audio-assets.md)   | 曲は refresh 前に Opus へ焼いて配り、MIDI は原本として添える         | Accepted   |
-| [0023](0023-render-mermaid-in-the-browser.md)                | Mermaid の図はブラウザで組み、本体は遅延して読む                     | Accepted   |
-| [0024](0024-clock-origin-from-real-time-at-ssr.md)           | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める      | Accepted   |
-| [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードの絵の取り逃しを別の状態として持ち、短い期限で取り直す   | Accepted   |
-| [0014](0014-link-cards-from-ogp-only.md)                     | リンクカードは短い不調の間だけ前回の中身で持ちこたえる               | Accepted   |
-| [0028](0028-relate-notes-by-embedding-similarity.md)         | 関連ノートを、refresh 時に作るベクトルの近さで並べる                 | Accepted   |
-| [0029](0029-retire-tags.md)                                  | タグをやめ、分類は `article` の 1 つに畳む                           | Accepted   |
-| [0030](0030-switch-embedding-model-to-qwen3.md)              | 関連ノートの埋め込みモデルを qwen3-embedding-0.6b に替える           | Accepted   |
-| [0031](0031-raise-embedding-input-limit-to-10000.md)         | 埋め込みの入力の上限を 8,000 字から 10,000 字に上げる                | Accepted   |
-| [0032](0032-call-long-form-posts-articles.md)                | 長文の投稿を article と呼び、`/articles/<slug>` で配る               | Accepted   |
-| [0033](0033-rename-note-to-article-in-storage-and-code.md)   | 長文の記事を指す `note` を、保存とコードの名前からも無くす           | Accepted   |
-| [0034](0034-artifacts-as-content-source-of-truth.md)         | コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む  | Accepted   |
-| [0035](0035-refresh-on-push-through-a-queue.md)              | コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる  | Accepted   |
-| [0036](0036-authenticate-admin-with-passkey.md)              | 管理者を passkey で認証し、セッションを KV に置く                    | Accepted   |
+| #                                                                    | タイトル                                                             | Status     |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------- |
+| [0001](0001-record-architecture-decisions.md)                        | アーキテクチャ決定を ADR として記録する                              | Accepted   |
+| [0002](0002-value-objects-at-repository-boundaries.md)               | リポジトリ境界では Value Object / ブランド型で受け渡す               | Accepted   |
+| [0003](0003-clean-architecture-and-cqrs.md)                          | Clean Architecture (DIP) と CQRS を採用する                          | Accepted   |
+| [0004](0004-github-as-content-source-of-truth.md)                    | コンテンツリポジトリを GitHub に置き、D1 / R2 をキャッシュにする     | Deprecated |
+| [0005](0005-mdast-over-html-rendering.md)                            | Markdown を HTML ではなく MDAST でフロントエンドに渡す               | Accepted   |
+| [0006](0006-react-router-framework-mode.md)                          | ページ描画は React Router のフレームワークモードに任せる             | Accepted   |
+| [0007](0007-strict-csp-outside-development.md)                       | CSP は development でのみ外し、script-src は厳格・style-src は緩める | Accepted   |
+| [0008](0008-interactive-day-clock-via-web-animations-api.md)         | 時間の表現を Web Animations API で操作可能にする                     | Accepted   |
+| [0009](0009-serve-note-source-markdown-verbatim.md)                  | ノートの原文 Markdown を R2 から verbatim で配信する                 | Accepted   |
+| [0010](0010-hand-written-service-worker-without-precache.md)         | Service Worker を手書きし、先回りして蓄えない                        | Accepted   |
+| [0011](0011-reader-session-in-kv.md)                                 | 読み手のセッションを KV に置き、同じ日の読み直しを数えない           | Accepted   |
+| [0012](0012-emoji-reactions-with-twemoji.md)                         | リアクションは一人 1 つに限り、Twemoji はその UI にだけ当てる        | Accepted   |
+| [0013](0013-math-as-mathml-at-refresh-time.md)                       | 数式は refresh 時に Temml で MathML へ組み、MDAST に埋めて配る       | Accepted   |
+| [0014](0014-link-cards-from-ogp-only.md)                             | リンクカードは OGP だけを見て、取れなければ素のリンクに落とす        | Accepted   |
+| [0012](0012-emoji-reactions-with-twemoji.md)                         | リアクションは一人 1 つに限り、Twemoji はその UI にだけ当てる        | Accepted   |
+| [0016](0016-receive-webmentions-in-house.md)                         | Webmention の受信を自前で実装し、検証は非同期に回す                  | Accepted   |
+| [0017](0017-webfonts-from-google-fonts.md)                           | 本文と数式の字を Google Fonts から読み、CSP を 2 ホストに開く        | Accepted   |
+| [0013](0013-math-as-mathml-at-refresh-time.md)                       | 数式は refresh 時に Temml で MathML へ組み、MDAST に埋めて配る       | Accepted   |
+| [0007](0007-strict-csp-outside-development.md)                       | CSP は development でのみ外し、script-src は厳格・style-src は緩める | Accepted   |
+| [0020](0020-negotiate-note-source-markdown-on-accept.md)             | `/notes/<slug>` は Accept を見て原文 Markdown を返す                 | Accepted   |
+| [0021](0021-measure-reading-with-web-analytics-beacon.md)            | 閲覧は Web Analytics のビーコンで数え、script-src を 1 つ開く        | Accepted   |
+| [0022](0022-bake-midi-into-opus-and-serve-audio-assets.md)           | 曲は refresh 前に Opus へ焼いて配り、MIDI は原本として添える         | Accepted   |
+| [0023](0023-render-mermaid-in-the-browser.md)                        | Mermaid の図はブラウザで組み、本体は遅延して読む                     | Accepted   |
+| [0024](0024-clock-origin-from-real-time-at-ssr.md)                   | 時計の開き位置を SSR で決め、JST の実時刻と実際の月齢から始める      | Accepted   |
+| [0014](0014-link-cards-from-ogp-only.md)                             | リンクカードの絵の取り逃しを別の状態として持ち、短い期限で取り直す   | Accepted   |
+| [0014](0014-link-cards-from-ogp-only.md)                             | リンクカードは短い不調の間だけ前回の中身で持ちこたえる               | Accepted   |
+| [0028](0028-relate-notes-by-embedding-similarity.md)                 | 関連ノートを、refresh 時に作るベクトルの近さで並べる                 | Accepted   |
+| [0029](0029-retire-tags.md)                                          | タグをやめ、分類は `article` の 1 つに畳む                           | Accepted   |
+| [0030](0030-switch-embedding-model-to-qwen3.md)                      | 関連ノートの埋め込みモデルを qwen3-embedding-0.6b に替える           | Accepted   |
+| [0031](0031-raise-embedding-input-limit-to-10000.md)                 | 埋め込みの入力の上限を 8,000 字から 10,000 字に上げる                | Accepted   |
+| [0032](0032-call-long-form-posts-articles.md)                        | 長文の投稿を article と呼び、`/articles/<slug>` で配る               | Accepted   |
+| [0033](0033-rename-note-to-article-in-storage-and-code.md)           | 長文の記事を指す `note` を、保存とコードの名前からも無くす           | Accepted   |
+| [0034](0034-artifacts-as-content-source-of-truth.md)                 | コンテンツリポジトリを Cloudflare Artifacts に置き、REST API で読む  | Accepted   |
+| [0035](0035-refresh-on-push-through-a-queue.md)                      | コンテンツリポジトリへの push は Queue で受け、同期を直列に走らせる  | Accepted   |
+| [0036](0036-authenticate-admin-with-passkey.md)                      | 管理者を passkey で認証し、セッションを KV に置く                    | Accepted   |
+| [0037](0037-switch-locale-through-a-cookie-and-a-server-endpoint.md) | 表示する言語は cookie に預け、切り替えはサーバーの受け口で行う       | Accepted   |
 
 ## 統合した番号
 

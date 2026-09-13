@@ -6,12 +6,18 @@
   "home": {
     "heading": "yantene",
     "tagline": "From the other side of the web",
-    "recentArticles": "Recent articles",
-    "popularArticles": "Popular articles",
+    "latest": "Latest",
+    "popular": "Popular",
     "viewAll": "View all"
   },
   "navigation": {
-    "loading": "Loading"
+    "loading": "Loading",
+    "siteNavLabel": "Site",
+    "menuLabel": "Menu",
+    "about": "About",
+    "articles": "Articles",
+    "notes": "Notes",
+    "slides": "Slides"
   },
   "feed": {
     "label": "Feed"
@@ -48,7 +54,14 @@
     "title": "Search",
     "placeholder": "Type keywords",
     "empty": "No matching articles.",
-    "resultsFor": "Results for \"{{query}}\" — {{count}}"
+    "resultsFor": "Results for \"{{query}}\" — {{count}}",
+    "searching": "Searching…",
+    "failed": "Could not search. Please try again.",
+    "hint": "Search articles by title and body.",
+    "seeAll": "See all results",
+    "hintMove": "to move",
+    "hintOpen": "to open",
+    "hintClose": "to close"
   },
   "share": {
     "title": "Share",
@@ -137,5 +150,14 @@
       "duplicate": "This passkey is already registered.",
       "notAllowed": "Registration is not allowed right now. Sign in, or check the registration token."
     }
+  },
+  "locale": {
+    "label": "Display language"
+  },
+  "comingSoon": {
+    "badge": "Coming soon",
+    "about": "A profile, and what I have been up to.",
+    "notes": "Short posts, the kind that do not need a title.",
+    "slides": "Slides from talks, and the decks that never became one."
   }
 }

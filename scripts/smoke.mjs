@@ -60,6 +60,21 @@ const targets = [
     path: "/licenses",
     expectBodyIncludes: "CC BY 4.0",
   },
+  /*
+   * ヘッダーのナビが指す 3 つ。中身が入るまでは「準備中」の一枚 (#413 / #412 / #415)。
+   *
+   * **本文まで見る。** とくに `/notes` は、記事一覧へ 307 で送っていた URL を明け渡した
+   * 場所で (ADR 0032)、旧 URL の表 (legacy-redirects.handler.ts) はページ委譲より先に
+   * 応える。表にうっかり戻ると、`<Link>` で辿ったときだけページが出て、直に開いたとき・
+   * 再読み込み・クローラーからは記事一覧へ飛ぶ、という来かたで行き先が変わる状態に戻る。
+   * どれも 5xx にはならないので、素の指定では見張ったことにならない。
+   *
+   * 見るのは `noindex` の印。中身が無いうちだけ立つもので、記事一覧には出ない。
+   * 文言と違ってロケールで変わらない。
+   */
+  { label: "/about", path: "/about", expectBodyIncludes: 'content="noindex"' },
+  { label: "/notes", path: "/notes", expectBodyIncludes: 'content="noindex"' },
+  { label: "/slides", path: "/slides", expectBodyIncludes: 'content="noindex"' },
   "/articles/does-not-exist",
   /*
    * 記事 URL は Accept 次第で HTML と原文 Markdown に分かれる (ADR 0020)。取り違えは

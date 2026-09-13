@@ -179,23 +179,38 @@ describe("buildPageMeta", () => {
    * noindex になる (jsonLd で「渡さないページが全部 500」を出した前科がある)。
    */
   it("omits the robots meta when it is not asked for", () => {
-    for (const pathname of ["/", "/articles", "/articles/foo", "/licenses"]) {
-      const meta = buildPageMeta({ locale: "ja", origin, pathname });
-
-      expect(meta.some((d) => (d as Record<string, unknown>).name === "robots")).toBe(false);
+    for (const path of ["/", "/articles", "/articles/foo", "/licenses"]) {
+      expect(
+        find(buildPageMeta({ locale: "ja", origin, pathname: path }), "name", "robots"),
+      ).toBeUndefined();
     }
   });
 
-  it("emits the robots meta when noindex is asked for", () => {
-    const meta = buildPageMeta({ locale: "ja", origin, pathname, robots: "noindex" });
+  /*
+   * 「準備中」のページは noindex だけ。そのページを拾ってほしくないだけで、ここから
+   * 先のリンク (ヘッダーのナビ) は辿ってもらってよい。
+   */
+  it("marks a page noindex without nofollow by default", () => {
+    expect(
+      find(buildPageMeta({ locale: "ja", origin, pathname, noindex: true }), "name", "robots"),
+    ).toBe("noindex");
+  });
 
-    expect(meta).toContainEqual({ name: "robots", content: "noindex, nofollow" });
+  /* 管理画面のように、その先ごと隠したいページだけが nofollow まで足す。 */
+  it("adds nofollow when the page should not be followed either", () => {
+    expect(
+      find(
+        buildPageMeta({ locale: "ja", origin, pathname, noindex: true, nofollow: true }),
+        "name",
+        "robots",
+      ),
+    ).toBe("noindex, nofollow");
   });
 
   it("still emits the full set alongside noindex", () => {
     // noindex のページでも title と canonical は出す。描かないと、管理画面の
     // タブが無題になり、開いているページが分からなくなる。
-    const meta = buildPageMeta({ locale: "ja", origin, pathname, robots: "noindex" });
+    const meta = buildPageMeta({ locale: "ja", origin, pathname, noindex: true, nofollow: true });
 
     expect(meta).toContainEqual({
       tagName: "link",
