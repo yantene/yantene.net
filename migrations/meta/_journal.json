@@ -120,6 +120,13 @@
       "when": 1789305487336,
       "tag": "0016_add_articles_status",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1789324127544,
+      "tag": "0017_create_works_table",
+      "breakpoints": true
     }
   ]
 }
