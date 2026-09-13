@@ -30,7 +30,7 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/sitemap.xml", async (c) => {
     const origin = new URL(c.req.url).origin;
-    const result = await new D1ArticleQueryRepository(c.env.D1).list({
+    const result = await D1ArticleQueryRepository.forReaders(c.env.D1).list({
       limit: SITEMAP_ARTICLE_LIMIT,
       offset: 0,
       sortBy: "lastModifiedOn",

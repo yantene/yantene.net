@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cardHtml, defaultCardHtml, OG_TEMPLATE_VERSION } from "./og-card";
-import { ArticleSlug } from "~/backend/domain/article";
+import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -34,11 +34,22 @@ const imageHeaders = {
   "Cache-Control": "public, max-age=31536000, immutable",
 };
 
-/** HTML を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。 */
-async function renderAndCache(env: Env, cacheKey: string, html: string): Promise<Response> {
+/**
+ * HTML を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。
+ *
+ * `extraHeaders` は限定公開の記事に `X-Robots-Tag: noindex` を足すためのもの。絵には
+ * 記事の題が焼き込んであるので、画像検索に出ると題と存在が漏れる (ADR 0040)。
+ */
+async function renderAndCache(
+  env: Env,
+  cacheKey: string,
+  html: string,
+  extraHeaders: Readonly<Record<string, string>> = {},
+): Promise<Response> {
+  const headers = { ...imageHeaders, ...extraHeaders };
   const cached = await env.R2.get(cacheKey);
   if (cached !== null) {
-    return new Response(cached.body, { headers: imageHeaders });
+    return new Response(cached.body, { headers });
   }
   // workers-og は WASM を含むため動的 import する (トップレベル import だと
   // index.ts を読むだけで WASM ロードが走り、テスト環境が壊れる)。
@@ -53,7 +64,7 @@ async function renderAndCache(env: Env, cacheKey: string, html: string): Promise
   await env.R2.put(cacheKey, bytes, {
     httpMetadata: { contentType: "image/png" },
   });
-  return new Response(bytes, { headers: imageHeaders });
+  return new Response(bytes, { headers });
 }
 
 /**
@@ -77,7 +88,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     const slug = ArticleSlug.parse(c.req.param("slug"));
     if (slug === undefined) return notFoundResponse("article not found");
 
-    const article = await new D1ArticleQueryRepository(c.env.D1).findBySlug(slug);
+    const article = await D1ArticleQueryRepository.forReaders(c.env.D1).findBySlug(slug);
     if (article === undefined) return notFoundResponse("article not found");
 
     const html = cardHtml({
@@ -89,6 +100,9 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       c.env,
       `og/articles/${slug.toString()}-${article.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
       html,
+      // 限定公開の絵は検索エンジンに載せない。題が焼き込んであるので、画像検索に
+      // 出ると題と存在が漏れ、そこから記事に辿り着ける (ADR 0040)。
+      shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {},
     );
   });
 

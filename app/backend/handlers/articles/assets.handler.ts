@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./content-cache-control";
-import { ArticleSlug } from "~/backend/domain/article";
-import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
+import { privateCacheHeadersFor, resolveArticleReadAccess } from "./article-read-access";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -24,11 +24,19 @@ export function createArticleAssetsRouter(): Hono<{ Bindings: Env }> {
     if (slug === undefined) return notFoundResponse("asset not found");
 
     const path = c.req.param("path");
-    // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
-    const [article, asset] = await Promise.all([
-      new D1ArticleQueryRepository(c.env.D1).findBySlug(slug),
+
+    /*
+     * 管理者なら全 status。**下書きをプレビューするときに絵だけ 404 にならないよう、
+     * ここも記事ページと同じ判定を通す** (ADR 0040)。
+     *
+     * R2 の取得と並べる。誰なのかを見るのに置き場を引くのは cookie を持つ人だけだが、
+     * 直列に置くと**画像 1 枚ごとにその往復が R2 の前に挟まる**。
+     */
+    const [access, asset] = await Promise.all([
+      resolveArticleReadAccess(c.env, c.req.raw),
       new R2ArticleContentCache(c.env.R2).getAsset(slug, path),
     ]);
+    const article = await access.query.findBySlug(slug);
 
     // 記事として索引に無いなら、その絵も無いことにする。原文と揃えて、在ることも
     // 教えない (存在の推測を許さない)。
@@ -42,6 +50,11 @@ export function createArticleAssetsRouter(): Hono<{ Bindings: Env }> {
       headers: {
         "Content-Type": asset.contentType,
         "Cache-Control": contentCacheControlFor(c.env),
+        // 限定公開の絵も検索エンジンに載せない (ADR 0040)。画像検索に出ると、
+        // そこから記事へ辿り着けてしまう。
+        ...(shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {}),
+        // 管理者にしか見えない記事の絵は共有キャッシュに載せない (ADR 0040)。
+        ...privateCacheHeadersFor(access, article.status),
       },
     });
   });

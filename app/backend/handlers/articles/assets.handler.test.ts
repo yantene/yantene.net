@@ -21,6 +21,7 @@ async function seedArticle(d1: D1Database): Promise<void> {
       summary: "A summary.",
       publishedOn: Temporal.PlainDate.from("2026-01-15"),
       lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
+      status: "published",
       sourceHash: "h1",
     }),
   );

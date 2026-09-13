@@ -2,15 +2,27 @@ import { Hono } from "hono";
 import { toArticleDetail } from "./article-detail-view";
 import { buildPayload, type ReactionsPayload } from "./reaction.handler";
 import { extractHeadings } from "./toc-headings";
+import {
+  privateCacheHeadersFor,
+  resolveArticleReadAccess,
+  shouldKeepResponsePrivate,
+} from "./article-read-access";
 import { recordArticleView, type ArticleViewRecording } from "./view-recording";
 import type { ArticleDetail, PublicArticleMeta } from "./article-detail-view";
-import type { Article } from "~/backend/domain/article";
+import type { ArticleReadAccess } from "./article-read-access";
+import type { Article, ArticleStatus } from "~/backend/domain/article";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import { LinkCardUrl } from "~/backend/domain/link-card";
-import { articlePath, ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
+import {
+  articlePath,
+  ArticleNotFoundError,
+  ArticleSlug,
+  isReachableByReaders,
+  shouldTellRobotsNoindex,
+} from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
@@ -44,14 +56,17 @@ const RELATED_LIMIT = 6;
 interface ResolvedArticle {
   readonly detail: ArticleDetail;
   readonly articleId: string;
+  /** 引いた記事の段階 (ADR 0040)。noindex を立てるかの判断に使う。 */
+  readonly status: ArticleStatus;
 }
 
 async function loadArticleDetail(
   env: Env,
+  access: ArticleReadAccess,
   slug: ArticleSlug,
 ): Promise<ResolvedArticle | undefined> {
   const [article, mdast] = await Promise.all([
-    new D1ArticleQueryRepository(env.D1).findBySlug(slug),
+    access.query.findBySlug(slug),
     new R2ArticleContentCache(env.R2).getMdast(slug),
   ]);
   if (article === undefined) return undefined;
@@ -59,7 +74,11 @@ async function loadArticleDetail(
     throw new Error(`MDAST cache is missing for an indexed article: ${slug.toString()}`);
   }
   const linkCards = await loadLinkCards(env, mdast as Root);
-  return { detail: toArticleDetail(article, mdast, linkCards), articleId: article.id };
+  return {
+    detail: toArticleDetail(article, mdast, linkCards),
+    articleId: article.id,
+    status: article.status,
+  };
 }
 
 /**
@@ -79,9 +98,13 @@ async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
 }
 
 /** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */
-async function resolveDetail(env: Env, slugParam: string): Promise<ResolvedArticle | undefined> {
+async function resolveDetail(
+  env: Env,
+  access: ArticleReadAccess,
+  slugParam: string,
+): Promise<ResolvedArticle | undefined> {
   const slug = ArticleSlug.parse(slugParam);
-  return slug === undefined ? undefined : loadArticleDetail(env, slug);
+  return slug === undefined ? undefined : loadArticleDetail(env, access, slug);
 }
 
 /**
@@ -93,9 +116,12 @@ export function createArticleDetailApiRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/:slug", async (c) => {
     const slugParam = c.req.param("slug");
-    const resolved = await resolveDetail(c.env, slugParam);
+    // 管理者なら全 status を引く (ADR 0040)。記事ページと同じ判定を通す。
+    const access = await resolveArticleReadAccess(c.env, c.req.raw);
+    const resolved = await resolveDetail(c.env, access, slugParam);
     if (resolved === undefined) throw new ArticleNotFoundError(slugParam);
-    return c.json(resolved.detail);
+    // 管理者にしか見えない記事は共有キャッシュに載せない (ADR 0040)。
+    return c.json(resolved.detail, { headers: privateCacheHeadersFor(access, resolved.status) });
   });
 
   return router;
@@ -139,6 +165,24 @@ export type ArticleDetailPageData =
       readonly related: readonly PublicArticle[];
       readonly headings: readonly TocHeading[];
       /**
+       * 検索エンジンに載せないよう伝えるか (ADR 0040)。`unlisted` のときだけ真。
+       *
+       * 隠す status は読み手に 404 を返すので、伝える相手がいない。管理者が下書きを
+       * 見ているときも真にはしない — 見えているのは cookie を持つ本人だけで、
+       * クローラーはそもそも辿り着けない。
+       */
+      readonly noindex: boolean;
+      /** 管理者として引いたか。 */
+      readonly admin: boolean;
+      /**
+       * この応答を共有キャッシュから遠ざけるか。**真なら loader が
+       * `PRIVATE_CACHE_HEADERS` を付ける** (ヘッダーを付けられるのはあちら)。
+       *
+       * `admin` と一致しない。読み手も URL で辿り着ける記事なら、管理者が見ていても
+       * 中身は同じなので遠ざける理由が無い (`privateCacheHeadersFor`)。
+       */
+      readonly privateResponse: boolean;
+      /**
        * 押されているリアクションと、この読み手が押しているもの。
        *
        * ページの描画に混ぜて返すのは、SSR の時点で「自分が押したか」を確定させるため。
@@ -181,20 +225,36 @@ async function loadRelated(
  */
 export async function loadArticleDetailPage(
   env: Env,
+  request: Request,
   slugParam: string,
   origin: string,
   recording: ArticleViewRecording | null,
 ): Promise<ArticleDetailPageData> {
-  const resolved = await resolveDetail(env, slugParam);
+  // 管理者なら全 status を引く (ADR 0040)。読み手には published + unlisted だけ。
+  const access = await resolveArticleReadAccess(env, request);
+  const resolved = await resolveDetail(env, access, slugParam);
   if (resolved === undefined) return { found: false };
 
   const detail = resolved.detail;
-  // 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
-  if (recording !== null) {
+  /*
+   * 読まれた記事として数える。応答を返し終えてから走るので、描画は待たされない。
+   *
+   * **読み手が到達できる記事だけ数える** (ADR 0040)。管理者が下書きを直しながら
+   * 何度も開くと、公開する前から閲覧数と人気スコアが積み上がってしまう。
+   */
+  if (recording !== null && isReachableByReaders(resolved.status)) {
     recordArticleView(env, { id: resolved.articleId, slug: detail.article.slug }, recording);
   }
 
-  const query = new D1ArticleQueryRepository(env.D1);
+  /*
+   * **関連記事は管理者でも読み手向けで固定する。** 下書きを関連記事として並べたい
+   * わけではない。
+   *
+   * 近さ (article_similarities) は全 status の間で書き直されるので、絞るのは
+   * D1ArticleEmbeddingQueryRepository.findRelatedSlugs の側。あちらで絞らずに
+   * ここだけで落とすと、上位 N 件を下書きが埋めたぶん関連記事が短くなる。
+   */
+  const query = D1ArticleQueryRepository.forReaders(env.D1);
   const slug = ArticleSlug.create(detail.article.slug);
   const [related, reactions, webmentions, blockedHosts] = await Promise.all([
     loadRelated(env, query, slug),
@@ -226,6 +286,9 @@ export async function loadArticleDetailPage(
     webmentions: toWebmentionGroups(shown),
     related: related.map((article) => toPublicArticle(article)),
     headings: extractHeadings(mdast),
+    noindex: shouldTellRobotsNoindex(resolved.status),
+    admin: access.admin,
+    privateResponse: shouldKeepResponsePrivate(access, resolved.status),
     reactions,
     jsonLd: {
       "@context": "https://schema.org",

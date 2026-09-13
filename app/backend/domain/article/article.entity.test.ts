@@ -19,6 +19,7 @@ describe("Article.create", () => {
       summary: "A short summary.",
       publishedOn,
       lastModifiedOn,
+      status: "published",
       sourceHash: "abc123",
     });
 
@@ -42,6 +43,7 @@ describe("Article.create", () => {
       imageUrl: ImageUrl.create("/api/v1/articles/my-article/assets/cover.png"),
       publishedOn,
       lastModifiedOn,
+      status: "published",
       sourceHash: "h",
     });
 
@@ -61,6 +63,7 @@ describe("Article.reconstruct", () => {
       imageUrl: undefined,
       publishedOn,
       lastModifiedOn,
+      status: "published",
       sourceHash: "h",
       createdAt,
       updatedAt,

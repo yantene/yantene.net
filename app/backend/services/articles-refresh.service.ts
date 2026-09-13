@@ -7,7 +7,7 @@ import { mapTree } from "./mdast-tree";
 import { resolveAssetUrl } from "./article-asset-url";
 import {
   parseArticleContent,
-  VisibilityValueError,
+  StatusValueError,
   type ParsedArticleContent,
 } from "./article-content-parser";
 import type { Definition, Image, Link, Nodes, Root } from "mdast";
@@ -19,7 +19,13 @@ import type {
   IArticleSearchIndex,
 } from "~/backend/domain/article";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import {
+  ImageUrl,
+  Article,
+  ArticleSlug,
+  ArticleTitle,
+  isListedToReaders,
+} from "~/backend/domain/article";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /**
@@ -42,8 +48,6 @@ export interface RefreshResult {
   readonly processed: string[];
   /** 削除した slug (コンテンツリポジトリから消えた記事)。 */
   readonly deleted: string[];
-  /** 非公開の指定により同期しなかった slug。既に載っていたものは deleted にも入る。 */
-  readonly unpublished: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
   /**
@@ -117,8 +121,9 @@ export class ArticlesRefreshService {
     // なる。閲覧数も届いた Webmention もコンテンツリポジトリには無いので、消したら戻せない。
     // 既に何件か載っているのに 1 件も見つからないのは、同期ではなく事故である。
     //
-    // 全記事を private にしたときはここに掛からない (非公開の記事もツリーには
-    // 在るので groups には入る)。掛かるのはコンテンツリポジトリの側が空に見えるときだけ。
+    // status を何にしても、ここには掛からない。どの status の記事も同期するので
+    // groups にも stored にも載る (ADR 0040)。掛かるのはコンテンツリポジトリの側が
+    // 空に見えるときだけ。
     if (stored.size > 0 && groups.length === 0) {
       throw new Error(
         `refusing to delete all ${stored.size.toString()} article(s): the content tree has no articles/*.md`,
@@ -127,7 +132,6 @@ export class ArticlesRefreshService {
 
     const processed: string[] = [];
     const skipped: { path: string; reason: string }[] = [];
-    const unpublished: string[] = [];
     const seen = new Set<string>();
     const linkedUrls = new Set<string>();
 
@@ -153,9 +157,9 @@ export class ArticlesRefreshService {
       // 変更なしは読まずに飛ばす。force のときは実装変更を既存記事へ反映するため
       // 読み直す。
       //
-      // ハッシュが一致するのは前回同期できた記事、つまり前回は公開だったものに限る
-      // (非公開なら D1 に載らず、stored に無いので一致しようがない)。visibility を
-      // 書き換えれば contentHash も変わるため、公開 → 非公開の切り替えは必ず下に抜ける。
+      // どの status の記事も D1 に載るので、ハッシュが一致するのは「前回も同じ中身で
+      // 同期できた記事」という意味しか持たない。status を書き換えれば contentHash も
+      // 変わるため、段階の移り変わりは必ず下に抜ける。
       const isUnchanged = stored.get(slug) === group.contentHash;
       if (options.force !== true && isUnchanged) {
         seen.add(slug);
@@ -164,8 +168,9 @@ export class ArticlesRefreshService {
 
       const source = await attempt(group, () => this.readArticle(group));
       if (!source.ok) {
-        // 読めなかった理由はコンテンツ不正 (読めない LaTeX / 読めない visibility) に
-        // 限られる。infra 障害は attempt が握らずに送出するので、ここには来ない。
+        // 読めなかった理由はコンテンツ不正 (読めない LaTeX / 読めない status / 旧書式の
+        // visibility の残り) に限られる。infra 障害は attempt が握らずに送出するので
+        // ここには来ない。
         // つまり記事自体はコンテンツリポジトリに在るので、seen に入れて掃除の対象から外す。
         // 入れ忘れると「コンテンツリポジトリから消えた記事」と同じ経路で D1・R2 から消え、閲覧数も
         // 届いた Webmention も道連れになる。Webmention はコンテンツリポジトリのどこにも無いので戻せない。
@@ -176,14 +181,11 @@ export class ArticlesRefreshService {
         continue;
       }
 
-      // 非公開の記事は seen に入れない。コンテンツリポジトリから消えた記事と同じ経路で
-      // D1 と R2 から掃除され、以後どの配信経路にも現れなくなる。
-      // 配信側で除外条件を書き足す方式だと、経路が増えるたびに漏れが起きる。
-      if (source.value.parsed.frontmatter.visibility === "private") {
-        unpublished.push(slug);
-        continue;
-      }
-
+      // status で分岐しない。**どの段階の記事も同期する** (ADR 0040)。読み手から
+      // 隠すのは配信の時点で行う (D1ArticleQueryRepository.forReaders)。
+      //
+      // 同期しない方式だと、取り下げた記事に届いていた Webmention と閲覧数が戻らない。
+      // どちらもコンテンツリポジトリのどこにも無いので、消したら復元できない。
       seen.add(slug);
       const synced = await attempt(group, () => this.syncArticle(group, source.value));
       if (!synced.ok) continue;
@@ -195,7 +197,6 @@ export class ArticlesRefreshService {
     return {
       processed,
       deleted,
-      unpublished,
       skipped,
       linkedUrls: [...linkedUrls],
     };
@@ -204,9 +205,7 @@ export class ArticlesRefreshService {
   /**
    * 原文を読んで解析する。書き込みには進まない。
    *
-   * 非公開の判定を syncArticle の内側に置くと、書き込みを始めてから引き返すことになる。
-   * かといって判定のためだけに読み直すと、公開する記事を 2 度読んで 2 度解析すること
-   * になる。読むのはここ 1 回にして、結果を syncArticle へ渡す。
+   * 読むのは 1 記事につき 1 回。結果をそのまま syncArticle へ渡す。
    */
   private async readArticle(group: ArticleGroup): Promise<ArticleSource> {
     const bytes = await this.content.readFile(group.sourcePath);
@@ -268,11 +267,25 @@ export class ArticlesRefreshService {
      * だけが新しくなり、**次の refresh がこの記事を読まずに飛ばす**ので索引が古い
      * まま固まる。force を流すまで直らず、直す必要があることも表に出ない。
      */
-    await this.searchIndex.index({
-      slug: group.slug,
-      title: article.title.toString(),
-      body: mdastToString(sized),
-    });
+    /*
+     * 索引に入れるのは `published` だけ (ADR 0040)。
+     *
+     * 索引はリポジトリを通らずに D1 を直接引かれるので、ここを素通りさせると
+     * **上位 N 件を下書きが埋めてから forReaders が落とす**ことになり、検索結果が
+     * N 件に足りなくなる。絞るのは読み取りではなく、索引に入れる時点。
+     *
+     * 公開 → 取り下げの向きも拾う。段階が変われば contentHash も変わるのでここへ
+     * 来る。落とさないと、取り下げた記事が検索から出続ける。
+     */
+    if (isListedToReaders(article.status)) {
+      await this.searchIndex.index({
+        slug: group.slug,
+        title: article.title.toString(),
+        body: mdastToString(sized),
+      });
+    } else {
+      await this.searchIndex.remove(group.slug);
+    }
     await this.command.upsert(article);
 
     return collectBareLinkUrls(sized);
@@ -394,7 +407,7 @@ function fnv1a(input: string): string {
 }
 
 /**
- * Markdown を解析する。読めない LaTeX と読めない visibility はコンテンツ不正として
+ * Markdown を解析する。読めない LaTeX と読めない status はコンテンツ不正として
  * 扱い、その記事だけをスキップの対象にする (誤字 1 つで refresh 全体を落とさない)。
  * それ以外の失敗はパーサの不具合なので、握りつぶさず送出する。
  */
@@ -402,7 +415,7 @@ function parseContent(markdown: string): ParsedArticleContent {
   try {
     return parseArticleContent(markdown);
   } catch (error) {
-    if (error instanceof MathSyntaxError || error instanceof VisibilityValueError) {
+    if (error instanceof MathSyntaxError || error instanceof StatusValueError) {
       throw new ArticleContentError(error.message);
     }
     throw error;
@@ -440,6 +453,7 @@ function buildArticleContent(
       imageUrl,
       publishedOn,
       lastModifiedOn,
+      status: parsed.frontmatter.status,
       sourceHash: group.contentHash,
     });
 

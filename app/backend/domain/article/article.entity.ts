@@ -1,6 +1,7 @@
 import type { ImageUrl } from "./image-url.vo";
 import type { ArticleSlug } from "./article-slug.vo";
 import type { ArticleTitle } from "./article-title.vo";
+import type { ArticleStatus } from "./article-status";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
@@ -18,6 +19,13 @@ interface ArticleFields<T extends IPersisted | IUnpersisted> {
   readonly publishedOn: Temporal.PlainDate;
   /** フロントマター由来の最終更新日 (日付のみ)。 */
   readonly lastModifiedOn: Temporal.PlainDate;
+  /**
+   * 記事の段階と公開範囲 (ADR 0040)。フロントマターに書かなければ `published`。
+   *
+   * **この値は「同期するか」を決めない。** どの status の記事も D1 / R2 に載る。
+   * 読み手から隠すのは配信の時点で行う。
+   */
+  readonly status: ArticleStatus;
   /**
    * コンテンツリポジトリ (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
    * (コンテンツリポジトリのツリーが返すファイルハッシュ)。
@@ -43,6 +51,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl?: ImageUrl;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    status: ArticleStatus;
     sourceHash: string;
   }): Article<IUnpersisted> {
     return new Article({
@@ -53,6 +62,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
       imageUrl: params.imageUrl,
       publishedOn: params.publishedOn,
       lastModifiedOn: params.lastModifiedOn,
+      status: params.status,
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -67,6 +77,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl: ImageUrl | undefined;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
+    status: ArticleStatus;
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -100,6 +111,10 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get lastModifiedOn(): Temporal.PlainDate {
     return this.fields.lastModifiedOn;
+  }
+
+  get status(): ArticleStatus {
+    return this.fields.status;
   }
 
   get sourceHash(): string {

@@ -52,6 +52,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0037](0037-switch-locale-through-a-cookie-and-a-server-endpoint.md) | 表示する言語は cookie に預け、切り替えはサーバーの受け口で行う         | Accepted   |
 | [0038](0038-split-feeds-by-content-kind.md)                          | フィードを種別ごとに分け、`/feed/` の下に並べる                        | Accepted   |
 | [0039](0039-sign-in-with-a-magic-link.md)                            | ログインはメールのマジックリンクで行い、トークンは POST でしか使わない | Accepted   |
+| [0040](0040-article-status-and-reader-facing-repository.md)          | 記事の status を全部同期し、読み取り口を読み手向けと管理者向けに分ける | Accepted   |
 
 ## 統合した番号
 

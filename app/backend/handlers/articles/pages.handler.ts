@@ -58,7 +58,7 @@ export async function loadArticlesListPage(env: Env, url: URL): Promise<Articles
   );
   const searchQuery = (url.searchParams.get("q") ?? "").trim();
 
-  const query = new D1ArticleQueryRepository(env.D1);
+  const query = D1ArticleQueryRepository.forReaders(env.D1);
   const isSearching = searchQuery.length > 0;
   const list = isSearching
     ? await searchArticles(query, searchQuery)
@@ -111,7 +111,7 @@ export interface HomePageData {
  * `/articles` が持つ。
  */
 export async function loadHomePage(env: Env): Promise<HomePageData> {
-  const query = new D1ArticleQueryRepository(env.D1);
+  const query = D1ArticleQueryRepository.forReaders(env.D1);
 
   const recent = await query.list({
     limit: RECENT_COUNT,

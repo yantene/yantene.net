@@ -8,32 +8,26 @@ import { matter } from "vfile-matter";
 import { latexToMathMl } from "./latex-to-mathml";
 import { mapTree, withChildren } from "./mdast-tree";
 import type { Nodes, Root, RootContent } from "mdast";
+import type { ArticleStatus } from "~/backend/domain/article";
+import { DEFAULT_ARTICLE_STATUS, isArticleStatus } from "~/backend/domain/article";
 
 const SUMMARY_MAX_CHARS = 160;
 
 const markdownProcessor = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 
 /**
- * 記事の公開範囲。フロントマターの `visibility` で指定する。
- *
- * 既定は `public`。`private` を書いた記事は同期の対象から外れ、D1 にも R2 にも
- * 載らない (articles-refresh.service.ts)。
- */
-export type ArticleVisibility = "public" | "private";
-
-/**
- * `visibility` として読めない値が書かれていた。
+ * `status` として読めない値が書かれていた。旧書式の `visibility` が残っている場合も
+ * これで報告する。
  *
  * 呼び出し側 (refresh) が記事単位のコンテンツ不正として拾えるよう、infra 障害と
  * 区別できる型にしておく。
  *
- * 読めない値を `private` に倒さないのは、綴りを間違えた記事が黙って消えるため。
- * 隠す方が公開するより傷が浅いのは確かだが、それは「隠すと決めた記事」の話で、
- * `visibility: pubic` と打ち間違えた記事は隠すと決めた覚えがない。同期しない点は
- * 変わらないまま、異常を異常として報告する。
+ * **読めない値を「隠す」に倒さない。** 隠す方が公開するより傷が浅いのは確かだが、
+ * それは「隠すと決めた記事」の話であって、`status: pubished` と打ち間違えた記事は
+ * 隠すと決めた覚えがない。同期しないまま、異常を異常として報告する (ADR 0040)。
  */
-export class VisibilityValueError extends Error {
-  readonly name = "VisibilityValueError";
+export class StatusValueError extends Error {
+  readonly name = "StatusValueError";
 }
 
 /** フロントマターから取り出した生のメタデータ (検証前)。 */
@@ -42,7 +36,7 @@ export interface ArticleFrontmatter {
   readonly imageUrl: string | undefined;
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
-  readonly visibility: ArticleVisibility;
+  readonly status: ArticleStatus;
 }
 
 export interface ParsedArticleContent {
@@ -77,7 +71,7 @@ export function parseArticleContent(markdown: string): ParsedArticleContent {
       imageUrl: asOptionalString(rawMatter.imageUrl),
       publishedOn: asDateString(rawMatter.publishedOn),
       lastModifiedOn: asDateString(rawMatter.lastModifiedOn),
-      visibility: asVisibility(rawMatter.visibility),
+      status: asStatus(rawMatter),
     },
     mdast,
     summary: extractSummary(mdast),
@@ -351,20 +345,34 @@ function asOptionalString(value: unknown): string | undefined {
 }
 
 /**
- * フロントマターの visibility を読む。
+ * フロントマターの status を読む (ADR 0040)。
  *
- * 書いていなければ公開。`public` / `private` 以外が書かれていたら
- * {@link VisibilityValueError} を送出する (どちらとも読めない以上、公開しないまま
- * 書き手に知らせる)。
+ * 書いていなければ `published`。読めない値は {@link StatusValueError} を送出する。
+ *
+ * **旧書式の `visibility` が残っていたらエラーにする。** 無視して既定の `published` に
+ * 倒すと、`visibility: private` と書いたままの下書きが黙って公開される。値が何であっても
+ * (`public` でも) 同じく弾く — 綴りを見て倒し方を変えると、倒し方の一覧が次の漏れになる。
+ *
+ * ⚠️ **気づき方が 2 通りある。** まだ同期していない記事は出てこないので分かるが、
+ * **既に D1 に載っている記事は前の中身のまま配信され続ける** (migration の既定で
+ * `status = 'published'` が入っているため)。画面は正常に見えるのに更新だけが
+ * 反映されなくなるので、気づく手立ては refresh の応答の `skipped` しか無い。
+ * コンテンツリポジトリ側の書き換えは、取りこぼさず一度に済ませること。
  */
-function asVisibility(value: unknown): ArticleVisibility {
-  if (value === undefined || value === null) return "public";
+function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
+  if ("visibility" in rawMatter) {
+    throw new StatusValueError(
+      "frontmatter still has the former `visibility` key; rename it to `status` (ADR 0040)",
+    );
+  }
+
+  const value = rawMatter.status;
+  if (value === undefined || value === null) return DEFAULT_ARTICLE_STATUS;
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    if (normalized === "public") return "public";
-    if (normalized === "private") return "private";
+    if (isArticleStatus(normalized)) return normalized;
   }
-  throw new VisibilityValueError(`frontmatter has unreadable visibility: ${JSON.stringify(value)}`);
+  throw new StatusValueError(`frontmatter has unreadable status: ${JSON.stringify(value)}`);
 }
 
 /**

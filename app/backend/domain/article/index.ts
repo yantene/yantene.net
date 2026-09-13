@@ -3,6 +3,15 @@ export { ImageUrl, InvalidImageUrlError } from "./image-url.vo";
 export { InvalidArticleSlugError, ArticleSlug } from "./article-slug.vo";
 export { InvalidArticleTitleError, ArticleTitle } from "./article-title.vo";
 export { Article } from "./article.entity";
+export {
+  articleStatuses,
+  DEFAULT_ARTICLE_STATUS,
+  isArticleStatus,
+  isListedToReaders,
+  isReachableByReaders,
+  shouldTellRobotsNoindex,
+} from "./article-status";
+export type { ArticleStatus } from "./article-status";
 export type { ArticleId } from "./article.entity";
 export type { CachedAsset, IArticleContentCache } from "./article-content-cache.interface";
 export type { IArticleCommandRepository } from "./article.command-repository.interface";

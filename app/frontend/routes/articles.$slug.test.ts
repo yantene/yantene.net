@@ -9,7 +9,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it } from "vitest";
-import { action } from "./articles.$slug";
+import { action, headers } from "./articles.$slug";
 import type { Route } from "./+types/articles.$slug";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
@@ -42,6 +42,7 @@ async function setup(): Promise<Harness> {
       imageUrl: undefined,
       publishedOn: Temporal.PlainDate.from(PUBLISHED_ON),
       lastModifiedOn: Temporal.PlainDate.from(PUBLISHED_ON),
+      status: "published",
       sourceHash: "hash-0",
     }),
   );
@@ -159,5 +160,46 @@ describe("記事ページの action", () => {
 
     expect(response.status).toBe(303);
     expect(await listReactions(harness)).toEqual([]);
+  });
+});
+
+/*
+ * loader が付けたヘッダーを文書の応答まで運ぶ関数 (ADR 0040)。
+ *
+ * ⚠️ **この export を消すと `Set-Cookie` 以外が黙って捨てられる。** React Router の
+ * `getDocumentHeaders` は、route が `headers` を持たないとき `prependCookies` しか
+ * 呼ばない。管理者の下書きが `private, no-store` 無しで配られ、しかも画面は何も
+ * 変わらないので気づけない。番人としてここに置く。
+ */
+describe("記事ページの headers", () => {
+  const call = (loader: Headers, parent: Headers = new Headers()): Headers =>
+    new Headers(
+      headers({
+        loaderHeaders: loader,
+        parentHeaders: parent,
+        actionHeaders: new Headers(),
+        errorHeaders: undefined,
+      }),
+    );
+
+  it("管理者向けのキャッシュ指定を運ぶ", () => {
+    const result = call(new Headers({ "Cache-Control": "private, no-store", Vary: "Cookie" }));
+
+    expect(result.get("Cache-Control")).toBe("private, no-store");
+    expect(result.get("Vary")).toBe("Cookie");
+  });
+
+  it("限定公開の X-Robots-Tag を運ぶ", () => {
+    expect(call(new Headers({ "X-Robots-Tag": "noindex" })).get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("親のヘッダーを消さない", () => {
+    const result = call(new Headers(), new Headers({ "X-From-Parent": "kept" }));
+
+    expect(result.get("X-From-Parent")).toBe("kept");
+  });
+
+  it("loader が何も付けなければ何も足さない", () => {
+    expect(call(new Headers()).get("Cache-Control")).toBeNull();
   });
 });

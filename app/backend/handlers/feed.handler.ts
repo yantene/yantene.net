@@ -75,7 +75,7 @@ ${entries}
 }
 
 async function recentArticles(db: D1Database): Promise<readonly PublicArticle[]> {
-  const result = await new D1ArticleQueryRepository(db).list({
+  const result = await D1ArticleQueryRepository.forReaders(db).list({
     limit: FEED_LIMIT,
     offset: 0,
     sortBy: "publishedOn",

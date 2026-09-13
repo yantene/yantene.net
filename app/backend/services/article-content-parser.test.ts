@@ -1,7 +1,7 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import { describe, expect, it } from "vitest";
 import { MathSyntaxError } from "./latex-to-mathml";
-import { extractSummary, parseArticleContent } from "./article-content-parser";
+import { extractSummary, parseArticleContent, StatusValueError } from "./article-content-parser";
 import type { ParsedArticleContent } from "./article-content-parser";
 
 const withFrontmatter = `---
@@ -27,8 +27,46 @@ describe("parseArticleContent", () => {
       imageUrl: "./cover.png",
       publishedOn: "2026-01-15",
       lastModifiedOn: "2026-01-20",
-      visibility: "public",
+      status: "published",
     });
+  });
+
+  describe("status", () => {
+    const withStatus = (line: string): string =>
+      `---\ntitle: T\npublishedOn: 2026-01-15\n${line}\n---\n\n本文。\n`;
+
+    it("書いていなければ published", () => {
+      expect(parseArticleContent("---\ntitle: T\n---\n\n本文。\n").frontmatter.status).toBe(
+        "published",
+      );
+    });
+
+    it.each(["published", "unlisted", "withdrawn", "draft", "idea"])("%s を読む", (status) => {
+      expect(parseArticleContent(withStatus(`status: ${status}`)).frontmatter.status).toBe(status);
+    });
+
+    it("大文字と前後の空白を許す", () => {
+      expect(parseArticleContent(withStatus('status: "  DRAFT  "')).frontmatter.status).toBe(
+        "draft",
+      );
+    });
+
+    it("読めない値は StatusValueError", () => {
+      expect(() => parseArticleContent(withStatus("status: pubished"))).toThrow(StatusValueError);
+    });
+
+    /*
+     * 旧書式を無視して既定の published に倒すと、`visibility: private` と書いたままの
+     * 下書きが黙って公開される。値が何であっても弾く (ADR 0040)。
+     */
+    it.each(["private", "public", "nonsense"])(
+      "旧書式の visibility: %s が残っていたら StatusValueError",
+      (value) => {
+        expect(() => parseArticleContent(withStatus(`visibility: ${value}`))).toThrow(
+          StatusValueError,
+        );
+      },
+    );
   });
 
   it("parses the body (without frontmatter) into MDAST", () => {
