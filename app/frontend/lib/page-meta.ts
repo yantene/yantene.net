@@ -56,6 +56,14 @@ export interface PageMetaInput {
    * 400 へ歩かせるだけになる。
    */
   readonly webmentionPath?: string;
+  /**
+   * 検索結果に出さないか。
+   *
+   * 中身がまだ無いページ (「準備中」だけを置いたもの) に立てる。sitemap には元々
+   * 載せていないが、載せていないことと「拾わないでほしい」ことは別で、リンクを
+   * 辿って来たクローラーには伝わらない。
+   */
+  readonly noindex?: boolean;
 }
 
 /**
@@ -75,6 +83,7 @@ export function buildPageMeta({
   jsonLd,
   feed,
   webmentionPath,
+  noindex = false,
 }: PageMetaInput): MetaDescriptor[] {
   const site = translationsFor(locale).meta;
   /*
@@ -130,6 +139,14 @@ export function buildPageMeta({
       rel: "webmention",
       href: `${origin}${webmentionPath}`,
     });
+  }
+
+  if (noindex) {
+    /*
+     * `nofollow` は付けない。拾ってほしくないのはこのページだけで、ここから先の
+     * リンク (ヘッダーのナビ) は辿ってもらってよい。
+     */
+    descriptors.push({ name: "robots", content: "noindex" });
   }
 
   if (jsonLd !== undefined) {

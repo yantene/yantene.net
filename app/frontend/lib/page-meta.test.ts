@@ -173,6 +173,19 @@ describe("buildPageMeta", () => {
     });
   });
 
+  /*
+   * 中身がまだ無いページ (「準備中」だけを置いたもの) に立てる。sitemap には元々
+   * 載せていないが、リンクを辿って来たクローラーにはそれが伝わらない。
+   */
+  it("marks a page noindex only when asked", () => {
+    expect(
+      find(buildPageMeta({ locale: "ja", origin, pathname, noindex: true }), "name", "robots"),
+    ).toBe("noindex");
+    expect(
+      find(buildPageMeta({ locale: "ja", origin, pathname }), "name", "robots"),
+    ).toBeUndefined();
+  });
+
   it("marks article pages with og:type article", () => {
     expect(
       find(

@@ -1,0 +1,257 @@
+/*
+ * キーボードから開く検索。
+ *
+ * ページの上のほうに浮かせる。真ん中に置くと、結果が増えたときに上下へ伸びて、
+ * 読んでいる行が動く。上端を固定して下へだけ伸ばせば、題の位置が変わらない。
+ */
+
+.command-palette {
+  /* `<dialog>` の既定は真ん中。上端から少し下げた位置に据える。 */
+  margin-block: 12vh auto;
+  margin-inline: auto;
+  width: min(40rem, calc(100vw - 2rem));
+  max-width: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  /* 暗がりを押して閉じられるように、箱の外まで押せる場所にしない。 */
+  overflow: visible;
+}
+
+.command-palette::backdrop {
+  background-color: color-mix(in oklab, #0b1221 45%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+/*
+ * 出入りの動き。
+ *
+ * `@starting-style` と `allow-discrete` を知らないブラウザでは、間を飛ばして
+ * いきなり出る。出ること自体は変わらないので、そのままでよい。
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .command-palette,
+  .command-palette::backdrop {
+    transition:
+      opacity 120ms ease,
+      translate 120ms ease,
+      overlay 120ms allow-discrete,
+      display 120ms allow-discrete;
+  }
+
+  .command-palette:not([open]),
+  .command-palette:not([open])::backdrop {
+    opacity: 0;
+  }
+
+  .command-palette:not([open]) {
+    translate: 0 -0.5rem;
+  }
+
+  @starting-style {
+    .command-palette[open],
+    .command-palette[open]::backdrop {
+      opacity: 0;
+    }
+
+    .command-palette[open] {
+      translate: 0 -0.5rem;
+    }
+  }
+}
+
+.command-palette-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-base-300);
+  /* 操作子より一段大きい丸み。面が大きいので、同じ値だと角が立って見える。 */
+  border-radius: calc(var(--control-radius) * 1.5);
+  background-color: var(--color-base-100);
+  box-shadow: 0 24px 64px rgb(11 18 33 / 0.22);
+  /* 中の一覧が角から食み出さないようにする。 */
+  overflow: hidden;
+}
+
+.command-palette-field {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--color-base-300);
+}
+
+.command-palette-icon {
+  flex: none;
+  font-size: 1.125rem;
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}
+
+/*
+ * 焦点の輪郭は入力欄ではなく、この欄全体で示す。開いた瞬間に焦点が入るので、
+ * 字の周りだけを囲むと箱の中に二重の枠が出る。
+ */
+.command-palette-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 -1px 0 var(--color-primary);
+}
+
+.command-palette-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-base-content);
+  outline: none;
+}
+
+/* 検索欄の「×」はブラウザごとに形も色も違う。Esc で閉じられるので出さない。 */
+.command-palette-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.command-palette-results {
+  display: flex;
+  flex-direction: column;
+  /* 結果が多くても画面を越えない。越えた分はここだけが動く。 */
+  max-height: min(24rem, 50vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.command-palette-results:empty {
+  display: none;
+}
+
+.command-palette-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 1.125rem;
+  color: var(--color-base-content);
+  /* 選ばれている行の印。幅は常に取っておかないと、選ぶたびに字が横へずれる。 */
+  border-inline-start: 3px solid transparent;
+}
+
+.command-palette-result.is-active {
+  background-color: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  border-inline-start-color: var(--color-primary);
+}
+
+/*
+ * 題も要約も 1 行に留める。
+ *
+ * 折り返しを許すと行の高さが不揃いになり、上下で選んでいる間、印がどこへ動いたのかを
+ * 目で追えなくなる。読み切れなかった題は、開いた先の記事が出す。
+ */
+.command-palette-result-title {
+  font-weight: 700;
+  line-height: 1.5;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.command-palette-result.is-active .command-palette-result-title {
+  color: var(--color-primary);
+}
+
+.command-palette-result-summary {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/*
+ * 状況の一文。読み上げのために入れ物は畳まず置いたままにするので、何も無いときは
+ * 高さを持たせない (share-menu.css と同じ作り)。
+ */
+.command-palette-status {
+  padding: 0.875rem 1.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+.command-palette-status:empty {
+  display: none;
+}
+
+.command-palette-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 1.125rem;
+  border-top: 1px solid var(--color-base-300);
+  background-color: var(--color-base-200);
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+.command-palette-hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* 案内は詰まって見えるので、鍵と字の組の間だけを空ける。 */
+.command-palette-hints span + kbd {
+  margin-inline-start: 0.5rem;
+}
+
+.command-palette-hints kbd {
+  min-width: 1.5rem;
+  padding: 0.0625rem 0.3125rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.3125rem;
+  background-color: var(--color-base-100);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  text-align: center;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+.command-palette-see-all {
+  margin-inline-start: auto;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/*
+ * パレットが開いている間、後ろのページを動かさない。
+ *
+ * `<dialog>` を modal で開いても背後のスクロールまでは止まらないため、印を見て止める
+ * (印を立てるのは command-palette.tsx)。
+ */
+html[data-modal-open] {
+  overflow: hidden;
+}
+
+/*
+ * 止めているあいだだけ、消えたスクロールバーの場所を空けておく。
+ *
+ * 空けないと、スクロールバーの幅 (GNU/Linux と Windows で 15px 前後) のぶん中身が横へ
+ * 寄る。中央に寄せた本文もヘッダーも一緒に動くので、**パレットを開閉するたびにページが
+ * 左右に跳ねて見える**。
+ *
+ * **常に空けるのではなく、この印が立っているあいだだけ。** 常に空けると、短いページの
+ * 右端に何も無い帯が残る。印は「いまスクロールバーが出ている」と測れたときにしか立たない
+ * (command-palette.tsx)。
+ *
+ * ⚠️ **daisyUI が `:root` に同じ property を置いている** (base/rootscrollgutter)。向こうの
+ * 値は daisyUI 自身の modal が開いたときにしか有効にならず、`:root` は `html` より詳細度が
+ * 高い。**同じ層の中に書くと必ず負ける**ので、ここは層の外 (このファイルは `@layer` に
+ * 入っていない) に置いてあることが効いている。`@layer` で囲まないこと。
+ */
+html[data-modal-gutter] {
+  scrollbar-gutter: stable;
+}

@@ -54,9 +54,12 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
     <AppLayout>
       {/*
         透過ヘッダを Celestim ヒーローの上に重ねる。ヒーローは pt で頭を空けている。
-        ロゴは伏せる。すぐ下のヒーローが同じ「やんてね」を出すので、二つ並ぶと煩わしい。
+
+        **ロゴは伏せない。** 頭では畳んであり、読み出すと帯の真ん中に現れて下層と同じ姿に
+        落ち着く (header.css の site-header-overlay-mark-in)。出し入れはスクロールの位置で
+        決まるので、React からは渡さない。
       */}
-      <Header variant="transparent" showLogo={false} />
+      <Header variant="transparent" />
       <HeroSection clockOrigin={clockOrigin} />
 
       {recent.length > 0 && (
@@ -71,7 +74,7 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           */}
           {popular.length > 0 && (
             <div className="mb-16">
-              <h2 className="text-2xl font-bold">{t("home.popularArticles")}</h2>
+              <h2 className="text-2xl font-bold">{t("home.popular")}</h2>
               <div className="mt-8">
                 <ArticleTimeline articles={popular} ranked />
               </div>
@@ -79,7 +82,7 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
           )}
 
           <div>
-            <h2 className="text-2xl font-bold">{t("home.recentArticles")}</h2>
+            <h2 className="text-2xl font-bold">{t("home.latest")}</h2>
             <div className="mt-8">
               <ArticleTimeline articles={recent} groupByYear />
             </div>

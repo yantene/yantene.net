@@ -208,29 +208,25 @@ describe("article URLs from before the rename", () => {
   });
 
   /*
-   * 一覧は 307。`/notes` は短文の投稿の一覧として戻ってくる予定 (#412) なので、
-   * ブラウザに覚えられる 308 は置けない。
+   * 一覧の `/notes` は**素通りさせる**。
+   *
+   * 記事一覧へ 307 で送っていたが、あの URL は短文の投稿の一覧として戻ってくる場所で、
+   * いまはページのルートが持っている (#412 の中身が入るまでは「準備中」の一枚)。
+   *
+   * ここが素通りしないと、`<Link>` で辿ったときだけページが出て、直に開いたとき・
+   * 再読み込み・別のタブで開いたとき・クローラーからは記事一覧へ飛ぶ、という
+   * 「来かたで行き先が変わるナビ」になる。委譲先のダミーが 404 を返せば素通りできている。
    */
-  it("temporarily redirects the old article list to /articles", async () => {
-    const res = await createTestApp().request("/notes", {}, env());
+  it("lets the notes list fall through to the page router", async () => {
+    const res = await createTestApp().request("/notes", {}, env(), executionCtx());
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("/articles");
+    expect(res.status).toBe(404);
   });
 
-  // `?q=` や `?page=` は改名の直前までこのアプリ自身が出していた効くクエリ。
-  it("keeps the query of the old article list", async () => {
-    const res = await createTestApp().request("/notes?q=devpod&page=2", {}, env());
+  it("lets the notes list with a query fall through too", async () => {
+    const res = await createTestApp().request("/notes?q=devpod&page=2", {}, env(), executionCtx());
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("/articles?q=devpod&page=2");
-  });
-
-  // 覚えさせない。max-age を付けると 307 でもその間はキャッシュから答えられる。
-  it("does not let the temporary redirect be cached", async () => {
-    const res = await createTestApp().request("/notes", {}, env());
-
-    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.status).toBe(404);
   });
 
   it("keeps the whole app on the faster router", async () => {
