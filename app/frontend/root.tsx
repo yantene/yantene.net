@@ -98,8 +98,10 @@ export const links: Route.LinksFunction = () => [
    * 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
    * フィード本体の <title> がずれる。
    *
-   * 全ページの既定はサイト全体のフィード。**種別ごとのページはこれを上書きする**
-   * (buildPageMeta の feed)。上書きしない限り、どのページからもまず全体が拾われる。
+   * **これは全ページに出る。消えない。** 種別ごとのページ (`/articles` など) が
+   * buildPageMeta の feed でもう 1 本足すので、そこでは rel=alternate が 2 本並ぶ —
+   * 「サイト全体」と「この場所のぶん」。リーダーの自動検出には両方が出るので、
+   * 名前で選んでもらう (だから feedIdentities は種別ごとに違う title を名乗る)。
    */
   {
     rel: "alternate",

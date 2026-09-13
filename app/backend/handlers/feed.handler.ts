@@ -74,19 +74,7 @@ ${entries}
 `;
 }
 
-/**
- * その種別の entry を集める。
- *
- * **`notes` と `slides` はまだ中身が無い** (#412 / #415)。コンテンツの型そのものが
- * 無いので、空を返す以外にやりようがない。entry 0 件の Atom は Atom として妥当で、
- * リーダーは「まだ何も出ていないフィード」として扱う。
- *
- * 種別が増えたらここに枝を足す。**`all` に混ぜ忘れないこと** — 種別ごとのフィードだけ
- * 増えて全体のフィードに出てこないと、全部を購読しているつもりの人に届かない。
- */
-async function entriesFor(kind: FeedKind, db: D1Database): Promise<readonly PublicArticle[]> {
-  if (kind === "notes" || kind === "slides") return [];
-
+async function recentArticles(db: D1Database): Promise<readonly PublicArticle[]> {
   const result = await new D1ArticleQueryRepository(db).list({
     limit: FEED_LIMIT,
     offset: 0,
@@ -94,6 +82,35 @@ async function entriesFor(kind: FeedKind, db: D1Database): Promise<readonly Publ
     direction: "desc",
   });
   return result.articles.map((article) => toPublicArticle(article));
+}
+
+/**
+ * その種別の entry を集める。
+ *
+ * **`notes` と `slides` はまだ中身が無い** (#412 / #415)。コンテンツの型そのものが
+ * 無いので、空を返す以外にやりようがない。entry 0 件の Atom は Atom として妥当で、
+ * リーダーは「まだ何も出ていないフィード」として扱う。
+ *
+ * **種別を網羅する形で書くこと。** 「記事以外は空」と書くと、後から足した種別が黙って
+ * 記事の流れを配ることになる — 行き先は feedIdentities から自動で生えるので、足した人が
+ * ここに気づかないまま公開される。網羅しておけば型が落ちて気づける (fail-loud)。
+ *
+ * `all` に混ぜ忘れないこと。種別ごとのフィードだけ増えて全体のフィードに出てこないと、
+ * 全部を購読しているつもりの人に届かない。
+ */
+async function entriesFor(kind: FeedKind, db: D1Database): Promise<readonly PublicArticle[]> {
+  switch (kind) {
+    case "all":
+    case "articles":
+      return await recentArticles(db);
+    case "notes":
+    case "slides":
+      return [];
+    default: {
+      const unhandled: never = kind;
+      throw new Error(`unknown feed kind: ${String(unhandled)}`);
+    }
+  }
 }
 
 /**

@@ -1,8 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router";
+import { useLocaleForm } from "~/frontend/lib/use-locale-form";
 import {
-  defaultLocale,
-  isSupportedLocale,
   localeAbbreviations,
   localeField,
   localeLabels,
@@ -35,21 +33,9 @@ interface LocaleSwitchProps {
  * (Accept-Language で決まっている) 読み手が、いま出ている言語を明示的に選べなくなる。
  */
 export function LocaleSwitch({ className = "" }: LocaleSwitchProps): React.JSX.Element {
-  const { t, i18n } = useTranslation();
-  const location = useLocation();
-
-  /*
-   * i18next の言語は "ja-JP" のような綴りにはならない (決めるのは resolve-locale で、
-   * 返るのは SupportedLocale だけ)。それでも読めない値に備えて既定へ倒す。ここで
-   * 落ちると、全ページのヘッダーが落ちる。
-   */
-  const current = isSupportedLocale(i18n.language) ? i18n.language : defaultLocale;
-
-  /*
-   * 戻り先。クエリは残す (検索結果を見たまま言語だけ変えられるように)。ハッシュは
-   * 送れない — ブラウザがサーバーへ送らないので、そもそもここに入ってこない。
-   */
-  const returnTo = `${location.pathname}${location.search}`;
+  const { t } = useTranslation();
+  /* いま選ばれているものと帰り先は、帯の LocaleMenu と同じものを使う。 */
+  const { current, returnTo } = useLocaleForm();
 
   return (
     <form

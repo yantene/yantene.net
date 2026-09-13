@@ -78,10 +78,19 @@ self.addEventListener("fetch", (event) => {
 });
 
 // 鮮度が要るものは触らない。
+//
+// **フィードは前方一致で外す。** 種別ごとに 1 本ずつあり (`/feed/articles.xml` など。
+// app/lib/feed.ts)、`/feed.xml` だけを名指ししていたときは残りが蓄えられていた。
+// 帯のリンクから開くと `mode === "navigate"` になるので、通信が途切れた後に XML の URL へ
+// `offline.html` が返る、という壊れ方までする。
+//
+// この対応は `app/frontend/lib/service-worker-cache.test.ts` が feedIdentities と
+// 突き合わせて見張っている。
 function isCacheable(url) {
   const path = url.pathname;
   if (path.startsWith("/api/")) return false;
-  if (["/feed.xml", "/sitemap.xml"].includes(path)) return false;
+  if (path === "/sitemap.xml") return false;
+  if (path === "/feed.xml" || path.startsWith("/feed/")) return false;
   // 原文 Markdown は保存目的で開かれるので素通しにする。
   return !path.endsWith(".md");
 }

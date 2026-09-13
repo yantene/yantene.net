@@ -3,14 +3,6 @@ import { HiOutlineScale } from "react-icons/hi2";
 import { Link } from "react-router";
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
 
-/**
- * 絵を伴う導線の見た目。絵と字の間隔・下線・hover をここで決める。
- *
- * 大きさと色は含めない。置き場所で地の色が違うので、使う側が足す。
- */
-const INLINE_ICON_LINK =
-  "press-control inline-flex items-center gap-1.5 underline-offset-4 transition-colors hover:text-primary hover:underline";
-
 interface FooterProps {
   /**
    * 著作権表示に出す期間。ここで時計を読まず loader が決めた値を受け取るのは、
@@ -69,7 +61,10 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
             (4.0 の 3(a)(2))。足元に全部を並べるより、リンク 1 本のほうが読める。
           */}
           {/* 絵の意味は文字が持つので、読み上げには渡さない。 */}
-          <Link to="/licenses" className={`${INLINE_ICON_LINK} text-xs text-foreground/80`}>
+          <Link
+            to="/licenses"
+            className="press-control inline-flex items-center gap-1.5 text-xs text-foreground/80 underline-offset-4 transition-colors hover:text-primary hover:underline"
+          >
             <HiOutlineScale aria-hidden="true" />
             {t("footer.licenses")}
           </Link>

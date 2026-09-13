@@ -70,6 +70,9 @@ export const feedIdentities: readonly FeedIdentity[] = [
   {
     kind: "articles",
     title: `${FEED_TITLE} — Articles`,
+    /* i18n の articles.lead と同じ一文 (一覧の見出しに続く字)。翻訳リソースは React の
+     * 外から引けないので、同じ文字列を二度持つしかない。ja.json を書き換えたらここも
+     * 合わせること。FEED_SUBTITLE と meta.description の関係と同じ。 */
     subtitle: "エッセイ、技術記事、その他もろもろ。長めに書きたいことはここに置いている。",
     path: "/feed/articles.xml",
     alternatePath: "/articles",

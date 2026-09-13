@@ -1,6 +1,7 @@
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineRss } from "react-icons/hi2";
-import { useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
+import { headerMenuGroupName, useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
 import { feedIdentities } from "~/lib/feed";
 
 /**
@@ -20,9 +21,19 @@ import { feedIdentities } from "~/lib/feed";
 export function FeedMenu({ className = "" }: { readonly className?: string }): React.JSX.Element {
   const { t } = useTranslation();
   const { ref } = useDismissableDetails();
+  const titleId = useId();
 
   return (
-    <details ref={ref} className={`header-menu ${className}`}>
+    /*
+      `name` を与えて排他にする。**同じ名前の `<details>` は 1 つしか開かない**ので、
+      隣の表示する言語を開けばこちらは畳まれる。
+
+      外押しで畳む仕掛け (useDismissableDetails) は `pointerdown` で受けているため、
+      キーボードで開いたとき (summary で Enter) には走らない。両方が開いて板が重なる
+      のを、JavaScript を足さずに止められるのがこれ。**対応していないブラウザでは
+      両方開くだけ**で、押せなくなるものは無い。
+    */
+    <details ref={ref} name={headerMenuGroupName} className={`header-menu ${className}`}>
       {/*
         絵しか出さないので名前は aria-label で渡す。開いているかどうかは <details> の
         summary が持つ既定の状態 (aria-expanded) がそのまま伝える。
@@ -39,9 +50,15 @@ export function FeedMenu({ className = "" }: { readonly className?: string }): R
         {/*
           見出しを 1 つ置く。絵だけの押し場所から開くので、開いた板の中に「これは
           フィードの一覧である」と書いてある字が無いと、4 つの名前だけが宙に浮く。
+
+          **一覧に結び付ける。** ナビにも同じ字の行き先 (Articles / Notes / Slides) が
+          あり、名前だけを読み上げると同じ名前のリンクが 4 つ並ぶ (帯とドロワーで 2 枚
+          ずつ描くため)。結び付けておけば「Feed の Articles」として読める。
         */}
-        <p className="header-menu-title">{t("feed.label")}</p>
-        <ul className="header-menu-list">
+        <p id={titleId} className="header-menu-title">
+          {t("feed.label")}
+        </p>
+        <ul aria-labelledby={titleId} className="header-menu-list">
           {feedIdentities.map((identity) => (
             <li key={identity.kind}>
               {/*
@@ -73,11 +90,14 @@ export function FeedMenu({ className = "" }: { readonly className?: string }): R
  */
 export function FeedMenuList(): React.JSX.Element {
   const { t } = useTranslation();
+  const titleId = useId();
 
   return (
     <div className="site-menu-feeds">
-      <p className="header-menu-title">{t("feed.label")}</p>
-      <ul className="site-menu-feed-list">
+      <p id={titleId} className="header-menu-title">
+        {t("feed.label")}
+      </p>
+      <ul aria-labelledby={titleId} className="site-menu-feed-list">
         {feedIdentities.map((identity) => (
           <li key={identity.kind}>
             <a

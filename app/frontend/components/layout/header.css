@@ -317,7 +317,16 @@
   justify-content: center;
   height: var(--control-height);
   padding-inline: 0.25rem;
-  color: inherit;
+  /*
+   * 弱めた字の濃さ。**検索と表示する言語と同じ式を使う** (search-trigger.css /
+   * .locale-switch-option)。`inherit` にしていたときは、帯で「検索 > ナビ > 道具」と
+   * 決めた重さの順に反して、絵だけの道具がいちばん濃い要素になっていた。
+   *
+   * 透過ヘッダーではこの変数が 80% に上がる (上の .site-header-overlay)。動く空の
+   * いちばん暗いところで 4.5:1 を割らないための値なので、ここが変数を読まないと
+   * その調整だけが効かない。
+   */
+  color: color-mix(in oklab, var(--color-base-content) var(--header-ink-dim, 62%), transparent);
   cursor: pointer;
   /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
   list-style: none;
@@ -365,7 +374,12 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+  /*
+   * **70% より薄くしないこと。** 11px の小さな字なので薄くしたくなるが、50% だと白地で
+   * 3.1:1 ほどしか出ず、WCAG 1.4.3 の 4.5:1 を割る (この字は「大きな文字」の扱いには
+   * ならない)。70% で 5.6:1 で、隣の .site-menu-feed-link と同じ濃さ。
+   */
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
 }
 
 .header-menu-list {
@@ -383,7 +397,11 @@
   display: flex;
   width: 100%;
   align-items: center;
-  /* 指で押せる高さ。字の大きさだけだと 44px に届かない。 */
+  /*
+   * **この板は lg から上でしか出ない** (使う側が `hidden lg:block` で伏せる) ので、
+   * 狙うのはマウスとキーボード。36px あれば足りる。指で押す側は畳んだドロワーのほうで、
+   * あちらは 44px にしてある (.site-menu-feed-link)。
+   */
   min-height: 2.25rem;
   padding-inline: 0.5rem;
   border-radius: 0.5rem;
@@ -533,7 +551,11 @@
 .site-menu-feed-link {
   display: inline-flex;
   align-items: center;
-  height: 2.25rem;
+  /*
+   * 指で押せる高さ。**ドロワーは狭い画面のためのものなので、ここだけ小さくしない。**
+   * 上に並ぶ行き先 (.site-menu-link) もハンバーガーも 44px にしてある。
+   */
+  min-height: 2.75rem;
   padding-inline: 0.5rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
