@@ -3,8 +3,19 @@ import { Cityscape } from "./cityscape";
 import { clockOriginClassName } from "./clock-origin";
 import { TimeScrubber } from "./time-scrubber";
 import type { ClockOrigin } from "./clock-origin";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
 import { SocialLinks } from "~/frontend/components/social/social-links";
+
+/*
+ * プロフィールがまだ同期されていないときの、代表 h-card の中身。
+ *
+ * **殻は必ず立てる。** 自己紹介と出ていく先は出さなくてよいが、名前と顔と自分への
+ * 参照が消えると、Bridgy Fed から見て「誰のサイトか分からない」状態になる。初回同期の
+ * 前やコンテンツリポジトリの事故で橋が架からなくなるのは、見た目が寂しくなるのとは重みが違う。
+ */
+const FALLBACK_NAME = "やんてね";
+const FALLBACK_PHOTO = "/icons/icon-192.png";
 
 interface HeroSectionProps {
   /**
@@ -12,9 +23,11 @@ interface HeroSectionProps {
    * (理由は clock-origin.ts に書いてある)。
    */
   readonly clockOrigin: ClockOrigin;
+  /** 書き手のプロフィール。まだ同期されていなければ null。 */
+  readonly profile: PublicProfile | null;
 }
 
-export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Element {
+export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.JSX.Element {
   return (
     /*
       開始位置は段階クラスで渡す。ここに載せたクラスは CSS 変数を差し替えるだけで、
@@ -46,7 +59,7 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
         */}
         <h1 className="inline-flex text-foreground">
           <Logotype className="h-12 w-auto sm:h-16" aria-hidden="true" />
-          <span className="sr-only p-name">やんてね</span>
+          <span className="sr-only p-name">{profile?.name ?? FALLBACK_NAME}</span>
         </h1>
 
         {/*
@@ -67,29 +80,37 @@ export function HeroSection({ clockOrigin }: HeroSectionProps): React.JSX.Elemen
         </a>
         <img
           className="sr-only u-photo"
-          src="/icons/icon-192.png"
+          src={profile?.avatarUrl ?? FALLBACK_PHOTO}
           alt=""
           width={192}
           height={192}
         />
 
         {/*
+          短い自己紹介と出ていく先は、プロフィールが同期されていれば出す。無いときは
+          出さない (それらしい既定の文言を置くと、書き手が書いたものと見分けが付かない)。
+
           背後の光は控えめなので、文字も少しだけ透かして景色に馴染ませる。
           薄めすぎると夜側で沈むため、全周期で AA を満たす範囲に留めている。
         */}
-        <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
-          現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。
-          <br />
-          東京で Web 開発者をやっています。
-          <br />
-          ラップトップと、おいしいごはんと、あとは大切な人たちがいればだいたい幸せです。
-        </p>
+        {profile !== null && (
+          <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
+            {profile.tagline.map((line, index) => (
+              <span key={line}>
+                {index > 0 && <br />}
+                {line}
+              </span>
+            ))}
+          </p>
+        )}
 
-        {/* 表はヘッダーと共有する (components/social/social-links.tsx)。 */}
-        <SocialLinks
-          className="mt-1 flex items-center gap-5"
-          linkClassName="press-control inline-flex text-2xl text-foreground/85 transition-colors hover:text-primary"
-        />
+        {profile !== null && profile.socials.length > 0 && (
+          <SocialLinks
+            links={profile.socials}
+            className="mt-1 flex items-center gap-5"
+            linkClassName="press-control inline-flex text-2xl text-foreground/85 transition-colors hover:text-primary"
+          />
+        )}
       </div>
 
       {/* 地平線の上を歩く人と、掴んで時間を進められる目盛り。 */}

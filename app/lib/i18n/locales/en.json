@@ -92,6 +92,9 @@
     "heading": "Responses",
     "openSource": "Open the source"
   },
+  "profile": {
+    "timeline": "Timeline"
+  },
   "signIn": {
     "title": "Sign in",
     "signOut": "Sign out",

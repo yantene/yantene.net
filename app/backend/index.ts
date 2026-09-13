@@ -13,6 +13,7 @@ import { createArticleMarkdownRouter } from "./handlers/articles/markdown.handle
 import { createArticleReactionApiRouter } from "./handlers/articles/reaction.handler";
 import { createRefreshRouter } from "./handlers/articles/refresh.handler";
 import { createSearchApiRouter } from "./handlers/articles/search.handler";
+import { createProfileAssetsRouter } from "./handlers/profile/assets.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
 import { createSignInRouter } from "./handlers/auth/sign-in.handler";
@@ -147,6 +148,7 @@ export const getApp = (
   app.route("/api/v1/articles", createArticleDetailApiRouter());
   app.route("/api/v1/articles", createArticleAssetsRouter());
   app.route("/api/v1/articles", createArticleReactionApiRouter());
+  app.route("/api/v1/profile", createProfileAssetsRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
   app.route("/api/v1/search", createSearchApiRouter());

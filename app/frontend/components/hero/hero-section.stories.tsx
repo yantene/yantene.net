@@ -1,5 +1,6 @@
 import { HeroSection } from "./hero-section";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { sampleProfile } from "~/frontend/components/profile/profile-fixture";
 
 const meta: Meta<typeof HeroSection> = {
   title: "Hero/HeroSection",
@@ -13,6 +14,7 @@ const meta: Meta<typeof HeroSection> = {
    */
   args: {
     clockOrigin: { minutesOfDay: 12 * 60, moonAgeDay: 14 },
+    profile: sampleProfile,
   },
 };
 
@@ -33,4 +35,14 @@ export const FastCycle: Story = {
       </div>
     ),
   ],
+};
+
+/**
+ * プロフィールがまだ同期されていないときの姿。
+ *
+ * 自己紹介と出ていく先は出ないが、代表 h-card の殻 (名前・サイト・顔) は
+ * sr-only のまま立っている。
+ */
+export const WithoutProfile: Story = {
+  args: { profile: null },
 };

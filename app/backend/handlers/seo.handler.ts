@@ -39,6 +39,7 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
     const staticUrls = [
       urlEntry(`${origin}/`),
+      urlEntry(`${origin}/about`),
       urlEntry(`${origin}/articles`),
       urlEntry(`${origin}/licenses`),
     ];

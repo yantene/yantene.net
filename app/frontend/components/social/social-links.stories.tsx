@@ -1,9 +1,12 @@
 import { SocialLinks } from "./social-links";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { sampleProfile } from "~/frontend/components/profile/profile-fixture";
 
 const meta: Meta<typeof SocialLinks> = {
   title: "Social/SocialLinks",
   component: SocialLinks,
+  /* 出す先はコンテンツリポジトリのプロフィールが持つ。ここでは見本のプロフィールから渡す。 */
+  args: { links: sampleProfile.socials },
 };
 
 export default meta;

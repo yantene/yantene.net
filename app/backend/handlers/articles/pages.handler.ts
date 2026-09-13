@@ -1,4 +1,6 @@
 import type { Article, ArticleListResult } from "~/backend/domain/article";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
+import { loadProfile } from "~/backend/handlers/profile/pages.handler";
 import {
   parseArticleSort,
   parsePagination,
@@ -102,6 +104,8 @@ export interface HomePageData {
    * 重みなので、まだ読まれていない記事も新しい順に候補へ入る。
    */
   readonly popular: PublicArticleList["articles"];
+  /** ヒーローに出す書き手のプロフィール。まだ同期されていなければ null。 */
+  readonly profile: PublicProfile | null;
 }
 
 /**
@@ -113,16 +117,20 @@ export interface HomePageData {
 export async function loadHomePage(env: Env): Promise<HomePageData> {
   const query = D1ArticleQueryRepository.forReaders(env.D1);
 
-  const recent = await query.list({
-    limit: RECENT_COUNT,
-    offset: 0,
-    sortBy: "publishedOn",
-    direction: "desc",
-  });
+  const [recent, profile] = await Promise.all([
+    query.list({
+      limit: RECENT_COUNT,
+      offset: 0,
+      sortBy: "publishedOn",
+      direction: "desc",
+    }),
+    loadProfile(env),
+  ]);
 
   return {
     recent: toPublicArticleList(recent, 1, RECENT_COUNT).articles,
     popular: await loadPopularArticles(env, query),
+    profile,
   };
 }
 

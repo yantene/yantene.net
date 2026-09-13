@@ -15,7 +15,6 @@ import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
-import { LinkCardUrl } from "~/backend/domain/link-card";
 import {
   articlePath,
   ArticleNotFoundError,
@@ -25,12 +24,11 @@ import {
 } from "~/backend/domain/article";
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
-import { toLinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import {
-  D1LinkCardQueryRepository,
   D1ArticleEmbeddingQueryRepository,
   D1ArticleQueryRepository,
   D1WebmentionBlocklist,
@@ -38,7 +36,6 @@ import {
 } from "~/backend/infra/d1/repositories";
 import { KvSessionQueryRepository } from "~/backend/infra/kv/repositories";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
-import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /** 記事末に出す関連記事の最大件数。 */
 const RELATED_LIMIT = 6;
@@ -79,22 +76,6 @@ async function loadArticleDetail(
     articleId: article.id,
     status: article.status,
   };
-}
-
-/**
- * 本文に貼られたむき出しの URL のカードを引く。
- *
- * カードが無い URL は表に載らず、描画側は素のリンクのまま描く。ここで取りに行くことは
- * しない。通常のリクエストで外部を叩かないため (ADR 0004)、取得は refresh の仕事。
- */
-async function loadLinkCards(env: Env, mdast: Root): Promise<LinkCardMap> {
-  const urls = collectBareLinkUrls(mdast);
-  if (urls.length === 0) return {};
-
-  const cards = await new D1LinkCardQueryRepository(env.D1).findByUrls(
-    urls.map((url) => LinkCardUrl.create(url)),
-  );
-  return toLinkCardMap(cards);
 }
 
 /** slug パラメータを解決して詳細をロードする共通処理 (API / ページで共有)。 */

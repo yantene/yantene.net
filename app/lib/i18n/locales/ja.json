@@ -92,6 +92,9 @@
     "heading": "Responses",
     "openSource": "出典を開く"
   },
+  "profile": {
+    "timeline": "Timeline"
+  },
   "signIn": {
     "title": "Sign in",
     "signOut": "Sign out",
