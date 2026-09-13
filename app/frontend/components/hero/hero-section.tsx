@@ -5,17 +5,8 @@ import { TimeScrubber } from "./time-scrubber";
 import type { ClockOrigin } from "./clock-origin";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
+import { FALLBACK_PROFILE_NAME, FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { SocialLinks } from "~/frontend/components/social/social-links";
-
-/*
- * プロフィールがまだ同期されていないときの、代表 h-card の中身。
- *
- * **殻は必ず立てる。** 自己紹介と出ていく先は出さなくてよいが、名前と顔と自分への
- * 参照が消えると、Bridgy Fed から見て「誰のサイトか分からない」状態になる。初回同期の
- * 前やコンテンツリポジトリの事故で橋が架からなくなるのは、見た目が寂しくなるのとは重みが違う。
- */
-const FALLBACK_NAME = "やんてね";
-const FALLBACK_PHOTO = "/icons/icon-192.png";
 
 interface HeroSectionProps {
   /**
@@ -59,7 +50,7 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         */}
         <h1 className="inline-flex text-foreground">
           <Logotype className="h-12 w-auto sm:h-16" aria-hidden="true" />
-          <span className="sr-only p-name">{profile?.name ?? FALLBACK_NAME}</span>
+          <span className="sr-only p-name">{profile?.name ?? FALLBACK_PROFILE_NAME}</span>
         </h1>
 
         {/*
@@ -80,7 +71,7 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         </a>
         <img
           className="sr-only u-photo"
-          src={profile?.avatarUrl ?? FALLBACK_PHOTO}
+          src={profile?.avatarUrl ?? FALLBACK_PROFILE_PHOTO}
           alt=""
           width={192}
           height={192}

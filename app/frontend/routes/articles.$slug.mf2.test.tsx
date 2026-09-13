@@ -51,6 +51,8 @@ function loaderData(): unknown {
     related: [],
     headings: [],
     reactions: { reactions: [], mine: null },
+    // 同期の前でも印が立つこと (筆者紹介が sr-only の p-author に倒れる) を見る。
+    profile: null,
     jsonLd: {},
   };
 }

@@ -14,6 +14,7 @@ import type { Article, ArticleStatus } from "~/backend/domain/article";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
 import {
   articlePath,
@@ -25,6 +26,8 @@ import {
 import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
+import { loadProfile } from "~/backend/handlers/profile/pages.handler";
+import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
@@ -170,6 +173,13 @@ export type ArticleDetailPageData =
        * クライアントで問い直して描き分けると hydration mismatch になる (#156)。
        */
       readonly reactions: ReactionsPayload;
+      /**
+       * 記事の末尾に出す筆者紹介。まだ同期されていなければ null。
+       *
+       * **プロフィールが無くても記事は落とさない。** 筆者紹介は sr-only の印だけに
+       * 倒れる (components/profile/author-note.tsx)。
+       */
+      readonly profile: PublicProfile | null;
       /** schema.org BlogPosting (検索エンジン向け構造化データ)。絶対 URL で構築する。 */
       readonly jsonLd: Record<string, unknown>;
     };
@@ -237,7 +247,7 @@ export async function loadArticleDetailPage(
    */
   const query = D1ArticleQueryRepository.forReaders(env.D1);
   const slug = ArticleSlug.create(detail.article.slug);
-  const [related, reactions, webmentions, blockedHosts] = await Promise.all([
+  const [related, reactions, webmentions, blockedHosts, profile] = await Promise.all([
     loadRelated(env, query, slug),
     loadReactions(env, resolved.articleId, slug, recording?.cookie ?? null),
     // 内部 id はここまで素の文字列で運んでいる。リポジトリ境界でブランド型に戻す。
@@ -245,6 +255,7 @@ export async function loadArticleDetailPage(
       entityId<"Article">(resolved.articleId),
     ),
     new D1WebmentionBlocklist(env.D1).listBlockedHosts(),
+    loadProfile(env),
   ]);
 
   /*
@@ -271,17 +282,26 @@ export async function loadArticleDetailPage(
     admin: access.admin,
     privateResponse: shouldKeepResponsePrivate(access, resolved.status),
     reactions,
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "BlogPosting",
-      headline: detail.article.title,
-      description: detail.article.summary,
-      image: `${origin}/og/articles/${detail.article.slug}`,
-      datePublished: detail.article.publishedOn,
-      dateModified: detail.article.lastModifiedOn,
-      author: { "@type": "Person", name: "yantene", url: `${origin}/` },
-      publisher: { "@type": "Person", name: "yantene" },
-      mainEntityOfPage: `${origin}${articlePath(detail.article.slug)}`,
-    },
+    profile,
+    jsonLd: (() => {
+      // 名前はプロフィール由来。同期の前は既定に倒す (h-card の印と同じ扱い)。
+      const author = {
+        "@type": "Person",
+        name: profile?.name ?? FALLBACK_PROFILE_NAME,
+        url: `${origin}/`,
+      };
+      return {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: detail.article.title,
+        description: detail.article.summary,
+        image: `${origin}/og/articles/${detail.article.slug}`,
+        datePublished: detail.article.publishedOn,
+        dateModified: detail.article.lastModifiedOn,
+        author,
+        publisher: { "@type": "Person", name: author.name },
+        mainEntityOfPage: `${origin}${articlePath(detail.article.slug)}`,
+      };
+    })(),
   };
 }
