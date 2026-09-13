@@ -358,7 +358,8 @@ Open source licenses / Search / Share がそれにあたる。
 
 ### フィードは種別ごとに分かれている
 
-ヘッダーの RSS の絵を押すと、All / Articles / Notes / Slides から選べる。
+ヘッダーの RSS の絵を押すと、All / Articles / Notes / Slides から選べる。設計判断の
+詳細は [ADR 0038](../../docs/adr/0038-split-feeds-by-content-kind.md) を参照。
 
 | 種別     | 行き先               | 中身                 |
 | -------- | -------------------- | -------------------- |
