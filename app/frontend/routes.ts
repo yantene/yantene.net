@@ -23,8 +23,4 @@ export default [
 
   // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
   route("licenses", "routes/licenses.tsx"),
-
-  // 管理画面 (ADR 0036)。サインインしていなければ passkey で入る画面になる。
-  // robots.txt が Disallow、ページ自身も noindex を出す。
-  route("admin", "routes/admin.tsx"),
 ] satisfies RouteConfig;

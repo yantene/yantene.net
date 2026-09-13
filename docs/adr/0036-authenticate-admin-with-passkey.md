@@ -1,8 +1,23 @@
 # 0036. 管理者を passkey で認証し、セッションを KV に置く
 
-- Status: Accepted
+- Status: Deprecated ([#480](https://github.com/yantene/yantene.net/issues/480) でマジックリンクに置き換え。production に出す前に落とした)
 - Date: 2026-09-12
 - Deciders: @yantene
+
+> [!NOTE]
+> **この決定は覆した。** 実装は production に出す前に落としてある
+> ([#480](https://github.com/yantene/yantene.net/issues/480))。
+>
+> 理由は passkey の出来ではなく、**入る人が管理者だけではなくなった**こと。知り合いに
+> 見せる記事と有償記事を計画していて、読み手にもログインが要る。passkey は識別子を
+> 持たないので相手が登録するまでこちらから許可を出せず、有償にするならどのみち
+> メールアドレスを集める。集めるものを識別子にするほうが素直だと判断した。
+>
+> **本文はそのまま残す。** 検討した選択肢 (Cloudflare Access が localhost に張れない、
+> ライブラリのバンドル実測) と、自前で検証を書くときの落とし穴は、この先 passkey を
+> 資格情報の 1 つとして足すときにまた要る。休眠実装を ADR ごと畳んで書き直す羽目に
+> なった前例がある ([#129](https://github.com/yantene/yantene.net/issues/129) →
+> [#401](https://github.com/yantene/yantene.net/issues/401))。
 
 ## Context / 背景
 

@@ -174,50 +174,16 @@ describe("buildPageMeta", () => {
   });
 
   /*
-   * 検索エンジンに載せないページの印。渡されなかったときに何も足さないことを
-   * 必ず押さえる。全ページが通る経路で、ここを取り違えると公開中の記事が
-   * noindex になる (jsonLd で「渡さないページが全部 500」を出した前科がある)。
+   * 中身がまだ無いページ (「準備中」だけを置いたもの) に立てる。sitemap には元々
+   * 載せていないが、リンクを辿って来たクローラーにはそれが伝わらない。
    */
-  it("omits the robots meta when it is not asked for", () => {
-    for (const path of ["/", "/articles", "/articles/foo", "/licenses"]) {
-      expect(
-        find(buildPageMeta({ locale: "ja", origin, pathname: path }), "name", "robots"),
-      ).toBeUndefined();
-    }
-  });
-
-  /*
-   * 「準備中」のページは noindex だけ。そのページを拾ってほしくないだけで、ここから
-   * 先のリンク (ヘッダーのナビ) は辿ってもらってよい。
-   */
-  it("marks a page noindex without nofollow by default", () => {
+  it("marks a page noindex only when asked", () => {
     expect(
       find(buildPageMeta({ locale: "ja", origin, pathname, noindex: true }), "name", "robots"),
     ).toBe("noindex");
-  });
-
-  /* 管理画面のように、その先ごと隠したいページだけが nofollow まで足す。 */
-  it("adds nofollow when the page should not be followed either", () => {
     expect(
-      find(
-        buildPageMeta({ locale: "ja", origin, pathname, noindex: true, nofollow: true }),
-        "name",
-        "robots",
-      ),
-    ).toBe("noindex, nofollow");
-  });
-
-  it("still emits the full set alongside noindex", () => {
-    // noindex のページでも title と canonical は出す。描かないと、管理画面の
-    // タブが無題になり、開いているページが分からなくなる。
-    const meta = buildPageMeta({ locale: "ja", origin, pathname, noindex: true, nofollow: true });
-
-    expect(meta).toContainEqual({
-      tagName: "link",
-      rel: "canonical",
-      href: `${origin}${pathname}`,
-    });
-    expect(meta.some((d) => "title" in (d as Record<string, unknown>))).toBe(true);
+      find(buildPageMeta({ locale: "ja", origin, pathname }), "name", "robots"),
+    ).toBeUndefined();
   });
 
   it("marks article pages with og:type article", () => {

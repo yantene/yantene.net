@@ -1,30 +1,12 @@
-# development で使う secret。`.dev.vars` にコピーして値を埋める
-# (`.dev.vars` は git に入らない)。
-
-# --- コンテンツリポジトリ (ADR 0034) ---
+# development で refresh を走らせるのに要る secret。
+# `.dev.vars` にコピーして値を埋める (`.dev.vars` は git に入らない)。
 #
-# 手元も Cloudflare Artifacts をコンテンツリポジトリとして読む。読み先は wrangler.jsonc の
-# vars が指している (namespace yantene / repo yantene-staging)。手元の作業ツリーを
-# 読めるようにして、この 2 つを不要にするのは #461。
+# 手元も Cloudflare Artifacts をコンテンツリポジトリとして読む (ADR 0034)。読み先は
+# wrangler.jsonc の vars が指している (namespace yantene / repo yantene-staging)。
+# 手元の作業ツリーを読めるようにして、この 2 つを不要にするのは #461。
 #
 # ARTIFACTS_API_TOKEN はダッシュボードの API Tokens で作る。権限は
 # Account / Artifacts / Read の 1 つだけにすること。
 
 ARTIFACTS_ACCOUNT_ID=
 ARTIFACTS_API_TOKEN=
-
-# --- 管理者の登録 (ADR 0036) ---
-#
-# 最初の passkey を登録するときに要る。**置かないと bootstrap の経路が閉じる**
-# (`/admin` の登録が 404 になる)。1 本でも登録されたあとの追加登録はサインインが
-# 条件なのでこの値を見ないが、**消さずに置いておくこと。** 端末をすべて失って
-# D1 の表を空にしたとき、復旧に再び要る。
-#
-# 推測されると誰でも最初の管理者になれるので、長い乱数にすること。
-#
-#   openssl rand -base64 32
-#
-# RP ID は環境ごとに別なので、手元の passkey は手元でだけ使える。staging と
-# production にはそれぞれ登録し直す。
-
-ADMIN_REGISTRATION_TOKEN=
