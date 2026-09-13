@@ -1,7 +1,9 @@
 // XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
 import { articlePath } from "~/backend/domain/article";
+import { workPath } from "~/backend/domain/work";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
+import { loadWorks } from "~/backend/handlers/works/pages.handler";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** sitemap に載せる記事数の上限 (個人ブログ規模では十分)。 */
@@ -31,7 +33,7 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/sitemap.xml", async (c) => {
     const origin = new URL(c.req.url).origin;
-    const [result, profile] = await Promise.all([
+    const [result, profile, works] = await Promise.all([
       D1ArticleQueryRepository.forReaders(c.env.D1).list({
         limit: SITEMAP_ARTICLE_LIMIT,
         offset: 0,
@@ -39,17 +41,20 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
         direction: "desc",
       }),
       loadProfile(c.env),
+      loadWorks(c.env),
     ]);
 
     /*
      * `/about` はプロフィールが同期されていなければ `noindex` を立てる (「準備中」の
      * 一枚になる)。載せたまま `noindex` を出すと、Search Console が「sitemap に出した
-     * URL が noindex」と言ってくる。同じ理由で `/notes` と `/slides` も載せていない。
+     * URL が noindex」と言ってくる。`/works` も 1 件も無ければ同じ姿になるので同じ扱い。
+     * `/notes` と `/slides` を載せていないのも同じ理由。
      */
     const staticUrls = [
       urlEntry(`${origin}/`),
       ...(profile === null ? [] : [urlEntry(`${origin}/about`)]),
       urlEntry(`${origin}/articles`),
+      ...(works.length === 0 ? [] : [urlEntry(`${origin}/works`)]),
       urlEntry(`${origin}/licenses`),
     ];
     const articleUrls = result.articles.map((article) =>
@@ -58,10 +63,13 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
         article.lastModifiedOn.toString({ calendarName: "never" }),
       ),
     );
+    // 作品に lastmod は付けない。フロントマターに日付を持たせていないので、出せるのは
+    // D1 行の更新時刻だけになる。あれは同期の都合で動く値で、中身が変わった日ではない。
+    const workUrls = works.map((work) => urlEntry(`${origin}${workPath(work.slug)}`));
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticUrls, ...articleUrls].join("\n")}
+${[...staticUrls, ...articleUrls, ...workUrls].join("\n")}
 </urlset>
 `;
     return c.body(xml, 200, {

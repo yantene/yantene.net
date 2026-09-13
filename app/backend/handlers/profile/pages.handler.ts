@@ -1,8 +1,10 @@
 import type { PublicProfile } from "./profile-view";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import type { PublicWork } from "~/backend/handlers/works/work-view";
 import type { Root } from "mdast";
 import { toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
+import { loadWorks } from "~/backend/handlers/works/pages.handler";
 import { isProfileDataError } from "~/backend/domain/profile";
 import { errorToContext } from "~/backend/domain/shared";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
@@ -16,6 +18,13 @@ export interface AboutPageData {
   readonly mdast: Root | null;
   /** 長い自己紹介に貼られたむき出しの URL のカード。 */
   readonly linkCards: LinkCardMap;
+  /**
+   * 作ったもの。本文ではなくフロントマターの概要を並べる。
+   *
+   * **プロフィールとは独立に出す。** 作品は自己紹介の一部ではなく、それ自体が
+   * 行き先を持つもの (`/works/<slug>`) なので、プロフィールが無いときも空にしない。
+   */
+  readonly works: readonly PublicWork[];
   readonly jsonLd: Record<string, unknown> | null;
 }
 
@@ -52,13 +61,14 @@ export async function loadProfile(env: Env): Promise<PublicProfile | null> {
  * 行き先なので、初回同期の前に「そんなページは無い」と答えるのは嘘になる。
  */
 export async function loadAboutPage(env: Env, origin: string): Promise<AboutPageData> {
-  const [profile, mdast] = await Promise.all([
+  const [profile, mdast, works] = await Promise.all([
     new D1ProfileQueryRepository(env.D1).find(),
     new R2ProfileContentCache(env.R2).getMdast(),
+    loadWorks(env),
   ]);
 
   if (profile === undefined) {
-    return { profile: null, mdast: null, linkCards: {}, jsonLd: null };
+    return { profile: null, mdast: null, linkCards: {}, works, jsonLd: null };
   }
   if (mdast === undefined) {
     // D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。
@@ -70,6 +80,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
     profile: publicProfile,
     mdast: mdast as Root,
     linkCards: await loadLinkCards(env, mdast as Root),
+    works,
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Person",
