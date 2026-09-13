@@ -65,6 +65,16 @@ export class ArtifactsContentStore implements IContentStore {
   private readonly fetchFn: typeof fetch;
   /** トークンはストア (= 1 回の refresh) 内で使い回す。 */
   private tokenPromise?: Promise<string>;
+  /**
+   * ツリーもストア (= 1 回の refresh) 内で使い回す。
+   *
+   * 1 回の walk は「先端コミット 1 回 + ディレクトリの数だけ tree」の要求になるので、
+   * 同期するものが増えるたびに読み直すと Workers のサブリクエストの予算を食う。
+   * それ以上に大事なのは**同じコミットを見ること**で、先端の取得はキャッシュを
+   * 避けている以上、読み直せば途中の push が入り込む。記事とプロフィールが別の
+   * コミットから組まれると、D1 の contentHash がどの版のものか言えなくなる。
+   */
+  private treePromise?: Promise<readonly ContentEntry[]>;
 
   constructor(private readonly config: ArtifactsContentStoreConfig) {
     this.branch = config.branch ?? "main";
@@ -99,7 +109,12 @@ export class ArtifactsContentStore implements IContentStore {
     return response.json();
   }
 
-  async listTree(): Promise<readonly ContentEntry[]> {
+  listTree(): Promise<readonly ContentEntry[]> {
+    this.treePromise ??= this.fetchTree();
+    return this.treePromise;
+  }
+
+  private async fetchTree(): Promise<readonly ContentEntry[]> {
     // ブランチの先端は動くので、Workers の fetch キャッシュを回避する。これが無いと
     // push 後も古いコミットが返り、refresh の変更検出が取りこぼす。
     const log = await this.getJson(

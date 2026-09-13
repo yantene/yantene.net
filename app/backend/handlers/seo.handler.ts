@@ -1,6 +1,7 @@
 // XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
 import { articlePath } from "~/backend/domain/article";
+import { loadProfile } from "~/backend/handlers/profile/pages.handler";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
 /** sitemap に載せる記事数の上限 (個人ブログ規模では十分)。 */
@@ -30,16 +31,24 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
 
   router.get("/sitemap.xml", async (c) => {
     const origin = new URL(c.req.url).origin;
-    const result = await D1ArticleQueryRepository.forReaders(c.env.D1).list({
-      limit: SITEMAP_ARTICLE_LIMIT,
-      offset: 0,
-      sortBy: "lastModifiedOn",
-      direction: "desc",
-    });
+    const [result, profile] = await Promise.all([
+      D1ArticleQueryRepository.forReaders(c.env.D1).list({
+        limit: SITEMAP_ARTICLE_LIMIT,
+        offset: 0,
+        sortBy: "lastModifiedOn",
+        direction: "desc",
+      }),
+      loadProfile(c.env),
+    ]);
 
+    /*
+     * `/about` はプロフィールが同期されていなければ `noindex` を立てる (「準備中」の
+     * 一枚になる)。載せたまま `noindex` を出すと、Search Console が「sitemap に出した
+     * URL が noindex」と言ってくる。同じ理由で `/notes` と `/slides` も載せていない。
+     */
     const staticUrls = [
       urlEntry(`${origin}/`),
-      urlEntry(`${origin}/about`),
+      ...(profile === null ? [] : [urlEntry(`${origin}/about`)]),
       urlEntry(`${origin}/articles`),
       urlEntry(`${origin}/licenses`),
     ];

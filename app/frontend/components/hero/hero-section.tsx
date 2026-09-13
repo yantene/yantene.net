@@ -2,6 +2,7 @@ import { Celestim } from "./celestim";
 import { Cityscape } from "./cityscape";
 import { clockOriginClassName } from "./clock-origin";
 import { TimeScrubber } from "./time-scrubber";
+import { TaglineLines } from "~/frontend/components/profile/tagline-lines";
 import type { ClockOrigin } from "./clock-origin";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
@@ -85,14 +86,10 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
           薄めすぎると夜側で沈むため、全周期で AA を満たす範囲に留めている。
         */}
         {profile !== null && (
-          <p className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
-            {profile.tagline.map((line, index) => (
-              <span key={line}>
-                {index > 0 && <br />}
-                {line}
-              </span>
-            ))}
-          </p>
+          <TaglineLines
+            lines={profile.tagline}
+            className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85"
+          />
         )}
 
         {profile !== null && profile.socials.length > 0 && (

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { TaglineLines } from "./tagline-lines";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 import { SocialLinks } from "~/frontend/components/social/social-links";
@@ -52,14 +53,10 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
           {profile.name}
         </a>
 
-        <p className="p-note text-[0.9rem] leading-relaxed text-foreground/85">
-          {profile.tagline.map((line, index) => (
-            <span key={line}>
-              {index > 0 && <br />}
-              {line}
-            </span>
-          ))}
-        </p>
+        <TaglineLines
+          lines={profile.tagline}
+          className="p-note text-[0.9rem] leading-relaxed text-foreground/85"
+        />
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           {profile.socials.length > 0 && (

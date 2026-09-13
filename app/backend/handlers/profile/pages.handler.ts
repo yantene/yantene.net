@@ -3,6 +3,9 @@ import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { Root } from "mdast";
 import { toPublicLifeEvents, toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
+import { isProfileDataError } from "~/backend/domain/profile";
+import { errorToContext } from "~/backend/domain/shared";
+import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1ProfileQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 
@@ -22,10 +25,25 @@ export interface AboutPageData {
  *
  * まだ同期されていなければ null。呼ぶ側は落とさずに描くこと (プロフィールが無いことは
  * 記事が読めない理由にならない)。
+ *
+ * **保存されている行が読めないときも null に倒す。** たとえば `social-platforms.ts` から
+ * 先を 1 つ落とすと、その先を持つ既存の行は VO に戻せなくなる。投げっぱなしにすると
+ * トップと全記事ページが 500 になり、しかも同期は読めないフロントマターを弾いて旧行を
+ * 残すので、コンテンツ側を直しても復旧しない。読み手には既定の h-card を見せ、
+ * 起きたことは `error` で記録に残す。D1 そのものの障害は throw し直す (握りつぶさない)。
  */
 export async function loadProfile(env: Env): Promise<PublicProfile | null> {
-  const profile = await new D1ProfileQueryRepository(env.D1).find();
-  return profile === undefined ? null : toPublicProfile(profile);
+  try {
+    const profile = await new D1ProfileQueryRepository(env.D1).find();
+    return profile === undefined ? null : toPublicProfile(profile);
+  } catch (error) {
+    if (!isProfileDataError(error)) throw error;
+    new ConsoleLogger({ component: "profile" }).error(
+      "stored profile could not be read; falling back to the default h-card",
+      errorToContext(error),
+    );
+    return null;
+  }
 }
 
 /**

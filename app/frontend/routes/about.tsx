@@ -62,6 +62,11 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
     <AppLayout>
       <Header />
       <main className="flex flex-1 flex-col">
+        {/*
+          「準備中」に倒れるのはプロフィールがまだ同期されていないときだけ。`mdast` の側は
+          型を絞るために並べてある (ローダは片方だけ null を返さない。D1 に行があるのに
+          R2 に本文が無ければ throw する)。
+        */}
         {profile === null || mdast === null ? (
           <ComingSoon heading={t("navigation.about")} description={t("comingSoon.about")} />
         ) : (

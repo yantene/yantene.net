@@ -1,3 +1,4 @@
+export { isProfileDataError } from "./errors";
 export { InvalidLifeEventDateError, LifeEventDate } from "./life-event-date.vo";
 export { InvalidLifeEventError, LifeEvent } from "./life-event.vo";
 export { InvalidProfileNameError, ProfileName } from "./profile-name.vo";

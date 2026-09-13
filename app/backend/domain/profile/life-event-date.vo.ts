@@ -15,6 +15,9 @@ export type LifeEventPrecision = "day" | "month" | "year";
  */
 const datePattern = /^\d{4}(?:-\d{2}(?:-\d{2})?)?$/u;
 
+/** D1 に入っている正規化キーの形。桁は必ず日まで埋まっている。 */
+const dayPattern = /^\d{4}-\d{2}-\d{2}$/u;
+
 export class InvalidLifeEventDateError extends Error {
   readonly name = "InvalidLifeEventDateError";
 }
@@ -36,9 +39,7 @@ export class LifeEventDate implements IValueObject<LifeEventDate> {
     const granularity = precisionOf(text);
     const normalized = padToDay(text, granularity);
     // 形が合っていても 2012-13 や 2013-02-30 は日付ではない。暦に無い日を弾く。
-    try {
-      Temporal.PlainDate.from(normalized);
-    } catch {
+    if (!isRealDate(normalized)) {
       throw new InvalidLifeEventDateError(`Life event date is not a real date: ${text}`);
     }
     return new LifeEventDate(normalized, granularity);
@@ -53,6 +54,13 @@ export class LifeEventDate implements IValueObject<LifeEventDate> {
   static reconstruct(normalized: string, granularity: string): LifeEventDate {
     if (!isLifeEventPrecision(granularity)) {
       throw new InvalidLifeEventDateError(`Unknown life event precision: ${granularity}`);
+    }
+    // 正規化キーのほうも見る。粒度だけを見ていると、`toString()` が壊れた値を切り出して
+    // `<time dateTime>` と画面の両方に出る (日付として読めない字が残る)。
+    if (!dayPattern.test(normalized) || !isRealDate(normalized)) {
+      throw new InvalidLifeEventDateError(
+        `Stored life event date is not a real date: ${normalized}`,
+      );
     }
     return new LifeEventDate(normalized, granularity);
   }
@@ -88,6 +96,16 @@ export class LifeEventDate implements IValueObject<LifeEventDate> {
 
 export function isLifeEventPrecision(value: string): value is LifeEventPrecision {
   return value === "day" || value === "month" || value === "year";
+}
+
+/** 暦に在る日か (`2012-13-01` や `2013-02-30` は形が合っていても日付ではない)。 */
+function isRealDate(normalized: string): boolean {
+  try {
+    Temporal.PlainDate.from(normalized);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function precisionOf(text: string): LifeEventPrecision {

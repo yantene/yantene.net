@@ -130,4 +130,34 @@ describe("loadProfile", () => {
     expect(profile?.socials.map((social) => social.platform)).toEqual(["github", "x"]);
     expect(profile).not.toHaveProperty("lifeEvents");
   });
+
+  /*
+   * 保存されている行が読めなくなる筋がある。`social-platforms.ts` から先を 1 つ落とせば、
+   * その先を持つ既存の行は VO に戻せない。しかも同期は読めないフロントマターを弾いて
+   * 旧行を残すので、コンテンツ側を直しても消えない。ここで投げると、プロフィールを
+   * 読むだけのトップと**全記事ページ**が巻き添えで 500 になる。
+   */
+  it("falls back to null when a stored row can no longer be read", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await d1
+      .prepare("UPDATE profile_socials SET platform = ? WHERE profile_id = ?")
+      .bind("retired-platform", "profile")
+      .run();
+
+    expect(await loadProfile(envWith(d1, bucket))).toBeNull();
+  });
+
+  /** D1 そのものの障害は握りつぶさない (静かに「プロフィールが無い」ことにしない)。 */
+  it("rethrows when D1 itself fails", async () => {
+    const failing = {
+      prepare: () => {
+        throw new Error("D1_ERROR: no such table");
+      },
+    } as unknown as D1Database;
+    const { bucket } = createTestR2();
+
+    await expect(loadProfile(envWith(failing, bucket))).rejects.toThrow("D1_ERROR");
+  });
 });

@@ -39,6 +39,11 @@ function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
 
+/**
+ * ツリーを訊かれるたびに `files` の今の姿を返す。本物は 1 回の同期で 1 つ作り、その間
+ * 同じ姿を返す約束だが (`IContentStore`)、ここでは 1 つのストアで何回もの同期を模して
+ * コンテンツリポジトリ側の書き換えを起こしたいので、わざとそうしていない。
+ */
 class MockContentStore implements IContentStore {
   /** 読みに行ったパス。「変更が無ければ開かない」を確かめるために控える。 */
   readonly reads: string[] = [];
@@ -212,6 +217,21 @@ describe("ProfileRefreshService", () => {
     expect(result.deleted).toBe(true);
     expect(await query.find()).toBeUndefined();
     expect(cache.deletedProfile).toBe(true);
+  });
+
+  /*
+   * ブランチの取り違えやコンテンツリポジトリ側の事故で何も無い応答が返ると、掃除の経路が
+   * そのまま削除になる。記事の同期にも同じガードがあるが、あちらは D1 に記事が 1 件も
+   * 入っていない環境では発火しないので、こちらで独立に止める。
+   */
+  it("refuses to clean up when the whole tree is empty", async () => {
+    await service.refresh();
+
+    files.clear();
+
+    await expect(service.refresh()).rejects.toThrow("the content tree is empty");
+    expect(await query.find()).toBeDefined();
+    expect(cache.deletedProfile).toBe(false);
   });
 
   it("does nothing when there is no profile and none was stored", async () => {

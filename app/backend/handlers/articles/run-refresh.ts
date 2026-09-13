@@ -46,9 +46,10 @@ export async function runRefresh(
   ).refresh({ force });
 
   /*
-   * プロフィールも同じツリーから同期する。記事の後に置くのは、ツリーごと空に見える
-   * 事故を記事側のガード (全件削除の拒否) に止めてもらうため。プロフィールは 1 つ
-   * しかないので自前のガードを持たない。
+   * プロフィールも同じツリーから同期する (`listTree()` の結果は 1 refresh の間
+   * 覚えているので、ツリーを読み直しはしない)。記事の後に置くのは、記事の同期が
+   * 落ちたときにプロフィールだけ先に進まないようにするため。ツリーごと空に見える
+   * 事故は、こちらも自前のガードで止める。
    */
   const profile = await new ProfileRefreshService(
     contentStore,
@@ -95,5 +96,7 @@ export async function runRefresh(
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
 
-  return { ...result, profile, linkCards, embeddings };
+  // linkedUrls は記事とプロフィールを合わせたもの (カードの同期に渡したものと同じ) を返す。
+  // 記事の分だけを返すと、`/about` のカードが取れたか取れなかったかを結果から辿れない。
+  return { ...result, linkedUrls, profile, linkCards, embeddings };
 }

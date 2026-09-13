@@ -1,4 +1,5 @@
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
+import { TaglineLines } from "./tagline-lines";
 import { SocialLinks } from "~/frontend/components/social/social-links";
 
 interface ProfileCardProps {
@@ -29,14 +30,10 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
       <div className="flex flex-col items-center gap-4 sm:items-start">
         <h1 className="p-name text-2xl font-semibold tracking-tight">{profile.name}</h1>
 
-        <p className="p-note max-w-xl text-[0.95rem] leading-relaxed text-foreground/85">
-          {profile.tagline.map((line, index) => (
-            <span key={line}>
-              {index > 0 && <br />}
-              {line}
-            </span>
-          ))}
-        </p>
+        <TaglineLines
+          lines={profile.tagline}
+          className="p-note max-w-xl text-[0.95rem] leading-relaxed text-foreground/85"
+        />
 
         {/*
           機械に読ませるためだけの、サイト自身への参照。見える形の対応物がこの紹介に

@@ -24,11 +24,13 @@ export interface PublicLifeEvent {
  * 3 か所 (トップのヒーロー・記事の末尾・`/about`) が共通で出すプロフィール。
  *
  * 長い自己紹介 (MDAST) とライフイベントはここに含めない。読むのは `/about` だけなので、
- * 記事を 1 本開くたびに運ぶ理由が無い。
+ * 記事を 1 本開くたびに**描画側へ運ぶ**理由が無い。ただし D1 からはまとめて読んでいる
+ * (`find()` は子表も引く)。ライフイベントが増えて重くなったら、要る列だけを引く
+ * 読み口をリポジトリに足すことになる。
  */
 export interface PublicProfile {
   readonly name: string;
-  /** 短い自己紹介。行に分けてある (描画側が `<br />` を挟む)。 */
+  /** 短い自己紹介。行に分けてある (描画側が改行を保ったまま 1 つの段落に流す)。 */
   readonly tagline: readonly string[];
   readonly avatarUrl: string | null;
   readonly socials: readonly PublicSocialAccount[];

@@ -117,19 +117,21 @@ export interface HomePageData {
 export async function loadHomePage(env: Env): Promise<HomePageData> {
   const query = D1ArticleQueryRepository.forReaders(env.D1);
 
-  const [recent, profile] = await Promise.all([
+  // 3 つは互いに依存しないので、待つのは 1 往復ぶんで足りる。
+  const [recent, popular, profile] = await Promise.all([
     query.list({
       limit: RECENT_COUNT,
       offset: 0,
       sortBy: "publishedOn",
       direction: "desc",
     }),
+    loadPopularArticles(env, query),
     loadProfile(env),
   ]);
 
   return {
     recent: toPublicArticleList(recent, 1, RECENT_COUNT).articles,
-    popular: await loadPopularArticles(env, query),
+    popular,
     profile,
   };
 }
