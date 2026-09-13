@@ -213,11 +213,12 @@
 }
 
 /*
- * 表示する言語の切り替え。
+ * 表示する言語の切り替え — **ドロワーの中に置く平らな姿** (LocaleSwitch)。
  *
- * 2 つしかないので、開いて選ばせずに両方を出したままにする。
+ * 帯のほうは globe の絵から開く板になっている (LocaleMenu / .header-menu)。ドロワーは
+ * 既に `<details>` の中なので、そこで更に畳まず、2 つしかない選択肢を出したままにする。
  *
- * **器は与えない。** 塗り分けたセグメントにしていたときは、帯で 2 番目に重いものが
+ * **器は与えない。** 塗り分けたセグメントにしていたときは、2 番目に重いものが
  * 「一度決めたらほとんど触らない設定」になっていた。字として置けば、いちばん重いのが
  * 検索、次がナビ、という順に落ち着く (interaction.css)。
  */
@@ -226,7 +227,7 @@
   align-items: center;
   /*
    * 字間は選択肢の側の padding が持つ (下)。**押し代のぶんを負の余白で戻す。**
-   * こうすると的を広げても、隣 (検索・フィード) との間隔と、ドロワーでの左端は動かない。
+   * こうすると的を広げても、ドロワーでの左端は動かない。
    */
   margin-inline: -0.25rem;
 }
@@ -237,8 +238,7 @@
    * なる。高さは隣の検索と同じ器の高さ、左右は 0.25rem ずつ。
    *
    * 左右の padding は的を広げると同時に、2 つの間の字間 (0.25rem + 0.25rem = 8px) も
-   * 作る。島の中でいちばん狭い間隔で、道具どうし (16px) より詰まることで 2 つで 1 組
-   * だと分かる。header.tsx の「島間 > ナビ > 道具 > その中」の順を崩さないこと。
+   * 作る。いちばん狭い間隔で、詰まることで 2 つで 1 組だと分かる。
    */
   display: inline-flex;
   align-items: center;
@@ -286,23 +286,136 @@
 }
 
 /*
- * 絵だけの操作子。いまはフィードの導線。
+ * 帯の絵から開く小さな板 — フィードの選び場所 (FeedMenu) と、表示する言語 (LocaleMenu)。
  *
- * **器は与えない。** 帯で面を持つのは検索だけ (interaction.css)。縁付きの箱に入れて
- * いたときは、RSS の印が箱の 62.5% しか塗らず (虫眼鏡は 81%)、しかも四分円が左下に
- * 寄った形なので、右上の空きが箱の中で目立った。**箱をやめれば余る空きも無くなる**ので、
- * 字を 1 段大きくして埋める必要もない。
+ * **器は `<details>`。** JavaScript が動かなくても開ける。足しているのは Esc と外押しで
+ * 畳むことだけ (useDismissableDetails)。
+ *
+ * ドロワー (.site-menu) と違い、板は押した絵の直下に落とす。**そのための基準をここに
+ * 置く。** ドロワーのほうは帯いっぱいに広げたいので、逆に `position` を持たせては
+ * いけない (下のコメントを参照)。
+ *
+ * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:block が持つ。
+ * ここで display を書くと、素の CSS は Tailwind の層より後に読まれるので、
+ * 使う側の `hidden` が効かなくなる。
+ */
+.header-menu {
+  position: relative;
+}
+
+/*
+ * 押し場所。**器は与えない。** 帯で面を持つのは検索だけ (interaction.css)。縁付きの箱に
+ * 入れていたときは、RSS の印が箱の 62.5% しか塗らず (虫眼鏡は 81%)、しかも四分円が
+ * 左下に寄った形なので、右上の空きが箱の中で目立った。
  *
  * ここで決めるのは押せる大きさだけ。絵そのものは 1.125rem しかなく、そのままでは指にも
  * マウスにも小さい。高さを隣の検索と揃えると、縦の位置も一緒に揃う。
- *
- * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:inline-flex が持つ。
  */
-.header-icon-link {
+.header-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: var(--control-height);
   padding-inline: 0.25rem;
-  /* 広げたぶんは負の余白で戻す。絵の右端は帯の右端に揃えたままにする。 */
-  margin-inline-end: -0.25rem;
+  color: inherit;
+  cursor: pointer;
+  /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
+  list-style: none;
+}
+
+.header-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.header-menu-trigger:hover {
+  color: var(--color-primary);
+}
+
+.header-menu-icon {
+  font-size: 1.125rem;
+}
+
+/*
+ * 並びの終端に来る板は、右端を絵に揃える。左へ開くのは、帯の右端から溢れさせないため。
+ *
+ * 幅は中身なり。ただし狭すぎると 1 項目が 2 行になるので下限を置く。
+ */
+.header-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  z-index: 40;
+  min-width: 11rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.75rem;
+  /* トップでは動く空の上に降りてくる。透かすと字が読めない。 */
+  background-color: var(--color-base-100);
+  box-shadow: 0 16px 32px rgb(11 18 33 / 0.12);
+}
+
+/*
+ * 板の名前。絵だけの押し場所から開くので、これが無いと名前の羅列が宙に浮く。
+ *
+ * ドロワーの中でも同じ字を使う (site-menu-feeds)。
+ */
+.header-menu-title {
+  padding: 0.25rem 0.5rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+}
+
+.header-menu-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * 板の中の 1 行。行そのものが押し場所なので press-surface を載せる (interaction.css)。
+ *
+ * `<button>` と `<a>` の両方が来る (表示する言語はフォームの送信、フィードはリンク)。
+ * 素の button は継承しないものが多いので、font と地を明示的に揃える。
+ */
+.header-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  /* 指で押せる高さ。字の大きさだけだと 44px に届かない。 */
+  min-height: 2.25rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.5rem;
+  background: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: start;
+  color: var(--color-base-content);
+  cursor: pointer;
+}
+
+.header-menu-item:hover {
+  color: var(--color-primary);
+}
+
+/*
+ * いま選ばれているもの (表示する言語)。
+ *
+ * **色だけで示さない。** 色を見分けられない読み手に伝わらないので、印も添える。
+ * 板の中は縦に並ぶので、下線ではなく行末のチェックにする — 下線はナビの現在地
+ * (.site-nav-current) が使っている印で、同じ帯の中で混ぜると読めなくなる。
+ */
+.header-menu-item[aria-current="true"] {
+  font-weight: 700;
+}
+
+.header-menu-item[aria-current="true"]::after {
+  content: "✓";
+  margin-inline-start: auto;
+  padding-inline-start: 0.75rem;
+  color: var(--color-primary);
 }
 
 /*
@@ -392,10 +505,42 @@
 
 .site-menu-foot {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-base-300);
+}
+
+/*
+ * ドロワーのフィード。**畳んだ中で更に畳まないので、4 つを横に並べる。**
+ *
+ * 帯では絵を押して開く形 (FeedMenu) だが、ここは既に `<details>` の中。入れ子の開閉に
+ * すると開くのに 2 手かかり、支援技術にもそのまま伝わる。
+ */
+.site-menu-feeds {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.site-menu-feed-list {
+  display: flex;
+  flex-wrap: wrap;
+  /* 字間は項目の側の padding が持つ。押し代のぶんを負の余白で戻して左端を揃える。 */
+  margin-inline: -0.5rem;
+}
+
+.site-menu-feed-link {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  padding-inline: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+.site-menu-feed-link:hover {
+  color: var(--color-primary);
 }

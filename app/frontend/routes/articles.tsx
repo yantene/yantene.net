@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { HiMagnifyingGlass } from "react-icons/hi2";
 import type { Route } from "./+types/articles";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { ArticlesListPageData } from "~/backend/handlers/articles/pages.handler";
@@ -8,7 +7,6 @@ import type { LoadArticlePage } from "~/frontend/components/article-timeline/inf
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadArticlesListPage } from "~/backend/handlers/articles/pages.handler";
-import { FeedLink } from "~/frontend/components/feed/feed-link";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { InfiniteArticleTimeline } from "~/frontend/components/article-timeline/infinite-article-timeline";
@@ -37,12 +35,19 @@ export async function loader({
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
-  const pageTitle = translationsFor(locale).articles.title;
+  const translations = translationsFor(locale);
+  const identity = feedIdentity("articles");
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    title: pageTitle,
+    title: translations.articles.title,
+    description: translations.articles.lead,
+    /*
+     * この場所に対応するフィードを名指しする。root が出す全体のフィードを上書きするので、
+     * ここを見ているリーダーには記事だけのフィードが見つかる。
+     */
+    feed: { path: identity.path, title: identity.title },
   });
 };
 
@@ -91,20 +96,6 @@ function buildLoadPage(sort: SortState): LoadArticlePage {
   };
 }
 
-/**
- * 結果の見出しを組み立てる。
- *
- * 何で絞った結果を見ているのかが一目で分かるようにする。検索語もタグも無いときは
- * ページの名前をそのまま出す。
- */
-function resultHeading(
-  t: (key: string, options?: Record<string, unknown>) => string,
-  { query, total }: { query: string; total: number },
-): string {
-  if (query.length > 0) return t("search.resultsFor", { query, count: total });
-  return t("articles.heading");
-}
-
 export default function ArticlesIndex({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { articles, pagination, query, sort, copyright } = loaderData;
@@ -131,35 +122,34 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps): Rea
       <Header />
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         {/*
-          このページが検索の入口と結果を兼ねる。探す前と後で別のページへ飛ばさず、
-          フォームは常に同じ場所に置いたままにする。
-        */}
-        <search className="articles-search">
-          <form method="get" action="/articles" role="search">
-            <label className="articles-search-field">
-              <HiMagnifyingGlass className="articles-search-icon" aria-hidden />
-              <input
-                type="search"
-                name="q"
-                defaultValue={query}
-                placeholder={t("search.placeholder")}
-                aria-label={t("search.title")}
-                autoComplete="off"
-              />
-            </label>
-          </form>
-        </search>
+          ページの名乗り。**何の場所なのかを先に書く。**
 
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-          <h1 className="articles-heading">
-            {resultHeading(t, { query, total: pagination.total })}
-          </h1>
-          {/*
-            一覧の入口に置く購読導線。ここは「全件を辿る」ページなので、辿らずに
-            受け取り続ける手を同じ高さに並べる。
-          */}
-          <FeedLink href={feedIdentity().path} />
-        </div>
+          検索欄を主役に据えていたときは、見出しを 1rem まで落として結果のラベルとして
+          扱っていた。探すのはパレット (`⌘K` / `Ctrl+K`) の仕事になったので、ここは
+          「Articles とは何か」を示す場所に戻す。
+
+          題は訳さない (場所の名前。locales.test.ts に線引きがある)。説明のほうは
+          読み手に語りかける文なので訳す。
+        */}
+        <header className="articles-intro">
+          <h1 className="articles-heading">{t("articles.heading")}</h1>
+          <p className="articles-lead">{t("articles.lead")}</p>
+        </header>
+
+        {/*
+          絞り込んだ結果を見ているときだけ、何で絞ったのかを出す。
+
+          **見出しは差し替えない。** ここは検索語によらず Articles という場所で、題ごと
+          入れ替えると、同じ URL がページによって別の名前を名乗ることになる。
+
+          ここへ来る道は 2 つ — パレットの「すべての結果を見る」と、`?q=` を直接
+          叩いた場合。ページ内に検索欄は無いので、絞り直すにはパレットを開き直す。
+        */}
+        {query.length > 0 && (
+          <p className="articles-results">
+            {t("search.resultsFor", { query, count: pagination.total })}
+          </p>
+        )}
 
         {articles.length === 0 ? (
           <p className="mt-8 text-base-content/60">

@@ -5,6 +5,7 @@ import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
+import { feedIdentities } from "~/lib/feed";
 
 function unpersistedArticle(params: {
   slug: string;
@@ -100,5 +101,71 @@ describe("カテゴリ", () => {
     expect(body).toContain("https://example.test/articles/a");
     expect(body).toContain("https://example.test/articles/b");
     expect(body).toContain("<title>やんてね</title>");
+  });
+});
+
+describe("種別ごとのフィード", () => {
+  /*
+   * 表にある行き先は必ず応答すること。**ヘッダーの選び場所は同じ表から描く**ので、
+   * 生やし忘れると押せるのに 404 になるリンクが帯に並ぶ。
+   */
+  it.each(feedIdentities.map((identity) => identity.path))("%s は Atom を返す", async (path) => {
+    const d1 = createTestD1();
+    const res = await createTestApp().request(path, {}, env(d1));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/atom+xml");
+    const body = await res.text();
+    expect(body).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+  });
+
+  it("記事のフィードは記事を載せる", async () => {
+    const d1 = createTestD1();
+    await new D1ArticleCommandRepository(d1).upsert(
+      unpersistedArticle({ slug: "hello-world", title: "Hello" }),
+    );
+    const res = await createTestApp().request(
+      "https://example.test/feed/articles.xml",
+      {},
+      env(d1),
+    );
+    const body = await res.text();
+
+    expect(body).toContain("<title>やんてね — Articles</title>");
+    expect(body).toContain("<id>https://example.test/articles</id>");
+    expect(body).toContain("https://example.test/articles/hello-world");
+  });
+
+  /*
+   * **Notes と Slides はまだ中身が無い** (#412 / #415)。記事が漏れて入ると、種別で
+   * 分けた意味が無くなるどころか、同じものが 3 本のフィードから届く。
+   */
+  it.each(["/feed/notes.xml", "/feed/slides.xml"])("%s は記事を載せない", async (path) => {
+    const d1 = createTestD1();
+    await new D1ArticleCommandRepository(d1).upsert(
+      unpersistedArticle({ slug: "hello-world", title: "Hello" }),
+    );
+    const res = await createTestApp().request(path, {}, env(d1));
+    const body = await res.text();
+
+    expect(res.status).toBe(200);
+    expect(body).not.toContain("<entry>");
+    expect(body).not.toContain("hello-world");
+  });
+
+  /*
+   * リーダーは title で購読先を見分ける。全体と同じ名前を名乗ると、別の種別を購読した
+   * つもりの人の手元で 1 本に見える。
+   */
+  it("それぞれ違う名前を名乗る", async () => {
+    const d1 = createTestD1();
+    const titles = await Promise.all(
+      feedIdentities.map(async (identity) => {
+        const res = await createTestApp().request(identity.path, {}, env(d1));
+        return /<title>(?<title>[^<]*)<\/title>/u.exec(await res.text())?.groups?.title;
+      }),
+    );
+
+    expect(new Set(titles).size).toBe(titles.length);
   });
 });

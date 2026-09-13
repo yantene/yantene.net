@@ -94,13 +94,18 @@ export const links: Route.LinksFunction = () => [
   // iOS はホーム画面に置くときに manifest ではなくこれを見る。
   { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
   { rel: "manifest", href: "/manifest.webmanifest" },
-  // 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
-  // フィード本体の <title> がずれる。
+  /*
+   * 名乗りは feedIdentity から引く。ここで文字列を持つと、リーダーに見える名前と
+   * フィード本体の <title> がずれる。
+   *
+   * 全ページの既定はサイト全体のフィード。**種別ごとのページはこれを上書きする**
+   * (buildPageMeta の feed)。上書きしない限り、どのページからもまず全体が拾われる。
+   */
   {
     rel: "alternate",
     type: "application/atom+xml",
-    title: feedIdentity().title,
-    href: feedIdentity().path,
+    title: feedIdentity("all").title,
+    href: feedIdentity("all").path,
   },
 ];
 

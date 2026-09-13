@@ -20,7 +20,8 @@
     "slides": "Slides"
   },
   "feed": {
-    "label": "Feed"
+    "label": "Feed",
+    "all": "All"
   },
   "timeline": {
     "loadingMore": "Loading more…",
@@ -31,6 +32,7 @@
   "articles": {
     "title": "Articles",
     "heading": "Articles",
+    "lead": "Essays, technical write-ups, and whatever else. Anything worth saying at length ends up here.",
     "empty": "No articles have been published yet.",
     "related": "Related articles",
     "toc": "Contents",

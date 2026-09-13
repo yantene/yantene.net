@@ -1,57 +1,57 @@
 /*
- * 記事一覧 (検索の入口と結果を兼ねるページ) 固有の見た目。
+ * 記事一覧固有の見た目。
  *
- * 記事の並び自体は ArticleTimeline が持つので、ここに置くのは探すための部分だけ。
+ * 記事の並び自体は ArticleTimeline が持つので、ここに置くのはページの名乗りだけ。
+ * 探す道具はここには無い (検索はヘッダーのパレットが持つ)。
  */
 
-/* 探す道具をページの頭にまとめる。結果より先に目に入る位置に置く。 */
-.articles-search {
-  display: block;
-  max-width: 36rem;
-  margin-inline: auto;
+/*
+ * ページの名乗り。**本文より先に、たっぷり空けて置く。**
+ *
+ * 検索欄を主役に据えていたときは、この場所を探す道具が占めていて、見出しは結果の
+ * ラベルとして 1rem まで落としてあった。いまは「ここは何の場所か」を出す場所なので、
+ * 記事の題 (一覧の中でいちばん大きい字) より更に一段上に置く。
+ */
+.articles-intro {
   margin-bottom: 2.5rem;
 }
 
-.articles-search-field {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 1.125rem;
-  border: 1px solid var(--color-base-300);
-  border-radius: 9999px;
-  background-color: var(--color-base-100);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.articles-search-field:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 18%, transparent);
-}
-
-.articles-search-icon {
-  flex: none;
-  font-size: 1.125rem;
-  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
-}
-
-.articles-search-field input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  font-size: 1rem;
-  line-height: 1.75;
-}
-
-.articles-search-field input:focus {
-  outline: none;
-}
-
-/* 検索欄が主役なので、結果の見出しは控えめに置く。 */
 .articles-heading {
+  font-size: 2.25rem;
+  font-weight: 700;
+  /* 欧文の見出しなので字間を少し詰める。大きくするほど空いて見えるため。 */
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-base-content);
+}
+
+@media (width >= 48rem) {
+  .articles-heading {
+    font-size: 3rem;
+  }
+}
+
+/*
+ * 名乗りに続く一文。**題のすぐ下に、題より弱く置く。**
+ *
+ * 幅を絞るのは読みやすさのため。一覧の器は 5xl (64rem) あり、そのまま流すと 1 行が
+ * 長くなりすぎて次の行頭を見失う。
+ */
+.articles-lead {
+  max-width: 40rem;
+  margin-top: 0.75rem;
   font-size: 1rem;
-  font-weight: 400;
+  line-height: 1.8;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+
+/*
+ * 絞り込んだ結果を見ているときに出る一行。
+ *
+ * 見出しではなく注記として置く。ここは検索語によらず Articles という場所で、
+ * 何で絞ったかは一覧に添える情報でしかない。
+ */
+.articles-results {
+  font-size: 0.875rem;
   color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
 }

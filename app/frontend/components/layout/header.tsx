@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { LocaleSwitch } from "./locale-switch";
+import { LocaleMenu } from "./locale-menu";
 import { SiteMenu } from "./site-menu";
 import { SiteNav } from "./site-nav";
 import Logo from "~/frontend/assets/yantene-logo.svg?react";
-import { FeedIconLink } from "~/frontend/components/feed/feed-link";
+import { FeedMenu } from "~/frontend/components/feed/feed-menu";
 import { CommandPalette } from "~/frontend/components/search/command-palette";
 import { SearchTrigger } from "~/frontend/components/search/search-trigger";
 
@@ -24,8 +24,8 @@ type HeaderProps = {
  * 字を打ち込んでいる最中か。
  *
  * 打っている場所で `Ctrl+K` を奪わない。macOS の入力欄では行末までの削除に割り当たって
- * いて、奪うと読み手の手癖を壊す。一覧の検索欄で押したときも、そこで打っている人は
- * 既に検索しているので、別の検索を被せる意味が無い。
+ * いて、奪うと読み手の手癖を壊す。パレット自身の入力欄で押したときも、そこで打って
+ * いる人は既に検索しているので、別の検索を被せる意味が無い。
  */
 function isTyping(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -80,18 +80,6 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
   // 夜側でコントラストが 4.5:1 を割るため、濃いめの色に切り替える。
   const inkClassName = isTransparent ? "text-foreground/80" : "text-muted-foreground";
   const navLinkClassName = `press-control text-sm font-medium transition-colors hover:text-primary ${inkClassName}`;
-  /*
-   * 絵だけの導線 (いまはフィード)。**器は持たない。** 帯で面を持つのは検索だけで、
-   * ここが決めるのは押せる大きさだけ (header.css の .header-icon-link)。
-   *
-   * 字の大きさは隣の虫眼鏡 (1rem) より 1 段だけ上。箱に入れていたときは箱の空きを
-   * 埋めるために text-xl まで上げていたが、箱をやめたので要らない。
-   *
-   * **display はここに入れない。** 出し隠しは使う側が `hidden lg:inline-flex` で載せる。
-   * 同じ層の display の指定を 2 つ並べると、勝つのはクラスの並び順ではなく生成された
-   * CSS の順になり、どちらが効くのか読めなくなる。
-   */
-  const iconLinkClassName = `header-icon-link press-control items-center justify-center text-lg transition-colors hover:text-primary ${inkClassName}`;
 
   return (
     <>
@@ -228,25 +216,29 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
               />
 
               {/*
-                出し隠しは囲みの側で行う。LocaleSwitch 自身は自前の CSS で display を
-                決めており (header.css)、素の CSS は Tailwind の層より後に読まれるので、
-                `hidden` を直接載せても効かない。
+                表示する言語。**畳んでおく。** 一度選べば cookie に 1 年残るので、帯で
+                常に場所を取らせる理由が無い (LocaleMenu)。EN / JA を出したままにして
+                いたときは、帯で 2 番目に目立つものが「一度決めたらほとんど触らない
+                設定」になっていた。
+
+                出し隠しは `hidden lg:block` で載せる。**器の側の display と喧嘩しない**
+                ように、LocaleMenu は自前の CSS で display を決めない (header.css の
+                .header-menu は position だけを持つ)。
               */}
-              <div className="hidden lg:block">
-                <LocaleSwitch />
-              </div>
+              <LocaleMenu className="hidden lg:block" />
 
               {/*
-                読み終えた後も繋がっていられる手。**帯に置くのはここだけ**で、フッターには
-                置いていない (一覧の見出し脇にあるのは、その一覧に対応するフィードを指す
-                別の導線)。ソーシャルメディアへの導線は帯にもドロワーにも置かない —
-                あれは「誰か」の情報で、行き先と道具を並べる場所には属さない。ヒーローと、
-                いずれプロフィール (#413) が持つ。
+                読み終えた後も繋がっていられる手。**帯に置くのはここだけ**で、フッターにも
+                一覧の見出し脇にも置いていない。ソーシャルメディアへの導線は帯にもドロワー
+                にも置かない — あれは「誰か」の情報で、行き先と道具を並べる場所には属さない。
+                ヒーローと、いずれプロフィール (#413) が持つ。
 
                 並びの終端に置く。出ていく先を指すものなので、ページの中を動かす道具
                 (検索・表示する言語) を通り過ぎた先にあるのが素直な順になる。
+
+                押すと種別ごとのフィードが開く (All / Articles / Notes / Slides)。
               */}
-              <FeedIconLink className={`hidden lg:inline-flex ${iconLinkClassName}`} />
+              <FeedMenu className="hidden lg:block" />
 
               <SiteMenu className="lg:hidden" />
             </div>

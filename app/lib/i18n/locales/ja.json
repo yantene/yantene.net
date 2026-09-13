@@ -20,7 +20,8 @@
     "slides": "Slides"
   },
   "feed": {
-    "label": "Feed"
+    "label": "Feed",
+    "all": "All"
   },
   "timeline": {
     "loadingMore": "続きを読み込んでいる…",
@@ -31,6 +32,7 @@
   "articles": {
     "title": "Articles",
     "heading": "Articles",
+    "lead": "エッセイ、技術記事、その他もろもろ。長めに書きたいことはここに置いている。",
     "empty": "まだ公開された記事がない。",
     "related": "Related articles",
     "toc": "Contents",

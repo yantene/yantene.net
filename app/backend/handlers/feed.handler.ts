@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { toPublicArticle, type PublicArticle } from "./article-view";
 import { articlePath } from "~/backend/domain/article";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
-import { feedIdentity, type FeedIdentity } from "~/lib/feed";
+import { feedIdentities, type FeedIdentity, type FeedKind } from "~/lib/feed";
 
 const FEED_LIMIT = 20;
 const FEED_AUTHOR = "yantene";
@@ -75,33 +75,49 @@ ${entries}
 }
 
 /**
- * Atom フィードの公開ルータ。`GET /feed.xml` が最新記事を Atom で返す。
+ * その種別の entry を集める。
  *
- * タグを廃止したのでフィードは 1 本だけ。`?tag=` を付けても無視して全体を返す。
- * 404 にすると、購読中のリーダーが「消えたフィード」として扱ってしまう。
+ * **`notes` と `slides` はまだ中身が無い** (#412 / #415)。コンテンツの型そのものが
+ * 無いので、空を返す以外にやりようがない。entry 0 件の Atom は Atom として妥当で、
+ * リーダーは「まだ何も出ていないフィード」として扱う。
+ *
+ * 種別が増えたらここに枝を足す。**`all` に混ぜ忘れないこと** — 種別ごとのフィードだけ
+ * 増えて全体のフィードに出てこないと、全部を購読しているつもりの人に届かない。
+ */
+async function entriesFor(kind: FeedKind, db: D1Database): Promise<readonly PublicArticle[]> {
+  if (kind === "notes" || kind === "slides") return [];
+
+  const result = await new D1ArticleQueryRepository(db).list({
+    limit: FEED_LIMIT,
+    offset: 0,
+    sortBy: "publishedOn",
+    direction: "desc",
+  });
+  return result.articles.map((article) => toPublicArticle(article));
+}
+
+/**
+ * Atom フィードの公開ルータ。種別ごとに 1 本ずつ生やす (`/feed.xml` が全体)。
+ *
+ * 行き先は `~/lib/feed` の {@link feedIdentities} が持つ。ヘッダーの選び場所も同じ表を
+ * 読むので、**片方にだけある URL は作れない**。
+ *
+ * タグは廃止した。`?tag=` を付けても無視してその種別の全体を返す。404 にすると、
+ * 購読中のリーダーが「消えたフィード」として扱ってしまう。
  */
 export function createFeedRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
-  router.get("/feed.xml", async (c) => {
-    const result = await new D1ArticleQueryRepository(c.env.D1).list({
-      limit: FEED_LIMIT,
-      offset: 0,
-      sortBy: "publishedOn",
-      direction: "desc",
+  for (const identity of feedIdentities) {
+    router.get(identity.path, async (c) => {
+      const articles = await entriesFor(identity.kind, c.env.D1);
+      const origin = new URL(c.req.url).origin;
+      return c.body(buildAtom(origin, articles, identity), 200, {
+        "Content-Type": "application/atom+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      });
     });
-
-    const origin = new URL(c.req.url).origin;
-    const xml = buildAtom(
-      origin,
-      result.articles.map((article) => toPublicArticle(article)),
-      feedIdentity(),
-    );
-    return c.body(xml, 200, {
-      "Content-Type": "application/atom+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-    });
-  });
+  }
 
   return router;
 }
