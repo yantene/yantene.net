@@ -1,13 +1,15 @@
+import { redirect } from "react-router";
 import type { Route } from "./+types/sign-in";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { currentAccount } from "~/backend/handlers/auth/current-account";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { SignInForm } from "~/frontend/components/sign-in/sign-in-form";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
-import { localeRouteContext } from "~/frontend/lib/route-context";
+import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { signInInvalidParam } from "~/lib/constants/sign-in";
 
 /*
@@ -22,8 +24,22 @@ interface SignInData extends PageMetaBase, CopyrightData {
   readonly invalid: boolean;
 }
 
-export function loader({ request, context }: Route.LoaderArgs): SignInData {
+/**
+ * ログイン済みならトップへ返す。
+ *
+ * 入っている人にこの画面を見せる意味が無いうえ、**リンクを送り直せてしまう** (1 つの
+ * アドレスに同時に生かせる本数は 3 本なので、枠を食う)。いま誰かは足元の
+ * Sign out で分かる。
+ */
+export async function loader({
+  request,
+  context,
+}: Route.LoaderArgs): Promise<SignInData | Response> {
   const url = new URL(request.url);
+
+  if ((await currentAccount(context.get(cloudflareContext).env, request)) !== undefined) {
+    return redirect("/");
+  }
 
   return {
     locale: context.get(localeRouteContext),

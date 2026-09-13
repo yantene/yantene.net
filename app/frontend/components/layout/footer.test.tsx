@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Footer } from "./footer";
 import { withI18n } from "~/frontend/lib/test-render";
 
@@ -14,7 +14,22 @@ const renderWithI18n = withI18n("en");
  * hydration で差し替わって全ページが mismatch を起こしていた。
  */
 describe("Footer", () => {
+  /*
+   * 足元の SignInState が `/api/v1/me` を引くので、塞がないと本物の要求が飛ぶ
+   * (テストの出力に socket hang up が混じる)。ここで見たいのは著作権表示と導線なので、
+   * 「ログインしていない」で固定する。
+   */
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve({ signedIn: false }) } as Response),
+      ),
+    );
+  });
+
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 

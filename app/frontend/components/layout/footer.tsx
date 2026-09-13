@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { HiOutlineScale } from "react-icons/hi2";
 import { Link } from "react-router";
 import type { CopyrightYears } from "~/backend/handlers/copyright-years";
+import { SignInState } from "./sign-in-state";
 
 interface FooterProps {
   /**
@@ -68,6 +69,12 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
             <HiOutlineScale aria-hidden="true" />
             {t("footer.licenses")}
           </Link>
+          {/*
+            ログインの入口。**ナビには出さない**方針なので、常設の導線はここだけ
+            (#490)。出ている字が Sign in か Sign out かが、そのままログイン状態の
+            表示を兼ねる。
+          */}
+          <SignInState />
         </nav>
       </div>
     </footer>

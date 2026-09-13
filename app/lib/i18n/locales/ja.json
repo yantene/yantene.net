@@ -94,6 +94,7 @@
   },
   "signIn": {
     "title": "Sign in",
+    "signOut": "Sign out",
     "lead": "メールアドレスを入れると、ログイン用のリンクが届きます。",
     "emailLabel": "メールアドレス",
     "submit": "リンクを送る",
