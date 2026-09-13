@@ -94,6 +94,7 @@
   },
   "signIn": {
     "title": "Sign in",
+    "signOut": "Sign out",
     "lead": "Enter your email address and a link to sign in will arrive.",
     "emailLabel": "Email address",
     "submit": "Send the link",
