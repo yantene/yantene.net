@@ -7,6 +7,8 @@ export { D1ArticleQueryRepository } from "./article.query-repository";
 export { D1ArticleReactionCommandRepository } from "./article-reaction.command-repository";
 export { D1ArticleReactionQueryRepository } from "./article-reaction.query-repository";
 export { D1ArticleSearchIndex } from "./article-search-index";
+export { D1SignInTokenCommandRepository } from "./sign-in-token.command-repository";
+export { D1SignInTokenQueryRepository } from "./sign-in-token.query-repository";
 export { D1ArticleViewCommandRepository } from "./article-view.command-repository";
 export { D1ArticleViewQueryRepository } from "./article-view.query-repository";
 export { D1WebmentionCommandRepository } from "./webmention.command-repository";

@@ -159,6 +159,77 @@ curl -sS -X POST \
 **イベント名は `pushed`。** メッセージ本体の `type` は `cf.artifacts.repo.pushed` だが、
 購読を作るときに渡すのは接頭辞の無いほう。
 
+### 1'''. メールの送信元ドメインを有効にする
+
+マジックリンクの配信 ([ADR 0039](../../docs/adr/0039-sign-in-with-a-magic-link.md)) に要る。
+**`send_email` バインディングを置いただけでは送れない。** 送信元のドメインを先に
+Email Sending へ載せること。
+
+**デプロイ自体は有効にする前でも通る** (PR #483 の `deploy` で確認)。落ちるのは送る
+瞬間だけで、`error` として記録に残る。つまり**順序は問わない**が、有効にするまで
+リンクは届かない。
+
+```bash
+pnpm exec wrangler email sending list                 # いま有効なドメイン
+pnpm exec wrangler email sending enable mail.yantene.net
+```
+
+**`mail.yantene.net` と apex (`yantene.net`) はどちらも有効にしてある。** 前者が
+マジックリンクの差出人、後者は Gmail から `contact@yantene.net` として出すため。
+3 環境とも同じ差出人を共有するので、**環境を作り直してもこれをやり直す必要は無い**。
+
+⚠️ **DNS を書き換える。** 入るのは 4 種類で、置き場は**有効にした名前の下**。
+
+| レコード    | 名前                                    | 中身                             |
+| ----------- | --------------------------------------- | -------------------------------- |
+| MX × 3      | `cf-bounce.<有効にした名前>`            | `route<N>.mx.cloudflare.net`     |
+| TXT (SPF)   | `cf-bounce.<有効にした名前>`            | `include:_spf.mx.cloudflare.net` |
+| TXT (DKIM)  | `cf-bounce._domainkey.<有効にした名前>` | 公開鍵                           |
+| TXT (DMARC) | `_dmarc.<有効にした名前>`               | `v=DMARC1; p=reject;`            |
+
+**そのドメイン自身の SPF は触らない** (SPF は戻り先の `cf-bounce.` の下に入る)。
+
+**`_dmarc` が既にあるドメインでも上書きされない。** apex (`yantene.net`) を有効にした
+ときに実測した。`wrangler email sending dns get` は `_dmarc` に `v=DMARC1; p=reject;` を
+出してくるが、**あれは「Cloudflare が望む姿」であって DNS の中身ではない。** 既存の
+`p=quarantine;pct=25;rua=...` はそのまま残った。それでも、既存の `_dmarc` があるゾーンを
+有効にするときは前後で引いて確かめること。
+
+⚠️ **反映には一呼吸ある。** MX と SPF は即入るが、DKIM (`cf-bounce._domainkey.<名前>`) は
+1 〜 2 分遅れる。入る前に送ると署名が検証できない。
+
+`disable` は入れた 4 種類をすべて畳む。**ただし消えるのも遅れる**ので、直後に引いて
+残っているように見えても数分待つこと。
+
+**既に別の送信基盤が使っている名前でも構わない。** `mail.yantene.net` には Amazon SES の
+MAIL FROM ドメインとしての SPF (`include:amazonses.com`) が残っているが、**Cloudflare は
+その名前自身の TXT を読みも書きもしない**ので共存する。受け手が SPF を引くのは
+envelope-from の `cf-bounce.mail.yantene.net` のほうで、そこには Cloudflare の SPF が
+入っている。
+
+⚠️ ただし SPF の**置き場所を勘違いすると逆の結論になる。** 「その名前の SPF が
+上書きされる」と思い込むと、空いている別のサブドメインを無駄に作ることになる。
+迷ったら引いて確かめること。
+
+```bash
+dig +short TXT <候補のサブドメイン>              # その名前自身 (触られない)
+dig +short TXT cf-bounce.<候補のサブドメイン>    # Cloudflare が置く先
+```
+
+なお `mail.yantene.net` の SES の SPF は**どちらからも使われていない**。SES 側は MX
+(`feedback-smtp.<region>.amazonses.com`) が無いために既定の `amazonses.com` へ落ちており、
+届いたメールの envelope-from は `...@ap-northeast-1.amazonses.com` になっていた。
+**SES を畳むときに一緒に消せばよい。**
+
+差出人のアドレスは `wrangler.jsonc` の vars (`MAIL_FROM`) が持つ。有効にしたドメインの
+**どのローカル部でも使える**が、**3 環境とも `no-reply@mail.yantene.net` で揃えてある**。
+環境ごとに分けても、どこから来たかは本文のリンクの host で分かる。分けると、読み手が
+一度でも見る字が環境の都合で変わることになる。
+
+**そのサブドメインの DMARC は、Cloudflare が置いた `p=reject` のほうが効く**
+(受け手は `_dmarc.<From のドメイン>` を先に見て、見つかればそこで止まる)。apex の
+`p=quarantine` は関係しない。DKIM も送信元のサブドメインに揃うので、整合は取れる。
+
 ### 2. KV namespace を作る
 
 読み手のセッション (ADR 0011) を置く先。作って、返ってきた id を `wrangler.jsonc` の
