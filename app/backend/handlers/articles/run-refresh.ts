@@ -9,14 +9,18 @@ import {
   D1ArticleEmbeddingQueryRepository,
   D1ArticleQueryRepository,
   D1ArticleSearchIndex,
+  D1ProfileCommandRepository,
+  D1ProfileQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { WorkersAiEmbeddingGenerator } from "~/backend/infra/ai/workers-ai-embedding-generator";
 import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
+import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
 import { ArticleEmbeddingsRefreshService } from "~/backend/services/article-embeddings-refresh.service";
 import { ArticlesRefreshService } from "~/backend/services/articles-refresh.service";
+import { ProfileRefreshService } from "~/backend/services/profile-refresh.service";
 
 /**
  * コンテンツリポジトリを D1 + R2 に同期する (Composition Root)。
@@ -31,25 +35,40 @@ export async function runRefresh(
   options: { force: boolean },
 ): Promise<Record<string, unknown>> {
   const { force } = options;
+  const contentStore = resolveContentStore(env);
 
   const result = await new ArticlesRefreshService(
-    resolveContentStore(env),
+    contentStore,
     new D1ArticleCommandRepository(env.D1),
     D1ArticleQueryRepository.forAdmin(env.D1),
     new R2ArticleContentCache(env.R2),
     new D1ArticleSearchIndex(env.D1),
   ).refresh({ force });
 
+  /*
+   * プロフィールも同じツリーから同期する。記事の後に置くのは、ツリーごと空に見える
+   * 事故を記事側のガード (全件削除の拒否) に止めてもらうため。プロフィールは 1 つ
+   * しかないので自前のガードを持たない。
+   */
+  const profile = await new ProfileRefreshService(
+    contentStore,
+    new D1ProfileCommandRepository(env.D1),
+    new D1ProfileQueryRepository(env.D1),
+    new R2ProfileContentCache(env.R2),
+  ).refresh({ force });
+
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う
   // (外部サイトが落ちていることは異常ではない) ので、別のサービスに分けている。
+  // 長い自己紹介が貼った URL も同じ表に入れる (`/about` だけカードにならない、を避ける)。
   const logger = new ConsoleLogger({ component: "link-cards" });
+  const linkedUrls = [...new Set([...result.linkedUrls, ...profile.linkedUrls])];
   const linkCards = await new LinkCardsRefreshService(
     new OgpLinkCardFetcher(logger),
     new D1LinkCardCommandRepository(env.D1),
     new D1LinkCardQueryRepository(env.D1),
     new R2LinkCardAssetCache(env.R2),
     logger,
-  ).sync(result.linkedUrls, Temporal.Now.instant(), { force });
+  ).sync(linkedUrls, Temporal.Now.instant(), { force });
 
   /*
    * 記事のベクトルと、記事どうしの近さを揃える。ここも記事の同期とは失敗の扱いが
@@ -76,5 +95,5 @@ export async function runRefresh(
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
 
-  return { ...result, linkCards, embeddings };
+  return { ...result, profile, linkCards, embeddings };
 }

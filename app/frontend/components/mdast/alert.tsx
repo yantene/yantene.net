@@ -1,4 +1,4 @@
-import { alertKinds, type AlertKind } from "~/backend/services/article-content-parser";
+import { alertKinds, type AlertKind } from "~/backend/services/markdown-body";
 
 /**
  * 種別ごとの見出し。本文が日本語なので、GFM の英語ラベルではなく日本語を出す。
