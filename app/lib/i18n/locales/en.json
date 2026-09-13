@@ -97,12 +97,12 @@
     "lead": "Enter your email address and a link to sign in will arrive.",
     "emailLabel": "Email address",
     "submit": "Send the link",
-    "invalid": "That is not an email address. Fix the typo and try again.",
-    "sent": "The link is on its way. Check your mail — and the spam folder, if it is not there.",
-    "sentNote": "The link stops working in 15 minutes, and once it is used.",
-    "confirm": "Sign in on this browser. Press below to continue.",
+    "invalid": "That is not an email address. Please fix the typo.",
+    "sent": "The link is on its way. If it is not there, check the spam folder.",
+    "sentNote": "The link stops working after 15 minutes, or once it is used.",
+    "confirm": "Sign in on this browser. The link is not used until you press.",
     "confirmAction": "Sign in",
-    "expired": "This link no longer works. It expires in 15 minutes, and once it is used.",
+    "expired": "This link no longer works. It has expired, or it has already been used.",
     "retry": "Send another link"
   },
   "footer": {
