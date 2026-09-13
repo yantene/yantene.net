@@ -230,9 +230,28 @@
  * パレットが開いている間、後ろのページを動かさない。
  *
  * `<dialog>` を modal で開いても背後のスクロールまでは止まらないため、印を見て止める
- * (印を立てるのは command-palette.tsx)。html には `scrollbar-gutter: stable` が
- * 掛かっているので、隠しても中身が横にずれることはない。
+ * (印を立てるのは command-palette.tsx)。
  */
 html[data-modal-open] {
   overflow: hidden;
+}
+
+/*
+ * 止めているあいだだけ、消えたスクロールバーの場所を空けておく。
+ *
+ * 空けないと、スクロールバーの幅 (GNU/Linux と Windows で 15px 前後) のぶん中身が横へ
+ * 寄る。中央に寄せた本文もヘッダーも一緒に動くので、**パレットを開閉するたびにページが
+ * 左右に跳ねて見える**。
+ *
+ * **常に空けるのではなく、この印が立っているあいだだけ。** 常に空けると、短いページの
+ * 右端に何も無い帯が残る。印は「いまスクロールバーが出ている」と測れたときにしか立たない
+ * (command-palette.tsx)。
+ *
+ * ⚠️ **daisyUI が `:root` に同じ property を置いている** (base/rootscrollgutter)。向こうの
+ * 値は daisyUI 自身の modal が開いたときにしか有効にならず、`:root` は `html` より詳細度が
+ * 高い。**同じ層の中に書くと必ず負ける**ので、ここは層の外 (このファイルは `@layer` に
+ * 入っていない) に置いてあることが効いている。`@layer` で囲まないこと。
+ */
+html[data-modal-gutter] {
+  scrollbar-gutter: stable;
 }

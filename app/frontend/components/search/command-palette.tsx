@@ -27,6 +27,17 @@ const DEBOUNCE_MS = 150;
  */
 const SCROLL_LOCK_ATTRIBUTE = "data-modal-open";
 
+/*
+ * スクロールバーの場所を空けておく印。**錠と分けてあるのは、空けるべき場面が狭いため。**
+ *
+ * 錠を掛けるとスクロールバーが消えるので、その幅のぶん中身が横へ寄る。空けておけば
+ * 寄らない。ただし**そもそもスクロールバーが出ていないページで空けると、今度は逆へ
+ * 寄る**。だから「いま出ているか」を見てから立てる。
+ *
+ * スクロールバーが画面に重なる環境 (macOS の既定など) では幅が 0 なので、印は立たない。
+ */
+const SCROLL_GUTTER_ATTRIBUTE = "data-modal-gutter";
+
 type Status = "idle" | "loading" | "ready" | "failed";
 
 /**
@@ -130,10 +141,18 @@ export function CommandPalette({
     }
     if (!open && dialog.open) dialog.close();
 
-    document.documentElement.toggleAttribute(SCROLL_LOCK_ATTRIBUTE, open);
+    /*
+     * **測るのは錠を掛ける前。** 掛けたあとはスクロールバーが消えているので、何を測っても
+     * 0 になる。`innerWidth` は画面の幅、`clientWidth` はスクロールバーを除いた幅。
+     */
+    const root = document.documentElement;
+    root.toggleAttribute(SCROLL_GUTTER_ATTRIBUTE, open && globalThis.innerWidth > root.clientWidth);
+    root.toggleAttribute(SCROLL_LOCK_ATTRIBUTE, open);
+
     // 開いたまま外されたときのため。印だけが残ると、ページが二度と動かなくなる。
     return () => {
-      document.documentElement.removeAttribute(SCROLL_LOCK_ATTRIBUTE);
+      root.removeAttribute(SCROLL_LOCK_ATTRIBUTE);
+      root.removeAttribute(SCROLL_GUTTER_ATTRIBUTE);
     };
   }, [open]);
 
