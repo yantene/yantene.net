@@ -55,12 +55,23 @@ export async function runRefresh(
    * 記事のベクトルと、記事どうしの近さを揃える。ここも記事の同期とは失敗の扱いが
    * 違う (外部のモデルに触るので落ちることがある) ので別のサービスに分けている。
    * 作れなかった記事は前回のベクトルと近さがそのまま残り、関連記事は前の並びで出る。
+   *
+   * ⚠️ **ここだけは `forReaders`。** 記事の同期と違い、作る対象を絞りたい (ADR 0040)。
+   *
+   * 下書きや書きかけの本文は「執筆計画」であって記事ではないので、そこから作った
+   * ベクトルは近さの意味を持たない。加えて 1 回に作れるのは 30 本までなので、
+   * **公開した記事のベクトル生成が書きかけに押し出される**。`article_similarities`
+   * も記事数の 2 乗で増えるところへ、出さないものぶんが乗る。
+   *
+   * 掃除 (`deleteOrphans`) は `articles` の表を直に見るので、ここで絞っても
+   * 消えた記事の行はきちんと片付く。公開 → 取り下げに転んだ記事のベクトルは残るが、
+   * `findRelatedSlugs` が出さないので表には出ない (出し直せばそのまま使える)。
    */
   const embeddings = await new ArticleEmbeddingsRefreshService(
     new WorkersAiEmbeddingGenerator(env.AI),
     new D1ArticleEmbeddingCommandRepository(env.D1),
     new D1ArticleEmbeddingQueryRepository(env.D1),
-    D1ArticleQueryRepository.forAdmin(env.D1),
+    D1ArticleQueryRepository.forReaders(env.D1),
     new R2ArticleContentCache(env.R2),
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
