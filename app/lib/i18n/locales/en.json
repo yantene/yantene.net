@@ -92,6 +92,19 @@
     "heading": "Responses",
     "openSource": "Open the source"
   },
+  "signIn": {
+    "title": "Sign in",
+    "lead": "Enter your email address and a link to sign in will arrive.",
+    "emailLabel": "Email address",
+    "submit": "Send the link",
+    "invalid": "That is not an email address. Fix the typo and try again.",
+    "sent": "The link is on its way. Check your mail — and the spam folder, if it is not there.",
+    "sentNote": "The link stops working in 15 minutes, and once it is used.",
+    "confirm": "Sign in on this browser. Press below to continue.",
+    "confirmAction": "Sign in",
+    "expired": "This link no longer works. It expires in 15 minutes, and once it is used.",
+    "retry": "Send another link"
+  },
   "footer": {
     "navLabel": "Footer",
     "licenses": "Open source licenses"
