@@ -118,8 +118,12 @@ export function SocialLinks({
         項目は `flex`。既定の `<li>` は中に行ボックスを作るので、絵がベースラインに乗って
         **下にディセンダ分の空きが残る**。並べたときに絵だけが 3px ほど上へ浮いて見える。
       */}
+      {/*
+        キーは行き先の URL にする。名前は platform から引くので、同じ platform を
+        2 つ書いた並び (mastodon を 2 つ、など) では名前が重なる。
+      */}
       {links.map((link) => (
-        <li key={link.label} className="flex">
+        <li key={link.href} className="flex">
           <a
             href={link.href}
             target="_blank"

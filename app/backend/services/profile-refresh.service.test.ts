@@ -181,6 +181,17 @@ describe("ProfileRefreshService", () => {
       ["在り得ない日付", PROFILE.replace("1993-11-18", "1993-13-45"), /dateOfBirth/],
       ["知らない platform", PROFILE.replace("platform: github", "platform: linkedin"), /platform/],
       ["url が無い", PROFILE.replace("    url: https://github.com/yantene\n", ""), /url/],
+      /*
+       * YAML そのものが読めないときも同じ扱いにする。書き手から見れば引用符の閉じ忘れも
+       * 欄の書き間違いも同じ「フロントマターの書き損じ」で、片方だけ 500 (Queue 経由なら
+       * 3 回再試行して DLQ 行き) になる理由が無い。
+       */
+      ["引用符を閉じていない", PROFILE.replace("愛知県刈谷市", '"愛知県刈谷市'), /./],
+      [
+        "インデントが崩れている",
+        PROFILE.replace("  - platform: github", "   - platform: github"),
+        /./,
+      ],
     ])("%s ときはファイルごとスキップして理由を返す", async (_label, markdown, reason) => {
       const { service, query, cache } = setup(file(markdown));
 
@@ -208,6 +219,15 @@ describe("ProfileRefreshService", () => {
       expect(result.skipped).toBeDefined();
       expect((await query.find())?.dateOfBirth.toString()).toBe("1993-11-18");
     });
+  });
+
+  it("空白だけの birthplace は、書いていないものとして扱う", async () => {
+    // 消したつもりの行が、ラベルだけあって値の無い欄として残らないようにする。
+    const { service, query } = setup(file(PROFILE.replace("愛知県刈谷市", "   ")));
+
+    await service.refresh();
+
+    expect((await query.find())?.birthplace).toBeUndefined();
   });
 
   it("socials を書かなければ空の並びになる", async () => {

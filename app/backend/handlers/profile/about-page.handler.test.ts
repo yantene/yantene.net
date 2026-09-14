@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadAboutPage } from "./about-page.handler";
+import { hasAboutPage, loadAboutPage } from "./about-page.handler";
 import type { Profile } from "~/backend/domain/profile";
 import { ProfileName, Profile as ProfileEntity } from "~/backend/domain/profile";
 import { D1ProfileCommandRepository } from "~/backend/infra/d1/repositories";
@@ -64,6 +64,42 @@ describe("loadAboutPage", () => {
     await new D1ProfileCommandRepository(d1).save(profile());
 
     expect((await loadAboutPage(bindings, ORIGIN)).profile).toBeNull();
+  });
+});
+
+/*
+ * sitemap に載せるかどうかと `noindex` を立てるかどうかは、同じ判定を通す。
+ * 別々に書くと、行だけあって本文の無い状態で「sitemap に載せておきながら出すなと
+ * 言う」ページになる。
+ */
+describe("hasAboutPage", () => {
+  it("行と本文が揃っていれば true", async () => {
+    const { env: bindings, d1, r2 } = env();
+    await new D1ProfileCommandRepository(d1).save(profile());
+    await new R2ProfileContentCache(r2).putMdast(MDAST);
+
+    expect(await hasAboutPage(bindings)).toBe(true);
+  });
+
+  it.each([
+    ["どちらも無い", false, false],
+    ["行だけある", true, false],
+    ["本文だけある", false, true],
+  ])("%s ときは false", async (_label, hasRow, hasBody) => {
+    const { env: bindings, d1, r2 } = env();
+    if (hasRow) await new D1ProfileCommandRepository(d1).save(profile());
+    if (hasBody) await new R2ProfileContentCache(r2).putMdast(MDAST);
+
+    expect(await hasAboutPage(bindings)).toBe(false);
+  });
+
+  it("loadAboutPage と食い違わない", async () => {
+    const { env: bindings, d1 } = env();
+    await new D1ProfileCommandRepository(d1).save(profile());
+
+    expect(await hasAboutPage(bindings)).toBe(
+      (await loadAboutPage(bindings, ORIGIN)).profile !== null,
+    );
   });
 
   describe("Person の構造化データ", () => {

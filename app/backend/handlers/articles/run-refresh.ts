@@ -50,19 +50,6 @@ export async function runRefresh(
     new D1ArticleSearchIndex(env.D1),
   ).refresh({ force });
 
-  /*
-   * 書き手のプロフィール (ADR 0041)。記事と同じツリーの `profile.md` 1 つを読む。
-   *
-   * **本文のリンクをカードにしない。** プロフィールに貼るのは文中のリンクで、
-   * 段落がリンク 1 つでできている形 (ADR 0014) にはならないため、集めても空になる。
-   */
-  const profile = await new ProfileRefreshService(
-    content,
-    new D1ProfileCommandRepository(env.D1),
-    new D1ProfileQueryRepository(env.D1),
-    new R2ProfileContentCache(env.R2),
-  ).refresh({ force });
-
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う
   // (外部サイトが落ちていることは異常ではない) ので、別のサービスに分けている。
   const logger = new ConsoleLogger({ component: "link-cards" });
@@ -98,6 +85,25 @@ export async function runRefresh(
     new R2ArticleContentCache(env.R2),
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
+
+  /*
+   * 書き手のプロフィール (ADR 0041)。記事と同じツリーの `profile.md` 1 つを読む。
+   *
+   * **いちばん後ろに置く。** ここが落ちても、前の 3 つは済んでいる形にしたい。
+   * とくにリンクカードは「今回変更のあった記事が参照する URL」しか取りに行かないので、
+   * 途中で止めると**その push で同期された記事の新しいリンクにカードが作られない**。
+   * 記事のハッシュはもう変わらないので、次の通常の refresh でも拾われず、force を
+   * 流すまで素のリンクのままになる。プロフィールの不調で記事の見た目を欠けさせない。
+   *
+   * **本文のリンクをカードにしない。** プロフィールに貼るのは文中のリンクで、
+   * 段落がリンク 1 つでできている形 (ADR 0014) にはならないため、集めても空になる。
+   */
+  const profile = await new ProfileRefreshService(
+    content,
+    new D1ProfileCommandRepository(env.D1),
+    new D1ProfileQueryRepository(env.D1),
+    new R2ProfileContentCache(env.R2),
+  ).refresh({ force });
 
   return { ...result, profile, linkCards, embeddings };
 }

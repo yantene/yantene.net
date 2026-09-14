@@ -11,6 +11,18 @@ import type { Nodes, Root, RootContent } from "mdast";
 
 const markdownProcessor = unified().use(remarkParse).use(remarkGfm).use(remarkMath);
 
+/**
+ * フロントマターそのものが読めなかった (YAML の構文エラー)。
+ *
+ * 引用符の閉じ忘れや、ブロックスカラーのインデント崩れがこれになる。**中身が読めない
+ * のではなく、区切りの中が YAML として成り立っていない**ので、欄ごとの検証より手前で
+ * 落ちる。呼び出し側がファイル単位のコンテンツ不正として拾えるよう、infra 障害と
+ * 区別できる型にしておく。
+ */
+export class FrontmatterSyntaxError extends Error {
+  readonly name = "FrontmatterSyntaxError";
+}
+
 /** フロントマターと本文に分けた Markdown。 */
 export interface MarkdownDocument {
   /** フロントマターの生の中身 (検証前)。書いていなければ空のオブジェクト。 */
@@ -31,7 +43,12 @@ export interface MarkdownDocument {
  */
 export function parseMarkdownDocument(markdown: string): MarkdownDocument {
   const file = new VFile({ value: markdown });
-  matter(file, { strip: true });
+  try {
+    matter(file, { strip: true });
+  } catch (error) {
+    // YAML の構文エラー。呼び出し側がファイル単位で拾えるよう名前を付け替える。
+    throw new FrontmatterSyntaxError(error instanceof Error ? error.message : String(error));
+  }
 
   // Alert の判定は改行を畳む前に済ませる。ラベル行の区切りは改行なので、
   // 畳む処理が先に走ると `[!NOTE] 本文` と繋がって見分けが付かなくなる。

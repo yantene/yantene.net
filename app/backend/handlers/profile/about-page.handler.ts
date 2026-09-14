@@ -1,5 +1,6 @@
 import { toPublicProfile, type PublicProfile } from "./profile-view";
 import type { Root } from "mdast";
+import type { Profile } from "~/backend/domain/profile";
 import { D1ProfileQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 
@@ -28,18 +29,34 @@ export interface AboutPageData {
  * 「準備中」に倒す (ADR 0041)。
  */
 export async function loadAboutPage(env: Env, origin: string): Promise<AboutPageData> {
-  const [found, mdast] = await Promise.all([
+  const found = await readProfile(env);
+  if (found === undefined) return { profile: null, mdast: null, jsonLd: undefined };
+
+  const profile = toPublicProfile(found.profile);
+  return { profile, mdast: found.mdast, jsonLd: toPersonJsonLd(profile, origin) };
+}
+
+/**
+ * `/about` に中身が出るか。
+ *
+ * **sitemap に載せるかどうかと `noindex` を立てるかどうかは、必ずこの 1 つの判定を
+ * 通す。** 別々に書くと、行だけあって本文の無い状態 (同期が途中で落ちた姿) で
+ * 「sitemap に載せておきながら出すなと言う」ページになる。
+ */
+export async function hasAboutPage(env: Env): Promise<boolean> {
+  return (await readProfile(env)) !== undefined;
+}
+
+/** D1 の行と R2 の本文。**揃っているときだけ返す。** */
+async function readProfile(env: Env): Promise<{ profile: Profile; mdast: Root } | undefined> {
+  const [profile, mdast] = await Promise.all([
     new D1ProfileQueryRepository(env.D1).find(),
     new R2ProfileContentCache(env.R2).getMdast(),
   ]);
 
-  if (found === undefined || mdast === undefined) {
-    return { profile: null, mdast: null, jsonLd: undefined };
-  }
-
-  const profile = toPublicProfile(found);
+  if (profile === undefined || mdast === undefined) return undefined;
   // R2 に置いたのは refresh が組んだ MDAST なので、形は分かっている (記事と同じ扱い)。
-  return { profile, mdast: mdast as Root, jsonLd: toPersonJsonLd(profile, origin) };
+  return { profile, mdast: mdast as Root };
 }
 
 /**

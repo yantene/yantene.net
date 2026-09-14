@@ -76,6 +76,22 @@ describe("ProfileCard の microformats2", () => {
     expect(discord?.getAttribute("rel")).toBe("noopener noreferrer");
   });
 
+  it("同じ platform を 2 つ書いても、両方が出る", () => {
+    // 名前は platform から引くので重なる。並びの一意性は行き先の URL が持つ。
+    const container = renderCard({
+      ...PROFILE,
+      socials: [
+        { platform: "mastodon", url: "https://mastodon.social/@yantene", isMe: true },
+        { platform: "mastodon", url: "https://fedibird.com/@yantene", isMe: false },
+      ],
+    });
+
+    const hrefs = [...container.querySelectorAll(":scope .profile-socials a")].map((link) =>
+      link.getAttribute("href"),
+    );
+    expect(hrefs).toEqual(["https://mastodon.social/@yantene", "https://fedibird.com/@yantene"]);
+  });
+
   it("出身地には印を付けない", () => {
     /*
      * h-card に生まれた場所を表す語が無い。近い名前 (`p-locality`) を流用すると

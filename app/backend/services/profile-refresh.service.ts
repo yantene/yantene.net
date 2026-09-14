@@ -1,6 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { MathSyntaxError } from "./latex-to-mathml";
-import { asDateString, asOptionalString, parseMarkdownDocument } from "./markdown-document";
+import {
+  asDateString,
+  asOptionalString,
+  FrontmatterSyntaxError,
+  parseMarkdownDocument,
+} from "./markdown-document";
 import type { Root } from "mdast";
 import type { IContentStore } from "~/backend/domain/content";
 import type {
@@ -107,14 +112,20 @@ export class ProfileRefreshService {
 }
 
 /**
- * Markdown を解析する。読めない LaTeX はコンテンツ不正として扱う。
+ * Markdown を解析する。読めない YAML と読めない LaTeX はコンテンツ不正として扱う。
  * それ以外の失敗はパーサの不具合なので、握りつぶさず送出する。
+ *
+ * YAML の構文エラーまで拾うのは、**欄の書き間違いと区別がつかないため**。書き手から
+ * 見れば引用符の閉じ忘れも `dateOfBirth` の粒度違いも同じ「フロントマターの書き損じ」で、
+ * 片方だけ 500 (Queue 経由なら 3 回再試行して DLQ 行き) になる理由が無い。
  */
 function parseContent(markdown: string): { frontmatter: Record<string, unknown>; mdast: Root } {
   try {
     return parseMarkdownDocument(markdown);
   } catch (error) {
-    if (error instanceof MathSyntaxError) throw new ProfileContentError(error.message);
+    if (error instanceof FrontmatterSyntaxError || error instanceof MathSyntaxError) {
+      throw new ProfileContentError(error.message);
+    }
     throw error;
   }
 }
@@ -124,13 +135,11 @@ function parseContent(markdown: string): { frontmatter: Record<string, unknown>;
  * 読めない値は {@link ProfileContentError} として送出し、プロフィールごとスキップする。
  */
 function buildProfile(frontmatter: Record<string, unknown>, sourceHash: string): Profile {
-  const name = asOptionalString(frontmatter.name);
+  const name = asTrimmedString(frontmatter.name);
   if (name === undefined) throw new ProfileContentError("frontmatter is missing name");
 
-  const tagline = asOptionalString(frontmatter.tagline)?.trim();
-  if (tagline === undefined || tagline.length === 0) {
-    throw new ProfileContentError("frontmatter is missing tagline");
-  }
+  const tagline = asTrimmedString(frontmatter.tagline);
+  if (tagline === undefined) throw new ProfileContentError("frontmatter is missing tagline");
 
   const dateOfBirth = asDateString(frontmatter.dateOfBirth);
   if (dateOfBirth === undefined) {
@@ -141,7 +150,7 @@ function buildProfile(frontmatter: Record<string, unknown>, sourceHash: string):
     return Profile.create({
       name: ProfileName.create(name),
       dateOfBirth: toDateOfBirth(dateOfBirth),
-      birthplace: asOptionalString(frontmatter.birthplace)?.trim(),
+      birthplace: asTrimmedString(frontmatter.birthplace),
       tagline,
       socials: readSocials(frontmatter.socials),
       sourceHash,
@@ -151,6 +160,17 @@ function buildProfile(frontmatter: Record<string, unknown>, sourceHash: string):
     // VO 検証・日付パース失敗はコンテンツ不正として扱う。
     throw new ProfileContentError(error instanceof Error ? error.message : String(error));
   }
+}
+
+/**
+ * 前後の空白を落として読む。**空白だけの値は書いていないものとして扱う。**
+ *
+ * 落とさないと、`birthplace: "   "` が空文字のまま残って「ラベルだけあって値の無い欄」に
+ * なる。書き手から見れば消したつもりの行なので、消えたように振る舞うのが正しい。
+ */
+function asTrimmedString(value: unknown): string | undefined {
+  const trimmed = asOptionalString(value)?.trim();
+  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
 }
 
 /**
