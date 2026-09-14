@@ -74,8 +74,8 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
           className="sr-only u-photo"
           src={profile?.avatarUrl ?? FALLBACK_PROFILE_PHOTO}
           alt=""
-          width={192}
-          height={192}
+          width={512}
+          height={512}
         />
 
         {/*

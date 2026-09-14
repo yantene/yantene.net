@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** 顔写真をまだ置いていないとき。名前と自己紹介だけで成り立つ。 */
+/** 顔写真をまだ置いていないとき。サイトのアイコンに倒れる。 */
 export const WithoutAvatar: Story = {
   args: { profile: { ...sampleProfile, avatarUrl: null } },
 };

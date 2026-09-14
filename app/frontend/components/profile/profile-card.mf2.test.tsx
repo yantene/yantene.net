@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ProfileCard } from "./profile-card";
 import { sampleProfile } from "./profile-fixture";
+import { FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 /*
  * `/about` の h-card。壊れても画面には何も出ないので、ここで形を固定する。
@@ -85,10 +86,16 @@ describe("ProfileCard の microformats2", () => {
     expect(marked(container, "h-card")).toHaveLength(1);
   });
 
-  it("顔写真が無くても h-card は立つ", () => {
+  it("顔写真が無ければサイトのアイコンに倒れる", () => {
+    /*
+     * 顔は必ず出す。名前だけが宙に浮くより、顔が名前の左に並んでいるほうが
+     * 「誰のページか」が一目で分かる (自己紹介や出ていく先を既定で埋めないのとは
+     * 扱いが違う。あちらは書き手が書いた字と見分けが付かなくなる)。
+     */
     const { container } = render(<ProfileCard profile={{ ...sampleProfile, avatarUrl: null }} />);
+
     expect(marked(container, "h-card")).toHaveLength(1);
-    expect(marked(container, "u-photo")).toHaveLength(0);
+    expect(marked(container, "u-photo")[0]?.getAttribute("src")).toBe(FALLBACK_PROFILE_PHOTO);
     expect(marked(container, "p-name")[0]?.textContent).toBe(sampleProfile.name);
   });
 });

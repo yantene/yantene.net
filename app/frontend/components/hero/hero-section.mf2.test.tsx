@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { HeroSection } from "./hero-section";
+import { FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { sampleProfile } from "~/frontend/components/profile/profile-fixture";
 
 /*
@@ -67,7 +68,9 @@ describe("プロフィールがまだ無いとき", () => {
     expect(card).not.toBeNull();
     expect(card?.querySelector(":scope .p-name")?.textContent).toBe("やんてね");
     expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/");
-    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe("/icons/icon-192.png");
+    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(
+      FALLBACK_PROFILE_PHOTO,
+    );
   });
 
   it("自己紹介と出ていく先は出さない", () => {
