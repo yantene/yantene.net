@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { resolveContentStore } from "./resolve-content-store";
+import { resolveContentStore, withSingleTreeRead } from "./resolve-content-store";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import {
   D1LinkCardCommandRepository,
@@ -9,14 +9,18 @@ import {
   D1ArticleEmbeddingQueryRepository,
   D1ArticleQueryRepository,
   D1ArticleSearchIndex,
+  D1ProfileCommandRepository,
+  D1ProfileQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { WorkersAiEmbeddingGenerator } from "~/backend/infra/ai/workers-ai-embedding-generator";
 import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
+import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
 import { ArticleEmbeddingsRefreshService } from "~/backend/services/article-embeddings-refresh.service";
 import { ArticlesRefreshService } from "~/backend/services/articles-refresh.service";
+import { ProfileRefreshService } from "~/backend/services/profile-refresh.service";
 
 /**
  * コンテンツリポジトリを D1 + R2 に同期する (Composition Root)。
@@ -32,12 +36,31 @@ export async function runRefresh(
 ): Promise<Record<string, unknown>> {
   const { force } = options;
 
+  /*
+   * 同期するものは 2 つある (記事とプロフィール) が、コンテンツリポジトリを引く口は 1 つに
+   * 束ねる。どちらも入口でツリー全体を列挙するので、別々に持たせると外への往復が倍になる。
+   */
+  const content = withSingleTreeRead(resolveContentStore(env));
+
   const result = await new ArticlesRefreshService(
-    resolveContentStore(env),
+    content,
     new D1ArticleCommandRepository(env.D1),
     D1ArticleQueryRepository.forAdmin(env.D1),
     new R2ArticleContentCache(env.R2),
     new D1ArticleSearchIndex(env.D1),
+  ).refresh({ force });
+
+  /*
+   * 書き手のプロフィール (ADR 0041)。記事と同じツリーの `profile.md` 1 つを読む。
+   *
+   * **本文のリンクをカードにしない。** プロフィールに貼るのは文中のリンクで、
+   * 段落がリンク 1 つでできている形 (ADR 0014) にはならないため、集めても空になる。
+   */
+  const profile = await new ProfileRefreshService(
+    content,
+    new D1ProfileCommandRepository(env.D1),
+    new D1ProfileQueryRepository(env.D1),
+    new R2ProfileContentCache(env.R2),
   ).refresh({ force });
 
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う
@@ -76,5 +99,5 @@ export async function runRefresh(
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
 
-  return { ...result, linkCards, embeddings };
+  return { ...result, profile, linkCards, embeddings };
 }

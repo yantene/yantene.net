@@ -1,4 +1,4 @@
-import type { IContentStore } from "~/backend/domain/content";
+import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import { ArtifactsContentStore } from "~/backend/infra/artifacts/artifacts-content-store";
 
 /**
@@ -44,4 +44,22 @@ function readSecret(env: Env, name: string): string {
     throw new Error(`${name} is required to read content from ${env.CONTENT_SOURCE}.`);
   }
   return value;
+}
+
+/**
+ * ツリーの列挙を 1 回に畳んだ {@link IContentStore}。
+ *
+ * 1 回の refresh で同期するものが 2 つある (記事とプロフィール) が、どちらも入口で
+ * ツリー全体を引く。`listTree` は**ディレクトリごとに 1 往復する**ので、素直に 2 回
+ * 呼ぶと外への往復が倍になり、Workers の subrequest の上限にも近づく。
+ *
+ * **返すのは 1 回の refresh のためのラッパで、使い回さない。** ブランチの先端は動くので、
+ * 長生きさせると古いツリーを配り続けることになる。
+ */
+export function withSingleTreeRead(store: IContentStore): IContentStore {
+  let tree: Promise<readonly ContentEntry[]> | undefined;
+  return {
+    listTree: () => (tree ??= store.listTree()),
+    readFile: (path: string) => store.readFile(path),
+  };
 }

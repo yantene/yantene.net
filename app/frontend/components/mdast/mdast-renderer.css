@@ -321,7 +321,7 @@
 }
 
 /*
- * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (article-content-parser.ts)、
+ * GFM の Alert (`> [!NOTE]`)。refresh 時に引用から起こした要素で (markdown-document.ts)、
  * 地の文と区別したい但し書き — リンク切れ、サービス終了、失われた画像 — に使う。
  *
  * 配色は daisyUI のテーマ変数を参照するので、light/dark の切り替えに自動で追従する。

@@ -93,6 +93,17 @@ describe("翻訳リソース", () => {
     }
   });
 
+  /*
+   * 欄の名前は訳す。場所と区画の名前 (About / Articles) と違い、同じものが言語に
+   * よって別の名前で呼ばれる心配が無い (`/about` の中にしか出ない字で、URL にも
+   * ナビにも現れない)。
+   */
+  it("プロフィールの欄の名前は日本語にする", () => {
+    for (const key of ["profile.dateOfBirth", "profile.birthplace"]) {
+      expect(valueAt(ja, key)).not.toBe(valueAt(en, key));
+    }
+  });
+
   it("読み上げにしか出ないランドマークの名前は日本語のまま", () => {
     for (const key of ["navigation.siteNavLabel", "navigation.menuLabel", "footer.navLabel"]) {
       expect(valueAt(ja, key)).not.toBe(valueAt(en, key));

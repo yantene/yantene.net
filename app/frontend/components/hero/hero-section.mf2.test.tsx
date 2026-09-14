@@ -42,6 +42,7 @@ describe("HeroSection の microformats2", () => {
     );
     expect(me).toEqual([
       "https://github.com/yantene",
+      "https://x.com/yantene",
       "https://bsky.app/profile/yantene.net",
       "https://mastodon.social/@yantene",
     ]);
@@ -49,7 +50,8 @@ describe("HeroSection の microformats2", () => {
 
   it("rel=me を付けない先にも安全な rel は残す", () => {
     const container = renderHero();
-    const x = container.querySelector(':scope a[href="https://x.com/yantene"]');
-    expect(x?.getAttribute("rel")).toBe("noopener noreferrer");
+    // Discord は公開プロフィールに相互リンクを置けないので、主張しない。
+    const discord = container.querySelector(':scope a[href="https://discord.com/users/yantene"]');
+    expect(discord?.getAttribute("rel")).toBe("noopener noreferrer");
   });
 });

@@ -78,7 +78,15 @@ const targets = [
     expectBodyIncludes: "CC BY 4.0",
   },
   /*
-   * ヘッダーのナビが指す 3 つ。中身が入るまでは「準備中」の一枚 (#413 / #412 / #415)。
+   * プロフィール。**`profile.md` を同期したあとは「準備中」ではない** (ADR 0041)。
+   *
+   * 見るのは名乗りの器 (`h-card`) にする。中身が入っていれば必ず出て、文言と違って
+   * ロケールで変わらない。ここが落ちるのは、同期がまだか、D1 の行と R2 の本文が
+   * 揃っていないとき (どちらも 5xx にはならないので、素の指定では見張れない)。
+   */
+  { label: "/about", path: "/about", expectBodyIncludes: "h-card" },
+  /*
+   * ヘッダーのナビが指す残りの 2 つ。中身が入るまでは「準備中」の一枚 (#412 / #415)。
    *
    * **本文まで見る。** とくに `/notes` は、記事一覧へ 307 で送っていた URL を明け渡した
    * 場所で (ADR 0032)、旧 URL の表 (legacy-redirects.handler.ts) はページ委譲より先に
@@ -89,7 +97,6 @@ const targets = [
    * 見るのは `noindex` の印。中身が無いうちだけ立つもので、記事一覧には出ない。
    * 文言と違ってロケールで変わらない。
    */
-  { label: "/about", path: "/about", expectBodyIncludes: 'content="noindex"' },
   { label: "/notes", path: "/notes", expectBodyIncludes: 'content="noindex"' },
   { label: "/slides", path: "/slides", expectBodyIncludes: 'content="noindex"' },
   "/articles/does-not-exist",

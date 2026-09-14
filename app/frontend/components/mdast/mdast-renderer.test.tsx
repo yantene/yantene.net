@@ -509,7 +509,7 @@ describe("MdastRenderer: MathML", () => {
 });
 
 /*
- * Alert は refresh 時のパースが引用から起こす (article-content-parser.ts)。
+ * Alert は refresh 時のパースが引用から起こす (markdown-document.ts)。
  * md() は素の remark なので data が付かない。実際の経路に合わせてパーサを通す。
  */
 function article(markdown: string): MdastRoot {

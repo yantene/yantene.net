@@ -44,6 +44,7 @@
 @import "./components/article-branches/article-branches.css";
 @import "./components/reaction/reaction-bar.css";
 @import "./components/reaction/reaction-hint.css";
+@import "./components/profile/profile-card.css";
 @import "./components/share/share-menu.css";
 @import "./routes/home.css";
 @import "./routes/articles.css";

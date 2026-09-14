@@ -1,0 +1,145 @@
+/*
+ * プロフィールの名乗り。`/about` の頭に置く。
+ *
+ * 本文 (Favorites と History) の描画は MdastRenderer が持つので、ここに置くのは
+ * 顔から出ていく先までの部分だけ。
+ */
+
+/*
+ * 顔と字を横に並べる。**狭い画面では縦に積む。**
+ *
+ * 顔を左に固定して字を右に流すと、携帯では字の欄が 1 行 10 字ほどになって読めない。
+ * 積んだときは中央揃えにして、顔・名前・自己紹介が 1 本の軸に乗るようにする。
+ */
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-base-300) 60%, transparent);
+}
+
+@media (width >= 40rem) {
+  .profile-card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+    text-align: left;
+  }
+}
+
+/*
+ * 顔。丸く抜く。
+ *
+ * `flex-shrink` を止めるのは、横並びのときに名前が長いと顔のほうが潰れるため
+ * (縮むのは字の欄でよい)。
+ */
+.profile-avatar {
+  flex-shrink: 0;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  background-color: var(--color-base-200);
+}
+
+@media (width >= 40rem) {
+  .profile-avatar {
+    width: 9rem;
+    height: 9rem;
+  }
+}
+
+.profile-identity {
+  /* 横並びのときに、長い語が欄からはみ出さないようにする。 */
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-base-content);
+}
+
+@media (width >= 40rem) {
+  .profile-name {
+    font-size: 2.25rem;
+  }
+}
+
+/*
+ * 短い自己紹介。**書いたとおりの行で出す。**
+ *
+ * 折り返しは `pre-line` に任せる。改行だけを残し、行頭の字下げや続く空白は畳むので、
+ * YAML のブロックスカラーに入る余白がそのまま出ることはない。要素を行ごとに割らずに
+ * 済むぶん、`p-note` を読む機械には 1 つの文字列として渡る。
+ */
+.profile-tagline {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  white-space: pre-line;
+  color: color-mix(in oklab, var(--color-base-content) 85%, transparent);
+}
+
+/*
+ * 生い立ち。ラベルと値を 2 列に並べる。
+ *
+ * 狭い画面でも 2 列のままにするのは、項目が 2 つしかなく、ラベルが短いため
+ * (積むと縦に 4 行になって、名乗りより背が高くなる)。
+ */
+.profile-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  justify-content: center;
+  gap: 0.25rem 1rem;
+  margin-top: 1.25rem;
+  font-size: 0.875rem;
+}
+
+@media (width >= 40rem) {
+  .profile-facts {
+    justify-content: start;
+  }
+}
+
+.profile-facts-label {
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  text-align: left;
+}
+
+.profile-facts-value {
+  color: var(--color-base-content);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+/* 出ていく先。ヒーローと同じ並びだが、こちらは左端に寄せる。 */
+.profile-socials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+@media (width >= 40rem) {
+  .profile-socials {
+    justify-content: flex-start;
+  }
+}
+
+.profile-social {
+  display: inline-flex;
+  font-size: 1.375rem;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  transition: color 150ms ease;
+}
+
+.profile-social:hover {
+  color: var(--color-primary);
+}

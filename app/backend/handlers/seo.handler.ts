@@ -1,7 +1,10 @@
 // XML/MIME 文字列を秘匿情報と誤検知するため無効化 (秘密は含まない)。
 import { Hono } from "hono";
 import { articlePath } from "~/backend/domain/article";
-import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import {
+  D1ArticleQueryRepository,
+  D1ProfileQueryRepository,
+} from "~/backend/infra/d1/repositories";
 
 /** sitemap に載せる記事数の上限 (個人ブログ規模では十分)。 */
 const SITEMAP_ARTICLE_LIMIT = 10_000;
@@ -22,7 +25,8 @@ function urlEntry(loc: string, lastmod?: string): string {
 
 /**
  * SEO 関連の公開ルータ。
- * - GET /sitemap.xml : ホーム / 一覧 / ライセンス / 全記事を列挙 (記事は lastmod つき)
+ * - GET /sitemap.xml : ホーム / 一覧 / (あれば) /about / ライセンス / 全記事を列挙
+ *                      (記事は lastmod つき)
  * - GET /robots.txt  : production は sitemap を案内、staging (BASIC 認証あり) は全 Disallow
  */
 export function createSeoRouter(): Hono<{ Bindings: Env }> {
@@ -37,9 +41,18 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
       direction: "desc",
     });
 
+    /*
+     * `/about` は**プロフィールを同期したときだけ**載せる。中身が無いうちは
+     * 「準備中」の一枚で `noindex` が立っており (routes/about.tsx)、載せると
+     * 「出しておきながら出すなと言う」ことになる。判定はこの 2 か所で必ず揃えること。
+     */
+    const hasProfile =
+      (await new D1ProfileQueryRepository(c.env.D1).findSourceHash()) !== undefined;
+
     const staticUrls = [
       urlEntry(`${origin}/`),
       urlEntry(`${origin}/articles`),
+      ...(hasProfile ? [urlEntry(`${origin}/about`)] : []),
       urlEntry(`${origin}/licenses`),
     ];
     const articleUrls = result.articles.map((article) =>
