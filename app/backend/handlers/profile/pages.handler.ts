@@ -88,6 +88,9 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
       name: publicProfile.name,
       description: publicProfile.tagline.join(" "),
       url: `${origin}/about`,
+      // 書いてある欄だけを載せる。空の値を置くと「知らない」ではなく「空だ」と伝わる。
+      ...(publicProfile.dateOfBirth === null ? {} : { birthDate: publicProfile.dateOfBirth }),
+      ...(publicProfile.birthplace === null ? {} : { birthPlace: publicProfile.birthplace }),
       ...(publicProfile.avatarUrl === null ? {} : { image: `${origin}${publicProfile.avatarUrl}` }),
       // 自分のものだと主張できる先だけを並べる。相互リンクの無い先を挙げると、
       // 確かめた側から見て嘘になる (h-card の rel="me" と同じ線引き)。

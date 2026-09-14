@@ -20,6 +20,15 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
   readonly name: ProfileName;
   /** 短い自己紹介。3 か所 (トップ・記事末尾・`/about`) が同じものを出す。 */
   readonly tagline: Tagline;
+  /**
+   * 生年月日。フロントマターに `dateOfBirth` が無ければ undefined。
+   *
+   * 粒度は日まで。**月まで・年までは受け取らない** (パーサが弾く)。粒度を許すと
+   * 出し分けの分岐が要るうえ、生まれた日は書き手が確実に知っている 1 日である。
+   */
+  readonly dateOfBirth: Temporal.PlainDate | undefined;
+  /** 出身地。フロントマターに `birthplace` が無ければ undefined。 */
+  readonly birthplace: string | undefined;
   /** 顔写真。フロントマターに avatar が無ければ undefined。 */
   readonly avatarUrl: ImageUrl | undefined;
   /** 出ていく先。フロントマターに書いた順に出す。 */
@@ -42,6 +51,8 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
   static create(params: {
     name: ProfileName;
     tagline: Tagline;
+    dateOfBirth?: Temporal.PlainDate;
+    birthplace?: string;
     avatarUrl?: ImageUrl;
     socials: readonly SocialAccount[];
     sourceHash: string;
@@ -50,6 +61,8 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
       id: undefined,
       name: params.name,
       tagline: params.tagline,
+      dateOfBirth: params.dateOfBirth,
+      birthplace: params.birthplace,
       avatarUrl: params.avatarUrl,
       socials: params.socials,
       sourceHash: params.sourceHash,
@@ -62,6 +75,8 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     id: ProfileId;
     name: ProfileName;
     tagline: Tagline;
+    dateOfBirth: Temporal.PlainDate | undefined;
+    birthplace: string | undefined;
     avatarUrl: ImageUrl | undefined;
     socials: readonly SocialAccount[];
     sourceHash: string;
@@ -81,6 +96,14 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get tagline(): Tagline {
     return this.fields.tagline;
+  }
+
+  get dateOfBirth(): Temporal.PlainDate | undefined {
+    return this.fields.dateOfBirth;
+  }
+
+  get birthplace(): string | undefined {
+    return this.fields.birthplace;
   }
 
   get avatarUrl(): ImageUrl | undefined {

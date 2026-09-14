@@ -194,6 +194,8 @@ function buildProfile(
     return Profile.create({
       name: parsed.name,
       tagline: parsed.tagline,
+      dateOfBirth: parsed.dateOfBirth,
+      birthplace: parsed.birthplace,
       avatarUrl:
         parsed.avatar === undefined
           ? undefined

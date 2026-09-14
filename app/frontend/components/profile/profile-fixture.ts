@@ -12,6 +12,8 @@ export const sampleProfile: PublicProfile = {
     "現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。",
     "東京で Web 開発者をやっています。",
   ],
+  dateOfBirth: "1993-11-18",
+  birthplace: "愛知県刈谷市",
   avatarUrl: "/api/v1/profile/assets/avatar.png",
   socials: [
     { platform: "github", url: "https://github.com/yantene", isMe: true },

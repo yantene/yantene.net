@@ -30,6 +30,16 @@ export const WithoutSocials: Story = {
   args: { profile: { ...sampleProfile, socials: [] } },
 };
 
+/** 生年月日も出身地も書いていないとき。ラベルだけの行は出さない。 */
+export const WithoutBirthFacts: Story = {
+  args: { profile: { ...sampleProfile, dateOfBirth: null, birthplace: null } },
+};
+
+/** 片方だけ書いたとき。書いてある欄だけが並ぶ。 */
+export const WithoutBirthplace: Story = {
+  args: { profile: { ...sampleProfile, birthplace: null } },
+};
+
 export const Narrow: Story = {
   globals: { viewport: { value: "mobile1", isRotated: false } },
 };
