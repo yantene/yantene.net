@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
 import { Work, WorkName, WorkSlug, WorkSummary } from "~/backend/domain/work";
-import { ImageUrl } from "~/backend/domain/shared";
 import {
   D1ProfileCommandRepository,
   D1WorkCommandRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 
@@ -38,7 +38,6 @@ async function seedProfile(d1: D1Database, overrides: BirthFacts = {}): Promise<
       dateOfBirth: Temporal.PlainDate.from("1993-11-18"),
       birthplace: "愛知県刈谷市",
       ...overrides,
-      avatarUrl: ImageUrl.create("/api/v1/profile/assets/avatar.png"),
       socials: [
         SocialAccount.create({ platform: "github", url: "https://github.com/yantene", isMe: true }),
         SocialAccount.create({ platform: "x", url: "https://x.com/yantene", isMe: false }),
@@ -129,7 +128,7 @@ describe("loadAboutPage", () => {
       "@type": "Person",
       name: "やんてね",
       url: `${ORIGIN}/about`,
-      image: `${ORIGIN}/api/v1/profile/assets/avatar.png`,
+      image: `${ORIGIN}${PROFILE_PHOTO}`,
       sameAs: ["https://github.com/yantene"],
     });
   });

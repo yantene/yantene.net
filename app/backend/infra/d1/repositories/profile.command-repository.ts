@@ -28,7 +28,6 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       tagline: source.tagline.toString(),
       dateOfBirth: source.dateOfBirth === undefined ? null : plainDateToIso(source.dateOfBirth),
       birthplace: source.birthplace ?? null,
-      avatarUrl: source.avatarUrl?.toString() ?? null,
       sourceHash: source.sourceHash,
       updatedAt: nowUnix,
     };

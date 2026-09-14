@@ -78,7 +78,6 @@ describe("GET /sitemap.xml", () => {
       Profile.create({
         name: ProfileName.create("やんてね"),
         tagline: Tagline.create("短い自己紹介。"),
-        avatarUrl: undefined,
         socials: [],
         sourceHash: "h1",
       }),

@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { HeroSection } from "./hero-section";
-import { FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { sampleProfile } from "~/frontend/components/profile/profile-fixture";
 
 /*
@@ -29,9 +29,7 @@ describe("HeroSection の microformats2", () => {
     const card = renderHero().querySelector(":scope .h-card");
     expect(card?.querySelector(":scope .p-name")?.textContent).toBe(sampleProfile.name);
     expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/");
-    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(
-      sampleProfile.avatarUrl,
-    );
+    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(PROFILE_PHOTO);
   });
 
   it("顔は読み上げに出さない", () => {
@@ -68,9 +66,7 @@ describe("プロフィールがまだ無いとき", () => {
     expect(card).not.toBeNull();
     expect(card?.querySelector(":scope .p-name")?.textContent).toBe("やんてね");
     expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/");
-    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(
-      FALLBACK_PROFILE_PHOTO,
-    );
+    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(PROFILE_PHOTO);
   });
 
   it("自己紹介と出ていく先は出さない", () => {

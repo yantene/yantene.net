@@ -187,7 +187,6 @@ describe("書き手の名乗り", () => {
       Profile.create({
         name: ProfileName.create("改めた名前"),
         tagline: Tagline.create("短い自己紹介。"),
-        avatarUrl: undefined,
         socials: [],
         sourceHash: "hash-profile",
       }),

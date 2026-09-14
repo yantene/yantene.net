@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { TaglineLines } from "./tagline-lines";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
-import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
+import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { SocialLinks } from "~/frontend/components/social/social-links";
 
 interface AuthorNoteProps {
@@ -35,13 +35,12 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
 
   return (
     <section className="p-author h-card flex flex-col gap-4 rounded-lg border border-border/60 px-6 py-5 sm:flex-row sm:gap-6">
-      {profile.avatarUrl !== null && (
-        <img
-          className="u-photo size-16 shrink-0 self-start rounded-full border border-border/60 object-cover"
-          src={profile.avatarUrl}
-          alt=""
-        />
-      )}
+      {/* 顔はサイトのアイコン。`/about` の名乗りと同じものを、小さく出す。 */}
+      <img
+        className="u-photo size-16 shrink-0 self-start rounded-full border border-border/60 object-cover"
+        src={PROFILE_PHOTO}
+        alt=""
+      />
 
       <div className="flex flex-col gap-3">
         {/*

@@ -21,7 +21,6 @@ export interface PublicProfile {
   /** 生年月日 ("YYYY-MM-DD")。`<time dateTime>` にそのまま入れる。書いていなければ null。 */
   readonly dateOfBirth: string | null;
   readonly birthplace: string | null;
-  readonly avatarUrl: string | null;
   readonly socials: readonly PublicSocialAccount[];
 }
 
@@ -31,7 +30,6 @@ export function toPublicProfile(profile: Profile): PublicProfile {
     tagline: profile.tagline.lines(),
     dateOfBirth: profile.dateOfBirth?.toString({ calendarName: "never" }) ?? null,
     birthplace: profile.birthplace ?? null,
-    avatarUrl: profile.avatarUrl?.toJSON() ?? null,
     socials: profile.socials.map((social) => ({
       platform: social.platform,
       url: social.url,

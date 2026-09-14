@@ -2,7 +2,7 @@ import type { ProfileName } from "./profile-name.vo";
 import type { SocialAccount } from "./social-account.vo";
 import type { Tagline } from "./tagline.vo";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { EntityId, ImageUrl, IPersisted, IUnpersisted } from "~/backend/domain/shared";
+import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type ProfileId = EntityId<"Profile">;
 
@@ -29,8 +29,6 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
   readonly dateOfBirth: Temporal.PlainDate | undefined;
   /** 出身地。フロントマターに `birthplace` が無ければ undefined。 */
   readonly birthplace: string | undefined;
-  /** 顔写真。フロントマターに avatar が無ければ undefined。 */
-  readonly avatarUrl: ImageUrl | undefined;
   /** 出ていく先。フロントマターに書いた順に出す。 */
   readonly socials: readonly SocialAccount[];
   /** コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。 */
@@ -42,8 +40,11 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
 /**
  * プロフィール集約。
  *
- * 長い自己紹介 (本文の MDAST) と顔写真の実体は R2 にあり、このエンティティが表すのは
- * D1 に置くメタデータ。短い自己紹介をここに持つのは、記事の末尾が毎回読むため。
+ * 長い自己紹介 (本文の MDAST) は R2 にあり、このエンティティが表すのは D1 に置く
+ * メタデータ。短い自己紹介をここに持つのは、記事の末尾が毎回読むため。
+ *
+ * **顔は持たない。** サイトのアイコン 1 つに決まっていて、書き手が選ぶものではない
+ * (`app/lib/profile-fallback.ts` の `PROFILE_PHOTO`)。
  */
 export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
   private constructor(private readonly fields: ProfileFields<T>) {}
@@ -53,7 +54,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     tagline: Tagline;
     dateOfBirth?: Temporal.PlainDate;
     birthplace?: string;
-    avatarUrl?: ImageUrl;
     socials: readonly SocialAccount[];
     sourceHash: string;
   }): Profile<IUnpersisted> {
@@ -63,7 +63,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
       tagline: params.tagline,
       dateOfBirth: params.dateOfBirth,
       birthplace: params.birthplace,
-      avatarUrl: params.avatarUrl,
       socials: params.socials,
       sourceHash: params.sourceHash,
       createdAt: undefined,
@@ -77,7 +76,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     tagline: Tagline;
     dateOfBirth: Temporal.PlainDate | undefined;
     birthplace: string | undefined;
-    avatarUrl: ImageUrl | undefined;
     socials: readonly SocialAccount[];
     sourceHash: string;
     createdAt: Temporal.Instant;
@@ -104,10 +102,6 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get birthplace(): string | undefined {
     return this.fields.birthplace;
-  }
-
-  get avatarUrl(): ImageUrl | undefined {
-    return this.fields.avatarUrl;
   }
 
   get socials(): readonly SocialAccount[] {

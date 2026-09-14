@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ProfileCard } from "./profile-card";
 import { sampleProfile } from "./profile-fixture";
-import { FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 /*
  * `/about` の h-card。壊れても画面には何も出ないので、ここで形を固定する。
@@ -35,7 +35,7 @@ describe("ProfileCard の microformats2", () => {
     expect(note?.textContent).toContain("東京で Web 開発者をやっています。");
 
     const [photo] = marked(container, "u-photo");
-    expect(photo?.getAttribute("src")).toBe(sampleProfile.avatarUrl);
+    expect(photo?.getAttribute("src")).toBe(PROFILE_PHOTO);
     // すぐ隣に同じことを言う名前があるので、読み上げで 2 回名乗らせない。
     expect(photo?.getAttribute("alt")).toBe("");
 
@@ -86,16 +86,11 @@ describe("ProfileCard の microformats2", () => {
     expect(marked(container, "h-card")).toHaveLength(1);
   });
 
-  it("顔写真が無ければサイトのアイコンに倒れる", () => {
+  it("顔はサイトのアイコン 1 つで、プロフィールでは選べない", () => {
     /*
-     * 顔は必ず出す。名前だけが宙に浮くより、顔が名前の左に並んでいるほうが
-     * 「誰のページか」が一目で分かる (自己紹介や出ていく先を既定で埋めないのとは
-     * 扱いが違う。あちらは書き手が書いた字と見分けが付かなくなる)。
+     * 顔がサイトのアイコンに決まっているなら、コンテンツリポジトリに書ける欄を設けても
+     * 選択肢は増えない。増えるのは「書き忘れて顔の無いプロフィール」という状態だけ。
      */
-    const { container } = render(<ProfileCard profile={{ ...sampleProfile, avatarUrl: null }} />);
-
-    expect(marked(container, "h-card")).toHaveLength(1);
-    expect(marked(container, "u-photo")[0]?.getAttribute("src")).toBe(FALLBACK_PROFILE_PHOTO);
-    expect(marked(container, "p-name")[0]?.textContent).toBe(sampleProfile.name);
+    expect(marked(renderCard(), "u-photo")[0]?.getAttribute("src")).toBe(PROFILE_PHOTO);
   });
 });

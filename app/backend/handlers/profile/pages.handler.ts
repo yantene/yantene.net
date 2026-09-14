@@ -10,6 +10,7 @@ import { errorToContext } from "~/backend/domain/shared";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1ProfileQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 export interface AboutPageData {
   /** まだ同期されていなければ null。ページは「準備中」に倒れる。 */
@@ -91,7 +92,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
       // 書いてある欄だけを載せる。空の値を置くと「知らない」ではなく「空だ」と伝わる。
       ...(publicProfile.dateOfBirth === null ? {} : { birthDate: publicProfile.dateOfBirth }),
       ...(publicProfile.birthplace === null ? {} : { birthPlace: publicProfile.birthplace }),
-      ...(publicProfile.avatarUrl === null ? {} : { image: `${origin}${publicProfile.avatarUrl}` }),
+      image: `${origin}${PROFILE_PHOTO}`,
       // 自分のものだと主張できる先だけを並べる。相互リンクの無い先を挙げると、
       // 確かめた側から見て嘘になる (h-card の rel="me" と同じ線引き)。
       sameAs: publicProfile.socials.filter((social) => social.isMe).map((social) => social.url),

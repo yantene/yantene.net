@@ -1,6 +1,6 @@
 import type { profile, profileSocials } from "~/backend/infra/d1/schema";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
-import { entityId, ImageUrl } from "~/backend/domain/shared";
+import { entityId } from "~/backend/domain/shared";
 import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
 
 /**
@@ -19,7 +19,6 @@ export function rowsToProfile(
     tagline: Tagline.create(row.tagline),
     dateOfBirth: row.dateOfBirth === null ? undefined : isoToPlainDate(row.dateOfBirth),
     birthplace: row.birthplace ?? undefined,
-    avatarUrl: row.avatarUrl === null ? undefined : ImageUrl.create(row.avatarUrl),
     socials: socialRows.map((social) =>
       SocialAccount.create({ platform: social.platform, url: social.url, isMe: social.isMe }),
     ),

@@ -23,13 +23,6 @@ export interface ParsedProfileContent {
   readonly dateOfBirth: Temporal.PlainDate | undefined;
   /** 出身地。書いていなければ undefined。 */
   readonly birthplace: string | undefined;
-  /**
-   * フロントマターに書かれた顔写真のパス。
-   *
-   * 解決は呼び出し側の役目。アセットがどの URL で配られるかを知っているのは、
-   * コンテンツリポジトリの並びを見ている側なので。
-   */
-  readonly avatar: string | undefined;
   readonly socials: readonly SocialAccount[];
   /** フロントマターを除いた長い自己紹介の MDAST。 */
   readonly mdast: Root;
@@ -57,7 +50,6 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
       tagline: Tagline.create(requireString(frontmatter.tagline, "tagline")),
       dateOfBirth: readDateOfBirth(frontmatter.dateOfBirth),
       birthplace: optionalString(frontmatter.birthplace, "birthplace"),
-      avatar: optionalString(frontmatter.avatar, "avatar"),
       socials: readSocials(frontmatter.socials),
       mdast: parsed.mdast,
     };

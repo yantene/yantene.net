@@ -20,10 +20,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const WithoutAvatar: Story = {
-  args: { profile: { ...sampleProfile, avatarUrl: null } },
-};
-
 /**
  * プロフィールがまだ同期されていないとき。
  *

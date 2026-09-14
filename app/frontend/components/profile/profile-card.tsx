@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { TaglineLines } from "./tagline-lines";
-import { FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { SocialLinks } from "~/frontend/components/social/social-links";
 import { toDisplayDate } from "~/frontend/lib/display-date";
 
@@ -16,13 +16,9 @@ interface ProfileCardProps {
  * h-card が 2 か所にあるのは microformats2 として正しい姿で、「このサイトの代表は
  * 誰か」を答えるのがトップに 1 つだけあればよい。
  *
- * 顔写真は見える形で出す。`alt` を空にしてあるのは、すぐ隣に同じことを言う名前が
- * あるため (読み上げで 2 回名乗ることになる)。
- *
- * **プロフィールに顔写真が書かれていなくても、サイトのアイコンを出す。** 名前だけが
- * 宙に浮くより、顔が名前の左に並んでいるほうが「誰のページか」が一目で分かる。
- * 自己紹介や出ていく先を既定で埋めないのとは扱いが違う — あちらは書き手が書いた字と
- * 見分けが付かなくなるが、こちらはサイト自身の顔であって誰かの言葉ではない。
+ * 顔はサイトのアイコン (`PROFILE_PHOTO`)。**書き手が選ぶ欄は無い。**
+ * `alt` を空にしてあるのは、すぐ隣に同じことを言う名前があるため (読み上げで 2 回
+ * 名乗ることになる)。
  *
  * 生い立ち (生年月日・出身地) は書いてあるものだけ出す。**空の欄は置かない。**
  * ラベルだけがあって値の無い行は、読み手には「知らされていない」ではなく「壊れている」
@@ -35,7 +31,7 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
     <div className="h-card flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
       <img
         className="u-photo size-28 shrink-0 rounded-full border border-border/60 object-cover"
-        src={profile.avatarUrl ?? FALLBACK_PROFILE_PHOTO}
+        src={PROFILE_PHOTO}
         alt=""
       />
 

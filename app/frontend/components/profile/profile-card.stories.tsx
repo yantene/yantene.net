@@ -20,11 +20,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-/** 顔写真をまだ置いていないとき。サイトのアイコンに倒れる。 */
-export const WithoutAvatar: Story = {
-  args: { profile: { ...sampleProfile, avatarUrl: null } },
-};
-
 /** 出ていく先を 1 つも書いていないとき。空の並びは出さない。 */
 export const WithoutSocials: Story = {
   args: { profile: { ...sampleProfile, socials: [] } },

@@ -14,7 +14,6 @@ export const sampleProfile: PublicProfile = {
   ],
   dateOfBirth: "1993-11-18",
   birthplace: "愛知県刈谷市",
-  avatarUrl: "/api/v1/profile/assets/avatar.png",
   socials: [
     { platform: "github", url: "https://github.com/yantene", isMe: true },
     { platform: "x", url: "https://x.com/yantene", isMe: false },
