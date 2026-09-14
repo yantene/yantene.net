@@ -1,7 +1,7 @@
-import type { IValueObject } from "~/backend/domain/shared";
+import type { IValueObject } from "./value-object.interface";
 
-// 記事のカバー画像 URL。フロントマターの相対パス (`./cover.png`) は
-// アセット API URL (ルート相対 `/api/v1/articles/<slug>/assets/...`) に解決してから
+// サイトが出す画像の URL (記事のカバー画像、プロフィールの顔写真)。フロントマターの
+// 相対パス (`./cover.png`) はアセット API URL (ルート相対 `/api/v1/...`) に解決してから
 // VO 化する前提で、ここでは解決済みの「ルート相対パス」だけを受け入れる。
 //
 // 絶対 URL は弾く。これは 2 つの規約を同時に満たすため:

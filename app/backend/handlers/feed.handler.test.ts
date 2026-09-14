@@ -2,10 +2,15 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
+import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
+import {
+  D1ArticleCommandRepository,
+  D1ProfileCommandRepository,
+} from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 import { feedIdentities } from "~/lib/feed";
+import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 
 function unpersistedArticle(params: {
   slug: string;
@@ -168,5 +173,35 @@ describe("種別ごとのフィード", () => {
     );
 
     expect(new Set(titles).size).toBe(titles.length);
+  });
+});
+
+/*
+ * 書き手の名前は h-card・記事末尾の筆者紹介・JSON-LD と同じ出どころから引く。
+ * ここだけ別に持つと、`profile.md` で名を改めたときにフィードが古い名前を配り続ける。
+ */
+describe("書き手の名乗り", () => {
+  it("プロフィールが同期されていればその名前を出す", async () => {
+    const d1 = createTestD1();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("改めた名前"),
+        tagline: Tagline.create("短い自己紹介。"),
+        avatarUrl: undefined,
+        socials: [],
+        sourceHash: "hash-profile",
+      }),
+    );
+
+    const res = await createTestApp().request("/feed.xml", {}, env(d1));
+
+    expect(await res.text()).toContain("<author><name>改めた名前</name></author>");
+  });
+
+  it("まだ同期されていなければ既定の名前を出す", async () => {
+    const d1 = createTestD1();
+    const res = await createTestApp().request("/feed.xml", {}, env(d1));
+
+    expect(await res.text()).toContain(`<author><name>${FALLBACK_PROFILE_NAME}</name></author>`);
   });
 });

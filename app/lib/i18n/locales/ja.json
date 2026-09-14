@@ -17,7 +17,8 @@
     "about": "About",
     "articles": "Articles",
     "notes": "Notes",
-    "slides": "Slides"
+    "slides": "Slides",
+    "works": "Works"
   },
   "feed": {
     "label": "Feed",
@@ -51,6 +52,17 @@
     },
     "actionsTop": "この記事に反応する・共有する (冒頭)",
     "actionsBottom": "この記事に反応する・共有する (末尾)"
+  },
+  "works": {
+    "title": "Works",
+    "heading": "Works",
+    "lead": "作ったもの。いまも動いているものも、自分だけが使ったものもあります。",
+    "notFound": {
+      "title": "作品が見つからない",
+      "heading": "作品が見つからない",
+      "description": "お探しの作品は存在しないか、公開されていません。",
+      "backToList": "作品一覧へ戻る"
+    }
   },
   "search": {
     "title": "Search",
@@ -132,6 +144,7 @@
     "badge": "Coming soon",
     "about": "プロフィールと、これまでやってきたこと。",
     "notes": "題を付けるほどでもない、短い投稿。",
-    "slides": "発表で使ったスライドと、発表しなかったスライド。"
+    "slides": "発表で使ったスライドと、発表しなかったスライド。",
+    "works": "作ったものと、なぜ作ったか。"
   }
 }

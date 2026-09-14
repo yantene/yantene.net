@@ -11,13 +11,20 @@ export default [
   route("articles", "routes/articles.tsx"),
   route("articles/:slug", "routes/articles.$slug.tsx"),
 
+  // プロフィール。中身はコンテンツリポジトリの `profile.md` から来る (ADR 0041)。
+  route("about", "routes/about.tsx"),
+
+  // 作ったもの。中身はコンテンツリポジトリの `works/<slug>.md` から来る (ADR 0042)。
+  // フィードは持たない (作ったものは購読するものではない)。
+  route("works", "routes/works.tsx"),
+  route("works/:slug", "routes/works.$slug.tsx"),
+
   /*
-   * ヘッダーのナビが指している、まだ中身の無い 3 つ。
+   * ヘッダーのナビが指している、まだ中身の無い 2 つ。
    *
    * 「準備中」の一文だけを置いてある。ナビに並べておきながら 404 に落とすと、
-   * サイトが壊れているように見えるため。中身が入るのは #413 / #412 / #415。
+   * サイトが壊れているように見えるため。中身が入るのは #412 / #415。
    */
-  route("about", "routes/about.tsx"),
   route("notes", "routes/notes.tsx"),
   route("slides", "routes/slides.tsx"),
 

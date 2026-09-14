@@ -48,7 +48,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 
 export default function Home({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { recent, popular, copyright, clockOrigin } = loaderData;
+  const { recent, popular, copyright, clockOrigin, profile } = loaderData;
 
   return (
     <AppLayout>
@@ -60,7 +60,7 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
         決まるので、React からは渡さない。
       */}
       <Header variant="transparent" />
-      <HeroSection clockOrigin={clockOrigin} />
+      <HeroSection clockOrigin={clockOrigin} profile={profile} />
 
       {recent.length > 0 && (
         <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">

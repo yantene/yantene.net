@@ -1,10 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { ImageUrl } from "./image-url.vo";
+import { ImageUrl, entityId } from "~/backend/domain/shared";
 import { ArticleSlug } from "./article-slug.vo";
 import { ArticleTitle } from "./article-title.vo";
 import { Article } from "./article.entity";
-import { entityId } from "~/backend/domain/shared";
 
 const slug = ArticleSlug.create("my-article");
 const title = ArticleTitle.create("My Article");

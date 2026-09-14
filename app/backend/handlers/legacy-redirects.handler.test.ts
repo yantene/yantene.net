@@ -104,7 +104,8 @@ describe("legacy article URLs", () => {
 describe("legacy pages other than articles", () => {
   it.each([
     ["/index.html", "/"],
-    ["/profile.html", "/"],
+    // 旧サイトのプロフィールは `/about` が引き継いだ (#413)。
+    ["/profile.html", "/about"],
     ["/atom.xml", "/feed.xml"],
     ["/list.html", "/articles"],
   ])("permanently redirects %s to %s", async (from, to) => {

@@ -25,6 +25,7 @@ const untranslatedNames = [
   "navigation.articles",
   "navigation.notes",
   "navigation.slides",
+  "navigation.works",
   "feed.label",
   // フィードの選び場所に並ぶ「全部」。隣に並ぶ Articles / Notes / Slides が英語のままなので、
   // ここだけ「すべて」にすると 1 つの板の中で語が混ざる。
@@ -33,6 +34,8 @@ const untranslatedNames = [
   "articles.heading",
   "articles.related",
   "articles.toc",
+  "works.title",
+  "works.heading",
   "search.title",
   "share.title",
   "webmention.heading",

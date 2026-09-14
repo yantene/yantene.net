@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ArticleHeader } from "./article-header";
+import { AuthorNote } from "~/frontend/components/profile/author-note";
 import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
@@ -35,6 +36,10 @@ const TARGET = "https://example.com/article";
  *
  * 本文にリンクを 1 つ置いてあるのは、送り先のパーサに実際の道を通らせるため。理由は
  * 下の「送り先のパーサから～」に書いた。
+ *
+ * **末尾の筆者紹介も一緒に描く。** `p-author` はあちらが持っているので、入れずに描くと
+ * 「誰の記事か」を名乗れない h-entry になり、下の readMention が実態と違うものを見る。
+ * ここではプロフィールの無い状態 (sr-only の印だけ) で描いている。
  */
 function renderHeader(): HTMLElement {
   const { container } = renderWithI18n(
@@ -51,6 +56,7 @@ function renderHeader(): HTMLElement {
           本文から <a href={TARGET}>よそ</a> へリンクしている。
         </p>
       </article>
+      <AuthorNote profile={null} origin={ORIGIN} />
     </main>,
   );
   return container;
@@ -91,13 +97,21 @@ describe("ArticleHeader の microformats2", () => {
     expect(dates[0].getAttribute("datetime")).toBe(PUBLISHED_ON);
   });
 
-  it("書き手を p-author h-card として 1 つだけ持つ", () => {
-    const authors = marked(renderHeader(), "p-author");
+  /*
+   * `p-author` を持つのは記事の末尾の筆者紹介 (components/profile/author-note.tsx) で、
+   * この見出しではない。h-entry の中に `p-author` が 2 つ並ぶとパーサは先頭を採るので、
+   * **記事全体で 1 つだけ**であることをここで見張る。
+   */
+  it("書き手を p-author h-card として 1 つだけ持つ (印は末尾の筆者紹介にある)", () => {
+    const container = renderHeader();
+    const authors = marked(container, "p-author");
 
     expect(authors).toHaveLength(1);
     expect(authors[0].classList.contains("h-card")).toBe(true);
     expect(authors[0].getAttribute("href")).toBe(`${ORIGIN}/`);
-    expect(authors[0].textContent).toBe("yantene");
+    expect(authors[0].textContent).toBe("やんてね");
+    // 見出しの中には無い。
+    expect(container.querySelector("header .p-author")).toBeNull();
   });
 
   /*
@@ -118,7 +132,7 @@ describe("ArticleHeader の microformats2", () => {
 
     const mention = readMention(html, source, [target]);
 
-    expect(mention.author.name).toBe("yantene");
+    expect(mention.author.name).toBe("やんてね");
     expect(mention.author.url?.toString()).toBe(`${ORIGIN}/`);
     expect(mention.publishedAt?.toString()).toBe("2026-05-08T00:00:00Z");
   });

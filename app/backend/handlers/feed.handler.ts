@@ -2,10 +2,11 @@ import { Hono } from "hono";
 import { toPublicArticle, type PublicArticle } from "./article-view";
 import { articlePath } from "~/backend/domain/article";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { loadProfile } from "~/backend/handlers/profile/pages.handler";
+import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 import { feedIdentities, type FeedIdentity, type FeedKind } from "~/lib/feed";
 
 const FEED_LIMIT = 20;
-const FEED_AUTHOR = "yantene";
 /** 記事が 1 件も無いときの feed updated (Date に依存させない安全側の既定値)。 */
 const FALLBACK_UPDATED = "2026-01-01T00:00:00Z";
 
@@ -50,6 +51,7 @@ function buildAtom(
   origin: string,
   articles: readonly PublicArticle[],
   identity: FeedIdentity,
+  author: string,
 ): string {
   // feed 全体の updated は最新の更新日時 (エントリの lastModifiedOn の最大)。
   const updated =
@@ -68,7 +70,7 @@ function buildAtom(
   <link href="${alternateUrl}" rel="alternate" type="text/html"/>
   <id>${alternateUrl}</id>
   <updated>${updated}</updated>
-  <author><name>${escapeXml(FEED_AUTHOR)}</name></author>
+  <author><name>${escapeXml(author)}</name></author>
 ${entries}
 </feed>
 `;
@@ -127,9 +129,18 @@ export function createFeedRouter(): Hono<{ Bindings: Env }> {
 
   for (const identity of feedIdentities) {
     router.get(identity.path, async (c) => {
-      const articles = await entriesFor(identity.kind, c.env.D1);
+      /*
+       * 書き手の名前はプロフィールから引く。h-card・記事末尾の筆者紹介・JSON-LD と
+       * 同じ 1 つの出どころにしておかないと、`profile.md` で名を改めたときにフィードだけが
+       * 古い名前を配り続ける (同じ記事に 2 人の書き手が居ることになる)。
+       */
+      const [articles, profile] = await Promise.all([
+        entriesFor(identity.kind, c.env.D1),
+        loadProfile(c.env),
+      ]);
       const origin = new URL(c.req.url).origin;
-      return c.body(buildAtom(origin, articles, identity), 200, {
+      const author = profile?.name ?? FALLBACK_PROFILE_NAME;
+      return c.body(buildAtom(origin, articles, identity, author), 200, {
         "Content-Type": "application/atom+xml; charset=utf-8",
         "Cache-Control": "public, max-age=3600",
       });

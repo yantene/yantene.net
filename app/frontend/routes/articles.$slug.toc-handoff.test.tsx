@@ -95,6 +95,7 @@ function loaderData(): unknown {
     webmentions: { faces: [], replies: [] },
     related: [],
     reactions: { reactions: [], mine: null },
+    profile: null,
     jsonLd: {},
   };
 }

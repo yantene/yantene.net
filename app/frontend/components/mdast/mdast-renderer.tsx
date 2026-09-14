@@ -27,7 +27,7 @@ import type { Html, Paragraph, Root as MdastRoot } from "mdast";
 import type { Handler, Raw, State } from "mdast-util-to-hast";
 import type { TocHeading } from "~/backend/handlers/articles/toc-headings";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
-import { ALERT_TAG_NAME } from "~/backend/services/article-content-parser";
+import { ALERT_TAG_NAME } from "~/backend/services/markdown-body";
 import { withLowercaseScheme } from "~/lib/http-url";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 

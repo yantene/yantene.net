@@ -15,7 +15,13 @@ export interface ContentEntry {
 }
 
 export interface IContentStore {
-  /** 全ファイルのパスとハッシュを列挙する (変更検出のためのスナップショット)。 */
+  /**
+   * 全ファイルのパスとハッシュを列挙する (変更検出のためのスナップショット)。
+   *
+   * **同じストアに何度訊いても同じ姿を返すこと。** 1 回の同期で記事とプロフィールが
+   * 別々に呼ぶので、呼ぶたびに読み直すと途中の push が入り込み、2 つが別のリビジョンから
+   * 組まれる。ストアは同期 1 回につき 1 つ作る (`resolveContentStore`)。
+   */
   listTree(): Promise<readonly ContentEntry[]>;
 
   /**

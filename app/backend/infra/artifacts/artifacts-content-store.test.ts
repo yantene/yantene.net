@@ -268,6 +268,23 @@ describe("ArtifactsContentStore", () => {
     await expect(store(fetchFn).readFile("a.md")).rejects.toBeInstanceOf(ArtifactsRequestError);
   });
 
+  it("walks the tree once and reuses it, so two syncs see the same commit", async () => {
+    const { fetchFn, calls } = routes({
+      [`${BASE}/log?ref=main&limit=1`]: () => envelope([{ hash: "c1", treeHash: "root" }]),
+      [`${BASE}/tree/root`]: () =>
+        envelope([{ name: "profile.md", hash: "h1", type: "blob" as const }]),
+    });
+    const contentStore = store(fetchFn);
+
+    const first = await contentStore.listTree();
+    const second = await contentStore.listTree();
+
+    expect(second).toEqual(first);
+    // 記事とプロフィールが別のコミットを見ないように、先端の取得は 1 回だけにする。
+    expect(calls.filter((call) => call.url.includes("/log?"))).toHaveLength(1);
+    expect(calls.filter((call) => call.url.includes("/tree/"))).toHaveLength(1);
+  });
+
   it("resolves the token once and reuses it across requests", async () => {
     const getAuthToken = vi.fn(() => Promise.resolve("cf-token"));
     const { fetchFn } = routes({

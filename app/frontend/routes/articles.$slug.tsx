@@ -17,6 +17,7 @@ import { ArticleActions } from "~/frontend/components/article-actions/article-ac
 import { ArticleBranches } from "~/frontend/components/article-branches/article-branches";
 import { CurrentSection } from "~/frontend/components/current-section/current-section";
 import { ArticleHeader } from "~/frontend/components/article-header/article-header";
+import { AuthorNote } from "~/frontend/components/profile/author-note";
 import { InlineTocRegistry } from "~/frontend/components/toc/inline-toc-registry";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
@@ -213,7 +214,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
     );
   }
 
-  const { article, mdast, related, headings, origin, reactions, linkCards, webmentions } =
+  const { article, mdast, related, headings, origin, reactions, linkCards, webmentions, profile } =
     loaderData;
 
   return (
@@ -270,6 +271,11 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             url={`${origin}/articles/${article.slug}`}
             title={article.title}
           />
+          {/*
+            筆者紹介。h-entry の `p-author` はここが持つ (article-header ではない)。
+            プロフィールがまだ無いときは sr-only の印だけに倒れる。
+          */}
+          <AuthorNote profile={profile} origin={origin} />
           {/* 届いた反応。1 件も無ければ何も描かない。 */}
           <WebmentionList webmentions={webmentions} />
           {related.length > 0 && (

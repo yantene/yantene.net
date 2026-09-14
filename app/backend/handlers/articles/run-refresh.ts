@@ -9,14 +9,22 @@ import {
   D1ArticleEmbeddingQueryRepository,
   D1ArticleQueryRepository,
   D1ArticleSearchIndex,
+  D1ProfileCommandRepository,
+  D1ProfileQueryRepository,
+  D1WorkCommandRepository,
+  D1WorkQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { WorkersAiEmbeddingGenerator } from "~/backend/infra/ai/workers-ai-embedding-generator";
 import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
+import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
+import { R2WorkContentCache } from "~/backend/infra/r2/r2-work-content-cache";
 import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
 import { ArticleEmbeddingsRefreshService } from "~/backend/services/article-embeddings-refresh.service";
 import { ArticlesRefreshService } from "~/backend/services/articles-refresh.service";
+import { ProfileRefreshService } from "~/backend/services/profile-refresh.service";
+import { WorksRefreshService } from "~/backend/services/works-refresh.service";
 
 /**
  * コンテンツリポジトリを D1 + R2 に同期する (Composition Root)。
@@ -31,25 +39,55 @@ export async function runRefresh(
   options: { force: boolean },
 ): Promise<Record<string, unknown>> {
   const { force } = options;
+  const contentStore = resolveContentStore(env);
 
   const result = await new ArticlesRefreshService(
-    resolveContentStore(env),
+    contentStore,
     new D1ArticleCommandRepository(env.D1),
     D1ArticleQueryRepository.forAdmin(env.D1),
     new R2ArticleContentCache(env.R2),
     new D1ArticleSearchIndex(env.D1),
   ).refresh({ force });
 
+  /*
+   * プロフィールも同じツリーから同期する (`listTree()` の結果は 1 refresh の間
+   * 覚えているので、ツリーを読み直しはしない)。記事の後に置くのは、記事の同期が
+   * 落ちたときにプロフィールだけ先に進まないようにするため。ツリーごと空に見える
+   * 事故は、こちらも自前のガードで止める。
+   */
+  const profile = await new ProfileRefreshService(
+    contentStore,
+    new D1ProfileCommandRepository(env.D1),
+    new D1ProfileQueryRepository(env.D1),
+    new R2ProfileContentCache(env.R2),
+  ).refresh({ force });
+
+  /*
+   * 作ったものも同じツリーから同期する。記事と同じ形 (`works/<slug>.md` + `works/<slug>/`)
+   * なので、経路も同じ。こちらもツリーごと空に見える事故は自前のガードで止める。
+   */
+  const works = await new WorksRefreshService(
+    contentStore,
+    new D1WorkCommandRepository(env.D1),
+    new D1WorkQueryRepository(env.D1),
+    new R2WorkContentCache(env.R2),
+  ).refresh({ force });
+
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う
   // (外部サイトが落ちていることは異常ではない) ので、別のサービスに分けている。
+  // 長い自己紹介と作品の説明が貼った URL も同じ表に入れる
+  // (`/about` と `/works/<slug>` だけカードにならない、を避ける)。
   const logger = new ConsoleLogger({ component: "link-cards" });
+  const linkedUrls = [
+    ...new Set([...result.linkedUrls, ...profile.linkedUrls, ...works.linkedUrls]),
+  ];
   const linkCards = await new LinkCardsRefreshService(
     new OgpLinkCardFetcher(logger),
     new D1LinkCardCommandRepository(env.D1),
     new D1LinkCardQueryRepository(env.D1),
     new R2LinkCardAssetCache(env.R2),
     logger,
-  ).sync(result.linkedUrls, Temporal.Now.instant(), { force });
+  ).sync(linkedUrls, Temporal.Now.instant(), { force });
 
   /*
    * 記事のベクトルと、記事どうしの近さを揃える。ここも記事の同期とは失敗の扱いが
@@ -76,5 +114,8 @@ export async function runRefresh(
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
 
-  return { ...result, linkCards, embeddings };
+  // linkedUrls は 3 つを合わせたもの (カードの同期に渡したものと同じ) を返す。
+  // 記事の分だけを返すと、`/about` と `/works/<slug>` のカードが取れたか取れなかったかを
+  // 結果から辿れない。
+  return { ...result, linkedUrls, profile, works, linkCards, embeddings };
 }

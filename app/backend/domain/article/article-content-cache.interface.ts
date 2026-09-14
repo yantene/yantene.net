@@ -1,10 +1,7 @@
+import type { CachedAsset } from "~/backend/domain/shared";
 import type { ArticleSlug } from "./article-slug.vo";
 
-/** キャッシュされた画像アセット。 */
-export interface CachedAsset {
-  readonly bytes: Uint8Array;
-  readonly contentType: string;
-}
+export type { CachedAsset };
 
 /**
  * 記事本文 (原文 Markdown・パース済み MDAST) と画像アセットのキャッシュ。

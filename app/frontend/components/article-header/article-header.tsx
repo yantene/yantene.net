@@ -13,9 +13,12 @@ export interface ArticleHeaderProps {
 /**
  * 記事の頭。カバー画像・日付・表題・タグと、microformats2 の印を持つ。
  *
- * **この記事を指す `u-url` と書き手を表す `p-author h-card` はここにある。** Webmention を
- * 送る側・読む側のパーサ (Bridgy 等) が「誰の・何という記事への言及か」を辿るのに要る印で、
- * 消えても画面には何も出ない。
+ * **この記事を指す `u-url` はここにある。** Webmention を送る側・読む側のパーサ (Bridgy 等) が
+ * 「何という記事への言及か」を辿るのに要る印で、消えても画面には何も出ない。
+ *
+ * **書き手を表す `p-author h-card` はここには無い。** 記事の末尾の筆者紹介
+ * (components/profile/author-note.tsx) が持っている。h-entry の中に `p-author` が
+ * 2 つ並ぶとパーサは先頭を採るので、見える紹介とここの印を両立させられない。
  *
  * ここが持つのは、entry の中に入る個々のプロパティだけである。**それらを束ねる `h-entry` と、
  * 本文を表す `e-content` はこの外側 (routes/articles.$slug.tsx) にある。** 束ねる側が外れると、
@@ -76,9 +79,6 @@ export function ArticleHeader({
         tabIndex={-1}
       >
         {title}
-      </a>
-      <a className="sr-only p-author h-card" href={`${origin}/`} aria-hidden="true" tabIndex={-1}>
-        yantene
       </a>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
         {/*
