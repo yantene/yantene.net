@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { SiMarkdown } from "react-icons/si";
+import { toDisplayDate } from "~/frontend/lib/display-date";
 
 export interface ArticleHeaderProps {
   readonly slug: string;
@@ -54,7 +55,7 @@ export function ArticleHeader({
       */}
       <p className="article-header-eyebrow">
         <time className="dt-published" dateTime={publishedOn}>
-          {publishedOn.replaceAll("-", ".")}
+          {toDisplayDate(publishedOn)}
         </time>
         <span className="article-header-kind">ARTICLE</span>
       </p>

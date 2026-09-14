@@ -1,11 +1,16 @@
 import { useTranslation } from "react-i18next";
-import { formatPlainDate } from "./plain-date";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { SocialLinks, toDisplaySocialLinks } from "~/frontend/components/social/social-links";
+import { toDisplayDate } from "~/frontend/lib/display-date";
 
-/** 顔。近影ではなくやんてねくんのアイコンを出す (#413 の続きで差し替える)。 */
-const AVATAR_SRC = "/icons/icon-192.png";
-const AVATAR_SIZE = 192;
+/**
+ * 顔。近影ではなくやんてねくんのアイコンを出す (#413 の続きで差し替える)。
+ *
+ * 512 を使うのは、ここが favicon と違って 144px まで大きく出るため。192 だと
+ * 高精細な画面で線が眠くなる。
+ */
+const AVATAR_SRC = "/icons/icon-512.png";
+const AVATAR_SIZE = 512;
 
 interface ProfileCardProps {
   readonly profile: PublicProfile;
@@ -23,7 +28,7 @@ interface ProfileCardProps {
  * 機械に渡すのは JSON-LD の `birthPlace` のほうに任せる。
  */
 export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <header className="profile-card h-card">
@@ -56,7 +61,7 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
           <dt className="profile-facts-label">{t("profile.dateOfBirth")}</dt>
           <dd className="profile-facts-value">
             <time className="dt-bday" dateTime={profile.dateOfBirth}>
-              {formatPlainDate(profile.dateOfBirth, i18n.language)}
+              {toDisplayDate(profile.dateOfBirth)}
             </time>
           </dd>
           {profile.birthplace !== null && (

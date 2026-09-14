@@ -36,6 +36,9 @@
  *
  * `flex-shrink` を止めるのは、横並びのときに名前が長いと顔のほうが潰れるため
  * (縮むのは字の欄でよい)。
+ *
+ * **輪郭の線は要る。** アイコンは白で裏打ちしてあるので、線が無いと明るいテーマで
+ * 地の色に溶け、丸く抜いたことが見えない (顔の線画だけが宙に浮く)。
  */
 .profile-avatar {
   flex-shrink: 0;
@@ -44,6 +47,7 @@
   border-radius: 9999px;
   object-fit: cover;
   background-color: var(--color-base-200);
+  border: 1px solid var(--color-base-300);
 }
 
 @media (width >= 40rem) {
@@ -94,7 +98,11 @@
  */
 .profile-facts {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /*
+   * どちらの列も中身の幅にする。片方を `1fr` にすると欄が横いっぱいに広がり、
+   * 積んだときの `justify-content: center` が効かなくなる (中央に寄せる余白が無い)。
+   */
+  grid-template-columns: auto auto;
   justify-content: center;
   gap: 0.25rem 1rem;
   margin-top: 1.25rem;

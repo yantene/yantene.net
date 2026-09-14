@@ -4,7 +4,7 @@ import { D1ProfileQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 
 /** 名乗りに出す顔。近影ではなくやんてねくんのアイコン (#413 の続きで差し替える)。 */
-const AVATAR_PATH = "/icons/icon-192.png";
+const AVATAR_PATH = "/icons/icon-512.png";
 
 export interface AboutPageData {
   /**

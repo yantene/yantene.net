@@ -53,6 +53,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0038](0038-split-feeds-by-content-kind.md)                          | フィードを種別ごとに分け、`/feed/` の下に並べる                        | Accepted   |
 | [0039](0039-sign-in-with-a-magic-link.md)                            | ログインはメールのマジックリンクで行い、トークンは POST でしか使わない | Accepted   |
 | [0040](0040-article-status-and-reader-facing-repository.md)          | 記事の status を全部同期し、読み取り口を読み手向けと管理者向けに分ける | Accepted   |
+| [0041](0041-sync-the-profile-as-one-content-file.md)                 | プロフィールはファイル 1 つとして同期し、経歴は本文に持つ              | Accepted   |
 
 ## 統合した番号
 
