@@ -40,6 +40,7 @@
     "lead": "エッセイ、技術記事、その他もろもろ。長めに書きたいことはここに置いています。",
     "empty": "まだ公開された記事がありません。",
     "related": "Related articles",
+    "author": "この記事を書いた人",
     "toc": "Contents",
     "viewMarkdown": "Markdown で見る",
     "clearFilter": "すべて表示",

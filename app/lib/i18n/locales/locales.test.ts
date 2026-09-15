@@ -97,7 +97,13 @@ describe("翻訳リソース", () => {
   });
 
   it("読み上げにしか出ないランドマークの名前は日本語のまま", () => {
-    for (const key of ["navigation.siteNavLabel", "navigation.menuLabel", "footer.navLabel"]) {
+    for (const key of [
+      "navigation.siteNavLabel",
+      "navigation.menuLabel",
+      "footer.navLabel",
+      // 記事末尾の筆者紹介の見出し。sr-only なので、見える相方と食い違う心配が無い。
+      "articles.author",
+    ]) {
       expect(valueAt(ja, key)).not.toBe(valueAt(en, key));
     }
   });

@@ -19,6 +19,10 @@ interface AuthorNoteProps {
  * sr-only で置いていたものを、見える形にしてここへ移した。h-entry の中に `p-author` が
  * 2 つ並ぶとパーサは先頭を採るので、**印はここ 1 つだけ**にすること。
  *
+ * 見出しは読み上げにしか出さない。顔と名前が並んでいれば誰のことかは目で分かるが、
+ * 読み上げでは本文の続きとして流れてしまうため、区画の名前だけを置く
+ * (画面に出ない名前は訳す。product.md「見える名前は訳さない」)。
+ *
  * プロフィールが無いときは、以前と同じ sr-only の 1 行に倒す。印ごと消すと、初回同期の
  * 前や `profile.md` を消した直後に Webmention の著者発見が黙って壊れる。
  */
@@ -34,41 +38,43 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
   }
 
   return (
-    <section className="p-author h-card flex flex-col gap-4 rounded-lg border border-border/60 px-6 py-5 sm:flex-row sm:gap-6">
-      {/* 顔はサイトのアイコン。`/about` の名乗りと同じものを、小さく出す。 */}
-      <img
-        className="u-photo size-16 shrink-0 self-start rounded-full border border-border/60 object-cover"
-        src={PROFILE_PHOTO}
-        alt=""
-      />
+    <section className="author-note">
+      <h2 className="sr-only">{t("articles.author")}</h2>
 
-      <div className="flex flex-col gap-3">
-        {/*
-          名前がそのまま筆者のサイトへの参照を兼ねる。`p-name` と `u-url` を 1 つの
-          リンクに載せるのは microformats2 の素直な書き方で、見えるものと機械が読むものが
-          ずれない。
-        */}
-        <a className="p-name u-url font-semibold hover:text-primary" href={`${origin}/`}>
-          {profile.name}
-        </a>
+      {/*
+        印を持つのは中の器のほうにする。外の `<section>` には見出しが入っており、
+        h-card の中に入れるとパーサが名前の候補として拾う (`p-name` を明示してある間は
+        実害が出ないが、印の中には印として読ませたいものだけを置く)。
+      */}
+      <div className="author-note-card p-author h-card">
+        {/* 顔はサイトのアイコン。`/about` の名乗りと同じものを、小さく出す。 */}
+        <img className="author-note-photo u-photo" src={PROFILE_PHOTO} alt="" />
 
-        <TaglineLines
-          lines={profile.tagline}
-          className="p-note text-[0.9rem] leading-relaxed text-foreground/85"
-        />
+        <div className="author-note-body">
+          {/*
+            名前がそのまま筆者のサイトへの参照を兼ねる。`p-name` と `u-url` を 1 つの
+            リンクに載せるのは microformats2 の素直な書き方で、見えるものと機械が読むものが
+            ずれない。
+          */}
+          <a className="author-note-name p-name u-url press-control" href={`${origin}/`}>
+            {profile.name}
+          </a>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          {profile.socials.length > 0 && (
-            <SocialLinks
-              links={profile.socials}
-              className="flex items-center gap-4"
-              linkClassName="press-control inline-flex text-xl text-foreground/85 transition-colors hover:text-primary"
-            />
-          )}
-          {/* 区画の名前は訳さない (product.md「見える名前は訳さない」)。 */}
-          <Link className="text-sm text-muted-foreground hover:text-primary" to="/about">
-            {t("navigation.about")}
-          </Link>
+          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" />
+
+          <div className="author-note-links">
+            {profile.socials.length > 0 && (
+              <SocialLinks
+                links={profile.socials}
+                className="author-note-socials"
+                linkClassName="author-note-social press-control"
+              />
+            )}
+            {/* 区画の名前は訳さない (product.md「見える名前は訳さない」)。 */}
+            <Link className="author-note-more press-control" to="/about">
+              {t("navigation.about")}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

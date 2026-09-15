@@ -1,0 +1,142 @@
+/*
+ * 記事の末尾に置く筆者紹介。
+ *
+ * **囲みを持たない。** 記事の足元に並ぶもののうち、枠を持つのは外から届いたもの
+ * (link-card・webmention-reply) だけで、このサイト自身の声は線と余白で区切っている。
+ * 筆者紹介を枠に入れると、自分の記事の末尾に他所から貼られた名刺のように見える。
+ *
+ * 代わりに、上に細い線を 1 本引いて本文と隔てる。下に続く Responses / Related articles
+ * と同じ作法なので、読み終えた先が同じ調子の区画の連なりになる。
+ */
+
+.author-note {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.author-note-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+/*
+ * 顔。**縁は線ではなく影で置く。**
+ *
+ * 1px の border を巻くと、丸の輪郭に沿って色の段が立ち、写真の縁がぎざつく。
+ * 同じ太さの影なら輪郭の外側に乗るので、丸みが濁らない。
+ */
+.author-note-photo {
+  flex-shrink: 0;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-border) 70%, transparent);
+  object-fit: cover;
+}
+
+/*
+ * 名前から下。**幅いっぱいに伸ばす。**
+ *
+ * 伸ばさないと、右端に寄せた `/about` への導線が「いちばん長い行の右端」に付く。
+ * 自己紹介の字数で位置が動くので、線の端 (区画の右端) に揃わない。
+ */
+.author-note-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+/*
+ * 名前。**この区画でいちばん強い字。**
+ *
+ * 一覧の 1 件の名前 (work-list-name・記事の題) と同じ役なので、大きさと重みもそこへ
+ * 揃える。以前は本文と見分けの付かない太字だったので、顔の隣に名前があることが
+ * 字の側から伝わっていなかった。
+ */
+.author-note-name {
+  align-self: flex-start;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--color-base-content);
+  text-decoration: none;
+}
+
+.author-note-name:hover {
+  color: var(--color-primary);
+}
+
+/* 短い自己紹介。一覧の概要 (work-list-summary) と同じ濃さ・同じ行送りで置く。 */
+.author-note-tagline {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+}
+
+/*
+ * 出ていく先と、`/about` への導線。
+ *
+ * 同じ行に並べるが、役が違う。絵は外 (よそのサイト) へ、字は中 (このサイトの `/about`)
+ * へ連れて行く。**混ぜて置くと `/about` が 6 つ目のアイコンに見える**ので、行の両端に
+ * 離す。折り返した狭い画面では上下に分かれ、そこでも隣り合わない。
+ */
+.author-note-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.625rem;
+}
+
+.author-note-socials {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.author-note-social {
+  display: inline-flex;
+  font-size: 1.125rem;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+.author-note-social:hover {
+  color: var(--color-primary);
+}
+
+.author-note-more {
+  margin-inline-start: auto;
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.author-note-more:hover {
+  color: var(--color-primary);
+}
+
+/* 行き先を指す矢。字の一部ではないので、翻訳リソースではなくここで足す。 */
+.author-note-more::after {
+  content: " →";
+}
+
+/*
+ * 狭い画面。顔を小さくして、名前と自己紹介に幅を譲る。
+ *
+ * 縦に積み替えない。積むと名前が顔の下に落ちて、名乗りの行が 2 つに割れる。
+ */
+@media (width < 40rem) {
+  .author-note-card {
+    gap: 1rem;
+  }
+
+  .author-note-photo {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+}
