@@ -1,7 +1,7 @@
 import type { profile, profileSocials } from "~/backend/infra/d1/schema";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
 import { entityId } from "~/backend/domain/shared";
-import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
+import { unixToInstant } from "~/backend/infra/d1/temporal";
 
 /**
  * D1 の 2 つの行を Profile エンティティに復元する。
@@ -17,8 +17,6 @@ export function rowsToProfile(
     id: entityId<"Profile">(row.id),
     name: ProfileName.create(row.name),
     tagline: Tagline.create(row.tagline),
-    dateOfBirth: row.dateOfBirth === null ? undefined : isoToPlainDate(row.dateOfBirth),
-    birthplace: row.birthplace ?? undefined,
     socials: socialRows.map((social) =>
       SocialAccount.create({ platform: social.platform, url: social.url, isMe: social.isMe }),
     ),

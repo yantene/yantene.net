@@ -1,5 +1,4 @@
 import type { Root } from "mdast";
-import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
@@ -14,13 +13,6 @@ import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cac
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 
 const ORIGIN = "https://yantene.net";
-
-/** 生い立ちは任意の欄なので、書いていないときの姿もここから作れるようにする。 */
-interface BirthFacts {
-  dateOfBirth?: Temporal.PlainDate;
-  birthplace?: string;
-}
-
 const BODY: Root = {
   type: "root",
   children: [{ type: "paragraph", children: [{ type: "text", value: "長い自己紹介。" }] }],
@@ -30,14 +22,11 @@ function envWith(d1: D1Database, bucket: R2Bucket): Env {
   return { D1: d1, R2: bucket } as unknown as Env;
 }
 
-async function seedProfile(d1: D1Database, overrides: BirthFacts = {}): Promise<void> {
+async function seedProfile(d1: D1Database): Promise<void> {
   await new D1ProfileCommandRepository(d1).upsert(
     Profile.create({
       name: ProfileName.create("やんてね"),
       tagline: Tagline.create("東京で Web 開発者をやっています。"),
-      dateOfBirth: Temporal.PlainDate.from("1993-11-18"),
-      birthplace: "愛知県刈谷市",
-      ...overrides,
       socials: [
         SocialAccount.create({ platform: "github", url: "https://github.com/yantene", isMe: true }),
         SocialAccount.create({ platform: "x", url: "https://x.com/yantene", isMe: false }),
@@ -133,31 +122,6 @@ describe("loadAboutPage", () => {
     });
   });
 
-  it("生年月日と出身地を JSON-LD に載せる", async () => {
-    const d1 = createTestD1();
-    const { bucket } = createTestR2();
-    await seedProfile(d1);
-    await new R2ProfileContentCache(bucket).putMdast(BODY);
-
-    const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
-
-    expect(jsonLd).toMatchObject({ birthDate: "1993-11-18", birthPlace: "愛知県刈谷市" });
-  });
-
-  it("書いていない生い立ちの欄は JSON-LD に出さない", async () => {
-    // 空の値を置くと「知らない」ではなく「空だ」と伝わる。
-    const d1 = createTestD1();
-    const { bucket } = createTestR2();
-    await seedProfile(d1, { dateOfBirth: undefined, birthplace: undefined });
-    await new R2ProfileContentCache(bucket).putMdast(BODY);
-
-    const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
-
-    expect(jsonLd).not.toHaveProperty("birthDate");
-    expect(jsonLd).not.toHaveProperty("birthPlace");
-  });
-
-  /** D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。 */
   it("fails loudly when the body is missing from R2", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();

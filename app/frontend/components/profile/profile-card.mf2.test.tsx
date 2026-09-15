@@ -59,33 +59,6 @@ describe("ProfileCard の microformats2", () => {
     expect(url?.getAttribute("tabindex")).toBe("-1");
   });
 
-  it("生年月日を dt-bday で持たせる", () => {
-    const [bday] = marked(renderCard(), "dt-bday");
-
-    // 機械には書かれたままの日付を渡す (人に見える字はサイト共通の書式)。
-    expect(bday?.getAttribute("datetime")).toBe(sampleProfile.dateOfBirth);
-    expect(bday?.textContent).toBe("1993.11.18");
-  });
-
-  it("出身地には印を付けない", () => {
-    /*
-     * h-card に生まれた場所を表す語が無い。近い名前 (`p-locality`) を流用すると
-     * 「いま住んでいる街」として読まれるので、機械に渡すのは JSON-LD の
-     * `birthPlace` だけにしてある。
-     */
-    const container = renderCard();
-
-    expect(marked(container, "p-locality")).toHaveLength(0);
-    expect(marked(container, "p-adr")).toHaveLength(0);
-  });
-
-  it("生年月日を書いていなければ dt-bday を置かない", () => {
-    const { container } = render(<ProfileCard profile={{ ...sampleProfile, dateOfBirth: null }} />);
-
-    expect(marked(container, "dt-bday")).toHaveLength(0);
-    expect(marked(container, "h-card")).toHaveLength(1);
-  });
-
   it("顔はサイトのアイコン 1 つで、プロフィールでは選べない", () => {
     /*
      * 顔がサイトのアイコンに決まっているなら、コンテンツリポジトリに書ける欄を設けても

@@ -20,10 +20,6 @@
     "slides": "Slides",
     "works": "Works"
   },
-  "profile": {
-    "dateOfBirth": "Date of birth",
-    "birthplace": "Birthplace"
-  },
   "feed": {
     "label": "Feed",
     "all": "All"

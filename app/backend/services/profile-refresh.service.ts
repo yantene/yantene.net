@@ -193,8 +193,6 @@ function buildProfile(
     return Profile.create({
       name: parsed.name,
       tagline: parsed.tagline,
-      dateOfBirth: parsed.dateOfBirth,
-      birthplace: parsed.birthplace,
       socials: parsed.socials,
       sourceHash: group.contentHash,
     });
