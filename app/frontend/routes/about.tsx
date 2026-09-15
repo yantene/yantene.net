@@ -71,7 +71,15 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
         {profile === null || mdast === null ? (
           <ComingSoon heading={t("navigation.about")} description={t("comingSoon.about")} />
         ) : (
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-12 px-6 py-12">
+          /*
+            名乗りの上を広く、下を狭く取る。
+
+            **子の間に一律の隙間を置かない。** 置くと、本文の最初の見出しが持つ
+            上の余白と足し合わさって、名乗りの下だけが上の倍を超える。名乗りは頭に
+            載せる札なので、下が空くと本文から切り離されて浮いて見える。
+            本文との間は本文自身の余白に任せ、作ったものの節にだけ明示的に置く。
+          */
+          <div className="mx-auto flex w-full max-w-3xl flex-col px-6 pt-20 pb-12">
             <ProfileCard profile={profile} />
 
             {/*
@@ -94,7 +102,7 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
               直接行ける)。
             */}
             {works.length > 0 && (
-              <section className="flex flex-col gap-6">
+              <section className="mt-12 flex flex-col gap-6">
                 <h2 className="text-xl font-bold tracking-tight">
                   <Link to="/works" className="press-control transition-colors hover:text-primary">
                     {t("works.heading")}

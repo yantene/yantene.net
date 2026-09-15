@@ -4,20 +4,17 @@ import { describe, expect, it } from "vitest";
 import { D1ProfileCommandRepository } from "./profile.command-repository";
 import { D1ProfileQueryRepository } from "./profile.query-repository";
 import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
-import { ImageUrl } from "~/backend/domain/shared";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 function unpersistedProfile(params: {
   name?: string;
   tagline?: string;
-  avatarUrl?: string;
   socials?: readonly SocialAccount[];
   sourceHash?: string;
 }): ProfileEntity<IUnpersisted> {
   return Profile.create({
     name: ProfileName.create(params.name ?? "やんてね"),
     tagline: Tagline.create(params.tagline ?? "東京で Web 開発者をやっています。"),
-    avatarUrl: params.avatarUrl === undefined ? undefined : ImageUrl.create(params.avatarUrl),
     socials: params.socials ?? [],
     sourceHash: params.sourceHash ?? "deadbeef",
   });
@@ -28,7 +25,6 @@ describe("D1ProfileCommandRepository", () => {
     const d1 = createTestD1();
     await new D1ProfileCommandRepository(d1).upsert(
       unpersistedProfile({
-        avatarUrl: "/api/v1/profile/assets/avatar.png",
         socials: [
           SocialAccount.create({
             platform: "github",
@@ -41,7 +37,6 @@ describe("D1ProfileCommandRepository", () => {
 
     const saved = await new D1ProfileQueryRepository(d1).find();
     expect(saved?.name.toString()).toBe("やんてね");
-    expect(saved?.avatarUrl?.toString()).toBe("/api/v1/profile/assets/avatar.png");
     expect(saved?.socials.map((social) => social.platform)).toEqual(["github"]);
   });
 

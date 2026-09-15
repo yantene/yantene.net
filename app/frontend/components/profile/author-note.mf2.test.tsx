@@ -2,6 +2,7 @@ import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { describe, expect, it } from "vitest";
 import { AuthorNote } from "./author-note";
 import { sampleProfile } from "./profile-fixture";
+import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { WebmentionUrl } from "~/backend/domain/webmention";
 import { readMention } from "~/backend/services/webmention-source-reader";
 import { withI18n } from "~/frontend/lib/test-render";
@@ -52,7 +53,7 @@ describe("AuthorNote の microformats2", () => {
     expect(name?.textContent).toBe(sampleProfile.name);
     expect(name?.getAttribute("href")).toBe(`${ORIGIN}/`);
 
-    expect(marked(container, "u-photo")[0]?.getAttribute("src")).toBe(sampleProfile.avatarUrl);
+    expect(marked(container, "u-photo")[0]?.getAttribute("src")).toBe(PROFILE_PHOTO);
     expect(marked(container, "p-note")[0]?.textContent).toContain("東京で Web 開発者");
   });
 

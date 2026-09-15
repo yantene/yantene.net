@@ -12,10 +12,11 @@ import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 const PROFILE_MD = `---
 name: やんてね
+dateOfBirth: 1993-11-18
+birthplace: 愛知県刈谷市
 tagline: |
   現実に屈しかけている自由ソフトウェア愛好家です。
   東京で Web 開発者をやっています。
-avatar: ./avatar.png
 socials:
   - platform: github
     url: https://github.com/yantene
@@ -121,7 +122,7 @@ let query: D1ProfileQueryRepository;
 beforeEach(() => {
   files = new Map([
     ["profile.md", { hash: "h-md", bytes: bytes(PROFILE_MD) }],
-    ["profile/avatar.png", { hash: "h-avatar", bytes: bytes("avatar") }],
+    ["profile/diagram.png", { hash: "h-diagram", bytes: bytes("diagram") }],
     // 記事もツリーに居る。プロフィールの同期がこれを拾わないこと。
     ["articles/hello.md", { hash: "h-article", bytes: bytes("---\ntitle: x\n---\n") }],
   ]);
@@ -133,6 +134,28 @@ beforeEach(() => {
 });
 
 describe("ProfileRefreshService", () => {
+  it("生年月日と出身地も D1 に入れる", async () => {
+    await service.refresh();
+
+    const profile = await query.find();
+    expect(profile?.dateOfBirth?.toString()).toBe("1993-11-18");
+    expect(profile?.birthplace).toBe("愛知県刈谷市");
+  });
+
+  it("生年月日と出身地は書かなくてよい", async () => {
+    // どちらも任意。書いていない欄は、値の無い欄ではなく「無い」として持つ。
+    files.set("profile.md", {
+      hash: "h-minimal",
+      bytes: bytes("---\nname: やんてね\ntagline: あいさつ\n---\n"),
+    });
+
+    await service.refresh();
+
+    const profile = await query.find();
+    expect(profile?.dateOfBirth).toBeUndefined();
+    expect(profile?.birthplace).toBeUndefined();
+  });
+
   it("syncs the profile into D1 and R2", async () => {
     const result = await service.refresh();
 
@@ -149,20 +172,19 @@ describe("ProfileRefreshService", () => {
     expect(profile?.socials[0]?.isMe).toBe(true);
 
     expect(cache.source).toBe(PROFILE_MD);
-    expect(cache.assets.get("avatar.png")).toBeDefined();
+    expect(cache.assets.get("diagram.png")).toBeDefined();
   });
 
   /** 記事の同期と同じツリーを見るので、articles/ を拾わないことを押さえておく。 */
   it("does not read files outside profile.md and profile/", async () => {
     await service.refresh();
-    expect(content.reads).toEqual(["profile.md", "profile/avatar.png"]);
+    expect(content.reads).toEqual(["profile.md", "profile/diagram.png"]);
   });
 
-  /** 顔写真も本文の画像も、コンテンツリポジトリの URL を出さずアセット API 経由で配る。 */
-  it("resolves the avatar and the body images to the asset API", async () => {
+  /** 本文の画像は、コンテンツリポジトリの URL を出さずアセット API 経由で配る。 */
+  it("resolves the body images to the asset API", async () => {
     await service.refresh();
 
-    expect((await query.find())?.avatarUrl?.toString()).toBe("/api/v1/profile/assets/avatar.png");
     const [image] = collectByType(cache.mdast as Root, "image");
     expect(image).toMatchObject({ url: "/api/v1/profile/assets/diagram.png" });
   });
@@ -189,7 +211,7 @@ describe("ProfileRefreshService", () => {
   it("reads again when only an asset changed", async () => {
     await service.refresh();
 
-    files.set("profile/avatar.png", { hash: "h-avatar-2", bytes: bytes("avatar2") });
+    files.set("profile/diagram.png", { hash: "h-diagram-2", bytes: bytes("diagram2") });
     expect((await service.refresh()).synced).toBe(true);
   });
 
@@ -227,7 +249,7 @@ describe("ProfileRefreshService", () => {
 
   it("does nothing when there is no profile and none was stored", async () => {
     files.delete("profile.md");
-    files.delete("profile/avatar.png");
+    files.delete("profile/diagram.png");
 
     const result = await service.refresh();
     expect(result).toEqual({ synced: false, deleted: false, skipped: [], linkedUrls: [] });
@@ -237,13 +259,13 @@ describe("ProfileRefreshService", () => {
   it("drops assets that are no longer in the content repository", async () => {
     await service.refresh();
 
-    files.delete("profile/avatar.png");
+    files.delete("profile/diagram.png");
     files.set("profile.md", {
       hash: "h-md-2",
-      bytes: bytes(PROFILE_MD.replace("avatar: ./avatar.png\n", "")),
+      bytes: bytes(PROFILE_MD.replace("![図](./diagram.png)", "")),
     });
     await service.refresh();
-    expect(cache.assets.has("avatar.png")).toBe(false);
+    expect(cache.assets.has("diagram.png")).toBe(false);
   });
 
   it("collects bare link URLs from the body for link cards", async () => {
@@ -267,9 +289,14 @@ describe("読めないプロフィール", () => {
       "知らない platform",
       "---\nname: やんてね\ntagline: あいさつ\nsocials:\n  - platform: myspace\n    url: https://example.com/\n---\n",
     ],
+    /*
+     * 生年月日は日まで書く。粒度を落とした値も暦に無い日付も、書き手にとっては同じ
+     * 「書き方を間違えた」なので、どちらもファイルごと諦める。
+     */
+    ["生年月日の粒度が粗い", "---\nname: やんてね\ntagline: あいさつ\ndateOfBirth: 1993-11\n---\n"],
     [
-      "顔写真が絶対 URL",
-      "---\nname: やんてね\ntagline: あいさつ\navatar: https://example.com/a.png\n---\n",
+      "在り得ない生年月日",
+      "---\nname: やんてね\ntagline: あいさつ\ndateOfBirth: 1993-13-45\n---\n",
     ],
   ])("%s のときはスキップして前の姿を残す", async (_label, markdown) => {
     await service.refresh();

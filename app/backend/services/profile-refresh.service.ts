@@ -15,7 +15,6 @@ import { definitionUrlsOf, withAssetUrls, withImageDimensions } from "./mdast-as
 import { resolveProfileAssetUrl } from "./profile-asset-url";
 import { parseProfileContent, ProfileContentError } from "./profile-content-parser";
 import { Profile } from "~/backend/domain/profile";
-import { ImageUrl } from "~/backend/domain/shared";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /** コンテンツリポジトリの中でプロフィールが置かれる場所。`profile.md` と `profile/<asset>`。 */
@@ -194,15 +193,13 @@ function buildProfile(
     return Profile.create({
       name: parsed.name,
       tagline: parsed.tagline,
-      avatarUrl:
-        parsed.avatar === undefined
-          ? undefined
-          : ImageUrl.create(resolveProfileAssetUrl(parsed.avatar)),
+      dateOfBirth: parsed.dateOfBirth,
+      birthplace: parsed.birthplace,
       socials: parsed.socials,
       sourceHash: group.contentHash,
     });
   } catch (error) {
-    // 絶対 URL を書いた avatar はここで落ちる (ImageUrl はルート相対しか受けない)。
+    // VO の検証はパーサ側で済んでいるが、将来足す欄がここで落ちても内容の誤りとして扱う。
     throw new ProfileContentError(error instanceof Error ? error.message : String(error));
   }
 }

@@ -1,3 +1,4 @@
+import { Temporal } from "@js-temporal/polyfill";
 import type { SocialAccount } from "~/backend/domain/profile";
 import type { Root } from "mdast";
 import { MathSyntaxError } from "./latex-to-mathml";
@@ -18,13 +19,10 @@ export class ProfileContentError extends Error {
 export interface ParsedProfileContent {
   readonly name: ProfileName;
   readonly tagline: Tagline;
-  /**
-   * フロントマターに書かれた顔写真のパス。
-   *
-   * 解決は呼び出し側の役目。アセットがどの URL で配られるかを知っているのは、
-   * コンテンツリポジトリの並びを見ている側なので。
-   */
-  readonly avatar: string | undefined;
+  /** 生年月日。書いていなければ undefined。 */
+  readonly dateOfBirth: Temporal.PlainDate | undefined;
+  /** 出身地。書いていなければ undefined。 */
+  readonly birthplace: string | undefined;
   readonly socials: readonly SocialAccount[];
   /** フロントマターを除いた長い自己紹介の MDAST。 */
   readonly mdast: Root;
@@ -50,7 +48,8 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
     return {
       name: ProfileName.create(requireString(frontmatter.name, "name")),
       tagline: Tagline.create(requireString(frontmatter.tagline, "tagline")),
-      avatar: optionalString(frontmatter.avatar, "avatar"),
+      dateOfBirth: readDateOfBirth(frontmatter.dateOfBirth),
+      birthplace: optionalString(frontmatter.birthplace, "birthplace"),
       socials: readSocials(frontmatter.socials),
       mdast: parsed.mdast,
     };
@@ -61,6 +60,35 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
     // 書かれた値に起因する失敗しかここを通らないよう、VO の factory は値の検証だけを行う。
     throw new ProfileContentError(error instanceof Error ? error.message : String(error));
   }
+}
+
+/** 生年月日に許す書式。粒度を落とした `1993-11` のような値は受け取らない。 */
+const DATE_OF_BIRTH_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * 生年月日を読む。書いていなければ undefined。
+ *
+ * **書式と暦の両方を見る。** 粒度を落とした `1993-11` は書式で、`1993-13-45` は暦で
+ * 落ちるが、書き手にとってはどちらも「生年月日の書き方を間違えた」1 つの誤りなので、
+ * 理由には欄の名前を入れて返す。Temporal がそのまま投げる `invalid RFC 9557 string`
+ * だけでは、`profile.md` のどこを直せばよいのか分からない。
+ *
+ * YAML 1.2 は `1993-11-18` を文字列で返す。日付として解釈する版に備えて Date も読む。
+ */
+function readDateOfBirth(value: unknown): Temporal.PlainDate | undefined {
+  if (value === undefined || value === null) return undefined;
+
+  const iso = value instanceof Date ? value.toISOString().slice(0, 10) : value;
+  if (typeof iso === "string" && DATE_OF_BIRTH_PATTERN.test(iso)) {
+    try {
+      return Temporal.PlainDate.from(iso);
+    } catch {
+      // 暦に無い日付。下の throw に合流させる。
+    }
+  }
+  throw new ProfileContentError(
+    `frontmatter has unreadable dateOfBirth (expected YYYY-MM-DD): ${JSON.stringify(value)}`,
+  );
 }
 
 function readSocials(value: unknown): readonly SocialAccount[] {

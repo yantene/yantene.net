@@ -18,7 +18,9 @@ export interface PublicProfile {
   readonly name: string;
   /** 短い自己紹介。行に分けてある (描画側が改行を保ったまま 1 つの段落に流す)。 */
   readonly tagline: readonly string[];
-  readonly avatarUrl: string | null;
+  /** 生年月日 ("YYYY-MM-DD")。`<time dateTime>` にそのまま入れる。書いていなければ null。 */
+  readonly dateOfBirth: string | null;
+  readonly birthplace: string | null;
   readonly socials: readonly PublicSocialAccount[];
 }
 
@@ -26,7 +28,8 @@ export function toPublicProfile(profile: Profile): PublicProfile {
   return {
     name: profile.name.toJSON(),
     tagline: profile.tagline.lines(),
-    avatarUrl: profile.avatarUrl?.toJSON() ?? null,
+    dateOfBirth: profile.dateOfBirth?.toString({ calendarName: "never" }) ?? null,
+    birthplace: profile.birthplace ?? null,
     socials: profile.socials.map((social) => ({
       platform: social.platform,
       url: social.url,

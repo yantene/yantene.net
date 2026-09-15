@@ -6,7 +6,7 @@ import { TaglineLines } from "~/frontend/components/profile/tagline-lines";
 import type { ClockOrigin } from "./clock-origin";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import Logotype from "~/frontend/assets/yantene-logotype.svg?react";
-import { FALLBACK_PROFILE_NAME, FALLBACK_PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { SocialLinks } from "~/frontend/components/social/social-links";
 
 interface HeroSectionProps {
@@ -70,13 +70,7 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         <a className="sr-only u-url" href="/" aria-hidden="true" tabIndex={-1}>
           yantene.net
         </a>
-        <img
-          className="sr-only u-photo"
-          src={profile?.avatarUrl ?? FALLBACK_PROFILE_PHOTO}
-          alt=""
-          width={192}
-          height={192}
-        />
+        <img className="sr-only u-photo" src={PROFILE_PHOTO} alt="" width={512} height={512} />
 
         {/*
           短い自己紹介と出ていく先は、プロフィールが同期されていれば出す。無いときは
