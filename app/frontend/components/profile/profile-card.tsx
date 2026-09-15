@@ -23,34 +23,43 @@ interface ProfileCardProps {
  * 生い立ち (生年月日・出身地) は書いてあるものだけ出す。**空の欄は置かない。**
  * ラベルだけがあって値の無い行は、読み手には「知らされていない」ではなく「壊れている」
  * ように見える。
+ *
+ * **画面の幅によらず中央に積む。** 顔を左に置いて字を右へ流すと、下に続く本文が欄の
+ * 左端から始まるのに対して名乗りだけが右に寄って見える。名乗りは本文の一部ではなく
+ * 頭に載せる札なので、本文の流れから外して左右対称に置く。
  */
 export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
-    <div className="h-card flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
+    <div className="h-card flex flex-col items-center gap-6 text-center">
       <img
         className="u-photo size-28 shrink-0 rounded-full border border-border/60 object-cover"
         src={PROFILE_PHOTO}
         alt=""
       />
 
-      <div className="flex flex-col items-center gap-4 sm:items-start">
+      <div className="flex flex-col items-center gap-4">
         <h1 className="p-name text-2xl font-semibold tracking-tight">{profile.name}</h1>
 
+        {/*
+          器を 2xl まで広げるのは、書かれた改行のまま出すため。中央揃えの字は、
+          行の途中で折り返すと軸が二重に見えて読みにくい。名乗りの器 (3xl) から
+          左右の余白を引いた幅には収まる。
+        */}
         <TaglineLines
           lines={profile.tagline}
-          className="p-note max-w-xl text-[0.95rem] leading-relaxed text-foreground/85"
+          className="p-note max-w-2xl text-[0.95rem] leading-relaxed text-foreground/85"
         />
 
         {/*
           生い立ち。ラベルと値を 2 列に並べる。
 
-          狭い画面でも 2 列のままにするのは、項目が 2 つしかなく、ラベルが短いため
-          (積むと縦に 4 行になって、名乗りより背が高くなる)。
+          2 列のままにするのは、項目が 2 つしかなく、ラベルが短いため (積むと縦に
+          4 行になって、名乗りより背が高くなる)。
         */}
         {(profile.dateOfBirth !== null || profile.birthplace !== null) && (
-          <dl className="grid grid-cols-[auto_auto] justify-center gap-x-4 gap-y-1 text-sm sm:justify-start">
+          <dl className="grid grid-cols-[auto_auto] justify-center gap-x-4 gap-y-1 text-sm">
             {profile.dateOfBirth !== null && (
               <>
                 <dt className="text-left text-muted-foreground">{t("profile.dateOfBirth")}</dt>
