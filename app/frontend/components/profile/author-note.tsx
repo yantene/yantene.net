@@ -47,20 +47,44 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
         実害が出ないが、印の中には印として読ませたいものだけを置く)。
       */}
       <div className="author-note-card p-author h-card">
-        {/* 顔はサイトのアイコン。`/about` の名乗りと同じものを、小さく出す。 */}
-        <img className="author-note-photo u-photo" src={PROFILE_PHOTO} alt="" />
+        {/*
+          顔はサイトのアイコン。`/about` の名乗りと同じものを、小さく出す。
+
+          押すと `/about` へ行く。**人には渡さない** (`aria-hidden` と `tabIndex={-1}`
+          の対)。すぐ右の名前が同じ行き先を持っているので、読み上げとタブ順に 2 つ並べる
+          理由が無い。片方だけ置くと、焦点が当たっても何も読まれない要素になる (#287)。
+        */}
+        <Link className="author-note-photo-link" to="/about" aria-hidden="true" tabIndex={-1}>
+          <img className="author-note-photo u-photo" src={PROFILE_PHOTO} alt="" />
+        </Link>
 
         <div className="author-note-body">
           {/*
-            名前がそのまま筆者のサイトへの参照を兼ねる。`p-name` と `u-url` を 1 つの
-            リンクに載せるのは microformats2 の素直な書き方で、見えるものと機械が読むものが
-            ずれない。
+            名前を押すと `/about` へ行く。**書いた人の紹介を読みたい人が押す場所**なので、
+            トップではなくあちらへ連れて行く。
+
+            ⚠️ **`u-url` はここに載せない。** あれは「その人の URL」を答える印で、
+            トップの代表 h-card が `/` を指している。ここだけ `/about` にすると、
+            読んだ側から見て同じ人に結びつかなくなる。印は下の sr-only が持つ。
           */}
-          <a className="author-note-name p-name u-url press-control" href={`${origin}/`}>
+          <Link className="author-note-name p-name press-control" to="/about">
             {profile.name}
+          </Link>
+
+          {/*
+            機械に読ませるためだけの、その人の URL。見える相方 (名前のリンク) は
+            `/about` を指しているので、印だけを別に置く。`aria-hidden` と
+            `tabIndex={-1}` は必ず対で置くこと (#287)。
+          */}
+          <a className="sr-only u-url" href={`${origin}/`} aria-hidden="true" tabIndex={-1}>
+            {origin}
           </a>
 
-          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" />
+          {/*
+            ここだけ改行を畳んで流す。書かれた改行のままだと行が 300px で止まり、
+            本文の幅に対して右が大きく余る (`TaglineLines` の `flow` を参照)。
+          */}
+          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" flow />
 
           <div className="author-note-links">
             {profile.socials.length > 0 && (

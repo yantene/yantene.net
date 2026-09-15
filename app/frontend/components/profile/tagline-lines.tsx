@@ -2,6 +2,14 @@ export interface TaglineLinesProps {
   /** 短い自己紹介を行に分けたもの。 */
   readonly lines: readonly string[];
   readonly className?: string;
+  /**
+   * 書かれた改行を畳んで、器の幅まで流すか。
+   *
+   * **狭い器に押し込むときだけ立てる。** 記事の末尾の筆者紹介がそれで、あそこは
+   * 書かれた改行のまま出すと行が 300px で止まり、本文の幅 (768px) に対して
+   * 右が大きく余る。区画が器を埋めていないように見えるので、そこだけ流す。
+   */
+  readonly flow?: boolean;
 }
 
 /**
@@ -15,6 +23,17 @@ export interface TaglineLinesProps {
  * それにあたる)、位置を key にするのは並べ替えに弱い書き方として避けたい。
  * 段落 1 つにテキストを流し込めば、どちらの悩みも持たなくて済む。
  */
-export function TaglineLines({ lines, className }: TaglineLinesProps): React.JSX.Element {
+export function TaglineLines({
+  lines,
+  className,
+  flow = false,
+}: TaglineLinesProps): React.JSX.Element {
+  /*
+   * 流すときは行を空白で繋ぐ。`white-space` を切り替えるだけだと、改行が
+   * 畳まれるかどうかがブラウザの既定に委ねられる (`normal` は改行を空白として
+   * 扱うが、そこに頼ると CSS を触った人が意図せず崩せる)。
+   */
+  if (flow) return <p className={className}>{lines.join(" ")}</p>;
+
   return <p className={`whitespace-pre-line ${className ?? ""}`}>{lines.join("\n")}</p>;
 }

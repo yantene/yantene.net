@@ -47,14 +47,34 @@ describe("AuthorNote の microformats2", () => {
   });
 
   it("名前・サイト・顔・自己紹介を持たせる", () => {
-    const container = renderNote(sampleProfile);
+    // 器の記事にも `p-name` (記事の題) があるので、h-card の中に絞って見る。
+    const card = renderNote(sampleProfile).querySelector(".h-card");
 
-    const name = marked(container, "p-name").find((node) => node.classList.contains("u-url"));
-    expect(name?.textContent).toBe(sampleProfile.name);
-    expect(name?.getAttribute("href")).toBe(`${ORIGIN}/`);
+    expect(card?.querySelector(":scope .p-name")?.textContent).toBe(sampleProfile.name);
+    expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(PROFILE_PHOTO);
+    expect(card?.querySelector(":scope .p-note")?.textContent).toContain("東京で Web 開発者");
+  });
 
-    expect(marked(container, "u-photo")[0]?.getAttribute("src")).toBe(PROFILE_PHOTO);
-    expect(marked(container, "p-note")[0]?.textContent).toContain("東京で Web 開発者");
+  it("u-url はトップを指す。見える導線が /about を指していても動かさない", () => {
+    /*
+     * `u-url` は「その人の URL」を答える印で、トップの代表 h-card が `/` を指している。
+     * ここだけ `/about` にすると、読んだ側から見て同じ人に結びつかなくなる。
+     */
+    const urls = marked(renderNote(sampleProfile), "u-url");
+
+    expect(urls).toHaveLength(1);
+    expect(urls[0]?.getAttribute("href")).toBe(`${ORIGIN}/`);
+  });
+
+  it("名前と顔は /about へ連れて行く", () => {
+    const card = renderNote(sampleProfile).querySelector(".h-card");
+
+    expect(card?.querySelector(":scope .p-name")?.getAttribute("href")).toBe("/about");
+    // 顔のリンクは人に渡さない (すぐ右の名前が同じ行き先を持っている)。
+    const photoLink = card?.querySelector(":scope .u-photo")?.closest("a");
+    expect(photoLink?.getAttribute("href")).toBe("/about");
+    expect(photoLink?.getAttribute("aria-hidden")).toBe("true");
+    expect(photoLink?.getAttribute("tabindex")).toBe("-1");
   });
 
   /** 印の一つ一つではなく、これを読む側 (相手の受け口で走るパーサ) から見て何が取れるか。 */
