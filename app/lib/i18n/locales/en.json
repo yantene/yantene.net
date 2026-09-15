@@ -36,6 +36,7 @@
     "lead": "Essays, technical write-ups, and whatever else. Anything worth saying at length ends up here.",
     "empty": "No articles have been published yet.",
     "related": "Related articles",
+    "author": "About the author",
     "toc": "Contents",
     "viewMarkdown": "View as Markdown",
     "clearFilter": "Show all",
