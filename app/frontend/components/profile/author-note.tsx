@@ -80,11 +80,7 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
             {origin}
           </a>
 
-          {/*
-            ここだけ改行を畳んで流す。書かれた改行のままだと行が 300px で止まり、
-            本文の幅に対して右が大きく余る (`TaglineLines` の `flow` を参照)。
-          */}
-          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" flow />
+          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" />
 
           <div className="author-note-links">
             {profile.socials.length > 0 && (
