@@ -24,13 +24,17 @@
 /*
  * 顔。**縁は線ではなく影で置く。**
  *
+ * 寸法は隣の欄との比で決める。名前・自己紹介・出ていく先を積むと 140px ほどになるので、
+ * 72px だと顔が欄の半分しか無く、名乗りとして弱い。狭い画面の寸法は下の媒体クエリが
+ * 別に持っている (あちらは幅を字に譲るほうが効く)。
+ *
  * 1px の border を巻くと、丸の輪郭に沿って色の段が立ち、写真の縁がぎざつく。
  * 同じ太さの影なら輪郭の外側に乗るので、丸みが濁らない。
  */
 .author-note-photo {
   flex-shrink: 0;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 5.5rem;
+  height: 5.5rem;
   margin: 0;
   border-radius: 9999px;
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-border) 70%, transparent);
