@@ -12,8 +12,6 @@ import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 const PROFILE_MD = `---
 name: やんてね
-dateOfBirth: 1993-11-18
-birthplace: 愛知県刈谷市
 tagline: |
   現実に屈しかけている自由ソフトウェア愛好家です。
   東京で Web 開発者をやっています。
@@ -134,28 +132,6 @@ beforeEach(() => {
 });
 
 describe("ProfileRefreshService", () => {
-  it("生年月日と出身地も D1 に入れる", async () => {
-    await service.refresh();
-
-    const profile = await query.find();
-    expect(profile?.dateOfBirth?.toString()).toBe("1993-11-18");
-    expect(profile?.birthplace).toBe("愛知県刈谷市");
-  });
-
-  it("生年月日と出身地は書かなくてよい", async () => {
-    // どちらも任意。書いていない欄は、値の無い欄ではなく「無い」として持つ。
-    files.set("profile.md", {
-      hash: "h-minimal",
-      bytes: bytes("---\nname: やんてね\ntagline: あいさつ\n---\n"),
-    });
-
-    await service.refresh();
-
-    const profile = await query.find();
-    expect(profile?.dateOfBirth).toBeUndefined();
-    expect(profile?.birthplace).toBeUndefined();
-  });
-
   it("syncs the profile into D1 and R2", async () => {
     const result = await service.refresh();
 
@@ -288,15 +264,6 @@ describe("読めないプロフィール", () => {
     [
       "知らない platform",
       "---\nname: やんてね\ntagline: あいさつ\nsocials:\n  - platform: myspace\n    url: https://example.com/\n---\n",
-    ],
-    /*
-     * 生年月日は日まで書く。粒度を落とした値も暦に無い日付も、書き手にとっては同じ
-     * 「書き方を間違えた」なので、どちらもファイルごと諦める。
-     */
-    ["生年月日の粒度が粗い", "---\nname: やんてね\ntagline: あいさつ\ndateOfBirth: 1993-11\n---\n"],
-    [
-      "在り得ない生年月日",
-      "---\nname: やんてね\ntagline: あいさつ\ndateOfBirth: 1993-13-45\n---\n",
     ],
   ])("%s のときはスキップして前の姿を残す", async (_label, markdown) => {
     await service.refresh();

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { PROFILE_ID } from "~/backend/domain/profile";
 import { profile, profileSocials } from "~/backend/infra/d1/schema";
-import { instantToUnix, plainDateToIso } from "~/backend/infra/d1/temporal";
+import { instantToUnix } from "~/backend/infra/d1/temporal";
 
 export class D1ProfileCommandRepository implements IProfileCommandRepository {
   private readonly db;
@@ -26,8 +26,6 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
     const content = {
       name: source.name.toString(),
       tagline: source.tagline.toString(),
-      dateOfBirth: source.dateOfBirth === undefined ? null : plainDateToIso(source.dateOfBirth),
-      birthplace: source.birthplace ?? null,
       sourceHash: source.sourceHash,
       updatedAt: nowUnix,
     };

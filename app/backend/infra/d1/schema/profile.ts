@@ -4,10 +4,8 @@ import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core"
  * 書き手のプロフィール。**常に 1 行**で、主キーは固定値 (`PROFILE_ID`)。
  *
  * 長い自己紹介 (MDAST) と顔写真の実体は R2 にあり、この表が持つのは記事の末尾が毎回
- * 読むもの — 名前と短い自己紹介 — と、`/about` に出す生い立ち (ADR 0041)。
+ * 読むもの — 名前と短い自己紹介 — だけ (ADR 0041)。
  *
- * - date_of_birth: 生年月日。ISO 日付文字列 ("YYYY-MM-DD")。書いていなければ NULL
- * - birthplace: 出身地。書いていなければ NULL
  * - source_hash: コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。
  *   refresh の変更検出に使う。既定の空ハッシュは次回 refresh で必ず不一致になる
  * - created_at / updated_at: D1 行の作成・更新時刻 (Unix 秒)
@@ -16,6 +14,12 @@ export const profile = sqliteTable("profile", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   tagline: text("tagline").notNull(),
+  /*
+   * ⚠️ **読み書きしていない。次のリリースで落とす (#507)。**
+   *
+   * 生い立ちは名乗りの欄ではなく本文に書くことにした (#508)。列を残してあるのは
+   * `avatar_url` と同じ理由で、列を消す migration が **Deploy より先に走る**ため。
+   */
   dateOfBirth: text("date_of_birth"),
   birthplace: text("birthplace"),
   /*
