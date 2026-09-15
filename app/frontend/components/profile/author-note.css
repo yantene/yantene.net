@@ -15,10 +15,23 @@
   border-top: 1px solid var(--color-border);
 }
 
+/*
+ * 顔と字の並び。**本文の幅いっぱいには広げず、狭めて中央に置く。**
+ *
+ * 本文の器 (768px) に合わせると、中身は左の 250px ほどに固まり、右の 400px が
+ * `/about` への導線だけを残して空く。区画全体が左に寄って見えるので、中身の量に
+ * 見合う幅まで絞る。
+ *
+ * **`fit-content` にはしない。** 幅が中身ぴったりだと `/about` の導線を右端へ
+ * 押しやる余白が消え、出ていく先の絵の隣に着いて 6 つ目のアイコンに見える
+ * (`.author-note-more` の項を参照)。離すための余白を残せる幅を置く。
+ */
 .author-note-card {
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
+  max-width: 30rem;
+  margin-inline: auto;
 }
 
 /*
@@ -137,6 +150,8 @@
 @media (width < 40rem) {
   .author-note-card {
     gap: 1rem;
+    /* 狭い画面では絞る余地が無い。器いっぱいに使う。 */
+    max-width: none;
   }
 
   .author-note-photo {
