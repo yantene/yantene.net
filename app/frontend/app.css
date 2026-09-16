@@ -53,18 +53,18 @@
 @import "./routes/articles.css";
 @import "./routes/articles.$slug.css";
 /*
+ * よその会社の印の出し方。各社のブランド規定なので 1 か所にまとめてある
+ * (docs/adr/0043-show-social-marks-as-each-brand-requires.md)。
+ */
+@import "./brand-marks.css";
+
+/*
  * 押下・フォーカスの作法はサイト全体で 1 つ。個別のコンポーネントには持たせない。
  *
  * 束ねる順の最後に置く。押下の反応は transition-property をまとめて置き換えるので、
  * コンポーネント側が自前で transition を書いている場所より後で読ませないと、
  * 押している間の変化だけが遷移せずに飛ぶ。
  */
-/*
- * よその会社の印の出し方。各社のブランド規定なので 1 か所にまとめてある
- * (docs/adr/0043-show-social-marks-as-each-brand-requires.md)。
- */
-@import "./brand-marks.css";
-
 @import "./interaction.css";
 
 @plugin "daisyui";

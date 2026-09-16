@@ -25,7 +25,7 @@ function blueskyQuery(url: string, title: string): string {
  * ⚠️ **Facebook は置かない。** Meta が許している印の形は「Facebook Blue の丸に白い f」と
  * 「白い丸に透明な f」の 2 つだけで、**黒の単色版が無い**。共有先を白いパネルに並べる
  * この作りでは、他が黒で揃うなかで Facebook だけ色が付くことになる。共有先を 1 つ
- * 減らすほうを選んだ (#512、[ADR 0043](../../../docs/adr/0043-show-social-marks-as-each-brand-requires.md))。
+ * 減らすほうを選んだ (#512、[ADR 0043](../../../../docs/adr/0043-show-social-marks-as-each-brand-requires.md))。
  */
 export function buildShareTargets(url: string, title: string): readonly ShareTarget[] {
   return [

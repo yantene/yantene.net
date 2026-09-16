@@ -18,5 +18,11 @@ export const sampleProfile: PublicProfile = {
     { platform: "bluesky", url: "https://bsky.app/profile/yantene.net", isMe: true },
     { platform: "mastodon", url: "https://mastodon.social/@yantene", isMe: true },
     { platform: "discord", url: "https://discord.com/users/yantene", isMe: false },
+    /*
+     * メール。**`mailto:` なのはここだけ**で、描く側の扱いも他と違う
+     * (別タブで開かない・`u-email` を名乗る)。見本にも入れておかないと、
+     * stories でもテストでもその分岐が一度も通らない。
+     */
+    { platform: "email", url: "mailto:contact@example.com", isMe: true },
   ],
 };

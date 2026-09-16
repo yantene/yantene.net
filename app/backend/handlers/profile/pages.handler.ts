@@ -10,6 +10,21 @@ import { errorToContext } from "~/backend/domain/shared";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
 import { D1ProfileQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
+
+/**
+ * JSON-LD の `email`。
+ *
+ * schema.org の Person は連絡先を `email` で受ける。`sameAs` は「その人だと分かる
+ * 参照 Web ページ」なので、`mailto:` はあちらではなくこちらに置く。
+ *
+ * 値は `mailto:` を剥いだアドレスにする。**画面に出ているものより増やさない** —
+ * 同じアドレスが同じページに既にリンクとして出ているので、機械が読める形を添えるだけ。
+ */
+function emailFor(profile: PublicProfile): { email?: string } {
+  const account = profile.socials.find((social) => social.platform === "email");
+  if (account === undefined) return {};
+  return { email: account.url.replace(/^mailto:/, "") };
+}
 import { PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 export interface AboutPageData {
@@ -92,7 +107,15 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
       image: `${origin}${PROFILE_PHOTO}`,
       // 自分のものだと主張できる先だけを並べる。相互リンクの無い先を挙げると、
       // 確かめた側から見て嘘になる (h-card の rel="me" と同じ線引き)。
-      sameAs: publicProfile.socials.filter((social) => social.isMe).map((social) => social.url),
+      //
+      // ⚠️ **メールはここに入れない。** sameAs は schema.org の定義で「その項目の身元を
+      // 一意に示す参照 Web ページ」であって、連絡先の置き場ではない。`mailto:` を混ぜると、
+      // sameAs をプロフィールページとして辿る読み手が開けない URL を掴む。
+      // Person には email という欄が別にあるので、そちらへ回す。
+      sameAs: publicProfile.socials
+        .filter((social) => social.isMe && social.platform !== "email")
+        .map((social) => social.url),
+      ...emailFor(publicProfile),
     },
   };
 }
