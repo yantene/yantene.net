@@ -1,6 +1,16 @@
 <!--
-  Character: the walking yantene, cut from the master yantene.svg (see yantene-logo.svg
-  for how the three assets are produced); never edit this file directly.
+  Character: the walking yantene, cut from the master yantene.svg (Inkscape) by hand and
+  passed through SVGO; never edit this file directly. To change the drawing, edit the
+  master, cut the two assets out again (yantene-character.svg / yantene-logotype.svg) and
+  re-run SVGO with the preset in vite.config.ts (preset-default, keep viewBox and ids).
+
+  The logo (character + wordmark side by side) is not a file: components/logo/logo.tsx
+  and og-card.ts place these two assets with the box in ~/lib/logo-layout. Cutting a
+  third, combined asset is what let the header and the OG card fall behind when this
+  drawing changed (#527).
+
+  Everything derived from this file is listed in public/icons/icon.svg and
+  public/icons/profile.svg; scripts/generate-icons.sh turns the first into the pngs.
 
   - The bottom edge of the viewBox is where the feet meet the ground. It is aligned
     with the horizon, which is the bottom edge of the cityscape viewBox.
