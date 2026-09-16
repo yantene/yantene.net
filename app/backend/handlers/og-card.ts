@@ -23,8 +23,14 @@ import { truncateByGrapheme } from "~/lib/truncate";
  * 行数が 3 行に収まるかを一緒に見ること。
  */
 const TITLE_MAX = 56;
-/** カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。 */
-export const OG_TEMPLATE_VERSION = "v13";
+/**
+ * カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。
+ *
+ * ⚠️ **素材の絵を差し替えたときも上げること。** 蓄えのキーはこの版だけで決まるので、
+ * 上げないと R2 の古い PNG が返り続ける (v14 はやんてねくんがノートパソコンを抱える
+ * 姿になった回。preview で旧い絵が返ってきて気づいた)。
+ */
+export const OG_TEMPLATE_VERSION = "v14";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
