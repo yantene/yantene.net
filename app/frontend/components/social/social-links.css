@@ -41,9 +41,24 @@
  * 「台に乗っている」ではなく「台をはみ出しかけている」ように見える。0.86em で、
  * いちばん大きい絵 (X は補正込みで 0.91em) でも縁までが絵の半分以上空く。
  */
-.social-link > .brand-mark {
+.social-link > svg {
   width: calc(0.86em * var(--social-icon-scale));
   height: calc(0.86em * var(--social-icon-scale));
+}
+
+/*
+ * 印でない絵の色。**いまのところ封筒だけ。**
+ *
+ * ⚠️ **`.social-link > svg` に書いてはいけない。** あれは (0,1,1) で、
+ * `brand-marks.css` の `.brand-mark` (0,1,0) に勝ってしまう。つまり「封筒のために」
+ * 書いたつもりの色が、**同じ台に載っているブランドの印すべてに効く**。そこを
+ * サイトの配色に寄せた瞬間、ADR 0043 が防いでいる違反がそのまま戻る。
+ *
+ * 種別で名指ししておけば、ここをどう変えても印には届かない。封筒を黒にしているのは
+ * 並びを揃えるためで、規定によるものではない (変えてよいのはこちらだけ)。
+ */
+.social-link-email > svg {
+  fill: #000;
 }
 
 /*
@@ -58,6 +73,9 @@
  *
  * ここに無い platform は補正なし (1 倍) で出る。`social-links.test.ts` が
  * socialPlatforms との取りこぼしを見張っている。
+ *
+ * 数値は塗りの面積比の実測から起こした。GitHub 0.43 / X 0.25 / Bluesky 0.59 /
+ * Mastodon 0.60 / Discord 0.54。
  */
 .social-link {
   --social-icon-scale: 1;
@@ -81,6 +99,14 @@
 
 .social-link-discord {
   --social-icon-scale: 1;
+}
+
+/*
+ * 封筒は横長で、同じ箱に入れると他より大きく見える。塗りの面積も広い。
+ * ブランドの印ではないので規定は無いが、揃えるのは同じ理屈。
+ */
+.social-link-email {
+  --social-icon-scale: 0.92;
 }
 
 /*

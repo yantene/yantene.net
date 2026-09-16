@@ -30,6 +30,15 @@ async function seedProfile(d1: D1Database): Promise<void> {
       socials: [
         SocialAccount.create({ platform: "github", url: "https://github.com/yantene", isMe: true }),
         SocialAccount.create({ platform: "x", url: "https://x.com/yantene", isMe: false }),
+        /*
+         * メールも `isMe: true` で入れておく。**入れないと下の sameAs の検査が
+         * 素通りする** (混ざりようがない状態で「混ざっていない」を確かめても意味が無い)。
+         */
+        SocialAccount.create({
+          platform: "email",
+          url: "mailto:contact@example.com",
+          isMe: true,
+        }),
       ],
       sourceHash: "h1",
     }),
@@ -104,7 +113,14 @@ describe("loadAboutPage", () => {
     expect(data.mdast).toEqual(BODY);
   });
 
-  /** sameAs に並べるのは、自分のものだと主張できる先だけ (h-card の rel="me" と同じ線引き)。 */
+  /**
+   * sameAs に並べるのは、自分のものだと主張できる先だけ (h-card の rel="me" と同じ線引き)。
+   *
+   * **メールは `isMe: true` でもここに入らない。** sameAs は schema.org の定義で
+   * 「その項目の身元を一意に示す参照 Web ページ」であって、連絡先の置き場ではない。
+   * `mailto:` を混ぜると、sameAs をプロフィールページとして辿る読み手が開けない URL を
+   * 掴む。Person の `email` 欄のほうへ回す。
+   */
   it("builds Person JSON-LD with only the reciprocal links", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
@@ -119,6 +135,8 @@ describe("loadAboutPage", () => {
       url: `${ORIGIN}/about`,
       image: `${ORIGIN}${PROFILE_PHOTO}`,
       sameAs: ["https://github.com/yantene"],
+      /* `mailto:` を剥いだアドレス。画面に出ているものと同じで、増やしていない。 */
+      email: "contact@example.com",
     });
   });
 
@@ -144,7 +162,7 @@ describe("loadProfile", () => {
 
     const profile = await loadProfile(envWith(d1, bucket));
     expect(profile?.name).toBe("やんてね");
-    expect(profile?.socials.map((social) => social.platform)).toEqual(["github", "x"]);
+    expect(profile?.socials.map((social) => social.platform)).toEqual(["github", "x", "email"]);
   });
 
   /*

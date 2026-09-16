@@ -63,9 +63,7 @@ describe("social-links.css", () => {
    */
   it("いちばん大きい絵でも、台の縁まで絵の半分以上空く", () => {
     const plate = Number(css.match(/\.social-link\s*\{[^}]*width:\s*([\d.]+)em/)?.[1]);
-    const glyph = Number(
-      css.match(/\.social-link > \.brand-mark\s*\{[^}]*width:\s*calc\(([\d.]+)em/)?.[1],
-    );
+    const glyph = Number(css.match(/\.social-link > svg\s*\{[^}]*width:\s*calc\(([\d.]+)em/)?.[1]);
     const largestScale = Math.max(
       ...[...css.matchAll(/--social-icon-scale:\s*([\d.]+)/g)].map((m) => Number(m[1])),
     );

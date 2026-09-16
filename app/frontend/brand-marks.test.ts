@@ -14,9 +14,19 @@ const css = readFileSync(
 
 /*
  * 印を描いている場所を、ソース全体から拾う。テストとストーリーは出荷されないので外す。
+ *
+ * **`.ts` も見る。** 素材の表だけを `.ts` に切り出すのはありそうな整理で、そこを
+ * 見ていないと顔ぶれの検査をすり抜ける。
  */
 const sources = import.meta.glob<string>(
-  ["./**/*.tsx", "!./**/*.test.tsx", "!./**/*.stories.tsx"],
+  [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "!./**/*.test.ts",
+    "!./**/*.test.tsx",
+    "!./**/*.stories.tsx",
+    "!./**/*.d.ts",
+  ],
   { query: "?raw", import: "default", eager: true },
 );
 
