@@ -7,7 +7,7 @@
 
 /** 共有先 1 つぶん。アイコンは描画側が名前で引く (ここに JSX を持ち込まない)。 */
 export interface ShareTarget {
-  readonly key: "x" | "bluesky" | "facebook";
+  readonly key: "x" | "bluesky";
   readonly label: string;
   readonly href: string;
 }
@@ -21,6 +21,11 @@ function blueskyQuery(url: string, title: string): string {
  *
  * 公式のボタン (widget.js など) は CSP の `script-src 'self'` で読めないので使わない。
  * どのサービスも素のリンクで共有画面を開けるため、それで足りる。
+ *
+ * ⚠️ **Facebook は置かない。** Meta が許している印の形は「Facebook Blue の丸に白い f」と
+ * 「白い丸に透明な f」の 2 つだけで、**黒の単色版が無い**。共有先を白いパネルに並べる
+ * この作りでは、他が黒で揃うなかで Facebook だけ色が付くことになる。共有先を 1 つ
+ * 減らすほうを選んだ (#512、[ADR 0043](../../../docs/adr/0043-show-social-marks-as-each-brand-requires.md))。
  */
 export function buildShareTargets(url: string, title: string): readonly ShareTarget[] {
   return [
@@ -37,11 +42,6 @@ export function buildShareTargets(url: string, title: string): readonly ShareTar
       key: "bluesky",
       label: "Bluesky",
       href: `https://bsky.app/intent/compose?${blueskyQuery(url, title)}`,
-    },
-    {
-      key: "facebook",
-      label: "Facebook",
-      href: `https://www.facebook.com/sharer/sharer.php?${new URLSearchParams({ u: url }).toString()}`,
     },
   ];
 }

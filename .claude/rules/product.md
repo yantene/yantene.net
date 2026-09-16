@@ -382,6 +382,28 @@ push を合図に D1 と R2 へ同期される
 - 出ていく先は URL と `isMe` (相互リンクがあるか) をコンテンツ側に、`platform` → アイコンの
   表をコードに置く (`app/lib/social-platforms.ts`)。**知らない `platform` を書くと、その回の
   同期でプロフィールごとスキップされる**
+
+  ⚠️ **出ていく先の絵の色と台は、好みではなく各社のブランド規定である**
+  ([ADR 0043](../../docs/adr/0043-show-social-marks-as-each-brand-requires.md))。
+  絵は `#000` で、**サイトの配色 (`--color-base-content`) に寄せてはいけない**。
+  GitHub「should only appear in white, black, or in few cases grey or green」、
+  Bluesky は Don't に「Recolor the logo (other than the approved black and white
+  variants)」、Discord「do not edit, change, distort, recolor, or reconfigure」。
+  下に敷く白い台も同じ理由で、GitHub の猫・Mastodon の m・Discord の目が抜きなので、
+  台が無いとヒーローの動く空が抜きに入る (GitHub「Don't place the logo over busy
+  backgrounds」)。hover で染まるのも台のほうで、絵ではない。
+
+  色は `brand-marks.css` が**サイト全体で 1 か所**持つ (`.brand-mark`)。台と大きさは
+  `social-links.css`。**置き場所は大きさしか渡せない**。`brand-marks.test.ts` と
+  `social-links.test.ts` がこの線引きを固定していて、**`react-icons/si` の印を新しい
+  場所に足すと検査が落ちる** (`brand-mark` を付け忘れないようにするため)。出典は
+  `brand-marks.css` にまとめてある。
+
+  ⚠️ **黒で揃うのは、たまたま 5 つとも黒を許しているからでしかない。** Meta は
+  Facebook の印について「Facebook Blue の丸に白い f」と「白い丸に透明な f」しか
+  許しておらず、黒の単色版が無い。そのため**共有メニューから Facebook を外した**。
+  印を足すときは、先にその会社が黒を許しているかを確かめること。
+
 - **経歴の年表は持たない。** 学歴や資格を並べると、読み手が最初に受け取るのが履歴書に
   なる。`/about` は「いま何をしていて、何を信じているか」に絞る
 - フロントマターが読めないときはプロフィールだけをスキップして**前の姿を残す**。記事の同期は

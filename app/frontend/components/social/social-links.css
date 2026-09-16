@@ -1,0 +1,114 @@
+/*
+ * 出ていく先の絵と、その下に敷く台。
+ *
+ * **絵の色は `brand-marks.css` が持つ** (各社のブランド規定なので、置き場所ごとに
+ * 散らさず 1 か所にまとめてある。出典もあちら)。ここが持つのは台と寸法だけ。
+ *
+ * ただし台と寸法も好みではない。**台は抜きから後ろを透けさせないため**、
+ * **寸法は安全余白のため**にこうなっている。理由はそれぞれの規則の上に書いた。
+ */
+
+/*
+ * 台。**絵は必ず不透明な白の上に乗せる。**
+ *
+ * GitHub の猫・Mastodon の m・Discord の目は抜き (negative space) なので、台が無いと
+ * 後ろの色がそのまま入る。ヒーローの空は 1 日かけて 昼 → 夕 → 夜 → 朝 と回るため、
+ * 台を敷かないと猫の色が時刻によって変わる。GitHub は「Don't place the logo over busy
+ * backgrounds」と明記している。
+ *
+ * 白地のページ (`/about`・記事末尾) では台が地に溶けて見えない。それでよい。規則は
+ * 「絵は必ず白の上に乗る」の 1 つで、見えるかどうかは置き場所の側の事情でしかない。
+ *
+ * 寸法は em で持つので、置き場所は font-size を渡すだけでよい。
+ */
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2em;
+  height: 2em;
+  border-radius: 9999px;
+  background: var(--color-base-100);
+}
+
+/*
+ * 絵。react-icons は svg に width="1em" height="1em" を属性で置くので、CSS の
+ * プロパティで上書きできる。
+ *
+ * 0.86em に落としているのは、**台との間に安全余白を作るため**。Simple Icons はどの絵も
+ * 24×24 の箱いっぱいに描く決まりなので、どの絵も箱の対角ではなく縦横いっぱいに広がる。
+ * 1em のままでも台の内側には収まるが、真円の GitHub は縁までの白が絵の 1/4 しか残らず、
+ * 「台に乗っている」ではなく「台をはみ出しかけている」ように見える。0.86em で、
+ * いちばん大きい絵 (X は補正込みで 0.91em) でも縁までが絵の半分以上空く。
+ */
+.social-link > .brand-mark {
+  width: calc(0.86em * var(--social-icon-scale));
+  height: calc(0.86em * var(--social-icon-scale));
+}
+
+/*
+ * 種類ごとの光学補正。
+ *
+ * 同じ箱に入れても、目が受け取る塊の大きさは形で違う。実測した塗りの面積比は
+ * GitHub 0.43 / X 0.25 / Bluesky 0.59 / Mastodon 0.60 / Discord 0.54 で、真円の GitHub と
+ * 線の細い X が両端になる。箱を揃えるだけでは余白が同じ幅で回らない。
+ *
+ * **連続値ではなく種類ごとのクラスで持つ。** 値を style 属性で渡すと CSP の下で消える
+ * (architecture.md「inline style を使わない」)。
+ *
+ * ここに無い platform は補正なし (1 倍) で出る。`social-links.test.ts` が
+ * socialPlatforms との取りこぼしを見張っている。
+ */
+.social-link {
+  --social-icon-scale: 1;
+}
+
+.social-link-github {
+  --social-icon-scale: 0.88;
+}
+
+.social-link-x {
+  --social-icon-scale: 1.06;
+}
+
+.social-link-bluesky {
+  --social-icon-scale: 1;
+}
+
+.social-link-mastodon {
+  --social-icon-scale: 0.94;
+}
+
+.social-link-discord {
+  --social-icon-scale: 1;
+}
+
+/*
+ * hover。**染めるのは台で、絵ではない。**
+ *
+ * 絵を primary に染める作りだったが、それが上記の recolor 禁止に当たる。台のほうなら
+ * 規定に触れずに手応えを出せる。
+ *
+ * --press-tint をそのまま使わないのは、あれが transparent との混色で半透明だから。
+ * 台に重ねると抜きから後ろが透け、直したはずのものが hover の間だけ戻る。
+ */
+.social-link:hover {
+  background: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+}
+
+/*
+ * 押している間も台は不透明に保つ。
+ *
+ * press-control は :active で opacity: 0.6 を掛けるが、それを台ごと受けると抜きから
+ * 空が透ける (直したはずのものが、押している間だけ戻る)。手応えは 1px の沈み込み
+ * (press-control の transform) と、下の濃いめの色で出す。
+ *
+ * ⚠️ **`a.` を外さないこと。** `.social-link:active` だけだと `.press-control:active` と
+ * 詳細度が並び (どちらも 0,2,0)、`interaction.css` のほうが app.css で後に import されて
+ * いるので**あちらが勝ち、この打ち消しが黙って効かなくなる**。要素で 1 つ上げておけば
+ * (0,2,1)、import の順を入れ替えても勝ち続ける。`social-links.test.ts` が見張っている。
+ */
+a.social-link:active {
+  opacity: 1;
+  background: color-mix(in oklab, var(--color-primary) 20%, var(--color-base-100));
+}

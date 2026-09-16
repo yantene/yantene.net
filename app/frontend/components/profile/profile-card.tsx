@@ -59,8 +59,8 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
         {profile.socials.length > 0 && (
           <SocialLinks
             links={profile.socials}
-            className="flex items-center gap-5"
-            linkClassName="press-control inline-flex text-2xl text-foreground/85 transition-colors hover:text-primary"
+            className="flex items-center gap-3"
+            linkClassName="press-control text-2xl"
           />
         )}
       </div>

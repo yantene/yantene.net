@@ -59,7 +59,9 @@ describe("ShareMenu", () => {
       expect.stringContaining("x.com/intent/post"),
     );
     expect(screen.getByRole("link", { name: "Share on Bluesky" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Share on Facebook" })).toBeInTheDocument();
+
+    /* Facebook は外してある (#512、ADR 0043)。戻すなら印の色から考え直すこと。 */
+    expect(screen.queryByRole("link", { name: "Share on Facebook" })).not.toBeInTheDocument();
   });
 
   /*

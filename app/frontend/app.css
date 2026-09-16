@@ -47,6 +47,7 @@
 @import "./components/share/share-menu.css";
 @import "./components/work/work-list.css";
 @import "./components/profile/author-note.css";
+@import "./components/social/social-links.css";
 @import "./routes/home.css";
 @import "./routes/page-intro.css";
 @import "./routes/articles.css";
@@ -58,6 +59,12 @@
  * コンポーネント側が自前で transition を書いている場所より後で読ませないと、
  * 押している間の変化だけが遷移せずに飛ぶ。
  */
+/*
+ * よその会社の印の出し方。各社のブランド規定なので 1 か所にまとめてある
+ * (docs/adr/0043-show-social-marks-as-each-brand-requires.md)。
+ */
+@import "./brand-marks.css";
+
 @import "./interaction.css";
 
 @plugin "daisyui";

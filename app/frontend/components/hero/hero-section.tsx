@@ -89,8 +89,8 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         {profile !== null && profile.socials.length > 0 && (
           <SocialLinks
             links={profile.socials}
-            className="mt-1 flex items-center gap-5"
-            linkClassName="press-control inline-flex text-2xl text-foreground/85 transition-colors hover:text-primary"
+            className="mt-1 flex items-center gap-3"
+            linkClassName="press-control text-2xl"
           />
         )}
       </div>

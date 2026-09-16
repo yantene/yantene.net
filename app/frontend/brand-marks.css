@@ -1,0 +1,52 @@
+/*
+ * よその会社の印 (ロゴマーク) の出し方。
+ *
+ * **ここの色は好みではなく、各社のブランド規定である。** サイトの配色に寄せたく
+ * なったら、先に出典を読むこと。どの社も揃って「黒か白以外に染めるな」と言っている。
+ *
+ * - GitHub「The Invertocat and our wordmark should only appear in white, black, or in
+ *   few cases grey or green」「Don't mix the color of the logo」
+ *   https://brand.github.com/foundations/logo
+ * - X「The X logo is black or white」「Logo should be white on black background or
+ *   black on white background」。加えて「Strict compliance with these Guidelines is
+ *   required at all times, and any use of the X brands in violation of these Guidelines
+ *   will automatically terminate any permission related to your use of the X brands」
+ *   https://about.x.com/en/who-we-are/brand-toolkit (Brand Quick Guide の PDF)
+ * - Bluesky は Don't に「Recolor the logo (other than the approved black and white
+ *   variants)」。さらに「Use a monochrome (black or white) variant when displaying
+ *   alongside other social media icons」と、この用途を名指ししている
+ *   https://bsky.social/about/support/branding
+ * - Mastodon「Use the one color black or white version of the logo」
+ *   https://joinmastodon.org/branding
+ * - Discord「Feel free to use our logo in color, black or white」。ただし
+ *   「Please do not edit, change, distort, recolor, or reconfigure the Discord logo」
+ *   https://discord.com/branding
+ *
+ * ⚠️ **黒を許さない会社もある。** Meta は Facebook の印について、許す形を
+ * 「Facebook Blue の丸に白い f」と「白い丸に透明な f」の 2 つだけに定めており、
+ * 黒の単色版が無い。**そのため共有先から Facebook を外した** (#512)。同じ性質の印を
+ * 足すときは、ここに黒で並べれば済む話ではないので注意すること。
+ */
+
+/*
+ * 印そのもの。**`currentColor` を継がせない。**
+ *
+ * 継ぐと、置いた場所の字の色 (このサイトなら紺の `--color-base-content`) や、
+ * hover の `--color-primary` で塗られる。これが上記の recolor 禁止に当たる。
+ * 実際、出ていく先・共有メニュー・ライセンスのページの 3 か所ともそうなっていた。
+ */
+.brand-mark {
+  fill: #000;
+}
+
+/*
+ * 色を変えないことは、hover や :active でも変わらない。
+ *
+ * 囲みのほうを染めるのは構わない (背景は印ではない)。染めてよいものと駄目なものの
+ * 線引きがここ。
+ */
+.brand-mark:hover,
+a:hover > .brand-mark,
+button:hover > .brand-mark {
+  fill: #000;
+}

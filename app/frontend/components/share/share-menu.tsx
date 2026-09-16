@@ -1,18 +1,26 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineLink, HiOutlineShare } from "react-icons/hi2";
-import { SiBluesky, SiFacebook, SiX } from "react-icons/si";
+import { SiBluesky, SiX } from "react-icons/si";
 import { buildClipboardPayload, buildShareTargets } from "./share-targets";
 import type { ShareTarget } from "./share-targets";
 
 /** コピーの結果を出しておく時間。読んで消えるまでの間だけ残す。 */
 const FEEDBACK_DURATION_MS = 2000;
 
+/*
+ * 共有先の印。**`className` を受け取れる型で持つ** (描くときに `brand-mark` を付ける
+ * ため。色は `brand-marks.css` が 1 か所で決める)。
+ */
+type BrandIcon = React.ComponentType<{
+  readonly className?: string;
+  readonly "aria-hidden"?: boolean;
+}>;
+
 const icons = {
   x: SiX,
   bluesky: SiBluesky,
-  facebook: SiFacebook,
-} as const satisfies Record<ShareTarget["key"], React.ComponentType>;
+} as const satisfies Record<ShareTarget["key"], BrandIcon>;
 
 type ShareMenuProps = {
   /** 共有する絶対 URL。相対パスだと貼った先で開けない。 */
@@ -147,7 +155,12 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
               rel="noreferrer"
               className="share-menu-item press-control"
             >
-              <Icon aria-hidden />
+              {/*
+                印には `brand-mark` を付ける。付けないと、行の字の色 (紺) と hover の
+                primary がそのまま印に流れ、各社の recolor 禁止に当たる。
+                字のほうはこちらの文言なので、これまでどおり色が変わってよい。
+              */}
+              <Icon className="brand-mark" aria-hidden />
               {t("share.shareOn", { service: target.label })}
             </a>
           );
