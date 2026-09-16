@@ -1,7 +1,13 @@
 import type { Profile as ProfileEntity } from "~/backend/domain/profile";
 import type { IUnpersisted } from "~/backend/domain/shared";
+import { getTableColumns } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { D1ProfileCommandRepository } from "./profile.command-repository";
+import {
+  D1_BOUND_PARAMETER_LIMIT,
+  D1ProfileCommandRepository,
+  HISTORY_ROWS_PER_STATEMENT,
+  SOCIAL_ROWS_PER_STATEMENT,
+} from "./profile.command-repository";
 import { D1ProfileQueryRepository } from "./profile.query-repository";
 import {
   HistoryEntry,
@@ -10,6 +16,7 @@ import {
   SocialAccount,
   Tagline,
 } from "~/backend/domain/profile";
+import { profileHistory, profileSocials } from "~/backend/infra/d1/schema";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 function unpersistedProfile(params: {
@@ -27,6 +34,26 @@ function unpersistedProfile(params: {
     sourceHash: params.sourceHash ?? "deadbeef",
   });
 }
+
+/**
+ * ⚠️ **1 文あたりのパラメータ数が D1 の上限を超えていないこと。**
+ *
+ * 超えると insert 1 文ではなく **batch ごと**落ちるので、経歴だけでなくプロフィールの
+ * 同期まるごとが止まる。**手元では踏めない** (`createTestD1` は node:sqlite で、あちらの
+ * 上限は 32766)。だから「動かして確かめる」ができず、数で見張るしかない。
+ *
+ * 列の数は schema から数える。**欄を 1 つ足したら、行数を切り直すまでここが落ちる。**
+ */
+describe("D1 のバインドパラメータ上限", () => {
+  it.each([
+    ["profile_socials", profileSocials, SOCIAL_ROWS_PER_STATEMENT],
+    ["profile_history", profileHistory, HISTORY_ROWS_PER_STATEMENT],
+  ])("%s は 1 文が上限に収まる", (_label, table, rowsPerStatement) => {
+    const columns = Object.keys(getTableColumns(table)).length;
+
+    expect(columns * rowsPerStatement).toBeLessThanOrEqual(D1_BOUND_PARAMETER_LIMIT);
+  });
+});
 
 describe("D1ProfileCommandRepository", () => {
   it("inserts the profile with its socials", async () => {
@@ -112,6 +139,28 @@ describe("D1ProfileCommandRepository", () => {
     expect(saved?.history[0]?.note).toBeUndefined();
     expect(saved?.history[1]?.url).toBe("https://example.com/");
     expect(saved?.history[1]?.note).toBe("補足");
+  });
+
+  /*
+   * 上限を超える件数でも、切った文をまたいで並びが崩れないこと。
+   *
+   * ⚠️ **これは上限そのものの検査ではない** (node:sqlite は何行でも通すので、切るのを
+   * やめてもここは緑のまま)。上限は「D1 のバインドパラメータ上限」の describe が数で見る。
+   * ここで見るのは、切ったせいで行が落ちたり順が入れ替わったりしないこと。
+   */
+  it("keeps the order across statement chunks", async () => {
+    const d1 = createTestD1();
+    const entries = Array.from({ length: HISTORY_ROWS_PER_STATEMENT * 2 + 1 }, (_unused, index) =>
+      HistoryEntry.create({
+        chapter: "社会人",
+        year: 2000 + index,
+        text: `出来事 ${String(index)}`,
+      }),
+    );
+    await new D1ProfileCommandRepository(d1).upsert(unpersistedProfile({ history: entries }));
+
+    const saved = await new D1ProfileQueryRepository(d1).find();
+    expect(saved?.history.map((entry) => entry.text)).toEqual(entries.map((entry) => entry.text));
   });
 
   /** 子は差分を取らずに入れ直す。経歴も出ていく先と同じ扱いであること。 */

@@ -18,16 +18,40 @@ function renderHistory(): HTMLElement {
   return container;
 }
 
-/** mf2 の語彙の接頭辞。h-card / h-entry の入れ子と、その中の各印。 */
-const MF2_PREFIXES = ["h-", "p-", "u-", "dt-", "e-"];
+/*
+ * mf2 の語彙を名指しで並べる。
+ *
+ * ⚠️ **接頭辞 (`h-` / `p-` …) だけで見ないこと。** Tailwind の `p-2` (余白) や `h-4`
+ * (高さ) が引っかかり、余白を足しただけの人が microformats の ADR へ送られる。
+ * ここは「印を置くな」の検査であって「その綴りを使うな」の検査ではない。
+ */
+const MF2_CLASSES = new Set([
+  "h-card",
+  "h-entry",
+  "h-feed",
+  "h-event",
+  "p-name",
+  "p-summary",
+  "p-note",
+  "p-author",
+  "p-category",
+  "u-url",
+  "u-uid",
+  "u-photo",
+  "u-email",
+  "dt-published",
+  "dt-updated",
+  "dt-bday",
+  "dt-start",
+  "dt-end",
+  "e-content",
+]);
 
 describe("ProfileHistory の microformats2", () => {
   it("microformats の印を 1 つも置かない", () => {
     const container = renderHistory();
     const found = [...container.querySelectorAll("*")].flatMap((element) =>
-      [...element.classList].filter((name) =>
-        MF2_PREFIXES.some((prefix) => name.startsWith(prefix)),
-      ),
+      [...element.classList].filter((name) => MF2_CLASSES.has(name)),
     );
 
     expect(found).toEqual([]);
@@ -62,7 +86,7 @@ describe("ProfileHistory の形", () => {
     const notes = [...renderHistory().querySelectorAll(".profile-history-note")];
 
     expect(notes.map((node) => node.textContent)).toEqual([
-      "CTF チーム優勝 (チーム名: `|`、6424 points)",
+      "CTF チーム優勝 (チーム名: |、6424 points)",
     ]);
   });
 });

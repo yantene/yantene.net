@@ -31,6 +31,7 @@ export const sampleProfile: PublicProfile = {
  * 見本の経歴。
  *
  * 出来事の 3 つの姿を 1 つずつ入れてある (素の行・リンクの付いた行・補足の付いた行)。
+ * **どの欄も素の字として出る** (Markdown は解釈しない) ので、見本にも記法を入れない。
  * どれかが欠けると、stories でもテストでもその分岐が一度も通らない。章を 2 つにして
  * いるのは、縦線が章をまたいで続くことを見るため (1 章だと端の判定しか働かない)。
  */
@@ -60,7 +61,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         year: 2012,
         text: "セキュリティ・キャンプ中央大会 2012 Web・セキュリティ・クラス",
         url: "https://www.youtube.com/watch?v=Ki1qb9q4z8E",
-        note: "CTF チーム優勝 (チーム名: `|`、6424 points)",
+        note: "CTF チーム優勝 (チーム名: |、6424 points)",
       },
       { year: 2018, text: "豊橋技術科学大学大学院 工学研究科 修了", url: null, note: null },
     ],

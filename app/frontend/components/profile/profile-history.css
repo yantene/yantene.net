@@ -49,6 +49,13 @@
   font-weight: 700;
   line-height: 1.5rem;
   color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  /*
+   * 柱の幅は固定で、入るのは日本語 3 文字ほど。VO は 40 文字まで通すので、
+   * `Freelancing` のような切れ目の無いラテン文字はここで折らないと右の列へはみ出す
+   * (grid の列は伸びないので、出来事の字に重なる)。書き手には見えない壊れ方なので、
+   * どんな名前でも必ず折れるようにしておく。
+   */
+  overflow-wrap: anywhere;
 }
 
 .profile-history-item {

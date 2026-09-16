@@ -54,23 +54,22 @@ export function toPublicProfile(profile: Profile): PublicProfile {
  * 経歴を章ごとに畳む。`/about` だけが使う。
  *
  * **並べ直さない。** 章の順も章の中の順も、書き手がフロントマターに書いた順のまま。
- * `Set` が現れた順を保つので、同じ章が離れて書かれていれば最初に現れた位置に畳まれる
- * (`ArticleTimeline` が公開年で束ね直すときと同じ手)。
+ * `Map` は入れた順を保つので、同じ章が離れて書かれていれば最初に現れた位置に畳まれる。
  *
  * 年で並べ替えないのは、並びが書き手のものだから。同じ年に卒業と入学が並ぶとき、
  * どちらを先に置くかを機械が決める理由が無い。
  */
 export function toPublicHistory(profile: Profile): readonly PublicHistoryChapter[] {
-  const chapters = [...new Set(profile.history.map((entry) => entry.chapter))];
-  return chapters.map((chapter) => ({
-    chapter,
-    entries: profile.history
-      .filter((entry) => entry.chapter === chapter)
-      .map((entry) => ({
-        year: entry.year,
-        text: entry.text,
-        url: entry.url ?? null,
-        note: entry.note ?? null,
-      })),
-  }));
+  const chapters = new Map<string, PublicHistoryEntry[]>();
+  for (const entry of profile.history) {
+    const entries = chapters.get(entry.chapter) ?? [];
+    if (entries.length === 0) chapters.set(entry.chapter, entries);
+    entries.push({
+      year: entry.year,
+      text: entry.text,
+      url: entry.url ?? null,
+      note: entry.note ?? null,
+    });
+  }
+  return [...chapters].map(([chapter, entries]) => ({ chapter, entries }));
 }

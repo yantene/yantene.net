@@ -134,10 +134,18 @@ function asRecord(value: unknown, field: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-/** 書いていなければ undefined。文字列でない値は誤りとして報告する。 */
+/**
+ * 書いていなければ undefined。
+ *
+ * **空の値を「無い」と報告しない。** `requireString` に回すと `is missing <欄>` になり、
+ * 書いてある欄を探しに行かせることになる。書いてあるが読めない、と言う。
+ */
 function optionalString(value: unknown, field: string): string | undefined {
   if (value === undefined || value === null) return undefined;
-  return requireString(value, field);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new ProfileContentError(`frontmatter has unreadable ${field}: ${JSON.stringify(value)}`);
+  }
+  return value;
 }
 
 /**

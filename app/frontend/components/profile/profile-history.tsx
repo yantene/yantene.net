@@ -5,6 +5,12 @@ interface ProfileHistoryProps {
   readonly history: readonly PublicHistoryChapter[];
 }
 
+type HistoryEntryView = PublicHistoryChapter["entries"][number];
+
+function keyOf(entry: HistoryEntryView): string {
+  return [entry.year, entry.text, entry.url ?? "", entry.note ?? ""].join("\u0000");
+}
+
 /**
  * 経歴を章ごとに束ねた縦の年表。`/about` の末尾だけが描く。
  *
@@ -34,8 +40,13 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
           <h3 className="profile-history-chapter-name">{chapter.chapter}</h3>
           <ol className="profile-history-list">
             {chapter.entries.map((entry) => (
-              // 同じ年に複数の出来事が並ぶので、年だけでは鍵にならない。
-              <li key={`${String(entry.year)}-${entry.text}`} className="profile-history-item">
+              /*
+                鍵は欄をすべて繋いだもの。**年と字だけでは足りない** — 同じ年に同じ字の
+                出来事を、補足やリンクだけ変えて 2 つ書ける (VO が見るのは各欄の妥当さで、
+                重複ではない)。全部の欄が同じなら見た目も同じになるので、そこで衝突しても
+                取り違えようが無い。
+              */
+              <li key={keyOf(entry)} className="profile-history-item">
                 {/* 点は線の上の駅を表す装飾で、年は隣の字が持っている。 */}
                 <span className="profile-history-dot" aria-hidden="true" />
                 {/*
@@ -55,9 +66,12 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
                       >
                         {entry.text}
                         {/*
-                          絵は行き先が外であることの印で、名前は隣の字が持っている。
-                          字の直後に置いて、折り返しても最後の行から離れないようにする。
+                          WORD JOINER (U+2060)。**字と絵の間で行を折らせない。**
+                          日本語はほぼどの字の間でも折れるので、これが無いと狭い画面で
+                          矢印だけが次の行に取り残される。
                         */}
+                        {"\u2060"}
+                        {/* 絵は行き先が外であることの印で、名前は隣の字が持っている。 */}
                         <span
                           className="profile-history-external ml-1 align-baseline text-base-content/40 transition-colors group-hover:text-primary"
                           aria-hidden="true"
