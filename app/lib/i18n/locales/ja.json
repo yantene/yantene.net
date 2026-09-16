@@ -142,7 +142,8 @@
     }
   },
   "locale": {
-    "label": "表示する言語"
+    "label": "表示する言語",
+    "heading": "Language"
   },
   "comingSoon": {
     "badge": "Coming soon",

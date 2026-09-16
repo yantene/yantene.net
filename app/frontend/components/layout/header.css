@@ -222,14 +222,28 @@
  * 「一度決めたらほとんど触らない設定」になっていた。字として置けば、いちばん重いのが
  * 検索、次がナビ、という順に落ち着く (interaction.css)。
  */
+/*
+ * 表示する言語の組。**見出しと選択肢の縦の組** (ドロワーの FEED と同じ作り)。
+ *
+ * 足元に並ぶ 2 つが同じ役なので、姿も揃える。片方だけ見出しを外すと、裸の EN / JA が
+ * どの群に属するのか読めなくなる。
+ */
 .locale-switch {
+  display: flex;
+  flex-direction: column;
+  /* .site-menu-feeds と同じ。見出しと中身の間はここだけで決める。 */
+  gap: 0.25rem;
+}
+
+.locale-switch-options {
   display: inline-flex;
   align-items: center;
   /*
-   * 字間は選択肢の側の padding が持つ (下)。**押し代のぶんを負の余白で戻す。**
-   * こうすると的を広げても、ドロワーでの左端は動かない。
+   * 字の左端を他の字に揃える (`.site-menu-feed-list` と同じ理由)。選択肢の左右の
+   * padding は 0.25rem しかないので、足りない 0.25rem をここで足す。**選択肢の側を
+   * 広げて揃えない** — 広げると EN と JA の字間も一緒に開き、2 つで 1 組に見えなくなる。
    */
-  margin-inline: -0.25rem;
+  padding-inline-start: 0.25rem;
 }
 
 .locale-switch-option {
@@ -481,6 +495,41 @@
   display: block;
 }
 
+/*
+ * ⚠️ **ドロワーを開いている間、帯は板と同じ地になる。**
+ *
+ * 板は不透明にしてある (すぐ下のコメント: トップでは動く空の上に降りてくるので、透かすと
+ * 字が読めない)。ところが帯のほうは、トップでは**スクロール 0 で完全に透明**で、見えて
+ * いるのはヒーローの空そのもの。開くと、空の色の帯に真っ白な板がくっついた姿になり、
+ * 閉じる × だけが違う地の上に乗る。
+ *
+ * 地を 1 つにすると、帯と板が 1 枚の面として読める。下層 (bg-white/60) も 60% の白なので
+ * わずかに違う。**どちらの variant でも揃える。**
+ *
+ * `animation-name: none` が要るのは、トップの帯の地をスクロール連動のアニメーションが
+ * 持っているため (site-header-overlay-band-in)。アニメーションの値は普通の宣言より強いので、
+ * 止めないと下の background-color が効かない。
+ */
+.site-header-band:has(.site-menu[open]) {
+  animation-name: none;
+  background-color: var(--color-base-100);
+  backdrop-filter: none;
+}
+
+/*
+ * ⚠️ **開いている間はロゴも出す。**
+ *
+ * トップでロゴを伏せているのは、すぐ下のヒーローが同じ名前を大きく出しているため
+ * (上の「失われる機能が『いまいる場所へ行く』でしかない」)。**ドロワーを開くと、その
+ * ヒーローは板の裏に隠れる。** 伏せたままだと、白い帯に閉じる × だけが浮いた姿になる。
+ *
+ * ここも地と同じで、アニメーションを止めると `to` ではなく素の姿 (= 見えている状態) に
+ * 戻る。`site-header-overlay-mark-in` は `from` で隠しているだけなので、止めれば出る。
+ */
+.site-header-band:has(.site-menu[open]) .site-header-mark {
+  animation-name: none;
+}
+
 .site-menu-panel {
   position: absolute;
   inset-inline: 0;
@@ -541,11 +590,16 @@
   gap: 0.25rem;
 }
 
+/*
+ * ⚠️ **字の左端を、ドロワーの他の字に揃える。**
+ *
+ * 押し代のぶんを負の余白で戻していた頃は、押せる箱の左端が板の縁に揃う代わりに、
+ * **字だけが 8px 左へ出ていた** — 見出し (FEED) と行き先は 24px、その下の項目は 16px。
+ * 読み手が追うのは字の縁なので、そちらを揃える (箱がはみ出すのは見えない)。
+ */
 .site-menu-feed-list {
   display: flex;
   flex-wrap: wrap;
-  /* 字間は項目の側の padding が持つ。押し代のぶんを負の余白で戻して左端を揃える。 */
-  margin-inline: -0.5rem;
 }
 
 .site-menu-feed-link {
