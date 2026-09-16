@@ -47,25 +47,25 @@ async function seedProfile(d1: D1Database): Promise<void> {
           isMe: true,
         }),
       ],
-      /*
-       * 章が離れて書かれた並び。**畳み直しが「現れた順」であることを見るために
-       * わざとこの順で置いてある** (高校 → 大学 → 高校)。年で並べ直さないことも
-       * ここで一緒に見える。
-       */
-      history: [
-        HistoryEntry.create({ chapter: "高校", date: HistoryDate.create("2012-03"), text: "卒業" }),
-        HistoryEntry.create({
-          chapter: "大学",
-          date: HistoryDate.create("2012-04-01"),
-          until: HistoryDate.create("2012-04-05"),
-          text: "入学",
-          url: "https://example.com/",
-          note: "補足",
-        }),
-        HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
-      ],
       sourceHash: "h1",
     }),
+    /*
+     * 章が離れて書かれた並び。**畳み直しが「現れた順」であることを見るために
+     * わざとこの順で置いてある** (高校 → 大学 → 高校)。年で並べ直さないことも
+     * ここで一緒に見える。
+     */
+    [
+      HistoryEntry.create({ chapter: "高校", date: HistoryDate.create("2012-03"), text: "卒業" }),
+      HistoryEntry.create({
+        chapter: "大学",
+        date: HistoryDate.create("2012-04-01"),
+        until: HistoryDate.create("2012-04-05"),
+        text: "入学",
+        url: "https://example.com/",
+        note: "補足",
+      }),
+      HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
+    ],
   );
 }
 
@@ -201,9 +201,9 @@ describe("loadAboutPage", () => {
         name: ProfileName.create("やんてね"),
         tagline: Tagline.create("東京で Web 開発者をやっています。"),
         socials: [],
-        history: [],
         sourceHash: "h1",
       }),
+      [],
     );
     await new R2ProfileContentCache(bucket).putMdast(BODY);
 
@@ -236,6 +236,46 @@ describe("loadAboutPage", () => {
       "url",
     ]);
     expect(JSON.stringify(jsonLd)).not.toContain("卒業");
+  });
+
+  /*
+   * ⚠️ **読めない行でページごと落とさない。** 倒れ方は読む口ごとに分かれる。
+   *
+   * 経歴だけが読めないなら、落とすのはその節だけ。名前も自己紹介も作ったものも出せる
+   * ものを、ページごと 500 にする理由が無い。以前はトップと記事ページが既定の h-card に
+   * 倒れるのに `/about` だけ ErrorBoundary に落ちていた (#519)。
+   */
+  it("drops only the history section when a stored history row is unreadable", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+    await d1
+      .prepare("UPDATE profile_history SET year = ? WHERE profile_id = ?")
+      .bind(11, "profile")
+      .run();
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile?.name).toBe("やんてね");
+    expect(data.history).toEqual([]);
+  });
+
+  /** プロフィールそのものが読めないときは、ページごと「準備中」に倒す (500 にしない)。 */
+  it("falls back to the coming-soon page when the profile itself is unreadable", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+    await d1
+      .prepare("UPDATE profile_socials SET platform = ? WHERE profile_id = ?")
+      .bind("retired-platform", "profile")
+      .run();
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile).toBeNull();
+    expect(data.jsonLd).toBeNull();
   });
 
   it("fails loudly when the body is missing from R2", async () => {
@@ -282,10 +322,12 @@ describe("loadProfile", () => {
   });
 
   /*
-   * 経歴の行も同じ扱い。`InvalidHistoryEntryError` を `profileDataErrors` に足し忘れると、
-   * 壊れた 1 行がトップと**全記事ページ**を 500 にする。
+   * ⚠️ **経歴が読めなくても巻き添えにしない。**
+   *
+   * 読む口を分けてあるので (`find` は経歴を読まない)、壊れた経歴の行はここに届かない。
+   * 届いていた頃は、**経歴を出していない全記事ページから h-card が消えていた** (#519)。
    */
-  it("falls back to null when a stored history row can no longer be read", async () => {
+  it("keeps the h-card when only a stored history row is unreadable", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
     await seedProfile(d1);
@@ -294,7 +336,7 @@ describe("loadProfile", () => {
       .bind(11, "profile")
       .run();
 
-    expect(await loadProfile(envWith(d1, bucket))).toBeNull();
+    expect((await loadProfile(envWith(d1, bucket)))?.name).toBe("やんてね");
   });
 
   /** D1 そのものの障害は握りつぶさない (静かに「プロフィールが無い」ことにしない)。 */

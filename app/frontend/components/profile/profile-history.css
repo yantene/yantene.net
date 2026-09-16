@@ -47,8 +47,8 @@
 
 .profile-history-chapter-name {
   position: sticky;
-  /* ヘッダーに潜り込まない位置で止める。 */
-  top: 4.5rem;
+  /* ヘッダーに潜り込まない位置で止める (値は app.css が 1 か所で持つ)。 */
+  top: var(--header-clearance);
   /* 柱の高さいっぱいに伸ばさず、その章の始まりに置く。 */
   align-self: start;
   padding-top: var(--history-item-padding-y);

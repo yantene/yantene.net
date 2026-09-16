@@ -1,4 +1,4 @@
-import type { IProfileCommandRepository, Profile } from "~/backend/domain/profile";
+import type { HistoryEntry, IProfileCommandRepository, Profile } from "~/backend/domain/profile";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
@@ -48,7 +48,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
    * ⚠️ **子の insert は行数で切って複数文にする** (D1 のバインドパラメータ上限)。
    * 1 文にまとめると、経歴が 15 件目に達した push で batch ごと落ちる。
    */
-  async upsert(source: Profile<IUnpersisted>): Promise<void> {
+  async upsert(source: Profile<IUnpersisted>, history: readonly HistoryEntry[]): Promise<void> {
     const nowUnix = instantToUnix(Temporal.Now.instant());
     const content = {
       name: source.name.toString(),
@@ -72,7 +72,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
      * 書いていない欄は null にする。空文字で埋めると「補足があって中身が空」の行に
      * なり、描く側が空の段落を出す。
      */
-    const historyRows = source.history.map((entry, position) => ({
+    const historyRows = history.map((entry, position) => ({
       profileId: PROFILE_ID,
       position,
       chapter: entry.chapter,

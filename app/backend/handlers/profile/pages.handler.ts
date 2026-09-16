@@ -1,6 +1,7 @@
 import type { PublicHistoryChapter, PublicProfile } from "./profile-view";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { PublicWork } from "~/backend/handlers/works/work-view";
+import type { HistoryEntry } from "~/backend/domain/profile";
 import type { Root } from "mdast";
 import { toPublicHistory, toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
@@ -65,16 +66,36 @@ export interface AboutPageData {
  * 起きたことは `error` で記録に残す。D1 そのものの障害は throw し直す (握りつぶさない)。
  */
 export async function loadProfile(env: Env): Promise<PublicProfile | null> {
+  const profile = await degradeOnUnreadableRows(
+    () => new D1ProfileQueryRepository(env.D1).find(),
+    undefined,
+    "stored profile could not be read; falling back to the default h-card",
+  );
+  return profile === undefined ? null : toPublicProfile(profile);
+}
+
+/**
+ * 保存されている行が読めないときに、そこだけ「無い」ことにして読み進める。
+ *
+ * D1 に入っている行が VO に戻せなくなる筋がある。たとえば `social-platforms.ts` から
+ * 先を 1 つ落とすと、その先を持つ既存の行は読めない。**投げっぱなしにするとページごと
+ * 500 になり、しかも同期は読めないフロントマターを弾いて旧行を残すので、コンテンツ側を
+ * 直しても復旧しない。**
+ *
+ * 黙って劣化させないために、倒すときは必ず `error` で記録に残す。**D1 そのものの障害は
+ * throw し直す** (握りつぶさない)。
+ */
+async function degradeOnUnreadableRows<T>(
+  read: () => Promise<T>,
+  fallback: T,
+  message: string,
+): Promise<T> {
   try {
-    const profile = await new D1ProfileQueryRepository(env.D1).find();
-    return profile === undefined ? null : toPublicProfile(profile);
+    return await read();
   } catch (error) {
     if (!isProfileDataError(error)) throw error;
-    new ConsoleLogger({ component: "profile" }).error(
-      "stored profile could not be read; falling back to the default h-card",
-      errorToContext(error),
-    );
-    return null;
+    new ConsoleLogger({ component: "profile" }).error(message, errorToContext(error));
+    return fallback;
   }
 }
 
@@ -83,10 +104,30 @@ export async function loadProfile(env: Env): Promise<PublicProfile | null> {
  *
  * プロフィールが無いときは 404 にせず null を返す。ヘッダーのナビが常に指している
  * 行き先なので、初回同期の前に「そんなページは無い」と答えるのは嘘になる。
+ *
+ * **保存されている行が読めないときも落とさない。** 読む口を 2 つに分けてあるので、
+ * 倒れ方も分かれる — プロフィールが読めなければページごと「準備中」に、経歴だけが
+ * 読めなければその節だけを落とす。以前はどちらも root の ErrorBoundary に落ちていて、
+ * トップと記事ページが既定の h-card に倒れるのに `/about` だけ 500 になっていた (#519)。
  */
 export async function loadAboutPage(env: Env, origin: string): Promise<AboutPageData> {
-  const [profile, mdast, works] = await Promise.all([
-    new D1ProfileQueryRepository(env.D1).find(),
+  const query = new D1ProfileQueryRepository(env.D1);
+  const [profile, history, mdast, works] = await Promise.all([
+    degradeOnUnreadableRows(
+      () => query.find(),
+      undefined,
+      "stored profile could not be read; falling back to the coming-soon page",
+    ),
+    /*
+     * ⚠️ **経歴が読めなくても、ページの残りは出す。** 読む口を分けてあるので、ここで
+     * 倒れても名前・自己紹介・作ったものは出せる。節が 1 つ消えるだけで済むものを、
+     * ページごと落とす理由が無い。
+     */
+    degradeOnUnreadableRows(
+      () => query.findHistory(),
+      [] as readonly HistoryEntry[],
+      "stored history could not be read; dropping the history section",
+    ),
     new R2ProfileContentCache(env.R2).getMdast(),
     loadWorks(env),
   ]);
@@ -103,7 +144,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   return {
     profile: publicProfile,
     mdast: mdast as Root,
-    history: toPublicHistory(profile),
+    history: toPublicHistory(history),
     linkCards: await loadLinkCards(env, mdast as Root),
     works,
     jsonLd: {

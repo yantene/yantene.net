@@ -24,16 +24,28 @@ function unpersistedProfile(params: {
   name?: string;
   tagline?: string;
   socials?: readonly SocialAccount[];
-  history?: readonly HistoryEntry[];
   sourceHash?: string;
 }): ProfileEntity<IUnpersisted> {
   return Profile.create({
     name: ProfileName.create(params.name ?? "やんてね"),
     tagline: Tagline.create(params.tagline ?? "東京で Web 開発者をやっています。"),
     socials: params.socials ?? [],
-    history: params.history ?? [],
     sourceHash: params.sourceHash ?? "deadbeef",
   });
+}
+
+/**
+ * 経歴は `Profile` が持たないので、upsert の第 2 引数で渡す。
+ *
+ * 書き込みだけは一緒でなければならない (途中で落ちて「名前はあるのに経歴が空」の姿を
+ * 表に出さない) ので、口は 2 つに割っていない。
+ */
+function upsertWith(
+  d1: D1Database,
+  profile: ProfileEntity<IUnpersisted>,
+  history: readonly HistoryEntry[] = [],
+): Promise<void> {
+  return new D1ProfileCommandRepository(d1).upsert(profile, history);
 }
 
 /**
@@ -59,7 +71,8 @@ describe("D1 のバインドパラメータ上限", () => {
 describe("D1ProfileCommandRepository", () => {
   it("inserts the profile with its socials", async () => {
     const d1 = createTestD1();
-    await new D1ProfileCommandRepository(d1).upsert(
+    await upsertWith(
+      d1,
       unpersistedProfile({
         socials: [
           SocialAccount.create({
@@ -79,8 +92,8 @@ describe("D1ProfileCommandRepository", () => {
   /** 子は差分を取らずに入れ直す。並べ替えたときに古い並びが残らないこと。 */
   it("replaces socials instead of piling them up", async () => {
     const d1 = createTestD1();
-    const command = new D1ProfileCommandRepository(d1);
-    await command.upsert(
+    await upsertWith(
+      d1,
       unpersistedProfile({
         socials: [
           SocialAccount.create({
@@ -92,7 +105,8 @@ describe("D1ProfileCommandRepository", () => {
         ],
       }),
     );
-    await command.upsert(
+    await upsertWith(
+      d1,
       unpersistedProfile({
         socials: [
           SocialAccount.create({
@@ -116,42 +130,36 @@ describe("D1ProfileCommandRepository", () => {
    */
   it("inserts the history in the written order", async () => {
     const d1 = createTestD1();
-    await new D1ProfileCommandRepository(d1).upsert(
-      unpersistedProfile({
-        history: [
-          HistoryEntry.create({
-            chapter: "高校",
-            date: HistoryDate.create("2012-03-01"),
-            until: HistoryDate.create("2012-03-05"),
-            text: "卒業",
-          }),
-          HistoryEntry.create({
-            chapter: "大学",
-            date: HistoryDate.create(2012),
-            text: "入学",
-            url: "https://example.com/",
-            note: "補足",
-          }),
-        ],
+    await upsertWith(d1, unpersistedProfile({}), [
+      HistoryEntry.create({
+        chapter: "高校",
+        date: HistoryDate.create("2012-03-01"),
+        until: HistoryDate.create("2012-03-05"),
+        text: "卒業",
       }),
-    );
+      HistoryEntry.create({
+        chapter: "大学",
+        date: HistoryDate.create(2012),
+        text: "入学",
+        url: "https://example.com/",
+        note: "補足",
+      }),
+    ]);
 
-    const saved = await new D1ProfileQueryRepository(d1).find();
-    expect(
-      saved?.history.map((entry) => [entry.chapter, entry.date.toString(), entry.text]),
-    ).toEqual([
+    const saved = await new D1ProfileQueryRepository(d1).findHistory();
+    expect(saved.map((entry) => [entry.chapter, entry.date.toString(), entry.text])).toEqual([
       ["高校", "2012-03-01", "卒業"],
       ["大学", "2012", "入学"],
     ]);
     /* 精度は「どこまで非 NULL か」で戻る。年だけの行を 1 月 1 日に倒さない。 */
-    expect(saved?.history[1]?.date.precision).toBe("year");
-    expect(saved?.history[0]?.until?.toString()).toBe("2012-03-05");
+    expect(saved[1]?.date.precision).toBe("year");
+    expect(saved[0]?.until?.toString()).toBe("2012-03-05");
     /* 終わりを書いていない行は undefined に戻る (始まりと同じ値に倒さない)。 */
-    expect(saved?.history[1]?.until).toBeUndefined();
-    expect(saved?.history[0]?.url).toBeUndefined();
-    expect(saved?.history[0]?.note).toBeUndefined();
-    expect(saved?.history[1]?.url).toBe("https://example.com/");
-    expect(saved?.history[1]?.note).toBe("補足");
+    expect(saved[1]?.until).toBeUndefined();
+    expect(saved[0]?.url).toBeUndefined();
+    expect(saved[0]?.note).toBeUndefined();
+    expect(saved[1]?.url).toBe("https://example.com/");
+    expect(saved[1]?.note).toBe("補足");
   });
 
   /*
@@ -170,42 +178,32 @@ describe("D1ProfileCommandRepository", () => {
         text: `出来事 ${String(index)}`,
       }),
     );
-    await new D1ProfileCommandRepository(d1).upsert(unpersistedProfile({ history: entries }));
+    await upsertWith(d1, unpersistedProfile({}), entries);
 
-    const saved = await new D1ProfileQueryRepository(d1).find();
-    expect(saved?.history.map((entry) => entry.text)).toEqual(entries.map((entry) => entry.text));
+    const saved = await new D1ProfileQueryRepository(d1).findHistory();
+    expect(saved.map((entry) => entry.text)).toEqual(entries.map((entry) => entry.text));
   });
 
   /** 子は差分を取らずに入れ直す。経歴も出ていく先と同じ扱いであること。 */
   it("replaces the history instead of piling it up", async () => {
     const d1 = createTestD1();
-    const command = new D1ProfileCommandRepository(d1);
-    await command.upsert(
-      unpersistedProfile({
-        history: [
-          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
-          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" }),
-        ],
-      }),
-    );
-    await command.upsert(
-      unpersistedProfile({
-        history: [
-          HistoryEntry.create({ chapter: "社会人", date: HistoryDate.create(2018), text: "就職" }),
-        ],
-      }),
-    );
+    await upsertWith(d1, unpersistedProfile({}), [
+      HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
+      HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" }),
+    ]);
+    await upsertWith(d1, unpersistedProfile({}), [
+      HistoryEntry.create({ chapter: "社会人", date: HistoryDate.create(2018), text: "就職" }),
+    ]);
 
-    const saved = await new D1ProfileQueryRepository(d1).find();
-    expect(saved?.history.map((entry) => entry.text)).toEqual(["就職"]);
+    const saved = await new D1ProfileQueryRepository(d1).findHistory();
+    expect(saved.map((entry) => entry.text)).toEqual(["就職"]);
   });
 
   it("keeps created_at when the profile is written again", async () => {
     const d1 = createTestD1();
-    const command = new D1ProfileCommandRepository(d1);
-    await command.upsert(unpersistedProfile({}));
+    await upsertWith(d1, unpersistedProfile({}));
     const first = await new D1ProfileQueryRepository(d1).find();
-    await command.upsert(unpersistedProfile({ name: "やんてね (改)" }));
+    await upsertWith(d1, unpersistedProfile({ name: "やんてね (改)" }));
     const second = await new D1ProfileQueryRepository(d1).find();
 
     expect(second?.name.toString()).toBe("やんてね (改)");
@@ -214,8 +212,8 @@ describe("D1ProfileCommandRepository", () => {
 
   it("deletes the profile and its children", async () => {
     const d1 = createTestD1();
-    const command = new D1ProfileCommandRepository(d1);
-    await command.upsert(
+    await upsertWith(
+      d1,
       unpersistedProfile({
         socials: [
           SocialAccount.create({
@@ -224,12 +222,10 @@ describe("D1ProfileCommandRepository", () => {
             isMe: true,
           }),
         ],
-        history: [
-          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" }),
-        ],
       }),
+      [HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" })],
     );
-    await command.delete();
+    await new D1ProfileCommandRepository(d1).delete();
 
     const query = new D1ProfileQueryRepository(d1);
     expect(await query.find()).toBeUndefined();
@@ -254,7 +250,7 @@ describe("D1ProfileQueryRepository", () => {
 
   it("reads the source hash without building the profile", async () => {
     const d1 = createTestD1();
-    await new D1ProfileCommandRepository(d1).upsert(unpersistedProfile({ sourceHash: "cafe1234" }));
+    await upsertWith(d1, unpersistedProfile({ sourceHash: "cafe1234" }));
     expect(await new D1ProfileQueryRepository(d1).findSourceHash()).toBe("cafe1234");
   });
 });

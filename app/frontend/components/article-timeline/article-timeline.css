@@ -37,8 +37,8 @@
 
 .article-timeline-year {
   position: sticky;
-  /* ヘッダーに潜り込まない位置で止める。 */
-  top: 4.5rem;
+  /* ヘッダーに潜り込まない位置で止める (値は app.css が 1 か所で持つ)。 */
+  top: var(--header-clearance);
   /* 行の高さいっぱいに伸ばさず、その年の始まりに置く。 */
   align-self: start;
   padding-top: var(--article-item-padding-y);

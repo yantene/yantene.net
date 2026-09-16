@@ -188,9 +188,9 @@ describe("書き手の名乗り", () => {
         name: ProfileName.create("改めた名前"),
         tagline: Tagline.create("短い自己紹介。"),
         socials: [],
-        history: [],
         sourceHash: "hash-profile",
       }),
+      [],
     );
 
     const res = await createTestApp().request("/feed.xml", {}, env(d1));
