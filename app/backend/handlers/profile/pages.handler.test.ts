@@ -2,6 +2,7 @@ import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
 import {
+  HistoryDate,
   HistoryEntry,
   Profile,
   ProfileName,
@@ -52,15 +53,16 @@ async function seedProfile(d1: D1Database): Promise<void> {
        * ここで一緒に見える。
        */
       history: [
-        HistoryEntry.create({ chapter: "高校", year: 2012, month: 3, text: "卒業" }),
+        HistoryEntry.create({ chapter: "高校", date: HistoryDate.create("2012-03"), text: "卒業" }),
         HistoryEntry.create({
           chapter: "大学",
-          year: 2012,
+          date: HistoryDate.create("2012-04-01"),
+          until: HistoryDate.create("2012-04-05"),
           text: "入学",
           url: "https://example.com/",
           note: "補足",
         }),
-        HistoryEntry.create({ chapter: "高校", year: 2011, text: "入学" }),
+        HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
       ],
       sourceHash: "h1",
     }),
@@ -178,13 +180,13 @@ describe("loadAboutPage", () => {
     const { history } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
     expect(history.map((chapter) => chapter.chapter)).toEqual(["高校", "大学"]);
-    expect(history[0]?.entries.map((entry) => [entry.year, entry.text])).toEqual([
-      [2012, "卒業"],
-      [2011, "入学"],
+    expect(history[0]?.entries.map((entry) => [entry.date, entry.text])).toEqual([
+      ["2012-03", "卒業"],
+      ["2011", "入学"],
     ]);
     // 書いていない欄は null で渡す (loader の応答に undefined は残らない)。
-    expect(history[0]?.entries[0]?.month).toBe(3);
-    expect(history[0]?.entries[1]?.month).toBeNull();
+    expect(history[0]?.entries[0]?.until).toBeNull();
+    expect(history[1]?.entries[0]?.until).toBe("2012-04-05");
     expect(history[0]?.entries[0]?.url).toBeNull();
     expect(history[0]?.entries[0]?.note).toBeNull();
     expect(history[1]?.entries[0]?.url).toBe("https://example.com/");

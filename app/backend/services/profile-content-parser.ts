@@ -3,6 +3,7 @@ import type { Root } from "mdast";
 import { MathSyntaxError } from "./latex-to-mathml";
 import { parseMarkdownBody } from "./markdown-body";
 import {
+  HistoryDate,
   HistoryEntry as HistoryEntryVo,
   ProfileName,
   SocialAccount as SocialAccountVo,
@@ -100,13 +101,14 @@ function readHistory(value: unknown): readonly HistoryEntry[] {
     return entries.map((entry, entryIndex) => {
       const entryLabel = `${label}.entries[${String(entryIndex)}]`;
       const fields = asRecord(entry, entryLabel);
-      const month = optionalNumber(fields.month, `${entryLabel}.month`);
       const url = optionalString(fields.url, `${entryLabel}.url`);
       const note = optionalString(fields.note, `${entryLabel}.note`);
       return HistoryEntryVo.create({
         chapter,
-        year: asNumber(fields.year, `${entryLabel}.year`),
-        ...(month === undefined ? {} : { month }),
+        date: requireDate(fields.date, `${entryLabel}.date`),
+        ...(fields.until === undefined || fields.until === null
+          ? {}
+          : { until: HistoryDate.create(fields.until) }),
         text: requireString(fields.text, `${entryLabel}.text`),
         ...(url === undefined ? {} : { url }),
         ...(note === undefined ? {} : { note }),
@@ -150,24 +152,19 @@ function optionalString(value: unknown, field: string): string | undefined {
   return value;
 }
 
-/** 書いていなければ undefined。数として読めない値は誤りとして報告する。 */
-function optionalNumber(value: unknown, field: string): number | undefined {
-  if (value === undefined || value === null) return undefined;
-  return asNumber(value, field);
-}
-
 /**
- * 数として読む。
+ * 出来事の日。
  *
- * **文字列は通さない。** YAML は `year: 2012` を数、`year: "2012"` を文字列として
- * 渡してくる。書き手にとっては同じつもりの字なので、通すか通さないかを決めておかないと
- * 「引用符を付けた年だけ静かに落ちる」ことになる。通さない側に倒して理由を返す。
+ * ⚠️ **YAML は精度によって型を変えてくる。** `2011` は数、`2011-06` と `2011-06-04` は
+ * 文字列になる (vfile-matter は timestamp 型を当てないので Date にはならない)。書き手に
+ * とっては同じ 1 つの欄なので、型の違いは `HistoryDate` が吸収する。**ここで型を
+ * 決め打たない。**
  */
-function asNumber(value: unknown, field: string): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new ProfileContentError(`frontmatter has unreadable ${field}: ${JSON.stringify(value)}`);
+function requireDate(value: unknown, field: string): HistoryDate {
+  if (value === undefined || value === null) {
+    throw new ProfileContentError(`frontmatter is missing ${field}`);
   }
-  return value;
+  return HistoryDate.create(value);
 }
 
 /** 書いていなければ false。真偽値として読めない値は誤りとして報告する。 */

@@ -10,7 +10,7 @@ import { instantToUnix } from "~/backend/infra/d1/temporal";
 /*
  * 1 文あたりの行数。**D1 のバインドパラメータ上限 (100) に収まる数で切る。**
  *
- * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 8)。
+ * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 12)。
  *
  * ⚠️ **手元のテストでは踏めない。** `createTestD1` は node:sqlite で、あちらの上限は
  * 32766 なので何行でも通る。超えたときに落ちるのは insert 1 文ではなく **batch ごと**で、
@@ -19,7 +19,7 @@ import { instantToUnix } from "~/backend/infra/d1/temporal";
  * 行数で切ることのほうを既定にする (`article-embedding.command-repository.ts` と同じ手)。
  */
 export const SOCIAL_ROWS_PER_STATEMENT = 16;
-export const HISTORY_ROWS_PER_STATEMENT = 12;
+export const HISTORY_ROWS_PER_STATEMENT = 8;
 
 /** D1 が 1 文に受けるバインドパラメータの数。 */
 export const D1_BOUND_PARAMETER_LIMIT = 100;
@@ -76,8 +76,12 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       profileId: PROFILE_ID,
       position,
       chapter: entry.chapter,
-      year: entry.year,
-      month: entry.month ?? null,
+      year: entry.date.year,
+      month: entry.date.month ?? null,
+      day: entry.date.day ?? null,
+      endYear: entry.until?.year ?? null,
+      endMonth: entry.until?.month ?? null,
+      endDay: entry.until?.day ?? null,
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,

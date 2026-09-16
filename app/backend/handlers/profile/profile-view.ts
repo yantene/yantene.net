@@ -10,9 +10,10 @@ export interface PublicSocialAccount {
 
 /** 経歴の 1 件。書いていない欄は null で渡す (loader の応答に undefined は残らない)。 */
 export interface PublicHistoryEntry {
-  readonly year: number;
-  /** 書いていなければ null。年だけの札になる。 */
-  readonly month: number | null;
+  /** `2011` / `2011-06` / `2011-06-04` のどれか。**桁の数が精度を表す。** */
+  readonly date: string;
+  /** 終わり。書いていなければ null (点の出来事)。始まりと同じ精度で入る。 */
+  readonly until: string | null;
   readonly text: string;
   readonly url: string | null;
   readonly note: string | null;
@@ -67,8 +68,8 @@ export function toPublicHistory(profile: Profile): readonly PublicHistoryChapter
     const entries = chapters.get(entry.chapter) ?? [];
     if (entries.length === 0) chapters.set(entry.chapter, entries);
     entries.push({
-      year: entry.year,
-      month: entry.month ?? null,
+      date: entry.date.toString(),
+      until: entry.until?.toString() ?? null,
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,

@@ -10,6 +10,7 @@ import {
 } from "./profile.command-repository";
 import { D1ProfileQueryRepository } from "./profile.query-repository";
 import {
+  HistoryDate,
   HistoryEntry,
   Profile,
   ProfileName,
@@ -118,10 +119,15 @@ describe("D1ProfileCommandRepository", () => {
     await new D1ProfileCommandRepository(d1).upsert(
       unpersistedProfile({
         history: [
-          HistoryEntry.create({ chapter: "高校", year: 2012, month: 3, text: "卒業" }),
+          HistoryEntry.create({
+            chapter: "高校",
+            date: HistoryDate.create("2012-03-01"),
+            until: HistoryDate.create("2012-03-05"),
+            text: "卒業",
+          }),
           HistoryEntry.create({
             chapter: "大学",
-            year: 2012,
+            date: HistoryDate.create(2012),
             text: "入学",
             url: "https://example.com/",
             note: "補足",
@@ -131,15 +137,19 @@ describe("D1ProfileCommandRepository", () => {
     );
 
     const saved = await new D1ProfileQueryRepository(d1).find();
-    expect(saved?.history.map((entry) => [entry.chapter, entry.year, entry.text])).toEqual([
-      ["高校", 2012, "卒業"],
-      ["大学", 2012, "入学"],
+    expect(
+      saved?.history.map((entry) => [entry.chapter, entry.date.toString(), entry.text]),
+    ).toEqual([
+      ["高校", "2012-03-01", "卒業"],
+      ["大学", "2012", "入学"],
     ]);
-    expect(saved?.history[0]?.month).toBe(3);
+    /* 精度は「どこまで非 NULL か」で戻る。年だけの行を 1 月 1 日に倒さない。 */
+    expect(saved?.history[1]?.date.precision).toBe("year");
+    expect(saved?.history[0]?.until?.toString()).toBe("2012-03-05");
+    /* 終わりを書いていない行は undefined に戻る (始まりと同じ値に倒さない)。 */
+    expect(saved?.history[1]?.until).toBeUndefined();
     expect(saved?.history[0]?.url).toBeUndefined();
     expect(saved?.history[0]?.note).toBeUndefined();
-    /* 書いていない月は null で入り、undefined に戻る (0 や空文字に倒さない)。 */
-    expect(saved?.history[1]?.month).toBeUndefined();
     expect(saved?.history[1]?.url).toBe("https://example.com/");
     expect(saved?.history[1]?.note).toBe("補足");
   });
@@ -156,7 +166,7 @@ describe("D1ProfileCommandRepository", () => {
     const entries = Array.from({ length: HISTORY_ROWS_PER_STATEMENT * 2 + 1 }, (_unused, index) =>
       HistoryEntry.create({
         chapter: "社会人",
-        year: 2000 + index,
+        date: HistoryDate.create(2000 + index),
         text: `出来事 ${String(index)}`,
       }),
     );
@@ -173,14 +183,16 @@ describe("D1ProfileCommandRepository", () => {
     await command.upsert(
       unpersistedProfile({
         history: [
-          HistoryEntry.create({ chapter: "高校", year: 2011, text: "入学" }),
-          HistoryEntry.create({ chapter: "高校", year: 2012, text: "卒業" }),
+          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2011), text: "入学" }),
+          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" }),
         ],
       }),
     );
     await command.upsert(
       unpersistedProfile({
-        history: [HistoryEntry.create({ chapter: "社会人", year: 2018, text: "就職" })],
+        history: [
+          HistoryEntry.create({ chapter: "社会人", date: HistoryDate.create(2018), text: "就職" }),
+        ],
       }),
     );
 
@@ -212,7 +224,9 @@ describe("D1ProfileCommandRepository", () => {
             isMe: true,
           }),
         ],
-        history: [HistoryEntry.create({ chapter: "高校", year: 2012, text: "卒業" })],
+        history: [
+          HistoryEntry.create({ chapter: "高校", date: HistoryDate.create(2012), text: "卒業" }),
+        ],
       }),
     );
     await command.delete();

@@ -63,7 +63,9 @@ export const profileSocials = sqliteTable(
  * 1 本の並びで、章に畳み直すのは出す側 (`toPublicHistory`)。行の形が
  * `profile_socials` と同じになるので、upsert の「消して入れ直す」もそのまま使える。
  *
- * - year / month: 起きた年 (西暦 4 桁) と月 (任意)。日と期間は持たない
+ * - year / month / day: 起きた日。**精度は「どこまで非 NULL か」で表す**
+ *   (年だけ・月まで・日まで)。揃えるために覚えていない日を捏造させないため
+ * - end_year / end_month / end_day: 終わり (任意)。始まりと同じ精度でしか入らない
  * - url: 任意。あると `text` がその先へのリンクになる
  * - note: 任意。`text` の下に 1 行だけ添える補足
  */
@@ -77,6 +79,10 @@ export const profileHistory = sqliteTable(
     chapter: text("chapter").notNull(),
     year: integer("year").notNull(),
     month: integer("month"),
+    day: integer("day"),
+    endYear: integer("end_year"),
+    endMonth: integer("end_month"),
+    endDay: integer("end_day"),
     text: text("text").notNull(),
     url: text("url"),
     note: text("note"),

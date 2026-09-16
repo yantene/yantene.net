@@ -32,24 +32,32 @@ export const sampleProfile: PublicProfile = {
  *
  * 出来事の 3 つの姿を 1 つずつ入れてある (素の行・リンクの付いた行・補足の付いた行)。
  * **どの欄も素の字として出る** (Markdown は解釈しない) ので、見本にも記法を入れない。
- * 月を書いた行と書いていない行も混ぜてある (札の字が `2012-04` と `2011` の 2 通りある)。
- * どれかが欠けると、stories でもテストでもその分岐が一度も通らない。章を 2 つにして
- * いるのは、縦線が章をまたいで続くことを見るため (1 章だと端の判定しか働かない)。
+ * 日の精度も 3 段とも混ぜてある (年だけ・月まで・日まで) うえに、終わりのある出来事も
+ * 1 件入れてある。どれかが欠けると、stories でもテストでもその分岐が一度も通らない。
+ * 章を 2 つにしているのは、縦線が章をまたいで続くことを見るため (1 章だと端の判定しか
+ * 働かない)。
  */
 export const sampleHistory: readonly PublicHistoryChapter[] = [
   {
     chapter: "高校",
     entries: [
       {
-        year: 2011,
-        month: null,
+        date: "2011-06-04",
+        until: null,
         text: "第 28 回 全国高等学校情報処理競技大会 愛知県予選会 個人優勝",
         url: null,
         note: null,
       },
       {
-        year: 2012,
-        month: 3,
+        date: "2012-02-20",
+        until: "2012-02-24",
+        text: "Ruby 合宿 2012 春",
+        url: null,
+        note: null,
+      },
+      {
+        date: "2012-03",
+        until: null,
         text: "愛知県立知立高等学校 情報処理科 卒業",
         url: null,
         note: null,
@@ -60,22 +68,22 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
     chapter: "大学",
     entries: [
       {
-        year: 2012,
-        month: 4,
+        date: "2012-04",
+        until: null,
         text: "豊橋技術科学大学 工学部 情報・知能工学課程 入学",
         url: null,
         note: null,
       },
       {
-        year: 2012,
-        month: null,
+        date: "2012-08-14",
+        until: "2012-08-18",
         text: "セキュリティ・キャンプ中央大会 2012 Web・セキュリティ・クラス",
         url: "https://www.youtube.com/watch?v=Ki1qb9q4z8E",
         note: "CTF チーム優勝 (チーム名: |、6424 points)",
       },
       {
-        year: 2018,
-        month: 3,
+        date: "2018",
+        until: null,
         text: "豊橋技術科学大学大学院 工学研究科 修了",
         url: null,
         note: null,
