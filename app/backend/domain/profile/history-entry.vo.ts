@@ -8,9 +8,13 @@ import type { IValueObject } from "~/backend/domain/shared";
  * 章を各件が持つのは、`profile_socials` と同じ平らな行として保存できる形にするため。
  * 束ね直すのは出す側 (`toPublicHistory`) で、現れた順に畳む。
  *
- * **年だけを持ち、月日と期間は持たない。** 年表に載るのは点の出来事なので、続いて
- * いることは始まった年の出来事として書く。範囲を持つと、左の柱に出す札が「2018–」の
- * ような字になり、読み上げでも横並びでも意味を取りにくくなる。
+ * **年と、書けるなら月まで。日と期間は持たない。** 年表に載るのは点の出来事なので、
+ * 続いていることは始まった年の出来事として書く。範囲を持つと札が「2018–」のような字に
+ * なり、読み上げでも横並びでも意味を取りにくくなる。
+ *
+ * 月が任意なのは、書ける出来事とそうでない出来事があるため。卒業と入学は 3 月と 4 月と
+ * 決まっているが、大会や合宿は覚えていないことがある。**必須にすると、覚えていない月を
+ * 埋めさせることになる。**
  *
  * ⚠️ **h-card にも JSON-LD にも出さない** (ADR 0044)。経歴は読み物として出すもので、
  * 機械に名乗る身元の一部ではない。生年月日と出身地を機械が読む形で持たないこと (#508) と
@@ -23,6 +27,8 @@ const MAX_URL_LENGTH = 2048;
 /* 西暦 4 桁。打ち間違い (`20112` や `11`) をその場で止めるための枠でしかない。 */
 const MIN_YEAR = 1000;
 const MAX_YEAR = 9999;
+const MIN_MONTH = 1;
+const MAX_MONTH = 12;
 
 export class InvalidHistoryEntryError extends Error {
   readonly name = "InvalidHistoryEntryError";
@@ -31,6 +37,7 @@ export class InvalidHistoryEntryError extends Error {
 interface HistoryEntryFields {
   readonly chapter: string;
   readonly year: number;
+  readonly month: number | undefined;
   readonly text: string;
   readonly url: string | undefined;
   readonly note: string | undefined;
@@ -42,6 +49,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
   static create(params: {
     chapter: string;
     year: number;
+    month?: number;
     text: string;
     url?: string;
     note?: string;
@@ -49,6 +57,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     return new HistoryEntry({
       chapter: requireText(params.chapter, "chapter", MAX_CHAPTER_LENGTH),
       year: validateYear(params.year),
+      month: params.month === undefined ? undefined : validateMonth(params.month),
       text: requireText(params.text, "text", MAX_TEXT_LENGTH),
       url: params.url === undefined ? undefined : validateUrl(params.url),
       note:
@@ -62,6 +71,11 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
 
   get year(): number {
     return this.fields.year;
+  }
+
+  /** 書いていなければ undefined。年だけの札になる。 */
+  get month(): number | undefined {
+    return this.fields.month;
   }
 
   get text(): string {
@@ -80,6 +94,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     return (
       this.fields.chapter === other.fields.chapter &&
       this.fields.year === other.fields.year &&
+      this.fields.month === other.fields.month &&
       this.fields.text === other.fields.text &&
       this.fields.url === other.fields.url &&
       this.fields.note === other.fields.note
@@ -90,6 +105,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     return {
       chapter: this.fields.chapter,
       year: this.fields.year,
+      month: this.fields.month,
       text: this.fields.text,
       url: this.fields.url,
       note: this.fields.note,
@@ -118,6 +134,16 @@ function validateYear(raw: number): number {
   if (!Number.isInteger(raw) || raw < MIN_YEAR || raw > MAX_YEAR) {
     throw new InvalidHistoryEntryError(
       `History year must be an integer in ${String(MIN_YEAR)}..${String(MAX_YEAR)}, got ${JSON.stringify(raw)}`,
+    );
+  }
+  return raw;
+}
+
+/** 月は 1 〜 12 の整数。年と同じく、書かれた値を解釈しない。 */
+function validateMonth(raw: number): number {
+  if (!Number.isInteger(raw) || raw < MIN_MONTH || raw > MAX_MONTH) {
+    throw new InvalidHistoryEntryError(
+      `History month must be an integer in ${String(MIN_MONTH)}..${String(MAX_MONTH)}, got ${JSON.stringify(raw)}`,
     );
   }
   return raw;

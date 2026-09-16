@@ -118,7 +118,7 @@ describe("D1ProfileCommandRepository", () => {
     await new D1ProfileCommandRepository(d1).upsert(
       unpersistedProfile({
         history: [
-          HistoryEntry.create({ chapter: "高校", year: 2012, text: "卒業" }),
+          HistoryEntry.create({ chapter: "高校", year: 2012, month: 3, text: "卒業" }),
           HistoryEntry.create({
             chapter: "大学",
             year: 2012,
@@ -135,8 +135,11 @@ describe("D1ProfileCommandRepository", () => {
       ["高校", 2012, "卒業"],
       ["大学", 2012, "入学"],
     ]);
+    expect(saved?.history[0]?.month).toBe(3);
     expect(saved?.history[0]?.url).toBeUndefined();
     expect(saved?.history[0]?.note).toBeUndefined();
+    /* 書いていない月は null で入り、undefined に戻る (0 や空文字に倒さない)。 */
+    expect(saved?.history[1]?.month).toBeUndefined();
     expect(saved?.history[1]?.url).toBe("https://example.com/");
     expect(saved?.history[1]?.note).toBe("補足");
   });

@@ -32,6 +32,7 @@ export const sampleProfile: PublicProfile = {
  *
  * 出来事の 3 つの姿を 1 つずつ入れてある (素の行・リンクの付いた行・補足の付いた行)。
  * **どの欄も素の字として出る** (Markdown は解釈しない) ので、見本にも記法を入れない。
+ * 月を書いた行と書いていない行も混ぜてある (札の字が `2012-04` と `2011` の 2 通りある)。
  * どれかが欠けると、stories でもテストでもその分岐が一度も通らない。章を 2 つにして
  * いるのは、縦線が章をまたいで続くことを見るため (1 章だと端の判定しか働かない)。
  */
@@ -41,11 +42,18 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
     entries: [
       {
         year: 2011,
+        month: null,
         text: "第 28 回 全国高等学校情報処理競技大会 愛知県予選会 個人優勝",
         url: null,
         note: null,
       },
-      { year: 2012, text: "愛知県立知立高等学校 情報処理科 卒業", url: null, note: null },
+      {
+        year: 2012,
+        month: 3,
+        text: "愛知県立知立高等学校 情報処理科 卒業",
+        url: null,
+        note: null,
+      },
     ],
   },
   {
@@ -53,17 +61,25 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
     entries: [
       {
         year: 2012,
+        month: 4,
         text: "豊橋技術科学大学 工学部 情報・知能工学課程 入学",
         url: null,
         note: null,
       },
       {
         year: 2012,
+        month: null,
         text: "セキュリティ・キャンプ中央大会 2012 Web・セキュリティ・クラス",
         url: "https://www.youtube.com/watch?v=Ki1qb9q4z8E",
         note: "CTF チーム優勝 (チーム名: |、6424 points)",
       },
-      { year: 2018, text: "豊橋技術科学大学大学院 工学研究科 修了", url: null, note: null },
+      {
+        year: 2018,
+        month: 3,
+        text: "豊橋技術科学大学大学院 工学研究科 修了",
+        url: null,
+        note: null,
+      },
     ],
   },
 ];

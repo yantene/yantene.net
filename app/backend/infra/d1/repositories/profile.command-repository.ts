@@ -10,7 +10,7 @@ import { instantToUnix } from "~/backend/infra/d1/temporal";
 /*
  * 1 文あたりの行数。**D1 のバインドパラメータ上限 (100) に収まる数で切る。**
  *
- * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 7)。
+ * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 8)。
  *
  * ⚠️ **手元のテストでは踏めない。** `createTestD1` は node:sqlite で、あちらの上限は
  * 32766 なので何行でも通る。超えたときに落ちるのは insert 1 文ではなく **batch ごと**で、
@@ -77,6 +77,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       position,
       chapter: entry.chapter,
       year: entry.year,
+      month: entry.month ?? null,
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,

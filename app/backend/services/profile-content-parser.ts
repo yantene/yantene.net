@@ -100,11 +100,13 @@ function readHistory(value: unknown): readonly HistoryEntry[] {
     return entries.map((entry, entryIndex) => {
       const entryLabel = `${label}.entries[${String(entryIndex)}]`;
       const fields = asRecord(entry, entryLabel);
+      const month = optionalNumber(fields.month, `${entryLabel}.month`);
       const url = optionalString(fields.url, `${entryLabel}.url`);
       const note = optionalString(fields.note, `${entryLabel}.note`);
       return HistoryEntryVo.create({
         chapter,
         year: asNumber(fields.year, `${entryLabel}.year`),
+        ...(month === undefined ? {} : { month }),
         text: requireString(fields.text, `${entryLabel}.text`),
         ...(url === undefined ? {} : { url }),
         ...(note === undefined ? {} : { note }),
@@ -146,6 +148,12 @@ function optionalString(value: unknown, field: string): string | undefined {
     throw new ProfileContentError(`frontmatter has unreadable ${field}: ${JSON.stringify(value)}`);
   }
   return value;
+}
+
+/** 書いていなければ undefined。数として読めない値は誤りとして報告する。 */
+function optionalNumber(value: unknown, field: string): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  return asNumber(value, field);
 }
 
 /**

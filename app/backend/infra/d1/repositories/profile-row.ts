@@ -32,6 +32,7 @@ export function rowsToProfile(
       HistoryEntry.create({
         chapter: entry.chapter,
         year: entry.year,
+        ...(entry.month === null ? {} : { month: entry.month }),
         text: entry.text,
         ...(entry.url === null ? {} : { url: entry.url }),
         ...(entry.note === null ? {} : { note: entry.note }),

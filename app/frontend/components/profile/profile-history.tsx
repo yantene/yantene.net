@@ -8,7 +8,21 @@ interface ProfileHistoryProps {
 type HistoryEntryView = PublicHistoryChapter["entries"][number];
 
 function keyOf(entry: HistoryEntryView): string {
-  return [entry.year, entry.text, entry.url ?? "", entry.note ?? ""].join("\u0000");
+  return [entry.year, entry.month ?? "", entry.text, entry.url ?? "", entry.note ?? ""].join(
+    "\u0000",
+  );
+}
+
+/**
+ * 札の字。月まで書いてあれば `2012-04`、無ければ `2012`。
+ *
+ * 記事の年表の `MM-DD` と同じ区切りにする。**混ざるのは承知の上** — 月を覚えている
+ * 出来事と、そうでない出来事が並ぶ。埋めさせるより、書けるものだけ書けるほうがよい。
+ */
+function stampOf(entry: HistoryEntryView): string {
+  const year = String(entry.year);
+  if (entry.month === null) return year;
+  return `${year}-${String(entry.month).padStart(2, "0")}`;
 }
 
 /**
@@ -50,10 +64,11 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
                 {/* 点は線の上の駅を表す装飾で、年は隣の字が持っている。 */}
                 <span className="profile-history-dot" aria-hidden="true" />
                 {/*
-                  年だけの札なので `time` は使わない。経歴は読み物として出すもので、
-                  機械に名乗る身元の一部ではない (ADR 0044)。
+                  `time` は使わない。経歴は読み物として出すもので、機械に名乗る身元の
+                  一部ではない (ADR 0044)。`2012-04` は `time` の datetime として通る
+                  書式だが、通ることと持たせることは別。
                 */}
-                <span className="profile-history-year">{entry.year}</span>
+                <span className="profile-history-year">{stampOf(entry)}</span>
 
                 <div className="profile-history-body">
                   <p className="profile-history-text">

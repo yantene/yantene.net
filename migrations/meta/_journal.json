@@ -148,6 +148,13 @@
       "when": 1789533340993,
       "tag": "0020_create_profile_history_table",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1789538647723,
+      "tag": "0021_add_profile_history_month",
+      "breakpoints": true
     }
   ]
 }

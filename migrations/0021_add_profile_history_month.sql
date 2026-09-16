@@ -1,0 +1,1 @@
+ALTER TABLE `profile_history` ADD `month` integer;
