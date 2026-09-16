@@ -8,11 +8,28 @@ export interface PublicSocialAccount {
   readonly isMe: boolean;
 }
 
+/** 経歴の 1 件。書いていない欄は null で渡す (loader の応答に undefined は残らない)。 */
+export interface PublicHistoryEntry {
+  readonly year: number;
+  readonly text: string;
+  readonly url: string | null;
+  readonly note: string | null;
+}
+
+/** 章 1 つと、その中の出来事。 */
+export interface PublicHistoryChapter {
+  readonly chapter: string;
+  readonly entries: readonly PublicHistoryEntry[];
+}
+
 /**
  * 3 か所 (トップのヒーロー・記事の末尾・`/about`) が共通で出すプロフィール。
  *
  * 長い自己紹介 (MDAST) はここに含めない。読むのは `/about` だけなので、記事を 1 本
  * 開くたびに運ぶ理由が無い。
+ *
+ * **経歴も同じ理由で入れない** (`toPublicHistory` が別に組む)。出るのは `/about` の
+ * 末尾だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。
  */
 export interface PublicProfile {
   readonly name: string;
@@ -31,4 +48,29 @@ export function toPublicProfile(profile: Profile): PublicProfile {
       isMe: social.isMe,
     })),
   };
+}
+
+/**
+ * 経歴を章ごとに畳む。`/about` だけが使う。
+ *
+ * **並べ直さない。** 章の順も章の中の順も、書き手がフロントマターに書いた順のまま。
+ * `Set` が現れた順を保つので、同じ章が離れて書かれていれば最初に現れた位置に畳まれる
+ * (`ArticleTimeline` が公開年で束ね直すときと同じ手)。
+ *
+ * 年で並べ替えないのは、並びが書き手のものだから。同じ年に卒業と入学が並ぶとき、
+ * どちらを先に置くかを機械が決める理由が無い。
+ */
+export function toPublicHistory(profile: Profile): readonly PublicHistoryChapter[] {
+  const chapters = [...new Set(profile.history.map((entry) => entry.chapter))];
+  return chapters.map((chapter) => ({
+    chapter,
+    entries: profile.history
+      .filter((entry) => entry.chapter === chapter)
+      .map((entry) => ({
+        year: entry.year,
+        text: entry.text,
+        url: entry.url ?? null,
+        note: entry.note ?? null,
+      })),
+  }));
 }

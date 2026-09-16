@@ -1,3 +1,4 @@
+import { InvalidHistoryEntryError } from "./history-entry.vo";
 import { InvalidProfileNameError } from "./profile-name.vo";
 import { InvalidSocialUrlError, UnknownSocialPlatformError } from "./social-account.vo";
 import { InvalidTaglineError } from "./tagline.vo";
@@ -20,6 +21,7 @@ import { InvalidImageUrlError } from "~/backend/domain/shared";
  * ⚠️ **VO を足したらここにも足すこと。** 漏らすと、そのエラーだけが 500 として出る。
  */
 const profileDataErrors = [
+  InvalidHistoryEntryError,
   InvalidImageUrlError,
   InvalidProfileNameError,
   InvalidSocialUrlError,

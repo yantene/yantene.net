@@ -4,7 +4,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { PROFILE_ID } from "~/backend/domain/profile";
-import { profile, profileSocials } from "~/backend/infra/d1/schema";
+import { profile, profileHistory, profileSocials } from "~/backend/infra/d1/schema";
 import { instantToUnix } from "~/backend/infra/d1/temporal";
 
 export class D1ProfileCommandRepository implements IProfileCommandRepository {
@@ -38,6 +38,23 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       isMe: social.isMe,
     }));
 
+    /*
+     * 経歴も同じ形で入れ直す。**章ごとに畳まずに平らな並びで置く。** 書いた順が
+     * `position` に残っていれば、章に畳み直すのは読み出した側でできる。
+     *
+     * 書いていない欄は null にする。空文字で埋めると「補足があって中身が空」の行に
+     * なり、描く側が空の段落を出す。
+     */
+    const historyRows = source.history.map((entry, position) => ({
+      profileId: PROFILE_ID,
+      position,
+      chapter: entry.chapter,
+      year: entry.year,
+      text: entry.text,
+      url: entry.url ?? null,
+      note: entry.note ?? null,
+    }));
+
     await this.db.batch([
       this.db
         .insert(profile)
@@ -45,6 +62,8 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
         .onConflictDoUpdate({ target: profile.id, set: content }),
       this.db.delete(profileSocials).where(eq(profileSocials.profileId, PROFILE_ID)),
       ...(socialRows.length > 0 ? [this.db.insert(profileSocials).values(socialRows)] : []),
+      this.db.delete(profileHistory).where(eq(profileHistory.profileId, PROFILE_ID)),
+      ...(historyRows.length > 0 ? [this.db.insert(profileHistory).values(historyRows)] : []),
     ]);
   }
 
@@ -52,6 +71,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
   async delete(): Promise<void> {
     await this.db.batch([
       this.db.delete(profileSocials).where(eq(profileSocials.profileId, PROFILE_ID)),
+      this.db.delete(profileHistory).where(eq(profileHistory.profileId, PROFILE_ID)),
       this.db.delete(profile).where(eq(profile.id, PROFILE_ID)),
     ]);
   }

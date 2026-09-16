@@ -1,8 +1,8 @@
-import type { PublicProfile } from "./profile-view";
+import type { PublicHistoryChapter, PublicProfile } from "./profile-view";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { PublicWork } from "~/backend/handlers/works/work-view";
 import type { Root } from "mdast";
-import { toPublicProfile } from "./profile-view";
+import { toPublicHistory, toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadWorks } from "~/backend/handlers/works/pages.handler";
 import { isProfileDataError } from "~/backend/domain/profile";
@@ -32,6 +32,13 @@ export interface AboutPageData {
   readonly profile: PublicProfile | null;
   /** 長い自己紹介。プロフィールが無ければ null。 */
   readonly mdast: Root | null;
+  /**
+   * 経歴。章ごとに畳んである。書いていなければ空 (節ごと出さない)。
+   *
+   * **出るのはここだけ。** トップと記事の末尾は読まないので `PublicProfile` には
+   * 載せていない (ADR 0044)。
+   */
+  readonly history: readonly PublicHistoryChapter[];
   /** 長い自己紹介に貼られたむき出しの URL のカード。 */
   readonly linkCards: LinkCardMap;
   /**
@@ -85,7 +92,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   ]);
 
   if (profile === undefined) {
-    return { profile: null, mdast: null, linkCards: {}, works: [], jsonLd: null };
+    return { profile: null, mdast: null, history: [], linkCards: {}, works: [], jsonLd: null };
   }
   if (mdast === undefined) {
     // D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。
@@ -96,6 +103,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   return {
     profile: publicProfile,
     mdast: mdast as Root,
+    history: toPublicHistory(profile),
     linkCards: await loadLinkCards(env, mdast as Root),
     works,
     jsonLd: {
@@ -116,6 +124,11 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
         .filter((social) => social.isMe && social.platform !== "email")
         .map((social) => social.url),
       ...emailFor(publicProfile),
+      /*
+       * ⚠️ **経歴はここに出さない** (ADR 0044)。`alumniOf` も `award` も足さないこと。
+       * 経歴は読み物として画面に出すもので、機械に名乗る身元の一部ではない
+       * (生年月日と出身地を機械が読む形で持たないこと (#508) と同じ線引き)。
+       */
     },
   };
 }

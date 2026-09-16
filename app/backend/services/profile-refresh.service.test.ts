@@ -19,6 +19,17 @@ socials:
   - platform: github
     url: https://github.com/yantene
     isMe: true
+history:
+  - chapter: 高校
+    entries:
+      - year: 2012
+        text: 卒業
+  - chapter: 大学
+    entries:
+      - year: 2012
+        text: 入学
+        url: https://example.com/
+        note: 補足
 ---
 
 長い自己紹介。
@@ -146,6 +157,16 @@ describe("ProfileRefreshService", () => {
     ]);
     expect(profile?.socials.map((social) => social.platform)).toEqual(["github"]);
     expect(profile?.socials[0]?.isMe).toBe(true);
+    /*
+     * 経歴は章の入れ子で書き、平らな並びで保存する。**各件に章の名前が写っている**
+     * ことと、書いた順が崩れていないことを見る (畳み直すのは出す側)。
+     */
+    expect(profile?.history.map((entry) => [entry.chapter, entry.year, entry.text])).toEqual([
+      ["高校", 2012, "卒業"],
+      ["大学", 2012, "入学"],
+    ]);
+    expect(profile?.history[1]?.url).toBe("https://example.com/");
+    expect(profile?.history[1]?.note).toBe("補足");
 
     expect(cache.source).toBe(PROFILE_MD);
     expect(cache.assets.get("diagram.png")).toBeDefined();
@@ -264,6 +285,35 @@ describe("読めないプロフィール", () => {
     [
       "知らない platform",
       "---\nname: やんてね\ntagline: あいさつ\nsocials:\n  - platform: myspace\n    url: https://example.com/\n---\n",
+    ],
+    /*
+     * 経歴の書き損じ。**引用符付きの年をとくに見る。** YAML は `year: "2012"` を
+     * 文字列として渡してくるので、通してしまうと「引用符を付けた年だけ静かに落ちる」
+     * ことになる。
+     */
+    [
+      "章の名前が無い",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - entries:\n      - year: 2012\n        text: 卒業\n---\n",
+    ],
+    [
+      "出来事が 1 件も無い章",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries: []\n---\n",
+    ],
+    [
+      "引用符の付いた年",
+      '---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: "2012"\n        text: 卒業\n---\n',
+    ],
+    [
+      "枠の外の年",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 11\n        text: 卒業\n---\n",
+    ],
+    [
+      "出来事の字が無い",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 2012\n---\n",
+    ],
+    [
+      "http(s) でない行き先",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 2012\n        text: 卒業\n        url: javascript:alert(1)\n---\n",
     ],
   ])("%s のときはスキップして前の姿を残す", async (_label, markdown) => {
     await service.refresh();

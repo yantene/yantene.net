@@ -65,6 +65,9 @@
       "backToList": "Back to works"
     }
   },
+  "history": {
+    "heading": "History"
+  },
   "search": {
     "title": "Search",
     "placeholder": "Type keywords",

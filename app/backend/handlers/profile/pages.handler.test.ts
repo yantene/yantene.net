@@ -1,7 +1,13 @@
 import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadAboutPage, loadProfile } from "./pages.handler";
-import { Profile, ProfileName, SocialAccount, Tagline } from "~/backend/domain/profile";
+import {
+  HistoryEntry,
+  Profile,
+  ProfileName,
+  SocialAccount,
+  Tagline,
+} from "~/backend/domain/profile";
 import { Work, WorkName, WorkSlug, WorkSummary } from "~/backend/domain/work";
 import {
   D1ProfileCommandRepository,
@@ -39,6 +45,22 @@ async function seedProfile(d1: D1Database): Promise<void> {
           url: "mailto:contact@example.com",
           isMe: true,
         }),
+      ],
+      /*
+       * 章が離れて書かれた並び。**畳み直しが「現れた順」であることを見るために
+       * わざとこの順で置いてある** (高校 → 大学 → 高校)。年で並べ直さないことも
+       * ここで一緒に見える。
+       */
+      history: [
+        HistoryEntry.create({ chapter: "高校", year: 2012, text: "卒業" }),
+        HistoryEntry.create({
+          chapter: "大学",
+          year: 2012,
+          text: "入学",
+          url: "https://example.com/",
+          note: "補足",
+        }),
+        HistoryEntry.create({ chapter: "高校", year: 2011, text: "入学" }),
       ],
       sourceHash: "h1",
     }),
@@ -140,6 +162,78 @@ describe("loadAboutPage", () => {
     });
   });
 
+  /**
+   * 章に畳み直すのは出す側。**並べ替えない。**
+   *
+   * 章の順は最初に現れた位置、章の中の順は書いた順。年でも章名でもソートしない
+   * (並びは書き手のもので、同じ年に卒業と入学が並ぶときどちらを先に置くかを
+   * 機械が決める理由が無い)。
+   */
+  it("folds the history into chapters in the order they appear", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const { history } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(history.map((chapter) => chapter.chapter)).toEqual(["高校", "大学"]);
+    expect(history[0]?.entries.map((entry) => [entry.year, entry.text])).toEqual([
+      [2012, "卒業"],
+      [2011, "入学"],
+    ]);
+    // 書いていない欄は null で渡す (loader の応答に undefined は残らない)。
+    expect(history[0]?.entries[0]?.url).toBeNull();
+    expect(history[0]?.entries[0]?.note).toBeNull();
+    expect(history[1]?.entries[0]?.url).toBe("https://example.com/");
+    expect(history[1]?.entries[0]?.note).toBe("補足");
+  });
+
+  it("returns no history when none is written", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("やんてね"),
+        tagline: Tagline.create("東京で Web 開発者をやっています。"),
+        socials: [],
+        history: [],
+        sourceHash: "h1",
+      }),
+    );
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    expect((await loadAboutPage(envWith(d1, bucket), ORIGIN)).history).toEqual([]);
+  });
+
+  /**
+   * ⚠️ **経歴は JSON-LD に出さない** (ADR 0044)。
+   *
+   * 経歴は読み物として画面に出すもので、機械に名乗る身元の一部ではない。生年月日と
+   * 出身地を機械が読む形で持たないこと (#508) と同じ線引きなので、`alumniOf` や
+   * `award` を足すとその線引きが経歴の側から崩れる。
+   */
+  it("keeps the history out of the Person JSON-LD", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
+      "@context",
+      "@type",
+      "description",
+      "email",
+      "image",
+      "name",
+      "sameAs",
+      "url",
+    ]);
+    expect(JSON.stringify(jsonLd)).not.toContain("卒業");
+  });
+
   it("fails loudly when the body is missing from R2", async () => {
     const d1 = createTestD1();
     const { bucket } = createTestR2();
@@ -178,6 +272,22 @@ describe("loadProfile", () => {
     await d1
       .prepare("UPDATE profile_socials SET platform = ? WHERE profile_id = ?")
       .bind("retired-platform", "profile")
+      .run();
+
+    expect(await loadProfile(envWith(d1, bucket))).toBeNull();
+  });
+
+  /*
+   * 経歴の行も同じ扱い。`InvalidHistoryEntryError` を `profileDataErrors` に足し忘れると、
+   * 壊れた 1 行がトップと**全記事ページ**を 500 にする。
+   */
+  it("falls back to null when a stored history row can no longer be read", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await d1
+      .prepare("UPDATE profile_history SET year = ? WHERE profile_id = ?")
+      .bind(11, "profile")
       .run();
 
     expect(await loadProfile(envWith(d1, bucket))).toBeNull();

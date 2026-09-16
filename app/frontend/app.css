@@ -47,6 +47,7 @@
 @import "./components/share/share-menu.css";
 @import "./components/work/work-list.css";
 @import "./components/profile/author-note.css";
+@import "./components/profile/profile-history.css";
 @import "./components/social/social-links.css";
 @import "./routes/home.css";
 @import "./routes/page-intro.css";
