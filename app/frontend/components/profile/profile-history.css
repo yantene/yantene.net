@@ -15,6 +15,14 @@
   /* 章の柱の幅。日本語 3 文字 + 余白が入る幅。 */
   --history-chapter-column: 4rem;
   /*
+   * 札の柱の幅。`2012-03` が入る幅で固定する。
+   *
+   * ⚠️ **`auto` にしないこと。** 項目ごとに grid を組んでいるので、`auto` は行ごとに
+   * 幅が決まる。月を書いた行と書いていない行が混ざると、**行ごとに本文の開始位置が
+   * ずれる**。
+   */
+  --history-stamp-column: 4rem;
+  /*
    * 項目の上端から点の中心までの距離。縦線を切り上げ・切り下げる位置でもある。
    * 年の 1 行目の中心 (上の余白 + 行の半分) に合わせてある。
    */
@@ -76,9 +84,11 @@
  */
 @media (width >= 40rem) {
   .profile-history-item {
-    grid-template-columns: var(--history-dot-column) auto minmax(0, 1fr);
+    grid-template-columns:
+      var(--history-dot-column) var(--history-stamp-column)
+      minmax(0, 1fr);
     grid-template-areas: "dot year body";
-    column-gap: 1.25rem;
+    column-gap: 1rem;
   }
 }
 

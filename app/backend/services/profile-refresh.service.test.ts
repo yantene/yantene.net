@@ -23,6 +23,7 @@ history:
   - chapter: 高校
     entries:
       - year: 2012
+        month: 3
         text: 卒業
   - chapter: 大学
     entries:
@@ -165,6 +166,9 @@ describe("ProfileRefreshService", () => {
       ["高校", 2012, "卒業"],
       ["大学", 2012, "入学"],
     ]);
+    expect(profile?.history[0]?.month).toBe(3);
+    /* 月は任意。書いていない行は年だけになる。 */
+    expect(profile?.history[1]?.month).toBeUndefined();
     expect(profile?.history[1]?.url).toBe("https://example.com/");
     expect(profile?.history[1]?.note).toBe("補足");
 
@@ -306,6 +310,14 @@ describe("読めないプロフィール", () => {
     [
       "枠の外の年",
       "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 11\n        text: 卒業\n---\n",
+    ],
+    [
+      "枠の外の月",
+      "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 2012\n        month: 13\n        text: 卒業\n---\n",
+    ],
+    [
+      "引用符の付いた月",
+      '---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - year: 2012\n        month: "3"\n        text: 卒業\n---\n',
     ],
     [
       "出来事の字が無い",

@@ -52,7 +52,7 @@ async function seedProfile(d1: D1Database): Promise<void> {
        * ここで一緒に見える。
        */
       history: [
-        HistoryEntry.create({ chapter: "高校", year: 2012, text: "卒業" }),
+        HistoryEntry.create({ chapter: "高校", year: 2012, month: 3, text: "卒業" }),
         HistoryEntry.create({
           chapter: "大学",
           year: 2012,
@@ -183,6 +183,8 @@ describe("loadAboutPage", () => {
       [2011, "入学"],
     ]);
     // 書いていない欄は null で渡す (loader の応答に undefined は残らない)。
+    expect(history[0]?.entries[0]?.month).toBe(3);
+    expect(history[0]?.entries[1]?.month).toBeNull();
     expect(history[0]?.entries[0]?.url).toBeNull();
     expect(history[0]?.entries[0]?.note).toBeNull();
     expect(history[1]?.entries[0]?.url).toBe("https://example.com/");

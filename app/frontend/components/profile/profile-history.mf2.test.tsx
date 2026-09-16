@@ -82,6 +82,18 @@ describe("ProfileHistory の形", () => {
     expect(links[0]?.textContent).toContain("セキュリティ・キャンプ中央大会 2012");
   });
 
+  /*
+   * 札は月まで書いてあれば `2012-04`、無ければ `2012`。**混ざるのは承知の上**で、
+   * 月を覚えている出来事とそうでない出来事が並ぶ。
+   */
+  it("月まで書いた行だけ月を出す", () => {
+    const stamps = [...renderHistory().querySelectorAll(".profile-history-year")].map(
+      (node) => node.textContent,
+    );
+
+    expect(stamps).toEqual(["2011", "2012-03", "2012-04", "2012", "2018-03"]);
+  });
+
   it("補足は書いてあるものだけ出す", () => {
     const notes = [...renderHistory().querySelectorAll(".profile-history-note")];
 

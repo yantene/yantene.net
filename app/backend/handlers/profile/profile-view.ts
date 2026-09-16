@@ -11,6 +11,8 @@ export interface PublicSocialAccount {
 /** 経歴の 1 件。書いていない欄は null で渡す (loader の応答に undefined は残らない)。 */
 export interface PublicHistoryEntry {
   readonly year: number;
+  /** 書いていなければ null。年だけの札になる。 */
+  readonly month: number | null;
   readonly text: string;
   readonly url: string | null;
   readonly note: string | null;
@@ -66,6 +68,7 @@ export function toPublicHistory(profile: Profile): readonly PublicHistoryChapter
     if (entries.length === 0) chapters.set(entry.chapter, entries);
     entries.push({
       year: entry.year,
+      month: entry.month ?? null,
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,

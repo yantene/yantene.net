@@ -27,6 +27,27 @@ describe("HistoryEntry", () => {
     expect(entry.note).toBe("CTF チーム優勝");
   });
 
+  /*
+   * 月は任意。卒業と入学は 3 月と 4 月と決まっているが、大会や合宿は覚えていないことが
+   * ある。必須にすると、覚えていない月を埋めさせることになる。
+   */
+  it("accepts an optional month", () => {
+    expect(HistoryEntry.create({ chapter: "大学", year: 2012, month: 4, text: "入学" }).month).toBe(
+      4,
+    );
+    expect(
+      HistoryEntry.create({ chapter: "大学", year: 2012, text: "入学" }).month,
+    ).toBeUndefined();
+  });
+
+  it("rejects a month outside 1..12", () => {
+    for (const month of [0, 13, -1, 4.5, Number.NaN]) {
+      expect(() =>
+        HistoryEntry.create({ chapter: "大学", year: 2012, month, text: "入学" }),
+      ).toThrow(InvalidHistoryEntryError);
+    }
+  });
+
   it("trims the surrounding space", () => {
     const entry = HistoryEntry.create({ chapter: " 高校 ", year: 2012, text: " 卒業 " });
     expect(entry.chapter).toBe("高校");
@@ -76,5 +97,9 @@ describe("HistoryEntry", () => {
     expect(
       HistoryEntry.create(params).equals(HistoryEntry.create({ ...params, chapter: "大学" })),
     ).toBe(false);
+    /* 月を書き足したものは別の値。書いていない状態と同じにしない。 */
+    expect(HistoryEntry.create(params).equals(HistoryEntry.create({ ...params, month: 3 }))).toBe(
+      false,
+    );
   });
 });
