@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { LocaleMenu } from "./locale-menu";
 import { SiteMenu } from "./site-menu";
 import { SiteNav } from "./site-nav";
-import Logo from "~/frontend/assets/yantene-logo.svg?react";
+import { Logo } from "~/frontend/components/logo/logo";
 import { FeedMenu } from "~/frontend/components/feed/feed-menu";
 import { CommandPalette } from "~/frontend/components/search/command-palette";
 import { SearchTrigger } from "~/frontend/components/search/search-trigger";

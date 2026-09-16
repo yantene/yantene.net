@@ -1,6 +1,10 @@
 <!--
-  Logotype: the wordmark alone, cut from the master yantene.svg (see yantene-logo.svg
-  for how the three assets are produced); never edit this file directly.
+  Logotype: the wordmark alone, cut from the master yantene.svg (see yantene-character.svg
+  for how the two assets are produced); never edit this file directly.
+
+  - Paired with the character it makes the logo, but there is no combined file: the box
+    that places the two is in ~/lib/logo-layout, and both components/logo/logo.tsx and
+    og-card.ts read it (#527).
 
   - Fills take currentColor.
   - The letters are kerned: measured per row of pixels, the closest ink between

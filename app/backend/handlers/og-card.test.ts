@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { cardHtml, defaultCardHtml } from "./og-card";
+import { LOGO_CHARACTER, LOGO_LOGOTYPE, LOGO_VIEW_BOX } from "~/lib/logo-layout";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
-import logoSource from "~/frontend/assets/yantene-logo.svg?raw";
+import characterSource from "~/frontend/assets/yantene-character.svg?raw";
+import logotypeSource from "~/frontend/assets/yantene-logotype.svg?raw";
 import ja from "~/lib/i18n/locales/ja.json";
 
 /**
@@ -56,17 +58,38 @@ describe("cityscape.svg (OG カードが頼っている書き方)", () => {
 
 /*
  * ロゴも街と同じく、素材の書き方に頼って data URI にしている。
+ *
+ * **ロゴは合成済みの 1 枚では持たない** (#527)。素材 2 つをここで並べるので、
+ * 頼っているのは「2 つとも同じ契約で書かれていること」と「素材の viewBox が
+ * `~/lib/logo-layout` の寸法と食い違っていないこと」の 2 つになる。
  */
-describe("yantene-logo.svg (OG カードが頼っている書き方)", () => {
-  it("塗りの色を currentColor で受けている", () => {
+describe("ロゴの素材 (OG カードが頼っている書き方)", () => {
+  it.each([
+    ["character", characterSource],
+    ["logotype", logotypeSource],
+  ])("%s は塗りの色を currentColor で受けている", (_label, source) => {
     // img の data URI には文書の color が届かないので、焼き込む先の目印になる。
-    expect(logoSource).toContain('fill="currentColor"');
+    expect(source).toContain('fill="currentColor"');
   });
 
-  it("viewBox の縦横比が変わっていない", () => {
-    // og-card.ts の LOGO_ASPECT はこの比から出した値で、img には preserveAspectRatio を
-    // 渡していない。比が動くとロゴが潰れる。
-    expect(logoSource).toContain('viewBox="0 0 817.133 256.771"');
+  /*
+   * 寸法は退役した yantene-logo.svg から測って出した値なので、素材の viewBox が動くと
+   * 並びがずれる。**ずれても絵は出てしまう**ので、数で突き合わせる。
+   */
+  it.each([
+    ["character", characterSource, LOGO_CHARACTER],
+    ["logotype", logotypeSource, LOGO_LOGOTYPE],
+  ])("%s の viewBox が logo-layout の寸法と合っている", (_label, source, box) => {
+    const viewBox = /viewBox="0 0 ([\d.]+) ([\d.]+)"/u.exec(source);
+
+    expect(viewBox).not.toBeNull();
+    expect(Number(viewBox?.[1])).toBeCloseTo(box.width, 3);
+    expect(Number(viewBox?.[2])).toBeCloseTo(box.height, 3);
+  });
+
+  /* 並べ終えた幅は、字形の右端がちょうど viewBox の右端に着くことで決まっている。 */
+  it("並べた姿の幅が素材から導ける", () => {
+    expect(LOGO_LOGOTYPE.x + LOGO_LOGOTYPE.width).toBeCloseTo(LOGO_VIEW_BOX.width, 3);
   });
 });
 

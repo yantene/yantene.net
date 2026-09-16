@@ -9,8 +9,10 @@
  * あちらが動くのは経路や蓄え方を変えたいとき。no-secrets を切っているのもこちらの都合
  * (インライン SVG と CSS が高エントロピーの文字列に見える) で、ルータ側は見張られたままになる。
  */
+import characterSource from "~/frontend/assets/yantene-character.svg?raw";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
-import logoSource from "~/frontend/assets/yantene-logo.svg?raw";
+import logotypeSource from "~/frontend/assets/yantene-logotype.svg?raw";
+import { LOGO_ASPECT, LOGO_CHARACTER, LOGO_LOGOTYPE, LOGO_VIEW_BOX } from "~/lib/logo-layout";
 import { truncateByGrapheme } from "~/lib/truncate";
 
 /*
@@ -21,8 +23,14 @@ import { truncateByGrapheme } from "~/lib/truncate";
  * 行数が 3 行に収まるかを一緒に見ること。
  */
 const TITLE_MAX = 56;
-/** カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。 */
-export const OG_TEMPLATE_VERSION = "v13";
+/**
+ * カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。
+ *
+ * ⚠️ **素材の絵を差し替えたときも上げること。** 蓄えのキーはこの版だけで決まるので、
+ * 上げないと R2 の古い PNG が返り続ける (v14 はやんてねくんがノートパソコンを抱える
+ * 姿になった回。preview で旧い絵が返ってきて気づいた)。
+ */
+export const OG_TEMPLATE_VERSION = "v14";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
@@ -150,27 +158,37 @@ function cityscapeHtml(): string {
   return artwork.cityscape;
 }
 
+/** 素材を入れ子の `<svg>` にして、並べる位置と大きさを与える。 */
+function nested(
+  source: string,
+  box: { x: number; y: number; width: number; height: number },
+): string {
+  const body = withoutPreamble(source);
+  const placement = ` x="${String(box.x)}" y="${String(box.y)}" width="${String(box.width)}" height="${String(box.height)}"`;
+  return `<svg${placement}${body.slice("<svg".length)}`;
+}
+
 /*
- * ロゴ (キャラクターとロゴタイプを並べた一枚)。ヘッダーに出しているものと同じ素材。
+ * ロゴ。**合成済みの 1 枚は持たず、素材 2 つをここで並べる。**
+ *
+ * ヘッダーの `Logo` と同じ寸法 (`~/lib/logo-layout`) を使う。写しを持っていたときは、
+ * キャラクターを描き直した回にヘッダーと OG カードだけが旧い姿で取り残された
+ * ([#527](https://github.com/yantene/yantene.net/issues/527))。
  *
  * 素材は塗りを `currentColor` で受ける。`img` の data URI には文書の color が届かない
  * ので、街と同じく本文の色を焼き込む。
  */
 function logoDataUri(): string {
-  artwork.logo ??= `data:image/svg+xml,${encodeURIComponent(
-    // 置換の文字列に `$&` のような指示を読ませないため、関数で色を返す。
-    withoutPreamble(logoSource).replaceAll("currentColor", () => INK),
-  )}`;
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(LOGO_VIEW_BOX.width)} ${String(LOGO_VIEW_BOX.height)}">`,
+    nested(characterSource, LOGO_CHARACTER),
+    nested(logotypeSource, LOGO_LOGOTYPE),
+    "</svg>",
+  ].join("");
+  // 置換の文字列に `$&` のような指示を読ませないため、関数で色を返す。
+  artwork.logo ??= `data:image/svg+xml,${encodeURIComponent(svg.replaceAll("currentColor", () => INK))}`;
   return artwork.logo;
 }
-
-/**
- * ロゴの縦横比 (幅 / 高さ)。素材の viewBox (817.133 x 256.771) から。
- *
- * `img` には preserveAspectRatio を渡せないので、高さから幅をここで導く。素材を
- * 差し替えて viewBox が変わったら、ここも合わせること (og-card.test.ts が見張る)。
- */
-const LOGO_ASPECT = 817.133 / 256.771;
 
 /** 寸法を CSS の長さにする (テンプレートに数値をそのまま置くと lint が止める)。 */
 function px(value: number): string {
