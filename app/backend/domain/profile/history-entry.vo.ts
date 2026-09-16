@@ -1,4 +1,5 @@
 import type { IValueObject } from "~/backend/domain/shared";
+import type { HistoryDate } from "./history-date.vo";
 
 /*
  * 経歴の 1 件。「いつ・何が起きたか」と、それがどの章に属するか。
@@ -8,13 +9,8 @@ import type { IValueObject } from "~/backend/domain/shared";
  * 章を各件が持つのは、`profile_socials` と同じ平らな行として保存できる形にするため。
  * 束ね直すのは出す側 (`toPublicHistory`) で、現れた順に畳む。
  *
- * **年と、書けるなら月まで。日と期間は持たない。** 年表に載るのは点の出来事なので、
- * 続いていることは始まった年の出来事として書く。範囲を持つと札が「2018–」のような字に
- * なり、読み上げでも横並びでも意味を取りにくくなる。
- *
- * 月が任意なのは、書ける出来事とそうでない出来事があるため。卒業と入学は 3 月と 4 月と
- * 決まっているが、大会や合宿は覚えていないことがある。**必須にすると、覚えていない月を
- * 埋めさせることになる。**
+ * **日は `HistoryDate` が 3 段の精度で持つ** (年だけ・月まで・日まで)。終わりのある
+ * 出来事は `until` を添える。終わりだけを書くことはできない。
  *
  * ⚠️ **h-card にも JSON-LD にも出さない** (ADR 0044)。経歴は読み物として出すもので、
  * 機械に名乗る身元の一部ではない。生年月日と出身地を機械が読む形で持たないこと (#508) と
@@ -24,11 +20,6 @@ const MAX_CHAPTER_LENGTH = 40;
 const MAX_TEXT_LENGTH = 200;
 const MAX_NOTE_LENGTH = 200;
 const MAX_URL_LENGTH = 2048;
-/* 西暦 4 桁。打ち間違い (`20112` や `11`) をその場で止めるための枠でしかない。 */
-const MIN_YEAR = 1000;
-const MAX_YEAR = 9999;
-const MIN_MONTH = 1;
-const MAX_MONTH = 12;
 
 export class InvalidHistoryEntryError extends Error {
   readonly name = "InvalidHistoryEntryError";
@@ -36,8 +27,9 @@ export class InvalidHistoryEntryError extends Error {
 
 interface HistoryEntryFields {
   readonly chapter: string;
-  readonly year: number;
-  readonly month: number | undefined;
+  readonly date: HistoryDate;
+  /** 終わり。書いていなければ点の出来事。 */
+  readonly until: HistoryDate | undefined;
   readonly text: string;
   readonly url: string | undefined;
   readonly note: string | undefined;
@@ -48,16 +40,16 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
 
   static create(params: {
     chapter: string;
-    year: number;
-    month?: number;
+    date: HistoryDate;
+    until?: HistoryDate;
     text: string;
     url?: string;
     note?: string;
   }): HistoryEntry {
     return new HistoryEntry({
       chapter: requireText(params.chapter, "chapter", MAX_CHAPTER_LENGTH),
-      year: validateYear(params.year),
-      month: params.month === undefined ? undefined : validateMonth(params.month),
+      date: params.date,
+      until: params.until === undefined ? undefined : validateUntil(params.date, params.until),
       text: requireText(params.text, "text", MAX_TEXT_LENGTH),
       url: params.url === undefined ? undefined : validateUrl(params.url),
       note:
@@ -69,13 +61,13 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     return this.fields.chapter;
   }
 
-  get year(): number {
-    return this.fields.year;
+  get date(): HistoryDate {
+    return this.fields.date;
   }
 
-  /** 書いていなければ undefined。年だけの札になる。 */
-  get month(): number | undefined {
-    return this.fields.month;
+  /** 書いていなければ undefined。点の出来事になる。 */
+  get until(): HistoryDate | undefined {
+    return this.fields.until;
   }
 
   get text(): string {
@@ -93,8 +85,8 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
   equals(other: HistoryEntry): boolean {
     return (
       this.fields.chapter === other.fields.chapter &&
-      this.fields.year === other.fields.year &&
-      this.fields.month === other.fields.month &&
+      this.fields.date.equals(other.fields.date) &&
+      this.fields.until?.toString() === other.fields.until?.toString() &&
       this.fields.text === other.fields.text &&
       this.fields.url === other.fields.url &&
       this.fields.note === other.fields.note
@@ -104,8 +96,8 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
   toJSON(): Record<string, unknown> {
     return {
       chapter: this.fields.chapter,
-      year: this.fields.year,
-      month: this.fields.month,
+      date: this.fields.date.toJSON(),
+      until: this.fields.until?.toJSON(),
       text: this.fields.text,
       url: this.fields.url,
       note: this.fields.note,
@@ -124,29 +116,26 @@ function requireText(raw: string, field: string, maxLength: number): string {
 }
 
 /**
- * 年は数として受ける。
+ * 終わりの日。
  *
- * `"2012"` や `2012 年` を通さないのは、書き手が書いた値をこちらで解釈し始めると、
- * `2012 年ごろ` のような字も «たぶん 2012» として通ってしまうため。枠に入らない値は
- * その場で同期を止めて理由を返す。
+ * **始まりと同じ精度でなければ通さない。** `date: 2012-08-14` に `until: 2012-08` を
+ * 書けると、どこまで分かっているのかが読み手にも機械にも取れなくなる。
+ *
+ * **始まりより後でなければ通さない。** 同じ日を終わりに書くのは点の出来事なので、
+ * `until` を消すのが正しい。
  */
-function validateYear(raw: number): number {
-  if (!Number.isInteger(raw) || raw < MIN_YEAR || raw > MAX_YEAR) {
+function validateUntil(date: HistoryDate, until: HistoryDate): HistoryDate {
+  if (date.precision !== until.precision) {
     throw new InvalidHistoryEntryError(
-      `History year must be an integer in ${String(MIN_YEAR)}..${String(MAX_YEAR)}, got ${JSON.stringify(raw)}`,
+      `History until must have the same precision as date (${date.precision}), got ${until.precision}`,
     );
   }
-  return raw;
-}
-
-/** 月は 1 〜 12 の整数。年と同じく、書かれた値を解釈しない。 */
-function validateMonth(raw: number): number {
-  if (!Number.isInteger(raw) || raw < MIN_MONTH || raw > MAX_MONTH) {
+  if (date.compare(until) >= 0) {
     throw new InvalidHistoryEntryError(
-      `History month must be an integer in ${String(MIN_MONTH)}..${String(MAX_MONTH)}, got ${JSON.stringify(raw)}`,
+      `History until must come after date, got ${date.toString()} and ${until.toString()}`,
     );
   }
-  return raw;
+  return until;
 }
 
 /**

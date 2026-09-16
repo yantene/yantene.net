@@ -1,5 +1,6 @@
 import type { profile, profileHistory, profileSocials } from "~/backend/infra/d1/schema";
 import {
+  HistoryDate,
   HistoryEntry,
   Profile,
   ProfileName,
@@ -27,12 +28,29 @@ export function rowsToProfile(
     socials: socialRows.map((social) =>
       SocialAccount.create({ platform: social.platform, url: social.url, isMe: social.isMe }),
     ),
-    /* 書いていない欄は null で入っている。VO は「無い」を undefined で表す。 */
+    /*
+     * 書いていない欄は null で入っている。VO は「無い」を undefined で表す。
+     *
+     * 日の精度は**どこまで非 NULL か**で決まる (`month` が null なら年だけ)。終わりは
+     * `end_year` が入っていれば在る (始まりと同じ精度でしか入らないので、そこだけ見れば足りる)。
+     */
     history: historyRows.map((entry) =>
       HistoryEntry.create({
         chapter: entry.chapter,
-        year: entry.year,
-        ...(entry.month === null ? {} : { month: entry.month }),
+        date: HistoryDate.fromParts({
+          year: entry.year,
+          ...(entry.month === null ? {} : { month: entry.month }),
+          ...(entry.day === null ? {} : { day: entry.day }),
+        }),
+        ...(entry.endYear === null
+          ? {}
+          : {
+              until: HistoryDate.fromParts({
+                year: entry.endYear,
+                ...(entry.endMonth === null ? {} : { month: entry.endMonth }),
+                ...(entry.endDay === null ? {} : { day: entry.endDay }),
+              }),
+            }),
         text: entry.text,
         ...(entry.url === null ? {} : { url: entry.url }),
         ...(entry.note === null ? {} : { note: entry.note }),
