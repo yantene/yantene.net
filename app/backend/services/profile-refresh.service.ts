@@ -139,7 +139,7 @@ export class ProfileRefreshService {
     await this.cache.putMdast(sized);
     await this.cache.putSource(markdown);
     await this.cache.pruneAssets(assetPathsOf(group));
-    await this.command.upsert(profile);
+    await this.command.upsert(profile, parsed.history);
 
     return collectBareLinkUrls(sized);
   }
@@ -194,7 +194,6 @@ function buildProfile(
       name: parsed.name,
       tagline: parsed.tagline,
       socials: parsed.socials,
-      history: parsed.history,
       sourceHash: group.contentHash,
     });
   } catch (error) {

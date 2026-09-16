@@ -79,9 +79,9 @@ describe("GET /sitemap.xml", () => {
         name: ProfileName.create("やんてね"),
         tagline: Tagline.create("短い自己紹介。"),
         socials: [],
-        history: [],
         sourceHash: "h1",
       }),
+      [],
     );
     const response = await createTestApp().request(
       "https://yantene.net/sitemap.xml",

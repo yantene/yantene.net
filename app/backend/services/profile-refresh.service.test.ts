@@ -161,19 +161,20 @@ describe("ProfileRefreshService", () => {
     /*
      * 経歴は章の入れ子で書き、平らな並びで保存する。**各件に章の名前が写っている**
      * ことと、書いた順が崩れていないことを見る (畳み直すのは出す側)。
+     *
+     * 引くのは `find` ではなく `findHistory`。読む口を分けてある (#519)。
      */
-    expect(
-      profile?.history.map((entry) => [entry.chapter, entry.date.toString(), entry.text]),
-    ).toEqual([
+    const history = await query.findHistory();
+    expect(history.map((entry) => [entry.chapter, entry.date.toString(), entry.text])).toEqual([
       ["高校", "2012-03-01", "卒業"],
       ["大学", "2012", "入学"],
     ]);
-    expect(profile?.history[0]?.until?.toString()).toBe("2012-03-05");
+    expect(history[0]?.until?.toString()).toBe("2012-03-05");
     /* 精度は書き手が書いたまま。年だけの行を 1 月 1 日に倒さない。 */
-    expect(profile?.history[1]?.date.precision).toBe("year");
-    expect(profile?.history[1]?.until).toBeUndefined();
-    expect(profile?.history[1]?.url).toBe("https://example.com/");
-    expect(profile?.history[1]?.note).toBe("補足");
+    expect(history[1]?.date.precision).toBe("year");
+    expect(history[1]?.until).toBeUndefined();
+    expect(history[1]?.url).toBe("https://example.com/");
+    expect(history[1]?.note).toBe("補足");
 
     expect(cache.source).toBe(PROFILE_MD);
     expect(cache.assets.get("diagram.png")).toBeDefined();

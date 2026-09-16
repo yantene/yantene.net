@@ -1,4 +1,4 @@
-import type { Profile } from "~/backend/domain/profile";
+import type { HistoryEntry, Profile } from "~/backend/domain/profile";
 import type { SocialPlatform } from "~/lib/social-platforms";
 
 export interface PublicSocialAccount {
@@ -32,7 +32,8 @@ export interface PublicHistoryChapter {
  * 開くたびに運ぶ理由が無い。
  *
  * **経歴も同じ理由で入れない** (`toPublicHistory` が別に組む)。出るのは `/about` の
- * 末尾だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。
+ * 末尾だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。引くのも
+ * 別の口 (`IProfileQueryRepository.findHistory`)。
  */
 export interface PublicProfile {
   readonly name: string;
@@ -62,9 +63,9 @@ export function toPublicProfile(profile: Profile): PublicProfile {
  * 年で並べ替えないのは、並びが書き手のものだから。同じ年に卒業と入学が並ぶとき、
  * どちらを先に置くかを機械が決める理由が無い。
  */
-export function toPublicHistory(profile: Profile): readonly PublicHistoryChapter[] {
+export function toPublicHistory(history: readonly HistoryEntry[]): readonly PublicHistoryChapter[] {
   const chapters = new Map<string, PublicHistoryEntry[]>();
-  for (const entry of profile.history) {
+  for (const entry of history) {
     const entries = chapters.get(entry.chapter) ?? [];
     if (entries.length === 0) chapters.set(entry.chapter, entries);
     entries.push({
