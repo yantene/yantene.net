@@ -130,7 +130,7 @@ export default function Licenses({ loaderData }: Route.ComponentProps): React.JS
             rel="noreferrer"
             className={`${linkClassName} inline-flex items-center gap-1.5`}
           >
-            <SiGithub aria-hidden="true" />
+            <SiGithub className="brand-mark" aria-hidden="true" />
             {t("licenses.rest.linkLabel")}
           </a>
         </p>

@@ -119,17 +119,22 @@
 .author-note-socials {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  /*
+   * 台を敷いたぶん、絵と絵の間は gap よりずっと広く見える (台の半径 2 つぶんが
+   * 足される)。gap をヒーローより詰めてあるのはそのため。
+   */
+  gap: 0.125rem;
 }
 
+/*
+ * 大きさだけを渡す。**色は渡さない。**
+ *
+ * 絵の色と台は `social-links.css` が持つ。以前はここが base-content の 55% で塗って
+ * いたが、GitHub / Bluesky / Discord の「黒か白以外に染めるな」に反していた。
+ * hover も台のほうが染まるので、ここには書かない。
+ */
 .author-note-social {
-  display: inline-flex;
-  font-size: 1.125rem;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
-}
-
-.author-note-social:hover {
-  color: var(--color-primary);
+  font-size: 1.25rem;
 }
 
 .author-note-more {

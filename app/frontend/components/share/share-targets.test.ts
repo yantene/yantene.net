@@ -28,11 +28,12 @@ describe("buildShareTargets", () => {
     expect(`${bluesky.origin}${bluesky.pathname}`).toBe("https://bsky.app/intent/compose");
     expect(bluesky.searchParams.get("text")).toBe(`記事の題 ${url}`);
 
-    const facebook = composeUrlOf(targets, "facebook");
-    expect(`${facebook.origin}${facebook.pathname}`).toBe(
-      "https://www.facebook.com/sharer/sharer.php",
-    );
-    expect(facebook.searchParams.get("u")).toBe(url);
+    /*
+     * Facebook は置かない。Meta が許す印の形は「Facebook Blue の丸に白い f」と
+     * 「白い丸に透明な f」の 2 つだけで、黒の単色版が無い (#512、ADR 0043)。
+     * 共有先を 1 つ減らすほうを選んだので、ここも 2 つで揃っていること。
+     */
+    expect(targets.map((target) => target.key)).toEqual(["x", "bluesky"]);
   });
 
   it("escapes characters that would otherwise break out of the query", () => {

@@ -11,7 +11,18 @@ import { socialPlatformLabels } from "~/lib/social-platforms";
  * なのでコンテンツ側に置けず、種類の名前 (`app/lib/social-platforms.ts`) だけを
  * 待ち合わせ場所にしている。
  */
-const socialIcons: Record<SocialPlatform, React.ComponentType> = {
+/*
+ * 印の素材。**`className` を受け取れる型で持つ。**
+ *
+ * 描くときに `brand-mark` を付けるため (色は `brand-marks.css` が 1 か所で決める)。
+ * `React.ComponentType` のままだと class を渡せず、色が周りの字から流れ込む。
+ */
+type BrandIcon = React.ComponentType<{
+  readonly className?: string;
+  readonly "aria-hidden"?: boolean;
+}>;
+
+const socialIcons: Record<SocialPlatform, BrandIcon> = {
   github: SiGithub,
   x: SiX,
   bluesky: SiBluesky,
@@ -38,7 +49,12 @@ interface SocialLinksProps {
   readonly links: readonly PublicSocialAccount[];
   /** 並べ方。置き場所 (ヒーローの中央揃え・`/about` の左寄せ) で違うので呼ぶ側が決める。 */
   readonly className?: string;
-  /** 絵 1 つぶんの大きさと色。既定値は無い (地の色が場所ごとに違うため)。 */
+  /**
+   * 絵 1 つぶんの大きさ。`font-size` を決めるクラスを渡す (台も絵も em で従う)。
+   *
+   * **色は渡さない。** 渡しても `.social-link` が勝つ。ブランド規定の話なので、
+   * 置き場所の都合で変えられる軸にしていない。
+   */
   readonly linkClassName: string;
 }
 
@@ -47,6 +63,10 @@ interface SocialLinksProps {
  *
  * 絵しか出さないので、名前は `aria-label` で渡す。`title` も置くのは、マウスで
  * 指したときに何のアイコンか読めるようにするため (`aria-label` は目で見えない)。
+ *
+ * **絵の色と台は `social-links.css` が持ち、呼ぶ側は選べない。** 各社のブランド規定で
+ * 黒 (または白) 以外に染めることが禁じられているため、置き場所ごとに色を渡せる作りに
+ * しない。`linkClassName` に渡すのは大きさと `press-control` だけ。
  */
 export function SocialLinks({
   links,
@@ -68,11 +88,11 @@ export function SocialLinks({
               href={link.url}
               target="_blank"
               rel={relFor(link.isMe)}
-              className={linkClassName}
+              className={`social-link social-link-${link.platform} ${linkClassName}`}
               aria-label={label}
               title={label}
             >
-              <Icon aria-hidden />
+              <Icon className="brand-mark" aria-hidden />
             </a>
           </li>
         );

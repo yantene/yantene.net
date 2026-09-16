@@ -90,7 +90,7 @@ export function ArticleHeader({
           href={`/articles/${slug}.md`}
           className="press-control inline-flex items-center gap-1 hover:text-primary hover:underline"
         >
-          <SiMarkdown aria-hidden="true" />
+          <SiMarkdown className="brand-mark" aria-hidden="true" />
           {t("articles.viewMarkdown")}
         </a>
       </div>
