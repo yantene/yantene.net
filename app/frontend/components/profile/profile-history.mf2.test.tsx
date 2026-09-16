@@ -94,6 +94,18 @@ describe("ProfileHistory の形", () => {
     expect(stamps).toEqual(["2011", "2012-03", "2012-04", "2012", "2018-03"]);
   });
 
+  /*
+   * ⚠️ **行き先の絵は字より先に置く。** 後ろに置くと、狭い画面で絵だけが次の行に
+   * 取り残される (#522)。リンクは段落の先頭から始まるので、前に置けば取り残されない。
+   * 見た目にしか出ない壊れ方で、しかも字の長さと画面の幅が噛み合ったときにしか出ない。
+   */
+  it("行き先の絵はリンクの先頭に置く", () => {
+    const [link] = [...renderHistory().querySelectorAll("a")];
+
+    expect(link?.firstElementChild?.className).toContain("profile-history-external");
+    expect(link?.textContent).toBe("セキュリティ・キャンプ中央大会 2012 Web・セキュリティ・クラス");
+  });
+
   it("補足は書いてあるものだけ出す", () => {
     const notes = [...renderHistory().querySelectorAll(".profile-history-note")];
 

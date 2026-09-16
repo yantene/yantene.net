@@ -79,20 +79,22 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
                         href={entry.url}
                         className="press-control group inline transition-colors hover:text-primary"
                       >
-                        {entry.text}
                         {/*
-                          WORD JOINER (U+2060)。**字と絵の間で行を折らせない。**
-                          日本語はほぼどの字の間でも折れるので、これが無いと狭い画面で
-                          矢印だけが次の行に取り残される。
+                          絵は行き先が外であることの印で、名前は隣の字が持っている。
+
+                          ⚠️ **字の前に置く。** 後ろに置くと、狭い画面で絵だけが次の行に
+                          取り残される (#522)。WORD JOINER を挟んでも止まらない — Chrome は
+                          atomic inline (inline-block の中の SVG) の直前では、WJ があっても
+                          折る。実機で確かめた。**リンクは段落の先頭から始まる**ので、
+                          前に置けば取り残されようがない (`WorkList` と同じ置き方)。
                         */}
-                        {"\u2060"}
-                        {/* 絵は行き先が外であることの印で、名前は隣の字が持っている。 */}
                         <span
-                          className="profile-history-external ml-1 align-baseline text-base-content/40 transition-colors group-hover:text-primary"
+                          className="profile-history-external mr-1 align-baseline text-base-content/40 transition-colors group-hover:text-primary"
                           aria-hidden="true"
                         >
                           <HiArrowTopRightOnSquare />
                         </span>
+                        {entry.text}
                       </a>
                     )}
                   </p>
