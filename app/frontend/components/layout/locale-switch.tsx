@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocaleForm } from "~/frontend/lib/use-locale-form";
 import {
@@ -34,35 +35,45 @@ interface LocaleSwitchProps {
  */
 export function LocaleSwitch({ className = "" }: LocaleSwitchProps): React.JSX.Element {
   const { t } = useTranslation();
+  const titleId = useId();
   /* いま選ばれているものと帰り先は、帯の LocaleMenu と同じものを使う。 */
   const { current, returnTo } = useLocaleForm();
 
   return (
+    /*
+      見出しは FeedMenuList と同じ作りにする。**片方だけ見出し付きにしない** — 足元に
+      並ぶ 2 つの組が、同じ役なのに違う姿で出ることになる。
+    */
     <form
       method="post"
       action={localePath}
       className={`locale-switch ${className}`}
-      aria-label={t("locale.label")}
+      aria-labelledby={titleId}
     >
+      <p id={titleId} className="header-menu-title">
+        {t("locale.heading")}
+      </p>
       <input type="hidden" name={localeReturnToField} value={returnTo} />
-      {supportedLocales.map((locale) => (
-        <button
-          key={locale}
-          type="submit"
-          name={localeField}
-          value={locale}
-          lang={locale}
-          /*
-           * 見えるのは略号 (EN / JA) だが、読み上げに渡すのは言語の名前そのもの。
-           * 2 文字の略号は音にすると何のことか分からない。
-           */
-          aria-label={localeLabels[locale]}
-          aria-current={locale === current ? "true" : undefined}
-          className="locale-switch-option press-control"
-        >
-          {localeAbbreviations[locale]}
-        </button>
-      ))}
+      <div className="locale-switch-options">
+        {supportedLocales.map((locale) => (
+          <button
+            key={locale}
+            type="submit"
+            name={localeField}
+            value={locale}
+            lang={locale}
+            /*
+             * 見えるのは略号 (EN / JA) だが、読み上げに渡すのは言語の名前そのもの。
+             * 2 文字の略号は音にすると何のことか分からない。
+             */
+            aria-label={localeLabels[locale]}
+            aria-current={locale === current ? "true" : undefined}
+            className="locale-switch-option press-control"
+          >
+            {localeAbbreviations[locale]}
+          </button>
+        ))}
+      </div>
     </form>
   );
 }

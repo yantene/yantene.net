@@ -95,7 +95,11 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
           (header.css の site-header-overlay-band-in)。着地する値は同じ。
         */}
         <div
-          className={isTransparent ? "site-header-overlay-band" : "bg-white/60 backdrop-blur-sm"}
+          className={
+            isTransparent
+              ? "site-header-band site-header-overlay-band"
+              : "site-header-band bg-white/60 backdrop-blur-sm"
+          }
         >
           {/*
             上下の余白は 12px。ロゴが 40px あるので、16px だと帯が 72px に育つ。検索欄 (32px) と

@@ -27,6 +27,8 @@ const untranslatedNames = [
   "navigation.slides",
   "navigation.works",
   "feed.label",
+  // ドロワーの足元で FEED と並ぶ区画の名前。片方だけ訳すと 2 つの組が揃わない。
+  "locale.heading",
   // フィードの選び場所に並ぶ「全部」。隣に並ぶ Articles / Notes / Slides が英語のままなので、
   // ここだけ「すべて」にすると 1 つの板の中で語が混ざる。
   "feed.all",
