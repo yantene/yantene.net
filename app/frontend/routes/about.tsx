@@ -11,6 +11,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { ProfileCard } from "~/frontend/components/profile/profile-card";
+import { ProfileHistory } from "~/frontend/components/profile/profile-history";
 import { WorkList } from "~/frontend/components/work/work-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
@@ -57,7 +58,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 
 export default function About({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { profile, mdast, linkCards, works, copyright, origin } = loaderData;
+  const { profile, mdast, history, linkCards, works, copyright, origin } = loaderData;
 
   return (
     <AppLayout>
@@ -109,6 +110,28 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
                   </Link>
                 </h2>
                 <WorkList works={works} />
+              </section>
+            )}
+
+            {/*
+              経歴。**ページのいちばん下に置く。**
+
+              ここに年表を出すことは、一度「持たない」と決めて覆した判断である
+              (ADR 0044)。当時の懸念は「読み手が最初に受け取るのが履歴書になる」ことで、
+              それを押さえているのは置き場所と束ね方。自己紹介の本文と作ったものより
+              後に置き、暦年ではなく章 (高校・大学・社会人) で束ねる。**上へ動かすと
+              懸念がそのまま戻る。**
+
+              1 件も書いていなければ節ごと出さない (空の見出しは置かない)。
+            */}
+            {history.length > 0 && (
+              <section className="mt-12 flex flex-col gap-6">
+                {/*
+                  作ったものの見出しと違って、行き先を持たない。経歴に続きのページは
+                  無いので、リンクにすると押せない字になる。
+                */}
+                <h2 className="text-xl font-bold tracking-tight">{t("history.heading")}</h2>
+                <ProfileHistory history={history} />
               </section>
             )}
           </div>

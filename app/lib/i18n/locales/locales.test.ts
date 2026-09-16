@@ -36,6 +36,9 @@ const untranslatedNames = [
   "articles.toc",
   "works.title",
   "works.heading",
+  // `/about` の末尾の経歴の節。Works と同じ「この場所には何があるか」の名前なので、
+  // 隣の節が英語のままなら、ここだけ「経歴」にすると 1 ページの中で語が混ざる。
+  "history.heading",
   "search.title",
   "share.title",
   "webmention.heading",

@@ -1,0 +1,190 @@
+/*
+ * 経歴の年表 (`/about` の末尾)。
+ *
+ * 見た目の語彙は記事の年表 (article-timeline.css) と共有する。左に柱を立て、点の列を
+ * 縦線が貫く。**同じ値を使い回さずに書き写しているのは、軸が違うため。** あちらの柱は
+ * 暦年で、点の色は公開月を 1 年の位相として表す。こちらの柱は章 (高校・大学・社会人) で、
+ * 点は線の上の駅でしかないので色を持たない。片方の都合で幅や色を動かしたときに、
+ * もう片方が一緒に動くほうが事故になる。
+ */
+
+.profile-history {
+  /* 点の列の幅。縦線の位置もここから決まるので、変えると線が点からずれる。 */
+  --history-dot-column: 1.25rem;
+  --history-dot-size: 0.5rem;
+  /* 章の柱の幅。日本語 3 文字 + 余白が入る幅。 */
+  --history-chapter-column: 4rem;
+  /*
+   * 項目の上端から点の中心までの距離。縦線を切り上げ・切り下げる位置でもある。
+   * 年の 1 行目の中心 (上の余白 + 行の半分) に合わせてある。
+   */
+  --history-dot-top: 1.75rem;
+  /*
+   * 項目の上下の余白。点の位置はこの余白の内側から数えるので、Tailwind の py-* では
+   * なくここで持つ (両者がずれると、点だけが線から外れる)。
+   */
+  --history-item-padding-y: 1rem;
+}
+
+/*
+ * 章は左の柱に置き、出来事は右の列に並べる。
+ *
+ * 章を項目の間に挟まないのは、右の列を途切れさせないため。挟むと章のたびに縦線が
+ * 分断され、時間が続いているように見えなくなる (記事の年表と同じ決め)。
+ */
+.profile-history-chapter {
+  display: grid;
+  grid-template-columns: var(--history-chapter-column) minmax(0, 1fr);
+}
+
+.profile-history-chapter-name {
+  position: sticky;
+  /* ヘッダーに潜り込まない位置で止める。 */
+  top: 4.5rem;
+  /* 柱の高さいっぱいに伸ばさず、その章の始まりに置く。 */
+  align-self: start;
+  padding-top: var(--history-item-padding-y);
+  padding-right: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  /*
+   * 柱の幅は固定で、入るのは日本語 3 文字ほど。VO は 40 文字まで通すので、
+   * `Freelancing` のような切れ目の無いラテン文字はここで折らないと右の列へはみ出す
+   * (grid の列は伸びないので、出来事の字に重なる)。書き手には見えない壊れ方なので、
+   * どんな名前でも必ず折れるようにしておく。
+   */
+  overflow-wrap: anywhere;
+}
+
+.profile-history-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--history-dot-column) minmax(0, 1fr);
+  grid-template-areas:
+    "dot year"
+    "dot body";
+  column-gap: 0.75rem;
+  align-items: start;
+  padding-block: var(--history-item-padding-y);
+}
+
+/*
+ * 広い画面では年を本文の左に並べる。狭い画面で段を分けるのは、4 桁と章の柱を横に
+ * 並べたぶんだけ本文の幅が削られて、1 行に 14 文字しか入らなくなるため。
+ */
+@media (width >= 40rem) {
+  .profile-history-item {
+    grid-template-columns: var(--history-dot-column) auto minmax(0, 1fr);
+    grid-template-areas: "dot year body";
+    column-gap: 1.25rem;
+  }
+}
+
+/*
+ * 点の列を貫く縦線。**章をまたいで続ける。**
+ *
+ * 端の判定は年表全体の端だけで行う。章ごとの端で切ると、章が変わるたびに線が途切れて
+ * 時間が続いて見えなくなる。
+ */
+.profile-history-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--history-dot-column) / 2);
+  width: 1px;
+  background-color: var(--color-base-300);
+}
+
+.profile-history-chapter:first-child
+  > .profile-history-list
+  > .profile-history-item:first-child::before {
+  top: var(--history-dot-top);
+}
+
+.profile-history-chapter:last-child
+  > .profile-history-list
+  > .profile-history-item:last-child::before {
+  top: 0;
+  bottom: auto;
+  height: var(--history-dot-top);
+}
+
+/* 出来事が 1 件だけのときは、線を引く相手がいないので出さない。 */
+.profile-history-chapter:first-child:last-child
+  > .profile-history-list
+  > .profile-history-item:first-child:last-child::before {
+  display: none;
+}
+
+/*
+ * 点。**色を持たない。**
+ *
+ * 記事の年表の点は公開月を色相で表すが、経歴は年しか持たないので位相にならない。
+ * 章ごとに色を振ることもしない (章の名前が柱に出ているので、色は同じことを二度言う)。
+ */
+.profile-history-dot {
+  grid-area: dot;
+  width: var(--history-dot-size);
+  height: var(--history-dot-size);
+  border-radius: 50%;
+  /*
+   * 縦線の分岐位置と点の中心を揃える。点は余白の内側から積まれるので、項目上端からの
+   * 距離 (--history-dot-top) から余白の分を引く。
+   */
+  margin-top: calc(
+    var(--history-dot-top) - var(--history-item-padding-y) - var(--history-dot-size) / 2
+  );
+  margin-left: calc((var(--history-dot-column) - var(--history-dot-size)) / 2);
+  /* 縦線の上に載せて、線を跨ぐ点に見せる。 */
+  position: relative;
+  z-index: 1;
+  background-color: color-mix(in oklab, var(--color-base-content) 35%, var(--color-base-100));
+  /* 線が点の縁から直に伸びると窮屈なので、地の色で少し余白を作る。 */
+  box-shadow: 0 0 0 3px var(--color-base-100);
+}
+
+.profile-history-year {
+  grid-area: year;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+.profile-history-body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/*
+ * 何が起きたか。**一覧の中でいちばん強い字だが、太くはしない。**
+ *
+ * 記事の題や作品の名前は押して開く先があるので太字で立てている。こちらは読み物の行で、
+ * 押す先があるとは限らない。太字を並べると、11 行すべてが見出しに見える。
+ */
+.profile-history-text {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-base-content);
+}
+
+/* 外を指す絵は字より小さく、行の中に収める。 */
+.profile-history-external {
+  display: inline-block;
+  font-size: 0.75em;
+}
+
+/*
+ * 出来事に添える補足。**1 行だけ。** 入れ子の箇条書きにはしない
+ * (2 つ書きたくなったら出来事を分ける、という決めをコンテンツ側に置いてある)。
+ */
+.profile-history-note {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}

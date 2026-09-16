@@ -1,6 +1,6 @@
 # 0041. プロフィールをコンテンツリポジトリに置き、記事と同じ経路で同期する
 
-- Status: Accepted
+- Status: Accepted (「経歴の年表は出さない」の段のみ [0044](0044-show-the-history-as-a-timeline-of-chapters.md) で置き換え)
 - Date: 2026-09-13
 - Deciders: @yantene
 

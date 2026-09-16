@@ -55,3 +55,30 @@ export const profileSocials = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.profileId, table.position] })],
 );
+
+/**
+ * 経歴。フロントマターに書いた順 (`position`) に出す。
+ *
+ * **章 (`chapter`) を各行が持つ。** 章ごとの表は作らない。読み出しは `position` 順の
+ * 1 本の並びで、章に畳み直すのは出す側 (`toPublicHistory`)。行の形が
+ * `profile_socials` と同じになるので、upsert の「消して入れ直す」もそのまま使える。
+ *
+ * - year: 起きた年 (西暦 4 桁)。月日は持たない
+ * - url: 任意。あると `text` がその先へのリンクになる
+ * - note: 任意。`text` の下に 1 行だけ添える補足
+ */
+export const profileHistory = sqliteTable(
+  "profile_history",
+  {
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profile.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    chapter: text("chapter").notNull(),
+    year: integer("year").notNull(),
+    text: text("text").notNull(),
+    url: text("url"),
+    note: text("note"),
+  },
+  (table) => [primaryKey({ columns: [table.profileId, table.position] })],
+);

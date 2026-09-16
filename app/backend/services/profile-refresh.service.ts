@@ -194,6 +194,7 @@ function buildProfile(
       name: parsed.name,
       tagline: parsed.tagline,
       socials: parsed.socials,
+      history: parsed.history,
       sourceHash: group.contentHash,
     });
   } catch (error) {

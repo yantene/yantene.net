@@ -1,3 +1,4 @@
+import type { HistoryEntry } from "./history-entry.vo";
 import type { ProfileName } from "./profile-name.vo";
 import type { SocialAccount } from "./social-account.vo";
 import type { Tagline } from "./tagline.vo";
@@ -22,6 +23,13 @@ interface ProfileFields<T extends IPersisted | IUnpersisted> {
   readonly tagline: Tagline;
   /** 出ていく先。フロントマターに書いた順に出す。 */
   readonly socials: readonly SocialAccount[];
+  /**
+   * 経歴。フロントマターに書いた順で、章ごとに畳んで `/about` の末尾に出す。
+   *
+   * **読むのは `/about` だけ。** トップと記事の末尾は名前と短い自己紹介しか出さないので、
+   * DTO (`PublicProfile`) にはこれを載せない (ADR 0044)。
+   */
+  readonly history: readonly HistoryEntry[];
   /** コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成ハッシュ)。 */
   readonly sourceHash: string;
   readonly createdAt: T["createdAt"];
@@ -44,6 +52,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     name: ProfileName;
     tagline: Tagline;
     socials: readonly SocialAccount[];
+    history: readonly HistoryEntry[];
     sourceHash: string;
   }): Profile<IUnpersisted> {
     return new Profile({
@@ -51,6 +60,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
       name: params.name,
       tagline: params.tagline,
       socials: params.socials,
+      history: params.history,
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -62,6 +72,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     name: ProfileName;
     tagline: Tagline;
     socials: readonly SocialAccount[];
+    history: readonly HistoryEntry[];
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -83,6 +94,10 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get socials(): readonly SocialAccount[] {
     return this.fields.socials;
+  }
+
+  get history(): readonly HistoryEntry[] {
+    return this.fields.history;
   }
 
   get sourceHash(): string {

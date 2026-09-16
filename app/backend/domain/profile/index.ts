@@ -1,4 +1,5 @@
 export { isProfileDataError } from "./errors";
+export { HistoryEntry, InvalidHistoryEntryError } from "./history-entry.vo";
 export { InvalidProfileNameError, ProfileName } from "./profile-name.vo";
 export { InvalidTaglineError, Tagline } from "./tagline.vo";
 export {

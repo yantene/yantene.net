@@ -56,6 +56,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0041](0041-keep-the-profile-in-the-content-repository.md)           | プロフィールをコンテンツリポジトリに置き、記事と同じ経路で同期する     | Accepted   |
 | [0042](0042-keep-works-as-their-own-content-kind.md)                 | 作ったものを独立した種別として持ち、`/works` で配る                    | Accepted   |
 | [0043](0043-show-social-marks-as-each-brand-requires.md)             | 出ていく先の絵は黒 1 色で、不透明な台の上に出す                        | Accepted   |
+| [0044](0044-show-the-history-as-a-timeline-of-chapters.md)           | 経歴を章で束ねた年表として `/about` の末尾に出す                       | Accepted   |
 
 ## 統合した番号
 

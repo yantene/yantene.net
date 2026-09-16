@@ -65,6 +65,9 @@
       "backToList": "作品一覧へ戻る"
     }
   },
+  "history": {
+    "heading": "History"
+  },
   "search": {
     "title": "Search",
     "placeholder": "キーワードを入力",
