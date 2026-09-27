@@ -10,11 +10,10 @@ import { sampleHistory } from "~/frontend/components/profile/profile-fixture";
 /*
  * `/about` の節の並び。
  *
- * ⚠️ **経歴を上へ動かすと、[ADR 0041](../../../docs/adr/0041-keep-the-profile-in-the-content-repository.md)
- * の懸念がそのまま戻る。** 「経歴の年表は出さない」を覆したのは
- * [ADR 0044](../../../docs/adr/0044-show-the-history-as-a-timeline-of-chapters.md) だが、
- * 当時の懸念 (読み手が最初に受け取るのが履歴書になる) を押さえているのは置き場所と
- * 束ね方であって、年表そのものではない。
+ * 経歴は名乗りの直下、自己紹介の本文より前に置く
+ * ([ADR 0045](../../../docs/adr/0045-show-the-history-right-under-the-profile-card.md))。
+ * 年表が生まれたところから始まる自分史なので、頭から読ませる。**名乗りより上には
+ * 出さない。** ページの頭にあるのは顔・名前・短い自己紹介のまま。
  *
  * 置き場所は見た目に出ないので (どの順でも「それらしく」出る)、ここで形を固定する。
  */
@@ -64,7 +63,7 @@ async function renderPage(): Promise<HTMLElement> {
  * `main p` のような緩い当て方にすると名乗りの中の tagline を拾ってしまい、本文より後か
  * どうかを見ていないテストになる。
  */
-const SECTIONS = [".h-card", ".mdast-prose", ".work-list", ".profile-history"] as const;
+const SECTIONS = [".h-card", ".profile-history", ".mdast-prose", ".work-list"] as const;
 
 /** 目印の要素が本文に現れる順。`compareDocumentPosition` ではなく走査順で見る。 */
 function orderOf(container: HTMLElement, selectors: readonly string[]): string[] {
@@ -80,7 +79,7 @@ function orderOf(container: HTMLElement, selectors: readonly string[]): string[]
 }
 
 describe("/about の節の並び", () => {
-  it("経歴は名乗り・本文・作ったものより後に出す", async () => {
+  it("経歴は名乗りの直後、本文と作ったものより前に出す", async () => {
     const container = await renderPage();
 
     // 1 つでも見つからなければ短い配列になって落ちる (印を取り違えたまま緑にしない)。

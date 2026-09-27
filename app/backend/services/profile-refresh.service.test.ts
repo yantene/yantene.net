@@ -25,6 +25,7 @@ history:
       - date: 2012-03-01
         until: 2012-03-05
         text: 卒業
+        important: true
   - chapter: 大学
     entries:
       - date: 2012
@@ -175,6 +176,8 @@ describe("ProfileRefreshService", () => {
     expect(history[1]?.until).toBeUndefined();
     expect(history[1]?.url).toBe("https://example.com/");
     expect(history[1]?.note).toBe("補足");
+    /* 畳んでいても出す印。書いていなければ false に倒す。 */
+    expect(history.map((entry) => entry.important)).toEqual([true, false]);
 
     expect(cache.source).toBe(PROFILE_MD);
     expect(cache.assets.get("diagram.png")).toBeDefined();
@@ -338,6 +341,14 @@ describe("読めないプロフィール", () => {
     [
       "http(s) でない行き先",
       "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - date: 2012\n        text: 卒業\n        url: javascript:alert(1)\n---\n",
+    ],
+    /*
+     * ⚠️ **`yes` や `"true"` を真に倒さない。** 通すと、書いた字によって畳んだ章に出たり
+     * 出なかったりする。真偽値として読めなければ止める。
+     */
+    [
+      "真偽値でない重要の印",
+      '---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - chapter: 高校\n    entries:\n      - date: 2012\n        text: 卒業\n        important: "true"\n---\n',
     ],
   ])("%s のときはスキップして前の姿を残す", async (_label, markdown) => {
     await service.refresh();

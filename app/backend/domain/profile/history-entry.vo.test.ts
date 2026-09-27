@@ -17,6 +17,20 @@ describe("HistoryEntry", () => {
     expect(entry.text).toBe("豊橋技術科学大学 工学部 情報・知能工学課程 入学");
     expect(entry.url).toBeUndefined();
     expect(entry.note).toBeUndefined();
+    expect(entry.important).toBe(false);
+  });
+
+  it("carries whether it stays visible in a folded chapter", () => {
+    const entry = HistoryEntry.create({
+      chapter: "社会人",
+      date: on("2026-03"),
+      text: "結婚",
+      important: true,
+    });
+    expect(entry.important).toBe(true);
+    expect(
+      entry.equals(HistoryEntry.create({ chapter: "社会人", date: on("2026-03"), text: "結婚" })),
+    ).toBe(false);
   });
 
   it("accepts an optional link and note", () => {

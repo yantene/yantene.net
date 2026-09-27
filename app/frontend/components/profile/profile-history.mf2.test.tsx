@@ -1,3 +1,4 @@
+import type { PublicHistoryChapter } from "~/backend/handlers/profile/profile-view";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { sampleHistory } from "./profile-fixture";
@@ -131,7 +132,10 @@ describe("ProfileHistory の形", () => {
     const { container } = render(
       <ProfileHistory
         history={[
-          { chapter: "章", entries: [{ date, until, text: "出来事", url: null, note: null }] },
+          {
+            chapter: "章",
+            entries: [{ date, until, text: "出来事", url: null, note: null, important: false }],
+          },
         ]}
       />,
     );
@@ -145,5 +149,61 @@ describe("ProfileHistory の形", () => {
     expect(notes.map((node) => node.textContent)).toEqual([
       "CTF チーム優勝 (チーム名: |、6424 points)",
     ]);
+  });
+
+  /*
+   * 章は畳んだ姿で出る。開閉の器は `<details>` で、**`open` を付けて描かない。**
+   * 付けて描くと、JavaScript の動かない環境でも全部が開いた姿になる。
+   */
+  it("章は畳んだ姿で描く", () => {
+    const toggles = [...renderHistory().querySelectorAll("details")];
+
+    expect(toggles).toHaveLength(2);
+    expect(toggles.every((toggle) => !toggle.open)).toBe(true);
+  });
+
+  /*
+   * 畳んだ章に残るのは、章の最初と最後と、重要の印の付いた出来事。`⋮` は隠れる出来事が
+   * 続く束の頭ごとに 1 つ。束を 1 つにまとめると、どこを省いたのかが分からない。
+   *
+   * 見本では、高校は優勝 (重要・最初) と卒業 (最後) が残って合宿が隠れる。大学は入学
+   * (最初)・セキュリティ・キャンプ (重要)・修了 (最後) で全部が残る。
+   */
+  it("章の両端と重要な出来事を残し、隠す束ごとに ⋮ を立てる", () => {
+    const container = renderHistory();
+    const sequence = [...container.querySelectorAll(".profile-history-list > li")].map((node) =>
+      node.classList.contains("profile-history-gap")
+        ? "⋮"
+        : node.classList.contains("profile-history-kept")
+          ? "kept"
+          : "hidden",
+    );
+
+    expect(sequence).toEqual(["kept", "⋮", "hidden", "kept", "kept", "kept", "kept"]);
+  });
+
+  /*
+   * 重要な出来事が 1 つも無い章でも、両端の 2 件は残る。章が `⋮` だけになると、
+   * 畳んだ姿から中身の見当が付かない。
+   */
+  it("重要な出来事の無い章でも、最初と最後は残す", () => {
+    const entry = (text: string): PublicHistoryChapter["entries"][number] => ({
+      date: "2000",
+      until: null,
+      text,
+      url: null,
+      note: null,
+      important: false,
+    });
+    const { container } = render(
+      <ProfileHistory
+        history={[{ chapter: "章", entries: [entry("入学"), entry("中"), entry("卒業")] }]}
+      />,
+    );
+    const kept = [...container.querySelectorAll(".profile-history-kept")].map(
+      (node) => node.querySelector(".profile-history-text")?.textContent,
+    );
+
+    expect(kept).toEqual(["入学", "卒業"]);
   });
 });

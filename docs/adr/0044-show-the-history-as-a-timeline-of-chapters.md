@@ -1,6 +1,6 @@
 # 0044. 経歴を章で束ねた年表として `/about` の末尾に出す
 
-- Status: Accepted
+- Status: Accepted (置き場所の段のみ [0045](0045-show-the-history-right-under-the-profile-card.md) で置き換え)
 - Date: 2026-09-16
 - Deciders: @yantene
 

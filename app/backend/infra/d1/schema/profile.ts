@@ -86,6 +86,8 @@ export const profileHistory = sqliteTable(
     text: text("text").notNull(),
     url: text("url"),
     note: text("note"),
+    /* 章を畳んでいても出す出来事の印 (ADR 0045)。 */
+    important: integer("important", { mode: "boolean" }).notNull().default(false),
   },
   (table) => [primaryKey({ columns: [table.profileId, table.position] })],
 );

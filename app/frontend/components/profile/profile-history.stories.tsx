@@ -8,7 +8,7 @@ const meta: Meta<typeof ProfileHistory> = {
   args: { history: sampleHistory },
   decorators: [
     /*
-     * 上に余白を置く。章の名前は sticky で、ヘッダーの下 (4.5rem) で止まる。Storybook には
+     * 上に余白を置く。章の開閉の器は sticky で、ヘッダーの下 (4.5rem) で止まる。Storybook には
      * ヘッダーが無いので、余白を置かないと最初から吸着した姿で出て、章と最初の出来事が
      * ずれているように見える。
      */
@@ -23,14 +23,25 @@ const meta: Meta<typeof ProfileHistory> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** 既定の姿。章は畳まれていて、重要な出来事と `⋮` だけが出る。 */
 export const Default: Story = {};
 
-/** 章が 1 つ・出来事が 1 件のとき。縦線を引く相手がいないので線は出ない。 */
+/**
+ * 章をすべて開いた姿。`open` 属性を直に立てる。器が `<details>` なので、これは読み手が
+ * 章の名前を押したときと同じ状態になる。
+ */
+export const Expanded: Story = {
+  play: ({ canvasElement }) => {
+    for (const toggle of canvasElement.querySelectorAll("details")) toggle.open = true;
+  },
+};
+
+/** 章が 1 つ・出来事が 1 件のとき。線は点から下へ伸びて薄れるだけになる。 */
 export const SingleEntry: Story = {
   args: { history: [{ chapter: "社会人", entries: [sampleHistory[1].entries[0]] }] },
 };
 
-/** 章が 1 つで出来事が複数。端の切り上げ・切り下げだけが働く。 */
+/** 章が 1 つで出来事が複数。頭の切り上げと、尻の伸ばしだけが働く。 */
 export const SingleChapter: Story = {
   args: { history: [sampleHistory[1]] },
 };

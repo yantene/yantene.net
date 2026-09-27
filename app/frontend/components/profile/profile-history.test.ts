@@ -42,4 +42,18 @@ describe("profile-history.css", () => {
 
     expect(rule.slice(0, rule.indexOf("}"))).toContain("overflow-wrap: anywhere");
   });
+
+  /*
+   * 年表の尻は最後の点で切らず、先へ伸ばして薄れさせる。いまも続いていることを表す
+   * 線なので、ほかの端と揃えて切ると「ここで終わった」年表に見える。
+   */
+  it("最後の出来事の線は点で切らず、先へ伸ばす", () => {
+    const rule = css.slice(
+      css.indexOf(".profile-history-chapter:last-child .profile-history-item:last-child::before"),
+    );
+    const body = rule.slice(0, rule.indexOf("}"));
+
+    expect(body).toContain("bottom: calc(-1 * var(--history-tail))");
+    expect(body).not.toContain("height:");
+  });
 });
