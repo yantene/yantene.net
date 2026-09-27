@@ -128,13 +128,13 @@
 }
 
 /*
- * 畳んだ章では、重要の印の無い出来事を隠し、代わりに `⋮` を立てる。
+ * 畳んだ章では、章の両端と重要の印の付いた出来事だけを残し、隠したところに `⋮` を立てる。
  *
  * 開いているかどうかは隣の `<details>` が持つ。出来事の列を `<details>` の中に
  * 入れないのは、畳んだ間も重要な出来事だけは出したいため。
  */
 .profile-history-chapter:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:not(.profile-history-important) {
+  .profile-history-item:not(.profile-history-kept) {
   display: none;
 }
 
@@ -186,23 +186,20 @@
 
 /*
  * 端を切るのは、**見えている**最初と最後の出来事だけ。畳んだ章と開いた章で、見えている
- * ものが違う (畳んだ章は重要な出来事と `⋮` だけ)。`⋮` は線を持たないので、端が `⋮` なら
+ * ものが違う (畳んだ章は残す出来事と `⋮` だけ)。`⋮` は線を持たないので、端が `⋮` なら
  * 切るものは無い。
  */
 .profile-history-chapter:first-child:has(> .profile-history-toggle[open])
   .profile-history-item:nth-child(1 of .profile-history-item)::before,
 .profile-history-chapter:first-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-child(1 of .profile-history-important, .profile-history-gap)::before {
+  .profile-history-item:nth-child(1 of .profile-history-kept, .profile-history-gap)::before {
   top: var(--history-dot-top);
 }
 
 .profile-history-chapter:last-child:has(> .profile-history-toggle[open])
   .profile-history-item:nth-last-child(1 of .profile-history-item)::before,
 .profile-history-chapter:last-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-last-child(
-    1 of .profile-history-important,
-    .profile-history-gap
-  )::before {
+  .profile-history-item:nth-last-child(1 of .profile-history-kept, .profile-history-gap)::before {
   top: 0;
   bottom: auto;
   height: var(--history-dot-top);
@@ -214,10 +211,10 @@
     1 of .profile-history-item
   )::before,
 .profile-history-chapter:only-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-child(
-    1 of .profile-history-important,
+  .profile-history-item:nth-child(1 of .profile-history-kept, .profile-history-gap):nth-last-child(
+    1 of .profile-history-kept,
     .profile-history-gap
-  ):nth-last-child(1 of .profile-history-important, .profile-history-gap)::before {
+  )::before {
   display: none;
 }
 

@@ -47,15 +47,24 @@ function stampOf(entry: HistoryEntryView): string {
 }
 
 /**
- * 畳んだ章で `⋮` を置く位置。**重要でない出来事が続く束の頭**ごとに 1 つ。
+ * 畳んだ章でも出す出来事か。**章の最初と最後は必ず出し**、その間は重要の印で決める。
  *
- * 重要な出来事の間に挟まった束は、それぞれの位置に `⋮` が立つ。1 つにまとめると、
+ * 最初と最後を残すのは、畳んだ姿からでもその章がいつからいつまでかが読めるようにする
+ * ため。重要な出来事が 1 つも無い章も、両端の 2 件で中身の見当が付く。
+ */
+function isKeptWhenFolded(entries: readonly HistoryEntryView[], index: number): boolean {
+  return index === 0 || index === entries.length - 1 || entries[index]?.important;
+}
+
+/**
+ * 畳んだ章で `⋮` を置く位置。**畳むと隠れる出来事が続く束の頭**ごとに 1 つ。
+ *
+ * 残す出来事の間に挟まった束は、それぞれの位置に `⋮` が立つ。1 つにまとめると、
  * どこを省いたのかが分からなくなる。
  */
 function startsGap(entries: readonly HistoryEntryView[], index: number): boolean {
-  const entry = entries[index];
-  if (entry === undefined || entry.important) return false;
-  return index === 0 || entries[index - 1]?.important;
+  if (isKeptWhenFolded(entries, index)) return false;
+  return isKeptWhenFolded(entries, index - 1);
 }
 
 /**
@@ -73,8 +82,9 @@ function startsGap(entries: readonly HistoryEntryView[], index: number): boolean
  * 束ねるのは暦年ではなく章 (高校・大学・社会人)。区切りは書き手が決めるので、
  * ここでは渡された順のまま出す (並べ替えない)。
  *
- * **章は畳んだ姿で出る** (ADR 0045)。畳んでいる間に出るのは重要の印 (`important`) の
- * 付いた出来事だけで、省いたところには `⋮` が立つ。章の名前を押すと全部が出る。
+ * **章は畳んだ姿で出る** (ADR 0045)。畳んでいる間に出るのは、章の最初と最後と、
+ * 重要の印 (`important`) の付いた出来事だけで、省いたところには `⋮` が立つ。
+ * 章の名前を押すと全部が出る。
  */
 export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Element {
   return (
@@ -121,7 +131,7 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
               */
               <li
                 key={keyOf(entry)}
-                className={`profile-history-item${entry.important ? " profile-history-important" : ""}`}
+                className={`profile-history-item${isKeptWhenFolded(chapter.entries, index) ? " profile-history-kept" : ""}`}
               >
                 {/* 点は線の上の駅を表す装飾で、年は隣の字が持っている。 */}
                 <span className="profile-history-dot" aria-hidden="true" />
