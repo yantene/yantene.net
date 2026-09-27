@@ -32,6 +32,8 @@
    * なくここで持つ (両者がずれると、点だけが線から外れる)。
    */
   --history-item-padding-y: 1rem;
+  /* 最後の出来事から先へ伸ばす線の長さ。いまも続いていることを表す。 */
+  --history-tail: 2.5rem;
 }
 
 /*
@@ -185,37 +187,29 @@
 }
 
 /*
- * 端を切るのは、**見えている**最初と最後の出来事だけ。畳んだ章と開いた章で、見えている
- * ものが違う (畳んだ章は残す出来事と `⋮` だけ)。`⋮` は線を持たないので、端が `⋮` なら
- * 切るものは無い。
+ * 年表の頭は、最初の点で線を切る。
+ *
+ * 章の最初と最後の出来事は畳んでも隠れないので (`profile-history.tsx`)、年表全体の
+ * 最初の `li` はいつも見えている出来事で、`⋮` にはならない。
  */
-.profile-history-chapter:first-child:has(> .profile-history-toggle[open])
-  .profile-history-item:nth-child(1 of .profile-history-item)::before,
-.profile-history-chapter:first-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-child(1 of .profile-history-kept, .profile-history-gap)::before {
+.profile-history-chapter:first-child .profile-history-item:first-child::before {
   top: var(--history-dot-top);
 }
 
-.profile-history-chapter:last-child:has(> .profile-history-toggle[open])
-  .profile-history-item:nth-last-child(1 of .profile-history-item)::before,
-.profile-history-chapter:last-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-last-child(1 of .profile-history-kept, .profile-history-gap)::before {
-  top: 0;
-  bottom: auto;
-  height: var(--history-dot-top);
-}
-
-/* 見えている出来事が 1 件だけのときは、線を引く相手がいないので出さない。 */
-.profile-history-chapter:only-child:has(> .profile-history-toggle[open])
-  .profile-history-item:nth-child(1 of .profile-history-item):nth-last-child(
-    1 of .profile-history-item
-  )::before,
-.profile-history-chapter:only-child:not(:has(> .profile-history-toggle[open]))
-  .profile-history-item:nth-child(1 of .profile-history-kept, .profile-history-gap):nth-last-child(
-    1 of .profile-history-kept,
-    .profile-history-gap
-  )::before {
-  display: none;
+/*
+ * 年表の尻は切らない。**最後の点の先へ線を伸ばし、薄れさせて終える。** 最後の出来事で
+ * 年表が終わっているのではなく、いまも続いていることを表す。
+ *
+ * 出来事が 1 件だけでも同じ。頭の規則が上を切り、ここが下へ伸ばす。
+ */
+.profile-history-chapter:last-child .profile-history-item:last-child::before {
+  bottom: calc(-1 * var(--history-tail));
+  background-color: transparent;
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-base-300) calc(100% - var(--history-tail) * 1.5),
+    transparent
+  );
 }
 
 /*

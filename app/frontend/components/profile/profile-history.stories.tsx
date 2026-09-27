@@ -36,12 +36,12 @@ export const Expanded: Story = {
   },
 };
 
-/** 章が 1 つ・出来事が 1 件のとき。縦線を引く相手がいないので線は出ない。 */
+/** 章が 1 つ・出来事が 1 件のとき。線は点から下へ伸びて薄れるだけになる。 */
 export const SingleEntry: Story = {
   args: { history: [{ chapter: "社会人", entries: [sampleHistory[1].entries[0]] }] },
 };
 
-/** 章が 1 つで出来事が複数。端の切り上げ・切り下げだけが働く。 */
+/** 章が 1 つで出来事が複数。頭の切り上げと、尻の伸ばしだけが働く。 */
 export const SingleChapter: Story = {
   args: { history: [sampleHistory[1]] },
 };
