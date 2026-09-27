@@ -670,6 +670,20 @@ describe("MdastRenderer: video", () => {
     expect(html).not.toContain("<video");
   });
 
+  it("aria-label を読み上げ用の名前として残し、空なら付けない", () => {
+    const named = ssr(
+      `<video aria-label="D Flip-Flop が動いている様子">\n` +
+        `<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`,
+    );
+    expect(named).toContain('aria-label="D Flip-Flop が動いている様子"');
+
+    const empty = ssr(
+      `<video aria-label="">\n<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`,
+    );
+    expect(empty).toContain("<video");
+    expect(empty).not.toContain("aria-label");
+  });
+
   it("自分のアセットを指す poster は残し、外を指す poster は落とす", () => {
     const kept = ssr(
       `<video poster="${SLUG}/cover.jpg">\n<source src="${VP9}" type="video/webm">\n</video>`,
