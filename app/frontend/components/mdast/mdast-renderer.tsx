@@ -343,14 +343,16 @@ function assetSourcesOf(element: Element): Element[] {
  * source を複数保つのは、同じ映像をコーデック違いで並べてブラウザに選ばせるためである
  * (AV1 を再生できない環境は H.264 に落ちる)。
  *
- * **付ける属性は固定する。この口はアニメーション画像を置き換えるためにある。**
- * だから音の出ない短い繰り返しとして振る舞わせ、`muted` と `playsInline` は本文側の
- * 書き方に関わらず必ず付ける。音が出ないことと、iOS で全画面に飛ばないことを、
- * 書き手の書き忘れに委ねない。`controls` も付ける。アニメーション画像には無かった
- * 「止める」手段になる。
+ * **付ける属性は固定する。そして自動再生しない。**
+ * この口はアニメーション画像を置き換えるために作ったが、置き換える相手と同じ振る舞い
+ * (勝手に再生され、繰り返す) にはしない。HTML だけでは `prefers-reduced-motion` を
+ * 尊重できず、本文からスクリプトを起こす経路も無いので、動いてしまってから止める形に
+ * なるためである。読者が押すまでは poster の 1 枚が出ている。
  *
- * poster だけは本文から受け取る。自動再生が止められた環境 (省電力・通信量節約) で、
- * 黒い四角ではなく 1 枚目を出せる。src と同じく自分のアセットに絞る。
+ * だから `controls` は必ず付ける。押す手段がないと再生できない。`playsInline` も
+ * 本文側の書き方に関わらず付ける。iOS で全画面に飛ばないことを書き忘れに委ねない。
+ *
+ * poster は本文から受け取る。src と同じく自分のアセットに絞る。
  */
 function toVideo(element: Element): Element | null {
   const sources = assetSourcesOf(element);
@@ -361,9 +363,6 @@ function toVideo(element: Element): Element | null {
     ...element,
     properties: {
       controls: true,
-      autoPlay: true,
-      loop: true,
-      muted: true,
       playsInline: true,
       preload: "metadata",
       ...(typeof poster === "string" && isArticleAssetSrc(poster) && { poster }),
