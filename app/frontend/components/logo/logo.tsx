@@ -5,7 +5,7 @@ import { LOGO_CHARACTER, LOGO_LOGOTYPE, LOGO_VIEW_BOX } from "~/lib/logo-layout"
 type LogoProps = React.ComponentProps<"svg">;
 
 /**
- * ロゴ。歩くやんてねくんと「やんてね」の字形を横に並べたもの。
+ * ロゴ。胸から上のやんてねくんと「やんてね」の字形を横に並べたもの。
  *
  * **合成済みの 1 枚は持たない。** 素材 2 つを入れ子の `<svg>` として並べるだけで、絵の
  * 在り処はそれぞれ 1 つになる。写しを持っていたときは、キャラクターを描き直した回に
@@ -13,7 +13,8 @@ type LogoProps = React.ComponentProps<"svg">;
  *
  * 入れ子の `<svg>` にしているのは、置き場所を `x` / `y` / `width` / `height` だけで
  * 書けるため。`<g transform>` で包むと、素材の viewBox と倍率を自分で掛け合わせることに
- * なり、素材を差し替えたときに合わせ直す数が増える。
+ * なり、素材を差し替えたときに合わせ直す数が増える。キャラクターを胸から上で切るのも
+ * 同じ入れ子の viewBox で、素材の viewBox を `LOGO_CHARACTER.viewBox` で上書きしている。
  *
  * 塗りは `currentColor` のまま通す。呼ぶ側の `color` がそのままインクになる
  * (素材 2 つとも同じ契約で、白の裏打ちだけが自前の色を持つ)。
