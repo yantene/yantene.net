@@ -142,7 +142,8 @@
     }
   },
   "locale": {
-    "label": "Display language"
+    "label": "Display language",
+    "heading": "Language"
   },
   "comingSoon": {
     "badge": "Coming soon",
