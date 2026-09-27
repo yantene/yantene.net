@@ -35,7 +35,8 @@ export const sampleProfile: PublicProfile = {
  * 日の精度も 3 段とも混ぜてある (年だけ・月まで・日まで) うえに、終わりのある出来事も
  * 1 件入れてある。どれかが欠けると、stories でもテストでもその分岐が一度も通らない。
  * 章を 2 つにしているのは、縦線が章をまたいで続くことを見るため (1 章だと端の判定しか
- * 働かない)。
+ * 働かない)。重要の印は章の頭と途中に 1 つずつ置き、畳んだ姿で `⋮` が章の頭・途中・
+ * 末尾のどれにも立つようにしてある。
  */
 export const sampleHistory: readonly PublicHistoryChapter[] = [
   {
@@ -47,6 +48,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "第 28 回 全国高等学校情報処理競技大会 愛知県予選会 個人優勝",
         url: null,
         note: null,
+        important: true,
       },
       {
         date: "2012-02-20",
@@ -54,6 +56,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "Ruby 合宿 2012 春",
         url: null,
         note: null,
+        important: false,
       },
       {
         date: "2012-03",
@@ -61,6 +64,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "愛知県立知立高等学校 情報処理科 卒業",
         url: null,
         note: null,
+        important: false,
       },
     ],
   },
@@ -73,6 +77,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "豊橋技術科学大学 工学部 情報・知能工学課程 入学",
         url: null,
         note: null,
+        important: false,
       },
       {
         date: "2012-08-14",
@@ -80,6 +85,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "セキュリティ・キャンプ中央大会 2012 Web・セキュリティ・クラス",
         url: "https://www.youtube.com/watch?v=Ki1qb9q4z8E",
         note: "CTF チーム優勝 (チーム名: |、6424 points)",
+        important: true,
       },
       {
         date: "2018",
@@ -87,6 +93,7 @@ export const sampleHistory: readonly PublicHistoryChapter[] = [
         text: "豊橋技術科学大学大学院 工学研究科 修了",
         url: null,
         note: null,
+        important: false,
       },
     ],
   },

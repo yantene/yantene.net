@@ -17,6 +17,8 @@ export interface PublicHistoryEntry {
   readonly text: string;
   readonly url: string | null;
   readonly note: string | null;
+  /** 章を畳んでいても出すかどうか (ADR 0045)。 */
+  readonly important: boolean;
 }
 
 /** 章 1 つと、その中の出来事。 */
@@ -32,7 +34,7 @@ export interface PublicHistoryChapter {
  * 開くたびに運ぶ理由が無い。
  *
  * **経歴も同じ理由で入れない** (`toPublicHistory` が別に組む)。出るのは `/about` の
- * 末尾だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。引くのも
+ * 1 か所だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。引くのも
  * 別の口 (`IProfileQueryRepository.findHistory`)。
  */
 export interface PublicProfile {
@@ -74,6 +76,7 @@ export function toPublicHistory(history: readonly HistoryEntry[]): readonly Publ
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,
+      important: entry.important,
     });
   }
   return [...chapters].map(([chapter, entries]) => ({ chapter, entries }));

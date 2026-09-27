@@ -1,4 +1,4 @@
-import { HiArrowTopRightOnSquare } from "react-icons/hi2";
+import { HiArrowTopRightOnSquare, HiChevronDown } from "react-icons/hi2";
 import type { PublicHistoryChapter } from "~/backend/handlers/profile/profile-view";
 
 interface ProfileHistoryProps {
@@ -8,9 +8,14 @@ interface ProfileHistoryProps {
 type HistoryEntryView = PublicHistoryChapter["entries"][number];
 
 function keyOf(entry: HistoryEntryView): string {
-  return [entry.date, entry.until ?? "", entry.text, entry.url ?? "", entry.note ?? ""].join(
-    "\u0000",
-  );
+  return [
+    entry.date,
+    entry.until ?? "",
+    entry.text,
+    entry.url ?? "",
+    entry.note ?? "",
+    String(entry.important),
+  ].join("\u0000");
 }
 
 /**
@@ -42,6 +47,18 @@ function stampOf(entry: HistoryEntryView): string {
 }
 
 /**
+ * 畳んだ章で `⋮` を置く位置。**重要でない出来事が続く束の頭**ごとに 1 つ。
+ *
+ * 重要な出来事の間に挟まった束は、それぞれの位置に `⋮` が立つ。1 つにまとめると、
+ * どこを省いたのかが分からなくなる。
+ */
+function startsGap(entries: readonly HistoryEntryView[], index: number): boolean {
+  const entry = entries[index];
+  if (entry === undefined || entry.important) return false;
+  return index === 0 || entries[index - 1]?.important;
+}
+
+/**
  * 経歴を章ごとに束ねた縦の年表。`/about` の名乗りの直下だけが描く。
  *
  * 見た目の語彙 (左の柱・点・縦の罫線) は記事の年表 (`article-timeline`) と共有するが、
@@ -55,6 +72,9 @@ function stampOf(entry: HistoryEntryView): string {
  *
  * 束ねるのは暦年ではなく章 (高校・大学・社会人)。区切りは書き手が決めるので、
  * ここでは渡された順のまま出す (並べ替えない)。
+ *
+ * **章は畳んだ姿で出る** (ADR 0045)。畳んでいる間に出るのは重要の印 (`important`) の
+ * 付いた出来事だけで、省いたところには `⋮` が立つ。章の名前を押すと全部が出る。
  */
 export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Element {
   return (
@@ -62,21 +82,47 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
       {history.map((chapter) => (
         <div key={chapter.chapter} className="profile-history-chapter">
           {/*
-            章の名前は見出しにする。記事の年表が年を見出しにしないのは、日付が各項目の
-            time 要素に残っていて読み上げに要らないため。**章はどの項目にも書いていない**
-            ので、見出しにしないと読み上げた人がどの束を聞いているのか分からない。
-            段は h3 (節の題「History」が h2 で、`WorkList` の作品名と同じ位置)。
+            開閉の器は `<details>`。**中身は空で、開いているかどうかだけを持つ。** 出来事の
+            列は隣の `<ol>` にあり、どれを隠すかは CSS が `:has([open])` で決める。
+            `<details>` の中に列を入れると、畳んだ間は重要な出来事まで隠れてしまう。
+
+            JavaScript は要らない (ヘッダーのメニューと同じ器)。
+
+            章の名前は見出しにする。**章はどの項目にも書いていない**ので、見出しにしないと
+            読み上げた人がどの束を聞いているのか分からない。段は h3 (節の題「History」が
+            h2)。`<summary>` の中の見出しはボタンに畳まれて見出しとしては読まれない
+            読み上げ環境もあるが、そのときもボタンの名前が章の名前になるので、どの束かは
+            伝わる。
           */}
-          <h3 className="profile-history-chapter-name">{chapter.chapter}</h3>
+          <details className="profile-history-toggle">
+            <summary className="profile-history-summary press-control">
+              <h3 className="profile-history-chapter-name">{chapter.chapter}</h3>
+              <HiChevronDown className="profile-history-caret" aria-hidden />
+            </summary>
+          </details>
           <ol className="profile-history-list">
-            {chapter.entries.map((entry) => (
+            {chapter.entries.flatMap((entry, index) => [
+              ...(startsGap(chapter.entries, index)
+                ? [
+                    /*
+                      省いた束の印。畳んでいる間だけ出る。読み上げには出さない (隠れた
+                      出来事は読み上げからも外れていて、開けば全部が読める)。
+                    */
+                    <li key={`gap:${keyOf(entry)}`} className="profile-history-gap" aria-hidden>
+                      ⋮
+                    </li>,
+                  ]
+                : []),
               /*
                 鍵は欄をすべて繋いだもの。**年と字だけでは足りない** — 同じ年に同じ字の
                 出来事を、補足やリンクだけ変えて 2 つ書ける (VO が見るのは各欄の妥当さで、
                 重複ではない)。全部の欄が同じなら見た目も同じになるので、そこで衝突しても
                 取り違えようが無い。
               */
-              <li key={keyOf(entry)} className="profile-history-item">
+              <li
+                key={keyOf(entry)}
+                className={`profile-history-item${entry.important ? " profile-history-important" : ""}`}
+              >
                 {/* 点は線の上の駅を表す装飾で、年は隣の字が持っている。 */}
                 <span className="profile-history-dot" aria-hidden="true" />
                 {/*
@@ -117,8 +163,8 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
 
                   {entry.note !== null && <p className="profile-history-note">{entry.note}</p>}
                 </div>
-              </li>
-            ))}
+              </li>,
+            ])}
           </ol>
         </div>
       ))}

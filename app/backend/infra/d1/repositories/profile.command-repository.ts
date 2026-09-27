@@ -10,7 +10,7 @@ import { instantToUnix } from "~/backend/infra/d1/temporal";
 /*
  * 1 文あたりの行数。**D1 のバインドパラメータ上限 (100) に収まる数で切る。**
  *
- * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 12)。
+ * 欄の数がそのまま 1 行あたりのパラメータ数になる (出ていく先は 5、経歴は 13)。
  *
  * ⚠️ **手元のテストでは踏めない。** `createTestD1` は node:sqlite で、あちらの上限は
  * 32766 なので何行でも通る。超えたときに落ちるのは insert 1 文ではなく **batch ごと**で、
@@ -19,7 +19,7 @@ import { instantToUnix } from "~/backend/infra/d1/temporal";
  * 行数で切ることのほうを既定にする (`article-embedding.command-repository.ts` と同じ手)。
  */
 export const SOCIAL_ROWS_PER_STATEMENT = 16;
-export const HISTORY_ROWS_PER_STATEMENT = 8;
+export const HISTORY_ROWS_PER_STATEMENT = 7;
 
 /** D1 が 1 文に受けるバインドパラメータの数。 */
 export const D1_BOUND_PARAMETER_LIMIT = 100;
@@ -46,7 +46,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
    * 表に出ない。
    *
    * ⚠️ **子の insert は行数で切って複数文にする** (D1 のバインドパラメータ上限)。
-   * 1 文にまとめると、経歴が 15 件目に達した push で batch ごと落ちる。
+   * 1 文にまとめると、経歴が 8 件目に達した push で batch ごと落ちる。
    */
   async upsert(source: Profile<IUnpersisted>, history: readonly HistoryEntry[]): Promise<void> {
     const nowUnix = instantToUnix(Temporal.Now.instant());
@@ -85,6 +85,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       text: entry.text,
       url: entry.url ?? null,
       note: entry.note ?? null,
+      important: entry.important,
     }));
 
     await this.db.batch([

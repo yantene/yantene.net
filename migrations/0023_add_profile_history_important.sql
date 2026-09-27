@@ -1,0 +1,1 @@
+ALTER TABLE `profile_history` ADD `important` integer DEFAULT false NOT NULL;

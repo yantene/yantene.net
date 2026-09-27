@@ -12,8 +12,8 @@
   /* 点の列の幅。縦線の位置もここから決まるので、変えると線が点からずれる。 */
   --history-dot-column: 1.25rem;
   --history-dot-size: 0.5rem;
-  /* 章の柱の幅。日本語 3 文字 + 余白が入る幅。 */
-  --history-chapter-column: 4rem;
+  /* 章の柱の幅。日本語 3 文字 + 開閉の印 + 余白が入る幅。 */
+  --history-chapter-column: 4.75rem;
   /*
    * 札の柱の幅。`2012-08-14 〜 18` (同じ月に収まる期間) が 1 行で入る幅で固定する。
    * 実測で 7.84rem。年をまたぐ期間 (`2012-12-28 〜 2013-01-03`、11.9rem) は折り返す。
@@ -45,18 +45,44 @@
   grid-template-columns: var(--history-chapter-column) minmax(0, 1fr);
 }
 
-.profile-history-chapter-name {
+/*
+ * 章の開閉の器 (`<details>`)。**中身は空で、開いているかどうかだけを持つ。**
+ *
+ * 柱の上に吸着させ、長い章を読んでいる間も、どの章にいるのかが見えるようにする。
+ */
+.profile-history-toggle {
   position: sticky;
   /* ヘッダーに潜り込まない位置で止める (値は app.css が 1 か所で持つ)。 */
   top: var(--header-clearance);
   /* 柱の高さいっぱいに伸ばさず、その章の始まりに置く。 */
   align-self: start;
+}
+
+.profile-history-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
   padding-top: var(--history-item-padding-y);
   padding-right: 0.5rem;
+  list-style: none;
+  cursor: pointer;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  transition: color 150ms;
+}
+
+.profile-history-summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-history-summary:hover {
+  color: var(--color-primary);
+}
+
+.profile-history-chapter-name {
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.5rem;
-  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
   /*
    * 柱の幅は固定で、入るのは日本語 3 文字ほど。VO は 40 文字まで通すので、
    * `Freelancing` のような切れ目の無いラテン文字はここで折らないと右の列へはみ出す
@@ -64,6 +90,56 @@
    * どんな名前でも必ず折れるようにしておく。
    */
   overflow-wrap: anywhere;
+}
+
+/* 開閉の印。章の名前の 1 行目の中心に揃える。 */
+.profile-history-caret {
+  flex: none;
+  width: 0.75rem;
+  height: 1.5rem;
+  transition: rotate 150ms;
+}
+
+.profile-history-toggle[open] .profile-history-caret {
+  rotate: 180deg;
+}
+
+/*
+ * 省いたところの印。**縦線の代わりに点々が入る。** 線を引いたまま `⋮` を重ねると、
+ * 続いているのか途切れているのかが読めない。線が点々に変わることが「ここは省いた」を
+ * 表す。
+ *
+ * 出るのは畳んだ章だけ (下の規則)。
+ */
+.profile-history-gap {
+  display: none;
+  grid-template-columns: var(--history-dot-column);
+  justify-items: center;
+  /*
+   * `⋮` の中心を点と同じ高さ (--history-dot-top) に置く。章が `⋮` から始まるときに、
+   * 柱の章の名前と横に揃う。
+   */
+  padding-top: calc(var(--history-dot-top) - 0.75rem);
+  padding-bottom: 0.25rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+  user-select: none;
+}
+
+/*
+ * 畳んだ章では、重要の印の無い出来事を隠し、代わりに `⋮` を立てる。
+ *
+ * 開いているかどうかは隣の `<details>` が持つ。出来事の列を `<details>` の中に
+ * 入れないのは、畳んだ間も重要な出来事だけは出したいため。
+ */
+.profile-history-chapter:not(:has(> .profile-history-toggle[open]))
+  .profile-history-item:not(.profile-history-important) {
+  display: none;
+}
+
+.profile-history-chapter:not(:has(> .profile-history-toggle[open])) .profile-history-gap {
+  display: grid;
 }
 
 .profile-history-item {
@@ -108,24 +184,40 @@
   background-color: var(--color-base-300);
 }
 
-.profile-history-chapter:first-child
-  > .profile-history-list
-  > .profile-history-item:first-child::before {
+/*
+ * 端を切るのは、**見えている**最初と最後の出来事だけ。畳んだ章と開いた章で、見えている
+ * ものが違う (畳んだ章は重要な出来事と `⋮` だけ)。`⋮` は線を持たないので、端が `⋮` なら
+ * 切るものは無い。
+ */
+.profile-history-chapter:first-child:has(> .profile-history-toggle[open])
+  .profile-history-item:nth-child(1 of .profile-history-item)::before,
+.profile-history-chapter:first-child:not(:has(> .profile-history-toggle[open]))
+  .profile-history-item:nth-child(1 of .profile-history-important, .profile-history-gap)::before {
   top: var(--history-dot-top);
 }
 
-.profile-history-chapter:last-child
-  > .profile-history-list
-  > .profile-history-item:last-child::before {
+.profile-history-chapter:last-child:has(> .profile-history-toggle[open])
+  .profile-history-item:nth-last-child(1 of .profile-history-item)::before,
+.profile-history-chapter:last-child:not(:has(> .profile-history-toggle[open]))
+  .profile-history-item:nth-last-child(
+    1 of .profile-history-important,
+    .profile-history-gap
+  )::before {
   top: 0;
   bottom: auto;
   height: var(--history-dot-top);
 }
 
-/* 出来事が 1 件だけのときは、線を引く相手がいないので出さない。 */
-.profile-history-chapter:first-child:last-child
-  > .profile-history-list
-  > .profile-history-item:first-child:last-child::before {
+/* 見えている出来事が 1 件だけのときは、線を引く相手がいないので出さない。 */
+.profile-history-chapter:only-child:has(> .profile-history-toggle[open])
+  .profile-history-item:nth-child(1 of .profile-history-item):nth-last-child(
+    1 of .profile-history-item
+  )::before,
+.profile-history-chapter:only-child:not(:has(> .profile-history-toggle[open]))
+  .profile-history-item:nth-child(
+    1 of .profile-history-important,
+    .profile-history-gap
+  ):nth-last-child(1 of .profile-history-important, .profile-history-gap)::before {
   display: none;
 }
 

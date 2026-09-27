@@ -131,7 +131,10 @@ describe("ProfileHistory の形", () => {
     const { container } = render(
       <ProfileHistory
         history={[
-          { chapter: "章", entries: [{ date, until, text: "出来事", url: null, note: null }] },
+          {
+            chapter: "章",
+            entries: [{ date, until, text: "出来事", url: null, note: null, important: false }],
+          },
         ]}
       />,
     );
@@ -145,5 +148,33 @@ describe("ProfileHistory の形", () => {
     expect(notes.map((node) => node.textContent)).toEqual([
       "CTF チーム優勝 (チーム名: |、6424 points)",
     ]);
+  });
+
+  /*
+   * 章は畳んだ姿で出る。開閉の器は `<details>` で、**`open` を付けて描かない。**
+   * 付けて描くと、JavaScript の動かない環境でも全部が開いた姿になる。
+   */
+  it("章は畳んだ姿で描く", () => {
+    const toggles = [...renderHistory().querySelectorAll("details")];
+
+    expect(toggles).toHaveLength(2);
+    expect(toggles.every((toggle) => !toggle.open)).toBe(true);
+  });
+
+  /*
+   * `⋮` は重要でない出来事が続く束の頭ごとに 1 つ。見本では、高校の途中から末尾まで・
+   * 大学の頭・大学の末尾の 3 か所。束を 1 つにまとめると、どこを省いたのかが分からない。
+   */
+  it("省いた束ごとに ⋮ を立て、重要な出来事には印を付ける", () => {
+    const container = renderHistory();
+    const sequence = [...container.querySelectorAll(".profile-history-list > li")].map((node) =>
+      node.classList.contains("profile-history-gap")
+        ? "⋮"
+        : node.classList.contains("profile-history-important")
+          ? "!"
+          : "-",
+    );
+
+    expect(sequence).toEqual(["!", "⋮", "-", "-", "⋮", "-", "!", "⋮", "-"]);
   });
 });

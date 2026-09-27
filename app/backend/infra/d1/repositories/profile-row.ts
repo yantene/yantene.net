@@ -66,6 +66,7 @@ export function rowsToHistory(
       text: entry.text,
       ...(entry.url === null ? {} : { url: entry.url }),
       ...(entry.note === null ? {} : { note: entry.note }),
+      important: entry.important,
     }),
   );
 }

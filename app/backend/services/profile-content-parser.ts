@@ -112,6 +112,7 @@ function readHistory(value: unknown): readonly HistoryEntry[] {
         text: requireString(fields.text, `${entryLabel}.text`),
         ...(url === undefined ? {} : { url }),
         ...(note === undefined ? {} : { note }),
+        important: asBoolean(fields.important, `${entryLabel}.important`),
       });
     });
   });

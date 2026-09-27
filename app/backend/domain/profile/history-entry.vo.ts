@@ -12,6 +12,8 @@ import type { HistoryDate } from "./history-date.vo";
  * **日は `HistoryDate` が 3 段の精度で持つ** (年だけ・月まで・日まで)。終わりのある
  * 出来事は `until` を添える。終わりだけを書くことはできない。
  *
+ * **`important` は章を畳んでいても出す出来事の印** (ADR 0045)。書かなければ false。
+ *
  * ⚠️ **h-card にも JSON-LD にも出さない** (ADR 0044)。経歴は読み物として出すもので、
  * 機械に名乗る身元の一部ではない。生年月日と出身地を機械が読む形で持たないこと (#508) と
  * 同じ線引きなので、`dt-*` や `alumniOf` を足さないこと。
@@ -33,6 +35,8 @@ interface HistoryEntryFields {
   readonly text: string;
   readonly url: string | undefined;
   readonly note: string | undefined;
+  /** 章を畳んでいても出すかどうか。 */
+  readonly important: boolean;
 }
 
 export class HistoryEntry implements IValueObject<HistoryEntry> {
@@ -45,6 +49,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     text: string;
     url?: string;
     note?: string;
+    important?: boolean;
   }): HistoryEntry {
     return new HistoryEntry({
       chapter: requireText(params.chapter, "chapter", MAX_CHAPTER_LENGTH),
@@ -54,6 +59,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
       url: params.url === undefined ? undefined : validateUrl(params.url),
       note:
         params.note === undefined ? undefined : requireText(params.note, "note", MAX_NOTE_LENGTH),
+      important: params.important ?? false,
     });
   }
 
@@ -82,6 +88,11 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
     return this.fields.note;
   }
 
+  /** 章を畳んでいても出すかどうか。書いていなければ false。 */
+  get important(): boolean {
+    return this.fields.important;
+  }
+
   equals(other: HistoryEntry): boolean {
     return (
       this.fields.chapter === other.fields.chapter &&
@@ -89,7 +100,8 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
       this.fields.until?.toString() === other.fields.until?.toString() &&
       this.fields.text === other.fields.text &&
       this.fields.url === other.fields.url &&
-      this.fields.note === other.fields.note
+      this.fields.note === other.fields.note &&
+      this.fields.important === other.fields.important
     );
   }
 
@@ -101,6 +113,7 @@ export class HistoryEntry implements IValueObject<HistoryEntry> {
       text: this.fields.text,
       url: this.fields.url,
       note: this.fields.note,
+      important: this.fields.important,
     };
   }
 }
