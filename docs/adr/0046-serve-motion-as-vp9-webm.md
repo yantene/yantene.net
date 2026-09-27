@@ -151,6 +151,16 @@ controls playsInline preload="metadata" poster
 Safari に残る 1 枚でもある。src と同じくアセット API に絞る。
 **動かない状態が既定になった以上、poster は実質必須である。**
 
+`aria-label` も本文から受け取る。**画像の alt にあたるもので、動画には他に名前が無い。**
+`<video>` の中に書いたフォールバックの文字列は、`toVideo` が children を `<source>` だけに
+組み直すので残らず、`poster` にも alt は付けられない。空文字のときは付けない。
+`hast-util-sanitize` の既定は `ariaLabel` を `a` / `img` / `ul` などにしか許していないので、
+schema に明示して通す。
+
+無いときに `<video>` ごと落とすことはしない。src が通らないときと違って、名前が無くても
+映像そのものは読者に届く。**書き忘れを止めるのはコンテンツ側の規範の仕事**で、
+`content/AGENTS.md` が画像の alt と同じ扱いで必須にしている。
+
 ### `<video>` の src はルート相対で書く
 
 ADR 0022 と同じ。生 HTML の中身は MDAST の URL 書き換え (`withAssetUrls`) が届かないので、
@@ -184,6 +194,7 @@ ADR 0022 と同じ。生 HTML の中身は MDAST の URL 書き換え (`withAsse
   - `app/frontend/components/mdast/mdast-renderer.test.tsx` が「自分のアセットを指す
     `<video>` だけが残る」「コーデック違いの source を書いた順に保つ」「controls と
     playsinline が立ち、autoplay と loop は立たない」「poster は自分のアセットだけ通す」
+    「aria-label は空でなければ残す」
     「source が残らなければ `<video>` ごと消える」を固定する。**source を複数並べる検査は
     残してある。** いまは 1 本だけ置くが、AV1 を足すときにこの並びが効く。
   - `app/backend/csp.test.ts` が `media-src 'self'` を固定する。

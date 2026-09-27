@@ -105,8 +105,9 @@ const sanitizeSchema = {
     // 音源も iframe と同じ二段構え。ここで許すのは形だけで、src の中身は
     // 後段 (toAudio) が自分のアセット API に絞る。
     audio: ["controls", "preload"],
-    // 動画も同じ。poster だけは中身を見る必要があるので、ここを通して toVideo が絞る。
-    video: ["controls", "preload", "poster"],
+    // 動画も同じ。poster と ariaLabel はここを通して toVideo が絞る。ariaLabel を
+    // 明示するのは、既定の schema が a / img / ul などにしか許していないためである。
+    video: ["controls", "preload", "poster", "ariaLabel"],
     source: ["src", "type"],
     [LINK_CARD_TAG]: ["url"],
     // Alert も link-card と同じくこちらが組み立てた印で、同じ経路なら本文からも書ける。
@@ -353,12 +354,17 @@ function assetSourcesOf(element: Element): Element[] {
  * 本文側の書き方に関わらず付ける。iOS で全画面に飛ばないことを書き忘れに委ねない。
  *
  * poster は本文から受け取る。src と同じく自分のアセットに絞る。
+ *
+ * aria-label も本文から受け取る。**画像の alt にあたるもので、動画には他に名前が無い。**
+ * `<video>` の中に書いたフォールバックの文字列は、ここが children を source だけに
+ * 組み直すので残らない。poster にも alt は付けられない。
  */
 function toVideo(element: Element): Element | null {
   const sources = assetSourcesOf(element);
   if (sources.length === 0) return null;
 
   const poster = element.properties.poster;
+  const ariaLabel = element.properties.ariaLabel;
   return {
     ...element,
     properties: {
@@ -366,6 +372,7 @@ function toVideo(element: Element): Element | null {
       playsInline: true,
       preload: "metadata",
       ...(typeof poster === "string" && isArticleAssetSrc(poster) && { poster }),
+      ...(typeof ariaLabel === "string" && ariaLabel !== "" && { ariaLabel }),
     },
     children: sources,
   };
