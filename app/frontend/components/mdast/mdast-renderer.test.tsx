@@ -615,23 +615,25 @@ describe("MdastRenderer: audio", () => {
  */
 describe("MdastRenderer: video", () => {
   const SLUG = "/api/v1/articles/computer-from-transistors-flip-flop/assets";
-  const AV1 = `${SLUG}/demo.av1.mp4`;
-  const H264 = `${SLUG}/demo.mp4`;
+  const AV1 = `${SLUG}/demo.av1.webm`;
+  const VP9 = `${SLUG}/demo.vp9.webm`;
 
-  it("自分のアセットを指す映像を残し、コーデック違いの source を順に保つ", () => {
+  it("自分のアセットを指す映像を残し、コーデック違いの source を書いた順に保つ", () => {
     const html = ssr(
-      `<video>\n<source src="${AV1}" type="video/mp4; codecs=av01.0.05M.08">\n` +
-        `<source src="${H264}" type="video/mp4">\n</video>`,
+      `<video>\n<source src="${AV1}" type="video/webm; codecs=av01.0.05M.08">\n` +
+        `<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`,
     );
     expect(html).toContain("<video");
     expect(html).toContain(`src="${AV1}"`);
-    expect(html).toContain(`src="${H264}"`);
-    expect(html.indexOf(AV1)).toBeLessThan(html.indexOf(H264));
+    expect(html).toContain(`src="${VP9}"`);
+    // 並びがそのまま優先順位になる。入れ替わるとブラウザの選び方が変わる。
+    expect(html.indexOf(AV1)).toBeLessThan(html.indexOf(VP9));
     expect(html).toContain("av01.0.05M.08");
+    expect(html).toContain("codecs=vp9");
   });
 
   it("音を出さず、その場で繰り返し、止められる形で出す", () => {
-    const html = ssr(`<video>\n<source src="${H264}" type="video/mp4">\n</video>`);
+    const html = ssr(`<video>\n<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`);
     // HTML の属性名は大小を区別しないので、出方ではなく属性が立っていることを見る。
     expect(html).toMatch(/\bmuted\b/i);
     expect(html).toMatch(/\bplaysinline\b/i);
@@ -642,14 +644,14 @@ describe("MdastRenderer: video", () => {
 
   it("自分のアセット以外を指す映像は、video ごと落とす", () => {
     const html = ssr(
-      '<video>\n<source src="https://example.com/demo.mp4" type="video/mp4">\n</video>',
+      '<video>\n<source src="https://example.com/demo.webm" type="video/webm">\n</video>',
     );
     expect(html).not.toContain("<video");
     expect(html).not.toContain("example.com");
   });
 
   it("解決されていない相対パスは通さない", () => {
-    const html = ssr('<video>\n<source src="./demo.mp4" type="video/mp4">\n</video>');
+    const html = ssr('<video>\n<source src="./demo.webm" type="video/webm">\n</video>');
     expect(html).not.toContain("<video");
   });
 
@@ -660,12 +662,12 @@ describe("MdastRenderer: video", () => {
 
   it("自分のアセットを指す poster は残し、外を指す poster は落とす", () => {
     const kept = ssr(
-      `<video poster="${SLUG}/cover.jpg">\n<source src="${H264}" type="video/mp4">\n</video>`,
+      `<video poster="${SLUG}/cover.jpg">\n<source src="${VP9}" type="video/webm">\n</video>`,
     );
     expect(kept).toContain(`poster="${SLUG}/cover.jpg"`);
 
     const dropped = ssr(
-      `<video poster="https://example.com/cover.jpg">\n<source src="${H264}" type="video/mp4">\n</video>`,
+      `<video poster="https://example.com/cover.jpg">\n<source src="${VP9}" type="video/webm">\n</video>`,
     );
     expect(dropped).toContain("<video");
     expect(dropped).not.toContain("poster");

@@ -17,8 +17,10 @@ describe("contentTypeForPath", () => {
   });
 
   it("maps video extensions (case-insensitively)", () => {
-    expect(contentTypeForPath("demo.mp4")).toBe("video/mp4");
-    expect(contentTypeForPath("a/demo.MP4")).toBe("video/mp4");
+    expect(contentTypeForPath("demo.webm")).toBe("video/webm");
+    expect(contentTypeForPath("a/demo.WEBM")).toBe("video/webm");
+    // H.264 は置かないので、MP4 は動画として名乗らない (ADR 0046)。
+    expect(contentTypeForPath("demo.mp4")).toBe("application/octet-stream");
   });
 
   it("falls back to octet-stream for unknown or missing extensions", () => {
