@@ -16,6 +16,13 @@ describe("contentTypeForPath", () => {
     expect(contentTypeForPath("song.MIDI")).toBe("audio/midi");
   });
 
+  it("maps video extensions (case-insensitively)", () => {
+    expect(contentTypeForPath("demo.webm")).toBe("video/webm");
+    expect(contentTypeForPath("a/demo.WEBM")).toBe("video/webm");
+    // H.264 は置かないので、MP4 は動画として名乗らない (ADR 0046)。
+    expect(contentTypeForPath("demo.mp4")).toBe("application/octet-stream");
+  });
+
   it("falls back to octet-stream for unknown or missing extensions", () => {
     expect(contentTypeForPath("file.bin")).toBe("application/octet-stream");
     expect(contentTypeForPath("noext")).toBe("application/octet-stream");

@@ -9,7 +9,7 @@ import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { Alert } from "./alert";
 import { Anchor } from "./anchor";
-import { isArticleAssetSrc } from "./audio";
+import { isArticleAssetSrc } from "./asset-src";
 import { CodeBlock } from "./code-block";
 import { normalizeEmbedSrc } from "./embed";
 import { DEFAULT_EMBED_TITLE, EmbedFrame } from "./embed-frame";
@@ -75,9 +75,9 @@ const sanitizeSchema = {
    *
    * DOM clobbering への備えが消えるわけではない。脚注の id は toHast が
    * `user-content-` を付けたものがそのまま残る。素通しになるのは本文が生 HTML に
-   * 自分で書いた id だが、生 HTML が通るのは iframe か audio を含むブロックだけで
-   * (keepEmbedHtml)、iframe は toEmbed が属性を一から組み直して id を落とす。
-   * 残るのは音源の周りに書いた id で、本文を書けるのが書き手自身に限られる以上
+   * 自分で書いた id だが、生 HTML が通るのは iframe か audio か video を含むブロック
+   * だけで (keepEmbedHtml)、iframe は toEmbed が属性を一から組み直して id を落とす。
+   * 残るのは音源や動画の周りに書いた id で、本文を書けるのが書き手自身に限られる以上
    * (下記の link-card と同じ理由)、ここは許容する。
    *
    * 逆に toHast 側の前置を外しても直らない。id は sanitize が前置して
@@ -85,13 +85,15 @@ const sanitizeSchema = {
    */
   clobberPrefix: "",
   // link-card はこちらが組み立てた印 (linkCardParagraph が起こす) だが、本文から書けない
-  // わけではない。iframe か audio を含む生 HTML のブロックは keepEmbedHtml が丸ごと通すので、
+  // わけではない。iframe か audio か video を含む生 HTML のブロックは keepEmbedHtml が
+  // 丸ごと通すので、
   // そこに並べれば要素として残る。塞いでいないのは、運ぶのが URL 1 つだけで出力は
   // LinkCardSlot がもう一度絞るうえ、本文を書けるのが書き手自身に限られるため。
   tagNames: [
     ...(defaultSchema.tagNames ?? []),
     "iframe",
     "audio",
+    "video",
     "source",
     LINK_CARD_TAG,
     ALERT_TAG_NAME,
@@ -103,6 +105,8 @@ const sanitizeSchema = {
     // 音源も iframe と同じ二段構え。ここで許すのは形だけで、src の中身は
     // 後段 (toAudio) が自分のアセット API に絞る。
     audio: ["controls", "preload"],
+    // 動画も同じ。poster だけは中身を見る必要があるので、ここを通して toVideo が絞る。
+    video: ["controls", "preload", "poster"],
     source: ["src", "type"],
     [LINK_CARD_TAG]: ["url"],
     // Alert も link-card と同じくこちらが組み立てた印で、同じ経路なら本文からも書ける。
@@ -122,19 +126,22 @@ const hasIframe = (html: string): boolean => /<iframe[\s/>]/i.test(html);
 /** 本文に直接書かれた HTML が音源かどうか。属性の中身までは見ない。 */
 const hasAudio = (html: string): boolean => /<audio[\s/>]/i.test(html);
 
+/** 本文に直接書かれた HTML が動画かどうか。属性の中身までは見ない。 */
+const hasVideo = (html: string): boolean => /<video[\s/>]/i.test(html);
+
 /**
- * MDAST → HAST のハンドラ差し替え。生 HTML のうち埋め込みと音源だけを後段へ通す。
+ * MDAST → HAST のハンドラ差し替え。生 HTML のうち埋め込みと音源と動画だけを後段へ通す。
  *
  * 生 HTML は既定では捨てられる。過去の記事には Markdown 記法を抱えたままの p 要素や、
  * 外部スクリプト前提の Twitter 引用が残っており、要素として起こすと
  * `![](./foo.png)` のような素の文字列が本文に出てしまうため、捨てたままにしておきたい。
- * ただし埋め込みと音源だけは、捨てると動画や曲が跡形もなく消える。ここで選り分ける。
+ * ただし埋め込みと音源と動画だけは、捨てると曲や映像が跡形もなく消える。ここで選り分ける。
  *
- * 通した先で何が残るかは rehypeSanitize と toEmbed / toAudio が決めるので、
+ * 通した先で何が残るかは rehypeSanitize と toEmbed / toAudio / toVideo が決めるので、
  * この関数は「そう書かれていそうか」だけを見れば足りる。
  */
 function keepEmbedHtml(state: State, node: Html): ReturnType<Handler> {
-  if (!hasIframe(node.value) && !hasAudio(node.value)) return undefined;
+  if (!hasIframe(node.value) && !hasAudio(node.value) && !hasVideo(node.value)) return undefined;
   const result: Raw = { type: "raw", value: node.value };
   state.patch(node, result);
   return state.applyData(node, result);
@@ -294,7 +301,24 @@ function toEmbed(element: Element): Element | null {
  * 静かに壊れているのと変わらない。
  */
 function toAudio(element: Element): Element | null {
-  const sources = element.children.flatMap((child) => {
+  const sources = assetSourcesOf(element);
+  if (sources.length === 0) return null;
+
+  return {
+    ...element,
+    properties: { controls: true, preload: "none" },
+    children: sources,
+  };
+}
+
+/**
+ * source 要素のうち、自分のアセットを指すものだけを属性を絞って組み直す。
+ *
+ * `type` は落とさずに残す。コーデックの違う同じ動画を並べたとき、どれを取りに行くかを
+ * ブラウザが決める手がかりがこれしか無いためである (`codecs` まではこちらで見ない)。
+ */
+function assetSourcesOf(element: Element): Element[] {
+  return element.children.flatMap((child) => {
     if (child.type !== "element" || child.tagName !== "source") return [];
     const src = child.properties.src;
     if (typeof src !== "string" || !isArticleAssetSrc(src)) return [];
@@ -310,17 +334,46 @@ function toAudio(element: Element): Element | null {
       },
     ];
   });
+}
+
+/**
+ * video 要素: 自分のアセットを指す動画だけを残す。
+ *
+ * toAudio と同じく、通せるものは一から組み直して返し、通せなければ null を返す。
+ * source を複数保つのは、同じ映像をコーデック違いで並べてブラウザに選ばせるためである
+ * (AV1 を再生できない環境は H.264 に落ちる)。
+ *
+ * **付ける属性は固定する。この口はアニメーション画像を置き換えるためにある。**
+ * だから音の出ない短い繰り返しとして振る舞わせ、`muted` と `playsInline` は本文側の
+ * 書き方に関わらず必ず付ける。音が出ないことと、iOS で全画面に飛ばないことを、
+ * 書き手の書き忘れに委ねない。`controls` も付ける。アニメーション画像には無かった
+ * 「止める」手段になる。
+ *
+ * poster だけは本文から受け取る。自動再生が止められた環境 (省電力・通信量節約) で、
+ * 黒い四角ではなく 1 枚目を出せる。src と同じく自分のアセットに絞る。
+ */
+function toVideo(element: Element): Element | null {
+  const sources = assetSourcesOf(element);
   if (sources.length === 0) return null;
 
+  const poster = element.properties.poster;
   return {
     ...element,
-    properties: { controls: true, preload: "none" },
+    properties: {
+      controls: true,
+      autoPlay: true,
+      loop: true,
+      muted: true,
+      playsInline: true,
+      preload: "metadata",
+      ...(typeof poster === "string" && isArticleAssetSrc(poster) && { poster }),
+    },
     children: sources,
   };
 }
 
 /**
- * hast ツリーを再帰的に走査し、img / a / iframe / audio 要素へ変換を適用する。toHast が
+ * hast ツリーを再帰的に走査し、img / a / iframe / audio / video 要素へ変換を適用する。toHast が
  * 毎回新しいツリーを生成するため、ここでの破壊的変更は入力の MDAST には影響しない。
  */
 function applyElementTransforms(
@@ -345,6 +398,12 @@ function applyElementTransforms(
       if (child.type !== "element" || child.tagName !== "audio") return [child];
       const audio = toAudio(child);
       return audio === null ? [] : [audio];
+    });
+    // 動画も同じ。
+    node.children = node.children.flatMap((child) => {
+      if (child.type !== "element" || child.tagName !== "video") return [child];
+      const video = toVideo(child);
+      return video === null ? [] : [video];
     });
     for (const child of node.children) {
       applyElementTransforms(child, resolveImageUrl, siteOrigin);
