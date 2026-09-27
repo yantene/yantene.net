@@ -632,14 +632,24 @@ describe("MdastRenderer: video", () => {
     expect(html).toContain("codecs=vp9");
   });
 
-  it("音を出さず、その場で繰り返し、止められる形で出す", () => {
+  it("読者が押すまで再生しない形で出す", () => {
     const html = ssr(`<video>\n<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`);
     // HTML の属性名は大小を区別しないので、出方ではなく属性が立っていることを見る。
-    expect(html).toMatch(/\bmuted\b/i);
-    expect(html).toMatch(/\bplaysinline\b/i);
-    expect(html).toMatch(/\bloop\b/i);
-    expect(html).toMatch(/\bautoplay\b/i);
     expect(html).toMatch(/\bcontrols\b/i);
+    expect(html).toMatch(/\bplaysinline\b/i);
+    expect(html).toContain('preload="metadata"');
+    // 動いてしまってから止める形にしない。prefers-reduced-motion を尊重できないため。
+    expect(html).not.toMatch(/\bautoplay\b/i);
+    expect(html).not.toMatch(/\bloop\b/i);
+  });
+
+  it("本文が autoplay や loop を書いても引き継がない", () => {
+    const html = ssr(
+      `<video autoplay loop muted>\n<source src="${VP9}" type="video/webm; codecs=vp9">\n</video>`,
+    );
+    expect(html).toContain("<video");
+    expect(html).not.toMatch(/\bautoplay\b/i);
+    expect(html).not.toMatch(/\bloop\b/i);
   });
 
   it("自分のアセット以外を指す映像は、video ごと落とす", () => {
