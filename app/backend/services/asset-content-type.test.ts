@@ -16,6 +16,11 @@ describe("contentTypeForPath", () => {
     expect(contentTypeForPath("song.MIDI")).toBe("audio/midi");
   });
 
+  it("maps video extensions (case-insensitively)", () => {
+    expect(contentTypeForPath("demo.mp4")).toBe("video/mp4");
+    expect(contentTypeForPath("a/demo.MP4")).toBe("video/mp4");
+  });
+
   it("falls back to octet-stream for unknown or missing extensions", () => {
     expect(contentTypeForPath("file.bin")).toBe("application/octet-stream");
     expect(contentTypeForPath("noext")).toBe("application/octet-stream");

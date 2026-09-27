@@ -58,6 +58,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0043](0043-show-social-marks-as-each-brand-requires.md)             | 出ていく先の絵は黒 1 色で、不透明な台の上に出す                        | Accepted   |
 | [0044](0044-show-the-history-as-a-timeline-of-chapters.md)           | 経歴を章で束ねた年表として `/about` の末尾に出す                       | Accepted   |
 | [0045](0045-show-the-history-right-under-the-profile-card.md)        | 経歴を `/about` の名乗りの直下に、章ごとに畳んで出す                   | Accepted   |
+| [0046](0046-serve-motion-as-av1-and-h264-mp4.md)                     | 動きのあるものは AV1 と H.264 の MP4 を並べ、`<video>` で配る          | Accepted   |
 
 ## 統合した番号
 

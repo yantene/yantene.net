@@ -607,6 +607,72 @@ describe("MdastRenderer: audio", () => {
 });
 
 /*
+ * 動きのあるものは本文に生の `<video>` で書く (ADR 0046)。音源と同じ二段構えで、
+ * 通してよいのは自分のアセット API を指す映像だけ。
+ *
+ * この口はアニメーション画像の置き換えなので、toVideo が muted / playsInline /
+ * loop / autoPlay / controls を固定で付ける。書き手の書き方では変わらない。
+ */
+describe("MdastRenderer: video", () => {
+  const SLUG = "/api/v1/articles/computer-from-transistors-flip-flop/assets";
+  const AV1 = `${SLUG}/demo.av1.mp4`;
+  const H264 = `${SLUG}/demo.mp4`;
+
+  it("自分のアセットを指す映像を残し、コーデック違いの source を順に保つ", () => {
+    const html = ssr(
+      `<video>\n<source src="${AV1}" type="video/mp4; codecs=av01.0.05M.08">\n` +
+        `<source src="${H264}" type="video/mp4">\n</video>`,
+    );
+    expect(html).toContain("<video");
+    expect(html).toContain(`src="${AV1}"`);
+    expect(html).toContain(`src="${H264}"`);
+    expect(html.indexOf(AV1)).toBeLessThan(html.indexOf(H264));
+    expect(html).toContain("av01.0.05M.08");
+  });
+
+  it("音を出さず、その場で繰り返し、止められる形で出す", () => {
+    const html = ssr(`<video>\n<source src="${H264}" type="video/mp4">\n</video>`);
+    // HTML の属性名は大小を区別しないので、出方ではなく属性が立っていることを見る。
+    expect(html).toMatch(/\bmuted\b/i);
+    expect(html).toMatch(/\bplaysinline\b/i);
+    expect(html).toMatch(/\bloop\b/i);
+    expect(html).toMatch(/\bautoplay\b/i);
+    expect(html).toMatch(/\bcontrols\b/i);
+  });
+
+  it("自分のアセット以外を指す映像は、video ごと落とす", () => {
+    const html = ssr(
+      '<video>\n<source src="https://example.com/demo.mp4" type="video/mp4">\n</video>',
+    );
+    expect(html).not.toContain("<video");
+    expect(html).not.toContain("example.com");
+  });
+
+  it("解決されていない相対パスは通さない", () => {
+    const html = ssr('<video>\n<source src="./demo.mp4" type="video/mp4">\n</video>');
+    expect(html).not.toContain("<video");
+  });
+
+  it("通せる映像が 1 つも無ければ video ごと消える", () => {
+    const html = ssr("<video controls>\n</video>");
+    expect(html).not.toContain("<video");
+  });
+
+  it("自分のアセットを指す poster は残し、外を指す poster は落とす", () => {
+    const kept = ssr(
+      `<video poster="${SLUG}/cover.jpg">\n<source src="${H264}" type="video/mp4">\n</video>`,
+    );
+    expect(kept).toContain(`poster="${SLUG}/cover.jpg"`);
+
+    const dropped = ssr(
+      `<video poster="https://example.com/cover.jpg">\n<source src="${H264}" type="video/mp4">\n</video>`,
+    );
+    expect(dropped).toContain("<video");
+    expect(dropped).not.toContain("poster");
+  });
+});
+
+/*
  * 見出しの頭に置くリンク。アイコンは HeadingLink が描くので、ここで見られるのは
  * 「置かれたか」「どこを指しているか」「余計なものが付いていないか」の 3 つ。
  *

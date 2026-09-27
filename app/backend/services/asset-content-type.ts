@@ -21,6 +21,15 @@ const contentTypes = new Map<string, string>([
   ["mp3", "audio/mpeg"],
   ["mid", "audio/midi"],
   ["midi", "audio/midi"],
+  /*
+   * 動画。本文の `<video>` が読む再生用で、置くのは MP4 だけにする。
+   *
+   * 中身は AV1 と H.264 の 2 本になるが、どちらも MP4 に入れる。AV1 を WebM ではなく
+   * MP4 へ入れるのは、音声と同じ理由で `.webm` からは音声か動画かを決められず、
+   * この表が Content-Type を一意に返せなくなるためである。どちらのコーデックかは
+   * `<source>` の `type` に書く codecs でブラウザが選り分ける。
+   */
+  ["mp4", "video/mp4"],
 ]);
 
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
