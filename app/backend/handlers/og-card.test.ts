@@ -73,7 +73,7 @@ describe("やんてねくんと字形の素材 (OG カードが頼っている�
   it.each([
     ["character", characterSource],
     ["logotype", logotypeSource],
-  ])("%s は根元の viewBox を 1 つだけ持つ", (_label, source) => {
+  ])("%s の根元の viewBox が `0 0 w h` の形で読める", (_label, source) => {
     // og-card.ts は最初の viewBox を窓に差し替え、字形の幅を viewBox の比から導く。
     // 読めなければ窓が効かず、やんてねくんが全身で縮んで出る。
     expect(source).toMatch(/<svg [^>]*viewBox="0 0 [\d.]+ [\d.]+"/u);
