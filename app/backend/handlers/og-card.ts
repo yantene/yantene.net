@@ -12,17 +12,17 @@
 import characterSource from "~/frontend/assets/yantene-character.svg?raw";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
 import logotypeSource from "~/frontend/assets/yantene-logotype.svg?raw";
-import { LOGO_ASPECT, LOGO_CHARACTER, LOGO_LOGOTYPE, LOGO_VIEW_BOX } from "~/lib/logo-layout";
 import { truncateByGrapheme } from "~/lib/truncate";
 
 /*
  * 表題の上限。
  *
- * 字が入る幅は 1040px で、52px の全角なら 1 行 20 字。ここを 60 より上げると 4 行になり、
- * 足元 (日付・署名) との間が詰まって街の帯に触れる。字の大きさを変えるときは
- * 行数が 3 行に収まるかを一緒に見ること。
+ * 字が入る幅は右の 4/5 から余白を引いた 820px で、52px の全角なら 1 行 15 字。ここを
+ * 45 より上げると全角だけの表題が 4 行になり、右上の署名と下の街に触れる。字の大きさや
+ * 余白を変えるときは、全角だけの表題が 3 行に収まるかを一緒に見ること (英字の混じる
+ * 表題は字が細いぶん短く収まるので、確かめにならない)。
  */
-const TITLE_MAX = 56;
+const TITLE_MAX = 45;
 /**
  * カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。
  *
@@ -30,7 +30,7 @@ const TITLE_MAX = 56;
  * 上げないと R2 の古い PNG が返り続ける (v14 はやんてねくんがノートパソコンを抱える
  * 姿になった回。preview で旧い絵が返ってきて気づいた)。
  */
-export const OG_TEMPLATE_VERSION = "v14";
+export const OG_TEMPLATE_VERSION = "v15";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
@@ -135,6 +135,44 @@ function cityscapeSvg(): string {
  */
 const CITYSCAPE_HEIGHT = 175;
 
+/** カードの寸法。 */
+const CARD_WIDTH = 1200;
+const CARD_HEIGHT = 630;
+
+/**
+ * 表題と日付を置き始める位置。左の 1/5 はやんてねくんに譲る。
+ */
+const CONTENT_LEFT = 240;
+
+/**
+ * やんてねくんの寄り方。素材の 1 unit をカードの何 px にするかと、カードの左上に来る
+ * 素材の座標。
+ *
+ * **ロゴとは切り方を分けてある。** ヘッダーのロゴ (`~/lib/logo-layout`) は胸から上を
+ * まるごと出すが、カードは顔と指さす手に寄せたどアップで、頭の天辺と顔の左側は
+ * カードの縁で切れる。寄せ方が違うので、寸法も共有しない。
+ *
+ * ⚠️ **見切れさせるのはカードの縁だけ。** 右と下は素材の輪郭のまま終わらせる。左の
+ * 1/5 に帯を立ててそこで切ると、靴や手が縦の直線で断たれて、絵が欠けて見える。
+ *
+ * ⚠️ **指さす手の先 (素材の x 171.6) が表題の少し手前に来るよう置いてある。** 手が
+ * 表題を指すのがこの意匠の要なので、素材を差し替えて手の位置が動いたら見直すこと。
+ */
+const CHARACTER_SCALE = 3;
+const CHARACTER_ORIGIN = { x: 88, y: 10 } as const;
+
+/**
+ * 素材から切り出す窓。カードと同じ縦横比にして、カード全体に重ねる。
+ *
+ * 窓と `img` の比が食い違うと、Satori と resvg は余白を付けて縮めるか、はみ出しを
+ * 切るかのどちらかをする。比を揃えておけば、どちらでも同じ絵になる。
+ */
+const CHARACTER_WINDOW = {
+  ...CHARACTER_ORIGIN,
+  width: CARD_WIDTH / CHARACTER_SCALE,
+  height: CARD_HEIGHT / CHARACTER_SCALE,
+} as const;
+
 /*
  * 素材から組み立てた画。最初にカードを描くときまで遅らせる。
  *
@@ -144,59 +182,58 @@ const CITYSCAPE_HEIGHT = 175;
  *
  * 評価そのものを遅らせる余地はまだ残っている ([#301](https://github.com/yantene/yantene.net/issues/301))。
  */
-const artwork: { cityscape?: string; logo?: string } = {};
+const artwork: { cityscape?: string; character?: string; logotype?: string } = {};
 
 /**
  * カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。
  *
- * 通常の流れから外して底に貼ってあるのは、日付から署名までの一行を街に重ねられるように
- * するため。線が薄いので重なっても字は読める (画面のヒーローも同じ扱いで、
- * hero-section.css が「テキストを街の上に逃がすとヒーローが間延びする」と書いている)。
+ * 通常の流れから外して底に貼ってあるのは、中身の置き場を街のぶん削らないため。削ると
+ * 真ん中に置いた表題が上へ押し上げられ、指さす手の高さから外れる。長い表題の裾は
+ * 街に重なるが、線が薄いぶん字は読める (画面のヒーローも同じ扱いで、hero-section.css が
+ * 「テキストを街の上に逃がすとヒーローが間延びする」と書いている)。
+ *
+ * やんてねくんは街より手前に立つ。素材の白い裏打ちが輪郭の内側の線を隠す。
  */
 function cityscapeHtml(): string {
-  artwork.cityscape ??= `<img src="data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}" width="1200" height="${CITYSCAPE_HEIGHT.toString()}" style="position:absolute;left:0;bottom:0;" />`;
+  artwork.cityscape ??= `<img src="data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}" width="${CARD_WIDTH.toString()}" height="${CITYSCAPE_HEIGHT.toString()}" style="position:absolute;left:0;bottom:0;" />`;
   return artwork.cityscape;
 }
 
-/**
- * 素材を入れ子の `<svg>` にして、並べる位置と大きさを与える。
- *
- * `viewBox` を渡すと素材の viewBox を差し替え、その窓だけを出す (キャラクターを胸から
- * 上で切るのに使う)。ヘッダーの `Logo` が React の props で上書きしているのと同じこと。
- */
-function nested(
+/** 素材の根元の `<svg>` の viewBox を差し替え、その窓だけを出す。 */
+function windowed(
   source: string,
-  box: { x: number; y: number; width: number; height: number; viewBox?: string },
+  box: { x: number; y: number; width: number; height: number },
 ): string {
-  const body = withoutPreamble(source);
-  const { viewBox } = box;
+  const viewBox = [box.x, box.y, box.width, box.height].map(String).join(" ");
   // 置換の文字列に `$&` のような指示を読ませないため、関数で返す。
-  const windowed =
-    viewBox === undefined ? body : body.replace(/viewBox="[^"]*"/u, () => `viewBox="${viewBox}"`);
-  const placement = ` x="${String(box.x)}" y="${String(box.y)}" width="${String(box.width)}" height="${String(box.height)}"`;
-  return `<svg${placement}${windowed.slice("<svg".length)}`;
+  return withoutPreamble(source).replace(/viewBox="[^"]*"/u, () => `viewBox="${viewBox}"`);
 }
 
-/*
- * ロゴ。**合成済みの 1 枚は持たず、素材 2 つをここで並べる。**
- *
- * ヘッダーの `Logo` と同じ寸法 (`~/lib/logo-layout`) を使う。写しを持っていたときは、
- * キャラクターを描き直した回にヘッダーと OG カードだけが旧い姿で取り残された
- * ([#527](https://github.com/yantene/yantene.net/issues/527))。
+/**
+ * 素材を `img` の data URI にする。
  *
  * 素材は塗りを `currentColor` で受ける。`img` の data URI には文書の color が届かない
  * ので、街と同じく本文の色を焼き込む。
  */
-function logoDataUri(): string {
-  const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(LOGO_VIEW_BOX.width)} ${String(LOGO_VIEW_BOX.height)}">`,
-    nested(characterSource, LOGO_CHARACTER),
-    nested(logotypeSource, LOGO_LOGOTYPE),
-    "</svg>",
-  ].join("");
+function inkedDataUri(svg: string): string {
   // 置換の文字列に `$&` のような指示を読ませないため、関数で色を返す。
-  artwork.logo ??= `data:image/svg+xml,${encodeURIComponent(svg.replaceAll("currentColor", () => INK))}`;
-  return artwork.logo;
+  return `data:image/svg+xml,${encodeURIComponent(svg.replaceAll("currentColor", () => INK))}`;
+}
+
+/** 左端に見切れるやんてねくん。カード全体に重ね、はみ出しはカードの縁で切れる。 */
+function characterHtml(): string {
+  artwork.character ??= inkedDataUri(windowed(characterSource, CHARACTER_WINDOW));
+  return `<img src="${artwork.character}" width="${CARD_WIDTH.toString()}" height="${CARD_HEIGHT.toString()}" style="position:absolute;left:0;top:0;" />`;
+}
+
+/** 素材の viewBox (`0 0 w h`) の幅と高さ。 */
+function viewBoxSize(source: string): { width: number; height: number } {
+  const [, , width = Number.NaN, height = Number.NaN] = (
+    /viewBox="([^"]+)"/u.exec(source)?.[1] ?? ""
+  )
+    .split(" ")
+    .map(Number);
+  return { width, height };
 }
 
 /** 寸法を CSS の長さにする (テンプレートに数値をそのまま置くと lint が止める)。 */
@@ -205,10 +242,17 @@ function px(value: number): string {
   return `${(Math.round(value * 100) / 100).toString()}px`;
 }
 
-/** ロゴを高さで置く。幅は縦横比から導く。 */
-function logoHtml(height: number): string {
-  const width = Math.round(height * LOGO_ASPECT);
-  return `<img src="${logoDataUri()}" width="${width.toString()}" height="${height.toString()}" style="width:${px(width)};height:${px(height)};" />`;
+/**
+ * 「やんてね」の字形を高さで置く。幅は素材の縦横比から導く。
+ *
+ * キャラクターと並べたロゴは使わない。やんてねくんはもう左端にいるので、並べると
+ * 1 枚に 2 人立つことになる。
+ */
+function logotypeHtml(height: number): string {
+  artwork.logotype ??= inkedDataUri(withoutPreamble(logotypeSource));
+  const size = viewBoxSize(logotypeSource);
+  const width = Math.round((height * size.width) / size.height);
+  return `<img src="${artwork.logotype}" width="${width.toString()}" height="${height.toString()}" style="width:${px(width)};height:${px(height)};" />`;
 }
 
 /*
@@ -236,32 +280,54 @@ function escapeHtml(value: string): string {
 }
 
 /**
+ * タグの間の空白を詰める。
+ *
+ * workers-og はタグの間の改行と字下げを文字のノードとして読み、flex の子に数える。
+ * 数えられると `justify-content` が見えない子の分まで間を割り振り、中身が意図した
+ * 位置からずれる (表題を上端に着けたつもりが、カードの 1/3 ほどの高さに浮いていた)。
+ */
+function compact(html: string): string {
+  return html.replaceAll(/>\s+</gu, "><").trim();
+}
+
+/**
+ * カードの枠。街・やんてねくん・上端の帯を敷き、右の 4/5 に中身を流す。
+ *
+ * やんてねくんは帯より先に置く。後に置いた要素が手前に描かれるので、帯が頭の上に
+ * 掛かり、頭の天辺がカードの縁ではなく帯で切れて見える。
+ */
+function frameHtml(content: string, layout: string): string {
+  return compact(`
+    <div style="position:relative;display:flex;flex-direction:column;width:${px(CARD_WIDTH)};height:${px(CARD_HEIGHT)};background:#ffffff;font-family:'Noto Sans JP';">
+      ${cityscapeHtml()}
+      ${characterHtml()}
+      ${TOP_BAND_HTML}
+      <div style="display:flex;flex-direction:column;flex:1;margin-left:${px(CONTENT_LEFT)};${layout}">
+        ${content}
+      </div>
+    </div>`);
+}
+
+/**
  * OG カードの HTML (Satori 制約: flex レイアウトのみ)。
  *
- * 日付から署名までの一行は、表題が何行になってもカードの決まった高さに置く。上下に
- * 振り分ける (`space-between`) だけだと、表題が短いときにこの行が真ん中まで上がってきて、
- * 記事ごとに居場所が変わる。
+ * 表題はカードの縦の真ん中に置き、日付をその上に添える。やんてねくんの指さす手が
+ * ちょうどこの高さにあり、表題を指す形になる。表題が 1 行でも 3 行でも、塊ごと
+ * 真ん中に着くので、手との位置関係は崩れない。下に 60px 余らせてあるのは、塊を
+ * 少し持ち上げて手の高さに寄せるため。
  *
- * 下の余白が 30px しかないのは、その一行を街の高さまで下ろすため。街は通常の流れから
- * 外して底に貼ってあるので、ここで場所を空けておく必要がない。線画に重なるが、線が薄い
- * ぶん字は読める (画面のヒーローも同じ扱いにしてある)。
+ * 署名の字形は右上に貼る。右下はスカイツリーが立っていて、重ねると塔の線が字に
+ * 絡んで読みにくい。
  */
 export function cardHtml(params: { title: string; date: string }): string {
   const title = escapeHtml(truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }));
-  return `
-    <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
-      ${cityscapeHtml()}
-      ${TOP_BAND_HTML}
-      <div style="display:flex;flex-direction:column;flex:1;justify-content:space-between;padding:44px 80px 30px;">
+  return frameHtml(
+    `
+        <div style="display:flex;font-size:28px;color:${MUTED_INK};margin-bottom:16px;">${escapeHtml(params.date)}</div>
         <div style="display:flex;font-size:52px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-          <div style="display:flex;flex-direction:column;">
-            <div style="display:flex;font-size:26px;color:${MUTED_INK};">${escapeHtml(params.date)}</div>
-          </div>
-          ${logoHtml(64)}
-        </div>
-      </div>
-    </div>`;
+        <div style="display:flex;position:absolute;right:80px;top:64px;">${logotypeHtml(44)}</div>`,
+    "justify-content:center;padding:0 80px 60px 60px;",
+  );
 }
 
 /**
@@ -271,17 +337,14 @@ export function cardHtml(params: { title: string; date: string }): string {
  * 「エッセイ、技術記事、つくったもの。」を継いだもので、カードに収まる長さではないので、
  * トップの og:description に使っている短い方に合わせてある。
  *
- * 中身はカードの中央に置く。街のぶんだけ下に余白を取ると、その高さぶんロゴが上へ
+ * 中身は右の 4/5 の中央に置く。街のぶんだけ下に余白を取ると、その高さぶん字形が上へ
  * 押し上げられて、絵の重心が上に寄る。記事カードと同じく、街には重ねてよい。
  */
 export function defaultCardHtml(): string {
-  return `
-    <div style="position:relative;display:flex;flex-direction:column;width:1200px;height:630px;background:#ffffff;font-family:'Noto Sans JP';">
-      ${cityscapeHtml()}
-      ${TOP_BAND_HTML}
-      <div style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;">
-        ${logoHtml(160)}
-        <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:32px;">Web の向こうから</div>
-      </div>
-    </div>`;
+  return frameHtml(
+    `
+        ${logotypeHtml(120)}
+        <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:32px;">Web の向こうから</div>`,
+    "align-items:center;justify-content:center;",
+  );
 }

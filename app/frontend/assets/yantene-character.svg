@@ -5,9 +5,10 @@
   re-run SVGO with the preset in vite.config.ts (preset-default, keep viewBox and ids).
 
   The logo (character + wordmark side by side) is not a file: components/logo/logo.tsx
-  and og-card.ts place these two assets with the box in ~/lib/logo-layout. Cutting a
-  third, combined asset is what let the header and the OG card fall behind when this
-  drawing changed (#527).
+  places these two assets with the box in ~/lib/logo-layout. Cutting a third, combined
+  asset is what let the header and the OG card fall behind when this drawing changed
+  (#527). The OG card (og-card.ts) does not use the logo: it opens its own close-up
+  window on this file, with the pointing hand aimed at the title (#545).
 
   Everything derived from this file is listed in public/icons/icon.svg and
   public/icons/profile.svg; scripts/generate-icons.sh turns the first into the pngs.

@@ -20,9 +20,6 @@ type Story = StoryObj<typeof meta>;
 /** ヘッダーに出る大きさ (40px)。並びの詰め方はこの大きさで見ること。 */
 export const Default: Story = {};
 
-/** OG カードに出る大きさ (64px)。 */
-export const Card: Story = { args: { className: "h-16 w-auto" } };
-
 /** 塗りは呼ぶ側の `color` を継ぐ。ここで色が変わらなければ契約が壊れている。 */
 export const InheritsColour: Story = {
   decorators: [
