@@ -158,14 +158,23 @@ function cityscapeHtml(): string {
   return artwork.cityscape;
 }
 
-/** 素材を入れ子の `<svg>` にして、並べる位置と大きさを与える。 */
+/**
+ * 素材を入れ子の `<svg>` にして、並べる位置と大きさを与える。
+ *
+ * `viewBox` を渡すと素材の viewBox を差し替え、その窓だけを出す (キャラクターを胸から
+ * 上で切るのに使う)。ヘッダーの `Logo` が React の props で上書きしているのと同じこと。
+ */
 function nested(
   source: string,
-  box: { x: number; y: number; width: number; height: number },
+  box: { x: number; y: number; width: number; height: number; viewBox?: string },
 ): string {
   const body = withoutPreamble(source);
+  const { viewBox } = box;
+  // 置換の文字列に `$&` のような指示を読ませないため、関数で返す。
+  const windowed =
+    viewBox === undefined ? body : body.replace(/viewBox="[^"]*"/u, () => `viewBox="${viewBox}"`);
   const placement = ` x="${String(box.x)}" y="${String(box.y)}" width="${String(box.width)}" height="${String(box.height)}"`;
-  return `<svg${placement}${body.slice("<svg".length)}`;
+  return `<svg${placement}${windowed.slice("<svg".length)}`;
 }
 
 /*
