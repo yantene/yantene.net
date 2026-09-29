@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { cardHtml, defaultCardHtml, OG_TEMPLATE_VERSION } from "./og-card";
+import { cardElement, defaultCardElement, OG_TEMPLATE_VERSION } from "./og-card";
 import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 import { notFoundResponse } from "~/lib/problem-details";
@@ -7,7 +7,7 @@ import { notFoundResponse } from "~/lib/problem-details";
 /*
  * フル字形の Noto Sans JP (サブセットだと ― 等の記号が豆腐になるため)。
  *
- * ⚠️ **ここを差し替えたら og-card.ts の OG_TEMPLATE_VERSION も上げること。** 蓄えのキーは
+ * ⚠️ **ここを差し替えたら og-card.tsx の OG_TEMPLATE_VERSION も上げること。** 蓄えのキーは
  * その版だけを見ているので、上げないと既に描いてあるカードが古い字のまま配られ続ける。
  */
 const FONT_KEY = "og/fonts/noto-sans-jp-700-full.ttf";
@@ -35,7 +35,7 @@ const imageHeaders = {
 };
 
 /**
- * HTML を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。
+ * カードの要素を OG 画像 (PNG) にして R2 にキャッシュし返す。既存キャッシュがあれば即返す。
  *
  * `extraHeaders` は限定公開の記事に `X-Robots-Tag: noindex` を足すためのもの。絵には
  * 記事の題が焼き込んであるので、画像検索に出ると題と存在が漏れる (ADR 0040)。
@@ -43,7 +43,7 @@ const imageHeaders = {
 async function renderAndCache(
   env: Env,
   cacheKey: string,
-  html: string,
+  card: React.JSX.Element,
   extraHeaders: Readonly<Record<string, string>> = {},
 ): Promise<Response> {
   const headers = { ...imageHeaders, ...extraHeaders };
@@ -55,7 +55,7 @@ async function renderAndCache(
   // index.ts を読むだけで WASM ロードが走り、テスト環境が壊れる)。
   const { ImageResponse } = await import("workers-og");
   const font = await loadFont(env);
-  const image = new ImageResponse(html, {
+  const image = new ImageResponse(card, {
     width: 1200,
     height: 630,
     fonts: [{ name: "Noto Sans JP", data: font, weight: 700, style: "normal" }],
@@ -81,7 +81,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
   const router = new Hono<{ Bindings: Env }>();
 
   router.get("/default", (c) =>
-    renderAndCache(c.env, `og/default-${OG_TEMPLATE_VERSION}.png`, defaultCardHtml()),
+    renderAndCache(c.env, `og/default-${OG_TEMPLATE_VERSION}.png`, defaultCardElement()),
   );
 
   router.get("/articles/:slug", async (c) => {
@@ -91,7 +91,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     const article = await D1ArticleQueryRepository.forReaders(c.env.D1).findBySlug(slug);
     if (article === undefined) return notFoundResponse("article not found");
 
-    const html = cardHtml({
+    const card = cardElement({
       title: article.title.toString(),
       date: article.publishedOn.toString({ calendarName: "never" }),
     });
@@ -99,7 +99,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
     return renderAndCache(
       c.env,
       `og/articles/${slug.toString()}-${article.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
-      html,
+      card,
       // 限定公開の絵は検索エンジンに載せない。題が焼き込んであるので、画像検索に
       // 出ると題と存在が漏れ、そこから記事に辿り着ける (ADR 0040)。
       shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {},

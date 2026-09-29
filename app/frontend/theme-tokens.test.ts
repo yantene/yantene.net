@@ -64,7 +64,7 @@ const definitions = new Map([
 
 describe.each([
   { name: "オフラインページ", path: "../../public/offline.html" },
-  { name: "OG カード", path: "../backend/handlers/og-card.ts" },
+  { name: "OG カード", path: "../backend/handlers/og-card.tsx" },
 ])("$name が写したテーマの色", ({ path }) => {
   const copies = collectCopies(read(path));
 
