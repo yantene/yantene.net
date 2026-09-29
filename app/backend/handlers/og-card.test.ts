@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardHtml, defaultCardHtml } from "./og-card";
+import { cardElement, defaultCardElement } from "./og-card";
 import cityscapeSource from "~/frontend/assets/cityscape.svg?raw";
 import characterSource from "~/frontend/assets/yantene-character.svg?raw";
 import logotypeSource from "~/frontend/assets/yantene-logotype.svg?raw";
@@ -7,12 +7,12 @@ import ja from "~/lib/i18n/locales/ja.json";
 
 /**
  * OG カードは街並みの素材をそのままは使えない。輪郭が `currentColor` で、線の太さを
- * 持たず、雲が混じっているためで、`og-card.ts` はこれらを素材の書き方に頼って解いて
+ * 持たず、雲が混じっているためで、`og-card.tsx` はこれらを素材の書き方に頼って解いて
  * いる。頼っている書き方が変わっていないことをここで見張る。
  *
  * 素材は scripts/extract-illustration.py が作業用の illustration.svg から書き出し、
  * 書き出したものを手で整えて置いてある (整え方は素材の先頭に書いてある)。だからここが
- * 落ちたときに直す先は、素材そのものでも `og-card.ts` でもなく、たいていは書き出しと
+ * 落ちたときに直す先は、素材そのものでも `og-card.tsx` でもなく、たいていは書き出しと
  * 手入れの工程。たとえば `clean()` が吐くのは `style="…stroke:currentColor…"` で、
  * ここが見ている `stroke="currentColor"` の形は手入れを経て初めて現れる。
  */
@@ -24,7 +24,7 @@ describe("cityscape.svg (OG カードが頼っている書き方)", () => {
   });
 
   it("雲を先に、街を後に置いている", () => {
-    // og-card.ts は「雲の頭から街の頭まで」を切って雲を落とす。
+    // og-card.tsx は「雲の頭から街の頭まで」を切って雲を落とす。
     expect(cityscapeSource.indexOf('<g id="clouds">')).toBeLessThan(
       cityscapeSource.indexOf('<g id="skyline">'),
     );
@@ -36,20 +36,20 @@ describe("cityscape.svg (OG カードが頼っている書き方)", () => {
   });
 
   it("線の太さを持たない", () => {
-    // 太さは画面では CSS が、OG では og-card.ts が与える。素材が持ち始めたら
+    // 太さは画面では CSS が、OG では og-card.tsx が与える。素材が持ち始めたら
     // 与えた値が効かなくなる (要素側の指定が勝つ)。
     expect(cityscapeSource).not.toContain("stroke-width");
   });
 
   it("根元のタグが属性を伴って開いている", () => {
-    // og-card.ts は `"<svg "` を目印に線の太さを差し込む。文字列指定の replace は
+    // og-card.tsx は `"<svg "` を目印に線の太さを差し込む。文字列指定の replace は
     // 見つからなければ黙って何もしないので、`<svg>` や `<svg\n` に変わると線が
     // 既定の太さ (この縮尺で約 3px) のまま出る。
     expect(cityscapeSource).toContain("<svg ");
   });
 
   it("viewBox の縦横比が変わっていない", () => {
-    // og-card.ts の CITYSCAPE_HEIGHT (1200px 幅に対する 175px) はこの比から出した
+    // og-card.tsx の CITYSCAPE_HEIGHT (1200px 幅に対する 175px) はこの比から出した
     // 値で、img には preserveAspectRatio を渡していない。比が動くと街が縦に潰れる。
     expect(cityscapeSource).toContain('viewBox="0 0 407.1932 59.2666"');
   });
@@ -74,7 +74,7 @@ describe("やんてねくんと字形の素材 (OG カードが頼っている�
     ["character", characterSource],
     ["logotype", logotypeSource],
   ])("%s の根元の viewBox が `0 0 w h` の形で読める", (_label, source) => {
-    // og-card.ts は最初の viewBox を窓に差し替え、字形の幅を viewBox の比から導く。
+    // og-card.tsx は最初の viewBox を窓に差し替え、字形の幅を viewBox の比から導く。
     // 読めなければ窓が効かず、やんてねくんが全身で縮んで出る。
     expect(source).toMatch(/<svg [^>]*viewBox="0 0 [\d.]+ [\d.]+"/u);
   });
@@ -84,75 +84,128 @@ describe("やんてねくんと字形の素材 (OG カードが頼っている�
 const INKED_ARTWORK = encodeURIComponent('fill="#1a2740"');
 const UNINKED_ARTWORK = encodeURIComponent("currentColor");
 
-/** HTML に置かれた data URI の SVG を、元の字面に戻して取り出す。 */
-const embeddedSvgs = (html: string): readonly string[] =>
-  [...html.matchAll(/src="data:image\/svg\+xml,([^"]+)"/gu)].map(([, uri = ""]) =>
-    decodeURIComponent(uri),
-  );
+/*
+ * カードは Satori に要素の木で渡す。関数のコンポーネントを呼び開いて、Satori が
+ * 受け取るのと同じ素の木にしてから確かめる。
+ */
+type Tree = string | number | boolean | null | undefined | Element | readonly Tree[];
+type Element = { type: unknown; props: { children?: Tree } & Record<string, unknown> };
+
+const isElement = (node: unknown): node is Element =>
+  typeof node === "object" && node !== null && "type" in node && "props" in node;
+
+function expand(node: Tree): Tree {
+  if (Array.isArray(node)) return node.map((child: Tree) => expand(child));
+  if (!isElement(node)) return node;
+  if (typeof node.type === "function") {
+    return expand((node.type as (props: unknown) => Tree)(node.props));
+  }
+  return { ...node, props: { ...node.props, children: expand(node.props.children) } };
+}
+
+/** 木の中の要素をすべて並べる。 */
+function elementsOf(node: Tree): readonly Element[] {
+  if (Array.isArray(node)) return node.flatMap((child: Tree) => elementsOf(child));
+  if (!isElement(node)) return [];
+  return [node, ...elementsOf(node.props.children)];
+}
+
+/** 子として文字列 `text` だけを持つ要素 (Satori から見て 1 つの文字の塊) を探す。 */
+const holderOf = (tree: Tree, text: string): Element | undefined =>
+  elementsOf(tree).find((element) => element.props.children === text);
+
+/** 木に置かれた data URI の SVG を、元の字面に戻して取り出す。 */
+const embeddedSvgs = (tree: Tree): readonly string[] =>
+  elementsOf(tree)
+    .map((element) => element.props["src"])
+    .filter((src): src is string => typeof src === "string")
+    .filter((src) => src.startsWith("data:image/svg+xml,"))
+    .map((src) => decodeURIComponent(src.slice("data:image/svg+xml,".length)));
+
+/** 木の全体を 1 つの字面にする (焼き込みや文言の有無を見るため)。 */
+const flatten = (tree: Tree): string => JSON.stringify(tree);
 
 /*
  * 意匠を単体で組めるようになったので、ここで確かめる。分ける前は Hono のルータと
  * workers-og を通さないと 1 文字も見られなかった。
  */
-describe("cardHtml", () => {
+describe("cardElement", () => {
   const params = {
     title: "はじめての記事",
     date: "2026-05-08",
   };
+  const card = (overrides: Partial<typeof params> = {}): Tree =>
+    expand(cardElement({ ...params, ...overrides }));
 
   it("表題と日付を載せる", () => {
-    const html = cardHtml(params);
+    const tree = card();
 
-    expect(html).toContain("はじめての記事");
-    expect(html).toContain("2026-05-08");
+    expect(holderOf(tree, "はじめての記事")).toBeDefined();
+    expect(holderOf(tree, "2026-05-08")).toBeDefined();
   });
 
   /*
-   * Satori に渡すのは HTML の文字列なので、表題の `<` をそのまま流すと本文が
-   * タグとして解釈される。
+   * **表題は 1 つの文字列の子として渡す。** HTML の文字列で渡していたときは、workers-og が
+   * HTMLRewriter から流れてきた文字の塊をそのまま子に並べ、表題が途中で割れていた。
+   * 割れると `lineClamp` が効かず (子が 2 つ以上なら flex しか許されない)、flex では
+   * 割れ目で段組みのように崩れる。
    */
-  it("表題の記号を実体参照にする", () => {
-    const html = cardHtml({ ...params, title: `<script>と"引用"と&` });
+  it("表題を 1 つの文字の塊として、実際の幅で 3 行に畳む", () => {
+    const title = holderOf(card(), "はじめての記事");
 
-    expect(html).toContain("&lt;script&gt;");
-    expect(html).toContain("&quot;引用&quot;");
-    expect(html).toContain("&amp;");
-    expect(html).not.toContain("<script>");
+    expect(title?.props["style"]).toMatchObject({
+      display: "block",
+      lineClamp: 3,
+      wordBreak: "break-word",
+    });
+  });
+
+  /*
+   * 要素の木で渡すので、表題は HTML として読まれない。実体参照にすると `&lt;` が
+   * そのまま字として出る。
+   */
+  it("表題の記号をそのままの字として渡す", () => {
+    const raw = `<script>と"引用"と&`;
+
+    expect(holderOf(card({ title: raw }), raw)).toBeDefined();
   });
 
   /*
    * 切り詰めは書記素で数える。UTF-16 の単位で切ると絵文字や拡張漢字が半分に割れ、
    * 豆腐になる。
    *
-   * **絵文字の位置は切り口に合わせてある。** 切るのは 44 個目 (TITLE_MAX - 1) なので、
-   * 43 文字の後ろに置くと、UTF-16 で切ったときにちょうど上位サロゲートだけが残る。
+   * **絵文字の位置は切り口に合わせてある。** 切るのは 119 個目 (TITLE_MAX - 1) なので、
+   * 118 文字の後ろに置くと、UTF-16 で切ったときにちょうど上位サロゲートだけが残る。
    * ここを外すと、素の slice に戻してもテストが通ってしまう。**TITLE_MAX を変えたら
    * ここも合わせること。**
    */
-  it("長い表題を書記素の単位で切り詰める", () => {
-    const html = cardHtml({ ...params, title: `${"あ".repeat(43)}🎉のこり` });
+  it("途方もなく長い表題を書記素の単位で切り詰める", () => {
+    const text = flatten(card({ title: `${"あ".repeat(118)}🎉のこり` }));
 
-    expect(html).toContain("…");
-    // 片割れになった上位サロゲートが残っていないこと。
-    expect(html).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
+    expect(text).toContain("…");
+    expect(text).not.toContain("のこり");
+    // 片割れになった上位サロゲートが残っていないこと (JSON では \\ud83c のように出る)。
+    expect(text).not.toMatch(/\\ud[89ab][0-9a-f]{2}(?!\\ud[c-f])/iu);
   });
 
-  it("短い表題は切り詰めない", () => {
-    expect(cardHtml(params)).not.toContain("…");
+  it("3 行に収まらない程度の表題は字数で切らない (畳むのは lineClamp)", () => {
+    const title = "あ".repeat(60);
+
+    expect(holderOf(card({ title }), title)).toBeDefined();
   });
 
   it("街と上端の帯を敷く", () => {
-    const html = cardHtml(params);
+    const text = flatten(card());
 
-    expect(html).toContain("data:image/svg+xml,");
-    expect(html).toContain("linear-gradient(90deg");
+    expect(text).toContain("data:image/svg+xml,");
+    expect(text).toContain("linear-gradient(90deg");
   });
 
   it("やんてねくんと署名の字形を置く (本文の色を焼き込んで)", () => {
-    const html = cardHtml(params);
+    const text = flatten(card());
 
-    expect(html).toContain(INKED_ARTWORK);
-    expect(html).not.toContain(UNINKED_ARTWORK);
+    expect(text).toContain(INKED_ARTWORK);
+    expect(text).not.toContain(UNINKED_ARTWORK);
   });
 
   /*
@@ -163,7 +216,7 @@ describe("cardHtml", () => {
   it("やんてねくんの窓をカードと同じ縦横比で切る", () => {
     // 素材の中の最初の id で見分ける。書き出し直して id が振り直されても追いかけられる。
     const marker = /id="[^"]+"/u.exec(characterSource)?.[0] ?? "";
-    const character = embeddedSvgs(cardHtml(params)).find((svg) => svg.includes(marker));
+    const character = embeddedSvgs(card()).find((svg) => svg.includes(marker));
     const [, , width = Number.NaN, height = Number.NaN] = (
       /viewBox="([^"]+)"/u.exec(character ?? "")?.[1] ?? ""
     )
@@ -172,26 +225,16 @@ describe("cardHtml", () => {
 
     expect(width / height).toBeCloseTo(1200 / 630, 3);
   });
-
-  /*
-   * workers-og はタグの間の空白を flex の子として数える。残すと `justify-content` が
-   * 見えない子の分まで間を割り振り、表題が狙った高さからずれる。
-   */
-  it("タグの間に空白を残さない", () => {
-    expect(cardHtml(params)).not.toMatch(/>\s+</u);
-  });
 });
 
-describe("defaultCardHtml", () => {
+describe("defaultCardElement", () => {
+  const card = (): Tree => expand(defaultCardElement());
+
   it("やんてねくんと名乗りの字形を置く (本文の色を焼き込んで)", () => {
-    const html = defaultCardHtml();
+    const text = flatten(card());
 
-    expect(html).toContain(INKED_ARTWORK);
-    expect(html).not.toContain(UNINKED_ARTWORK);
-  });
-
-  it("タグの間に空白を残さない", () => {
-    expect(defaultCardHtml()).not.toMatch(/>\s+</u);
+    expect(text).toContain(INKED_ARTWORK);
+    expect(text).not.toContain(UNINKED_ARTWORK);
   });
 
   /*
@@ -202,6 +245,6 @@ describe("defaultCardHtml", () => {
    * 目に入らないまま古びていく。
    */
   it("添え書きが ja.json の home.tagline と揃っている", () => {
-    expect(defaultCardHtml()).toContain(ja.home.tagline);
+    expect(holderOf(card(), ja.home.tagline)).toBeDefined();
   });
 });

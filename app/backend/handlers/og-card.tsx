@@ -2,8 +2,8 @@
 /**
  * OG カードの意匠。
  *
- * Satori に渡す静的な HTML を組み立てるだけで、配信も蓄えも知らない。相手は
- * og.handler.ts で、あちらは組み上がった HTML を PNG にして R2 に置く。
+ * Satori に渡す静的な要素を組み立てるだけで、配信も蓄えも知らない。相手は
+ * og.handler.ts で、あちらは組み上がった要素を PNG にして R2 に置く。
  *
  * 分けてあるのは、この 2 つが変わる理由が違うため。ここが動くのは見た目を変えたいとき、
  * あちらが動くのは経路や蓄え方を変えたいとき。no-secrets を切っているのもこちらの都合
@@ -17,12 +17,12 @@ import { truncateByGrapheme } from "~/lib/truncate";
 /*
  * 表題の上限。
  *
- * 字が入る幅はやんてねくんの右から余白を引いた 720px で、48px の全角なら 1 行 15 字。ここを
- * 45 より上げると全角だけの表題が 4 行になり、右上の署名と下の街に触れる。字の大きさや
- * 余白を変えるときは、全角だけの表題が 3 行に収まるかを一緒に見ること (英字の混じる
- * 表題は字が細いぶん短く収まるので、確かめにならない)。
+ * 見た目の上では効いていない。カードに収まるかは `lineClamp` が実際の幅で決める
+ * (`cardElement` を参照)。ここで切るのは、途方もなく長い表題を Satori に組ませて
+ * Worker の CPU を使い切らないため。3 行ぶん (全角で 45 字ほど、英字だとその倍) を
+ * 十分に超える長さにしてある。
  */
-const TITLE_MAX = 45;
+const TITLE_MAX = 120;
 /**
  * カードのデザイン版。テンプレート/フォントを変えたら上げると全 OG が再生成される。
  *
@@ -30,12 +30,12 @@ const TITLE_MAX = 45;
  * 上げないと R2 の古い PNG が返り続ける (v14 はやんてねくんがノートパソコンを抱える
  * 姿になった回。preview で旧い絵が返ってきて気づいた)。
  */
-export const OG_TEMPLATE_VERSION = "v16";
+export const OG_TEMPLATE_VERSION = "v17";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
  * header.css から取ってある。あちらは色を実行時の custom property と color-mix で
- * 組み立てるが、ここは Satori に渡す静的な HTML なのでどちらも使えない。白地に
+ * 組み立てるが、ここは Satori に渡す静的な要素なのでどちらも使えない。白地に
  * 重ねた結果の色を数値で置く。
  *
  * テーマの値をそのまま写したものには `= --token` を添えてある。theme-tokens.test.ts が
@@ -180,6 +180,11 @@ const CHARACTER_WINDOW = {
 } as const;
 
 /*
+ * 絵はどれも `alt=""` にしてある。PNG に焼き込まれるので誰にも読まれないが、書かないと
+ * lint (jsx-a11y) が止める。
+ */
+
+/*
  * 素材から組み立てた画。最初にカードを描くときまで遅らせる。
  *
  * このファイルは og.handler.ts 経由で index.ts から静的に繋がっているので、モジュールの
@@ -189,21 +194,6 @@ const CHARACTER_WINDOW = {
  * 評価そのものを遅らせる余地はまだ残っている ([#301](https://github.com/yantene/yantene.net/issues/301))。
  */
 const artwork: { cityscape?: string; character?: string; logotype?: string } = {};
-
-/**
- * カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。
- *
- * 通常の流れから外して底に貼ってあるのは、中身の置き場を街のぶん削らないため。削ると
- * 真ん中に置いた表題が上へ押し上げられ、指さす手の高さから外れる。長い表題の裾は
- * 街に重なるが、線が薄いぶん字は読める (画面のヒーローも同じ扱いで、hero-section.css が
- * 「テキストを街の上に逃がすとヒーローが間延びする」と書いている)。
- *
- * やんてねくんは街より手前に立つ。素材の白い裏打ちが輪郭の内側の線を隠す。
- */
-function cityscapeHtml(): string {
-  artwork.cityscape ??= `<img src="data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}" width="${CARD_WIDTH.toString()}" height="${CITYSCAPE_HEIGHT.toString()}" style="position:absolute;left:0;bottom:0;" />`;
-  return artwork.cityscape;
-}
 
 /** 素材の根元の `<svg>` の viewBox を差し替え、その窓だけを出す。 */
 function windowed(
@@ -226,12 +216,6 @@ function inkedDataUri(svg: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg.replaceAll("currentColor", () => INK))}`;
 }
 
-/** 左端に見切れるやんてねくん。カード全体に重ね、はみ出しはカードの縁で切れる。 */
-function characterHtml(): string {
-  artwork.character ??= inkedDataUri(windowed(characterSource, CHARACTER_WINDOW));
-  return `<img src="${artwork.character}" width="${CARD_WIDTH.toString()}" height="${CARD_HEIGHT.toString()}" style="position:absolute;left:0;top:0;" />`;
-}
-
 /** 素材の viewBox (`0 0 w h`) の幅と高さ。 */
 function viewBoxSize(source: string): { width: number; height: number } {
   const [, , width = Number.NaN, height = Number.NaN] = (
@@ -242,10 +226,41 @@ function viewBoxSize(source: string): { width: number; height: number } {
   return { width, height };
 }
 
-/** 寸法を CSS の長さにする (テンプレートに数値をそのまま置くと lint が止める)。 */
-function px(value: number): string {
-  // 端数を落とす。0.4 倍のような掛け算がそのままだと 13.600000000000001px になる。
-  return `${(Math.round(value * 100) / 100).toString()}px`;
+/**
+ * カードの足元に敷く街。幅いっぱいに置き、下端 (素材では地平線) をカードの底に合わせる。
+ *
+ * 通常の流れから外して底に貼ってあるのは、中身の置き場を街のぶん削らないため。削ると
+ * 真ん中に置いた表題が上へ押し上げられ、指さす手の高さから外れる。長い表題の裾は
+ * 街に重なるが、線が薄いぶん字は読める (画面のヒーローも同じ扱いで、hero-section.css が
+ * 「テキストを街の上に逃がすとヒーローが間延びする」と書いている)。
+ *
+ * やんてねくんは街より手前に立つ。素材の白い裏打ちが輪郭の内側の線を隠す。
+ */
+function Cityscape(): React.JSX.Element {
+  artwork.cityscape ??= `data:image/svg+xml,${encodeURIComponent(cityscapeSvg())}`;
+  return (
+    <img
+      alt=""
+      src={artwork.cityscape}
+      width={CARD_WIDTH}
+      height={CITYSCAPE_HEIGHT}
+      style={{ position: "absolute", left: 0, bottom: 0 }}
+    />
+  );
+}
+
+/** 左端に見切れるやんてねくん。カード全体に重ね、はみ出しはカードの縁で切れる。 */
+function Character(): React.JSX.Element {
+  artwork.character ??= inkedDataUri(windowed(characterSource, CHARACTER_WINDOW));
+  return (
+    <img
+      alt=""
+      src={artwork.character}
+      width={CARD_WIDTH}
+      height={CARD_HEIGHT}
+      style={{ position: "absolute", left: 0, top: 0 }}
+    />
+  );
 }
 
 /**
@@ -254,11 +269,13 @@ function px(value: number): string {
  * キャラクターと並べたロゴは使わない。やんてねくんはもう左端にいるので、並べると
  * 1 枚に 2 人立つことになる。
  */
-function logotypeHtml(height: number): string {
+function Logotype({ height }: { height: number }): React.JSX.Element {
   artwork.logotype ??= inkedDataUri(withoutPreamble(logotypeSource));
   const size = viewBoxSize(logotypeSource);
   const width = Math.round((height * size.width) / size.height);
-  return `<img src="${artwork.logotype}" width="${width.toString()}" height="${height.toString()}" style="width:${px(width)};height:${px(height)};" />`;
+  return (
+    <img alt="" src={artwork.logotype} width={width} height={height} style={{ width, height }} />
+  );
 }
 
 /*
@@ -271,29 +288,27 @@ function logotypeHtml(height: number): string {
  * 下に落とす翳りは header.css がヘッダーの下に引いているものと同じ。帯だけだと切り口が
  * 硬く、カードの縁に貼り付けた線に見える。
  */
-const TOP_BAND_HTML = `
-  <div style="display:flex;flex-direction:column;width:100%;">
-    <div style="display:flex;height:10px;width:100%;background:linear-gradient(90deg,${ACCENT},${SECONDARY},${PRIMARY},${HORIZON_INK},${ACCENT});"></div>
-    <div style="display:flex;height:14px;width:100%;background:linear-gradient(180deg,${withAlpha(HORIZON_INK, 0.12)},${withAlpha(HORIZON_INK, 0)});"></div>
-  </div>`;
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-/**
- * タグの間の空白を詰める。
- *
- * workers-og はタグの間の改行と字下げを文字のノードとして読み、flex の子に数える。
- * 数えられると `justify-content` が見えない子の分まで間を割り振り、中身が意図した
- * 位置からずれる (表題を上端に着けたつもりが、カードの 1/3 ほどの高さに浮いていた)。
- */
-function compact(html: string): string {
-  return html.replaceAll(/>\s+</gu, "><").trim();
+function TopBand(): React.JSX.Element {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          height: 10,
+          width: "100%",
+          background: `linear-gradient(90deg,${ACCENT},${SECONDARY},${PRIMARY},${HORIZON_INK},${ACCENT})`,
+        }}
+      />
+      <div
+        style={{
+          display: "flex",
+          height: 14,
+          width: "100%",
+          background: `linear-gradient(180deg,${withAlpha(HORIZON_INK, 0.12)},${withAlpha(HORIZON_INK, 0)})`,
+        }}
+      />
+    </div>
+  );
 }
 
 /**
@@ -303,37 +318,89 @@ function compact(html: string): string {
  * 重なる。逆に置くと、頭が帯を突き抜けてカードの縁まで出てしまい、上端の色の帯が
  * 途中で途切れて見える。
  */
-function frameHtml(content: string, layout: string): string {
-  return compact(`
-    <div style="position:relative;display:flex;flex-direction:column;width:${px(CARD_WIDTH)};height:${px(CARD_HEIGHT)};background:#ffffff;font-family:'Noto Sans JP';">
-      ${cityscapeHtml()}
-      ${characterHtml()}
-      ${TOP_BAND_HTML}
-      <div style="display:flex;flex-direction:column;flex:1;margin-left:${px(CONTENT_LEFT)};${layout}">
-        ${content}
+function Frame({
+  layout,
+  children,
+}: {
+  layout: React.CSSProperties;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        background: "#ffffff",
+        fontFamily: "'Noto Sans JP'",
+      }}
+    >
+      <Cityscape />
+      <Character />
+      <TopBand />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          marginLeft: CONTENT_LEFT,
+          ...layout,
+        }}
+      >
+        {children}
       </div>
-    </div>`);
+    </div>
+  );
 }
 
 /**
- * OG カードの HTML (Satori 制約: flex レイアウトのみ)。
+ * OG カード (Satori 制約: flex レイアウトのみ)。
+ *
+ * **HTML の文字列ではなく要素の木で渡す。** workers-og は文字列を HTMLRewriter で読み、
+ * 流れてきた文字の塊をそのまま子に並べる。HTML は素材の data URI で大きいので、塊の
+ * 切れ目が表題の途中に掛かることがあり、割れた表題は `lineClamp` を受け付けず
+ * (子が 2 つ以上だと flex しか許されない)、flex では割れ目で段組みのように崩れる。
+ * 要素の木なら表題は必ず 1 つの文字列として届く。
  *
  * 表題はカードの縦の真ん中に置き、日付をその上に添える。やんてねくんの指さす手が
  * ちょうどこの高さにあり、表題を指す形になる。表題が 1 行でも 3 行でも、塊ごと
  * 真ん中に着くので、手との位置関係は崩れない。下に 60px 余らせてあるのは、塊を
  * 少し持ち上げて手の高さに寄せるため。
  *
+ * 表題は**実際の幅で 3 行に畳む** (`lineClamp`)。字数で切ると、細い英字の表題が
+ * 2 行目の途中で切れ、全角の句読点が禁則で行を詰める表題は 4 行にはみ出す。
+ * 空白の無い長い語 (識別子や URL) は `break-word` で折り返す。折らないとカードの外へ
+ * 出ていく。
+ *
  * 署名の字形は右上に貼る。右下はスカイツリーが立っていて、重ねると塔の線が字に
  * 絡んで読みにくい。
  */
-export function cardHtml(params: { title: string; date: string }): string {
-  const title = escapeHtml(truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" }));
-  return frameHtml(
-    `
-        <div style="display:flex;font-size:28px;color:${MUTED_INK};margin-bottom:16px;">${escapeHtml(params.date)}</div>
-        <div style="display:flex;font-size:48px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
-        <div style="display:flex;position:absolute;right:80px;top:64px;">${logotypeHtml(44)}</div>`,
-    "justify-content:center;padding:0 80px 60px 60px;",
+export function cardElement(params: { title: string; date: string }): React.JSX.Element {
+  const title = truncateByGrapheme(params.title, TITLE_MAX, { ellipsis: "…" });
+  return (
+    <Frame layout={{ justifyContent: "center", padding: "0 80px 60px 60px" }}>
+      <div style={{ display: "flex", fontSize: 28, color: MUTED_INK, marginBottom: 16 }}>
+        {params.date}
+      </div>
+      <div
+        style={{
+          display: "block",
+          lineClamp: 3,
+          fontSize: 48,
+          fontWeight: 700,
+          color: INK,
+          lineHeight: 1.3,
+          wordBreak: "break-word",
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: "flex", position: "absolute", right: 80, top: 64 }}>
+        <Logotype height={44} />
+      </div>
+    </Frame>
   );
 }
 
@@ -347,11 +414,13 @@ export function cardHtml(params: { title: string; date: string }): string {
  * 中身はやんてねくんの右の中央に置く。街のぶんだけ下に余白を取ると、その高さぶん字形が上へ
  * 押し上げられて、絵の重心が上に寄る。記事カードと同じく、街には重ねてよい。
  */
-export function defaultCardHtml(): string {
-  return frameHtml(
-    `
-        ${logotypeHtml(120)}
-        <div style="display:flex;font-size:30px;color:${MUTED_INK};margin-top:32px;">Web の向こうから</div>`,
-    "align-items:center;justify-content:center;",
+export function defaultCardElement(): React.JSX.Element {
+  return (
+    <Frame layout={{ alignItems: "center", justifyContent: "center" }}>
+      <Logotype height={120} />
+      <div style={{ display: "flex", fontSize: 30, color: MUTED_INK, marginTop: 32 }}>
+        Web の向こうから
+      </div>
+    </Frame>
   );
 }

@@ -7,7 +7,7 @@
   The logo (character + wordmark side by side) is not a file: components/logo/logo.tsx
   places these two assets with the box in ~/lib/logo-layout. Cutting a third, combined
   asset is what let the header and the OG card fall behind when this drawing changed
-  (#527). The OG card (og-card.ts) does not use the logo: it opens its own close-up
+  (#527). The OG card (og-card.tsx) does not use the logo: it opens its own close-up
   window on this file, with the pointing hand aimed at the title (#545).
 
   Everything derived from this file is listed in public/icons/icon.svg and

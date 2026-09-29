@@ -4,7 +4,7 @@
 
   - Paired with the character it makes the logo, but there is no combined file: the box
     that places the two is in ~/lib/logo-layout, read by components/logo/logo.tsx (#527).
-    og-card.ts places this file alone, as the card's signature (#545).
+    og-card.tsx places this file alone, as the card's signature (#545).
 
   - Fills take currentColor.
   - The letters are kerned: measured per row of pixels, the closest ink between
