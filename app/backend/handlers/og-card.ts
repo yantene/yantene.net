@@ -17,7 +17,7 @@ import { truncateByGrapheme } from "~/lib/truncate";
 /*
  * 表題の上限。
  *
- * 字が入る幅は右の 4/5 から余白を引いた 820px で、52px の全角なら 1 行 15 字。ここを
+ * 字が入る幅はやんてねくんの右から余白を引いた 720px で、48px の全角なら 1 行 15 字。ここを
  * 45 より上げると全角だけの表題が 4 行になり、右上の署名と下の街に触れる。字の大きさや
  * 余白を変えるときは、全角だけの表題が 3 行に収まるかを一緒に見ること (英字の混じる
  * 表題は字が細いぶん短く収まるので、確かめにならない)。
@@ -30,7 +30,7 @@ const TITLE_MAX = 45;
  * 上げないと R2 の古い PNG が返り続ける (v14 はやんてねくんがノートパソコンを抱える
  * 姿になった回。preview で旧い絵が返ってきて気づいた)。
  */
-export const OG_TEMPLATE_VERSION = "v15";
+export const OG_TEMPLATE_VERSION = "v16";
 
 /*
  * カードの配色。app.css の daisyUI テーマ (name: "yantene") と、地平線を引いている
@@ -140,26 +140,32 @@ const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
 
 /**
- * 表題と日付を置き始める位置。左の 1/5 はやんてねくんに譲る。
+ * 表題と日付を置き始める位置。左はやんてねくんに譲る。
+ *
+ * やんてねくんの窓を動かしたら、指さす手の先 (いまは約 359px) がここより手前に
+ * 収まっているかを一緒に見ること。はみ出すと手が日付に掛かる。
  */
-const CONTENT_LEFT = 240;
+const CONTENT_LEFT = 340;
 
 /**
  * やんてねくんの寄り方。素材の 1 unit をカードの何 px にするかと、カードの左上に来る
  * 素材の座標。
  *
  * **ロゴとは切り方を分けてある。** ヘッダーのロゴ (`~/lib/logo-layout`) は胸から上を
- * まるごと出すが、カードは顔と指さす手に寄せたどアップで、頭の天辺と顔の左側は
+ * まるごと出すが、カードは顔と指さす手に寄せたどアップで、頭の天辺と後ろ頭は
  * カードの縁で切れる。寄せ方が違うので、寸法も共有しない。
  *
- * ⚠️ **見切れさせるのはカードの縁だけ。** 右と下は素材の輪郭のまま終わらせる。左の
- * 1/5 に帯を立ててそこで切ると、靴や手が縦の直線で断たれて、絵が欠けて見える。
+ * ⚠️ **顔のパーツ (両目・両頬・口) は切らない。** 左目は素材の x 70 あたりにあるので、
+ * 窓の左端をこれより右へ寄せると目が欠け、誰の顔か読めなくなる。
+ *
+ * ⚠️ **見切れさせるのはカードの縁だけ。** 右と下は素材の輪郭のまま終わらせる。左に
+ * 帯を立ててそこで切ると、靴や手が縦の直線で断たれて、絵が欠けて見える。
  *
  * ⚠️ **指さす手の先 (素材の x 171.6) が表題の少し手前に来るよう置いてある。** 手が
  * 表題を指すのがこの意匠の要なので、素材を差し替えて手の位置が動いたら見直すこと。
  */
 const CHARACTER_SCALE = 3;
-const CHARACTER_ORIGIN = { x: 88, y: 10 } as const;
+const CHARACTER_ORIGIN = { x: 52, y: 10 } as const;
 
 /**
  * 素材から切り出す窓。カードと同じ縦横比にして、カード全体に重ねる。
@@ -291,7 +297,7 @@ function compact(html: string): string {
 }
 
 /**
- * カードの枠。街・やんてねくん・上端の帯を敷き、右の 4/5 に中身を流す。
+ * カードの枠。街・やんてねくん・上端の帯を敷き、やんてねくんの右に中身を流す。
  *
  * やんてねくんは帯より先に置く。後に置いた要素が手前に描かれるので、帯が頭の天辺に
  * 重なる。逆に置くと、頭が帯を突き抜けてカードの縁まで出てしまい、上端の色の帯が
@@ -325,7 +331,7 @@ export function cardHtml(params: { title: string; date: string }): string {
   return frameHtml(
     `
         <div style="display:flex;font-size:28px;color:${MUTED_INK};margin-bottom:16px;">${escapeHtml(params.date)}</div>
-        <div style="display:flex;font-size:52px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
+        <div style="display:flex;font-size:48px;font-weight:700;color:${INK};line-height:1.3;">${title}</div>
         <div style="display:flex;position:absolute;right:80px;top:64px;">${logotypeHtml(44)}</div>`,
     "justify-content:center;padding:0 80px 60px 60px;",
   );
@@ -338,7 +344,7 @@ export function cardHtml(params: { title: string; date: string }): string {
  * 「エッセイ、技術記事、つくったもの。」を継いだもので、カードに収まる長さではないので、
  * トップの og:description に使っている短い方に合わせてある。
  *
- * 中身は右の 4/5 の中央に置く。街のぶんだけ下に余白を取ると、その高さぶん字形が上へ
+ * 中身はやんてねくんの右の中央に置く。街のぶんだけ下に余白を取ると、その高さぶん字形が上へ
  * 押し上げられて、絵の重心が上に寄る。記事カードと同じく、街には重ねてよい。
  */
 export function defaultCardHtml(): string {
