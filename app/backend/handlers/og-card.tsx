@@ -397,8 +397,8 @@ export function cardElement(params: { title: string; date: string }): React.JSX.
       >
         {title}
       </div>
-      <div style={{ display: "flex", position: "absolute", right: 80, top: 64 }}>
-        <Logotype height={44} />
+      <div style={{ display: "flex", position: "absolute", right: 48, top: 48 }}>
+        <Logotype height={60} />
       </div>
     </Frame>
   );
