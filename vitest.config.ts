@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [svgrPlugin()],
   test: {
     environment: "happy-dom",
-    include: ["app/**/*.test.{ts,tsx}"],
+    include: ["app/**/*.test.{ts,tsx}", "vite/**/*.test.ts"],
     passWithNoTests: true,
     setupFiles: ["./vitest.setup.ts"],
   },

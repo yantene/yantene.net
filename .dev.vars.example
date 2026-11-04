@@ -1,12 +1,17 @@
-# development で refresh を走らせるのに要る secret。
+# development で要る secret。
 # `.dev.vars` にコピーして値を埋める (`.dev.vars` は git に入らない)。
 #
-# 手元も Cloudflare Artifacts をコンテンツリポジトリとして読む (ADR 0034)。読み先は
-# wrangler.jsonc の vars が指している (namespace yantene / repo yantene-staging)。
-# 手元の作業ツリーを読めるようにして、この 2 つを不要にするのは #461。
+# 手元はコンテンツリポジトリの作業ツリー (content/) を読む (ADR 0047)。
+# refresh を手で叩くときの X-Refresh-Token にこの値を使う。
+
+REFRESH_SECRET=
+
+# 手元から Cloudflare Artifacts を読みたいときだけ、wrangler.jsonc の CONTENT_SOURCE を
+# "artifacts" に替えて次の 2 つを埋める。読み先は vars が指している
+# (namespace yantene / repo yantene-staging)。
 #
 # ARTIFACTS_API_TOKEN はダッシュボードの API Tokens で作る。権限は
 # Account / Artifacts / Read の 1 つだけにすること。
 
-ARTIFACTS_ACCOUNT_ID=
-ARTIFACTS_API_TOKEN=
+# ARTIFACTS_ACCOUNT_ID=
+# ARTIFACTS_API_TOKEN=

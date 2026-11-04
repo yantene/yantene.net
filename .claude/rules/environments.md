@@ -66,9 +66,9 @@ preview デプロイは staging の Worker に**バージョンだけ上げて�
 直後の窓で叩くか、ダッシュボードから触ること。production には preview が飛ばないので
 この問題は出ない。
 
-手元 (development) も同じ 2 つが要る。`.dev.vars.example` を `.dev.vars` に写して埋める。
-手元の作業ツリーを読めるようにしてこれを不要にするのは
-[#461](https://github.com/yantene/yantene.net/issues/461)。
+手元 (development) には要らない。手元は作業ツリーを読む
+([ADR 0047](../../docs/adr/0047-read-the-working-tree-in-development.md))。手元から Artifacts を
+読みたいときだけ、`CONTENT_SOURCE` を `artifacts` に替えて `.dev.vars` に 2 つを置く。
 
 ### 1'. Artifacts のリポジトリを用意する
 

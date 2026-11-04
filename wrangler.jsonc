@@ -10,11 +10,14 @@
   "vars": {
     "APP_ENV": "development",
     // どのコンテンツリポジトリを読むか (ADR 0034)。無い値・知らない値なら refresh が
-    // throw する (fail-loud)。手元の作業ツリーを読む "local" を足すのは #461。
-    "CONTENT_SOURCE": "artifacts",
-    // Cloudflare Artifacts (コンテンツリポジトリ) の参照。アカウント ID と
-    // API トークン (Artifacts > Read) は secret で与える:
-    // ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
+    // throw する (fail-loud)。手元は作業ツリーを読む (ADR 0047)。
+    "CONTENT_SOURCE": "local",
+    // `pnpm dev` の Vite が作業ツリーを出す口 (vite/content-bridge.ts)。dev サーバーの
+    // ポートを変えたら合わせる。読む先は環境変数 CONTENT_DIR (既定は content/)。
+    "LOCAL_CONTENT_URL": "http://localhost:5173/__content",
+    // Cloudflare Artifacts (コンテンツリポジトリ) の参照。手元で CONTENT_SOURCE を
+    // "artifacts" に替えたときだけ使う。アカウント ID と API トークン (Artifacts > Read) は
+    // secret で与える: ARTIFACTS_ACCOUNT_ID / ARTIFACTS_API_TOKEN。
     "ARTIFACTS_NAMESPACE": "yantene",
     // 手元から production のリポジトリを読まないよう staging 側を指す。
     "ARTIFACTS_REPO": "yantene-staging",

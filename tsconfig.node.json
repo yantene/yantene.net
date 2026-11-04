@@ -6,7 +6,8 @@
     "vitest.setup.ts",
     "eslint.config.ts",
     "drizzle.config.ts",
-    "react-router.config.ts"
+    "react-router.config.ts",
+    "vite/**/*.ts"
   ],
   "compilerOptions": {
     // strict / paths は親 tsconfig.json から継承する
@@ -15,7 +16,7 @@
     // 解決するため、拡張子まで書く必要がある (拡張子なしだと将来のデフォルトで壊れる)。
     "allowImportingTsExtensions": true,
     "types": ["node"],
-    "lib": ["ES2022"],
+    "lib": ["ES2023"],
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler"

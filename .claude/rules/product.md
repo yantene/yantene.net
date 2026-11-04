@@ -42,9 +42,30 @@ Web サイトは自己表現の場であり、Web 屋として細部にこだわ
 ([ADR 0034](../../docs/adr/0034-artifacts-as-content-source-of-truth.md))。環境ごとに
 リポジトリを分け (`yantene/yantene-production` / `yantene/yantene-staging`)、どちらも
 `main` だけを見る。どれを読むかは `wrangler.jsonc` の vars
-(`CONTENT_SOURCE` / `ARTIFACTS_REPO`) が決める。**3 環境とも `artifacts`。**
-手元の作業ツリーを読む `local` を足すのは
-[#461](https://github.com/yantene/yantene.net/issues/461)。
+(`CONTENT_SOURCE` / `ARTIFACTS_REPO`) が決める。**staging と production は `artifacts`、
+手元 (development) は `local`。**
+
+### 手元では作業ツリーを読む
+
+development は `content/` の**作業ツリー**を読む
+([ADR 0047](../../docs/adr/0047-read-the-working-tree-in-development.md))。コミットしていない
+下書きも、commit も push もせずに手元の画面で確かめられる。
+
+```bash
+pnpm dev   # 別の端末で
+curl -X POST http://localhost:5173/api/v1/refresh -H "X-Refresh-Token: <.dev.vars の REFRESH_SECRET>"
+```
+
+- **手元には push の合図が無い。** 記事を直したら refresh を手で叩く
+- 読む範囲は push すれば載るものと同じ (`git ls-files`)。`.gitignore` で外したものは読まない
+- Worker からホストのファイルは読めないので、**Vite の dev サーバーが口を出している**
+  (`vite/content-bridge.ts`)。`pnpm run preview` には口が無い。ポートを 5173 から動かしたら
+  wrangler.jsonc の `LOCAL_CONTENT_URL` も合わせる
+- `draft` は管理者にしか見えない。手元のログインはメールが届かない代わりに、本文が
+  `.wrangler/tmp/email/` にファイルで書き出される (dev サーバーのログにパスが出る)。
+  そこにあるリンクを開く
+- 同期が `no such table` で落ちたら、手元の D1 に migration が当たっていない
+  (`pnpm run db:dev:migrate`)
 
 その環境のリポジトリの `main` に push すると、push が Queue に流れて同期が走る
 ([ADR 0035](../../docs/adr/0035-refresh-on-push-through-a-queue.md))。
