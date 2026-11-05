@@ -4,7 +4,7 @@ import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n();
 import { describe, expect, it } from "vitest";
-import Licenses, { ATTRIBUTIONS } from "./licenses";
+import Legal, { AMAZON_ASSOCIATES_STATEMENT, ATTRIBUTIONS } from "./legal";
 import { googleFontFamilies } from "~/frontend/root";
 import { translationsFor } from "~/frontend/lib/page-meta";
 import { supportedLocales } from "~/lib/i18n/locale";
@@ -21,8 +21,8 @@ import routes from "~/frontend/routes";
 async function renderPage(): Promise<void> {
   const Stub = createRoutesStub([
     {
-      path: "/licenses",
-      Component: Licenses,
+      path: "/legal",
+      Component: Legal,
       loader: () => ({
         locale: "ja",
         origin: "https://yantene.net",
@@ -31,14 +31,14 @@ async function renderPage(): Promise<void> {
     },
   ]);
 
-  renderWithI18n(<Stub initialEntries={["/licenses"]} />, { router: false });
+  renderWithI18n(<Stub initialEntries={["/legal"]} />, { router: false });
 
   // loader の解決を待つ。描き終わるまでは何も出ていない。
   // 場所の名前は日本語モードでも英語のまま (app/lib/i18n/locales/locales.test.ts)。
-  await screen.findByRole("heading", { name: "Open source licenses" });
+  await screen.findByRole("heading", { name: "Legal", level: 1 });
 }
 
-describe("ライセンスのページ", () => {
+describe("/legal", () => {
   it("絵文字の意匠の帰属を出す", async () => {
     await renderPage();
 
@@ -56,15 +56,26 @@ describe("ライセンスのページ", () => {
     expect(screen.getByRole("link", { name: "STIX Two Math" })).toBeVisible();
     expect(screen.getAllByRole("link", { name: "SIL Open Font License 1.1" })).toHaveLength(2);
   });
+
+  /*
+   * Amazon アソシエイトの運営規約 (第 5 条) が、サイトのどこかに出すことを求めている。
+   * 記事の本文には書かずここ 1 か所に置くので、消えると規約を外れる。
+   */
+  it("Amazon アソシエイトの表示を規約の文言のまま出す", async () => {
+    await renderPage();
+
+    expect(screen.getByRole("heading", { name: "Affiliate links", level: 2 })).toBeVisible();
+    expect(screen.getByText(AMAZON_ASSOCIATES_STATEMENT)).toBeVisible();
+  });
 });
 
 /*
  * ページの中身とフッターのリンクが両方あっても、ルートの登録が外れれば行き先は 404 に
  * なる。createRoutesStub は routes.ts を読まないので、上の 2 つでは捕まらない。
  */
-describe("ライセンスのページの登録", () => {
-  it("routes.ts に /licenses がある", () => {
-    expect(routes.some((route) => "path" in route && route.path === "licenses")).toBe(true);
+describe("/legal の登録", () => {
+  it("routes.ts に /legal がある", () => {
+    expect(routes.some((route) => "path" in route && route.path === "legal")).toBe(true);
   });
 });
 
@@ -74,7 +85,7 @@ describe("ライセンスのページの登録", () => {
  * 読んでいる書体の側を正として突き合わせる。
  */
 describe("読み込んでいる書体の帰属", () => {
-  it.each(googleFontFamilies.map(({ name }) => name))("%s の帰属が /licenses にある", (name) => {
+  it.each(googleFontFamilies.map(({ name }) => name))("%s の帰属が /legal にある", (name) => {
     expect(ATTRIBUTIONS.some((attribution) => attribution.name === name)).toBe(true);
   });
 });

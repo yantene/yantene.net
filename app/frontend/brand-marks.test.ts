@@ -101,7 +101,7 @@ describe("ブランドの印", () => {
       "./components/article-header/article-header.tsx",
       "./components/share/share-menu.tsx",
       "./components/social/social-links.tsx",
-      "./routes/licenses.tsx",
+      "./routes/legal.tsx",
     ]);
   });
 });

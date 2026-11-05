@@ -73,8 +73,8 @@ const targets = [
    * 素の指定 (500 未満なら ok) では見張ったことにならない。
    */
   {
-    label: "/licenses",
-    path: "/licenses",
+    label: "/legal",
+    path: "/legal",
     expectBodyIncludes: "CC BY 4.0",
   },
   /*

@@ -138,6 +138,10 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
    */
   router.get("/list.html", (c) => permanentRedirect(c, "/articles"));
 
+  // 帰属のページは、アフィリエイトの断り書きと一緒に `/legal` が引き継いだ (#552)。
+  // CC BY 4.0 の帰属としてフッター以外からも指されうるので、行き先を残す。
+  router.get("/licenses", (c) => permanentRedirect(c, "/legal"));
+
   // 記事に紐付く画像。現行サイトではアセット API が配信する。表に無いディレクトリは
   // 素通りさせ、通常の 404 に委ねる。
   router.get("/images/:directory/:file{.+}", (c, next) => {

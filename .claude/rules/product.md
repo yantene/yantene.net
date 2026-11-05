@@ -550,7 +550,7 @@ push を合図に D1 と R2 へ同期される
 
 **場所と区画の名前は、日本語モードでも英語のまま出す。** About / Articles / Notes /
 Slides / Popular / Latest / Contents / Related articles / Responses / Feed / All /
-Open source licenses / Search / Share がそれにあたる。
+Legal / Open source licenses / Affiliate links / Search / Share がそれにあたる。
 
 - 名前を訳すと、同じ場所が言語によって別の名前で呼ばれることになる (URL は
   `/articles` のままなのに見出しだけ「記事」になる)
@@ -662,6 +662,17 @@ React の外から引けないため。ja.json を書き換えたらあちらも
 差出人は `MAIL_FROM`。送信専用のサブドメインなので**返信は受け取れない**ため、
 `Reply-To` に `ADMIN_EMAIL` を入れてある。送信元ドメインを有効にする手順は
 environments.md を参照。
+
+## 断り書き (`/legal`)
+
+フッターの Legal から辿れる 1 枚に、表示が使用の条件になっているものをまとめる
+([#552](https://github.com/yantene/yantene.net/issues/552))。OSS の帰属と、アフィリエイトリンクの
+断り書きの 2 節。`/licenses` は `/legal` へ 308 で送る。
+
+- **アフィリエイトの断り書きは記事の本文に書かない。** Amazon アソシエイトの運営規約 (第 5 条) が
+  求めるのは「サイト上のどこかに目立つように」で、記事ごとではない。ここ 1 か所に置く
+- **規約の文言は訳さない。** 英語モードでも日本語のまま出す (`AMAZON_ASSOCIATES_STATEMENT`)。
+  訳した文は規約の文言ではない
 
 ## 補助ドメイン
 

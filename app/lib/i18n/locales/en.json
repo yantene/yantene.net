@@ -124,7 +124,15 @@
   },
   "footer": {
     "navLabel": "Footer",
-    "licenses": "Open source licenses"
+    "legal": "Legal"
+  },
+  "legal": {
+    "title": "Legal",
+    "description": "Licenses of the open source work this site uses, and a disclosure about affiliate links.",
+    "affiliate": {
+      "heading": "Affiliate links",
+      "lead": "Some articles contain affiliate links. When you buy through one, the author earns a commission."
+    }
   },
   "licenses": {
     "title": "Open source licenses",

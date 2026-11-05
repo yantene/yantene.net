@@ -124,7 +124,15 @@
   },
   "footer": {
     "navLabel": "フッター",
-    "licenses": "Open source licenses"
+    "legal": "Legal"
+  },
+  "legal": {
+    "title": "Legal",
+    "description": "このサイトが使用しているオープンソースの成果物のライセンスと、アフィリエイトリンクについての表示。",
+    "affiliate": {
+      "heading": "Affiliate links",
+      "lead": "記事の中には、紹介料を受け取るリンク (アフィリエイトリンク) を含むものがあります。リンク先で買われると、筆者に紹介料が入ります。"
+    }
   },
   "licenses": {
     "title": "Open source licenses",

@@ -57,8 +57,8 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) =>
  * CSP の許可と対で動く (`app/backend/index.ts`)。ここのホストを変えるならあちらも直すこと。
  */
 /*
- * export しているのは、/licenses が挙げる帰属と突き合わせるため
- * (routes/licenses.test.ts)。ここに書体を足したら、あちらにも帰属が要る。
+ * export しているのは、/legal が挙げる帰属と突き合わせるため
+ * (routes/legal.test.tsx)。ここに書体を足したら、あちらにも帰属が要る。
  */
 export const googleFontFamilies = [
   // 本文。400 は地の文、700 は見出しと強調。

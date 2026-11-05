@@ -55,7 +55,7 @@ export function createSeoRouter(): Hono<{ Bindings: Env }> {
       ...(profile === null ? [] : [urlEntry(`${origin}/about`)]),
       urlEntry(`${origin}/articles`),
       ...(works.length === 0 ? [] : [urlEntry(`${origin}/works`)]),
-      urlEntry(`${origin}/licenses`),
+      urlEntry(`${origin}/legal`),
     ];
     const articleUrls = result.articles.map((article) =>
       urlEntry(

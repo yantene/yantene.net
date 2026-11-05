@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { SiGithub } from "react-icons/si";
-import type { Route } from "./+types/licenses";
+import type { Route } from "./+types/legal";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
@@ -54,6 +54,16 @@ export const ATTRIBUTIONS = [
   usageKey: string;
 }[];
 
+/**
+ * Amazon アソシエイト・プログラム運営規約 第 5 条 (2026-04-20 改定) が、サイト上のどこかに
+ * 目立つように出すことを求めている文言。〔乙の名称〕にはサイトの名前を入れる。
+ *
+ * 規約の文言なので訳さない。英語モードでも日本語のまま出す (訳した文は規約の文言ではない)。
+ * 記事ごとの本文には断りを書かず、ここに 1 か所だけ置く (#552)。
+ */
+export const AMAZON_ASSOCIATES_STATEMENT =
+  "Amazonのアソシエイトとして、yantene.net は適格販売により収入を得ています。";
+
 export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & CopyrightData {
   return {
     locale: context.get(localeRouteContext),
@@ -64,20 +74,20 @@ export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & C
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin } = loaderData;
-  const licenses = translationsFor(locale).licenses;
+  const legal = translationsFor(locale).legal;
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    title: licenses.title,
-    description: licenses.description,
+    title: legal.title,
+    description: legal.description,
   });
 };
 
 const linkClassName =
   "press-control underline underline-offset-4 transition-colors hover:text-primary";
 
-export default function Licenses({ loaderData }: Route.ComponentProps): React.JSX.Element {
+export default function Legal({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
   const { copyright } = loaderData;
 
@@ -85,7 +95,9 @@ export default function Licenses({ loaderData }: Route.ComponentProps): React.JS
     <AppLayout>
       <Header />
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("licenses.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("legal.title")}</h1>
+
+        <h2 className="mt-8 text-lg font-semibold text-foreground">{t("licenses.title")}</h2>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{t("licenses.lead")}</p>
 
         {/*
@@ -133,6 +145,16 @@ export default function Licenses({ loaderData }: Route.ComponentProps): React.JS
             <SiGithub className="brand-mark" aria-hidden="true" />
             {t("licenses.rest.linkLabel")}
           </a>
+        </p>
+
+        <h2 className="mt-12 text-lg font-semibold text-foreground">
+          {t("legal.affiliate.heading")}
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          {t("legal.affiliate.lead")}
+        </p>
+        <p lang="ja" className="mt-2 text-sm leading-relaxed text-foreground">
+          {AMAZON_ASSOCIATES_STATEMENT}
         </p>
       </main>
       <Footer copyright={copyright} />

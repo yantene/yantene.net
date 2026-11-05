@@ -67,16 +67,13 @@ describe("Footer", () => {
   });
 
   /*
-   * 絵文字と書体の帰属はライセンスのページが持つ。CC BY 4.0 は帰属をまとめた場所への
+   * 絵文字と書体の帰属と、アフィリエイトの断り書きは /legal が持つ。CC BY 4.0 は帰属をまとめた場所への
    * リンクでも条件を満たせると定めているが、それはリンクが実際にあることが前提なので、
-   * 消えたら落ちるようにしておく (帰属そのものは licenses.test.tsx が見張る)。
+   * 消えたら落ちるようにしておく (中身は legal.test.tsx が見張る)。
    */
-  it("ライセンスのページへ繋ぐ", () => {
+  it("/legal へ繋ぐ", () => {
     renderFooter(2019, 2026);
 
-    expect(screen.getByRole("link", { name: "Open source licenses" })).toHaveAttribute(
-      "href",
-      "/licenses",
-    );
+    expect(screen.getByRole("link", { name: "Legal" })).toHaveAttribute("href", "/legal");
   });
 });
