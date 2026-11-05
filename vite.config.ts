@@ -3,6 +3,7 @@ import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type PluginOption, type UserConfig } from "vite";
 import svgr from "vite-plugin-svgr";
+import { contentBridgePlugin } from "./vite/content-bridge.ts";
 
 /**
  * SVG を React コンポーネントとしてインライン展開する (`import X from "./x.svg?react"`)。
@@ -215,6 +216,7 @@ const viteConfig = defineConfig({
     tailwindcss(),
     svgrPlugin(),
     reactRouter(),
+    contentBridgePlugin(),
   ],
 });
 

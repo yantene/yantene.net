@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveContentStore } from "./resolve-content-store";
 import { ArtifactsContentStore } from "~/backend/infra/artifacts/artifacts-content-store";
+import { LocalContentStore } from "~/backend/infra/local/local-content-store";
 
 const VARS = {
   ARTIFACTS_NAMESPACE: "yantene",
@@ -22,6 +23,19 @@ describe("resolveContentStore", () => {
       }),
     );
     expect(store).toBeInstanceOf(ArtifactsContentStore);
+  });
+
+  it("builds the local store when CONTENT_SOURCE is local", () => {
+    const store = resolveContentStore(
+      env({ CONTENT_SOURCE: "local", LOCAL_CONTENT_URL: "http://localhost:5173/__content" }),
+    );
+    expect(store).toBeInstanceOf(LocalContentStore);
+  });
+
+  it("throws (fail-loud) when local has no bridge URL", () => {
+    expect(() => resolveContentStore(env({ CONTENT_SOURCE: "local" }))).toThrow(
+      /LOCAL_CONTENT_URL/,
+    );
   });
 
   it("throws (fail-loud) when a secret for the chosen source is missing", () => {

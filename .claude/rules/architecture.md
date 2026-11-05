@@ -37,6 +37,7 @@ docs/
 └── adr/       # Architecture Decision Records (設計判断の記録。詳細は adr.md)
 migrations/    # Drizzle 生成のマイグレーション (NNNN_intent.sql) + meta/
 public/        # 静的アセット (icons / manifest など。ビルドを介さず配信)
+vite/          # dev サーバーだけに足す口 (手元の作業ツリーを Worker に渡す。ADR 0047)
 scripts/       # 運用スクリプト (release.sh / validate-migrations.mjs / d1/ ヘルパー)
 .claude/
 └── rules/     # プロジェクト規約 (CLAUDE.md が @ で読み込む。本ファイルもここ)
@@ -64,6 +65,7 @@ app/
 │   │   ├── r2/                 # R2 実装 (原文 / MDAST / 画像のキャッシュ)
 │   │   ├── kv/                 # KV 実装 (読み手のセッション)
 │   │   ├── artifacts/          # コンテンツリポジトリ (Cloudflare Artifacts) の実装 (ADR 0034)
+│   │   ├── local/              # 手元の作業ツリーを読む実装 (development。ADR 0047)
 │   │   └── console/            # ConsoleLogger (ILogger 実装)
 │   ├── handlers/               # HTTP ハンドラ層（Composition Root）
 │   │   ├── articles/           # 記事の API ルータ + ページ用ローダ (loadXxxPage)

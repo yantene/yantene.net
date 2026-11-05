@@ -68,7 +68,7 @@ function skippedTypes(messages: MessageBatch["messages"]): readonly string[] {
  *
  * 読んでいるコンテンツリポジトリが Artifacts でない環境では何もしない。そこで走らせても、
  * Artifacts の push を合図に別の場所の中身を同期することになる (手元の作業ツリーを読む
- * `local` を足したとき。#461)。
+ * `local`。ADR 0047)。
  *
  * 失敗したら ack せずに投げ返す。Queue が再試行する。
  */
