@@ -84,7 +84,7 @@ function encodePath(path: string): string {
 /**
  * 過去の URL を現行の URL へリダイレクトするルータ。index.ts で BASIC 認証の後ろに
  * マウントするので、staging では認証を通した相手にだけ答える (どの URL が在るかを
- * 外に教えない)。過去の URL は 2 世代ある。
+ * 外に教えない)。過去の URL は 3 つの世代にまたがる。
  *
  * **旧 yantene.net (Jekyll + GitHub Pages)。** 外部のリンク・検索結果・フィード購読に
  * 残っており、ドメインを本アプリへ向けた時点で行き先を失った。
@@ -101,6 +101,11 @@ function encodePath(path: string): string {
  *
  * - /notes/<slug>, /notes/<slug>.md     → /articles/<slug>, /articles/<slug>.md
  *   (domain/article/article-path.ts の表にある記事だけ。表に無い `/notes/<slug>` は移さない)
+ *
+ * **帰属のページを `/licenses` と呼んでいた頃。** アフィリエイトの断り書きと一緒に `/legal` が
+ * 引き継いだ (#552)。
+ *
+ * - /licenses                           → /legal
  *
  * **一覧の `/notes` はここには無い。** 記事一覧へ 307 で送っていたが、あの URL は短文の
  * 投稿の一覧として戻ってくる場所で (ADR 0032 がそのために 308 を避けていた)、いまは
@@ -137,6 +142,10 @@ export function createLegacyRedirectRouter(): Hono<{ Bindings: Env }> {
    * 送る。効かないクエリを引き継ぐと、308 がブラウザに覚えられて死んだクエリが残る。
    */
   router.get("/list.html", (c) => permanentRedirect(c, "/articles"));
+
+  // 帰属のページは、アフィリエイトの断り書きと一緒に `/legal` が引き継いだ (#552)。
+  // CC BY 4.0 の帰属としてフッター以外からも指されうるので、行き先を残す。
+  router.get("/licenses", (c) => permanentRedirect(c, "/legal"));
 
   // 記事に紐付く画像。現行サイトではアセット API が配信する。表に無いディレクトリは
   // 素通りさせ、通常の 404 に委ねる。

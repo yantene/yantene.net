@@ -108,6 +108,8 @@ describe("legacy pages other than articles", () => {
     ["/profile.html", "/about"],
     ["/atom.xml", "/feed.xml"],
     ["/list.html", "/articles"],
+    // 帰属のページは断り書きと一緒に `/legal` が引き継いだ (#552)。
+    ["/licenses", "/legal"],
   ])("permanently redirects %s to %s", async (from, to) => {
     const res = await createTestApp().request(from, {}, env());
 

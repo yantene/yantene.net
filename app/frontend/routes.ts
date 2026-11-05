@@ -29,7 +29,7 @@ export default [
   route("slides", "routes/slides.tsx"),
 
   // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
-  route("licenses", "routes/licenses.tsx"),
+  route("legal", "routes/legal.tsx"),
 
   /*
    * ログイン (ADR 0039)。**ナビには出さない。**

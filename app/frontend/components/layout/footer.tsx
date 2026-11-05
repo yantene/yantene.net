@@ -63,11 +63,11 @@ export function Footer({ copyright }: FooterProps): React.JSX.Element {
           */}
           {/* 絵の意味は文字が持つので、読み上げには渡さない。 */}
           <Link
-            to="/licenses"
+            to="/legal"
             className="press-control inline-flex items-center gap-1.5 text-xs text-foreground/80 underline-offset-4 transition-colors hover:text-primary hover:underline"
           >
             <HiOutlineScale aria-hidden="true" />
-            {t("footer.licenses")}
+            {t("footer.legal")}
           </Link>
           {/*
             ログインの入口。**ナビには出さない**方針なので、常設の導線はここだけ
