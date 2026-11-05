@@ -58,11 +58,12 @@ export const ATTRIBUTIONS = [
  * Amazon アソシエイト・プログラム運営規約 第 5 条 (2026-04-20 改定) が、サイト上のどこかに
  * 目立つように出すことを求めている文言。〔乙の名称〕にはサイトの名前を入れる。
  *
- * 規約の文言なので訳さない。英語モードでも日本語のまま出す (訳した文は規約の文言ではない)。
+ * 字間だけはサイトの表記 (英字と日本語の間に半角スペース) に揃えた。規約は「実質的に同じ文言」を
+ * 認めている。規約の文言なので訳さない。英語モードでも日本語のまま出す (訳した文は規約の文言ではない)。
  * 記事ごとの本文には断りを書かず、ここに 1 か所だけ置く (#552)。
  */
 export const AMAZON_ASSOCIATES_STATEMENT =
-  "Amazonのアソシエイトとして、yantene.net は適格販売により収入を得ています。";
+  "Amazon のアソシエイトとして、yantene.net は適格販売により収入を得ています。";
 
 export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & CopyrightData {
   return {
