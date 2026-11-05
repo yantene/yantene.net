@@ -3,6 +3,7 @@ import { ALERT_TAG_NAME, parseMarkdownBody } from "./markdown-body";
 import type { Nodes, Root, RootContent } from "mdast";
 import type { ArticleStatus } from "~/backend/domain/article";
 import { DEFAULT_ARTICLE_STATUS, isArticleStatus } from "~/backend/domain/article";
+import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
 const SUMMARY_MAX_CHARS = 160;
 
@@ -63,15 +64,21 @@ export function parseArticleContent(markdown: string): ParsedArticleContent {
 }
 
 /**
- * 見出し・脚注定義・水平線・生 HTML を除いた本文ブロックのテキストを連結し、
+ * 見出し・脚注定義・水平線・生 HTML・リンクカードを除いた本文ブロックのテキストを連結し、
  * 先頭 160 文字を返す。
+ *
+ * リンクカードになる段落 (むき出しの URL だけの段落) を除くのは、重要なリンクを書き出しの
+ * 近くにカードで置くと、要約が URL の途中で切れるため (#551)。どの段落がカードになるかは
+ * 描画と取得が使う collectBareLinkParagraphs に任せ、ここで判定を持たない。
  */
 export function extractSummary(root: Root): string {
+  const cards = new Set<Nodes>(collectBareLinkParagraphs(root).map(({ paragraph }) => paragraph));
+  const isIncluded = (node: Nodes): boolean => isSummaryNode(node) && !cards.has(node);
   const parts: string[] = [];
   let length = 0;
   for (const node of root.children) {
-    if (!isSummaryNode(node)) continue;
-    const text = summaryTextOf(node).trim();
+    if (!isIncluded(node)) continue;
+    const text = summaryTextOf(node, isIncluded).trim();
     if (text.length === 0) continue;
     parts.push(text);
     length += text.length + 1; // 連結時の区切りスペース分
@@ -117,11 +124,11 @@ function isSummaryNode(node: Nodes): boolean {
  * ノード配下のテキストを、除外対象のノードを飛ばしながら連結する。
  * 葉ノードの文字列化 (画像の alt を含む) は mdast-util-to-string に委ねる。
  */
-function summaryTextOf(node: RootContent): string {
+function summaryTextOf(node: RootContent, isIncluded: (node: Nodes) => boolean): string {
   if (!("children" in node)) return mdastToString(node);
   return node.children
-    .filter((child) => isSummaryNode(child))
-    .map((child) => summaryTextOf(child))
+    .filter((child) => isIncluded(child))
+    .map((child) => summaryTextOf(child, isIncluded))
     .join("");
 }
 

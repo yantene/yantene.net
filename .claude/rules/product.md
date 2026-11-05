@@ -153,6 +153,8 @@ curl -X POST "<origin>/api/v1/refresh?force=true" -H "X-Refresh-Token: <secret>"
   ([#322](https://github.com/yantene/yantene.net/issues/322))。R2 の置き場を空けたければ
   手で消すこと。
 
+- 要約からリンクカードになる段落を外した ([#551](https://github.com/yantene/yantene.net/issues/551))。
+  force refresh を流すまで、書き出しの近くにカードを置いた既存記事の要約は URL を含んだまま出る
 - 関連記事を本文のベクトルで並べるようにした ([ADR 0028](../../docs/adr/0028-relate-notes-by-embedding-similarity.md))。
   ベクトルを作るのは「変更のあった記事」だけなので、**導入直後は既存記事のベクトルが 1 本も
   入らない**。関連記事が全記事で空になるので、一度 force refresh を流すこと。
@@ -276,9 +278,13 @@ N 件に足りなくなる。
 ### summary は MDAST から自動抽出
 
 一覧表示用の要約は手書きしない。Markdown を MDAST (AST) に変換した後、
-見出し・脚注・コードブロック・生 HTML・数式を除いたテキストノードから先頭 160 文字を
-切り出す。数式を除くのは、ノードが持つ値が LaTeX 原文で、残すと `\frac{a}{b}` のような
+見出し・脚注・コードブロック・生 HTML・数式・リンクカードになる段落を除いたテキストノードから
+先頭 160 文字を切り出す。数式を除くのは、ノードが持つ値が LaTeX 原文で、残すと `\frac{a}{b}` のような
 制御綴りが一覧や OGP にそのまま出るため。
+
+リンクカードになる段落 (むき出しの URL だけの段落) を除くのは、書き出しの近くにカードを
+置くと要約が URL の途中で切れるため ([#551](https://github.com/yantene/yantene.net/issues/551))。
+どの段落がカードになるかは `app/lib/link-card/bare-link.ts` が 1 か所で決め、要約もそれに従う。
 
 生 HTML (`html` ノード) を除くのは、`<s>` や `<div class='box'>` といったタグ文字列が
 そのまま要約に出てしまうため。段落中のインライン HTML も対象で、タグに囲まれた本文自体は
