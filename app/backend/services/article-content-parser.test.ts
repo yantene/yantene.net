@@ -308,3 +308,28 @@ describe("要約と Alert", () => {
     expect(summary).toBe("引用は本文の一部。 続きの段落。");
   });
 });
+
+describe("要約とリンクカード", () => {
+  const parse = (body: string): string =>
+    parseArticleContent(`---\ntitle: T\n---\n\n${body}`).summary;
+
+  it("カードになる段落 (むき出しの URL だけ) を要約に数えない", () => {
+    expect(parse("話題の品だ。\n\nhttps://example.com/item?tag=x\n\nしかし続きがある。\n")).toBe(
+      "話題の品だ。 しかし続きがある。",
+    );
+  });
+
+  it("引用の中のカードも数えない", () => {
+    expect(parse("> https://example.com/\n\n本文。\n")).toBe("本文。");
+  });
+
+  it("文中のリンクは本文として数える", () => {
+    expect(parse("詳しくは https://example.com/ を見る。\n")).toBe(
+      "詳しくは https://example.com/ を見る。",
+    );
+  });
+
+  it("リスト項目の URL はカードにならないので数える", () => {
+    expect(parse("- https://example.com/\n")).toBe("https://example.com/");
+  });
+});
