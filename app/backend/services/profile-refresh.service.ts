@@ -9,6 +9,7 @@ import type {
 } from "~/backend/domain/profile";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { contentTypeForPath } from "./asset-content-type";
+import { isSyncedAssetPath } from "./content-asset-path";
 import { computeContentHash } from "./content-hash";
 import { readImageDimensions } from "./image-dimensions";
 import { definitionUrlsOf, withAssetUrls, withImageDimensions } from "./mdast-assets";
@@ -172,7 +173,11 @@ function idle(): ProfileSyncResult {
 function groupProfile(tree: readonly ContentEntry[]): ProfileGroup | undefined {
   const source = tree.find((entry) => entry.path === SOURCE_PATH);
   if (source === undefined) return undefined;
-  const assets = tree.filter((entry) => entry.path.startsWith(ASSET_PREFIX));
+  const assets = tree.filter(
+    (entry) =>
+      entry.path.startsWith(ASSET_PREFIX) &&
+      isSyncedAssetPath(entry.path.slice(ASSET_PREFIX.length)),
+  );
   return { assets, contentHash: computeContentHash(source, assets) };
 }
 
