@@ -1,6 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { toString as mdastToString } from "mdast-util-to-string";
 import { contentTypeForPath } from "./asset-content-type";
+import { isSyncedAssetPath } from "./content-asset-path";
 import { computeContentHash } from "./content-hash";
 import { definitionUrlsOf, withAssetUrls, withImageDimensions } from "./mdast-assets";
 import { readImageDimensions, type ImageDimensions } from "./image-dimensions";
@@ -339,6 +340,7 @@ export class ArticlesRefreshService {
 /**
  * ツリーを 1 パスでノード単位 (slug) にまとめる。`articles/<base>.md` を起点にし、
  * `articles/<base>/` 配下のエントリをそのアセットとして束ねる。合成ハッシュも算出する。
+ * `_` で始まる要素を含むパスは束ねない (`isSyncedAssetPath`)。
  */
 function groupArticles(tree: readonly ContentEntry[]): ArticleGroup[] {
   const sources: { base: string; entry: ContentEntry }[] = [];
@@ -354,6 +356,7 @@ function groupArticles(tree: readonly ContentEntry[]): ArticleGroup[] {
       const prefixEnd = entry.path.indexOf("/", SOURCE_DIRECTORY.length);
       if (prefixEnd === -1) continue;
       const prefix = entry.path.slice(0, prefixEnd + 1);
+      if (!isSyncedAssetPath(entry.path.slice(prefix.length))) continue;
       const list = assetsByPrefix.get(prefix) ?? [];
       list.push(entry);
       assetsByPrefix.set(prefix, list);

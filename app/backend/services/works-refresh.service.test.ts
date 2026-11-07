@@ -239,6 +239,24 @@ describe("WorksRefreshService", () => {
     expect(cache.assets.has("infoholick/diagram.png")).toBe(false);
   });
 
+  /* 執筆の材料は `_` で始まる名前に置けば同期されない (#559)。 */
+  it("does not sync paths with a segment starting with _", async () => {
+    files.set("works/infoholick/_x", { hash: "h-x", bytes: bytes("secret") });
+    files.set("works/infoholick/img/_draft.png", { hash: "h-draft", bytes: bytes("draft") });
+
+    await service.refresh();
+    expect([...cache.assets.keys()]).toEqual(["infoholick/diagram.png"]);
+    expect(content.reads).toEqual(["works/infoholick.md", "works/infoholick/diagram.png"]);
+  });
+
+  it("does not resync when only a path starting with _ changes", async () => {
+    files.set("works/infoholick/_x", { hash: "h-x", bytes: bytes("v1") });
+    await service.refresh();
+
+    files.set("works/infoholick/_x", { hash: "h-x-2", bytes: bytes("v2") });
+    expect((await service.refresh()).processed).toEqual([]);
+  });
+
   it("collects bare link URLs from the body for link cards", async () => {
     files.set("works/infoholick.md", {
       hash: "h-md-linked",

@@ -2,11 +2,17 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import { createArticleAssetsRouter } from "./assets.handler";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
+import type { ContentEntry, IContentStore } from "~/backend/domain/content";
+import {
+  D1ArticleCommandRepository,
+  D1ArticleQueryRepository,
+  D1ArticleSearchIndex,
+} from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { createTestApp } from "~/backend/test-app";
+import { ArticlesRefreshService } from "~/backend/services/articles-refresh.service";
 
 function envWith(d1: D1Database, bucket: R2Bucket): Env {
   return { D1: d1, R2: bucket } as unknown as Env;
@@ -103,6 +109,45 @@ describe("createArticleAssetsRouter GET /:slug/assets/:path", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  /*
+   * 執筆の材料 (`_materials/` など) は同期の時点で落ちる (#559)。R2 に入らないので、
+   * 記事が公開されていてもアセット API からは引けない。
+   */
+  it("returns 404 for synced paths with a segment starting with _", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    const encode = (text: string): Uint8Array => new TextEncoder().encode(text);
+    const files = new Map<string, Uint8Array>([
+      [
+        "articles/hello.md",
+        encode(
+          "---\ntitle: Hello\npublishedOn: 2026-01-15\nlastModifiedOn: 2026-01-16\n---\n\nBody.\n",
+        ),
+      ],
+      ["articles/hello/cover.png", encode("PNG")],
+      ["articles/hello/_materials/x.md", encode("secret")],
+      ["articles/hello/img/_draft.png", encode("draft")],
+    ]);
+    const content: IContentStore = {
+      listTree: (): Promise<readonly ContentEntry[]> =>
+        Promise.resolve([...files.keys()].map((path) => ({ path, hash: path }))),
+      readFile: (path: string): Promise<Uint8Array | undefined> => Promise.resolve(files.get(path)),
+    };
+    await new ArticlesRefreshService(
+      content,
+      new D1ArticleCommandRepository(d1),
+      D1ArticleQueryRepository.forAdmin(d1),
+      new R2ArticleContentCache(bucket),
+      new D1ArticleSearchIndex(d1),
+    ).refresh();
+
+    const get = (path: string): Response | Promise<Response> =>
+      createArticleAssetsRouter().request(`/hello/assets/${path}`, {}, envWith(d1, bucket));
+    expect((await get("cover.png")).status).toBe(200);
+    expect((await get("_materials/x.md")).status).toBe(404);
+    expect((await get("img/_draft.png")).status).toBe(404);
   });
 
   it("returns 404 for an invalid slug", async () => {

@@ -10,6 +10,7 @@ import type {
 import type { IUnpersisted } from "~/backend/domain/shared";
 import type { Root } from "mdast";
 import { contentTypeForPath } from "./asset-content-type";
+import { isSyncedAssetPath } from "./content-asset-path";
 import { computeContentHash } from "./content-hash";
 import { readImageDimensions } from "./image-dimensions";
 import { definitionUrlsOf, withAssetUrls, withImageDimensions } from "./mdast-assets";
@@ -221,6 +222,7 @@ export class WorksRefreshService {
 /**
  * ツリーを 1 パスで作品単位 (slug) にまとめる。`works/<base>.md` を起点にし、
  * `works/<base>/` 配下のエントリをそのアセットとして束ねる。合成ハッシュも算出する。
+ * `_` で始まる要素を含むパスは束ねない (`isSyncedAssetPath`)。
  */
 function groupWorks(tree: readonly ContentEntry[]): WorkGroup[] {
   const sources: { base: string; entry: ContentEntry }[] = [];
@@ -233,6 +235,7 @@ function groupWorks(tree: readonly ContentEntry[]): WorkGroup[] {
       const prefixEnd = entry.path.indexOf("/", SOURCE_DIRECTORY.length);
       if (prefixEnd === -1) continue;
       const prefix = entry.path.slice(0, prefixEnd + 1);
+      if (!isSyncedAssetPath(entry.path.slice(prefix.length))) continue;
       const list = assetsByPrefix.get(prefix) ?? [];
       list.push(entry);
       assetsByPrefix.set(prefix, list);

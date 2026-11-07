@@ -837,6 +837,45 @@ lastModifiedOn: 2026-01-15
     expect(cache.assets.has("hello::new.png")).toBe(true);
   });
 
+  /*
+   * 執筆の材料 (取材メモなど) を記事の隣の `_materials/` に置けるようにする (#559)。
+   * `_` で始まる要素を含むパスは、どの深さでも R2 に写さない。
+   */
+  it("does not cache assets under a path segment starting with _", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/cover.png", { hash: "a1", bytes: bytes("PNG") }],
+      ["articles/hello/_materials/x.md", { hash: "m1", bytes: bytes("secret") }],
+      ["articles/hello/img/_draft.png", { hash: "d1", bytes: bytes("draft") }],
+    ]);
+    const { service, cache, content } = setup(files);
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual(["hello"]);
+    expect([...cache.assets.keys()]).toEqual(["hello::cover.png"]);
+    // 読みにも行かない。
+    expect(content.reads).not.toContain("articles/hello/_materials/x.md");
+    expect(content.reads).not.toContain("articles/hello/img/_draft.png");
+  });
+
+  it("keeps the content hash when only files under _materials/ change", async () => {
+    const files = new Map([
+      ["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }],
+      ["articles/hello/_materials/x.md", { hash: "m1", bytes: bytes("v1") }],
+    ]);
+    const { service, query } = setup(files);
+
+    await service.refresh();
+    const before = (await query.findBySlug(ArticleSlug.create("hello")))?.sourceHash;
+
+    files.set("articles/hello/_materials/x.md", { hash: "m2", bytes: bytes("v2") });
+    files.set("articles/hello/_materials/y.md", { hash: "m3", bytes: bytes("new") });
+    const second = await service.refresh();
+
+    expect(second.processed).toEqual([]);
+    expect((await query.findBySlug(ArticleSlug.create("hello")))?.sourceHash).toBe(before);
+  });
+
   it("propagates infra errors (fail-loud) instead of skipping them", async () => {
     const files = new Map([["articles/hello.md", { hash: "h1", bytes: bytes(helloMd) }]]);
     const { service, cache } = setup(files);
