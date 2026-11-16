@@ -518,7 +518,7 @@ Bridgy Fed から見て「誰のサイトか・誰が書いたか」が分から
 ### 機械に名乗る身元は 1 つの `@id` にまとめる
 
 JSON-LD の `Person` は、どのページに出ても `<origin>/#person` という同じ `@id` を
-名乗る ([ADR 0048](../../docs/adr/0048-name-the-author-under-one-id.md))。名前が同じだけでは
+名乗る ([ADR 0048](../../docs/adr/0048-identify-the-author-and-the-site-in-structured-data.md))。名前が同じだけでは
 読む側 (検索エンジン) に同じ 1 人だと伝わらないため。
 
 **どのページも構造化データを出す。** 少なくとも「自分はこのサイトの一部だ」と名乗る。

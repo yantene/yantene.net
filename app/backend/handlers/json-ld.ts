@@ -38,7 +38,8 @@ function websiteId(origin: string): string {
 }
 
 /**
- * サイトへの参照。記事と `/about` が `isPartOf` で「このページはこのサイトの一部」と言う。
+ * サイトへの参照。トップ以外のどのページも、`isPartOf` で「このページはこのサイトの
+ * 一部」と言う。
  *
  * `@id` だけで指す。サイトの本体 (名前・別名) を言うのはトップの `WebSite` の役で、
  * ページごとに写すと、名前を変えたときに場所によって違うことを言う余地ができる。
@@ -126,7 +127,7 @@ export function personNode(origin: string, profile: PublicProfile | null): JsonL
 }
 
 /**
- * 書き手への参照。記事の `author` / `publisher` が使う。
+ * 書き手への参照。記事の `author` / `publisher` と、作品の `creator` が使う。
  *
  * **`@id` だけの裸の参照にはしない。** Google の Article の構造化データは `author` に
  * `name` を求め、`url` を勧めている。記事のページには Person の本体が無いので、裸の
@@ -177,35 +178,37 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile | null)
 }
 
 /**
- * どの型にも当たらないページ (`/legal`、ログインの画面) の構造化データ。ページを `WebPage`
- * として名乗り、サイトの一部だと言う。
+ * 「どこの、何のページか」だけを名乗る構造化データ。サイトの一部だと言う。
+ *
+ * `path` は絞り込みやページ送りを含まない、その場所そのもののパス。canonical と同じ URL を
+ * 名乗る。
  */
-export function webPageJsonLd(origin: string, path: string): JsonLdNode {
+function pageInSite(type: string, origin: string, path: string): JsonLdNode {
   return {
     "@context": "https://schema.org",
-    "@type": "WebPage",
+    "@type": type,
     url: `${origin}${path}`,
     isPartOf: websiteReference(origin),
   };
 }
 
 /**
- * 一覧のページ (`/articles`、`/works`、`/notes`、`/slides`) の構造化データ。ページを `CollectionPage` として
- * 名乗り、サイトの一部だと言う。
+ * どの型にも当たらないページ (`/legal`、ログインの画面) の構造化データ。ページを `WebPage`
+ * として名乗る。
+ */
+export function webPageJsonLd(origin: string, path: string): JsonLdNode {
+  return pageInSite("WebPage", origin, path);
+}
+
+/**
+ * 一覧のページ (`/articles`、`/works`、`/notes`、`/slides`) の構造化データ。ページを
+ * `CollectionPage` として名乗る。
  *
  * **並んでいる中身は載せない。** 1 件ずつの記述はそれぞれのページ (`BlogPosting`、
  * `CreativeWork`) が持っていて、ここに写すと同じものを 2 か所で言うことになる。
- *
- * `path` は絞り込みやページ送りを含まない、その場所そのもののパス。canonical と同じ URL を
- * 名乗る。
  */
 export function collectionPageJsonLd(origin: string, path: string): JsonLdNode {
-  return {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    url: `${origin}${path}`,
-    isPartOf: websiteReference(origin),
-  };
+  return pageInSite("CollectionPage", origin, path);
 }
 
 /**

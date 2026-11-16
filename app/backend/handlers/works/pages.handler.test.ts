@@ -172,6 +172,21 @@ describe("loadWorkDetailPage", () => {
     expect(jsonLd?.isPartOf).toEqual({ "@id": `${ORIGIN}/#website` });
   });
 
+  /* 作品にも経歴を出さない (ADR 0044)。作った人を指す節に欄を足す抜け道を塞ぐ。 */
+  it("keeps the history out of the CreativeWork", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWork(d1);
+    await new R2WorkContentCache(bucket).putMdast(WorkSlug.create("infoholick"), BODY);
+
+    const { jsonLd } = await loadWorkDetailPage(envWith(d1, bucket), "infoholick", ORIGIN);
+    const serialized = JSON.stringify(jsonLd);
+
+    for (const key of ["alumniOf", "award", "birthDate", "birthPlace", "worksFor"]) {
+      expect(serialized).not.toContain(`"${key}"`);
+    }
+  });
+
   /* プロフィールが同期されていなくても、指す先は変えない。名前だけ既定に倒れる。 */
   it("keeps pointing at the same @id before the profile is synced", async () => {
     const d1 = createTestD1();

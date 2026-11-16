@@ -60,7 +60,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0045](0045-show-the-history-right-under-the-profile-card.md)        | 経歴を `/about` の名乗りの直下に、章ごとに畳んで出す                   | Accepted   |
 | [0046](0046-serve-motion-as-vp9-webm.md)                             | 動きのあるものは VP9 の WebM 1 本で配り、自動再生しない                | Accepted   |
 | [0047](0047-read-the-working-tree-in-development.md)                 | 手元では作業ツリーを Vite の dev サーバー越しに読む                    | Accepted   |
-| [0048](0048-name-the-author-under-one-id.md)                         | 書き手の身元を 1 つの `@id` にまとめ、`/#person` で名乗る              | Accepted   |
+| [0048](0048-identify-the-author-and-the-site-in-structured-data.md)  | 書き手とサイトに `@id` を付け、どのページの構造化データからも指す      | Accepted   |
 
 ## 統合した番号
 
