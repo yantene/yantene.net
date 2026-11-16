@@ -1,11 +1,24 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { loadArticlesListPage } from "./pages.handler";
+import { loadArticlesListPage, loadHomePage } from "./pages.handler";
 import type { ArticlesListPageData } from "./pages.handler";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { D1ArticleCommandRepository, D1ArticleSearchIndex } from "~/backend/infra/d1/repositories";
+import {
+  HistoryDate,
+  HistoryEntry,
+  Profile,
+  ProfileName,
+  SocialAccount,
+  Tagline,
+} from "~/backend/domain/profile";
+import {
+  D1ArticleCommandRepository,
+  D1ArticleSearchIndex,
+  D1ProfileCommandRepository,
+} from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
+import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 function article(slug: string, publishedOn: string): Article<IUnpersisted> {
   return Article.create({
@@ -41,6 +54,79 @@ const envWith = (d1: D1Database): Env => ({ D1: d1 }) as unknown as Env;
 
 const load = (d1: D1Database, search: string): Promise<ArticlesListPageData> =>
   loadArticlesListPage(envWith(d1), new URL(`https://example.com/articles${search}`));
+
+/*
+ * トップはサイト (`WebSite`) と書き手 (`Person`) を名乗る (ADR 0048)。
+ *
+ * 全ページ共通の出し口を通るので、プロフィールの有無の両方で形を固定する。
+ */
+describe("loadHomePage の JSON-LD (ADR 0048)", () => {
+  const ORIGIN = "https://example.com";
+  const PERSON_ID = `${ORIGIN}/about#person`;
+
+  const graphOf = (jsonLd: Record<string, unknown>): readonly Record<string, unknown>[] =>
+    jsonLd["@graph"] as readonly Record<string, unknown>[];
+
+  it("プロフィールが無くてもサイト名と書き手の殻を出す", async () => {
+    const { jsonLd } = await loadHomePage(envWith(createTestD1()), ORIGIN);
+
+    expect(jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          name: "やんてね",
+          alternateName: "yantene.net",
+          url: `${ORIGIN}/`,
+          publisher: { "@id": PERSON_ID },
+        },
+        {
+          "@type": "Person",
+          "@id": PERSON_ID,
+          name: FALLBACK_PROFILE_NAME,
+          url: `${ORIGIN}/about`,
+          image: `${ORIGIN}${PROFILE_PHOTO}`,
+        },
+      ],
+    });
+  });
+
+  it("プロフィールがあれば、書き手の名前と出ていく先が入る", async () => {
+    const d1 = createTestD1();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("書き手"),
+        tagline: Tagline.create("自己紹介。"),
+        socials: [
+          SocialAccount.create({
+            platform: "github",
+            url: "https://github.com/yantene",
+            isMe: true,
+          }),
+          SocialAccount.create({ platform: "x", url: "https://x.com/yantene", isMe: false }),
+        ],
+        sourceHash: "h1",
+      }),
+      [HistoryEntry.create({ chapter: "高校", date: HistoryDate.create("2012-03"), text: "卒業" })],
+    );
+
+    const { jsonLd } = await loadHomePage(envWith(d1), ORIGIN);
+    const [site, person] = graphOf(jsonLd);
+
+    expect(site?.publisher).toEqual({ "@id": PERSON_ID });
+    expect(person).toEqual({
+      "@type": "Person",
+      "@id": PERSON_ID,
+      name: "書き手",
+      url: `${ORIGIN}/about`,
+      image: `${ORIGIN}${PROFILE_PHOTO}`,
+      description: "自己紹介。",
+      sameAs: ["https://github.com/yantene"],
+    });
+    // ⚠️ 経歴は機械に名乗らない (ADR 0044)。新しく Person を出す場所なので、ここでも見張る。
+    expect(JSON.stringify(jsonLd)).not.toContain("卒業");
+  });
+});
 
 describe("loadArticlesListPage", () => {
   it("絞り込みがなければ公開日の新しい順に全件返す", async () => {

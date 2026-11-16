@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ArticleDetail } from "./article-detail-view";
 import type { ArticleStatus } from "~/backend/domain/article";
 import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
+import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
+import {
+  D1ArticleCommandRepository,
+  D1ProfileCommandRepository,
+} from "~/backend/infra/d1/repositories";
+import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { createTestApp } from "~/backend/test-app";
@@ -213,5 +218,72 @@ describe("loadArticleDetailPage の status (ADR 0040)", () => {
     if (!page.found) throw new Error("管理者なら読めるはず");
     expect(page.admin).toBe(true);
     expect(page.noindex).toBe(false);
+  });
+});
+
+/*
+ * 記事の筆者と発行者は、`/about` とトップが名乗るのと同じ 1 人を指す (ADR 0048)。
+ *
+ * 以前は `@id` が無く `url` がトップを指していたので、読む側からは `/about` の Person と
+ * 記事の author が「同じ名前の別人」に見えていた。
+ */
+describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
+  const ORIGIN = "https://example.test";
+
+  async function loadJsonLd(d1: D1Database): Promise<Record<string, unknown>> {
+    const bucket = makeBucket();
+    await seed(d1, bucket);
+    const page = await loadArticleDetailPage(
+      env(d1, bucket),
+      new Request(`${ORIGIN}/articles/hello`),
+      "hello",
+      ORIGIN,
+      null,
+    );
+    if (!page.found) throw new Error("記事が見つかっていない");
+    return page.jsonLd;
+  }
+
+  it("author と publisher が同じ @id を指し、url は /about になる", async () => {
+    const d1 = createTestD1();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("書き手"),
+        tagline: Tagline.create("自己紹介。"),
+        socials: [],
+        sourceHash: "h1",
+      }),
+      [],
+    );
+
+    const jsonLd = await loadJsonLd(d1);
+
+    const person = {
+      "@type": "Person",
+      "@id": `${ORIGIN}/about#person`,
+      name: "書き手",
+      url: `${ORIGIN}/about`,
+    };
+    expect(jsonLd).toMatchObject({ "@type": "BlogPosting", headline: "Hello" });
+    // `@id` だけの裸の参照にしない。Google の Article が author に name を求める。
+    expect(jsonLd.author).toEqual(person);
+    expect(jsonLd.publisher).toEqual(person);
+  });
+
+  /*
+   * プロフィールが同期されていなくても、指す先 (`@id`) は変えない。変わるのは名前だけで、
+   * 既定に倒れる (h-card の印と同じ扱い)。同期された時点で、同じ `@id` の名前が入れ替わる。
+   */
+  it("プロフィールが無くても同じ @id を指し、名前だけ既定に倒れる", async () => {
+    const jsonLd = await loadJsonLd(createTestD1());
+
+    const person = {
+      "@type": "Person",
+      "@id": `${ORIGIN}/about#person`,
+      name: FALLBACK_PROFILE_NAME,
+      url: `${ORIGIN}/about`,
+    };
+    expect(jsonLd.author).toEqual(person);
+    expect(jsonLd.publisher).toEqual(person);
   });
 });

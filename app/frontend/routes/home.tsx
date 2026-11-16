@@ -20,11 +20,12 @@ export async function loader({
   request,
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & ClockOriginData & HomePageData> {
-  const home = await loadHomePage(context.get(cloudflareContext).env);
+  const origin = new URL(request.url).origin;
+  const home = await loadHomePage(context.get(cloudflareContext).env, origin);
   return {
     ...home,
     locale: context.get(localeRouteContext),
-    origin: new URL(request.url).origin,
+    origin,
     copyright: resolveCopyrightYears(),
     /*
      * ヒーローの空をどの時刻から始めるか。ここで時計を読むのは、Workers が I/O の外の
@@ -35,7 +36,7 @@ export async function loader({
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const home = translationsFor(locale).home;
   return buildPageMeta({
     locale,
@@ -43,6 +44,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     pathname: location.pathname,
     title: home.heading,
     description: home.tagline,
+    jsonLd,
   });
 };
 

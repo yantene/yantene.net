@@ -153,7 +153,7 @@ describe("loadAboutPage", () => {
 
     const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
-    expect(jsonLd).toMatchObject({
+    expect(jsonLd?.mainEntity).toMatchObject({
       "@type": "Person",
       name: "やんてね",
       url: `${ORIGIN}/about`,
@@ -161,6 +161,28 @@ describe("loadAboutPage", () => {
       sameAs: ["https://github.com/yantene"],
       /* `mailto:` を剥いだアドレス。画面に出ているものと同じで、増やしていない。 */
       email: "contact@example.com",
+    });
+  });
+
+  /**
+   * ページを `ProfilePage` として名乗り、主題に書き手を置く (ADR 0048)。
+   *
+   * 書き手の `@id` は `/about#person`。記事とトップが同じ綴りで指してくるので、
+   * ここがずれると「同じ名前の人が 2 人いる」状態に戻る。
+   */
+  it("wraps the Person in a ProfilePage under the shared @id", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(jsonLd).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      mainEntity: { "@type": "Person", "@id": `${ORIGIN}/about#person` },
     });
   });
 
@@ -225,8 +247,15 @@ describe("loadAboutPage", () => {
 
     const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
+    // 包みの側にも欄を足させない。経歴を `ProfilePage` の欄として出す抜け道を塞ぐ。
     expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
       "@context",
+      "@type",
+      "mainEntity",
+      "url",
+    ]);
+    expect(Object.keys(jsonLd?.mainEntity ?? {}).toSorted()).toEqual([
+      "@id",
       "@type",
       "description",
       "email",

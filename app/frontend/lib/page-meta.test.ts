@@ -35,6 +35,36 @@ describe("buildPageMeta", () => {
     expect(ld).toEqual({ "script:ld+json": jsonLd });
   });
 
+  /*
+   * トップは `WebSite` と `Person` を 1 つの `@graph` にまとめて渡す (ADR 0048)。
+   * 複数の節も 1 つのオブジェクトとして同じ出し口を通るので、手を入れずに素通しする。
+   */
+  it("passes a @graph of several nodes through as one ld+json descriptor", () => {
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "WebSite", name: "やんてね", publisher: { "@id": `${origin}/about#person` } },
+        { "@type": "Person", "@id": `${origin}/about#person`, name: "やんてね" },
+      ],
+    };
+    const meta = buildPageMeta({ locale: "ja", origin, pathname: "/", jsonLd });
+
+    const scripts = meta.filter((d) => "script:ld+json" in (d as Record<string, unknown>));
+    expect(scripts).toEqual([{ "script:ld+json": jsonLd }]);
+  });
+
+  /*
+   * jsonLd を渡しても、ほかの meta は 1 つも欠けない。過去の回帰は jsonLd の有無で
+   * ページごと落ちる形だったので、有る側でも一式が揃っていることを見る。
+   */
+  it("keeps the rest of the meta intact whether or not jsonLd is given", () => {
+    const withoutLd = buildPageMeta({ locale: "ja", origin, pathname });
+    const withLd = buildPageMeta({ locale: "ja", origin, pathname, jsonLd: { "@graph": [] } });
+
+    expect(withLd.slice(0, withoutLd.length)).toEqual(withoutLd);
+    expect(withLd).toHaveLength(withoutLd.length + 1);
+  });
+
   it("falls back to the site title when no page title is given", () => {
     const meta = buildPageMeta({ locale: "ja", origin, pathname });
     const site = translationsFor("ja").meta;
