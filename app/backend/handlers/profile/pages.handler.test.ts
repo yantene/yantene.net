@@ -250,7 +250,6 @@ describe("loadAboutPage", () => {
     // 包みの側にも欄を足させない。経歴を `ProfilePage` の欄として出す抜け道を塞ぐ。
     expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
       "@context",
-      "@id",
       "@type",
       "mainEntity",
       "url",

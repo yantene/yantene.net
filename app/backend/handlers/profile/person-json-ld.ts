@@ -33,13 +33,11 @@ function websiteId(origin: string): string {
   return `${origin}/#website`;
 }
 
-/** `/about` というページの `@id`。ページと、そこに書かれている人 ({@link personId}) は別のもの。 */
-function profilePageId(origin: string): string {
-  return `${origin}/about#profile`;
-}
-
-/** 書き手についてのページ。Person の `url` が指す先。 */
-function personUrl(origin: string): string {
+/**
+ * 書き手についてのページ (`/about`) の URL。Person の `url` と、そのページ自身
+ * (`ProfilePage`) の `url` が指す先。
+ */
+function aboutUrl(origin: string): string {
   return `${origin}/about`;
 }
 
@@ -59,25 +57,35 @@ function emailFor(profile: PublicProfile): { email?: string } {
 }
 
 /**
+ * JSON-LD の `sameAs`。自分のものだと主張できる先だけを並べる。相互リンクの無い先を
+ * 挙げると、確かめた側から見て嘘になる (h-card の `rel="me"` と同じ線引き)。
+ *
+ * **並べる先が 1 つも無ければ、欄ごと出さない。** 空の `sameAs` は「出ていく先は無い」と
+ * 名乗ることになる。
+ *
+ * ⚠️ **メールはここに入れない。** `sameAs` は schema.org の定義で「その項目の身元を
+ * 一意に示す参照 Web ページ」であって、連絡先の置き場ではない。`mailto:` を混ぜると、
+ * `sameAs` をプロフィールページとして辿る読み手が開けない URL を掴む。Person には
+ * `email` という欄が別にあるので、そちらへ回す ({@link emailFor})。
+ */
+function sameAsFor(profile: PublicProfile): { sameAs?: readonly string[] } {
+  const urls = profile.socials
+    .filter((social) => social.isMe && social.platform !== "email")
+    .map((social) => social.url);
+  return urls.length === 0 ? {} : { sameAs: urls };
+}
+
+/**
  * プロフィールから来る欄。**同期されていなければ 1 つも出さない。**
  *
- * 既定値で埋めない。空の `sameAs` や空の `description` は「出ていく先は無い」
- * 「自己紹介は無い」と名乗ることになり、同期されたあとの姿と食い違う。
+ * 既定値で埋めない。空の `description` は「自己紹介は無い」と名乗ることになり、
+ * 同期されたあとの姿と食い違う。
  */
 function profileFields(profile: PublicProfile | null): JsonLdNode {
   if (profile === null) return {};
   return {
     description: profile.tagline.join(" "),
-    // 自分のものだと主張できる先だけを並べる。相互リンクの無い先を挙げると、
-    // 確かめた側から見て嘘になる (h-card の rel="me" と同じ線引き)。
-    //
-    // ⚠️ **メールはここに入れない。** sameAs は schema.org の定義で「その項目の身元を
-    // 一意に示す参照 Web ページ」であって、連絡先の置き場ではない。`mailto:` を混ぜると、
-    // sameAs をプロフィールページとして辿る読み手が開けない URL を掴む。
-    // Person には email という欄が別にあるので、そちらへ回す。
-    sameAs: profile.socials
-      .filter((social) => social.isMe && social.platform !== "email")
-      .map((social) => social.url),
+    ...sameAsFor(profile),
     ...emailFor(profile),
   };
 }
@@ -91,15 +99,13 @@ function profileFields(profile: PublicProfile | null): JsonLdNode {
  * 残すのと同じ理由で、記事とトップが指している `@id` の先を空にしない。
  *
  * ⚠️ **経歴はここに出さない** (ADR 0044)。`alumniOf` も `award` も `birthDate` も
- * `worksFor` も足さないこと。経歴は読み物として画面に出すもので、機械に名乗る身元の
- * 一部ではない (生年月日と出身地を機械が読む形で持たないこと (#508) と同じ線引き)。
+ * `birthPlace` も `worksFor` も足さないこと。経歴は読み物として画面に出すもので、機械に
+ * 名乗る身元の一部ではない (生年月日と出身地を機械が読む形で持たないこと (#508) と同じ
+ * 線引き)。
  */
 export function personNode(origin: string, profile: PublicProfile | null): JsonLdNode {
   return {
-    "@type": "Person",
-    "@id": personId(origin),
-    name: profile?.name ?? FALLBACK_PROFILE_NAME,
-    url: personUrl(origin),
+    ...personReference(origin, profile),
     image: `${origin}${PROFILE_PHOTO}`,
     ...profileFields(profile),
   };
@@ -120,7 +126,7 @@ export function personReference(origin: string, profile: PublicProfile | null): 
     "@type": "Person",
     "@id": personId(origin),
     name: profile?.name ?? FALLBACK_PROFILE_NAME,
-    url: personUrl(origin),
+    url: aboutUrl(origin),
   };
 }
 
@@ -142,13 +148,15 @@ const SITE_ALTERNATE_NAME = "yantene.net";
  * **プロフィールが同期されているときだけ呼ぶ。** 同期の前の `/about` は「準備中」の一枚で
  * `noindex` が立つ。中身の無いページが「これは誰それのプロフィールページだ」と名乗るのは
  * 嘘になる。
+ *
+ * **ページ自身には `@id` を付けない。** 名札が要るのは、ほかの場所から指されるもの
+ * (書き手とサイト) だけ。このページを指す節はどこにも無い。
  */
 export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonLdNode {
   return {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
-    "@id": profilePageId(origin),
-    url: personUrl(origin),
+    url: aboutUrl(origin),
     mainEntity: personNode(origin, profile),
   };
 }

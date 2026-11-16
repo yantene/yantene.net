@@ -77,11 +77,31 @@ describe("personNode", () => {
     });
   });
 
-  it("omits email when the profile has no email account", () => {
+  /*
+   * 同期されていても、並べる先が無ければ欄ごと出さない。空の `sameAs` は「出ていく先は
+   * 無い」と名乗ることになる。
+   */
+  it("omits sameAs and email when the profile has nowhere to point", () => {
     const node = personNode(ORIGIN, { ...PROFILE, socials: [] });
 
     expect(node).not.toHaveProperty("email");
-    expect(node.sameAs).toEqual([]);
+    expect(node).not.toHaveProperty("sameAs");
+  });
+
+  /* 相互リンクの無い先しか無いときも同じ。主張できる先が 0 件なら出さない。 */
+  it("omits sameAs when no account is verified as the author's own", () => {
+    const node = personNode(ORIGIN, {
+      ...PROFILE,
+      socials: [{ platform: "x", url: "https://x.com/yantene", isMe: false }],
+    });
+
+    expect(node).not.toHaveProperty("sameAs");
+  });
+
+  /* 本体は参照に欄を足したもの。同じ `@id` の節が、場所によって違う名前や URL を言わない。 */
+  it("agrees with the reference on every field the reference carries", () => {
+    expect(personNode(ORIGIN, PROFILE)).toMatchObject(personReference(ORIGIN, PROFILE));
+    expect(personNode(ORIGIN, null)).toMatchObject(personReference(ORIGIN, null));
   });
 });
 
@@ -107,14 +127,27 @@ describe("personReference", () => {
       url: `${ORIGIN}/about`,
     });
   });
+
+  it("keeps the history out", () => {
+    expect(historyKeysIn(personReference(ORIGIN, PROFILE))).toEqual([]);
+  });
+});
+
+describe("the history guard itself", () => {
+  /* 見張りが実際に落ちることを確かめる。落ちない見張りは、通していても何も守らない。 */
+  it("finds a forbidden key at any depth", () => {
+    const leaked = { mainEntity: { ...personNode(ORIGIN, PROFILE), alumniOf: "どこかの学校" } };
+
+    expect(historyKeysIn(leaked)).toEqual(["alumniOf"]);
+  });
 });
 
 describe("profilePageJsonLd", () => {
+  /* ページ自身に `@id` は付けない。名札が要るのは、ほかから指される書き手とサイトだけ。 */
   it("wraps the author in a ProfilePage", () => {
     expect(profilePageJsonLd(ORIGIN, PROFILE)).toEqual({
       "@context": "https://schema.org",
       "@type": "ProfilePage",
-      "@id": `${ORIGIN}/about#profile`,
       url: `${ORIGIN}/about`,
       mainEntity: personNode(ORIGIN, PROFILE),
     });

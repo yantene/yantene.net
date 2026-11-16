@@ -14,6 +14,7 @@ import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cac
 import { createTestApp } from "~/backend/test-app";
 import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { loadArticleDetailPage } from "./detail.handler";
+import { personId } from "~/backend/handlers/profile/person-json-ld";
 
 /** MDAST の put/get だけを賄う最小 R2 モック。 */
 function makeBucket(): R2Bucket {
@@ -224,8 +225,8 @@ describe("loadArticleDetailPage の status (ADR 0040)", () => {
 /*
  * 記事の筆者と発行者は、`/about` とトップが名乗るのと同じ 1 人を指す (ADR 0048)。
  *
- * 以前は `@id` が無く `url` がトップを指していたので、読む側からは `/about` の Person と
- * 記事の author が「同じ名前の別人」に見えていた。
+ * `@id` が揃っていないと、読む側からは `/about` の Person と記事の author が「同じ名前の
+ * 別人」に見える。
  */
 describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
   const ORIGIN = "https://example.test";
@@ -268,6 +269,19 @@ describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
     // `@id` だけの裸の参照にしない。Google の Article が author に name を求める。
     expect(jsonLd.author).toEqual(person);
     expect(jsonLd.publisher).toEqual(person);
+    // 綴りの出どころは 1 か所。`/about` とトップが名乗る `@id` と同じ関数から来る。
+    expect(person["@id"]).toBe(personId(ORIGIN));
+  });
+
+  /*
+   * 記事にも経歴を出さない (ADR 0044)。筆者を指す節に欄を足す抜け道を塞ぐ。
+   */
+  it("経歴の欄を記事の JSON-LD に出さない", async () => {
+    const serialized = JSON.stringify(await loadJsonLd(createTestD1()));
+
+    for (const key of ["alumniOf", "award", "birthDate", "birthPlace", "worksFor"]) {
+      expect(serialized).not.toContain(`"${key}"`);
+    }
   });
 
   /*
