@@ -1,4 +1,14 @@
 export { InvalidWorkNameError, WorkName } from "./work-name.vo";
+export { InvalidWorkPeriodError, WorkPeriod } from "./work-period.vo";
+export { InvalidWorkRoleError, WorkRole } from "./work-role.vo";
+export {
+  InvalidWorkScreenshotError,
+  isWorkScreenshotKind,
+  WorkScreenshot,
+  workScreenshotKinds,
+} from "./work-screenshot.vo";
+export type { WorkScreenshotDimensions, WorkScreenshotKind } from "./work-screenshot.vo";
+export { InvalidWorkStackError, WorkStack } from "./work-stack.vo";
 export { InvalidWorkSlugError, WorkSlug } from "./work-slug.vo";
 export { InvalidWorkSummaryError, WorkSummary } from "./work-summary.vo";
 export { InvalidWorkUrlError, WorkUrl } from "./work-url.vo";

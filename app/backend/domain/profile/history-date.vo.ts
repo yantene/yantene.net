@@ -121,6 +121,28 @@ export class HistoryDate implements IValueObject<HistoryDate> {
   }
 }
 
+/**
+ * 終わりの日が始まりと組にならない理由。組になるなら undefined。
+ *
+ * **始まりと同じ精度でなければ通さない。** `2012-08-14` に `2012-08` を添えられると、
+ * どこまで分かっているのかが読み手にも機械にも取れなくなる。
+ *
+ * **始まりより後でなければ通さない。** 同じ日を終わりに書くのは点なので、終わりを
+ * 消すのが正しい。
+ *
+ * 経歴の出来事と作品の時期が同じ決まりで終わりを持つので、ここに 1 つだけ置く。
+ * 投げる型は使う側ごとに違うため、返すのは理由の字だけにしてある。
+ */
+export function spanEndViolation(from: HistoryDate, until: HistoryDate): string | undefined {
+  if (from.precision !== until.precision) {
+    return `must have the same precision as date (${from.precision}), got ${until.precision}`;
+  }
+  if (from.compare(until) >= 0) {
+    return `must come after date, got ${from.toString()} and ${until.toString()}`;
+  }
+  return undefined;
+}
+
 function requireYear(raw: number): number {
   if (!Number.isInteger(raw) || raw < MIN_YEAR || raw > MAX_YEAR) {
     throw new InvalidHistoryDateError(

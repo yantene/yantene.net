@@ -1,0 +1,54 @@
+/*
+ * 作品の諸元 (work-facts.tsx)。使った技術・時期・役割を、名前と値の対で並べる。
+ */
+
+.work-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+/*
+ * 1 行。左に欄の名前、右に値。**名前の柱の幅は固定する。** 値の長さで柱が動くと、
+ * 行ごとに値の頭が揃わない。
+ */
+.work-facts-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: baseline;
+}
+
+/* 欄の名前。値より弱く置く (読ませたいのは値のほう)。 */
+.work-facts-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+.work-facts-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+/*
+ * 技術の名前の札。**押せるものに見せない。** 行き先が無いので、塗りも影も付けず、
+ * 細い枠だけで区切る (押し場所の語彙である面の塗りを使わない)。
+ */
+.work-facts-tag {
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* 時期は識別子に近いので、字送りの揃った書体で置く (在り処の URL と同じ扱い)。 */
+.work-facts-period {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875rem;
+}

@@ -1,8 +1,13 @@
 import type { WorkName } from "./work-name.vo";
+import type { WorkPeriod } from "./work-period.vo";
+import type { WorkRole } from "./work-role.vo";
+import type { WorkScreenshot } from "./work-screenshot.vo";
 import type { WorkSlug } from "./work-slug.vo";
 import type { WorkSummary } from "./work-summary.vo";
 import type { WorkUrl } from "./work-url.vo";
 import type { Temporal } from "@js-temporal/polyfill";
+import type { ArticleSlug } from "~/backend/domain/article";
+import { WorkStack } from "./work-stack.vo";
 import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type WorkId = EntityId<"Work">;
@@ -25,6 +30,24 @@ interface WorkFields<T extends IPersisted | IUnpersisted> {
    * 非負の整数であることは書き込み経路 (`work-content-parser.ts`) が担保する。
    */
   readonly position: number;
+  /** 使った技術の名前の並び。書いていなければ空。 */
+  readonly stack: WorkStack;
+  /** 作った時期。書いていなければ undefined。**並べ替えには使わない** (並びは position)。 */
+  readonly period: WorkPeriod | undefined;
+  /** 自分の役割 (1 行)。書いていなければ undefined。 */
+  readonly role: WorkRole | undefined;
+  /** `/works` で大きく出すかどうか。書いていなければ false。 */
+  readonly featured: boolean;
+  /** スクリーンショット。書いた順。 */
+  readonly screenshots: readonly WorkScreenshot[];
+  /**
+   * この作品について書いた記事の slug。書いた順。
+   *
+   * ⚠️ **読み手に見せてよい記事とは限らない。** 下書きの slug も、まだ無い記事の slug も
+   * 入る。出す側は必ず記事の読み手向けの読み口で引き直し、**この並びをそのまま応答に
+   * 載せないこと** (slug だけでも、書きかけの記事が在ることが漏れる)。
+   */
+  readonly articleSlugs: readonly ArticleSlug[];
   /**
    * コンテンツリポジトリ (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
    * (md + アセットの合成ハッシュ)。
@@ -50,6 +73,12 @@ export class Work<T extends IPersisted | IUnpersisted = IPersisted> {
     summary: WorkSummary;
     url?: WorkUrl;
     position: number;
+    stack?: WorkStack;
+    period?: WorkPeriod;
+    role?: WorkRole;
+    featured?: boolean;
+    screenshots?: readonly WorkScreenshot[];
+    articleSlugs?: readonly ArticleSlug[];
     sourceHash: string;
   }): Work<IUnpersisted> {
     return new Work({
@@ -59,6 +88,12 @@ export class Work<T extends IPersisted | IUnpersisted = IPersisted> {
       summary: params.summary,
       url: params.url,
       position: params.position,
+      stack: params.stack ?? WorkStack.empty(),
+      period: params.period,
+      role: params.role,
+      featured: params.featured ?? false,
+      screenshots: params.screenshots ?? [],
+      articleSlugs: params.articleSlugs ?? [],
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -72,6 +107,12 @@ export class Work<T extends IPersisted | IUnpersisted = IPersisted> {
     summary: WorkSummary;
     url: WorkUrl | undefined;
     position: number;
+    stack: WorkStack;
+    period: WorkPeriod | undefined;
+    role: WorkRole | undefined;
+    featured: boolean;
+    screenshots: readonly WorkScreenshot[];
+    articleSlugs: readonly ArticleSlug[];
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -101,6 +142,31 @@ export class Work<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get position(): number {
     return this.fields.position;
+  }
+
+  get stack(): WorkStack {
+    return this.fields.stack;
+  }
+
+  get period(): WorkPeriod | undefined {
+    return this.fields.period;
+  }
+
+  get role(): WorkRole | undefined {
+    return this.fields.role;
+  }
+
+  get featured(): boolean {
+    return this.fields.featured;
+  }
+
+  get screenshots(): readonly WorkScreenshot[] {
+    return this.fields.screenshots;
+  }
+
+  /** ⚠️ 読み手に見せてよい記事とは限らない。そのまま応答に載せないこと。 */
+  get articleSlugs(): readonly ArticleSlug[] {
+    return this.fields.articleSlugs;
   }
 
   get sourceHash(): string {

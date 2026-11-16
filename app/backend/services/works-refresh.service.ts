@@ -1,11 +1,13 @@
 import type { ImageDimensions } from "./image-dimensions";
 import type { ParsedWorkContent } from "./work-content-parser";
+import type { IArticleQueryRepository } from "~/backend/domain/article";
 import type { ContentEntry, IContentStore } from "~/backend/domain/content";
 import type {
   IWorkCommandRepository,
   IWorkContentCache,
   IWorkQueryRepository,
   Work as WorkEntity,
+  WorkScreenshot,
 } from "~/backend/domain/work";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import type { Root } from "mdast";
@@ -38,9 +40,24 @@ export interface WorksSyncResult {
   readonly deleted: string[];
   /** 不正なコンテンツ (フロントマター等) でスキップしたファイル。 */
   readonly skipped: { path: string; reason: string }[];
+  /**
+   * 同期はしたが、書き手に直してほしいこと。いまは「関連記事に知らない slug がある」だけ。
+   *
+   * **今回読み直した作品に限らず、保存されている全作品について毎回出す。** 読み直した
+   * 作品だけに出すと、次の push で警告が消えて、直っていない誤りが直ったように見える。
+   */
+  readonly warnings: { path: string; reason: string }[];
   /** 再処理した作品が参照しているカード化対象の URL (重複なし)。 */
   readonly linkedUrls: string[];
 }
+
+/**
+ * 記事が在るかどうかを確かめるための口。slug の一覧が引ければ足りる。
+ *
+ * ⚠️ **どの段階の記事も返す読み口を渡すこと。** 読み手向けの読み口を渡すと、下書きの
+ * 記事を指した作品に「知らない slug」の警告が出続ける。
+ */
+export type KnownArticles = Pick<IArticleQueryRepository, "listSourceHashes">;
 
 export interface WorksRefreshOptions {
   /** ハッシュが一致していても読み直す。実装側の変更を既存の作品に反映するとき。 */
@@ -84,6 +101,7 @@ export class WorksRefreshService {
     private readonly command: IWorkCommandRepository,
     private readonly query: IWorkQueryRepository,
     private readonly cache: IWorkContentCache,
+    private readonly articles: KnownArticles,
   ) {}
 
   async refresh(options: WorksRefreshOptions = {}): Promise<WorksSyncResult> {
@@ -131,12 +149,37 @@ export class WorksRefreshService {
       }
     }
 
+    const deleted = await this.deleteRemoved(stored, seen);
     return {
       processed,
-      deleted: await this.deleteRemoved(stored, seen),
+      deleted,
       skipped,
+      warnings: await this.findUnknownArticles(),
       linkedUrls: [...linkedUrls],
     };
+  }
+
+  /**
+   * 関連記事に書かれた slug のうち、記事として存在しないものを警告にする。
+   *
+   * **作品はスキップしない。** 作品と記事のどちらが先に同期されるかで結果が変わると、
+   * 書き手は push の順番を気にすることになる。無い記事は出すときに外れるだけで、
+   * 記事が入れば何もしなくても並ぶ。
+   */
+  private async findUnknownArticles(): Promise<{ path: string; reason: string }[]> {
+    const works = await this.query.list();
+    if (works.every((work) => work.articleSlugs.length === 0)) return [];
+
+    const known = await this.articles.listSourceHashes();
+    return works.flatMap((work) =>
+      work.articleSlugs
+        .map((articleSlug) => articleSlug.toString())
+        .filter((articleSlug) => !known.has(articleSlug))
+        .map((articleSlug) => ({
+          path: `${SOURCE_DIRECTORY}${work.slug.toString()}.md`,
+          reason: `articles lists an unknown slug: ${articleSlug}`,
+        })),
+    );
   }
 
   /**
@@ -150,11 +193,13 @@ export class WorksRefreshService {
   private async syncWork(group: WorkGroup): Promise<readonly string[]> {
     const source = await this.readWork(group);
     // 書き始める前に検証を終える。途中で引き返すと、R2 だけが新しい姿になる。
-    const { work, mdast } = buildWorkContent(group, source.parsed);
+    const mdast = resolveBodyAssets(group, source.parsed);
+    const located = locateScreenshots(group, source.parsed.screenshots);
 
     // アセットを先に処理して寸法を得てから MDAST に埋める (レイアウトシフト対策)。
     const dimensions = await this.cacheAssets(group);
     const sized = withImageDimensions(mdast, dimensions, definitionUrlsOf(mdast));
+    const work = buildWork(group, source.parsed, withDimensions(located, dimensions));
 
     await this.cache.putMdast(group.slug, sized);
     await this.cache.putSource(group.slug, source.markdown);
@@ -265,24 +310,91 @@ function assetPathsOf(group: WorkGroup): ReadonlySet<string> {
   return new Set(group.assets.map((asset) => asset.path.slice(group.assetPrefix.length)));
 }
 
+/** 本文中の相対 URL をアセット API URL に解決する (ADR 0005)。 */
+function resolveBodyAssets(group: WorkGroup, parsed: ParsedWorkContent): Root {
+  const slug = group.slug.toString();
+  return withAssetUrls(parsed.mdast, (url) => resolveWorkAssetUrl(slug, url));
+}
+
 /**
- * 解析済みの内容から Work エンティティと MDAST を組み立てる純関数。
- * VO 検証の失敗はコンテンツ不正として送出する。
+ * スクリーンショットの `src` を配る URL に解決し、**その作品の置き場に実在することを
+ * 確かめる**。1 枚でも外れたら作品ごと諦める。
+ *
+ * 外れるのは次のもの。どれも、通すと見せ場に割れた絵が出る。
+ *
+ * - 置き場に無いファイル (打ち間違い)
+ * - `_` で始まる要素を含むパス。同期で落とすので R2 に写らず、アセット API からも
+ *   引けない (`content-asset-path.ts`)。**下書きの置き場を見せ場から指させない**
+ * - 外の URL と `../`。写しを持たないものは寸法も取れず、相手の都合で消える
+ *
+ * 突き合わせるのは解決後の URL どうし。寸法の表 (`cacheAssets`) と同じ解決を通すので、
+ * 符号化の揺れを気にせずに済む (#297)。
+ *
+ * ⚠️ **R2 に書き始める前に呼ぶこと。** 書いたあとで引き返すと、R2 だけが新しい姿になる。
  */
-function buildWorkContent(
+function locateScreenshots(
+  group: WorkGroup,
+  screenshots: readonly WorkScreenshot[],
+): readonly WorkScreenshot[] {
+  const slug = group.slug.toString();
+  const assetUrls = new Set(
+    [...assetPathsOf(group)].map((relPath) => resolveWorkAssetUrl(slug, relPath)),
+  );
+  return screenshots.map((screenshot) => {
+    const src = resolveWorkAssetUrl(slug, screenshot.src);
+    if (!assetUrls.has(src)) {
+      throw new WorkContentError(
+        `screenshot src is not a synced asset of this work: ${screenshot.src}`,
+      );
+    }
+    try {
+      return screenshot.locatedAt({ src });
+    } catch (error) {
+      throw new WorkContentError(error instanceof Error ? error.message : String(error));
+    }
+  });
+}
+
+/**
+ * 読めた寸法を添える。読めなかった画像は寸法を持たないまま通す。
+ *
+ * ⚠️ **ここは R2 に書き始めたあとに走るので、投げない。** 寸法として通らない値
+ * (0 や小数) が来たら、その画像を寸法なしで通す。いまの `readImageDimensions` は正の整数
+ * しか返さないが、読める形式が増えたときにここで同期ごと落ちる形にしておかない。
+ */
+function withDimensions(
+  screenshots: readonly WorkScreenshot[],
+  dimensions: ReadonlyMap<string, ImageDimensions>,
+): readonly WorkScreenshot[] {
+  return screenshots.map((screenshot) => {
+    const size = dimensions.get(screenshot.src);
+    if (size === undefined || !isUsableSize(size)) return screenshot;
+    return screenshot.locatedAt({ src: screenshot.src, dimensions: size });
+  });
+}
+
+function isUsableSize(size: ImageDimensions): boolean {
+  return [size.width, size.height].every((side) => Number.isInteger(side) && side > 0);
+}
+
+/** 解析済みの内容から Work エンティティを組み立てる純関数。 */
+function buildWork(
   group: WorkGroup,
   parsed: ParsedWorkContent,
-): { work: WorkEntity<IUnpersisted>; mdast: Root } {
-  const slug = group.slug.toString();
-  const work = Work.create({
+  screenshots: readonly WorkScreenshot[],
+): WorkEntity<IUnpersisted> {
+  return Work.create({
     slug: group.slug,
     name: parsed.name,
     summary: parsed.summary,
     url: parsed.url,
     position: parsed.position,
+    stack: parsed.stack,
+    period: parsed.period,
+    role: parsed.role,
+    featured: parsed.featured,
+    screenshots,
+    articleSlugs: parsed.articleSlugs,
     sourceHash: group.contentHash,
   });
-
-  // 本文中の相対 URL をアセット API URL に解決してからキャッシュする (ADR 0005)。
-  return { work, mdast: withAssetUrls(parsed.mdast, (url) => resolveWorkAssetUrl(slug, url)) };
 }

@@ -35,6 +35,7 @@ export const LongText: Story = {
   args: {
     works: [
       {
+        ...sampleWorks[2],
         slug: "infoholick",
         name: "infoholick",
         summary:

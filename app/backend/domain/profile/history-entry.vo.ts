@@ -1,5 +1,6 @@
 import type { IValueObject } from "~/backend/domain/shared";
 import type { HistoryDate } from "./history-date.vo";
+import { spanEndViolation } from "./history-date.vo";
 
 /*
  * 経歴の 1 件。「いつ・何が起きたか」と、それがどの章に属するか。
@@ -128,26 +129,10 @@ function requireText(raw: string, field: string, maxLength: number): string {
   return trimmed;
 }
 
-/**
- * 終わりの日。
- *
- * **始まりと同じ精度でなければ通さない。** `date: 2012-08-14` に `until: 2012-08` を
- * 書けると、どこまで分かっているのかが読み手にも機械にも取れなくなる。
- *
- * **始まりより後でなければ通さない。** 同じ日を終わりに書くのは点の出来事なので、
- * `until` を消すのが正しい。
- */
+/** 終わりの日。組にならない理由は `spanEndViolation` が 1 か所で決める。 */
 function validateUntil(date: HistoryDate, until: HistoryDate): HistoryDate {
-  if (date.precision !== until.precision) {
-    throw new InvalidHistoryEntryError(
-      `History until must have the same precision as date (${date.precision}), got ${until.precision}`,
-    );
-  }
-  if (date.compare(until) >= 0) {
-    throw new InvalidHistoryEntryError(
-      `History until must come after date, got ${date.toString()} and ${until.toString()}`,
-    );
-  }
+  const violation = spanEndViolation(date, until);
+  if (violation !== undefined) throw new InvalidHistoryEntryError(`History until ${violation}`);
   return until;
 }
 
