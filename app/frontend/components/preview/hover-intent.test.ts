@@ -55,6 +55,33 @@ describe("HoverIntent", () => {
     expect(onOpen).toHaveBeenCalledExactlyOnceWith("b");
   });
 
+  /*
+   * 並んだ参照 (`[^1][^2]`) で起きる。前のチップを閉じる者が居なくなると、次のチップが
+   * 出るまで前の中身が残り、次の相手が見えない記事なら離れるまで残り続ける。
+   */
+  it("still closes the previous chip when the cursor moves on to a neighbour", () => {
+    const hover = intent();
+    hover.enter("a");
+    vi.advanceTimersByTime(300);
+    hover.leave();
+    hover.enter("b");
+
+    vi.advanceTimersByTime(150);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the chip when the cursor comes back to the link it left", () => {
+    const hover = intent();
+    hover.enter("a");
+    vi.advanceTimersByTime(300);
+    hover.leave();
+    vi.advanceTimersByTime(100);
+    hover.enter("a");
+
+    vi.advanceTimersByTime(1000);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("closes shortly after leaving", () => {
     const hover = intent();
     hover.enter("a");

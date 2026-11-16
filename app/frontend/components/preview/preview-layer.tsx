@@ -114,11 +114,15 @@ export function PreviewLayer({
     return { intent, targets };
   }, [footnotes, loadArticlePreview]);
 
-  // 本文が差し替わったら、前の本文のリンクを指したままのチップを残さない。
+  /*
+   * 本文が差し替わったら、前の本文を指したままのチップとドロワーを残さない。脚注の id は
+   * 記事をまたいで同じ (`user-content-fn-1`) なので、残すと別の記事の脚注が出る。
+   */
   useEffect(
     () => () => {
       hover.intent.dispose();
       setChip(null);
+      setDrawerId(null);
     },
     [hover],
   );

@@ -382,6 +382,8 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
 ### 内部リンクと脚注の参照にはプレビューが出る
 
 本文の `/articles/<slug>` へのリンクと脚注の参照に触ると、行き先の中身を小さく出す。
+**記事に限らない。** 作品の説明と `/about` の長い自己紹介も同じ描画 (`MdastRenderer`) を
+通るので、そこに書いた記事へのリンクと脚注にも出る。
 設計判断の詳細は [ADR 0049](../../docs/adr/0049-preview-links-on-demand-and-position-them-in-css.md) を参照。
 
 | 環境                                 | 内部リンク                  | 脚注の参照                  |
@@ -394,7 +396,7 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
   refresh では何も焼き込まないので、MDAST は変わらず、force refresh も要らない
 - 脚注の中身は同じ記事の脚注一覧から写す。通信はしない
 - **サーバーは何も足さない。** チップもドロワーも読み手が触ってから本文の外に出すので、
-  SSR の HTML は今までと同じ形のまま (`mdast-renderer.preview.test.tsx` が見張っている)
+  SSR の HTML はプレビューの無い形のまま (`mdast-renderer.preview.test.tsx` が見張っている)
 - 位置合わせは CSS (Popover API + anchor positioning)。`style` 属性は書かない
 - 対象は記事へのリンクと脚注だけ。外部リンクにはリンクカードがある。`/works/<slug>` と
   `/about` へのリンクには出さない

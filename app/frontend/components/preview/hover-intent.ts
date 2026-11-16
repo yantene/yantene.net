@@ -33,6 +33,8 @@ export class HoverIntent<Subject> {
   #openTimer: ReturnType<typeof setTimeout> | undefined;
   #closeTimer: ReturnType<typeof setTimeout> | undefined;
   #wanted: Subject | undefined;
+  /** いま離れたばかりの相手。戻ってきたときだけ、閉じるのを取り消す。 */
+  #left: Subject | undefined;
   #dismissed: Subject | undefined;
   #held = false;
 
@@ -41,7 +43,12 @@ export class HoverIntent<Subject> {
   }
 
   enter(subject: Subject): void {
-    clearTimeout(this.#closeTimer);
+    /*
+     * 閉じるのを取り消すのは、離れた相手に戻ってきたときだけ。隣のリンクへ移ったときは
+     * 前のチップをそのまま閉じさせる。取り消すと、次のチップが出るまで (相手が見えない
+     * 記事なら離れるまでずっと) 前のリンクの中身が残る。
+     */
+    if (subject === this.#left || subject === this.#dismissed) clearTimeout(this.#closeTimer);
     /*
      * 閉じた相手には、一度離れるまで出し直さない。Esc で閉じても焦点はリンクに残って
      * いるし、カーソルもその上に居る。ここで出し直すと「閉じられないチップ」になる。
@@ -57,6 +64,7 @@ export class HoverIntent<Subject> {
   }
 
   leave(): void {
+    this.#left = this.#wanted ?? this.#left;
     this.#dismissed = undefined;
     this.#wanted = undefined;
     clearTimeout(this.#openTimer);
@@ -100,5 +108,7 @@ export class HoverIntent<Subject> {
   dispose(): void {
     clearTimeout(this.#openTimer);
     clearTimeout(this.#closeTimer);
+    // 取りに行っている最中の相手にも、遅れて出させない ({@link wants} が偽を返す)。
+    this.#wanted = undefined;
   }
 }
