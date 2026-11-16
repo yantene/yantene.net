@@ -516,6 +516,40 @@ push を合図に D1 と R2 へ同期される
 - フロントマターが読めないときはプロフィールだけをスキップして**前の姿を残す**。記事の同期は
   通る
 
+### 名前は本名で、別の呼び名は機械にだけ名乗る
+
+フロントマターの `name` は**本名だけ**を書く。ハンドルネームや英語名を括弧で混ぜない
+([#565](https://github.com/yantene/yantene.net/issues/565))。ほかの呼び名は別の欄に分けてあり、
+どれも省略できる (`ProfileIdentity`)。
+
+| 欄                              | 画面                         | JSON-LD の `Person`          |
+| ------------------------------- | ---------------------------- | ---------------------------- |
+| `name`                          | 出す                         | `name`                       |
+| `nameEn`                        | 本名の後ろに括弧で添えて出す | `alternateName`              |
+| `alternateNames`                | 出さない                     | `alternateName`              |
+| `familyName` / `givenName`      | 出さない                     | 同名の欄                     |
+| `jobTitle`                      | 出さない                     | `jobTitle`                   |
+| `description` / `descriptionEn` | 出さない                     | `description` (日本語のほう) |
+
+- **画面に出す名前 (`displayName`) と機械に名乗る名前 (`name`) は別物。** 画面は
+  `吉田 周平 (Shuhei YOSHIDA)`、JSON-LD の `name` は `吉田 周平`。括弧つきの字を `name` に
+  入れると、読む側で別名との突き合わせが効かなくなる。h-card の `p-name` とフィードの
+  筆者は画面のほうに揃えてある
+- `alternateName` は英語名と `alternateNames` を 1 つの並びにし、本名と同じ字と重なった字を
+  落とす。**使っていない表記を足さない** (書き手の側の決まり。`content/AGENTS.md`)
+- 機械向けの説明文 (`description`) は三人称で「何者か」を言うもので、`tagline` とは別物。
+  書いてあれば JSON-LD の `description` と `/about` の説明文 (`<meta name="description">`) は
+  そちらを採り、無ければ `tagline` に倒れる。英語で読みに来た相手の `/about` の説明文には
+  `descriptionEn` を出す
+- **`/about` の `<title>` はページ名の側を本名にする** (`吉田 周平 - やんてね`)。ナビと
+  ページの見出しは About のまま。⚠️ **サイト名の側は動かさない。** 本名で見つけてもらう
+  ことと、サイトの名前を変えることは別の話
+- ⚠️ **経歴に当たる欄は足さない。** ここに置くのは「何と呼ぶか」と「何者か」まで。
+  `alumniOf` / `birthDate` / `worksFor` を足さない線引きは下の節と同じ
+- ⚠️ **この欄を読めるコードが出る前に、欄を書いた `profile.md` を push しないこと。**
+  前のコードは欄を無視したままハッシュを覚えるので、コードが出たあとの同期でも
+  「変わっていない」と飛ばされる。先に push してしまったら force refresh を流す
+
 ### 同期される前も h-card の殻は立つ
 
 ⚠️ プロフィールが無いとき、自己紹介と出ていく先は出さないが、**トップの代表 h-card
@@ -536,7 +570,7 @@ Bridgy Fed から見て「誰のサイトか・誰が書いたか」が分から
 それは場所によって顔が出たり出なかったりする形で表に出る。
 
 ⚠️ 名前のほうは違う。あちらはコンテンツが持ち、同期されていないときだけ
-`FALLBACK_PROFILE_NAME` に倒れる。
+`FALLBACK_PROFILE_NAME` (本名) に倒れる。
 
 ⚠️ **`p-author` は記事の末尾にある。** 以前は記事の頭 (`article-header.tsx`) に sr-only で
 置いていた。h-entry の中に `p-author` が 2 つ並ぶとパーサは先頭を採るので、見える筆者紹介と

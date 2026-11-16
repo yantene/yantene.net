@@ -37,16 +37,51 @@ export interface PublicHistoryChapter {
  * 1 か所だけなので、記事ページの応答に 10 件以上の出来事を載せることになる。引くのも
  * 別の口 (`IProfileQueryRepository.findHistory`)。
  */
+/**
+ * 機械 (検索エンジンと AI) に名乗るための、名前まわりの欄。英語名を除いて画面には出ない。
+ * 書いていない欄は null (loader の応答に undefined は残らない)。
+ */
+export interface PublicProfileIdentity {
+  readonly nameEn: string | null;
+  readonly familyName: string | null;
+  readonly givenName: string | null;
+  readonly alternateNames: readonly string[];
+  readonly jobTitle: string | null;
+  readonly description: string | null;
+  readonly descriptionEn: string | null;
+}
+
 export interface PublicProfile {
+  /** 本名。JSON-LD の `Person.name` と `/about` の `<title>` に出る。 */
   readonly name: string;
+  /**
+   * 画面に出す名前。英語名があれば本名の後ろに括弧で添える (`吉田 周平 (Shuhei YOSHIDA)`)。
+   *
+   * ⚠️ **機械に名乗る名前には使わない。** 括弧つきの字は名前ではないので、JSON-LD の
+   * `name` に入れると別名との突き合わせが効かなくなる。あちらは `name` を使う。
+   */
+  readonly displayName: string;
+  readonly identity: PublicProfileIdentity;
   /** 短い自己紹介。行に分けてある (描画側が改行を保ったまま 1 つの段落に流す)。 */
   readonly tagline: readonly string[];
   readonly socials: readonly PublicSocialAccount[];
 }
 
 export function toPublicProfile(profile: Profile): PublicProfile {
+  const { identity } = profile;
+  const name = profile.name.toJSON();
   return {
-    name: profile.name.toJSON(),
+    name,
+    displayName: identity.nameEn === undefined ? name : `${name} (${identity.nameEn})`,
+    identity: {
+      nameEn: identity.nameEn ?? null,
+      familyName: identity.familyName ?? null,
+      givenName: identity.givenName ?? null,
+      alternateNames: identity.alternateNames,
+      jobTitle: identity.jobTitle ?? null,
+      description: identity.description ?? null,
+      descriptionEn: identity.descriptionEn ?? null,
+    },
     tagline: profile.tagline.lines(),
     socials: profile.socials.map((social) => ({
       platform: social.platform,

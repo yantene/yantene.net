@@ -100,7 +100,7 @@ describe("プロフィールがまだ無いとき", () => {
     expect(authors).toHaveLength(1);
     expect(authors[0].classList.contains("h-card")).toBe(true);
     expect(authors[0].getAttribute("href")).toBe(`${ORIGIN}/`);
-    expect(authors[0].textContent).toBe("やんてね");
+    expect(authors[0].textContent).toBe("吉田 周平");
   });
 
   /** sr-only の印は `aria-hidden` と `tabIndex={-1}` の対で置く (#287)。 */
@@ -117,6 +117,6 @@ describe("プロフィールがまだ無いとき", () => {
       WebmentionUrl.create(TARGET),
     ]);
 
-    expect(mention.author.name).toBe("やんてね");
+    expect(mention.author.name).toBe("吉田 周平");
   });
 });

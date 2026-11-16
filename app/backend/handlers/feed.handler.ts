@@ -139,7 +139,7 @@ export function createFeedRouter(): Hono<{ Bindings: Env }> {
         loadProfile(c.env),
       ]);
       const origin = new URL(c.req.url).origin;
-      const author = profile?.name ?? FALLBACK_PROFILE_NAME;
+      const author = profile?.displayName ?? FALLBACK_PROFILE_NAME;
       return c.body(buildAtom(origin, articles, identity, author), 200, {
         "Content-Type": "application/atom+xml; charset=utf-8",
         "Cache-Control": "public, max-age=3600",

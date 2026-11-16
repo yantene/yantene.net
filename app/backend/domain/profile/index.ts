@@ -2,6 +2,8 @@ export { isProfileDataError } from "./errors";
 export { HistoryDate, InvalidHistoryDateError, spanEndViolation } from "./history-date.vo";
 export type { HistoryDatePrecision } from "./history-date.vo";
 export { HistoryEntry, InvalidHistoryEntryError } from "./history-entry.vo";
+export { InvalidProfileIdentityError, ProfileIdentity } from "./profile-identity.vo";
+export type { ProfileIdentityFields } from "./profile-identity.vo";
 export { InvalidProfileNameError, ProfileName } from "./profile-name.vo";
 export { InvalidTaglineError, Tagline } from "./tagline.vo";
 export {

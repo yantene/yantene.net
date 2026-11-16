@@ -68,7 +68,7 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
             読んだ側から見て同じ人に結びつかなくなる。印は下の sr-only が持つ。
           */}
           <Link className="author-note-name p-name press-control" to="/about">
-            {profile.name}
+            {profile.displayName}
           </Link>
 
           {/*

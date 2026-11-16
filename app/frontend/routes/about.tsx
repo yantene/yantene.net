@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Route } from "./+types/about";
 import type { AboutPageData } from "~/backend/handlers/profile/pages.handler";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
@@ -39,6 +40,23 @@ export async function loader({
   };
 }
 
+/**
+ * `/about` の説明文。機械向けの説明文 (三人称で「何者か」を言う) があればそれを、無ければ
+ * 短い自己紹介を出す。同期の前は「準備中」の一文で代える。
+ *
+ * 英語で読みに来た相手には英語の説明文を出す。無ければ日本語のものに倒れる。
+ */
+function aboutDescription(
+  profile: PublicProfile | null,
+  locale: string,
+  comingSoon: string,
+): string {
+  if (profile === null) return comingSoon;
+  const { description, descriptionEn } = profile.identity;
+  const written = locale === "en" ? (descriptionEn ?? description) : description;
+  return written ?? profile.tagline.join(" ");
+}
+
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
   const { locale, origin, profile, jsonLd } = loaderData;
   const translations = translationsFor(locale);
@@ -47,9 +65,13 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     locale,
     origin,
     pathname: location.pathname,
-    title: translations.navigation.about,
-    // 自己紹介があればそれを出す。無いうちは「準備中」の一文で代える。
-    description: profile === null ? translations.comingSoon.about : profile.tagline.join(" "),
+    /*
+     * ページ名の側は本名にする (「吉田 周平 - やんてね」)。このページが何のページかを
+     * 検索結果で言うのは `<title>` で、「About」では誰のことか分からない。ナビとページの
+     * 見出しは About のまま (場所の名前は変えない)。サイト名の側も動かさない。
+     */
+    title: profile === null ? translations.navigation.about : profile.name,
+    description: aboutDescription(profile, locale, translations.comingSoon.about),
     jsonLd,
     // 中身が無いうちは検索結果に出さない。
     noindex: profile === null,

@@ -5,6 +5,7 @@ import {
   HistoryDate,
   HistoryEntry,
   Profile,
+  ProfileIdentity,
   ProfileName,
   SocialAccount,
   Tagline,
@@ -146,8 +147,44 @@ describe("loadAboutPage", () => {
     const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
     expect(data.profile?.name).toBe("やんてね");
+    // 英語名を書いていなければ、画面に出す名前は本名そのまま。
+    expect(data.profile?.displayName).toBe("やんてね");
     expect(data.profile?.tagline).toEqual(["東京で Web 開発者をやっています。"]);
     expect(data.mdast).toEqual(BODY);
+  });
+
+  /*
+   * 英語名があれば、画面に出す名前は本名の後ろに括弧で添える。**機械に名乗る名前
+   * (JSON-LD の `name`) は本名だけ**で、英語名は `alternateName` へ回る。
+   */
+  it("shows the English name beside the real name but names the Person by the real name", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("吉田 周平"),
+        identity: ProfileIdentity.create({
+          nameEn: "Shuhei YOSHIDA",
+          alternateNames: ["やんてね", "yantene"],
+        }),
+        tagline: Tagline.create("あいさつ"),
+        socials: [],
+        sourceHash: "h1",
+      }),
+      [],
+    );
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile?.name).toBe("吉田 周平");
+    expect(data.profile?.displayName).toBe("吉田 周平 (Shuhei YOSHIDA)");
+    expect(data.jsonLd).toMatchObject({
+      mainEntity: {
+        name: "吉田 周平",
+        alternateName: ["Shuhei YOSHIDA", "やんてね", "yantene"],
+      },
+    });
   });
 
   /**
@@ -405,5 +442,28 @@ describe("loadProfile", () => {
     const { bucket } = createTestR2();
 
     await expect(loadProfile(envWith(failing, bucket))).rejects.toThrow("D1_ERROR");
+  });
+});
+
+/*
+ * 別名の列は JSON の文字列の配列。**壊れた値を空の並びに倒さず、500 にもしない。**
+ * 読めないプロフィールとして、ページごと「準備中」に倒す (ほかの読めない行と同じ)。
+ */
+describe("読めない別名の列", () => {
+  it.each([
+    ["JSON として壊れている", "{broken"],
+    ["配列でない", '{"a":1}'],
+    ["文字列でない要素が混ざる", '["yantene",1,null]'],
+  ])("%s ときは準備中のページに倒れる", async (_label, stored) => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+    await d1.prepare("UPDATE profile SET alternate_names = ?").bind(stored).run();
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile).toBeNull();
+    expect(JSON.stringify(data.jsonLd)).not.toContain("alternateName");
   });
 });

@@ -35,7 +35,7 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
       />
 
       <div className="flex flex-col items-center gap-4">
-        <h1 className="p-name text-2xl font-semibold tracking-tight">{profile.name}</h1>
+        <h1 className="p-name text-2xl font-semibold tracking-tight">{profile.displayName}</h1>
 
         {/*
           器を 2xl まで広げるのは、書かれた改行のまま出すため。中央揃えの字は、

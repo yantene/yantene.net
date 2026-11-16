@@ -197,6 +197,7 @@ function buildProfile(
   try {
     return Profile.create({
       name: parsed.name,
+      identity: parsed.identity,
       tagline: parsed.tagline,
       socials: parsed.socials,
       sourceHash: group.contentHash,

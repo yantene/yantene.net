@@ -51,7 +51,7 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         */}
         <h1 className="inline-flex text-foreground">
           <Logotype className="h-12 w-auto sm:h-16" aria-hidden="true" />
-          <span className="sr-only p-name">{profile?.name ?? FALLBACK_PROFILE_NAME}</span>
+          <span className="sr-only p-name">{profile?.displayName ?? FALLBACK_PROFILE_NAME}</span>
         </h1>
 
         {/*

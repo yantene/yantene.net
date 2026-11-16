@@ -12,7 +12,7 @@
 /**
  * 名前の既定。**プロフィールが同期されていれば、そちらの名前が勝つ。**
  */
-export const FALLBACK_PROFILE_NAME = "やんてね";
+export const FALLBACK_PROFILE_NAME = "吉田 周平";
 
 /**
  * 顔。やんてねくんの頭と肩。

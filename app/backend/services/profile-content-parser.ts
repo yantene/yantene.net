@@ -5,6 +5,7 @@ import { parseMarkdownBody } from "./markdown-body";
 import {
   HistoryDate,
   HistoryEntry as HistoryEntryVo,
+  ProfileIdentity,
   ProfileName,
   SocialAccount as SocialAccountVo,
   Tagline,
@@ -23,6 +24,7 @@ export class ProfileContentError extends Error {
 
 export interface ParsedProfileContent {
   readonly name: ProfileName;
+  readonly identity: ProfileIdentity;
   readonly tagline: Tagline;
   readonly socials: readonly SocialAccount[];
   /** 経歴。章を各件が持つ平らな並びで、書いた順のまま。 */
@@ -50,6 +52,7 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
   try {
     return {
       name: ProfileName.create(requireString(frontmatter.name, "name")),
+      identity: readIdentity(frontmatter),
       tagline: Tagline.create(requireString(frontmatter.tagline, "tagline")),
       socials: readSocials(frontmatter.socials),
       history: readHistory(frontmatter.history),
@@ -62,6 +65,30 @@ export function parseProfileContent(markdown: string): ParsedProfileContent {
     // 書かれた値に起因する失敗しかここを通らないよう、VO の factory は値の検証だけを行う。
     throw new ProfileContentError(error instanceof Error ? error.message : String(error));
   }
+}
+
+/** 名前まわりの欄。どれも省略できる。書いてあるのに読めない値は弾く。 */
+function readIdentity(frontmatter: Record<string, unknown>): ProfileIdentity {
+  const read = (field: string): { [key: string]: string } => {
+    const value = optionalString(frontmatter[field], field);
+    return value === undefined ? {} : { [field]: value };
+  };
+  return ProfileIdentity.create({
+    ...read("nameEn"),
+    ...read("familyName"),
+    ...read("givenName"),
+    alternateNames: readAlternateNames(frontmatter.alternateNames),
+    ...read("jobTitle"),
+    ...read("description"),
+    ...read("descriptionEn"),
+  });
+}
+
+function readAlternateNames(value: unknown): readonly string[] {
+  if (value === undefined || value === null) return [];
+  return asArray(value, "alternateNames").map((entry, index) =>
+    requireString(entry, `alternateNames[${String(index)}]`),
+  );
 }
 
 function readSocials(value: unknown): readonly SocialAccount[] {
