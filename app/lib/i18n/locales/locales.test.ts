@@ -39,6 +39,12 @@ const untranslatedNames = [
   "articles.toc",
   "works.title",
   "works.heading",
+  // 作品のページの区画の名前。記事のページの Related articles と同じ語で揃える。
+  "works.relatedArticles",
+  // 諸元の欄の名前。3 つで 1 組なので、1 つだけ訳すと表の中で語が混ざる。
+  "works.stack",
+  "works.period",
+  "works.role",
   // `/about` の経歴の節。Works と同じ「この場所には何があるか」の名前なので、
   // 隣の節が英語のままなら、ここだけ「経歴」にすると 1 ページの中で語が混ざる。
   "history.heading",
@@ -111,6 +117,8 @@ describe("翻訳リソース", () => {
       "footer.navLabel",
       // 記事末尾の筆者紹介の見出し。sr-only なので、見える相方と食い違う心配が無い。
       "articles.author",
+      // 作品のスクリーンショットの並びの名前。画面には出ない。
+      "works.screenshotsLabel",
     ]) {
       expect(valueAt(ja, key)).not.toBe(valueAt(en, key));
     }

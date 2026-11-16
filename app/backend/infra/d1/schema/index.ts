@@ -7,4 +7,4 @@ export { profile, profileHistory, profileSocials } from "./profile";
 export { signInTokens } from "./sign-in-tokens";
 export { webmentionBlocks } from "./webmention-blocks";
 export { webmentions } from "./webmentions";
-export { works } from "./works";
+export { workArticles, workScreenshots, works } from "./works";

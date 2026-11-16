@@ -62,6 +62,11 @@
     "title": "Works",
     "heading": "Works",
     "lead": "作ったもの。いまも動いているものも、自分だけが使ったものもあります。",
+    "stack": "Stack",
+    "period": "Period",
+    "role": "Role",
+    "relatedArticles": "Related articles",
+    "screenshotsLabel": "スクリーンショット",
     "notFound": {
       "title": "作品が見つからない",
       "heading": "作品が見つからない",

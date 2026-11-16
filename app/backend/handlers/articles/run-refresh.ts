@@ -71,6 +71,8 @@ export async function runRefresh(
     new D1WorkCommandRepository(env.D1),
     new D1WorkQueryRepository(env.D1),
     new R2WorkContentCache(env.R2),
+    // 関連記事に書かれた slug が在るかを確かめる。下書きも「在る」うちなので forAdmin。
+    D1ArticleQueryRepository.forAdmin(env.D1),
   ).refresh({ force });
 
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う

@@ -19,6 +19,25 @@ position: 0
 ![図](./diagram.png)
 `;
 
+/** PNG: シグネチャ + IHDR (幅・高さは big-endian 32bit)。寸法を読ませるための最小の姿。 */
+function pngOf(width: number, height: number): Uint8Array {
+  const png = new Uint8Array(24);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  const view = new DataView(png.buffer);
+  view.setUint32(8, 13);
+  png.set([0x49, 0x48, 0x44, 0x52], 12);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return png;
+}
+
+/** 必須の欄だけを書いた作品に、足した欄を添える。 */
+function workWith(extra: string): Uint8Array {
+  return bytes(
+    `---\nname: infoholick\nsummary: 読んだものを覚えておくやつ。\nposition: 0\n${extra}---\n\n本文。\n`,
+  );
+}
+
 function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
 }
@@ -114,6 +133,8 @@ let service: WorksRefreshService;
 let content: MockContentStore;
 let cache: InMemoryCache;
 let query: D1WorkQueryRepository;
+/** 記事として存在する slug。関連記事の警告はこれと突き合わせる。 */
+let knownArticles: Set<string>;
 
 beforeEach(() => {
   files = new Map([
@@ -126,7 +147,11 @@ beforeEach(() => {
   content = new MockContentStore(files);
   cache = new InMemoryCache();
   query = new D1WorkQueryRepository(d1);
-  service = new WorksRefreshService(content, new D1WorkCommandRepository(d1), query, cache);
+  knownArticles = new Set(["hello"]);
+  service = new WorksRefreshService(content, new D1WorkCommandRepository(d1), query, cache, {
+    listSourceHashes: () =>
+      Promise.resolve(new Map([...knownArticles].map((slug) => [slug, "hash"]))),
+  });
 });
 
 describe("WorksRefreshService", () => {
@@ -224,7 +249,13 @@ describe("WorksRefreshService", () => {
     files.clear();
 
     const result = await service.refresh();
-    expect(result).toEqual({ processed: [], deleted: [], skipped: [], linkedUrls: [] });
+    expect(result).toEqual({
+      processed: [],
+      deleted: [],
+      skipped: [],
+      warnings: [],
+      linkedUrls: [],
+    });
   });
 
   it("drops assets that are no longer in the content repository", async () => {
@@ -319,5 +350,204 @@ describe("読めない作品", () => {
   it("propagates infra errors instead of skipping them", async () => {
     content.unreadable.add("works/infoholick.md");
     await expect(service.refresh()).rejects.toThrow("source file could not be read");
+  });
+});
+
+describe("足した欄", () => {
+  /** 既存の作品はどの欄も書いていない。今までどおり同期されること。 */
+  it("syncs a work that writes none of the added fields", async () => {
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual(["infoholick"]);
+    expect(result.warnings).toEqual([]);
+    const [work] = await query.list();
+    expect(work?.featured).toBe(false);
+    expect(work?.stack.toArray()).toEqual([]);
+    expect(work?.period).toBeUndefined();
+    expect(work?.role).toBeUndefined();
+    expect(work?.screenshots).toEqual([]);
+    expect(work?.articleSlugs).toEqual([]);
+  });
+
+  it("stores featured, stack, period and role", async () => {
+    files.set("works/infoholick.md", {
+      hash: "h-fields",
+      bytes: workWith(
+        "featured: true\nstack: [TypeScript, Hono]\nperiod:\n  from: 2024-06\n  until: 2025-03\nrole: 設計から運用まで\n",
+      ),
+    });
+    await service.refresh();
+
+    const [work] = await query.list();
+    expect(work?.featured).toBe(true);
+    expect(work?.stack.toArray()).toEqual(["TypeScript", "Hono"]);
+    expect(work?.period?.toJSON()).toEqual({ from: "2024-06", until: "2025-03" });
+    expect(work?.role?.toString()).toBe("設計から運用まで");
+  });
+});
+
+describe("スクリーンショット", () => {
+  const SHOTS =
+    "screenshots:\n  - src: ./top.png\n    alt: トップ画面\n  - src: shots/reader.png\n    alt: 記事を開いた画面\n    kind: mobile\n";
+
+  beforeEach(() => {
+    files.set("works/infoholick.md", { hash: "h-shots", bytes: workWith(SHOTS) });
+    files.set("works/infoholick/top.png", { hash: "h-top", bytes: pngOf(1600, 900) });
+    files.set("works/infoholick/shots/reader.png", { hash: "h-reader", bytes: pngOf(450, 950) });
+  });
+
+  /** コンテンツリポジトリの URL は出さない。本文の画像と同じアセット API に解決する。 */
+  it("resolves src to the asset API and fills in the dimensions", async () => {
+    await service.refresh();
+
+    const [work] = await query.list();
+    expect(work?.screenshots.map((screenshot) => screenshot.toJSON())).toEqual([
+      {
+        src: "/api/v1/works/infoholick/assets/top.png",
+        alt: "トップ画面",
+        kind: "desktop",
+        width: 1600,
+        height: 900,
+      },
+      {
+        src: "/api/v1/works/infoholick/assets/shots/reader.png",
+        alt: "記事を開いた画面",
+        kind: "mobile",
+        width: 450,
+        height: 950,
+      },
+    ]);
+  });
+
+  /** 寸法を読めない形式でも作品は同期する。誤った寸法を付けるより、付けないほうが安全。 */
+  it("keeps a screenshot whose dimensions cannot be read, without dimensions", async () => {
+    files.set("works/infoholick/top.png", { hash: "h-top-2", bytes: bytes("not an image") });
+    await service.refresh();
+
+    const [work] = await query.list();
+    expect(work?.screenshots[0]?.dimensions).toBeUndefined();
+    expect(work?.screenshots[1]?.dimensions).toEqual({ width: 450, height: 950 });
+  });
+
+  /** 入れ替えたら前の並びは残らない (消してから入れ直す)。 */
+  it("replaces the screenshots on the next sync", async () => {
+    await service.refresh();
+
+    files.set("works/infoholick.md", {
+      hash: "h-shots-2",
+      bytes: workWith("screenshots:\n  - src: ./top.png\n    alt: 新しいトップ画面\n"),
+    });
+    await service.refresh();
+
+    const [work] = await query.list();
+    expect(work?.screenshots.map((screenshot) => screenshot.alt)).toEqual(["新しいトップ画面"]);
+  });
+
+  /*
+   * 置き場に無いものを指した作品は、作品ごと諦めて前の姿を残す。通すと見せ場に割れた絵が
+   * 出る。`_` で始まるパスは同期で落とすので、ツリーに在っても「置き場に無い」側に入る。
+   */
+  it.each([
+    ["置き場に無いファイル", "./missing.png"],
+    ["_ で始まるファイル", "./_draft.png"],
+    ["_ で始まるディレクトリの下", "./_materials/top.png"],
+    ["外の URL", "https://example.com/top.png"],
+    ["置き場の外 (../)", "../other/top.png"],
+    ["ルート相対", "/api/v1/works/infoholick/assets/top.png?v=2"],
+  ])("%s を指したらスキップして前の姿を残す", async (_label, src) => {
+    files.set("works/infoholick/_draft.png", { hash: "h-draft", bytes: pngOf(10, 10) });
+    files.set("works/infoholick/_materials/top.png", { hash: "h-mat", bytes: pngOf(10, 10) });
+    await service.refresh();
+    const assetsBefore = [...cache.assets.keys()];
+
+    files.set("works/infoholick.md", {
+      hash: "h-bad-src",
+      bytes: workWith(`screenshots:\n  - src: ${src}\n    alt: 画面\n`),
+    });
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.skipped).toEqual([
+      {
+        path: "works/infoholick.md",
+        reason: `screenshot src is not a synced asset of this work: ${src}`,
+      },
+    ]);
+    const [work] = await query.list();
+    expect(work?.screenshots).toHaveLength(2);
+    // R2 に書き始める前に引き返している (R2 だけが新しい姿にならない)。
+    expect([...cache.assets.keys()]).toEqual(assetsBefore);
+    expect(cache.sources.get("infoholick")).toContain("記事を開いた画面");
+  });
+
+  it("skips the work when a screenshot has no alt", async () => {
+    files.set("works/infoholick.md", {
+      hash: "h-no-alt",
+      bytes: workWith("screenshots:\n  - src: ./top.png\n"),
+    });
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.skipped[0]?.reason).toContain("screenshots[0].alt");
+  });
+});
+
+describe("関連記事", () => {
+  it("stores the article slugs in the written order", async () => {
+    knownArticles = new Set(["hello", "second"]);
+    files.set("works/infoholick.md", {
+      hash: "h-articles",
+      bytes: workWith("articles:\n  - second\n  - hello\n"),
+    });
+    const result = await service.refresh();
+
+    expect(result.warnings).toEqual([]);
+    const [work] = await query.list();
+    expect(work?.articleSlugs.map((slug) => slug.toString())).toEqual(["second", "hello"]);
+  });
+
+  /*
+   * 作品と記事のどちらが先に同期されるかで結果が変わらないように、無い記事の slug でも
+   * 作品は同期する。書き手には警告で知らせる。
+   */
+  it("syncs the work and warns about a slug no article has", async () => {
+    files.set("works/infoholick.md", {
+      hash: "h-articles",
+      bytes: workWith("articles:\n  - hello\n  - not-yet-written\n"),
+    });
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual(["infoholick"]);
+    expect(result.skipped).toEqual([]);
+    expect(result.warnings).toEqual([
+      { path: "works/infoholick.md", reason: "articles lists an unknown slug: not-yet-written" },
+    ]);
+    const [work] = await query.list();
+    expect(work?.articleSlugs.map((slug) => slug.toString())).toEqual(["hello", "not-yet-written"]);
+  });
+
+  /** 読み直さなかった回にも出す。出さないと、直っていない誤りが直ったように見える。 */
+  it("keeps warning on later syncs that do not reprocess the work", async () => {
+    files.set("works/infoholick.md", {
+      hash: "h-articles",
+      bytes: workWith("articles:\n  - not-yet-written\n"),
+    });
+    await service.refresh();
+
+    const result = await service.refresh();
+    expect(result.processed).toEqual([]);
+    expect(result.warnings).toHaveLength(1);
+  });
+
+  /** 記事が入れば、作品を触らなくても警告は消える。 */
+  it("stops warning once the article exists", async () => {
+    files.set("works/infoholick.md", {
+      hash: "h-articles",
+      bytes: workWith("articles:\n  - not-yet-written\n"),
+    });
+    await service.refresh();
+
+    knownArticles.add("not-yet-written");
+    expect((await service.refresh()).warnings).toEqual([]);
   });
 });

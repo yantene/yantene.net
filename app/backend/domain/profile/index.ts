@@ -1,5 +1,5 @@
 export { isProfileDataError } from "./errors";
-export { HistoryDate, InvalidHistoryDateError } from "./history-date.vo";
+export { HistoryDate, InvalidHistoryDateError, spanEndViolation } from "./history-date.vo";
 export type { HistoryDatePrecision } from "./history-date.vo";
 export { HistoryEntry, InvalidHistoryEntryError } from "./history-entry.vo";
 export { InvalidProfileNameError, ProfileName } from "./profile-name.vo";

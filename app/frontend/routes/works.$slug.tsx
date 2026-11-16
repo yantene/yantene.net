@@ -7,7 +7,10 @@ import type { PageMetaBase } from "~/frontend/lib/page-meta";
 import type { WorkDetailPageData } from "~/backend/handlers/works/pages.handler";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadWorkDetailPage } from "~/backend/handlers/works/pages.handler";
+import { ArticleTimeline } from "~/frontend/components/article-timeline/article-timeline";
 import { displayUrl } from "~/frontend/components/work/display-url";
+import { WorkFacts } from "~/frontend/components/work/work-facts";
+import { WorkGallery } from "~/frontend/components/work/work-gallery";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
@@ -74,7 +77,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 
 export default function WorkShow({ loaderData }: Route.ComponentProps): React.JSX.Element {
   const { t } = useTranslation();
-  const { work, mdast, linkCards, origin, copyright } = loaderData;
+  const { work, mdast, linkCards, articles, origin, copyright } = loaderData;
 
   if (work === null || mdast === null) {
     return (
@@ -96,6 +99,12 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
     <AppLayout>
       <Header />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+        {/*
+          頭に画面を置く。**どんなものかは、名前より先に見て分かるほうが早い。**
+          1 枚も無い作品では何も出ず、名前から始まる。
+        */}
+        <WorkGallery screenshots={work.screenshots} label={t("works.screenshotsLabel")} />
+
         {/*
           一覧の名乗り (page-intro) は使わない。あちらは「ここは何の場所か」を出す器で、
           ここに出るのは作品そのものの名前。下に本文が続くぶん、間の空きも違う。
@@ -123,11 +132,28 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
           )}
         </header>
 
+        {/* 諸元。どの欄も書いていなければ何も出ない (空きも残さない)。 */}
+        <WorkFacts work={work} />
+
         {/*
           microformats の印は付けない。ここは h-entry ではないので、`e-content` を
           置くと「何の本文か」を指さない印だけが残る (`/about` と同じ扱い)。
         */}
         <MdastRenderer node={mdast} linkCards={linkCards} siteOrigin={origin} />
+
+        {/*
+          この作品について書いた記事。**記事の一覧と同じ器で出す** (同じ「記事 1 本」が
+          場所によって違う作りで出ると、情報の在り処が食い違う)。
+
+          並びは書き手が決めた順なので、年では束ねない。読み手に見えない記事は loader が
+          外してあり、1 本も残らなければ節ごと出さない。
+        */}
+        {articles.length > 0 && (
+          <section>
+            <h2 className="article-related-heading">{t("works.relatedArticles")}</h2>
+            <ArticleTimeline articles={articles} />
+          </section>
+        )}
       </main>
       <Footer copyright={copyright} />
     </AppLayout>

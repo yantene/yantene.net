@@ -62,6 +62,11 @@
     "title": "Works",
     "heading": "Works",
     "lead": "Things I have made. Some are still running, some were only ever mine.",
+    "stack": "Stack",
+    "period": "Period",
+    "role": "Role",
+    "relatedArticles": "Related articles",
+    "screenshotsLabel": "Screenshots",
     "notFound": {
       "title": "Work not found",
       "heading": "Work not found",

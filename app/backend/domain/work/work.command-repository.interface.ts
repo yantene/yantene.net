@@ -6,6 +6,9 @@ export interface IWorkCommandRepository {
   /**
    * 作品のメタデータを slug をキーに upsert する。
    * refresh がコンテンツリポジトリの内容で D1 を同期するための操作。
+   *
+   * スクリーンショットと関連記事の並びも一緒に入れ替える。**割れた姿を表に出さない**
+   * (「名前は新しいのにスクリーンショットは前のまま」を読み手に見せない)。
    */
   upsert(work: Work<IUnpersisted>): Promise<void>;
 

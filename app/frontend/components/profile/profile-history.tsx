@@ -1,5 +1,6 @@
 import { HiArrowTopRightOnSquare, HiChevronDown } from "react-icons/hi2";
 import type { PublicHistoryChapter } from "~/backend/handlers/profile/profile-view";
+import { spanStamp } from "~/lib/date-span";
 
 interface ProfileHistoryProps {
   readonly history: readonly PublicHistoryChapter[];
@@ -16,34 +17,6 @@ function keyOf(entry: HistoryEntryView): string {
     entry.note ?? "",
     String(entry.important),
   ].join("\u0000");
-}
-
-/**
- * 札の字。
- *
- * 点の出来事はそのまま (`2011` / `2011-06` / `2011-06-04`)。終わりがあるときは
- * **始まりと重なる位を畳んで**出す。
- *
- * | 始まり     | 終わり     | 札                      |
- * | ---------- | ---------- | ----------------------- |
- * | 2012-08-14 | 2012-08-18 | `2012-08-14 〜 18`      |
- * | 2012-08-14 | 2012-09-02 | `2012-08-14 〜 09-02`   |
- * | 2012-12-28 | 2013-01-03 | `2012-12-28 〜 2013-01-03` |
- * | 2011       | 2013       | `2011 〜 2013`          |
- *
- * 畳まずに両端を書くと、5 日間の合宿の札が 24 字になって本文より目立つ。**最後の位は
- * 必ず残す** (`2012-08-14 〜 ` のような尻切れを作らない)。
- */
-function stampOf(entry: HistoryEntryView): string {
-  if (entry.until === null) return entry.date;
-
-  const from = entry.date.split("-");
-  const to = entry.until.split("-");
-  // 始まりと違いの出る最初の位。精度は同じなので、必ずどこかで違う。
-  const differs = from.findIndex((part, index) => part !== to[index]);
-  const keepFrom = differs === -1 ? from.length - 1 : differs;
-
-  return `${entry.date} 〜 ${to.slice(keepFrom).join("-")}`;
 }
 
 /**
@@ -140,7 +113,7 @@ export function ProfileHistory({ history }: ProfileHistoryProps): React.JSX.Elem
                   一部ではない (ADR 0044)。`2012-04` は `time` の datetime として通る
                   書式だが、通ることと持たせることは別。
                 */}
-                <span className="profile-history-year">{stampOf(entry)}</span>
+                <span className="profile-history-year">{spanStamp(entry.date, entry.until)}</span>
 
                 <div className="profile-history-body">
                   <p className="profile-history-text">

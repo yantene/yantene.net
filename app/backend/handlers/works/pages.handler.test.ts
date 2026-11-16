@@ -1,10 +1,21 @@
 import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadWorkDetailPage, loadWorks, loadWorksPage } from "./pages.handler";
+import type { ArticleStatus } from "~/backend/domain/article";
+import { Temporal } from "@js-temporal/polyfill";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
-import { Work, WorkName, WorkSlug, WorkSummary, WorkUrl } from "~/backend/domain/work";
+import {
+  Work,
+  WorkName,
+  WorkScreenshot,
+  WorkSlug,
+  WorkSummary,
+  WorkUrl,
+} from "~/backend/domain/work";
 import { personId } from "~/backend/handlers/json-ld";
 import {
+  D1ArticleCommandRepository,
   D1ProfileCommandRepository,
   D1WorkCommandRepository,
 } from "~/backend/infra/d1/repositories";
@@ -26,7 +37,14 @@ function envWith(d1: D1Database, bucket: R2Bucket): Env {
 
 async function seedWork(
   d1: D1Database,
-  params: { slug?: string; name?: string; url?: string; position?: number } = {},
+  params: {
+    slug?: string;
+    name?: string;
+    url?: string;
+    position?: number;
+    screenshots?: readonly WorkScreenshot[];
+    articleSlugs?: readonly string[];
+  } = {},
 ): Promise<void> {
   await new D1WorkCommandRepository(d1).upsert(
     Work.create({
@@ -35,9 +53,36 @@ async function seedWork(
       summary: WorkSummary.create("読んだものを覚えておくやつ。"),
       url: params.url === undefined ? undefined : WorkUrl.create(params.url),
       position: params.position ?? 0,
+      screenshots: params.screenshots ?? [],
+      articleSlugs: (params.articleSlugs ?? []).map((slug) => ArticleSlug.create(slug)),
       sourceHash: "h1",
     }),
   );
+}
+
+async function seedArticle(d1: D1Database, slug: string, status: ArticleStatus): Promise<void> {
+  await new D1ArticleCommandRepository(d1).upsert(
+    Article.create({
+      slug: ArticleSlug.create(slug),
+      title: ArticleTitle.create(`題 ${slug}`),
+      summary: "要約。",
+      publishedOn: Temporal.PlainDate.from("2026-01-15"),
+      lastModifiedOn: Temporal.PlainDate.from("2026-01-16"),
+      status,
+      sourceHash: "h1",
+    }),
+  );
+}
+
+/** 作品を 1 件、本文つきで置いて詳細を引く。 */
+async function loadDetail(
+  d1: D1Database,
+  work: Parameters<typeof seedWork>[1],
+): ReturnType<typeof loadWorkDetailPage> {
+  const { bucket } = createTestR2();
+  await seedWork(d1, work);
+  await new R2WorkContentCache(bucket).putMdast(WorkSlug.create("infoholick"), BODY);
+  return loadWorkDetailPage(envWith(d1, bucket), "infoholick", ORIGIN);
 }
 
 describe("loadWorks", () => {
@@ -75,8 +120,112 @@ describe("loadWorksPage", () => {
         name: "infoholick",
         summary: "読んだものを覚えておくやつ。",
         url: "https://github.com/yantene/infoholick",
+        stack: [],
+        period: null,
+        role: null,
+        featured: false,
+        screenshots: [],
       },
     ]);
+  });
+
+  /*
+   * ⚠️ 関連記事の slug を一覧の応答に載せないこと。下書きの slug も入っているので、
+   * slug だけでも書きかけの記事が在ることが漏れる。
+   */
+  it("never exposes the article slugs of a work", async () => {
+    const d1 = createTestD1();
+    await seedArticle(d1, "secret-draft", "draft");
+    await seedWork(d1, { articleSlugs: ["secret-draft"] });
+
+    const data = await loadWorksPage(envWith(d1, createTestR2().bucket), ORIGIN);
+    expect(JSON.stringify(data)).not.toContain("secret-draft");
+  });
+});
+
+describe("loadWorkDetailPage: この作品について書いた記事", () => {
+  it("returns the published articles in the order the writer chose", async () => {
+    const d1 = createTestD1();
+    await seedArticle(d1, "alpha", "published");
+    await seedArticle(d1, "zulu", "published");
+
+    const data = await loadDetail(d1, { articleSlugs: ["zulu", "alpha"] });
+    expect(data.articles.map((article) => article.slug)).toEqual(["zulu", "alpha"]);
+  });
+
+  /*
+   * 読み手に見えない記事は黙って外す。**限定公開 (`unlisted`) も外す** — URL を知っていれば
+   * 読める記事だが、ここは記事を並べる経路で、並べた時点で「一覧に出ない」が破れる。
+   * まだ無い記事の slug も同じ扱い。
+   */
+  it.each(["unlisted", "withdrawn", "draft", "idea"] as const)(
+    "leaves out an article that is %s",
+    async (status) => {
+      const d1 = createTestD1();
+      await seedArticle(d1, "shown", "published");
+      await seedArticle(d1, "hidden", status);
+
+      const data = await loadDetail(d1, { articleSlugs: ["hidden", "shown", "not-yet-written"] });
+      expect(data.articles.map((article) => article.slug)).toEqual(["shown"]);
+      // 応答のどこにも (JSON-LD にも) slug が残らないこと。
+      expect(JSON.stringify(data)).not.toContain("hidden");
+      expect(JSON.stringify(data)).not.toContain("not-yet-written");
+    },
+  );
+
+  it("returns no articles for a work that lists none", async () => {
+    const data = await loadDetail(createTestD1(), {});
+    expect(data.articles).toEqual([]);
+  });
+});
+
+describe("loadWorkDetailPage: JSON-LD", () => {
+  it("lists the screenshots as absolute image URLs", async () => {
+    const data = await loadDetail(createTestD1(), {
+      screenshots: [
+        WorkScreenshot.create({ src: "/api/v1/works/infoholick/assets/top.png", alt: "トップ" }),
+        WorkScreenshot.create({ src: "/api/v1/works/infoholick/assets/b.png", alt: "記事" }),
+      ],
+    });
+
+    expect(data.jsonLd).toMatchObject({
+      image: [
+        `${ORIGIN}/api/v1/works/infoholick/assets/top.png`,
+        `${ORIGIN}/api/v1/works/infoholick/assets/b.png`,
+      ],
+    });
+  });
+
+  it("points subjectOf at the articles readers can see", async () => {
+    const d1 = createTestD1();
+    await seedArticle(d1, "why-i-built-it", "published");
+    await seedArticle(d1, "half-written", "draft");
+
+    const data = await loadDetail(d1, { articleSlugs: ["why-i-built-it", "half-written"] });
+    expect(data.jsonLd).toMatchObject({
+      subjectOf: [
+        {
+          "@type": "BlogPosting",
+          headline: "題 why-i-built-it",
+          url: `${ORIGIN}/articles/why-i-built-it`,
+        },
+      ],
+    });
+  });
+
+  /** 無いものは欄ごと出さない (空の配列を置かない)。 */
+  it("omits image and subjectOf when the work has neither", async () => {
+    const data = await loadDetail(createTestD1(), {});
+    expect(data.jsonLd).not.toHaveProperty("image");
+    expect(data.jsonLd).not.toHaveProperty("subjectOf");
+  });
+
+  it("omits subjectOf when no listed article is visible to readers", async () => {
+    const d1 = createTestD1();
+    await seedArticle(d1, "half-written", "draft");
+
+    const data = await loadDetail(d1, { articleSlugs: ["half-written"] });
+    expect(data.jsonLd).not.toHaveProperty("subjectOf");
   });
 });
 

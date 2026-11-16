@@ -169,6 +169,13 @@
       "when": 1790519252617,
       "tag": "0023_add_profile_history_important",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794802664604,
+      "tag": "0024_add_works_showcase_fields_screenshots_and_articles",
+      "breakpoints": true
     }
   ]
 }

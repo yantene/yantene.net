@@ -1,0 +1,70 @@
+/*
+ * 作品のスクリーンショットの並び (work-gallery.tsx)。`/works/<slug>` の頭に出る。
+ */
+
+/*
+ * 横に流す。はみ出した分は横スクロールで送り、1 枚ずつ止まる。
+ *
+ * 高さは画面の幅に合わせて段を付けず滑らかに変える。**値は CSS の中で決まるので、
+ * 画像を待たずに枠が立つ** (読み込みの前後でページが動かない)。
+ */
+.work-gallery {
+  --work-gallery-height: clamp(10rem, 45vw, 20rem);
+
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  /* 焦点の輪と影が上下で切れないだけの余白。 */
+  padding-block: 0.25rem;
+}
+
+/*
+ * 1 枚ぶんの枠。高さは揃え、幅は比率のクラス (下) が決める。
+ *
+ * 縮ませない。flex に任せると、枚数が増えるほど 1 枚が細くなって何も読めなくなる。
+ */
+.work-gallery-frame {
+  flex: none;
+  height: var(--work-gallery-height);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent);
+  border-radius: 0.5rem;
+  background: var(--color-base-200);
+  scroll-snap-align: start;
+}
+
+/* 横長のデスクトップ画面。 */
+.work-gallery-desktop {
+  aspect-ratio: 16 / 9;
+}
+
+/* 縦長のスマートフォン画面。 */
+.work-gallery-mobile {
+  aspect-ratio: 9 / 19;
+}
+
+/*
+ * 押し場所は枠いっぱい。記事の本文では `.mdast-prose` が同じボタンを中央に寄せるが、
+ * ここは prose の外なので、こちらで形を与える。
+ */
+.work-gallery .lightbox-trigger {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+/*
+ * 枠に合わない分は切る。**上端に寄せる。** 画面の顔 (ヘッダーや題) は上にあるので、
+ * 中央で切ると何の画面か分からなくなる。全体は拡大すれば見える。
+ */
+.work-gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
