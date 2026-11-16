@@ -382,7 +382,7 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
 ### 内部リンクと脚注の参照にはプレビューが出る
 
 本文の `/articles/<slug>` へのリンクと脚注の参照に触ると、行き先の中身を小さく出す。
-設計判断の詳細は [ADR 0050](../../docs/adr/0050-preview-links-on-demand-and-position-them-in-css.md) を参照。
+設計判断の詳細は [ADR 0049](../../docs/adr/0049-preview-links-on-demand-and-position-them-in-css.md) を参照。
 
 | 環境                                 | 内部リンク                  | 脚注の参照                  |
 | ------------------------------------ | --------------------------- | --------------------------- |

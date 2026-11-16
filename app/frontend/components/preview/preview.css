@@ -1,5 +1,5 @@
 /*
- * 本文の内部リンクと脚注の参照に出すプレビュー (preview-layer.tsx、ADR 0050)。
+ * 本文の内部リンクと脚注の参照に出すプレビュー (preview-layer.tsx、ADR 0049)。
  *
  * チップもドロワーも createPortal で body の下に出るので、器 (`.mdast-prose`) の中に
  * 居る前提では書けない。脚注の中身だけは、自分で `.mdast-prose` を名乗って本文と同じ

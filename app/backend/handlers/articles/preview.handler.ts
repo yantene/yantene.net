@@ -32,7 +32,7 @@ function toArticlePreview(article: Article): ArticlePreview {
  * 記事のプレビューの公開 JSON API ルータ。認証不要。
  * GET /:slug/preview → 題・要約・公開日・カバー画像。見えない記事は ArticleNotFoundError (→ 404)。
  *
- * **読み取り口は `forReaders` で固定する。管理者でも分けない** (ADR 0050)。
+ * **読み取り口は `forReaders` で固定する。管理者でも分けない** (ADR 0049)。
  * この応答は公開のキャッシュに載る。管理者に下書きの題を返すと、同じ URL を引いた
  * 読み手にそのまま配られ、載った先で剥がす手立てが無い。だから誰が引いているか
  * (セッション) を見に行くこと自体をしない。記事ページのように
