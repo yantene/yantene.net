@@ -109,16 +109,25 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
           一覧の名乗り (page-intro) は使わない。あちらは「ここは何の場所か」を出す器で、
           ここに出るのは作品そのものの名前。下に本文が続くぶん、間の空きも違う。
         */}
-        <header>
-          <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-            {work.name}
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-base-content/70">{work.summary}</p>
+        <header className="flex flex-col gap-4">
+          <div>
+            <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+              {work.name}
+            </h1>
+            <p className="mt-3 text-base leading-relaxed text-base-content/70">{work.summary}</p>
+          </div>
 
+          {/*
+            諸元。どの欄も書いていなければ何も出ない (空きも残さない。間の空きは親の gap が
+            持つので、描かれなかった子のぶんは詰まる)。
+          */}
+          <WorkFacts work={work} />
+
+          {/* 在り処は最後。名前 → 概要 → 諸元と読んだあとの「では見に行く」の出口になる。 */}
           {work.url !== null && (
             <a
               href={work.url}
-              className="work-list-url press-control mt-4 inline-flex items-center gap-1.5 transition-colors hover:text-primary"
+              className="work-list-url press-control inline-flex items-center gap-1.5 transition-colors hover:text-primary"
             >
               {/*
                 絵は行き先が外であることの印で、名前は隣の字が持っている。読み上げから
@@ -131,9 +140,6 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
             </a>
           )}
         </header>
-
-        {/* 諸元。どの欄も書いていなければ何も出ない (空きも残さない)。 */}
-        <WorkFacts work={work} />
 
         {/*
           microformats の印は付けない。ここは h-entry ではないので、`e-content` を

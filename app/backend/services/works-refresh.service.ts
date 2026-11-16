@@ -355,17 +355,26 @@ function locateScreenshots(
   });
 }
 
-/** 読めた寸法を添える。読めなかった画像は寸法を持たないまま通す。 */
+/**
+ * 読めた寸法を添える。読めなかった画像は寸法を持たないまま通す。
+ *
+ * ⚠️ **ここは R2 に書き始めたあとに走るので、投げない。** 寸法として通らない値
+ * (0 や小数) が来たら、その画像を寸法なしで通す。いまの `readImageDimensions` は正の整数
+ * しか返さないが、読める形式が増えたときにここで同期ごと落ちる形にしておかない。
+ */
 function withDimensions(
   screenshots: readonly WorkScreenshot[],
   dimensions: ReadonlyMap<string, ImageDimensions>,
 ): readonly WorkScreenshot[] {
   return screenshots.map((screenshot) => {
     const size = dimensions.get(screenshot.src);
-    return size === undefined
-      ? screenshot
-      : screenshot.locatedAt({ src: screenshot.src, dimensions: size });
+    if (size === undefined || !isUsableSize(size)) return screenshot;
+    return screenshot.locatedAt({ src: screenshot.src, dimensions: size });
   });
+}
+
+function isUsableSize(size: ImageDimensions): boolean {
+  return [size.width, size.height].every((side) => Number.isInteger(side) && side > 0);
 }
 
 /** 解析済みの内容から Work エンティティを組み立てる純関数。 */

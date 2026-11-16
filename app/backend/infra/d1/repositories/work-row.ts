@@ -58,11 +58,20 @@ export function rowToWork(row: WorkRow, children: WorkChildRows): Work {
 
 /** `stack` の列は JSON の配列。文字列の並びでなければ破損として扱う。 */
 function parseStack(row: WorkRow): readonly string[] {
-  const parsed: unknown = JSON.parse(row.stack);
+  const parsed = parseJson(row.stack);
   if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === "string")) {
     throw new CorruptWorkRowError(`works.stack is not a list of strings: ${row.slug}`);
   }
   return parsed;
+}
+
+/** JSON として読めない字は undefined。呼ぶ側が破損として扱う。 */
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function toPeriod(row: WorkRow): WorkPeriod | undefined {
