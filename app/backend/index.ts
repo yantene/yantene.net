@@ -23,6 +23,7 @@ import { createWebmentionAvatarsRouter } from "./handlers/webmentions/avatars.ha
 import type { MiddlewareHandler } from "hono";
 import { ArticleNotFoundError } from "~/backend/domain/article";
 import { conditionalBasicAuth } from "~/backend/middleware/basic-auth";
+import { redirectTrailingSlash } from "~/backend/middleware/trailing-slash";
 import {
   WEB_ANALYTICS_BEACON_SRC,
   WEB_ANALYTICS_REPORT_ORIGIN,
@@ -161,6 +162,17 @@ export const getApp = (
   // 過去の URL (旧サイトと、記事を `/notes/<slug>` と呼んでいた頃) を現行の URL へ
   // リダイレクトする。表に無いパスは素通りするので、後続のルーティングには影響しない。
   app.route("/", createLegacyRedirectRouter());
+
+  // 末尾にスラッシュの付いた URL を、付かない URL へ送る (#569)。
+  //
+  // **旧 URL のリダイレクトより後ろに置く。** 昔のリンクは末尾にスラッシュが付いている
+  // ことが多く、あちらは付いたままでも 1 回で新しい URL へ送る。先にこちらを通すと、
+  // 「スラッシュを落とす」「新しい URL へ送る」の 2 段跳びになる。
+  //
+  // ここより前に登録した経路 (API・フィード・OG・sitemap) は、末尾にスラッシュが付くと
+  // どれにも当たらずにここへ落ちてくるので、同じように送られる。ルートとしては足さない
+  // ので、ルーターの選ばれ方 (markdown.handler.test.ts) には触らない。
+  app.use("*", redirectTrailingSlash);
 
   // 記事の原文 Markdown。ページではなくファイルを返すので React Router へ委譲せず
   // Hono で完結させる。`/articles/<slug>.md` と、`/articles/<slug>` のうち Accept が
