@@ -2,6 +2,7 @@ import type { profile, profileHistory, profileSocials } from "~/backend/infra/d1
 import {
   HistoryDate,
   HistoryEntry,
+  InvalidProfileIdentityError,
   Profile,
   ProfileIdentity,
   ProfileName,
@@ -40,21 +41,37 @@ export function rowsToProfile(
 
 /**
  * 名前まわりの欄を復元する。書いていない欄は NULL で入っている。
- *
- * 別名は JSON の配列。配列でない・文字列でない要素は、VO が読めない値として弾く
- * (`isProfileDataError` が拾い、読めないプロフィールとして倒れる)。
  */
 function rowToIdentity(row: typeof profile.$inferSelect): ProfileIdentity {
-  const alternateNames: unknown = row.alternateNames;
   return ProfileIdentity.create({
     ...(row.nameEn === null ? {} : { nameEn: row.nameEn }),
     ...(row.familyName === null ? {} : { familyName: row.familyName }),
     ...(row.givenName === null ? {} : { givenName: row.givenName }),
-    alternateNames: Array.isArray(alternateNames) ? alternateNames.map(String) : [],
+    alternateNames: parseAlternateNames(row.alternateNames),
     ...(row.jobTitle === null ? {} : { jobTitle: row.jobTitle }),
     ...(row.description === null ? {} : { description: row.description }),
     ...(row.descriptionEn === null ? {} : { descriptionEn: row.descriptionEn }),
   });
+}
+
+/**
+ * 別名の列 (JSON の文字列の配列) を読む。
+ *
+ * **読めない値を空の並びに倒さない。** JSON として壊れている・配列でない・文字列でない
+ * 要素が混ざっている、のどれも `InvalidProfileIdentityError` にする。`isProfileDataError` が
+ * 拾うので、ページは 500 にならず「読めないプロフィール」として倒れる。
+ */
+function parseAlternateNames(stored: string): readonly string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stored);
+  } catch {
+    throw new InvalidProfileIdentityError("Stored alternate names are not valid JSON");
+  }
+  if (!Array.isArray(parsed) || !parsed.every((name) => typeof name === "string")) {
+    throw new InvalidProfileIdentityError("Stored alternate names must be an array of strings");
+  }
+  return parsed;
 }
 
 /**

@@ -444,3 +444,26 @@ describe("loadProfile", () => {
     await expect(loadProfile(envWith(failing, bucket))).rejects.toThrow("D1_ERROR");
   });
 });
+
+/*
+ * 別名の列は JSON の文字列の配列。**壊れた値を空の並びに倒さず、500 にもしない。**
+ * 読めないプロフィールとして、ページごと「準備中」に倒す (ほかの読めない行と同じ)。
+ */
+describe("読めない別名の列", () => {
+  it.each([
+    ["JSON として壊れている", "{broken"],
+    ["配列でない", '{"a":1}'],
+    ["文字列でない要素が混ざる", '["yantene",1,null]'],
+  ])("%s ときは準備中のページに倒れる", async (_label, stored) => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+    await d1.prepare("UPDATE profile SET alternate_names = ?").bind(stored).run();
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile).toBeNull();
+    expect(JSON.stringify(data.jsonLd)).not.toContain("alternateName");
+  });
+});

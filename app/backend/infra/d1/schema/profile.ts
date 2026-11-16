@@ -16,14 +16,15 @@ export const profile = sqliteTable("profile", {
   /*
    * 機械 (検索エンジンと AI) に名乗るための、名前まわりの欄 (`ProfileIdentity`)。
    * どれも省略でき、書いていなければ NULL。別名だけは JSON の配列で、無ければ `[]`。
+   *
+   * ⚠️ **別名を `mode: "json"` にしない。** あちらは行を引いた時点で parse するので、
+   * 壊れた値が 1 つ入ると読み出しそのものが落ち、全ページが 500 になる。素の字で持ち、
+   * 復元のとき (`profile-row.ts`) に読めない値として倒す。
    */
   nameEn: text("name_en"),
   familyName: text("family_name"),
   givenName: text("given_name"),
-  alternateNames: text("alternate_names", { mode: "json" })
-    .$type<readonly string[]>()
-    .notNull()
-    .default([]),
+  alternateNames: text("alternate_names").notNull().default("[]"),
   jobTitle: text("job_title"),
   description: text("description"),
   descriptionEn: text("description_en"),

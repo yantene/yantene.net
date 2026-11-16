@@ -56,7 +56,7 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
       nameEn: source.identity.nameEn ?? null,
       familyName: source.identity.familyName ?? null,
       givenName: source.identity.givenName ?? null,
-      alternateNames: source.identity.alternateNames,
+      alternateNames: JSON.stringify(source.identity.alternateNames),
       jobTitle: source.identity.jobTitle ?? null,
       description: source.identity.description ?? null,
       descriptionEn: source.identity.descriptionEn ?? null,
