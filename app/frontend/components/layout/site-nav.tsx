@@ -9,10 +9,14 @@ import { Link, useLocation } from "react-router";
  *
  * Home を置かないのは、ロゴがその役を兼ねているため (header.tsx)。
  *
- * `/notes` (#412) `/slides` (#415) はまだ中身が無く、いまは「準備中」の一文だけを
- * 置いたページに繋がっている。**それでもナビには出す。** サイトが何を置く場所なのかは、
- * 置き終わる前から読み手に見えていてよい。`/about` と `/works` も、コンテンツが
- * まだ同期されていない間は同じ姿になる。
+ * `/slides` (#415) はまだ中身が無く、いまは「準備中」の一文だけを置いたページに
+ * 繋がっている。**それでもナビには出す。** サイトが何を置く場所なのかは、置き終わる
+ * 前から読み手に見えていてよい。`/about` と `/works` も、コンテンツがまだ同期されて
+ * いない間は同じ姿になる。
+ *
+ * **`/notes` (#412) は並べない。** ページは「準備中」のまま実在するが、何を置く場所に
+ * するかがまだ決まっていない。決まっていないものは名乗らない。フィードの選び場所からも
+ * 同じ理由で外してある (`~/lib/feed` の `listedFeedIdentities`)。
  *
  * **フィードのある種別だけを並べているのではない。** `/works` にフィードは無い
  * (作ったものは購読するものではない。ADR 0042)。ナビは「この場所には何があるか」を
@@ -33,7 +37,6 @@ export interface SiteNavItem {
 export const siteNavItems: readonly SiteNavItem[] = [
   { to: "/about", labelKey: "navigation.about" },
   { to: "/articles", labelKey: "navigation.articles" },
-  { to: "/notes", labelKey: "navigation.notes" },
   { to: "/slides", labelKey: "navigation.slides" },
   { to: "/works", labelKey: "navigation.works" },
 ];

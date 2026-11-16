@@ -2,7 +2,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineRss } from "react-icons/hi2";
 import { headerMenuGroupName, useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
-import { feedIdentities } from "~/lib/feed";
+import { listedFeedIdentities } from "~/lib/feed";
 
 /**
  * フィードの選び場所。帯の絵を押すと、種別ごとのフィードが開く。
@@ -14,9 +14,12 @@ import { feedIdentities } from "~/lib/feed";
  * 書くと、フィード本体 (backend/handlers/feed.handler) が生やす URL と、ここに出る
  * URL が別々に育つ。
  *
- * **`Notes` と `Slides` はまだ中身が無い** (#412 / #415) が、押せる導線として出す。
- * 返るのは entry 0 件の Atom で、いま購読しておけば中身が入った時点で届く。押せなく
- * すると、その時点で購読している人が誰もいない状態から始まることになる。
+ * **`Slides` はまだ中身が無い** (#415) が、押せる導線として出す。返るのは entry 0 件の
+ * Atom で、いま購読しておけば中身が入った時点で届く。押せなくすると、その時点で
+ * 購読している人が誰もいない状態から始まることになる。
+ *
+ * **`Notes` は並べない** (#412)。フィードは実在するが、ナビが名乗っていない場所を
+ * ここだけが名乗ることになるため。何を出すかは表の側 (`listedFeedIdentities`) が決める。
  */
 export function FeedMenu({ className = "" }: { readonly className?: string }): React.JSX.Element {
   const { t } = useTranslation();
@@ -49,9 +52,9 @@ export function FeedMenu({ className = "" }: { readonly className?: string }): R
       <div className="header-menu-panel">
         {/*
           見出しを 1 つ置く。絵だけの押し場所から開くので、開いた板の中に「これは
-          フィードの一覧である」と書いてある字が無いと、4 つの名前だけが宙に浮く。
+          フィードの一覧である」と書いてある字が無いと、名前だけが宙に浮く。
 
-          **一覧に結び付ける。** ナビにも同じ字の行き先 (Articles / Notes / Slides) が
+          **一覧に結び付ける。** ナビにも同じ字の行き先 (Articles / Slides) が
           あり、名前だけを読み上げると同じ名前のリンクが 4 つ並ぶ (帯とドロワーで 2 枚
           ずつ描くため)。結び付けておけば「Feed の Articles」として読める。
         */}
@@ -59,7 +62,7 @@ export function FeedMenu({ className = "" }: { readonly className?: string }): R
           {t("feed.label")}
         </p>
         <ul aria-labelledby={titleId} className="header-menu-list">
-          {feedIdentities.map((identity) => (
+          {listedFeedIdentities.map((identity) => (
             <li key={identity.kind}>
               {/*
                 `<Link>` ではなく素の `<a>`。フィードは Hono が応答するエンドポイントで
@@ -98,7 +101,7 @@ export function FeedMenuList(): React.JSX.Element {
         {t("feed.label")}
       </p>
       <ul aria-labelledby={titleId} className="site-menu-feed-list">
-        {feedIdentities.map((identity) => (
+        {listedFeedIdentities.map((identity) => (
           <li key={identity.kind}>
             <a
               href={identity.path}

@@ -26,10 +26,10 @@ type Story = StoryObj<typeof meta>;
 export const Closed: Story = {};
 
 /*
- * 開いた姿。All / Articles / Notes / Slides が縦に積まれる。
+ * 開いた姿。All / Articles / Slides が縦に積まれる。
  *
- * **Notes と Slides はまだ中身が無い** (#412 / #415) が、押せる導線として出す。返るのは
- * entry 0 件の Atom で、いま購読しておけば中身が入った時点で届く。
+ * **Slides はまだ中身が無い** (#415) が、押せる導線として出す。返るのは entry 0 件の
+ * Atom で、いま購読しておけば中身が入った時点で届く。
  *
  * `open` 属性を直に立てて開く。器が `<details>` なので、これは読み手が絵を押したときと
  * 同じ状態になる。

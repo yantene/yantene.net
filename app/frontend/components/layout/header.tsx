@@ -241,7 +241,7 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
                 並びの終端に置く。出ていく先を指すものなので、ページの中を動かす道具
                 (検索・表示する言語) を通り過ぎた先にあるのが素直な順になる。
 
-                押すと種別ごとのフィードが開く (All / Articles / Notes / Slides)。
+                押すと種別ごとのフィードが開く (All / Articles / Slides)。
               */}
               <FeedMenu className="hidden lg:block" />
 

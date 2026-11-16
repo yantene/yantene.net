@@ -18,12 +18,13 @@ const FEED_TITLE = "やんてね";
 const FEED_SUBTITLE = "Web の向こうから。エッセイ、技術記事、つくったもの。";
 
 /**
- * フィードの種別。サイトの行き先 (ナビ) と 1 対 1 で対応させ、`all` がその全部を束ねる。
+ * フィードの種別。時系列に増える投稿の型と 1 対 1 で対応させ、`all` がその全部を束ねる。
  *
  * **`notes` と `slides` はまだ中身が無い** (#412 / #415)。それでもフィードとしては
- * 実在させ、entry 0 件の Atom を返す。ナビが行き先を先に見せているのと同じ理屈で、
- * いま購読しておけば中身が入った時点で届く。後から URL を生やすと、その時点で
- * 購読している人が誰もいない状態から始まる。
+ * 実在させ、entry 0 件の Atom を返す。いま購読しておけば中身が入った時点で届く。
+ * 後から URL を生やすと、その時点で購読している人が誰もいない状態から始まる。
+ *
+ * 実在することと、ヘッダーの選び場所に出すことは別 ({@link listedFeedIdentities})。
  */
 export type FeedKind = "all" | "articles" | "notes" | "slides";
 
@@ -46,7 +47,10 @@ export interface FeedIdentity {
 }
 
 /**
- * フィードの一覧。**並びはヘッダーの選び場所にそのまま出る順。**
+ * 実在するフィードの一覧。**並びはヘッダーの選び場所にそのまま出る順。**
+ *
+ * フィード本体のルータ・Service Worker の「蓄えない」一覧・デプロイ後のスモークは
+ * ここを読む。**選び場所に出すものだけが要るなら {@link listedFeedIdentities} を読むこと。**
  *
  * `all` を先頭に置き、以下はナビと同じ順にする。どれか 1 つだけを購読する人より、
  * まず全部を購読する人のほうが多い。
@@ -98,6 +102,28 @@ export const feedIdentities: readonly FeedIdentity[] = [
     labelKey: "navigation.slides",
   },
 ];
+
+/**
+ * 実在はするが、ヘッダーの選び場所には出さない種別。
+ *
+ * `notes` は何を置く場所にするかがまだ決まっていない (#412)。決まっていないものを
+ * ナビと選び場所で名乗ると、読み手に「ここに短文が載る」と約束することになるので、
+ * どちらからも外してある。**フィードと `/notes` は消していない** — URL は購読された
+ * 時点で動かせない契約になるので、既に実在するものは残す。
+ *
+ * ナビ (frontend/components/layout/site-nav) と揃えること。片方にだけ出すと、
+ * 読めるのに購読できない (あるいはその逆の) 場所が生まれる。`feed-menu.test.tsx` が
+ * 見張っている。
+ */
+const unlistedFeedKinds: ReadonlySet<FeedKind> = new Set<FeedKind>(["notes"]);
+
+/**
+ * ヘッダーの選び場所 (帯とドロワー) に並べるフィード。{@link feedIdentities} から
+ * {@link unlistedFeedKinds} を除いたもの。
+ */
+export const listedFeedIdentities: readonly FeedIdentity[] = feedIdentities.filter(
+  (identity) => !unlistedFeedKinds.has(identity.kind),
+);
 
 /**
  * 種別からフィードの名乗りを引く。

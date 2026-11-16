@@ -556,11 +556,16 @@ push を合図に D1 と R2 へ同期される
 
 全ページの頭に、行き先・検索・表示する言語・出ていく先を置く。
 
-- 行き先は About / Articles / Notes / Slides / Works の 5 つ。**Notes (#412) /
-  Slides (#415) はまだ中身が無く、「準備中」の一文だけを置いたページに繋がっている。**
+- 行き先は About / Articles / Slides / Works の 4 つ。**Slides (#415) はまだ中身が
+  無く、「準備中」の一文だけを置いたページに繋がっている。**
   それでもナビには出す (サイトが何を置く場所なのかは、置き終わる前から見えていてよい)。
   中身の無いうちは `noindex` を立てて検索結果には出さない。About と Works も、
   コンテンツがまだ同期されていない間は同じ姿になる
+- ⚠️ **Notes (#412) はナビにもフィードのメニューにも出さない。** 何を置く場所にするかが
+  まだ決まっていないため (決まっていないものは名乗らない)。**`/notes` (準備中、`noindex`) と
+  `/feed/notes.xml` (entry 0 件の Atom) は実在したまま**で、ルートもハンドラも消して
+  いない。出す・出さないはナビの表 (`site-nav.tsx`) と `app/lib/feed.ts` の
+  `listedFeedIdentities` が持ち、`feed-menu.test.tsx` が 2 つを揃えている
 - ⚠️ **フィードのある種別だけを並べているのではない。** Works にフィードは無い
   ([ADR 0042](../../docs/adr/0042-keep-works-as-their-own-content-kind.md))。ナビは
   「この場所には何があるか」を示すもので、購読の口があるかとは別。
@@ -590,6 +595,7 @@ push を合図に D1 と R2 へ同期される
 **場所と区画の名前は、日本語モードでも英語のまま出す。** About / Articles / Notes /
 Slides / Popular / Latest / Contents / Related articles / Responses / Feed / All /
 Legal / Open source licenses / Affiliate links / Search / Share がそれにあたる。
+Notes はナビに出していないが、`/notes` の見出しに出るのでここに残る。
 
 - 名前を訳すと、同じ場所が言語によって別の名前で呼ばれることになる (URL は
   `/articles` のままなのに見出しだけ「記事」になる)
@@ -641,22 +647,25 @@ React の外から引けないため。ja.json を書き換えたらあちらも
 
 ### フィードは種別ごとに分かれている
 
-ヘッダーの RSS の絵を押すと、All / Articles / Notes / Slides から選べる。設計判断の
+ヘッダーの RSS の絵を押すと、All / Articles / Slides から選べる。設計判断の
 詳細は [ADR 0038](../../docs/adr/0038-split-feeds-by-content-kind.md) を参照。
 
-| 種別     | 行き先               | 中身                 |
-| -------- | -------------------- | -------------------- |
-| All      | `/feed.xml`          | サイトに出るもの全部 |
-| Articles | `/feed/articles.xml` | 記事                 |
-| Notes    | `/feed/notes.xml`    | **まだ空** (#412)    |
-| Slides   | `/feed/slides.xml`   | **まだ空** (#415)    |
+| 種別     | 行き先               | 中身                 | メニュー |
+| -------- | -------------------- | -------------------- | -------- |
+| All      | `/feed.xml`          | サイトに出るもの全部 | 出す     |
+| Articles | `/feed/articles.xml` | 記事                 | 出す     |
+| Notes    | `/feed/notes.xml`    | **まだ空** (#412)    | 出さない |
+| Slides   | `/feed/slides.xml`   | **まだ空** (#415)    | 出す     |
 
-- **中身の無い種別も購読先として実在させる** (entry 0 件の Atom)。ナビが行き先を先に
-  見せているのと同じ理屈で、いま購読しておけば中身が入った時点で届く。後から URL を
-  生やすと、その時点で購読している人が誰もいない状態から始まる
+- **中身の無い種別も購読先として実在させる** (entry 0 件の Atom)。いま購読しておけば
+  中身が入った時点で届く。後から URL を生やすと、その時点で購読している人が誰もいない
+  状態から始まる
 - ⚠️ **これは「いずれ時系列に増える種別」の話。** `/about` と `/works` は時系列に
   増えないので、購読先を実在させても何も届かない。フィードは持たない
   ([ADR 0042](../../docs/adr/0042-keep-works-as-their-own-content-kind.md))
+- **メニューに出すのは、ナビが名乗っている種別だけ。** Notes はナビに出していないので
+  メニューにも出さない。フィードそのものは実在し、`/notes` の `rel=alternate` からは
+  辿れる
 - **Notes / Slides が埋まるまで、All と Articles の中身は同じ。** 両方を購読すると
   同じものが 2 回届く
 - ⚠️ **種別ごとのフィードは `/feed/` の下に置くこと。** `/articles/feed.xml` のように

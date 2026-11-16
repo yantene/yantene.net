@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FeedMenu, FeedMenuList } from "./feed-menu";
 import { siteNavItems } from "~/frontend/components/layout/site-nav";
 import { withI18n } from "~/frontend/lib/test-render";
-import { feedIdentities } from "~/lib/feed";
+import { feedIdentities, listedFeedIdentities } from "~/lib/feed";
 
 const renderWithI18n = withI18n();
 
@@ -24,26 +24,35 @@ describe("FeedMenu", () => {
     expect(details?.open).toBe(false);
   });
 
-  it("表にある行き先をすべて並べる", () => {
+  it("選び場所に出す行き先をすべて並べる", () => {
     renderWithI18n(<FeedMenu />);
 
-    expect(feedHrefs()).toEqual(feedIdentities.map((identity) => identity.path));
+    expect(feedHrefs()).toEqual(listedFeedIdentities.map((identity) => identity.path));
   });
 
   /*
-   * **中身の無い種別も押せるままにする** (#412 / #415)。返るのは entry 0 件の Atom で、
+   * **中身の無い種別も押せるままにする** (#415)。返るのは entry 0 件の Atom で、
    * いま購読しておけば中身が入った時点で届く。押せなくすると、その時点で購読している
    * 人が誰もいない状態から始まる。
    */
   it("まだ中身の無い種別も押せる", () => {
     renderWithI18n(<FeedMenu />);
 
-    for (const name of ["Notes", "Slides"]) {
-      expect(screen.getByRole("link", { name })).toHaveAttribute(
-        "href",
-        `/feed/${name.toLowerCase()}.xml`,
-      );
-    }
+    expect(screen.getByRole("link", { name: "Slides" })).toHaveAttribute(
+      "href",
+      "/feed/slides.xml",
+    );
+  });
+
+  /*
+   * Notes は何を置く場所にするかが決まっていない (#412)。ナビが名乗っていない場所を
+   * ここだけが名乗らないこと。
+   */
+  it("Notes は並べない", () => {
+    renderWithI18n(<FeedMenu />);
+
+    expect(screen.queryByRole("link", { name: "Notes" })).toBeNull();
+    expect(feedHrefs()).not.toContain("/feed/notes.xml");
   });
 
   /*
@@ -67,7 +76,13 @@ describe("FeedMenuList (ドロワー)", () => {
   it("帯と同じ行き先を並べる", () => {
     renderWithI18n(<FeedMenuList />);
 
-    expect(feedHrefs()).toEqual(feedIdentities.map((identity) => identity.path));
+    expect(feedHrefs()).toEqual(listedFeedIdentities.map((identity) => identity.path));
+  });
+
+  it("Notes は並べない", () => {
+    renderWithI18n(<FeedMenuList />);
+
+    expect(feedHrefs()).not.toContain("/feed/notes.xml");
   });
 
   /*
@@ -83,9 +98,9 @@ describe("FeedMenuList (ドロワー)", () => {
 
 describe("フィードの種別とサイトの行き先", () => {
   /*
-   * 時系列に並ぶものを置く場所は、ナビの行き先とフィードの種別が 1 対 1。**そちらに
-   * 足した行き先はフィードにも要る** — 片方にだけあると、読めるのに購読できない
-   * (あるいはその逆の) 場所が生まれる。
+   * 時系列に並ぶものを置く場所は、ナビの行き先と選び場所に出すフィードが 1 対 1。
+   * **そちらに足した行き先はフィードにも要る** — 片方にだけあると、読めるのに購読
+   * できない (あるいはその逆の) 場所が生まれる。
    *
    * 時系列で増えない 2 つは持たない。`/about` は 1 枚しか無く、`/works` は書き手が
    * 手で並べたものなので、どちらも購読しても何も届かない (ADR 0042)。
@@ -93,12 +108,24 @@ describe("フィードの種別とサイトの行き先", () => {
   const timelessPaths = new Set(["/about", "/works"]);
 
   it("`all` を除くと、時系列の行き先とちょうど対応する", () => {
-    const feedTargets = feedIdentities
+    const feedTargets = listedFeedIdentities
       .filter((identity) => identity.kind !== "all")
       .map((identity) => identity.alternatePath);
 
     expect(feedTargets).toEqual(
       siteNavItems.map((item) => item.to).filter((to) => !timelessPaths.has(to)),
     );
+  });
+
+  /*
+   * **選び場所から外しても、フィードは消さない。** URL は購読された時点で動かせない
+   * 契約になる。`/feed/notes.xml` は entry 0 件の Atom として実在し続ける
+   * (応答そのものは backend/handlers/feed.handler.test.ts が見ている)。
+   */
+  it("選び場所に出さない種別も、フィードとしては実在する", () => {
+    const paths = feedIdentities.map((identity) => identity.path);
+
+    expect(paths).toContain("/feed/notes.xml");
+    expect(siteNavItems.map((item) => item.to)).not.toContain("/notes");
   });
 });
