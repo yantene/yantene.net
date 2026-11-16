@@ -63,6 +63,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0048](0048-identify-the-author-and-the-site-in-structured-data.md)  | 書き手とサイトに `@id` を付け、どのページの構造化データからも指す      | Accepted   |
 | [0049](0049-preview-links-on-demand-and-position-them-in-css.md)     | 本文のリンクのプレビューは触ったときに取り、位置は CSS で決める        | Accepted   |
 | [0051](0051-show-works-with-screenshots-and-linked-articles.md)      | 作品にスクリーンショットと関連記事を持たせ、記事は描画のたびに引き直す | Accepted   |
+| [0050](0050-show-works-with-screenshots-and-linked-articles.md)      | 作品にスクリーンショットと関連記事を持たせ、記事は描画のたびに引き直す | Accepted   |
 
 ## 統合した番号
 

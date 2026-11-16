@@ -588,7 +588,7 @@ JSON-LD の `Person` は、どのページに出ても `<origin>/#person` とい
 作品は**コンテンツリポジトリの `works/<slug>.md` + `works/<slug>/`**。記事と同じ対の形で、
 push を合図に D1 と R2 へ同期される
 ([ADR 0042](../../docs/adr/0042-keep-works-as-their-own-content-kind.md) /
-[ADR 0051](../../docs/adr/0051-show-works-with-screenshots-and-linked-articles.md))。
+[ADR 0050](../../docs/adr/0050-show-works-with-screenshots-and-linked-articles.md))。
 
 出る場所は 3 つ。同じ 1 つのデータから賄う。
 
