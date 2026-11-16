@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { D1ContentViewCommandRepository } from "./content-view.command-repository";
 import { D1ContentViewQueryRepository } from "./content-view.query-repository";
 import { D1ArticleCommandRepository } from "./article.command-repository";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { viewWeightLog } from "~/backend/domain/content-view";
 import { articleRef } from "~/backend/domain/shared";
@@ -17,7 +17,7 @@ interface Harness {
   seed: (params: {
     slug: string;
     publishedOn: string;
-    status?: ArticleStatus;
+    status?: ContentStatus;
     views?: number;
   }) => Promise<string>;
   popular: (limit: number) => Promise<readonly string[]>;
@@ -72,7 +72,7 @@ describe("人気順", () => {
    */
   it("公開されていない記事がどれだけ読まれていても、上位を埋めない", async () => {
     const harness = setup();
-    const hidden: readonly ArticleStatus[] = ["unlisted", "withdrawn", "draft", "idea"];
+    const hidden: readonly ContentStatus[] = ["unlisted", "withdrawn", "draft", "idea"];
     for (const status of hidden) {
       await harness.seed({ slug: `hidden-${status}`, publishedOn: "2026-06-01", status, views: 9 });
     }

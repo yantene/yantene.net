@@ -1,14 +1,14 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ArticlePreview } from "./preview.handler";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
-async function seedWith(d1: D1Database, status: ArticleStatus): Promise<void> {
+async function seedWith(d1: D1Database, status: ContentStatus): Promise<void> {
   await new D1ArticleCommandRepository(d1).upsert(
     Article.create({
       slug: ArticleSlug.create("hello"),

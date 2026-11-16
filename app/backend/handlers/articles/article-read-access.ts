@@ -1,5 +1,5 @@
-import type { ArticleStatus } from "~/backend/domain/article";
-import { isReachableByReaders } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { isReachableByReaders } from "~/backend/domain/shared";
 import { currentAccount, PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
@@ -53,7 +53,7 @@ export async function resolveArticleReadAccess(
  */
 export function shouldKeepResponsePrivate(
   access: ArticleReadAccess,
-  status: ArticleStatus,
+  status: ContentStatus,
 ): boolean {
   return access.admin && !isReachableByReaders(status);
 }
@@ -66,7 +66,7 @@ export function shouldKeepResponsePrivate(
  */
 export function privateCacheHeadersFor(
   access: ArticleReadAccess,
-  status: ArticleStatus,
+  status: ContentStatus,
 ): Readonly<Record<string, string>> {
   return shouldKeepResponsePrivate(access, status) ? PRIVATE_CACHE_HEADERS : {};
 }

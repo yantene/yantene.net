@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cardElement, defaultCardElement, OG_TEMPLATE_VERSION } from "./og-card";
-import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
+import { ArticleSlug } from "~/backend/domain/article";
+import { shouldTellRobotsNoindex } from "~/backend/domain/shared";
 import { SlideSlug } from "~/backend/domain/slide";
 import { D1ArticleQueryRepository, D1SlideQueryRepository } from "~/backend/infra/d1/repositories";
 import { plainDateToIso } from "~/backend/infra/d1/temporal";

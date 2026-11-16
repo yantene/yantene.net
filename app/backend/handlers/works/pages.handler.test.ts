@@ -1,7 +1,7 @@
 import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadWorkDetailPage, loadWorks, loadWorksPage } from "./pages.handler";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { Temporal } from "@js-temporal/polyfill";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
@@ -60,7 +60,7 @@ async function seedWork(
   );
 }
 
-async function seedArticle(d1: D1Database, slug: string, status: ArticleStatus): Promise<void> {
+async function seedArticle(d1: D1Database, slug: string, status: ContentStatus): Promise<void> {
   await new D1ArticleCommandRepository(d1).upsert(
     Article.create({
       slug: ArticleSlug.create(slug),

@@ -9,3 +9,12 @@ export type { IUnpersisted } from "./unpersisted.interface";
 export type { IValueObject } from "./value-object.interface";
 export { articleRef, contentKinds, isContentKind } from "./content-ref";
 export type { ContentKind, ContentRef } from "./content-ref";
+export {
+  contentStatuses,
+  DEFAULT_CONTENT_STATUS,
+  isContentStatus,
+  isListedToReaders,
+  isReachableByReaders,
+  shouldTellRobotsNoindex,
+} from "./content-status";
+export type { ContentStatus } from "./content-status";

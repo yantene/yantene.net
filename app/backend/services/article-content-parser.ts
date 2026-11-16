@@ -1,8 +1,8 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import { ALERT_TAG_NAME, parseMarkdownBody } from "./markdown-body";
 import type { Nodes, Root, RootContent } from "mdast";
-import type { ArticleStatus } from "~/backend/domain/article";
-import { DEFAULT_ARTICLE_STATUS, isArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { DEFAULT_CONTENT_STATUS, isContentStatus } from "~/backend/domain/shared";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
 const SUMMARY_MAX_CHARS = 160;
@@ -28,7 +28,7 @@ export interface ArticleFrontmatter {
   readonly imageUrl: string | undefined;
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
-  readonly status: ArticleStatus;
+  readonly status: ContentStatus;
 }
 
 export interface ParsedArticleContent {
@@ -151,7 +151,7 @@ function asOptionalString(value: unknown): string | undefined {
  * 反映されなくなるので、気づく手立ては refresh の応答の `skipped` しか無い。
  * コンテンツリポジトリ側の書き換えは、取りこぼさず一度に済ませること。
  */
-function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
+function asStatus(rawMatter: Record<string, unknown>): ContentStatus {
   if ("visibility" in rawMatter) {
     throw new StatusValueError(
       "frontmatter still has the former `visibility` key; rename it to `status` (ADR 0040)",
@@ -159,10 +159,10 @@ function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
   }
 
   const value = rawMatter.status;
-  if (value === undefined || value === null) return DEFAULT_ARTICLE_STATUS;
+  if (value === undefined || value === null) return DEFAULT_CONTENT_STATUS;
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    if (isArticleStatus(normalized)) return normalized;
+    if (isContentStatus(normalized)) return normalized;
   }
   throw new StatusValueError(`frontmatter has unreadable status: ${JSON.stringify(value)}`);
 }

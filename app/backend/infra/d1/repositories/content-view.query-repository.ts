@@ -2,8 +2,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import type { IContentViewQueryRepository } from "~/backend/domain/content-view";
 import type { ContentKind, ContentRef } from "~/backend/domain/shared";
-import { articleStatuses, isListedToReaders } from "~/backend/domain/article";
-import { isContentKind } from "~/backend/domain/shared";
+import { contentStatuses, isListedToReaders, isContentKind } from "~/backend/domain/shared";
 import { articles, contentViews } from "~/backend/infra/d1/schema";
 
 /**
@@ -13,7 +12,7 @@ import { articles, contentViews } from "~/backend/infra/d1/schema";
  * 絞るのはここ。素通りさせると**上位 N 件を下書きが埋めてから forReaders が落とす**
  * ことになり、人気順が N 件に足りなくなる。
  */
-const LISTED_ARTICLE_STATUSES = articleStatuses.filter((status) => isListedToReaders(status));
+const LISTED_ARTICLE_STATUSES = contentStatuses.filter((status) => isListedToReaders(status));
 
 const ARTICLE_KIND: ContentKind = "article";
 
