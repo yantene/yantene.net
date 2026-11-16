@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/slides";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import type { JsonLdData, PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { ComingSoon } from "~/frontend/components/coming-soon/coming-soon";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -19,22 +19,27 @@ import { feedIdentity } from "~/lib/feed";
  * 既に並んでいるので、行き先が 404 だとサイトが壊れて見える。
  */
 
-export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & CopyrightData {
+export function loader({
+  request,
+  context,
+}: Route.LoaderArgs): PageMetaBase & CopyrightData & JsonLdData {
+  const origin = new URL(request.url).origin;
   return {
     locale: context.get(localeRouteContext),
-    origin: new URL(request.url).origin,
+    origin,
     copyright: resolveCopyrightYears(),
+    jsonLd: collectionPageJsonLd(origin, "/slides"),
   };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const translations = translationsFor(locale);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    jsonLd: collectionPageJsonLd(origin, location.pathname),
+    jsonLd,
     title: translations.navigation.slides,
     description: translations.comingSoon.slides,
     /*

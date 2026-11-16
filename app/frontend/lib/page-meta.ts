@@ -13,6 +13,16 @@ export interface PageMetaBase {
 }
 
 /**
+ * ページの構造化データ (ADR 0048)。**組むのは loader で、`meta` は運ぶだけ。**
+ *
+ * `meta` はブラウザでも走る。そこで組むと、組み立ての側 (`backend/handlers/json-ld`) が
+ * クライアントのバンドルに入る。
+ */
+export interface JsonLdData {
+  readonly jsonLd: Record<string, unknown>;
+}
+
+/**
  * meta 関数は React コンポーネントの外で動くため useTranslation を使えない。
  * locale から翻訳リソースを直接引く。
  */

@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { Route } from "./+types/sign-in.sent";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import type { JsonLdData, PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
@@ -19,22 +19,27 @@ import { localeRouteContext } from "~/frontend/lib/route-context";
  * 調べず、常に同じ字を出す。
  */
 
-export function loader({ request, context }: Route.LoaderArgs): PageMetaBase & CopyrightData {
+export function loader({
+  request,
+  context,
+}: Route.LoaderArgs): PageMetaBase & CopyrightData & JsonLdData {
+  const origin = new URL(request.url).origin;
   return {
     locale: context.get(localeRouteContext),
-    origin: new URL(request.url).origin,
+    origin,
     copyright: resolveCopyrightYears(),
+    jsonLd: webPageJsonLd(origin, "/sign-in/sent"),
   };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const translations = translationsFor(locale);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    jsonLd: webPageJsonLd(origin, location.pathname),
+    jsonLd,
     title: translations.signIn.title,
     description: translations.signIn.lead,
     noindex: true,
