@@ -26,7 +26,7 @@ import type {
  * | `1.` のリスト        | 1 項目ずつ出す                                         |
  * | 画像だけの段落       | 図。置き方は縦横比で決まる                             |
  * | 表・引用・Alert・コード・数式 | そのまま 1 つの塊                             |
- * | 脚注の定義           | 最後の「参考」のページ                                 |
+ * | 脚注の定義           | 最後の References のページ                             |
  * | `. . .`              | 間。ここで一度止める                                   |
  *
  * サーバー (同期のときの量の検査、ページの loader) とブラウザの両方から呼ぶので、
@@ -133,7 +133,7 @@ interface Draft {
  * MDAST をデッキに切る。
  *
  * 表紙は必ず 1 枚目に立つ (題と発表の場はフロントマターが持つので、ここでは殻だけ)。
- * 脚注があれば、最後に「参考」のページを 1 枚足す。
+ * 脚注があれば、最後に References のページを 1 枚足す。
  */
 export function paginate(mdast: Root): SlideDeck {
   const drafts: Draft[] = [draft("cover", [], 0)];
@@ -185,13 +185,14 @@ function place(node: RootContent, current: Draft, drafts: Draft[]): void {
   // 生の HTML は見た目の逃げ道になるので運ばない。区切り線はページを切らない (切るのは見出し)。
   if (node.type === "html" || node.type === "thematicBreak") return;
 
-  const page = current.kind === "content" ? current : draft("content", [], current.chapter);
-  if (page !== current) drafts.push(page);
-
   if (isPause(node)) {
-    page.step += 1;
+    // 間は、塊の置けるページの中でだけ意味を持つ。表紙や扉の直後に書いた間でページを起こさない。
+    if (current.kind === "content") current.step += 1;
     return;
   }
+
+  const page = current.kind === "content" ? current : draft("content", [], current.chapter);
+  if (page !== current) drafts.push(page);
   page.blocks.push(blockOf(node, page));
 }
 
@@ -221,7 +222,8 @@ function finish(page: Draft): SlidePage {
     layout: layoutOf(figure, blocks),
     figure,
     blocks,
-    lastStep: page.step,
+    // 最後の塊が出る段まで。ページの末尾に書いた間で、何も出ない空送りを作らない。
+    lastStep: Math.max(0, ...page.blocks.map((block) => block.itemSteps?.at(-1) ?? block.step)),
     notes: page.notes,
   };
 }

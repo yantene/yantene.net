@@ -21,7 +21,10 @@ export interface OverfullWarning {
 
 interface Limits {
   readonly listItems: number;
-  /** 折り返したあとの行数の上限と、1 行に入る字数の見積もり (全角で数える)。 */
+  /**
+   * 折り返したあとの行数の上限と、1 行に入る字数の見積もり。
+   * 字数は全角を想定した数で、半角も 1 字に数える (英数字の多い行は多めに見積もる)。
+   */
   readonly textLines: number;
   readonly charactersPerLine: number;
   readonly codeLines: number;
@@ -58,12 +61,22 @@ const BESIDE_FIGURE: Limits = {
   tableRows: 5,
 };
 
+/** 引用だけのページ。字を大きく出すので、入る量は少ない。 */
+const QUOTE: Limits = {
+  listItems: 4,
+  textLines: 5,
+  charactersPerLine: 20,
+  codeLines: 5,
+  tableRows: 4,
+};
+
 const TABLE_COLUMNS = 5;
 const TITLE_CHARACTERS = 32;
 
 function limitsFor(layout: SlideLayout): Limits {
   if (layout === "figure-over") return UNDER_FIGURE;
   if (layout === "figure-beside") return BESIDE_FIGURE;
+  if (layout === "quote") return QUOTE;
   return ROOMY;
 }
 
@@ -136,6 +149,8 @@ function countTextLines(node: RootContent, charactersPerLine: number): number {
   return Math.ceil(mdastToString(node).length / charactersPerLine);
 }
 
+/** コードの行数。Mermaid は図に組まれるので、ソースの行数は数えない。 */
 function countCodeLines(node: RootContent): number {
-  return node.type === "code" ? node.value.split("\n").length : 0;
+  if (node.type !== "code" || node.lang === "mermaid") return 0;
+  return node.value.split("\n").length;
 }

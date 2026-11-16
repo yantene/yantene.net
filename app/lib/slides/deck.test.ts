@@ -264,3 +264,38 @@ describe("withoutPauses / footnoteNumbers", () => {
     ]);
   });
 });
+
+describe("間 (`. . .`) の置き場所", () => {
+  /* 表紙や章の扉の直後に書いた間で、題も中身も無いページを起こさない。 */
+  it("does not open a page for a pause written before any page", () => {
+    const deck = deckOf(". . .\n\n# 章\n\n. . .\n\n## 題\n\n- 列挙\n");
+    expect(deck.pages.map((page) => page.kind)).toEqual(["cover", "chapter", "content"]);
+  });
+
+  /* ページの末尾に書いた間は、その先に出すものが無い。何も出ない空送りを作らない。 */
+  it("does not add an empty step for a trailing pause", () => {
+    const page = contentPages(deckOf("## 題\n\n- 前\n\n. . .\n\n- 後\n\n. . .\n"))[0];
+    expect(page?.blocks.map((block) => block.step)).toEqual([0, 1]);
+    expect(page?.lastStep).toBe(1);
+  });
+});
+
+describe("findOverfull: 置き方ごとの目安", () => {
+  /* 引用だけのページは字を大きく出すので、入る量が少ない。 */
+  it("is stricter on a page that shows a lone quote in large type", () => {
+    const quote = (characters: number): string => `## 題\n\n> ${"あ".repeat(characters)}\n`;
+
+    expect(findOverfull(deckOf(quote(100)))).toEqual([]);
+    expect(findOverfull(deckOf(quote(101)))).toEqual([
+      { page: 2, reason: "6 lines of text (at most 5)" },
+    ]);
+  });
+
+  /* Mermaid は図に組まれる。ソースの行数をコードの行数として数えない。 */
+  it("does not count the source lines of a diagram as code", () => {
+    const source = Array.from({ length: 20 }, (_, index) => `  a${String(index)} --> b`).join("\n");
+    expect(
+      findOverfull(deckOf(`## 図\n\n\`\`\`mermaid\nflowchart LR\n${source}\n\`\`\`\n`)),
+    ).toEqual([]);
+  });
+});

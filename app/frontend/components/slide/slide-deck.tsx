@@ -96,6 +96,12 @@ export function SlideDeck({ context, labels }: SlideDeckProps): React.JSX.Elemen
   // 現在地を URL に写す。履歴は積まない (戻るボタンでページを 1 枚ずつ戻らせない)。
   useEffect(() => {
     if (!playing) return;
+    /*
+     * ページ番号でないハッシュ (読み物の見出しや脚注への行き先) で開いたときは、最初の
+     * ページに居る間は書き換えない。書き換えると、その行き先へ飛べなくなる。
+     */
+    const isAnchor = !/^#?\d*$/.test(globalThis.location.hash);
+    if (isAnchor && position.page === 0 && position.step === 0) return;
     const hash = hashOf(position);
     if (globalThis.location.hash !== hash) globalThis.history.replaceState(null, "", hash);
   }, [playing, position]);
