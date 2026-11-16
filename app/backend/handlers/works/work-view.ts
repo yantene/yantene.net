@@ -43,7 +43,7 @@ export interface PublicWork {
   readonly role: string | null;
   /** `/works` で大きく出すかどうか。 */
   readonly featured: boolean;
-  /** スクリーンショット。書いた順。1 枚目が一覧と OG 画像の顔になる。 */
+  /** スクリーンショット。書いた順。 */
   readonly screenshots: readonly PublicWorkScreenshot[];
 }
 

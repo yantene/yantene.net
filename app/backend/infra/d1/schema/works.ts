@@ -14,7 +14,7 @@ import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlit
  *   `2024-06-04`) のまま持つ。**並べ替えには使わない** (並びは position)。書いて
  *   いなければ両方 NULL、終わりを書いていなければ period_until だけ NULL
  * - role: 自分の役割 (1 行)。書いていなければ NULL
- * - featured: `/works` で大きく出すかどうか
+ * - featured: 目立たせたい作品の印 (真偽値)
  * - source_hash: コンテンツリポジトリのリビジョン識別子 (Markdown + アセットの合成
  *   ハッシュ)。refresh の変更検出に使う。既定の空ハッシュは次回 refresh で必ず
  *   不一致になる (書き損じた行が「同じ内容」として素通りしない)

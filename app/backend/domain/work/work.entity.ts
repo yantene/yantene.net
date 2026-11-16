@@ -38,7 +38,7 @@ interface WorkFields<T extends IPersisted | IUnpersisted> {
   readonly role: WorkRole | undefined;
   /** `/works` で大きく出すかどうか。書いていなければ false。 */
   readonly featured: boolean;
-  /** スクリーンショット。書いた順。1 枚目が一覧と OG 画像の顔になる。 */
+  /** スクリーンショット。書いた順。 */
   readonly screenshots: readonly WorkScreenshot[];
   /**
    * この作品について書いた記事の slug。書いた順。

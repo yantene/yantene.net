@@ -132,6 +132,10 @@ describe("parseWorkContent: 読めない値は作品ごと諦める", () => {
       "screenshots:\n  - src: ./top.png\n    alt: トップ画面\n    kind: tablet\n",
     ],
     [
+      "同じ screenshot を書き方だけ変えて 2 回",
+      "screenshots:\n  - src: ./top.png\n    alt: a\n  - src: top.png\n    alt: b\n",
+    ],
+    [
       "同じ screenshot を 2 回",
       "screenshots:\n  - src: ./top.png\n    alt: a\n  - src: ./top.png\n    alt: b\n",
     ],

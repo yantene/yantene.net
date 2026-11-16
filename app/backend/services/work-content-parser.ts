@@ -191,7 +191,8 @@ function readScreenshots(value: unknown): readonly WorkScreenshot[] {
     );
   }
   const screenshots = value.map((item, index) => readScreenshot(item, index));
-  const sources = screenshots.map((screenshot) => screenshot.src);
+  // `./a.png` と `a.png` は同じファイルを指す。書いた字ではなく指す先で比べる。
+  const sources = screenshots.map((screenshot) => screenshot.src.replace(/^(\.\/)+/, ""));
   if (new Set(sources).size !== sources.length) {
     throw new WorkContentError("frontmatter lists the same screenshot src twice");
   }
