@@ -43,7 +43,12 @@
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
 }
 
-@supports (anchor-name: --preview-anchor) {
+/*
+ * 錨の名前だけでなく、置き場所の指定 (`position-area`) まで読めることを確かめる。
+ * 片方だけ読めるブラウザ (初期の実装は `inset-area` という名前だった) でここに入ると、
+ * 下端の固定を外したのに寄せる先が決まらず、チップが画面の外に出る。
+ */
+@supports (anchor-name: --preview-anchor) and (position-area: block-end) {
   .preview-chip {
     /*
      * リンクの真下に、リンクの中央へ寄せて出す。下に収まらなければ上へ回す。
