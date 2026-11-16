@@ -33,6 +33,8 @@
 @import "./components/mdast/embed-frame.css";
 @import "./components/mdast/lightbox-image.css";
 @import "./components/mdast/mdast-renderer.css";
+/* mdast-renderer.css より後に置く。脚注の中身が本文の組版を一段詰めて上書きする。 */
+@import "./components/preview/preview.css";
 @import "./components/toc/inline-table-of-contents.css";
 @import "./components/current-section/current-section.css";
 @import "./components/navigation-progress/navigation-progress.css";

@@ -54,6 +54,10 @@
     "actionsTop": "React to and share this article (top)",
     "actionsBottom": "React to and share this article (bottom)"
   },
+  "preview": {
+    "footnoteLabel": "Footnote",
+    "close": "Close"
+  },
   "works": {
     "title": "Works",
     "heading": "Works",

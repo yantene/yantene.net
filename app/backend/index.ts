@@ -8,6 +8,7 @@ import { createLocaleRouter } from "./handlers/locale.handler";
 import { createLinkCardAssetsRouter } from "./handlers/link-cards/assets.handler";
 import { createArticleAssetsRouter } from "./handlers/articles/assets.handler";
 import { createArticleDetailApiRouter } from "./handlers/articles/detail.handler";
+import { createArticlePreviewApiRouter } from "./handlers/articles/preview.handler";
 import { createArticlesApiRouter } from "./handlers/articles/list-api.handler";
 import { createArticleMarkdownRouter } from "./handlers/articles/markdown.handler";
 import { createArticleReactionApiRouter } from "./handlers/articles/reaction.handler";
@@ -149,6 +150,7 @@ export const getApp = (
   app.route("/api/v1/articles", createArticlesApiRouter());
   app.route("/api/v1/articles", createArticleDetailApiRouter());
   app.route("/api/v1/articles", createArticleAssetsRouter());
+  app.route("/api/v1/articles", createArticlePreviewApiRouter());
   app.route("/api/v1/articles", createArticleReactionApiRouter());
   app.route("/api/v1/profile", createProfileAssetsRouter());
   app.route("/api/v1/works", createWorkAssetsRouter());

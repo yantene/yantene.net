@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isExternalHref } from "./href";
+import { articleSlugOfHref, isExternalHref } from "./href";
 
 describe("isExternalHref", () => {
   // http と https の両方を外部として扱うことが眼目
@@ -81,5 +81,52 @@ describe("isExternalHref", () => {
     it("絶対 URL でないものは変わらず内部", () => {
       expect(isExternalHref("/articles/x", origin)).toBe(false);
     });
+  });
+});
+
+describe("articleSlugOfHref", () => {
+  const origin = "https://yantene.net";
+
+  it("ルート相対の記事ページから slug を取る", () => {
+    expect(articleSlugOfHref("/articles/hello-world")).toBe("hello-world");
+  });
+
+  it("節や問い合わせが付いていても、指している記事は同じ", () => {
+    expect(articleSlugOfHref("/articles/hello#section")).toBe("hello");
+    expect(articleSlugOfHref("/articles/hello?x=1")).toBe("hello");
+    expect(articleSlugOfHref("/articles/hello/")).toBe("hello");
+  });
+
+  it("このサイトを指す絶対 URL も記事として扱う", () => {
+    expect(articleSlugOfHref("https://yantene.net/articles/hello", origin)).toBe("hello");
+  });
+
+  it("出どころが分からなければ、絶対 URL は記事として扱わない", () => {
+    expect(articleSlugOfHref("https://yantene.net/articles/hello")).toBeNull();
+  });
+
+  it("よそのサイトの同じ形のパスには当てない", () => {
+    expect(articleSlugOfHref("https://example.com/articles/hello", origin)).toBeNull();
+    expect(articleSlugOfHref("//yantene.net/articles/hello", origin)).toBeNull();
+  });
+
+  it("記事ページでないものには当てない", () => {
+    expect(articleSlugOfHref("/articles")).toBeNull();
+    expect(articleSlugOfHref("/articles/hello.md")).toBeNull();
+    expect(articleSlugOfHref("/articles/hello/assets/a.png")).toBeNull();
+    expect(articleSlugOfHref("/api/v1/articles/hello")).toBeNull();
+    expect(articleSlugOfHref("/works/hello")).toBeNull();
+    expect(articleSlugOfHref("/about")).toBeNull();
+  });
+
+  it("ページ内アンカーと相対パスには当てない", () => {
+    expect(articleSlugOfHref("#user-content-fn-1")).toBeNull();
+    expect(articleSlugOfHref("./hello")).toBeNull();
+    expect(articleSlugOfHref("hello")).toBeNull();
+  });
+
+  it("http(s) でないスキームには当てない", () => {
+    expect(articleSlugOfHref("mailto:a@example.com")).toBeNull();
+    expect(articleSlugOfHref("javascript:alert(1)")).toBeNull();
   });
 });
