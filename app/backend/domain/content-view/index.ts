@@ -1,5 +1,5 @@
-export type { IArticleViewCommandRepository } from "./article-view.command-repository.interface";
-export type { IArticleViewQueryRepository } from "./article-view.query-repository.interface";
+export type { IContentViewCommandRepository } from "./content-view.command-repository.interface";
+export type { IContentViewQueryRepository } from "./content-view.query-repository.interface";
 export {
   logScoreAfterReaction,
   logScoreAfterReactionRemoved,

@@ -1,10 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { ArticleSlug } from "~/backend/domain/article";
-import { viewWeightLog } from "~/backend/domain/article-view";
+import { viewWeightLog } from "~/backend/domain/content-view";
 import { Session, SessionId } from "~/backend/domain/session";
+import { articleRef } from "~/backend/domain/shared";
 import { buildSessionCookie, readSessionId } from "~/backend/handlers/session-cookie";
 import { ConsoleLogger } from "~/backend/infra/console/console-logger";
-import { D1ArticleViewCommandRepository } from "~/backend/infra/d1/repositories";
+import { D1ContentViewCommandRepository } from "~/backend/infra/d1/repositories";
 import {
   KvSessionCommandRepository,
   KvSessionQueryRepository,
@@ -116,8 +117,8 @@ async function applyView(
     await new KvSessionCommandRepository(env.SESSIONS).save(session.withView(slug, viewedOn));
 
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
-    await new D1ArticleViewCommandRepository(env.D1).addView(
-      article.id,
+    await new D1ContentViewCommandRepository(env.D1).addView(
+      articleRef(article.id),
       viewWeightLog(viewedOn.toString()),
     );
   } catch (error) {

@@ -7,3 +7,5 @@ export type { ILogger, LogContext } from "./logger.interface";
 export type { IPersisted } from "./persisted.interface";
 export type { IUnpersisted } from "./unpersisted.interface";
 export type { IValueObject } from "./value-object.interface";
+export { articleRef, contentKinds, isContentKind } from "./content-ref";
+export type { ContentKind, ContentRef } from "./content-ref";

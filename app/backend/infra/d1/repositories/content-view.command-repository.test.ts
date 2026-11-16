@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { D1ArticleReactionCommandRepository } from "./article-reaction.command-repository";
-import { D1ArticleViewCommandRepository } from "./article-view.command-repository";
+import { D1ContentReactionCommandRepository } from "./content-reaction.command-repository";
+import { D1ContentViewCommandRepository } from "./content-view.command-repository";
 import { D1ArticleCommandRepository } from "./article.command-repository";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import {
@@ -9,8 +9,13 @@ import {
   logScoreAfterView,
   reactionWeightLog,
   viewWeightLog,
-} from "~/backend/domain/article-view";
-import { createTestD1, readViewLogScore } from "~/backend/infra/d1/test-helper";
+} from "~/backend/domain/content-view";
+import { articleRef } from "~/backend/domain/shared";
+import {
+  createTestD1,
+  readLegacyViewLogScore,
+  readViewLogScore,
+} from "~/backend/infra/d1/test-helper";
 
 const PUBLISHED_ON = "2026-01-15";
 const VIEWED_ON = "2026-02-01";
@@ -18,8 +23,8 @@ const VIEWED_ON = "2026-02-01";
 interface Harness {
   readonly d1: D1Database;
   readonly articleId: string;
-  readonly views: D1ArticleViewCommandRepository;
-  readonly reactions: D1ArticleReactionCommandRepository;
+  readonly views: D1ContentViewCommandRepository;
+  readonly reactions: D1ContentReactionCommandRepository;
 }
 
 async function setup(): Promise<Harness> {
@@ -40,14 +45,16 @@ async function setup(): Promise<Harness> {
   return {
     d1,
     articleId: article.id,
-    views: new D1ArticleViewCommandRepository(d1),
-    reactions: new D1ArticleReactionCommandRepository(d1),
+    views: new D1ContentViewCommandRepository(d1),
+    reactions: new D1ContentReactionCommandRepository(d1),
   };
 }
 
 async function readViewCount(harness: Harness): Promise<number | undefined> {
   const row = await harness.d1
-    .prepare("SELECT view_count AS count FROM articles WHERE id = ?")
+    .prepare(
+      "SELECT view_count AS count FROM content_views WHERE kind = 'article' AND content_id = ?",
+    )
     .bind(harness.articleId)
     .first<{ count: number }>();
 
@@ -60,7 +67,7 @@ describe("閲覧の記録", () => {
     // 出発点は投稿日の重み (upsert がそこから始めている)。
     const start = viewWeightLog(PUBLISHED_ON);
 
-    await harness.views.addView(harness.articleId, viewWeightLog(VIEWED_ON));
+    await harness.views.addView(articleRef(harness.articleId), viewWeightLog(VIEWED_ON));
 
     expect(await readViewCount(harness)).toBe(1);
     expect(await readViewLogScore(harness.d1, harness.articleId)).toBe(
@@ -71,7 +78,7 @@ describe("閲覧の記録", () => {
   it("無い記事に足しても何も起きない", async () => {
     const harness = await setup();
 
-    await harness.views.addView("missing", viewWeightLog(VIEWED_ON));
+    await harness.views.addView(articleRef("missing"), viewWeightLog(VIEWED_ON));
 
     // 元の記事は巻き込まれない。
     expect(await readViewCount(harness)).toBe(0);
@@ -89,8 +96,8 @@ describe("閲覧の記録", () => {
     const weight = viewWeightLog(VIEWED_ON);
 
     await Promise.all([
-      harness.views.addView(harness.articleId, weight),
-      harness.views.addView(harness.articleId, weight),
+      harness.views.addView(articleRef(harness.articleId), weight),
+      harness.views.addView(articleRef(harness.articleId), weight),
     ]);
 
     expect(await readViewCount(harness)).toBe(2);
@@ -106,13 +113,33 @@ describe("閲覧の記録", () => {
     const start = viewWeightLog(PUBLISHED_ON);
 
     await Promise.all([
-      harness.views.addView(harness.articleId, viewWeightLog(VIEWED_ON)),
-      harness.reactions.addLogScore(harness.articleId, reactionWeightLog(VIEWED_ON)),
+      harness.views.addView(articleRef(harness.articleId), viewWeightLog(VIEWED_ON)),
+      harness.reactions.addLogScore(articleRef(harness.articleId), reactionWeightLog(VIEWED_ON)),
     ]);
 
     expect(await readViewLogScore(harness.d1, harness.articleId)).toBeCloseTo(
       logScoreAfterReaction(logScoreAfterView(start, VIEWED_ON), VIEWED_ON),
       12,
+    );
+  });
+
+  /*
+   * 移行のあいだ、旧い列 (articles.view_count / view_log_score) にも同じ値を書く
+   * (#566)。旧い列を落とすときに、このテストごと消す。
+   */
+  it("旧い列にも同じ値が入る", async () => {
+    const harness = await setup();
+
+    await harness.views.addView(articleRef(harness.articleId), viewWeightLog(VIEWED_ON));
+    await harness.views.addView(articleRef(harness.articleId), viewWeightLog(VIEWED_ON));
+
+    const legacy = await harness.d1
+      .prepare("SELECT view_count AS count FROM articles WHERE id = ?")
+      .bind(harness.articleId)
+      .first<{ count: number }>();
+    expect(legacy?.count).toBe(2);
+    expect(await readLegacyViewLogScore(harness.d1, harness.articleId)).toBe(
+      await readViewLogScore(harness.d1, harness.articleId),
     );
   });
 });

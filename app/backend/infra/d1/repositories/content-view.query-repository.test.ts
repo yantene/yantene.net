@@ -1,18 +1,19 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
-import { D1ArticleViewCommandRepository } from "./article-view.command-repository";
-import { D1ArticleViewQueryRepository } from "./article-view.query-repository";
+import { D1ContentViewCommandRepository } from "./content-view.command-repository";
+import { D1ContentViewQueryRepository } from "./content-view.query-repository";
 import { D1ArticleCommandRepository } from "./article.command-repository";
 import type { ArticleStatus } from "~/backend/domain/article";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { viewWeightLog } from "~/backend/domain/article-view";
+import { viewWeightLog } from "~/backend/domain/content-view";
+import { articleRef } from "~/backend/domain/shared";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 const VIEWED_ON = "2026-07-01";
 
 interface Harness {
   readonly d1: D1Database;
-  /** 記事を 1 本入れ、views 回読ませる。id を返す。 */
+  /** 記事を 1 本入れ、views 回読ませる。人気順に出てくるときの名前 (種別:id) を返す。 */
   seed: (params: {
     slug: string;
     publishedOn: string;
@@ -25,7 +26,7 @@ interface Harness {
 function setup(): Harness {
   const d1 = createTestD1();
   const articles = new D1ArticleCommandRepository(d1);
-  const views = new D1ArticleViewCommandRepository(d1);
+  const views = new D1ContentViewCommandRepository(d1);
 
   return {
     d1,
@@ -43,11 +44,14 @@ function setup(): Harness {
         }),
       );
       for (let i = 0; i < count; i++) {
-        await views.addView(article.id, viewWeightLog(VIEWED_ON));
+        await views.addView(articleRef(article.id), viewWeightLog(VIEWED_ON));
       }
-      return article.id;
+      return `article:${article.id}`;
     },
-    popular: (limit) => new D1ArticleViewQueryRepository(d1).listPopularArticleIds(limit),
+    popular: async (limit) => {
+      const ranked = await new D1ContentViewQueryRepository(d1).listPopular(limit);
+      return ranked.map((content) => `${content.kind}:${content.id}`);
+    },
   };
 }
 

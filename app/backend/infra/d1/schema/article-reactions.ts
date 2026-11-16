@@ -2,6 +2,9 @@ import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core"
 import { articles } from "./articles";
 
 /**
+ * ⚠️ **旧い置き場。読まれていない。** いまの置き場は content_reactions (ADR 0051)。
+ * 移行のあいだ書き込みだけはこちらにも入れてあり、表は別のリリースで落とす (#566)。
+ *
  * 記事に付いたリアクションの数。絵文字ごとに 1 行を持つ。
  *
  * この表が持つのは「どの絵文字が何回押されたか」だけで、誰が押したかは残らない。

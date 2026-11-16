@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { KvSessionCommandRepository } from "./session.command-repository";
 import { KvSessionQueryRepository } from "./session.query-repository";
 import { ArticleSlug } from "~/backend/domain/article";
-import { ReactionEmoji } from "~/backend/domain/article-reaction";
+import { ReactionEmoji } from "~/backend/domain/content-reaction";
 import { SESSION_LIFETIME_DAYS, Session, SessionId } from "~/backend/domain/session";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
 

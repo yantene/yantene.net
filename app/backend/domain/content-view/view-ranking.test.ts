@@ -3,6 +3,7 @@ import {
   logScoreAfterReaction,
   logScoreAfterReactionRemoved,
   logScoreAfterView,
+  REACTION_WEIGHT_IN_VIEWS,
   reactionWeightLog,
   VIEW_SCORE_EPOCH,
   VIEW_SCORE_HALF_LIFE_DAYS,
@@ -30,6 +31,27 @@ function viewedTimes(initial: number, count: number, viewedOn: string): number {
   for (let i = 0; i < count; i++) score = logScoreAfterView(score, viewedOn);
   return score;
 }
+
+/*
+ * 基準日と重みを数で固定する。ほかのテストは定数を読み込んで相対的に確かめているので、
+ * 定数が動いても通ってしまう。動かすと記録済みのスコアと意味が食い違う (全コンテンツの
+ * スコアを捨てることになる) ので、動いたことに気づけるようにしておく。
+ */
+describe("基準日と重み", () => {
+  it("基準日は 2000-01-01、半減期は 30 日、リアクションは閲覧 5 回ぶん", () => {
+    expect(VIEW_SCORE_EPOCH).toBe("2000-01-01");
+    expect(VIEW_SCORE_HALF_LIFE_DAYS).toBe(30);
+    expect(REACTION_WEIGHT_IN_VIEWS).toBe(5);
+  });
+
+  it("日付から出る重みが変わらない", () => {
+    // 2000-01-01 から 9511 日後。9511 / 30 * ln 2。
+    expect(viewWeightLog("2026-01-15")).toBe((9511 / 30) * Math.LN2);
+    expect(viewWeightLog("2026-01-15")).toBeCloseTo(219.750_761_143_521_34, 9);
+    expect(reactionWeightLog("2026-01-15")).toBeCloseTo(221.360_199_055_955_43, 9);
+    expect(viewWeightLog("2000-01-31")).toBe(Math.LN2);
+  });
+});
 
 describe("viewWeightLog", () => {
   it("基準日のアクセスの重みは 1", () => {

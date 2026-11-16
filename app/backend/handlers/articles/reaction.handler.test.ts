@@ -9,7 +9,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 import type { ReactionsPayload } from "./reaction.handler";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
-import { viewWeightLog } from "~/backend/domain/article-view";
+import { viewWeightLog } from "~/backend/domain/content-view";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1, readViewLogScore } from "~/backend/infra/d1/test-helper";
 import { createTestKv } from "~/backend/infra/kv/test-helper";

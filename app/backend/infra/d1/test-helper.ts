@@ -126,6 +126,26 @@ export async function readViewLogScore(
   articleId: string,
 ): Promise<number | undefined> {
   const row = await d1
+    .prepare(
+      "SELECT view_log_score AS score FROM content_views WHERE kind = 'article' AND content_id = ?",
+    )
+    .bind(articleId)
+    .first<{ score: number }>();
+
+  return row?.score;
+}
+
+/**
+ * 旧い列 (`articles.view_log_score`) の対数スコアを直に読む。
+ *
+ * 移行のあいだ、書き込みは新旧の両方に入れている (#566)。両方が同じ値で進んで
+ * いることを確かめるために要る。旧い列を落とすときに消す。
+ */
+export async function readLegacyViewLogScore(
+  d1: D1Database,
+  articleId: string,
+): Promise<number | undefined> {
+  const row = await d1
     .prepare("SELECT view_log_score AS score FROM articles WHERE id = ?")
     .bind(articleId)
     .first<{ score: number }>();

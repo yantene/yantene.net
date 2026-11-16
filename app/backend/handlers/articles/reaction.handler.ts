@@ -2,12 +2,13 @@ import { Hono } from "hono";
 import { deleteReaction, putReaction } from "./reaction-recording";
 import type { Context } from "hono";
 import { ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
-import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/article-reaction";
+import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/content-reaction";
 import { SessionId } from "~/backend/domain/session";
+import { articleRef } from "~/backend/domain/shared";
 import { buildSessionCookie, readSessionId } from "~/backend/handlers/session-cookie";
 import {
   D1ArticleQueryRepository,
-  D1ArticleReactionQueryRepository,
+  D1ContentReactionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { httpStatus } from "~/lib/constants/http-status";
 import { createProblemResponse } from "~/lib/problem-details";
@@ -188,7 +189,9 @@ export async function buildPayload(
   articleId: string,
   mine: ReactionEmoji | undefined,
 ): Promise<ReactionsPayload> {
-  const reactions = await new D1ArticleReactionQueryRepository(env.D1).listByArticleId(articleId);
+  const reactions = await new D1ContentReactionQueryRepository(env.D1).listByContent(
+    articleRef(articleId),
+  );
   return {
     reactions: reactions.map((reaction) => ({
       emoji: reaction.emoji,
