@@ -34,7 +34,7 @@ export const contentViews = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.kind, table.contentId] }),
-    // 人気順は「対数スコアの大きい順に数件」を引くだけなので、この索引で足りる。
+    // 人気順は「対数スコアの大きい順に数件」。並べ替えに使える索引を置く (使うかは実行計画が決める)。
     index("content_views_view_log_score_idx").on(table.viewLogScore),
   ],
 );
