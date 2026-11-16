@@ -1,0 +1,226 @@
+/*
+ * 本文の内部リンクと脚注の参照に出すプレビュー (preview-layer.tsx、ADR 0050)。
+ *
+ * チップもドロワーも createPortal で body の下に出るので、器 (`.mdast-prose`) の中に
+ * 居る前提では書けない。脚注の中身だけは、自分で `.mdast-prose` を名乗って本文と同じ
+ * 組版に乗る (`.preview-footnote`)。
+ */
+
+/*
+ * チップが指しているリンク。**位置合わせの錨はここに置く。**
+ *
+ * 名前は 1 つだけで足りる。チップは同時に 1 つしか出ず、印が付くのも、いま指している
+ * リンク 1 本だけ。リンクごとに名前を振る形にすると `style` 属性が要る。
+ */
+[data-preview-anchor] {
+  anchor-name: --preview-anchor;
+}
+
+/*
+ * チップ。Popover API で最前面に出る。
+ *
+ * **まず、画面の下端に固定した姿を書く。** CSS anchor positioning が使えない
+ * ブラウザではこれがそのまま出る (ドロワーと同じ場所なので、見た目も寄せてある)。
+ * 使えるブラウザでは、下の `@supports` がリンクの脇へ寄せ直す。
+ *
+ * `inset` と `margin` を書き直しているのは、ブラウザが `[popover]` に既定で
+ * `inset: 0; margin: auto` (画面の中央) を当てるため。
+ */
+.preview-chip {
+  position: fixed;
+  inset: auto 1rem 1rem;
+  width: auto;
+  max-width: 32rem;
+  max-height: min(20rem, 50dvh);
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.75rem;
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+}
+
+@supports (anchor-name: --preview-anchor) {
+  .preview-chip {
+    /*
+     * リンクの真下に、リンクの中央へ寄せて出す。下に収まらなければ上へ回す。
+     * 左右は、画面からはみ出さないようブラウザが寄せ直す。
+     */
+    position-anchor: --preview-anchor;
+    position-area: block-end;
+    position-try-fallbacks: flip-block;
+    inset: auto;
+    width: max-content;
+    max-width: min(24rem, calc(100vw - 2rem));
+    /*
+     * リンクとの間は、縦の margin で空ける。離しすぎると、リンクからチップへカーソルを
+     * 移す途中で隙間に落ちる (閉じるまでの猶予の間に渡り切れなくなる)。
+     */
+    margin: 0.375rem 0;
+  }
+}
+
+/*
+ * 出るときだけ、ふわりと現れる。消えるときは待たせない (離れたらすぐ消える)。
+ * 動きを減らす設定では、現れ方も一瞬にする。
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .preview-chip:popover-open {
+    opacity: 1;
+    transition: opacity 0.12s ease-out;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+}
+
+/* 内部リンクのチップの中身 (article-preview-card.tsx)。 */
+.article-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.article-preview-date {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+.article-preview-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 要約は 3 行まで。チップの大きさを記事ごとに揺らさない。 */
+.article-preview-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/*
+ * 脚注の中身。本文と同じ組版 (`.mdast-prose`) に乗せたうえで、脇に出す注として
+ * 字と行間を一段詰める。本文の 17px・行送り 2.0 のままだと、チップが本文より目立つ。
+ */
+.preview-footnote.mdast-prose {
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+
+/* 頭と尻の余白を落とす。器の padding と二重になる。 */
+.preview-footnote.mdast-prose > :first-child {
+  margin-top: 0;
+}
+
+.preview-footnote.mdast-prose > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * 脚注のドロワー (footnote-drawer.tsx)。タッチで脚注の参照を押したときに下端から出る。
+ *
+ * dialog 自身には余白を持たせない。**dialog そのものを押した = 背景を押した**として
+ * 閉じるので、余白があると中身の縁を押しただけで閉じてしまう。余白は `.footnote-drawer-sheet`
+ * が持つ。
+ */
+.footnote-drawer {
+  position: fixed;
+  inset: auto 0 0;
+  width: 100%;
+  /* 幅の広い画面 (タブレット) では、本文と同じ幅に留めて中央に置く。 */
+  max-width: 48rem;
+  max-height: 70dvh;
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 1rem 1rem 0 0;
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 0.12);
+}
+
+.footnote-drawer[open] {
+  display: flex;
+}
+
+.footnote-drawer::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.footnote-drawer-sheet {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+  /* 下端はホームバーなどの切り欠きをよける。 */
+  padding: 0.5rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+}
+
+/* 払えることを示すつまみ。 */
+.footnote-drawer-grip {
+  flex: none;
+  align-self: center;
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-base-300);
+}
+
+/* 長い脚注は中で巻く。巻き終わりで後ろの本文まで引きずらない。 */
+.footnote-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.footnote-drawer-close {
+  flex: none;
+  /* 指で押せる高さを確保する。 */
+  min-height: 2.75rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-base-content);
+}
+
+/* 開いている間は、後ろの本文を巻かせない。 */
+html:has(.footnote-drawer[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .footnote-drawer[open] {
+    translate: 0 0;
+    transition: translate 0.2s ease-out;
+
+    @starting-style {
+      translate: 0 100%;
+    }
+  }
+}
+
+/*
+ * 印刷には出さない。紙の上では触れないので、開いたまま刷ると本文に被さるだけになる。
+ * 脚注そのものは本文の末尾の一覧に居る。
+ */
+@media print {
+  .preview-chip:popover-open,
+  .footnote-drawer[open] {
+    display: none;
+  }
+}

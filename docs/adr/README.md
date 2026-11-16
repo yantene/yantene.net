@@ -61,6 +61,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0046](0046-serve-motion-as-vp9-webm.md)                             | 動きのあるものは VP9 の WebM 1 本で配り、自動再生しない                | Accepted   |
 | [0047](0047-read-the-working-tree-in-development.md)                 | 手元では作業ツリーを Vite の dev サーバー越しに読む                    | Accepted   |
 | [0048](0048-identify-the-author-and-the-site-in-structured-data.md)  | 書き手とサイトに `@id` を付け、どのページの構造化データからも指す      | Accepted   |
+| [0050](0050-preview-links-on-demand-and-position-them-in-css.md)     | 本文のリンクのプレビューは触ったときに取り、位置は CSS で決める        | Accepted   |
 
 ## 統合した番号
 

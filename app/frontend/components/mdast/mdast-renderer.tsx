@@ -9,10 +9,12 @@ import rehypeSlug from "rehype-slug";
 import { unified } from "unified";
 import { Alert } from "./alert";
 import { Anchor } from "./anchor";
+import { ArticleLink } from "./article-link";
 import { isArticleAssetSrc } from "./asset-src";
 import { CodeBlock } from "./code-block";
 import { normalizeEmbedSrc } from "./embed";
 import { DEFAULT_EMBED_TITLE, EmbedFrame } from "./embed-frame";
+import { FootnoteReference } from "./footnote-reference";
 import { HeadingLink } from "./heading-link";
 import { isExternalHref } from "./href";
 import { LightboxImage } from "./lightbox-image";
@@ -20,6 +22,13 @@ import { LINK_CARD_TAG, LinkCardsContext } from "./link-card-context";
 import { LinkCardSlot } from "./link-card-slot";
 import { mathMlAttributes, mathMlDescendants, mathMlTagNames } from "./mathml";
 import { MermaidDiagram } from "./mermaid-diagram";
+import {
+  ARTICLE_LINK_TAG,
+  collectFootnoteBodies,
+  FOOTNOTE_REFERENCE_TAG,
+  markPreviewAnchors,
+} from "./preview-targets";
+import { PreviewLayer } from "~/frontend/components/preview/preview-layer";
 import { InlineTableOfContents } from "~/frontend/components/toc/inline-table-of-contents";
 import { TOC_TAG, TocHeadingsContext } from "~/frontend/components/toc/toc-context";
 import type { Element, ElementContent, Root as HastRoot, RootContent } from "hast";
@@ -624,6 +633,8 @@ export function MdastRenderer({
     lowercaseSchemes(expanded);
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
+    // リンクの付け替え (press-control・外部リンクの rel) を終えてから印を付ける。
+    markPreviewAnchors(transformed, siteOrigin);
     wrapMermaidBlocks(transformed);
     appendHeadingLinks(transformed);
     /*
@@ -632,28 +643,44 @@ export function MdastRenderer({
      */
     if (hasToc) insertInlineToc(transformed);
 
-    return toJsxRuntime(transformed, {
-      Fragment,
-      jsx,
-      jsxs,
-      components: {
-        pre: CodeBlock,
-        img: LightboxImage,
-        iframe: EmbedFrame,
-        a: Anchor,
-        [LINK_CARD_TAG]: LinkCardSlot,
-        [ALERT_TAG_NAME]: Alert,
-        [MERMAID_TAG]: MermaidDiagram,
-        [TOC_TAG]: InlineTableOfContents,
-        [HEADING_LINK_TAG]: HeadingLink,
-      },
-    }) as React.JSX.Element;
+    const toElement = (tree: HastRoot): React.JSX.Element =>
+      toJsxRuntime(tree, {
+        Fragment,
+        jsx,
+        jsxs,
+        components: {
+          pre: CodeBlock,
+          img: LightboxImage,
+          iframe: EmbedFrame,
+          a: Anchor,
+          [LINK_CARD_TAG]: LinkCardSlot,
+          [ALERT_TAG_NAME]: Alert,
+          [MERMAID_TAG]: MermaidDiagram,
+          [TOC_TAG]: InlineTableOfContents,
+          [HEADING_LINK_TAG]: HeadingLink,
+          [FOOTNOTE_REFERENCE_TAG]: FootnoteReference,
+          [ARTICLE_LINK_TAG]: ArticleLink,
+        },
+      }) as React.JSX.Element;
+
+    /*
+     * 脚注の中身を、チップとドロワーに出すために取り出しておく。**変換をすべて終えた
+     * 木から写す**ので、リンクも数式も画像も本文と同じ描き方になる (preview-targets.ts)。
+     * 本文には足さない。出すのは読み手が触ってからで、置き場は本文の外 (PreviewLayer)。
+     */
+    const footnotes = new Map<string, React.ReactNode>(
+      [...collectFootnoteBodies(transformed)].map(([id, body]) => [id, toElement(body)]),
+    );
+
+    return { body: toElement(transformed), footnotes };
   }, [node, transformImageUrl, cardsByUrl, hasToc, siteOrigin]);
 
   return (
     <article className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>
       <LinkCardsContext value={cardsByUrl}>
-        <TocHeadingsContext value={headings ?? EMPTY_HEADINGS}>{content}</TocHeadingsContext>
+        <TocHeadingsContext value={headings ?? EMPTY_HEADINGS}>
+          <PreviewLayer footnotes={content.footnotes}>{content.body}</PreviewLayer>
+        </TocHeadingsContext>
       </LinkCardsContext>
     </article>
   );

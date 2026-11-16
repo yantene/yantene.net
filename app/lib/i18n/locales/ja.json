@@ -54,6 +54,10 @@
     "actionsTop": "この記事に反応する・共有する (冒頭)",
     "actionsBottom": "この記事に反応する・共有する (末尾)"
   },
+  "preview": {
+    "footnoteLabel": "脚注",
+    "close": "閉じる"
+  },
   "works": {
     "title": "Works",
     "heading": "Works",
