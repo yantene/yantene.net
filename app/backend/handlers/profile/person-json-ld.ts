@@ -173,6 +173,25 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonL
 }
 
 /**
+ * 一覧のページ (`/articles`、`/works`) の構造化データ。ページを `CollectionPage` として
+ * 名乗り、サイトの一部だと言う。
+ *
+ * **並んでいる中身は載せない。** 1 件ずつの記述はそれぞれのページ (`BlogPosting`、
+ * `CreativeWork`) が持っていて、ここに写すと同じものを 2 か所で言うことになる。
+ *
+ * `path` は絞り込みやページ送りを含まない、その場所そのもののパス。canonical と同じ URL を
+ * 名乗る。
+ */
+export function collectionPageJsonLd(origin: string, path: string): JsonLdNode {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    url: `${origin}${path}`,
+    isPartOf: websiteReference(origin),
+  };
+}
+
+/**
  * トップの構造化データ。サイトそのもの (`WebSite`) と、その持ち主 (`Person`) を並べる。
  *
  * 2 つの節を 1 つの `@graph` にまとめる。`buildPageMeta` が受けるのは 1 つのオブジェクトで、

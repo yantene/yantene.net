@@ -85,9 +85,14 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
 | トップ   | `@graph` に `WebSite` と `Person` の本体。`WebSite` の `publisher` は `@id` で `Person` を指す |
 | 記事     | `BlogPosting`。`author` と `publisher` は `@id` + `name` + `url` (`/about`) の参照             |
 
-- **記事と `/about` は、`isPartOf` でサイト (`<origin>/#website`) を指す。** 人を 1 つに
-  まとめたのと同じ線を、サイトにも張る。指すのは `@id` だけで、サイトの名前を言うのは
-  トップの `WebSite` だけにする
+- **記事・作品・`/about`・一覧は、`isPartOf` でサイト (`<origin>/#website`) を指す。** 人を
+  1 つにまとめたのと同じ線を、サイトにも張る。指すのは `@id` だけで、サイトの名前を言う
+  のはトップの `WebSite` だけにする
+- **作品 (`/works/<slug>` の `CreativeWork`) は、`creator` で書き手を指す。** 記事の `author` と
+  同じ名前付きの参照で、作った人が記事の筆者と同じ 1 人だと言う
+- **一覧 (`/articles`、`/works`) は `CollectionPage` として名乗る。** 載せるのは `url` と
+  `isPartOf` だけで、並んでいる中身は写さない (1 件ずつの記述はそれぞれのページが持つ)。
+  `url` は canonical と同じで、検索の結果やページ送りの途中でも変わらない
 - **記事は名前付きの参照にする (案 E に `name` と `url` を足した形)。** `@id` で同じ人だと
   言い、`name` で Google の要件を満たす。自己紹介と出ていく先は載せない
 - **トップには本体を置く。** トップは `WebSite` の `publisher` が指す先を同じ `@graph` の
@@ -112,6 +117,11 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
   あって、引けることを約束するものではない。同期された時点で、同じ `@id` の中身が埋まる
 - **`/about` は何も出さない。** 「準備中」の一枚で `noindex` が立っているページが
   `ProfilePage` を名乗るのは嘘になる
+- 作品は、記事と同じく `creator` の名前だけ既定値に倒す
+
+**中身の無いページは名乗らない。** 作品が 1 つも無いあいだの `/works` と、まだ中身の無い
+`/notes` / `/slides` は「準備中」で `noindex` が立つので、JSON-LD を出さない (`/about` の
+同期前と同じ線引き)。
 
 ## 帰結 / Consequences
 

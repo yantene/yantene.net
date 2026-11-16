@@ -527,8 +527,12 @@ JSON-LD の `Person` は、どのページに出ても `<origin>/#person` とい
 | トップ   | `WebSite` と Person の本体 (1 つの `@graph`)                       |
 | 記事     | `author` / `publisher` が `@id` + `name` + `url` (`/about`) で指す |
 
-- 記事と `/about` は、`isPartOf` でサイト (`<origin>/#website`) も指す。サイトの名前を
-  言うのはトップの `WebSite` だけで、ほかは `@id` で指すだけ
+- 記事・作品・`/about`・一覧は、`isPartOf` でサイト (`<origin>/#website`) も指す。サイトの
+  名前を言うのはトップの `WebSite` だけで、ほかは `@id` で指すだけ
+- 作品 (`/works/<slug>`) は `creator` で同じ `@id` の書き手を指す。一覧 (`/articles`、`/works`) は
+  `CollectionPage` として名乗り、並んでいる中身は写さない
+- **中身の無いページは名乗らない。** 「準備中」で `noindex` が立つあいだ (作品が無い `/works`、
+  `/notes`、`/slides`、同期前の `/about`) は JSON-LD を出さない
 - **`Person` を手で組まない。** `app/backend/handlers/profile/person-json-ld.ts` を通す。
   `@id` の綴りが 1 か所ずれると「同じ名前の人が 2 人いる」ように読まれ、画面には何も
   出ないので気づけない

@@ -130,6 +130,24 @@ describe("loadHomePage の JSON-LD (ADR 0048)", () => {
 });
 
 describe("loadArticlesListPage", () => {
+  /*
+   * 一覧は `CollectionPage` として名乗り、サイトの一部だと言う (ADR 0048)。検索の結果でも
+   * ページ送りの途中でも、名乗る URL は canonical と同じ `/articles`。
+   */
+  it("どの絞り込みでも、同じ一覧としてサイトの一部だと名乗る", async () => {
+    const d1 = createTestD1();
+    await seed(d1);
+    const expected = {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      url: "https://example.com/articles",
+      isPartOf: { "@id": "https://example.com/#website" },
+    };
+
+    expect((await load(d1, "")).jsonLd).toEqual(expected);
+    expect((await load(d1, "?q=alpha&page=2")).jsonLd).toEqual(expected);
+  });
+
   it("絞り込みがなければ公開日の新しい順に全件返す", async () => {
     const d1 = createTestD1();
     await seed(d1);

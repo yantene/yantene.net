@@ -1,7 +1,7 @@
 import type { Article, ArticleListResult } from "~/backend/domain/article";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
-import { homeJsonLd } from "~/backend/handlers/profile/person-json-ld";
+import { collectionPageJsonLd, homeJsonLd } from "~/backend/handlers/profile/person-json-ld";
 import {
   parseArticleSort,
   parsePagination,
@@ -41,6 +41,11 @@ export interface ArticlesListPageData extends PublicArticleList {
     readonly sortBy: string | null;
     readonly order: string | null;
   };
+  /**
+   * `/articles` の構造化データ (`CollectionPage`。ADR 0048)。検索の結果でもページ送りの
+   * 途中でも、名乗る URL は canonical と同じ `/articles`。
+   */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 /**
@@ -82,6 +87,7 @@ export async function loadArticlesListPage(env: Env, url: URL): Promise<Articles
       sortBy: url.searchParams.get("sort-by"),
       order: url.searchParams.get("order"),
     },
+    jsonLd: collectionPageJsonLd(url.origin, "/articles"),
   };
 }
 
