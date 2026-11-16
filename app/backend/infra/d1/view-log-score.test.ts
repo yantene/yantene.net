@@ -1,9 +1,9 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
 import { D1ArticleCommandRepository } from "./repositories";
-import { articles } from "./schema";
+import { contentViews } from "./schema";
 import { createTestD1, readViewLogScore } from "./test-helper";
 import { scoreWithWeightAdded, scoreWithWeightRemoved } from "./view-log-score";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
@@ -15,12 +15,12 @@ import {
   VIEW_SCORE_EPOCH,
   VIEW_SCORE_HALF_LIFE_DAYS,
   viewWeightLog,
-} from "~/backend/domain/article-view";
+} from "~/backend/domain/content-view";
 
 /**
  * SQL の式が、ドメインの JS と同じ答えを出すことを固定する。
  *
- * 順位付けの意味を決めているのは domain/article-view/view-ranking で、SQL はその写し。
+ * 順位付けの意味を決めているのは domain/content-view/view-ranking で、SQL はその写し。
  * 写しの側が静かにずれると、順位だけが理由もなく変わる。倍精度の最後の 1 ビットまで
  * 一致することを見ているので、丸め方が変わればここが落ちる。
  */
@@ -59,25 +59,25 @@ async function setup(): Promise<Harness> {
     }),
   );
   const db = drizzle(d1);
-  const row = eq(articles.id, article.id);
+  const row = and(eq(contentViews.kind, "article"), eq(contentViews.contentId, article.id));
 
   return {
     d1,
     articleId: article.id,
     seed: async (logScore) => {
-      await db.update(articles).set({ viewLogScore: logScore }).where(row);
+      await db.update(contentViews).set({ viewLogScore: logScore }).where(row);
     },
     add: async (weightLog) => {
       await db
-        .update(articles)
-        .set({ viewLogScore: scoreWithWeightAdded(weightLog) })
+        .update(contentViews)
+        .set({ viewLogScore: scoreWithWeightAdded(contentViews.viewLogScore, weightLog) })
         .where(row);
     },
     remove: async (weightLog, floorLogScore) => {
       await db
-        .update(articles)
+        .update(contentViews)
         .set({
-          viewLogScore: scoreWithWeightRemoved(weightLog, floorLogScore),
+          viewLogScore: scoreWithWeightRemoved(contentViews.viewLogScore, weightLog, floorLogScore),
         })
         .where(row);
     },

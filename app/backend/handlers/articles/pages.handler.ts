@@ -11,7 +11,7 @@ import {
 } from "~/backend/handlers/article-view";
 import {
   D1ArticleQueryRepository,
-  D1ArticleViewQueryRepository,
+  D1ContentViewQueryRepository,
 } from "~/backend/infra/d1/repositories";
 
 /**
@@ -107,7 +107,7 @@ export interface HomePageData {
   /**
    * よく読まれている順。
    *
-   * 読まれた回数から並べる (詳しくは domain/article-view/view-ranking)。出発点は投稿日の
+   * 読まれた回数から並べる (詳しくは domain/content-view/view-ranking)。出発点は投稿日の
    * 重みなので、まだ読まれていない記事も新しい順に候補へ入る。
    */
   readonly popular: PublicArticleList["articles"];
@@ -161,9 +161,9 @@ async function loadPopularArticles(
   env: Env,
   query: D1ArticleQueryRepository,
 ): Promise<PublicArticleList["articles"]> {
-  const rankedIds = await new D1ArticleViewQueryRepository(env.D1).listPopularArticleIds(
-    POPULAR_COUNT,
-  );
+  const ranked = await new D1ContentViewQueryRepository(env.D1).listPopular(POPULAR_COUNT);
+  // 順位には種別が混ざる。ここで出すのは記事なので、記事を指すものだけを拾う。
+  const rankedIds = ranked.filter((content) => content.kind === "article").map(({ id }) => id);
   if (rankedIds.length === 0) return [];
 
   // 引き直した行を、順位の並びに戻す。

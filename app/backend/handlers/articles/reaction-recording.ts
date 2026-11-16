@@ -1,10 +1,11 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { ArticleSlug } from "~/backend/domain/article";
-import type { ReactionEmoji } from "~/backend/domain/article-reaction";
+import type { ReactionEmoji } from "~/backend/domain/content-reaction";
 import type { Session, SessionId } from "~/backend/domain/session";
-import { reactionWeightLog, viewWeightLog } from "~/backend/domain/article-view";
+import { reactionWeightLog, viewWeightLog } from "~/backend/domain/content-view";
 import { Session as SessionEntity } from "~/backend/domain/session";
-import { D1ArticleReactionCommandRepository } from "~/backend/infra/d1/repositories";
+import { articleRef, type ContentRef } from "~/backend/domain/shared";
+import { D1ContentReactionCommandRepository } from "~/backend/infra/d1/repositories";
 import {
   KvSessionCommandRepository,
   KvSessionQueryRepository,
@@ -55,7 +56,8 @@ export async function putReaction(
   // 同じ絵文字を押し直しても何も起きない (取り消しは別の入り口が持つ)。
   if (existing?.emoji.equals(emoji) === true) return session;
 
-  const reactions = new D1ArticleReactionCommandRepository(env.D1);
+  const reactions = new D1ContentReactionCommandRepository(env.D1);
+  const content = articleRef(article.id);
   const next = session.withReaction(article.slug, emoji, today);
 
   // 先にセッションを書く。途中で落ちたときに、数だけ動いて押した本人が
@@ -63,13 +65,13 @@ export async function putReaction(
   await new KvSessionCommandRepository(env.SESSIONS).save(next);
 
   if (existing !== undefined) {
-    await reactions.decrement(article.id, existing.emoji);
+    await reactions.decrement(content, existing.emoji);
   }
-  await reactions.increment(article.id, emoji);
+  await reactions.increment(content, emoji);
 
   if (existing === undefined) {
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
-    await reactions.addLogScore(article.id, reactionWeightLog(today.toString()));
+    await reactions.addLogScore(content, reactionWeightLog(today.toString()));
   }
 
   return next;
@@ -91,12 +93,13 @@ export async function deleteReaction(
   const existing = session.reactionFor(article.slug);
   if (existing === undefined) return session;
 
-  const reactions = new D1ArticleReactionCommandRepository(env.D1);
+  const reactions = new D1ContentReactionCommandRepository(env.D1);
+  const content = articleRef(article.id);
   const next = session.withoutReaction(article.slug);
 
   await new KvSessionCommandRepository(env.SESSIONS).save(next);
-  await reactions.decrement(article.id, existing.emoji);
-  await removeReactionScore(reactions, article.id, existing.reactedOn.toString());
+  await reactions.decrement(content, existing.emoji);
+  await removeReactionScore(reactions, content, existing.reactedOn.toString());
 
   return next;
 }
@@ -112,15 +115,15 @@ export async function deleteReaction(
  * 記事が無ければ投稿日も読めず、そのまま何もしない。
  */
 async function removeReactionScore(
-  reactions: D1ArticleReactionCommandRepository,
-  articleId: string,
+  reactions: D1ContentReactionCommandRepository,
+  content: ContentRef,
   reactedOn: string,
 ): Promise<void> {
-  const publishedOn = await reactions.findPublishedOn(articleId);
+  const publishedOn = await reactions.findPublishedOn(content);
   if (publishedOn === undefined) return;
 
   await reactions.subtractLogScore(
-    articleId,
+    content,
     reactionWeightLog(reactedOn),
     viewWeightLog(publishedOn),
   );

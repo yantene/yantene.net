@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import type { SessionId, SessionReaction } from "~/backend/domain/session";
 import { ArticleSlug } from "~/backend/domain/article";
-import { ReactionEmoji } from "~/backend/domain/article-reaction";
+import { ReactionEmoji } from "~/backend/domain/content-reaction";
 import { Session } from "~/backend/domain/session";
 
 /** KV に置く形。JSON にできる値だけで持つ。 */

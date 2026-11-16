@@ -12,9 +12,10 @@ import { describe, expect, it } from "vitest";
 import { action, headers } from "./articles.$slug";
 import type { Route } from "./+types/articles.$slug";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { articleRef } from "~/backend/domain/shared";
 import {
   D1ArticleCommandRepository,
-  D1ArticleReactionQueryRepository,
+  D1ContentReactionQueryRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestKv } from "~/backend/infra/kv/test-helper";
@@ -83,7 +84,9 @@ async function submit(harness: Harness, emoji: string, slug: string = SLUG): Pro
 }
 
 function listReactions(harness: Harness): Promise<readonly { emoji: string; count: number }[]> {
-  return new D1ArticleReactionQueryRepository(harness.env.D1).listByArticleId(harness.articleId);
+  return new D1ContentReactionQueryRepository(harness.env.D1).listByContent(
+    articleRef(harness.articleId),
+  );
 }
 
 describe("記事ページの action", () => {

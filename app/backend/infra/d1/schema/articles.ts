@@ -35,6 +35,10 @@ export const articles = sqliteTable(
      */
     status: text("status").notNull().default("published"),
     /*
+     * ⚠️ **view_count / view_log_score は旧い置き場。読まれていない。** いまの置き場は
+     * content_views で、人気順もそちらを引く (ADR 0051)。移行のあいだ書き込みだけは
+     * こちらにも入れてあり、列は別のリリースで落とす (#566)。以下は列の意味の説明。
+     *
      * 読まれた回数と、そこから作る人気の目安。
      *
      * この表が持つのは「何回読まれたか」だけで、誰が読んだかは残らない。読み直しを
@@ -45,7 +49,7 @@ export const articles = sqliteTable(
      * - view_log_score: 人気の目安 (自然対数)。新しく読まれるほど大きな重みを足して
      *   いくので、素の値なら指数的に膨らんで倍精度でも 85 年ほどで溢れる。対数のまま
      *   持てば経過に対して線形にしか増えず、事実上いつまでも壊れない。対数は単調なので
-     *   この列で直接 ORDER BY すれば人気順になる (詳細は domain/article-view/view-ranking)
+     *   この列で直接 ORDER BY すれば人気順になる (詳細は domain/content-view/view-ranking)
      *
      * 初期値は 0 で、対数の 0 は素の 1、つまり「基準日に 1 回読まれた」ぶんに当たる。
      * 実際には読まれていないのに 1 回ぶんを置くのは、素の 0 だと対数が -∞ になって
@@ -61,10 +65,10 @@ export const articles = sqliteTable(
     updatedAt: integer("updated_at").notNull(),
   },
   (table) => [
-    // 人気順は「対数スコアの大きい順に数件」を引くだけなので、この索引で足りる。
+    // 旧い置き場の索引。列と一緒に落とす (人気順はもう content_views の索引で引く)。
     index("articles_view_log_score_idx").on(table.viewLogScore),
-    // 読み手向けの経路はすべて status で絞る。人気順は対数スコアの索引と併せて
-    // 引かれるので、絞り込みが索引無しの全走査にならないようにしておく。
+    // 読み手向けの経路はすべて status で絞る。絞り込みが索引無しの全走査にならない
+    // ようにしておく。
     index("articles_status_idx").on(table.status),
   ],
 );

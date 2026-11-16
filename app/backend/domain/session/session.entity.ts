@@ -1,7 +1,7 @@
 import type { SessionId } from "./session-id.vo";
 import type { Temporal } from "@js-temporal/polyfill";
 import type { ArticleSlug } from "~/backend/domain/article";
-import type { ReactionEmoji } from "~/backend/domain/article-reaction";
+import type { ReactionEmoji } from "~/backend/domain/content-reaction";
 
 /**
  * セッションの寿命 (日)。

@@ -53,7 +53,8 @@ app/
 │   ├── domain/                 # ドメイン層（インフラ非依存）
 │   │   ├── shared/             # 共通基底インターフェース・VO (IValueObject, ILogger 等)
 │   │   ├── article/            # Article 集約 (entity, VO, CQRS repo interface, errors)
-│   │   ├── article-view/       # 閲覧数と人気ランキング
+│   │   ├── content-view/       # 閲覧数と人気ランキング (種別をまたぐ。ADR 0051)
+│   │   ├── content-reaction/   # リアクション (種別をまたぐ。ADR 0051)
 │   │   ├── session/            # 読み手のセッション (ADR 0011)
 │   │   └── content/            # コンテンツリポジトリのポート (IContentStore)
 │   ├── infra/                  # インフラ層（domain のインターフェースを実装）

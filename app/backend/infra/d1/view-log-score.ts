@@ -1,16 +1,17 @@
-import { type SQL, sql } from "drizzle-orm";
-import { articles } from "~/backend/infra/d1/schema";
+import { type AnyColumn, type SQL, sql } from "drizzle-orm";
 
 /**
- * 対数スコア (articles.view_log_score) の足し引きを、SQL の式として組む。
+ * 対数スコア (view_log_score) の足し引きを、SQL の式として組む。
  *
- * ドメイン (domain/article-view/view-ranking) が JS で定義している log-sum-exp と同じものを
+ * ドメイン (domain/content-view/view-ranking) が JS で定義している log-sum-exp と同じものを
  * SQL で書き直したもの。読んでから書き戻す 2 手にすると、その間に別の閲覧やリアクションが
  * 挟まったときに、後から書いたほうが先の加算を丸ごと上書きして消してしまう。SQLite に
  * ln / exp / max があるので、今の値から新しい値を作るところまで 1 文に収められる。
  *
  * 足す重みそのものはここでは決めない。日付から重みを出すのは順位付けの意味を決める仕事で、
  * ドメインに置いてある。ここは受け取った値を対数のまま足し引きするだけにする。
+ *
+ * どの列に対する式かは呼ぶ側が渡す。式の形は列によらない。
  */
 
 /**
@@ -19,9 +20,10 @@ import { articles } from "~/backend/infra/d1/schema";
  * 大きいほうを括り出してから足すので、exp の引数が 0 以下に収まり、途中で溢れない。
  * ドメイン側は log1p を使うが SQLite に相当する関数が無いので ln(1 + x) の形で書く。
  * 倍精度の最後の 1 ビットまで一致することは view-log-score.test.ts が固定している。
+ *
+ * @param score いまのスコアを持つ列。
  */
-export function scoreWithWeightAdded(weightLog: number): SQL<number> {
-  const score = articles.viewLogScore;
+export function scoreWithWeightAdded(score: AnyColumn, weightLog: number): SQL<number> {
   const larger = sql`max(${score}, ${weightLog})`;
 
   return sql`${larger} + ln(exp(${score} - ${larger}) + exp(${weightLog} - ${larger}))`;
@@ -41,10 +43,14 @@ export function scoreWithWeightAdded(weightLog: number): SQL<number> {
  *
  * 下限そのものが要る理由はドメイン側 (logScoreAfterReactionRemoved) に書いてある。
  *
- * @param floorLogScore 下限。この記事の出発点 (投稿日の重み) を渡す。
+ * @param score いまのスコアを持つ列。
+ * @param floorLogScore 下限。指す先の出発点 (投稿日の重み) を渡す。
  */
-export function scoreWithWeightRemoved(weightLog: number, floorLogScore: number): SQL<number> {
-  const score = articles.viewLogScore;
+export function scoreWithWeightRemoved(
+  score: AnyColumn,
+  weightLog: number,
+  floorLogScore: number,
+): SQL<number> {
   const removed = sql`${score} + ln(1 - exp(${weightLog} - ${score}))`;
 
   return sql`max(ifnull(${removed}, ${floorLogScore}), ${floorLogScore})`;
