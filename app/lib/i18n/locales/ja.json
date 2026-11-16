@@ -74,6 +74,24 @@
       "backToList": "作品一覧へ戻る"
     }
   },
+  "slides": {
+    "title": "Slides",
+    "heading": "Slides",
+    "lead": "発表で使ったスライド。同じ中身を、読み物としても読めます。",
+    "transcript": "Transcript",
+    "pages": "{{count}} ページ",
+    "previous": "前へ",
+    "next": "次へ",
+    "fullscreen": "全画面",
+    "controls": "スライドの操作",
+    "source": "Markdown",
+    "notFound": {
+      "title": "スライドが見つかりません",
+      "heading": "スライドが見つかりません",
+      "description": "お探しのスライドは存在しないか、公開を終えています。",
+      "backToList": "スライドの一覧へ"
+    }
+  },
   "history": {
     "heading": "History"
   },

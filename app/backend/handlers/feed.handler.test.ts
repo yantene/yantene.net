@@ -7,6 +7,7 @@ import {
   D1ArticleCommandRepository,
   D1ProfileCommandRepository,
 } from "~/backend/infra/d1/repositories";
+import { seedSlide } from "~/backend/handlers/slides/test-seed";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 import { feedIdentities } from "~/lib/feed";
@@ -143,8 +144,8 @@ describe("種別ごとのフィード", () => {
   });
 
   /*
-   * **Notes と Slides はまだ中身が無い** (#412 / #415)。記事が漏れて入ると、種別で
-   * 分けた意味が無くなるどころか、同じものが 3 本のフィードから届く。
+   * **Notes はまだ中身が無く** (#412)、Slides に入るのはスライドだけ。記事が漏れて
+   * 入ると、種別で分けた意味が無くなるどころか、同じものが 3 本のフィードから届く。
    */
   it.each(["/feed/notes.xml", "/feed/slides.xml"])("%s は記事を載せない", async (path) => {
     const d1 = createTestD1();
@@ -203,5 +204,101 @@ describe("書き手の名乗り", () => {
     const res = await createTestApp().request("/feed.xml", {}, env(d1));
 
     expect(await res.text()).toContain(`<author><name>${FALLBACK_PROFILE_NAME}</name></author>`);
+  });
+});
+
+describe("スライドのフィード (ADR 0052)", () => {
+  it("/feed/slides.xml はスライドを entry として載せる", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1, { title: "意味 & 見た目", summary: "語りの書き出し。" });
+
+    const res = await createTestApp().request("https://example.test/feed/slides.xml", {}, env(d1));
+    const body = await res.text();
+
+    expect(body).toContain("<title>やんてね — Slides</title>");
+    expect(body).toContain('<link href="https://example.test/slides/semantic-slides"/>');
+    // id はページの URL そのもの (記事と同じ決め)。
+    expect(body).toContain("<id>https://example.test/slides/semantic-slides</id>");
+    expect(body).toContain("<title>意味 &amp; 見た目</title>");
+    expect(body).toContain("<summary>語りの書き出し。</summary>");
+    expect(body).toContain('<category term="slide"/>');
+  });
+
+  /** 直した日は持っていない。published と updated は同じ日になる。 */
+  it("出した日を published と updated の両方に置く", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1, { publishedOn: "2026-11-14" });
+
+    const body = await (await createTestApp().request("/feed/slides.xml", {}, env(d1))).text();
+
+    expect(body).toContain("<published>2026-11-14T00:00:00Z</published>");
+    expect(body).toContain("<updated>2026-11-14T00:00:00Z</updated>");
+  });
+
+  it("/feed/articles.xml はスライドを載せない", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1);
+
+    const body = await (await createTestApp().request("/feed/articles.xml", {}, env(d1))).text();
+
+    expect(body).not.toContain("<entry>");
+  });
+
+  it("/feed/notes.xml はスライドを載せない", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1);
+
+    const body = await (await createTestApp().request("/feed/notes.xml", {}, env(d1))).text();
+
+    expect(body).not.toContain("<entry>");
+  });
+
+  /*
+   * 種別ごとのフィードだけ増えて全体に出てこないと、全部を購読しているつもりの人に
+   * 届かない。混ぜたうえで、出した日の新しい順に並べる。
+   */
+  it("/feed.xml は記事とスライドを出した日の新しい順に混ぜる", async () => {
+    const d1 = createTestD1();
+    const articles = new D1ArticleCommandRepository(d1);
+    await articles.upsert(
+      unpersistedArticle({ slug: "old-article", title: "古い記事", publishedOn: "2026-01-01" }),
+    );
+    await articles.upsert(
+      unpersistedArticle({ slug: "new-article", title: "新しい記事", publishedOn: "2026-12-01" }),
+    );
+    await seedSlide(d1, { slug: "middle-slide", publishedOn: "2026-06-01" });
+
+    const body = await (await createTestApp().request("/feed.xml", {}, env(d1))).text();
+    const order = ["/articles/new-article", "/slides/middle-slide", "/articles/old-article"].map(
+      (path) => body.indexOf(`<id>http://localhost${path}</id>`),
+    );
+
+    expect(order.every((index) => index !== -1)).toBe(true);
+    expect(order).toEqual(order.toSorted((a, b) => a - b));
+    expect(body).toContain('<category term="article"/>');
+    expect(body).toContain('<category term="slide"/>');
+  });
+
+  /** 混ぜても 20 件で切る。古いほうが落ちる。 */
+  it("/feed.xml は混ぜたあとで 20 件に切る", async () => {
+    const d1 = createTestD1();
+    const articles = new D1ArticleCommandRepository(d1);
+    for (let index = 0; index < 20; index += 1) {
+      await articles.upsert(
+        unpersistedArticle({
+          slug: `article-${String(index)}`,
+          title: "記事",
+          publishedOn: `2026-02-${String(index + 1).padStart(2, "0")}`,
+        }),
+      );
+    }
+    await seedSlide(d1, { slug: "newest-slide", publishedOn: "2026-12-01" });
+
+    const body = await (await createTestApp().request("/feed.xml", {}, env(d1))).text();
+
+    expect(body.match(/<entry>/gu)).toHaveLength(20);
+    expect(body).toContain("/slides/newest-slide");
+    // いちばん古い記事が押し出される。
+    expect(body).not.toContain("/articles/article-0<");
   });
 });

@@ -87,3 +87,27 @@ describe("createOgRouter GET /articles/:slug が見つからないとき", () =>
     expect(response.status).toBeGreaterThanOrEqual(500);
   });
 });
+
+/* スライドのカードも、断り方は記事と同じ形に揃える。 */
+describe("createOgRouter GET /slides/:slug が見つからないとき", () => {
+  const slideNotFound = {
+    ...problemDetails404,
+    body: { ...problemDetails404.body, detail: "slide not found" },
+  };
+
+  it("スラグとして読めない値を、表を引かずに Problem Details で断る", async () => {
+    const response = await createOgRouter().request(
+      `/slides/${encodeURIComponent("not a slug!")}`,
+      {},
+      {},
+    );
+
+    await expect(refusalOf(response)).resolves.toEqual(slideNotFound);
+  });
+
+  it("スライドが無いときも Problem Details で断る", async () => {
+    const response = await createOgRouter().request("/slides/missing", {}, envWith(createTestD1()));
+
+    await expect(refusalOf(response)).resolves.toEqual(slideNotFound);
+  });
+});

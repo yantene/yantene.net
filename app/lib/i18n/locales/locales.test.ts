@@ -37,6 +37,11 @@ const untranslatedNames = [
   "articles.heading",
   "articles.related",
   "articles.toc",
+  // スライドの場所と区画の名前。
+  "slides.title",
+  "slides.heading",
+  "slides.transcript",
+  "slides.source",
   "works.title",
   "works.heading",
   // 作品のページの区画の名前。記事のページの Related articles と同じ語で揃える。

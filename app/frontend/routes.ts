@@ -27,6 +27,7 @@ export default [
    */
   route("notes", "routes/notes.tsx"),
   route("slides", "routes/slides.tsx"),
+  route("slides/:slug", "routes/slides.$slug.tsx"),
 
   // 絵文字と書体の帰属を置く場所。フッターのリンクから辿る。
   route("legal", "routes/legal.tsx"),

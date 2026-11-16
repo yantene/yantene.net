@@ -170,8 +170,10 @@ function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
 /**
  * フロントマターの日付を ISO 日付文字列にそろえる。YAML パーサが文字列で返す場合と
  * Date で返す場合の両方に備える。
+ *
+ * スライドのフロントマター (slide-content-parser.ts) も同じ読み方をする。
  */
-function asDateString(value: unknown): string | undefined {
+export function asDateString(value: unknown): string | undefined {
   if (typeof value === "string" && value.length > 0) return value;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return undefined;

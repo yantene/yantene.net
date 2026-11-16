@@ -106,7 +106,8 @@ const targets = [
    * 文言と違ってロケールで変わらない。
    */
   { label: "/notes", path: "/notes", expectBodyIncludes: 'content="noindex"' },
-  { label: "/slides", path: "/slides", expectBodyIncludes: 'content="noindex"' },
+  // `/slides` はスライドが入ると `noindex` が外れるので、印は見ない (届くことだけを見る)。
+  "/slides",
   "/articles/does-not-exist",
   /*
    * 記事 URL は Accept 次第で HTML と原文 Markdown に分かれる (ADR 0020)。取り違えは

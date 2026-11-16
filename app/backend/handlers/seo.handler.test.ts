@@ -5,6 +5,7 @@ import {
   D1ProfileCommandRepository,
   D1WorkCommandRepository,
 } from "~/backend/infra/d1/repositories";
+import { seedSlide } from "~/backend/handlers/slides/test-seed";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
 
@@ -60,7 +61,7 @@ describe("GET /sitemap.xml", () => {
   /*
    * `/about` はプロフィールが同期されるまで `noindex` の「準備中」になる。載せたまま
    * `noindex` を出すと、Search Console が「sitemap に出した URL が noindex」と言ってくる。
-   * 同じ理由で `/notes` と `/slides` も載せていない。
+   * 同じ理由で `/notes` も載せていない (`/slides` はスライドが 1 本以上あるときだけ載せる)。
    */
   it("プロフィールが同期されるまで /about は載せない", async () => {
     const response = await createTestApp().request(
@@ -126,5 +127,33 @@ describe("GET /sitemap.xml", () => {
 
     expect(body).toContain("<loc>https://yantene.net/works</loc>");
     expect(body).toContain("<loc>https://yantene.net/works/infoholick</loc>");
+  });
+
+  /** `/slides` も 1 本も無ければ `noindex` の「準備中」になる。`/works` と同じ扱い。 */
+  it("スライドが 1 本も無ければ /slides は載せない", async () => {
+    const response = await createTestApp().request(
+      "https://yantene.net/sitemap.xml",
+      {},
+      envFor({ private: false }),
+    );
+
+    expect(await response.text()).not.toContain("/slides");
+  });
+
+  it("スライドが入れば /slides と各スライドを載せる", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1, { publishedOn: "2026-11-14" });
+    const response = await createTestApp().request(
+      "https://yantene.net/sitemap.xml",
+      {},
+      { D1: d1, APP_ENV: "test" },
+    );
+    const body = await response.text();
+
+    expect(body).toContain("<url><loc>https://yantene.net/slides</loc></url>");
+    // lastmod は出した日 (直した日は持っていない)。
+    expect(body).toContain(
+      "<url><loc>https://yantene.net/slides/semantic-slides</loc><lastmod>2026-11-14</lastmod></url>",
+    );
   });
 });

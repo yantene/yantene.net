@@ -174,39 +174,66 @@ describe("paginate: 書いたものを黙って捨てない", () => {
 });
 
 describe("findOverfull", () => {
+  const items = (count: number, text = "項目"): string =>
+    Array.from({ length: count }, (_, index) => `- ${text} ${String(index)}`).join("\n");
+  const code = (lines: number): string =>
+    ["```ts", ...Array.from({ length: lines }, () => "const a = 1;"), "```"].join("\n");
+
   it("finds nothing in the sample deck", () => {
     expect(findOverfull(deckOf(SAMPLE_SLIDE_MARKDOWN))).toEqual([]);
   });
 
+  /* 数は、テーマの字の大きさで実物を測って決めた上限。ちょうどは通り、1 つ超えると出る。 */
   it("reports the page number and what overflows", () => {
-    const items = Array.from({ length: 8 }, (_, index) => `- 項目 ${String(index)}`).join("\n");
-    const code = ["```ts", ...Array.from({ length: 14 }, () => "const a = 1;"), "```"].join("\n");
-    const deck = deckOf(`## 列挙が多い\n\n${items}\n\n## コードが長い\n\n${code}\n`);
+    const deck = deckOf(
+      `## 入る\n\n${items(7)}\n\n## 列挙が多い\n\n${items(8)}\n\n## 入る\n\n${code(9)}\n\n## コードが長い\n\n${code(10)}\n`,
+    );
 
     expect(findOverfull(deck)).toEqual([
-      { page: 2, reason: "8 list items (at most 6)" },
-      { page: 3, reason: "14 lines of code (at most 12)" },
+      { page: 3, reason: "8 list items (at most 7)" },
+      { page: 5, reason: "10 lines of code (at most 9)" },
     ]);
   });
 
-  /* 図と場所を分け合うページは、使える広さが半分ほどなので目安も小さい。 */
-  it("is stricter on a page that shares the space with a figure", () => {
-    const items = Array.from({ length: 5 }, (_, index) => `- 項目 ${String(index)}`).join("\n");
+  /* 項目の数が少なくても、1 項目が長ければ折り返して入らなくなる。行数で見積もる。 */
+  it("estimates wrapped lines, not only the number of items", () => {
+    const long = "あ".repeat(40);
 
-    expect(findOverfull(deckOf(`## 題\n\n${items}\n`))).toEqual([]);
-    expect(findOverfull(deckOf(`## 題\n\n![図](./a.png)\n\n${items}\n`))).toEqual([
-      { page: 2, reason: "5 list items (at most 4)" },
+    expect(findOverfull(deckOf(`## 題\n\n${items(4, long)}\n`))).toEqual([]);
+    expect(findOverfull(deckOf(`## 題\n\n${items(5, long)}\n`))).toEqual([
+      { page: 2, reason: "10 lines of text (at most 8)" },
     ]);
+  });
+
+  /*
+   * 横長の図の下に積むページは、下に置く量が増えるほど図が小さくなる。図が読める大きさで
+   * 残る量に抑える。縦長の図の横に並べるページは高さを使えるので、もう少し置ける。
+   */
+  it("is stricter on a page that shares the space with a figure", () => {
+    const under = `## 題\n\n![図](./a.png)\n\n${items(4)}\n`;
+    expect(findOverfull(deckOf(under))).toEqual([
+      { page: 2, reason: "4 list items (at most 3)" },
+      { page: 2, reason: "4 lines of text (at most 3)" },
+    ]);
+
+    const beside = withImageSize(parseMarkdownBody(under).mdast, 780, 1688);
+    expect(findOverfull(paginate(beside))).toEqual([]);
   });
 
   it("counts nested list items and table size", () => {
-    const nested = "- 親\n  - 子 1\n  - 子 2\n  - 子 3\n  - 子 4\n  - 子 5\n  - 子 6\n";
+    const nested = `- 親\n${Array.from({ length: 7 }, (_, index) => `  - 子 ${String(index)}`).join("\n")}\n`;
     const table = `| a | b | c | d | e | f |\n| - | - | - | - | - | - |\n| 1 | 2 | 3 | 4 | 5 | 6 |\n`;
     const deck = deckOf(`## 入れ子\n\n${nested}\n## 表\n\n${table}`);
 
     expect(findOverfull(deck)).toEqual([
-      { page: 2, reason: "7 list items (at most 6)" },
+      { page: 2, reason: "8 list items (at most 7)" },
       { page: 3, reason: "6 table columns (at most 5)" },
+    ]);
+  });
+
+  it("flags a title too long to stay on two lines", () => {
+    expect(findOverfull(deckOf(`## ${"題".repeat(33)}\n`))).toEqual([
+      { page: 2, reason: "33 characters in the title (at most 32)" },
     ]);
   });
 });

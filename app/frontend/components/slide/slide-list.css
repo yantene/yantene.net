@@ -1,0 +1,56 @@
+/*
+ * スライドの一覧 (routes/slides.tsx)。日付・題・ページ数の 3 列。
+ * 狭い画面では日付とページ数を題の上下に畳む。
+ */
+.slide-list {
+  display: grid;
+  margin-top: 2rem;
+}
+
+.slide-list-item {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  gap: 0.25rem 1.25rem;
+  align-items: baseline;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--color-base-300);
+}
+
+.slide-list-date,
+.slide-list-pages {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted-foreground);
+}
+
+.slide-list-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.slide-list-title:hover {
+  color: var(--color-primary);
+}
+
+.slide-list-event,
+.slide-list-summary {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--color-muted-foreground);
+}
+
+.slide-list-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+@media (width < 40rem) {
+  .slide-list-item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

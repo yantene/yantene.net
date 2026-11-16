@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { cardElement, defaultCardElement, OG_TEMPLATE_VERSION } from "./og-card";
 import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
-import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { SlideSlug } from "~/backend/domain/slide";
+import { D1ArticleQueryRepository, D1SlideQueryRepository } from "~/backend/infra/d1/repositories";
+import { plainDateToIso } from "~/backend/infra/d1/temporal";
 import { notFoundResponse } from "~/lib/problem-details";
 
 /*
@@ -70,6 +72,7 @@ async function renderAndCache(
 /**
  * OG 画像の生成ルータ (公開)。
  * - GET /og/articles/:slug → 記事のブランドカード (imageUrl 有無に関わらず常に生成)
+ * - GET /og/slides/:slug   → スライドのカード (記事と同じカードに、スライドの題と日付)
  * - GET /og/default     → サイト共通のデフォルトカード
  * R2 にキャッシュし、記事更新やテンプレ版変更で自動再生成する。
  *
@@ -103,6 +106,31 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       // 限定公開の絵は検索エンジンに載せない。題が焼き込んであるので、画像検索に
       // 出ると題と存在が漏れ、そこから記事に辿り着ける (ADR 0040)。
       shouldTellRobotsNoindex(article.status) ? { "X-Robots-Tag": "noindex" } : {},
+    );
+  });
+
+  /*
+   * スライドのカード。絵は記事と同じもので、題と日付だけがスライドのもの。
+   * スライド専用の絵 (表紙をそのまま焼くなど) を作るときは、ここを差し替える。
+   *
+   * 公開範囲を持たない (出ているものはすべて読み手に見せてよい) ので、`noindex` は
+   * 付けない。
+   */
+  router.get("/slides/:slug", async (c) => {
+    const slug = SlideSlug.parse(c.req.param("slug"));
+    if (slug === undefined) return notFoundResponse("slide not found");
+
+    const slide = await new D1SlideQueryRepository(c.env.D1).findBySlug(slug);
+    if (slide === undefined) return notFoundResponse("slide not found");
+
+    const card = cardElement({
+      title: slide.title.toString(),
+      date: plainDateToIso(slide.publishedOn),
+    });
+    return renderAndCache(
+      c.env,
+      `og/slides/${slug.toString()}-${slide.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
+      card,
     );
   });
 

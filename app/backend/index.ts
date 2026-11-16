@@ -15,6 +15,8 @@ import { createArticleReactionApiRouter } from "./handlers/articles/reaction.han
 import { createRefreshRouter } from "./handlers/articles/refresh.handler";
 import { createSearchApiRouter } from "./handlers/articles/search.handler";
 import { createProfileAssetsRouter } from "./handlers/profile/assets.handler";
+import { createSlideAssetsRouter } from "./handlers/slides/assets.handler";
+import { createSlideMarkdownRouter } from "./handlers/slides/markdown.handler";
 import { createWorkAssetsRouter } from "./handlers/works/assets.handler";
 import { createOgRouter } from "./handlers/og.handler";
 import { createSeoRouter } from "./handlers/seo.handler";
@@ -154,6 +156,7 @@ export const getApp = (
   app.route("/api/v1/articles", createArticleReactionApiRouter());
   app.route("/api/v1/profile", createProfileAssetsRouter());
   app.route("/api/v1/works", createWorkAssetsRouter());
+  app.route("/api/v1/slides", createSlideAssetsRouter());
   app.route("/api/v1/link-cards", createLinkCardAssetsRouter());
   app.route("/api/v1/webmentions", createWebmentionAvatarsRouter());
   app.route("/api/v1/search", createSearchApiRouter());
@@ -181,6 +184,10 @@ export const getApp = (
   // Markdown を名指しした要求の 2 つを受け持つ (ADR 0020)。それ以外の /articles/* は
   // 素通りしてページ描画に落ちる (その応答に Vary: Accept と Link を足すのもここ)。
   app.route("/articles", createArticleMarkdownRouter());
+
+  // スライドの原文 Markdown (`/slides/<slug>.md`)。記事と同じく Hono で完結させる。
+  // `.md` で終わらない /slides/* は素通りしてページ描画に落ちる。
+  app.route("/slides", createSlideMarkdownRouter());
 
   // 記事の同期 (コンテンツリポジトリ → D1 + R2)。POST /api/v1/refresh。
   // REFRESH_SECRET で保護する運用エンドポイント。
