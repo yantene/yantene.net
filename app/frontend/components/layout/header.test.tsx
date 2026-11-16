@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { Header } from "./header";
 import { withI18n } from "~/frontend/lib/test-render";
-import { feedIdentities } from "~/lib/feed";
+import { listedFeedIdentities } from "~/lib/feed";
 
 const renderWithI18n = withI18n();
 
@@ -106,7 +106,7 @@ describe("Header の作り", () => {
     const destinations = navigations.map((navigation) =>
       [...navigation.querySelectorAll("a")].map((link) => link.getAttribute("href")),
     );
-    expect(destinations[0]).toEqual(["/about", "/articles", "/notes", "/slides", "/works"]);
+    expect(destinations[0]).toEqual(["/about", "/articles", "/slides", "/works"]);
     expect(destinations[1]).toEqual(destinations[0]);
   });
 
@@ -152,10 +152,10 @@ describe("Header の作り", () => {
       .map((link) => link.getAttribute("href"))
       .filter((href) => href !== null && href.startsWith("/feed"));
 
-    // 4 種別 × (帯 + ドロワー)。
-    expect(feedHrefs).toHaveLength(feedIdentities.length * 2);
-    const band = feedHrefs.slice(0, feedIdentities.length);
-    expect(band).toEqual(feedIdentities.map((identity) => identity.path));
-    expect(feedHrefs.slice(feedIdentities.length)).toEqual(band);
+    // 選び場所に出す種別 × (帯 + ドロワー)。
+    expect(feedHrefs).toHaveLength(listedFeedIdentities.length * 2);
+    const band = feedHrefs.slice(0, listedFeedIdentities.length);
+    expect(band).toEqual(listedFeedIdentities.map((identity) => identity.path));
+    expect(feedHrefs.slice(listedFeedIdentities.length)).toEqual(band);
   });
 });
