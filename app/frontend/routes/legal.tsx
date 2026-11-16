@@ -7,6 +7,7 @@ import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -80,6 +81,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     locale,
     origin,
     pathname: location.pathname,
+    jsonLd: webPageJsonLd(origin, location.pathname),
     title: legal.title,
     description: legal.description,
   });

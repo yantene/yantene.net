@@ -27,7 +27,7 @@ import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
-import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
+import { personReference, websiteReference } from "~/backend/handlers/json-ld";
 import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
@@ -283,25 +283,22 @@ export async function loadArticleDetailPage(
     privateResponse: shouldKeepResponsePrivate(access, resolved.status),
     reactions,
     profile,
-    jsonLd: (() => {
-      // 名前はプロフィール由来。同期の前は既定に倒す (h-card の印と同じ扱い)。
-      const author = {
-        "@type": "Person",
-        name: profile?.name ?? FALLBACK_PROFILE_NAME,
-        url: `${origin}/`,
-      };
-      return {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        headline: detail.article.title,
-        description: detail.article.summary,
-        image: `${origin}/og/articles/${detail.article.slug}`,
-        datePublished: detail.article.publishedOn,
-        dateModified: detail.article.lastModifiedOn,
-        author,
-        publisher: { "@type": "Person", name: author.name },
-        mainEntityOfPage: `${origin}${articlePath(detail.article.slug)}`,
-      };
-    })(),
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: detail.article.title,
+      description: detail.article.summary,
+      image: `${origin}/og/articles/${detail.article.slug}`,
+      datePublished: detail.article.publishedOn,
+      dateModified: detail.article.lastModifiedOn,
+      /*
+       * 筆者も発行者も、`/about` とトップが名乗るのと同じ 1 人を指す (ADR 0048)。
+       * 名前はプロフィール由来で、同期の前は既定に倒れる (h-card の印と同じ扱い)。
+       */
+      author: personReference(origin, profile),
+      publisher: personReference(origin, profile),
+      isPartOf: websiteReference(origin),
+      mainEntityOfPage: `${origin}${articlePath(detail.article.slug)}`,
+    },
   };
 }

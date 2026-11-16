@@ -50,7 +50,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     title: translations.navigation.about,
     // 自己紹介があればそれを出す。無いうちは「準備中」の一文で代える。
     description: profile === null ? translations.comingSoon.about : profile.tagline.join(" "),
-    ...(jsonLd === null ? {} : { jsonLd }),
+    jsonLd,
     // 中身が無いうちは検索結果に出さない。
     noindex: profile === null,
   });

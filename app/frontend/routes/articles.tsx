@@ -34,7 +34,7 @@ export async function loader({
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const translations = translationsFor(locale);
   const identity = feedIdentity("articles");
   return buildPageMeta({
@@ -48,6 +48,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
      * ここを見ているリーダーには記事だけのフィードが見つかる。
      */
     feed: { path: identity.path, title: identity.title },
+    jsonLd,
   });
 };
 

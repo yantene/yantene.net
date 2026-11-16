@@ -4,12 +4,20 @@ import type { Root } from "mdast";
 import { toPublicWork } from "./work-view";
 import { workPath, WorkSlug } from "~/backend/domain/work";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
+import { loadProfile } from "~/backend/handlers/profile/pages.handler";
+import {
+  collectionPageJsonLd,
+  personReference,
+  websiteReference,
+} from "~/backend/handlers/json-ld";
 import { D1WorkQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2WorkContentCache } from "~/backend/infra/r2/r2-work-content-cache";
 
 export interface WorksPageData {
   /** 並び順 (`position` の小さい順)。まだ同期されていなければ空。 */
   readonly works: readonly PublicWork[];
+  /** `/works` の構造化データ (`CollectionPage`。ADR 0048)。作品が無いあいだも出す。 */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 export interface WorkDetailPageData {
@@ -35,8 +43,11 @@ export async function loadWorks(env: Env): Promise<readonly PublicWork[]> {
 }
 
 /** `/works` のデータを揃える (Composition Root)。 */
-export async function loadWorksPage(env: Env): Promise<WorksPageData> {
-  return { works: await loadWorks(env) };
+export async function loadWorksPage(env: Env, origin: string): Promise<WorksPageData> {
+  return {
+    works: await loadWorks(env),
+    jsonLd: collectionPageJsonLd(origin, "/works"),
+  };
 }
 
 /**
@@ -54,10 +65,11 @@ export async function loadWorkDetailPage(
   const slug = WorkSlug.parse(slugParam);
   if (slug === undefined) return notFound();
 
-  // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
-  const [work, mdast] = await Promise.all([
+  // 3 つは互いに独立なので並行に読む。プロフィールは、作った人を名指しするために要る。
+  const [work, mdast, profile] = await Promise.all([
     new D1WorkQueryRepository(env.D1).findBySlug(slug),
     new R2WorkContentCache(env.R2).getMdast(slug),
+    loadProfile(env),
   ]);
 
   if (work === undefined) return notFound();
@@ -78,6 +90,9 @@ export async function loadWorkDetailPage(
       url: `${origin}${workPath(publicWork.slug)}`,
       // 外の在り処は「同じものを指す別の URL」。正規の URL はこちらなので url とは分ける。
       ...(publicWork.url === null ? {} : { sameAs: [publicWork.url] }),
+      // 作った人は、記事の筆者や `/about` と同じ 1 人 (ADR 0048)。同じ `@id` で指す。
+      creator: personReference(origin, profile),
+      isPartOf: websiteReference(origin),
     },
   };
 }

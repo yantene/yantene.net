@@ -1,6 +1,7 @@
 import type { Article, ArticleListResult } from "~/backend/domain/article";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
+import { collectionPageJsonLd, homeJsonLd } from "~/backend/handlers/json-ld";
 import {
   parseArticleSort,
   parsePagination,
@@ -40,6 +41,11 @@ export interface ArticlesListPageData extends PublicArticleList {
     readonly sortBy: string | null;
     readonly order: string | null;
   };
+  /**
+   * `/articles` の構造化データ (`CollectionPage`。ADR 0048)。検索の結果でもページ送りの
+   * 途中でも、名乗る URL は canonical と同じ `/articles`。
+   */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 /**
@@ -81,6 +87,7 @@ export async function loadArticlesListPage(env: Env, url: URL): Promise<Articles
       sortBy: url.searchParams.get("sort-by"),
       order: url.searchParams.get("order"),
     },
+    jsonLd: collectionPageJsonLd(url.origin, "/articles"),
   };
 }
 
@@ -106,6 +113,13 @@ export interface HomePageData {
   readonly popular: PublicArticleList["articles"];
   /** ヒーローに出す書き手のプロフィール。まだ同期されていなければ null。 */
   readonly profile: PublicProfile | null;
+  /**
+   * サイト (`WebSite`) と書き手 (`Person`) の構造化データ (ADR 0048)。
+   *
+   * **プロフィールが無くても null にならない。** サイト名は同期と関係が無く、Person は
+   * 殻だけで立つ。
+   */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 /**
@@ -114,7 +128,7 @@ export interface HomePageData {
  * ホームは一覧の代わりではなく入口なので、続きは足さずここで打ち切る。全件を辿る導線は
  * `/articles` が持つ。
  */
-export async function loadHomePage(env: Env): Promise<HomePageData> {
+export async function loadHomePage(env: Env, origin: string): Promise<HomePageData> {
   const query = D1ArticleQueryRepository.forReaders(env.D1);
 
   // 3 つは互いに依存しないので、待つのは 1 往復ぶんで足りる。
@@ -133,6 +147,7 @@ export async function loadHomePage(env: Env): Promise<HomePageData> {
     recent: toPublicArticleList(recent, 1, RECENT_COUNT).articles,
     popular,
     profile,
+    jsonLd: homeJsonLd(origin, profile),
   };
 }
 

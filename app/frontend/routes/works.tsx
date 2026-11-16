@@ -29,7 +29,7 @@ export async function loader({
   context,
 }: Route.LoaderArgs): Promise<PageMetaBase & CopyrightData & WorksPageData> {
   const url = new URL(request.url);
-  const data = await loadWorksPage(context.get(cloudflareContext).env);
+  const data = await loadWorksPage(context.get(cloudflareContext).env, url.origin);
 
   return {
     ...data,
@@ -40,7 +40,7 @@ export async function loader({
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin, works } = loaderData;
+  const { locale, origin, works, jsonLd } = loaderData;
   const translations = translationsFor(locale);
 
   return buildPageMeta({
@@ -52,6 +52,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     description: works.length === 0 ? translations.comingSoon.works : translations.works.lead,
     // 中身が無いうちは検索結果に出さない。
     noindex: works.length === 0,
+    jsonLd,
   });
 };
 

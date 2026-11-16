@@ -1,8 +1,14 @@
 import type { Root } from "mdast";
 import { describe, expect, it } from "vitest";
 import { loadWorkDetailPage, loadWorks, loadWorksPage } from "./pages.handler";
+import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
 import { Work, WorkName, WorkSlug, WorkSummary, WorkUrl } from "~/backend/domain/work";
-import { D1WorkCommandRepository } from "~/backend/infra/d1/repositories";
+import { personId } from "~/backend/handlers/json-ld";
+import {
+  D1ProfileCommandRepository,
+  D1WorkCommandRepository,
+} from "~/backend/infra/d1/repositories";
+import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2WorkContentCache } from "~/backend/infra/r2/r2-work-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
@@ -62,7 +68,7 @@ describe("loadWorksPage", () => {
     const d1 = createTestD1();
     await seedWork(d1, { url: "https://github.com/yantene/infoholick" });
 
-    const { works } = await loadWorksPage(envWith(d1, createTestR2().bucket));
+    const { works } = await loadWorksPage(envWith(d1, createTestR2().bucket), ORIGIN);
     expect(works).toEqual([
       {
         slug: "infoholick",
@@ -71,6 +77,40 @@ describe("loadWorksPage", () => {
         url: "https://github.com/yantene/infoholick",
       },
     ]);
+  });
+});
+
+/*
+ * 一覧は `CollectionPage` として名乗り、サイトの一部だと言う (ADR 0048)。
+ */
+describe("loadWorksPage の JSON-LD (ADR 0048)", () => {
+  it("作品があれば、サイトの一部である一覧として名乗る", async () => {
+    const d1 = createTestD1();
+    await seedWork(d1);
+
+    const { jsonLd } = await loadWorksPage(envWith(d1, createTestR2().bucket), ORIGIN);
+
+    expect(jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      url: `${ORIGIN}/works`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+    });
+  });
+
+  /*
+   * 作品が無いあいだ (「準備中」+ noindex) も同じものを名乗る。この場所が在ることは置き
+   * 終わる前から言ってよく、検索結果に出すかどうかは noindex が別に決める。
+   */
+  it("作品が 1 つも無くても同じ一覧として名乗る", async () => {
+    const { jsonLd } = await loadWorksPage(envWith(createTestD1(), createTestR2().bucket), ORIGIN);
+
+    expect(jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      url: `${ORIGIN}/works`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+    });
   });
 });
 
@@ -99,6 +139,68 @@ describe("loadWorkDetailPage", () => {
       description: "読んだものを覚えておくやつ。",
       url: `${ORIGIN}/works/infoholick`,
       sameAs: ["https://github.com/yantene/infoholick"],
+    });
+  });
+
+  /*
+   * 作った人は、記事の筆者や `/about` と同じ 1 人を指す (ADR 0048)。`@id` が揃っていないと、
+   * 読む側からは「同じ名前の別人が作ったもの」に見える。
+   */
+  it("names the author as the creator under the shared @id", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWork(d1);
+    await new R2WorkContentCache(bucket).putMdast(WorkSlug.create("infoholick"), BODY);
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("書き手"),
+        tagline: Tagline.create("自己紹介。"),
+        socials: [],
+        sourceHash: "h1",
+      }),
+      [],
+    );
+
+    const { jsonLd } = await loadWorkDetailPage(envWith(d1, bucket), "infoholick", ORIGIN);
+
+    expect(jsonLd?.creator).toEqual({
+      "@type": "Person",
+      "@id": personId(ORIGIN),
+      name: "書き手",
+      url: `${ORIGIN}/about`,
+    });
+    expect(jsonLd?.isPartOf).toEqual({ "@id": `${ORIGIN}/#website` });
+  });
+
+  /* 作品にも経歴を出さない (ADR 0044)。作った人を指す節に欄を足す抜け道を塞ぐ。 */
+  it("keeps the history out of the CreativeWork", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWork(d1);
+    await new R2WorkContentCache(bucket).putMdast(WorkSlug.create("infoholick"), BODY);
+
+    const { jsonLd } = await loadWorkDetailPage(envWith(d1, bucket), "infoholick", ORIGIN);
+    const serialized = JSON.stringify(jsonLd);
+
+    for (const key of ["alumniOf", "award", "birthDate", "birthPlace", "worksFor"]) {
+      expect(serialized).not.toContain(`"${key}"`);
+    }
+  });
+
+  /* プロフィールが同期されていなくても、指す先は変えない。名前だけ既定に倒れる。 */
+  it("keeps pointing at the same @id before the profile is synced", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWork(d1);
+    await new R2WorkContentCache(bucket).putMdast(WorkSlug.create("infoholick"), BODY);
+
+    const { jsonLd } = await loadWorkDetailPage(envWith(d1, bucket), "infoholick", ORIGIN);
+
+    expect(jsonLd?.creator).toEqual({
+      "@type": "Person",
+      "@id": personId(ORIGIN),
+      name: FALLBACK_PROFILE_NAME,
+      url: `${ORIGIN}/about`,
     });
   });
 

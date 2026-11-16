@@ -15,7 +15,7 @@ import {
   D1WorkCommandRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
-import { PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 
@@ -80,7 +80,20 @@ describe("loadAboutPage", () => {
 
     expect(data.profile).toBeNull();
     expect(data.mdast).toBeNull();
-    expect(data.jsonLd).toBeNull();
+    // 「準備中」のあいだも、ここが書き手のページだとは名乗る (ADR 0048)。書き手は殻だけ。
+    expect(data.jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+      mainEntity: {
+        "@type": "Person",
+        "@id": `${ORIGIN}/#person`,
+        name: FALLBACK_PROFILE_NAME,
+        url: `${ORIGIN}/about`,
+        image: `${ORIGIN}${PROFILE_PHOTO}`,
+      },
+    });
   });
 
   /*
@@ -153,7 +166,7 @@ describe("loadAboutPage", () => {
 
     const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
-    expect(jsonLd).toMatchObject({
+    expect(jsonLd?.mainEntity).toMatchObject({
       "@type": "Person",
       name: "やんてね",
       url: `${ORIGIN}/about`,
@@ -161,6 +174,28 @@ describe("loadAboutPage", () => {
       sameAs: ["https://github.com/yantene"],
       /* `mailto:` を剥いだアドレス。画面に出ているものと同じで、増やしていない。 */
       email: "contact@example.com",
+    });
+  });
+
+  /**
+   * ページを `ProfilePage` として名乗り、主題に書き手を置く (ADR 0048)。
+   *
+   * 書き手の `@id` は `/#person`。記事とトップが同じ綴りで指してくるので、
+   * ここがずれると「同じ名前の人が 2 人いる」状態に戻る。
+   */
+  it("wraps the Person in a ProfilePage under the shared @id", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedProfile(d1);
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(jsonLd).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      mainEntity: { "@type": "Person", "@id": `${ORIGIN}/#person` },
     });
   });
 
@@ -225,8 +260,16 @@ describe("loadAboutPage", () => {
 
     const { jsonLd } = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
+    // 包みの側にも欄を足させない。経歴を `ProfilePage` の欄として出す抜け道を塞ぐ。
     expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
       "@context",
+      "@type",
+      "isPartOf",
+      "mainEntity",
+      "url",
+    ]);
+    expect(Object.keys(jsonLd?.mainEntity ?? {}).toSorted()).toEqual([
+      "@id",
       "@type",
       "description",
       "email",
@@ -275,7 +318,20 @@ describe("loadAboutPage", () => {
     const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
     expect(data.profile).toBeNull();
-    expect(data.jsonLd).toBeNull();
+    // 読めない行から拾った名前や出ていく先を、機械にだけ名乗らない。殻に倒す。
+    expect(data.jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+      mainEntity: {
+        "@type": "Person",
+        "@id": `${ORIGIN}/#person`,
+        name: FALLBACK_PROFILE_NAME,
+        url: `${ORIGIN}/about`,
+        image: `${ORIGIN}${PROFILE_PHOTO}`,
+      },
+    });
   });
 
   it("fails loudly when the body is missing from R2", async () => {
