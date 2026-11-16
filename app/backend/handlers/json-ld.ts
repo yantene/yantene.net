@@ -1,13 +1,17 @@
-import type { PublicProfile } from "./profile-view";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 /*
- * 書き手の身元を表す構造化データ (ADR 0048)。
+ * 書き手とサイトを表す構造化データ (ADR 0048)。
  *
- * **Person を出す場所はすべてここを通す。** `/about`・トップ・記事の 3 か所が同じ `@id` を
- * 名乗ることで、読む側 (検索エンジン) は「同じ 1 人」だと分かる。場所ごとに手で組むと、
- * `@id` の綴りが 1 か所ずれただけで「同じ名前の人が 2 人いる」状態に戻り、しかも画面には
- * 何も出ないので気づけない。
+ * **Person と WebSite を出す場所、指す場所はすべてここを通す。** どのページも同じ `@id` を
+ * 名乗り、指すことで、読む側 (検索エンジン) は「同じ 1 人」「同じ 1 つのサイト」だと分かる。
+ * 場所ごとに手で組むと、`@id` の綴りが 1 か所ずれただけで「同じ名前の人が 2 人いる」状態に
+ * 戻り、しかも画面には何も出ないので気づけない。
+ *
+ * **どのページも、少なくとも「自分はこのサイトの一部だ」と名乗る。** 中身がまだ無い
+ * ページ (準備中) も同じ。その場所が在ることは置き終わる前から言ってよく、検索結果に出すか
+ * どうかは `noindex` が別に決める。名乗らないのは、存在しないページ (404) だけ。
  */
 
 type JsonLdNode = Record<string, unknown>;
@@ -155,14 +159,14 @@ const SITE_ALTERNATE_NAME = "yantene.net";
 /**
  * `/about` の構造化データ。ページを `ProfilePage` として名乗り、その主題に書き手を置く。
  *
- * **プロフィールが同期されているときだけ呼ぶ。** 同期の前の `/about` は「準備中」の一枚で
- * `noindex` が立つ。中身の無いページが「これは誰それのプロフィールページだ」と名乗るのは
- * 嘘になる。
+ * **プロフィールが同期されていなくても出す。** 主題の書き手は殻だけになる (`personNode`)。
+ * そのあいだ `/about` は「準備中」で `noindex` が立つが、ここが書き手のページであることは
+ * 変わらない。記事とトップが `url` で指している先でもある。
  *
  * **ページ自身には `@id` を付けない。** 名札が要るのは、ほかの場所から指されるもの
  * (書き手とサイト) だけ。このページを指す節はどこにも無い。
  */
-export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonLdNode {
+export function profilePageJsonLd(origin: string, profile: PublicProfile | null): JsonLdNode {
   return {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
@@ -173,7 +177,20 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonL
 }
 
 /**
- * 一覧のページ (`/articles`、`/works`) の構造化データ。ページを `CollectionPage` として
+ * どの型にも当たらないページ (`/legal`、ログインの画面) の構造化データ。ページを `WebPage`
+ * として名乗り、サイトの一部だと言う。
+ */
+export function webPageJsonLd(origin: string, path: string): JsonLdNode {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: `${origin}${path}`,
+    isPartOf: websiteReference(origin),
+  };
+}
+
+/**
+ * 一覧のページ (`/articles`、`/works`、`/notes`、`/slides`) の構造化データ。ページを `CollectionPage` として
  * 名乗り、サイトの一部だと言う。
  *
  * **並んでいる中身は載せない。** 1 件ずつの記述はそれぞれのページ (`BlogPosting`、

@@ -9,18 +9,15 @@ import {
   collectionPageJsonLd,
   personReference,
   websiteReference,
-} from "~/backend/handlers/profile/person-json-ld";
+} from "~/backend/handlers/json-ld";
 import { D1WorkQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2WorkContentCache } from "~/backend/infra/r2/r2-work-content-cache";
 
 export interface WorksPageData {
   /** 並び順 (`position` の小さい順)。まだ同期されていなければ空。 */
   readonly works: readonly PublicWork[];
-  /**
-   * `/works` の構造化データ (`CollectionPage`。ADR 0048)。**作品が 1 つも無いあいだは
-   * `null`。** 「準備中」で `noindex` が立つページは、作ったものの一覧だと名乗らない。
-   */
-  readonly jsonLd: Record<string, unknown> | null;
+  /** `/works` の構造化データ (`CollectionPage`。ADR 0048)。作品が無いあいだも出す。 */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 export interface WorkDetailPageData {
@@ -47,10 +44,9 @@ export async function loadWorks(env: Env): Promise<readonly PublicWork[]> {
 
 /** `/works` のデータを揃える (Composition Root)。 */
 export async function loadWorksPage(env: Env, origin: string): Promise<WorksPageData> {
-  const works = await loadWorks(env);
   return {
-    works,
-    jsonLd: works.length === 0 ? null : collectionPageJsonLd(origin, "/works"),
+    works: await loadWorks(env),
+    jsonLd: collectionPageJsonLd(origin, "/works"),
   };
 }
 

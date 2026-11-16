@@ -52,7 +52,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     description: works.length === 0 ? translations.comingSoon.works : translations.works.lead,
     // 中身が無いうちは検索結果に出さない。
     noindex: works.length === 0,
-    ...(jsonLd === null ? {} : { jsonLd }),
+    jsonLd,
   });
 };
 

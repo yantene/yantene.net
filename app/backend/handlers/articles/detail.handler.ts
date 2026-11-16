@@ -27,7 +27,7 @@ import { entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
-import { personReference, websiteReference } from "~/backend/handlers/profile/person-json-ld";
+import { personReference, websiteReference } from "~/backend/handlers/json-ld";
 import { toPublicArticle, type PublicArticle } from "~/backend/handlers/article-view";
 import { readSessionId } from "~/backend/handlers/session-cookie";
 import { toWebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";

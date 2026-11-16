@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { loadWorkDetailPage, loadWorks, loadWorksPage } from "./pages.handler";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
 import { Work, WorkName, WorkSlug, WorkSummary, WorkUrl } from "~/backend/domain/work";
-import { personId } from "~/backend/handlers/profile/person-json-ld";
+import { personId } from "~/backend/handlers/json-ld";
 import {
   D1ProfileCommandRepository,
   D1WorkCommandRepository,
@@ -98,11 +98,19 @@ describe("loadWorksPage の JSON-LD (ADR 0048)", () => {
     });
   });
 
-  /* 「準備中」で noindex が立つページは、作ったものの一覧だと名乗らない。 */
-  it("作品が 1 つも無ければ何も出さない", async () => {
+  /*
+   * 作品が無いあいだ (「準備中」+ noindex) も同じものを名乗る。この場所が在ることは置き
+   * 終わる前から言ってよく、検索結果に出すかどうかは noindex が別に決める。
+   */
+  it("作品が 1 つも無くても同じ一覧として名乗る", async () => {
     const { jsonLd } = await loadWorksPage(envWith(createTestD1(), createTestR2().bucket), ORIGIN);
 
-    expect(jsonLd).toBeNull();
+    expect(jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      url: `${ORIGIN}/works`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+    });
   });
 });
 

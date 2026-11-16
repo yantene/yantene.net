@@ -7,6 +7,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { SignInPanel } from "~/frontend/components/sign-in/sign-in-panel";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -33,6 +34,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     locale,
     origin,
     pathname: location.pathname,
+    jsonLd: webPageJsonLd(origin, location.pathname),
     title: translations.signIn.title,
     description: translations.signIn.lead,
     noindex: true,

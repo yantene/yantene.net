@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { PublicProfile } from "./profile-view";
+import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import {
+  collectionPageJsonLd,
   homeJsonLd,
   personId,
   personNode,
   personReference,
   profilePageJsonLd,
+  webPageJsonLd,
   websiteReference,
-} from "./person-json-ld";
+} from "~/backend/handlers/json-ld";
 import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 
 const ORIGIN = "https://yantene.net";
@@ -155,8 +157,40 @@ describe("profilePageJsonLd", () => {
     });
   });
 
+  /* 同期の前も出す。主題の書き手は殻だけになる。 */
+  it("still names the page before the first sync, around the shell of the author", () => {
+    expect(profilePageJsonLd(ORIGIN, null)).toEqual({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+      mainEntity: personNode(ORIGIN, null),
+    });
+  });
+
   it("keeps the history out", () => {
     expect(historyKeysIn(profilePageJsonLd(ORIGIN, PROFILE))).toEqual([]);
+  });
+});
+
+describe("collectionPageJsonLd / webPageJsonLd", () => {
+  /* 並んでいる中身は写さない。名乗るのは「どこの、何のページか」だけ。 */
+  it("names a listing as part of the site and nothing more", () => {
+    expect(collectionPageJsonLd(ORIGIN, "/articles")).toEqual({
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      url: `${ORIGIN}/articles`,
+      isPartOf: websiteReference(ORIGIN),
+    });
+  });
+
+  it("names any other page as part of the site and nothing more", () => {
+    expect(webPageJsonLd(ORIGIN, "/legal")).toEqual({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      url: `${ORIGIN}/legal`,
+      isPartOf: websiteReference(ORIGIN),
+    });
   });
 });
 

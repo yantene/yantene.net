@@ -3,7 +3,7 @@ import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { PublicWork } from "~/backend/handlers/works/work-view";
 import type { HistoryEntry } from "~/backend/domain/profile";
 import type { Root } from "mdast";
-import { profilePageJsonLd } from "./person-json-ld";
+import { profilePageJsonLd } from "~/backend/handlers/json-ld";
 import { toPublicHistory, toPublicProfile } from "./profile-view";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadWorks } from "~/backend/handlers/works/pages.handler";
@@ -35,7 +35,8 @@ export interface AboutPageData {
    * ちぐはぐも作らない。作品そのものは `/works` が独立に出す。
    */
   readonly works: readonly PublicWork[];
-  readonly jsonLd: Record<string, unknown> | null;
+  /** `/about` の構造化データ (`ProfilePage`)。同期の前も出す (書き手は殻だけ)。 */
+  readonly jsonLd: Record<string, unknown>;
 }
 
 /**
@@ -118,7 +119,14 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
   ]);
 
   if (profile === undefined) {
-    return { profile: null, mdast: null, history: [], linkCards: {}, works: [], jsonLd: null };
+    return {
+      profile: null,
+      mdast: null,
+      history: [],
+      linkCards: {},
+      works: [],
+      jsonLd: profilePageJsonLd(origin, null),
+    };
   }
   if (mdast === undefined) {
     // D1 に行があるのに本文が無いのは同期の壊れ方。黙って空のページを出さない。
@@ -133,8 +141,7 @@ export async function loadAboutPage(env: Env, origin: string): Promise<AboutPage
     linkCards: await loadLinkCards(env, mdast as Root),
     works,
     /*
-     * `ProfilePage` で包み、主題に書き手を置く (ADR 0048)。同期の前はここへ来ないので
-     * (上で null を返している)、「準備中」の一枚がプロフィールページを名乗ることは無い。
+     * `ProfilePage` で包み、主題に書き手を置く (ADR 0048)。
      */
     jsonLd: profilePageJsonLd(origin, publicProfile),
   };

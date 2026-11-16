@@ -8,6 +8,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { SignInForm } from "~/frontend/components/sign-in/sign-in-form";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { signInInvalidParam } from "~/lib/constants/sign-in";
@@ -56,6 +57,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     locale,
     origin,
     pathname: location.pathname,
+    jsonLd: webPageJsonLd(origin, location.pathname),
     title: translations.signIn.title,
     description: translations.signIn.lead,
     /*

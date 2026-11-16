@@ -15,7 +15,7 @@ import {
   D1WorkCommandRepository,
 } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
-import { PROFILE_PHOTO } from "~/lib/profile-fallback";
+import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
 
@@ -80,7 +80,20 @@ describe("loadAboutPage", () => {
 
     expect(data.profile).toBeNull();
     expect(data.mdast).toBeNull();
-    expect(data.jsonLd).toBeNull();
+    // 「準備中」のあいだも、ここが書き手のページだとは名乗る (ADR 0048)。書き手は殻だけ。
+    expect(data.jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+      mainEntity: {
+        "@type": "Person",
+        "@id": `${ORIGIN}/#person`,
+        name: FALLBACK_PROFILE_NAME,
+        url: `${ORIGIN}/about`,
+        image: `${ORIGIN}${PROFILE_PHOTO}`,
+      },
+    });
   });
 
   /*
@@ -305,7 +318,20 @@ describe("loadAboutPage", () => {
     const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
     expect(data.profile).toBeNull();
-    expect(data.jsonLd).toBeNull();
+    // 読めない行から拾った名前や出ていく先を、機械にだけ名乗らない。殻に倒す。
+    expect(data.jsonLd).toEqual({
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
+      mainEntity: {
+        "@type": "Person",
+        "@id": `${ORIGIN}/#person`,
+        name: FALLBACK_PROFILE_NAME,
+        url: `${ORIGIN}/about`,
+        image: `${ORIGIN}${PROFILE_PHOTO}`,
+      },
+    });
   });
 
   it("fails loudly when the body is missing from R2", async () => {

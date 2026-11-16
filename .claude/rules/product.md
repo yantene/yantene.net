@@ -521,19 +521,25 @@ JSON-LD の `Person` は、どのページに出ても `<origin>/#person` とい
 名乗る ([ADR 0048](../../docs/adr/0048-name-the-author-under-one-id.md))。名前が同じだけでは
 読む側 (検索エンジン) に同じ 1 人だと伝わらないため。
 
-| 場所     | 出すもの                                                           |
-| -------- | ------------------------------------------------------------------ |
-| `/about` | `ProfilePage`。`mainEntity` に Person の本体                       |
-| トップ   | `WebSite` と Person の本体 (1 つの `@graph`)                       |
-| 記事     | `author` / `publisher` が `@id` + `name` + `url` (`/about`) で指す |
+**どのページも構造化データを出す。** 少なくとも「自分はこのサイトの一部だ」と名乗る。
 
-- 記事・作品・`/about`・一覧は、`isPartOf` でサイト (`<origin>/#website`) も指す。サイトの
-  名前を言うのはトップの `WebSite` だけで、ほかは `@id` で指すだけ
-- 作品 (`/works/<slug>`) は `creator` で同じ `@id` の書き手を指す。一覧 (`/articles`、`/works`) は
-  `CollectionPage` として名乗り、並んでいる中身は写さない
-- **中身の無いページは名乗らない。** 「準備中」で `noindex` が立つあいだ (作品が無い `/works`、
-  `/notes`、`/slides`、同期前の `/about`) は JSON-LD を出さない
-- **`Person` を手で組まない。** `app/backend/handlers/profile/person-json-ld.ts` を通す。
+| ページ                                         | 型               | 指す先                                  |
+| ---------------------------------------------- | ---------------- | --------------------------------------- |
+| トップ                                         | `WebSite`        | 書き手 (隣に Person の本体)             |
+| `/about`                                       | `ProfilePage`    | Person の本体 (`mainEntity`)、サイト    |
+| 記事                                           | `BlogPosting`    | 書き手 (`author` / `publisher`)、サイト |
+| 作品 (`/works/<slug>`)                         | `CreativeWork`   | 書き手 (`creator`)、サイト              |
+| 一覧 (`/articles` `/works` `/notes` `/slides`) | `CollectionPage` | サイト                                  |
+| それ以外 (`/legal`、ログインの画面)            | `WebPage`        | サイト                                  |
+
+- サイトは `isPartOf` で `<origin>/#website` を指す。サイトの名前を言うのはトップの
+  `WebSite` だけで、ほかは `@id` で指すだけ。一覧に並んでいる中身は写さない
+- **中身がまだ無いページ (準備中) も名乗る。** その場所が在ることは置き終わる前から言って
+  よい (ナビが行き先を先に見せているのと同じ)。検索結果に出すかどうかは `noindex` が決める
+- **存在しないページ (404) は名乗らない**
+- ⚠️ **ルートを足したら `json-ld-wiring.test.ts` に足す。** 足し忘れると検査が落ちる。
+  構造化データの無いページは画面から見えないので、ここでしか気づけない
+- **`Person` を手で組まない。** `app/backend/handlers/json-ld.ts` を通す。
   `@id` の綴りが 1 か所ずれると「同じ名前の人が 2 人いる」ように読まれ、画面には何も
   出ないので気づけない
 - ⚠️ **`@id` は動かさない。** 識別子なので、変えると読む側には別人が現れたように見える
@@ -545,8 +551,8 @@ JSON-LD の `Person` は、どのページに出ても `<origin>/#person` とい
   `worksFor` はどの場所にも足さない
 - `WebSite` の `name` は「やんてね」で固定する。**翻訳リソースから引かない** (クローラーは
   既定の英語で読みに来るので、引くとサイト名が `yantene` になる)
-- 同期の前は、記事とトップは同じ `@id` のまま名前だけ既定値に倒れる。`/about` は何も
-  出さない (「準備中」+ `noindex` のページは `ProfilePage` を名乗らない)
+- 同期の前は、どのページも同じ `@id` のまま名前だけ既定値に倒れる。`/about` も
+  `ProfilePage` を名乗り、書き手は殻だけになる
 
 ## 作ったもの (work)
 

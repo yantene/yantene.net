@@ -1,7 +1,7 @@
 import type { Article, ArticleListResult } from "~/backend/domain/article";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
-import { collectionPageJsonLd, homeJsonLd } from "~/backend/handlers/profile/person-json-ld";
+import { collectionPageJsonLd, homeJsonLd } from "~/backend/handlers/json-ld";
 import {
   parseArticleSort,
   parsePagination,

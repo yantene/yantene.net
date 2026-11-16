@@ -14,7 +14,7 @@ import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cac
 import { createTestApp } from "~/backend/test-app";
 import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { loadArticleDetailPage } from "./detail.handler";
-import { personId } from "~/backend/handlers/profile/person-json-ld";
+import { personId } from "~/backend/handlers/json-ld";
 
 /** MDAST の put/get だけを賄う最小 R2 モック。 */
 function makeBucket(): R2Bucket {

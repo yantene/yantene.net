@@ -7,6 +7,7 @@ import { ComingSoon } from "~/frontend/components/coming-soon/coming-soon";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { collectionPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
@@ -33,6 +34,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     locale,
     origin,
     pathname: location.pathname,
+    jsonLd: collectionPageJsonLd(origin, location.pathname),
     title: translations.navigation.slides,
     description: translations.comingSoon.slides,
     /*

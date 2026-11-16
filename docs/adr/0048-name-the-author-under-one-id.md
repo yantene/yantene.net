@@ -6,9 +6,9 @@
 
 ## Context / 背景
 
-書き手を表す構造化データ (schema.org の `Person`) は 3 種類のページに出る。`/about` は
-書き手そのものを、記事は筆者 (`author`) と発行者 (`publisher`) を、トップはサイトの持ち主を
-それぞれ名乗る。
+書き手を表す構造化データ (schema.org の `Person`) は何種類ものページに出る。`/about` は
+書き手そのものを、記事は筆者 (`author`) と発行者 (`publisher`) を、作品は作った人
+(`creator`) を、トップはサイトの持ち主をそれぞれ名乗る。
 
 JSON-LD はページごとに閉じている。別々のページに同じ名前の `Person` が出ていても、読む側
 (検索エンジン) にとってそれが同じ 1 人だという根拠は無い。名前の一致は根拠にならない
@@ -61,7 +61,7 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
 ## 決定
 
 **書き手の `@id` は `<origin>/#person` の 1 つ (案 A)。** 組み立てるのは
-`app/backend/handlers/profile/person-json-ld.ts` の `personId` だけで、`Person` を出す
+`app/backend/handlers/json-ld.ts` の `personId` だけで、`Person` を出す
 場所はすべてこのモジュールを通る。origin は要求から取る (canonical と同じ)。production
 では `https://yantene.net/#person` になる。
 
@@ -77,22 +77,29 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
   場所から指されるものだけ。このページを指す節は無く、付けるなら土台は `/about` に
   なるので、案 B と同じ弱点 (URL を変えると古い識別子が残る) を抱える
 
-ページごとの出し方。
+**どのページも構造化データを出す。** 少なくとも「自分はこのサイトの一部だ」と名乗る。
 
-| ページ   | 出すもの                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------- |
-| `/about` | `ProfilePage`。`mainEntity` に `Person` の本体 (名前・顔・短い自己紹介・`sameAs`・`email`)     |
-| トップ   | `@graph` に `WebSite` と `Person` の本体。`WebSite` の `publisher` は `@id` で `Person` を指す |
-| 記事     | `BlogPosting`。`author` と `publisher` は `@id` + `name` + `url` (`/about`) の参照             |
+| ページ                                         | 型               | 指す先                                                  |
+| ---------------------------------------------- | ---------------- | ------------------------------------------------------- |
+| トップ                                         | `WebSite`        | `publisher` → 書き手 (同じ `@graph` に `Person` の本体) |
+| `/about`                                       | `ProfilePage`    | `mainEntity` に `Person` の本体、`isPartOf` → サイト    |
+| 記事                                           | `BlogPosting`    | `author` / `publisher` → 書き手、`isPartOf` → サイト    |
+| 作品 (`/works/<slug>`)                         | `CreativeWork`   | `creator` → 書き手、`isPartOf` → サイト                 |
+| 一覧 (`/articles` `/works` `/notes` `/slides`) | `CollectionPage` | `isPartOf` → サイト                                     |
+| それ以外 (`/legal`、ログインの画面)            | `WebPage`        | `isPartOf` → サイト                                     |
 
-- **記事・作品・`/about`・一覧は、`isPartOf` でサイト (`<origin>/#website`) を指す。** 人を
-  1 つにまとめたのと同じ線を、サイトにも張る。指すのは `@id` だけで、サイトの名前を言う
-  のはトップの `WebSite` だけにする
-- **作品 (`/works/<slug>` の `CreativeWork`) は、`creator` で書き手を指す。** 記事の `author` と
-  同じ名前付きの参照で、作った人が記事の筆者と同じ 1 人だと言う
-- **一覧 (`/articles`、`/works`) は `CollectionPage` として名乗る。** 載せるのは `url` と
-  `isPartOf` だけで、並んでいる中身は写さない (1 件ずつの記述はそれぞれのページが持つ)。
-  `url` は canonical と同じで、検索の結果やページ送りの途中でも変わらない
+- **サイトを指すのは `@id` だけ。** 人を 1 つにまとめたのと同じ線を、サイトにも張る。
+  サイトの名前を言うのはトップの `WebSite` だけにする
+- **作品は `creator` で書き手を指す。** 記事の `author` と同じ名前付きの参照で、作った人が
+  記事の筆者と同じ 1 人だと言う
+- **一覧に載せるのは `url` と `isPartOf` だけ。** 並んでいる中身は写さない (1 件ずつの
+  記述はそれぞれのページが持つ)。`url` は canonical と同じで、検索の結果やページ送りの
+  途中でも変わらない
+- **中身がまだ無いページ (準備中) も名乗る。** その場所が在ることは置き終わる前から言って
+  よく、ヘッダーのナビが行き先を先に見せているのと同じ理屈。検索結果に出すかどうかは
+  `noindex` が別に決める
+- **存在しないページ (404) は名乗らない。** 見つからなかった記事や作品が「自分はこの
+  サイトの記事だ」と言うのは嘘になる
 - **記事は名前付きの参照にする (案 E に `name` と `url` を足した形)。** `@id` で同じ人だと
   言い、`name` で Google の要件を満たす。自己紹介と出ていく先は載せない
 - **トップには本体を置く。** トップは `WebSite` の `publisher` が指す先を同じ `@graph` の
@@ -115,13 +122,10 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
   殻 (`@id`・名前・顔・`url`) だけになり、`description` / `sameAs` / `email` は出さない
   (空の `sameAs` を出すと「出ていく先は無い」と名乗ることになる)。`@id` は識別子で
   あって、引けることを約束するものではない。同期された時点で、同じ `@id` の中身が埋まる
-- **`/about` は何も出さない。** 「準備中」の一枚で `noindex` が立っているページが
-  `ProfilePage` を名乗るのは嘘になる
+- **`/about` も出す。** 「準備中」で `noindex` が立つが、`ProfilePage` として名乗り、
+  主題の書き手は殻だけにする。記事とトップが `url` で指している先なので、ここが書き手の
+  ページであることは同期の前から変わらない
 - 作品は、記事と同じく `creator` の名前だけ既定値に倒す
-
-**中身の無いページは名乗らない。** 作品が 1 つも無いあいだの `/works` と、まだ中身の無い
-`/notes` / `/slides` は「準備中」で `noindex` が立つので、JSON-LD を出さない (`/about` の
-同期前と同じ線引き)。
 
 ## 帰結 / Consequences
 
@@ -133,9 +137,14 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
   そのままで、`url` だけを直せば済む。
 - 悪い面・トレードオフ: staging と production は origin が違うので、`@id` も違う。
   staging は BASIC 認証の内側にあり、クローラーには見えないので実害は無い。
-- 検証方法: `person-json-ld.test.ts` が `@id` の綴りと、本体・参照・同期前の殻の形を
-  固定する。`pages.handler.test.ts` (profile / articles) と `detail.handler.test.ts` が
-  各ページの出力を固定し、`/about` の欄の許可リストが経歴の混入を見張る。
+- 良い面: ルートを足すと、`json-ld-wiring.test.ts` が落ちる。構造化データの無いページが
+  黙って増えない。
+- 悪い面・トレードオフ: 作品のページがプロフィールを 1 回引く (`creator` に名前を入れる
+  ため)。
+- 検証方法: `json-ld.test.ts` が `@id` の綴りと、本体・参照・同期前の殻・各ページの型の形を
+  固定する。各 `pages.handler.test.ts` と `detail.handler.test.ts` が loader の出力を固定し、
+  `/about` の欄の許可リストが経歴の混入を見張る。`json-ld-wiring.test.ts` が、全ルートの
+  `meta` が構造化データを HTML まで運ぶことと、404 では出さないことを固定する。
   `page-meta.test.ts` が、`@graph` が全ページ共通の出し口を素通りすることを固定する。
 
 ## 参考 / More Information
