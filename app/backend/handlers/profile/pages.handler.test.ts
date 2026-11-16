@@ -167,7 +167,7 @@ describe("loadAboutPage", () => {
   /**
    * ページを `ProfilePage` として名乗り、主題に書き手を置く (ADR 0048)。
    *
-   * 書き手の `@id` は `/about#person`。記事とトップが同じ綴りで指してくるので、
+   * 書き手の `@id` は `/#person`。記事とトップが同じ綴りで指してくるので、
    * ここがずれると「同じ名前の人が 2 人いる」状態に戻る。
    */
   it("wraps the Person in a ProfilePage under the shared @id", async () => {
@@ -182,7 +182,7 @@ describe("loadAboutPage", () => {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
       url: `${ORIGIN}/about`,
-      mainEntity: { "@type": "Person", "@id": `${ORIGIN}/about#person` },
+      mainEntity: { "@type": "Person", "@id": `${ORIGIN}/#person` },
     });
   });
 
@@ -250,6 +250,7 @@ describe("loadAboutPage", () => {
     // 包みの側にも欄を足させない。経歴を `ProfilePage` の欄として出す抜け道を塞ぐ。
     expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
       "@context",
+      "@id",
       "@type",
       "mainEntity",
       "url",

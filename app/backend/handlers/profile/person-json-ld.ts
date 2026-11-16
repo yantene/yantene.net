@@ -15,14 +15,27 @@ type JsonLdNode = Record<string, unknown>;
 /**
  * 書き手の `@id`。**この文字列を組み立てるのはここだけ。**
  *
- * `/about` を土台にするのは、そこが書き手についてのページだから。`#person` を付けるのは、
- * ページ (`ProfilePage`) とそこに書かれている人 (`Person`) が別のものだから。
+ * サイトのルートを土台にするのは、そこが動かない場所だから。`@id` は名札であって、
+ * 開けるページを指す必要は無い。書き手についてのページ (`/about`) は `url` が指す。
+ * `#person` を付けるのは、同じルートを土台にするサイト (`#website`) と人を別の名札で
+ * 言い分けるため。**フラグメント無しのルートを人の `@id` にしないこと** (サイトと人が
+ * 同じ 1 つの節に合体する)。
  *
  * ⚠️ **一度配ったら動かさない。** 識別子なので、変えると読む側からは別人が現れたことに
- * なる。`/about` の URL を動かすときは、この `@id` だけは元の綴りのまま残すこと。
+ * なる。
  */
 export function personId(origin: string): string {
-  return `${origin}/about#person`;
+  return `${origin}/#person`;
+}
+
+/** サイトの `@id`。書き手 ({@link personId}) と同じルートを土台に、別のフラグメントで名乗る。 */
+function websiteId(origin: string): string {
+  return `${origin}/#website`;
+}
+
+/** `/about` というページの `@id`。ページと、そこに書かれている人 ({@link personId}) は別のもの。 */
+function profilePageId(origin: string): string {
+  return `${origin}/about#profile`;
 }
 
 /** 書き手についてのページ。Person の `url` が指す先。 */
@@ -134,6 +147,7 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonL
   return {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
+    "@id": profilePageId(origin),
     url: personUrl(origin),
     mainEntity: personNode(origin, profile),
   };
@@ -155,6 +169,7 @@ export function homeJsonLd(origin: string, profile: PublicProfile | null): JsonL
     "@graph": [
       {
         "@type": "WebSite",
+        "@id": websiteId(origin),
         name: SITE_NAME,
         alternateName: SITE_ALTERNATE_NAME,
         url: `${origin}/`,

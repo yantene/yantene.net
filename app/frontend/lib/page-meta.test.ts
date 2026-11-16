@@ -43,8 +43,8 @@ describe("buildPageMeta", () => {
     const jsonLd = {
       "@context": "https://schema.org",
       "@graph": [
-        { "@type": "WebSite", name: "やんてね", publisher: { "@id": `${origin}/about#person` } },
-        { "@type": "Person", "@id": `${origin}/about#person`, name: "やんてね" },
+        { "@type": "WebSite", name: "やんてね", publisher: { "@id": `${origin}/#person` } },
+        { "@type": "Person", "@id": `${origin}/#person`, name: "やんてね" },
       ],
     };
     const meta = buildPageMeta({ locale: "ja", origin, pathname: "/", jsonLd });

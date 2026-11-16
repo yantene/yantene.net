@@ -38,15 +38,13 @@ describe("personId", () => {
    * 識別子なので、一度配ったら動かさない。綴りを 1 字変えると、読む側からは別人が
    * 現れたことになる。
    */
-  it("is the about page with a #person fragment", () => {
-    expect(personId(ORIGIN)).toBe("https://yantene.net/about#person");
+  it("is the site root with a #person fragment", () => {
+    expect(personId(ORIGIN)).toBe("https://yantene.net/#person");
   });
 
   /* origin は要求から来る。staging で production の `@id` を名乗らない。 */
   it("follows the origin it is given", () => {
-    expect(personId("https://staging.yantene.net")).toBe(
-      "https://staging.yantene.net/about#person",
-    );
+    expect(personId("https://staging.yantene.net")).toBe("https://staging.yantene.net/#person");
   });
 });
 
@@ -54,7 +52,7 @@ describe("personNode", () => {
   it("describes the author in full when the profile is synced", () => {
     expect(personNode(ORIGIN, PROFILE)).toEqual({
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: "やんてね",
       url: `${ORIGIN}/about`,
       image: `${ORIGIN}${PROFILE_PHOTO}`,
@@ -72,7 +70,7 @@ describe("personNode", () => {
   it("keeps only the shell before the first sync", () => {
     expect(personNode(ORIGIN, null)).toEqual({
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: FALLBACK_PROFILE_NAME,
       url: `${ORIGIN}/about`,
       image: `${ORIGIN}${PROFILE_PHOTO}`,
@@ -95,7 +93,7 @@ describe("personReference", () => {
   it("carries the id, the name and the about url, and nothing else", () => {
     expect(personReference(ORIGIN, PROFILE)).toEqual({
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: "やんてね",
       url: `${ORIGIN}/about`,
     });
@@ -104,7 +102,7 @@ describe("personReference", () => {
   it("falls back to the default name before the first sync", () => {
     expect(personReference(ORIGIN, null)).toEqual({
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: FALLBACK_PROFILE_NAME,
       url: `${ORIGIN}/about`,
     });
@@ -116,6 +114,7 @@ describe("profilePageJsonLd", () => {
     expect(profilePageJsonLd(ORIGIN, PROFILE)).toEqual({
       "@context": "https://schema.org",
       "@type": "ProfilePage",
+      "@id": `${ORIGIN}/about#profile`,
       url: `${ORIGIN}/about`,
       mainEntity: personNode(ORIGIN, PROFILE),
     });
@@ -133,10 +132,11 @@ describe("homeJsonLd", () => {
       "@graph": [
         {
           "@type": "WebSite",
+          "@id": `${ORIGIN}/#website`,
           name: "やんてね",
           alternateName: "yantene.net",
           url: `${ORIGIN}/`,
-          publisher: { "@id": `${ORIGIN}/about#person` },
+          publisher: { "@id": `${ORIGIN}/#person` },
         },
         personNode(ORIGIN, PROFILE),
       ],
@@ -151,7 +151,7 @@ describe("homeJsonLd", () => {
     const [site, person] = graph;
 
     expect(site?.publisher).toEqual({ "@id": person?.["@id"] });
-    expect(person?.["@id"]).toBe(`${ORIGIN}/about#person`);
+    expect(person?.["@id"]).toBe(`${ORIGIN}/#person`);
   });
 
   /*

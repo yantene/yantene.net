@@ -62,7 +62,7 @@ const load = (d1: D1Database, search: string): Promise<ArticlesListPageData> =>
  */
 describe("loadHomePage の JSON-LD (ADR 0048)", () => {
   const ORIGIN = "https://example.com";
-  const PERSON_ID = `${ORIGIN}/about#person`;
+  const PERSON_ID = `${ORIGIN}/#person`;
 
   const graphOf = (jsonLd: Record<string, unknown>): readonly Record<string, unknown>[] =>
     jsonLd["@graph"] as readonly Record<string, unknown>[];
@@ -75,6 +75,7 @@ describe("loadHomePage の JSON-LD (ADR 0048)", () => {
       "@graph": [
         {
           "@type": "WebSite",
+          "@id": `${ORIGIN}/#website`,
           name: "やんてね",
           alternateName: "yantene.net",
           url: `${ORIGIN}/`,

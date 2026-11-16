@@ -260,7 +260,7 @@ describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
 
     const person = {
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: "書き手",
       url: `${ORIGIN}/about`,
     };
@@ -279,7 +279,7 @@ describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
 
     const person = {
       "@type": "Person",
-      "@id": `${ORIGIN}/about#person`,
+      "@id": `${ORIGIN}/#person`,
       name: FALLBACK_PROFILE_NAME,
       url: `${ORIGIN}/about`,
     };
