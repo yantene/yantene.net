@@ -129,7 +129,9 @@ Cloudflare Worker のエントリポイントは `workers/app.ts`。`getApp()` �
    secure headers / BASIC 認証 / JSON API (`/api/**`) / フィード・OG 画像・sitemap /
    記事の原文 Markdown (`/articles/<slug>.md` と、`Accept` が `text/markdown` を名指しした
    ときの `/articles/<slug>`。ADR 0020) / Webmention の受け口 (`POST /webmention`) /
-   過去の URL のリダイレクト (`legacy-redirects.handler.ts`)
+   過去の URL のリダイレクト (`legacy-redirects.handler.ts`) /
+   末尾にスラッシュの付いた URL の付け替え (`middleware/trailing-slash.ts`。`/articles/` を
+   `/articles` へ 308 で送り、1 つのページに URL を 2 つ持たせない)
 3. どれにも当たらないリクエストは末尾の `app.all("*")` が React Router へ委譲する
 4. React Router がルートを解決し、loader が `context.get(cloudflareContext).env` から
    `backend/handlers` のローダを呼んでデータを揃える
