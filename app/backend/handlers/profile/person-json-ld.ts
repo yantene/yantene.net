@@ -34,6 +34,16 @@ function websiteId(origin: string): string {
 }
 
 /**
+ * サイトへの参照。記事と `/about` が `isPartOf` で「このページはこのサイトの一部」と言う。
+ *
+ * `@id` だけで指す。サイトの本体 (名前・別名) を言うのはトップの `WebSite` の役で、
+ * ページごとに写すと、名前を変えたときに場所によって違うことを言う余地ができる。
+ */
+export function websiteReference(origin: string): JsonLdNode {
+  return { "@id": websiteId(origin) };
+}
+
+/**
  * 書き手についてのページ (`/about`) の URL。Person の `url` と、そのページ自身
  * (`ProfilePage`) の `url` が指す先。
  */
@@ -157,6 +167,7 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile): JsonL
     "@context": "https://schema.org",
     "@type": "ProfilePage",
     url: aboutUrl(origin),
+    isPartOf: websiteReference(origin),
     mainEntity: personNode(origin, profile),
   };
 }

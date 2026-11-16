@@ -85,6 +85,9 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
 | トップ   | `@graph` に `WebSite` と `Person` の本体。`WebSite` の `publisher` は `@id` で `Person` を指す |
 | 記事     | `BlogPosting`。`author` と `publisher` は `@id` + `name` + `url` (`/about`) の参照             |
 
+- **記事と `/about` は、`isPartOf` でサイト (`<origin>/#website`) を指す。** 人を 1 つに
+  まとめたのと同じ線を、サイトにも張る。指すのは `@id` だけで、サイトの名前を言うのは
+  トップの `WebSite` だけにする
 - **記事は名前付きの参照にする (案 E に `name` と `url` を足した形)。** `@id` で同じ人だと
   言い、`name` で Google の要件を満たす。自己紹介と出ていく先は載せない
 - **トップには本体を置く。** トップは `WebSite` の `publisher` が指す先を同じ `@graph` の

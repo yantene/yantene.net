@@ -6,6 +6,7 @@ import {
   personNode,
   personReference,
   profilePageJsonLd,
+  websiteReference,
 } from "./person-json-ld";
 import { FALLBACK_PROFILE_NAME, PROFILE_PHOTO } from "~/lib/profile-fallback";
 
@@ -149,12 +150,26 @@ describe("profilePageJsonLd", () => {
       "@context": "https://schema.org",
       "@type": "ProfilePage",
       url: `${ORIGIN}/about`,
+      isPartOf: { "@id": `${ORIGIN}/#website` },
       mainEntity: personNode(ORIGIN, PROFILE),
     });
   });
 
   it("keeps the history out", () => {
     expect(historyKeysIn(profilePageJsonLd(ORIGIN, PROFILE))).toEqual([]);
+  });
+});
+
+describe("websiteReference", () => {
+  /*
+   * 記事と `/about` が指す先は、トップが名乗る `WebSite` の `@id` と同じ綴りでなければ
+   * ならない。ずれると、どこにも無いサイトを指すことになる。
+   */
+  it("points at the WebSite the home page declares", () => {
+    const [site] = homeJsonLd(ORIGIN, null)["@graph"] as readonly Record<string, unknown>[];
+
+    expect(websiteReference(ORIGIN)).toEqual({ "@id": `${ORIGIN}/#website` });
+    expect(websiteReference(ORIGIN)).toEqual({ "@id": site?.["@id"] });
   });
 });
 

@@ -271,6 +271,8 @@ describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
     expect(jsonLd.publisher).toEqual(person);
     // 綴りの出どころは 1 か所。`/about` とトップが名乗る `@id` と同じ関数から来る。
     expect(person["@id"]).toBe(personId(ORIGIN));
+    // 記事はサイトの一部。トップが名乗る `WebSite` を `@id` だけで指す。
+    expect(jsonLd.isPartOf).toEqual({ "@id": `${ORIGIN}/#website` });
   });
 
   /*
