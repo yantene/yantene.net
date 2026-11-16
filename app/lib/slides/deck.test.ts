@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paginate, titleTextOf } from "./deck";
+import { footnoteNumbers, paginate, titleTextOf, withoutPauses } from "./deck";
 import { findOverfull } from "./overfull";
 import { SAMPLE_SLIDE_MARKDOWN } from "./sample-deck";
 import type { ContentPage, SlideDeck, SlidePage } from "./deck";
@@ -46,6 +46,8 @@ describe("paginate: 見本のデッキ", () => {
       "content:設計の拠り所",
       "content:入口のコード",
       "content:人気順の重み",
+      "content:同期のしくみ",
+      "content:使っているもの",
       "content:ご清聴ありがとうございました",
       "references:",
     ]);
@@ -234,6 +236,31 @@ describe("findOverfull", () => {
   it("flags a title too long to stay on two lines", () => {
     expect(findOverfull(deckOf(`## ${"題".repeat(33)}\n`))).toEqual([
       { page: 2, reason: "33 characters in the title (at most 32)" },
+    ]);
+  });
+});
+
+describe("withoutPauses / footnoteNumbers", () => {
+  /* 間はスライドの時間の話。読み物に `. . .` を字として出さない。 */
+  it("drops pause markers for the reading view and keeps everything else", () => {
+    const mdast = parseMarkdownBody("## 題\n\n- 前\n\n. . .\n\n- 後\n\n語り。\n").mdast;
+    const reading = withoutPauses(mdast);
+
+    expect(reading.children.map((node) => node.type)).toEqual([
+      "heading",
+      "list",
+      "list",
+      "paragraph",
+    ]);
+    // 元の木は変えない。
+    expect(mdast.children).toHaveLength(5);
+  });
+
+  it("numbers footnotes in the order of the references page", () => {
+    const deck = deckOf("## 題\n\n- 一[^b]\n- 二[^a]\n\n[^a]: A\n[^b]: B\n");
+    expect([...footnoteNumbers(deck)]).toEqual([
+      ["a", 1],
+      ["b", 2],
     ]);
   });
 });

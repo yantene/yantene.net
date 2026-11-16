@@ -63,5 +63,11 @@ export const Code: Story = { args: { page: pageAt(9), number: 10 } };
 /** 数式。 */
 export const Math: Story = { args: { page: pageAt(10), number: 11 } };
 
+/** 図式 (Mermaid)。ブラウザで図に組む。 */
+export const Diagram: Story = { args: { page: pageAt(11), number: 12 } };
+
+/** 入れ子の列挙。 */
+export const NestedBullets: Story = { args: { page: pageAt(12), number: 13 } };
+
 /** 参考。脚注を最後の 1 枚にまとめる。 */
-export const References: Story = { args: { page: pageAt(12), number: 13 } };
+export const References: Story = { args: { page: pageAt(14), number: 15 } };

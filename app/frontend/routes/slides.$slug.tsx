@@ -15,7 +15,7 @@ import { SlideDeck } from "~/frontend/components/slide/slide-deck";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
-import { paginate } from "~/lib/slides/deck";
+import { paginate, withoutPauses } from "~/lib/slides/deck";
 
 /*
  * スライド 1 本 (ADR 0052)。
@@ -95,7 +95,9 @@ export default function SlideShow({ loaderData }: Route.ComponentProps): React.J
     };
   }, [slide, mdast, author, linkCards, origin]);
 
-  if (slide === null || mdast === null || context === null) {
+  const transcript = useMemo(() => (mdast === null ? null : withoutPauses(mdast)), [mdast]);
+
+  if (slide === null || mdast === null || context === null || transcript === null) {
     return (
       <AppLayout>
         <Header />
@@ -117,8 +119,8 @@ export default function SlideShow({ loaderData }: Route.ComponentProps): React.J
       <div className="slide-screen-only">
         <Header />
       </div>
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-10">
-        <article className="h-entry flex flex-col gap-10">
+      <main className="slide-print-root mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-10">
+        <article className="slide-print-root h-entry flex flex-col gap-10">
           <header className="slide-screen-only flex flex-col gap-2">
             <h1 className="p-name text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
               {slide.title}
@@ -165,7 +167,8 @@ export default function SlideShow({ loaderData }: Route.ComponentProps): React.J
               {t("slides.transcript")}
             </h2>
             <MdastRenderer
-              node={mdast}
+              // 「間」の印はスライドの時間の話なので、読み物には出さない。
+              node={transcript}
               className="e-content"
               linkCards={linkCards}
               siteOrigin={origin}

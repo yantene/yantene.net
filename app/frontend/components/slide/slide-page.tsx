@@ -6,8 +6,10 @@ import type {
   SlideDeck,
   SlidePage as SlidePageModel,
 } from "~/lib/slides/deck";
-import type { Root, RootContent } from "mdast";
+import type { Nodes, Root, RootContent } from "mdast";
+import { mapTree } from "~/backend/services/mdast-tree";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
+import { footnoteNumbers } from "~/lib/slides/deck";
 
 /** 表紙に出す、発表の場。 */
 export interface SlideEventView {
@@ -205,7 +207,14 @@ function Blocks({
   readonly nodes: readonly RootContent[];
   readonly context: SlideContext;
 }): React.JSX.Element {
-  const root: Root = { type: "root", children: [...nodes, ...context.deck.definitions] };
+  const numbers = footnoteNumbers(context.deck);
+  const root: Root = {
+    type: "root",
+    children: [
+      ...nodes.map((node) => withPlainFootnotes(node, numbers)),
+      ...context.deck.definitions,
+    ],
+  };
   return (
     <MdastRenderer
       node={root}
@@ -213,6 +222,25 @@ function Blocks({
       {...(context.siteOrigin === undefined ? {} : { siteOrigin: context.siteOrigin })}
     />
   );
+}
+
+/**
+ * 脚注の参照を、番号だけの上付きの字に替える。
+ *
+ * **リンクにしない。** 同じ原文を下の読み物も描いていて、そちらが脚注の id を持つ。
+ * スライドの側も同じ id を出すと 1 つのページに id が 2 つ並び、読み物の「参照へ戻る」が
+ * 隠れているスライドに当たる。行き先は最後の References のページが持つ。
+ */
+function withPlainFootnotes<T extends Nodes>(node: T, numbers: ReadonlyMap<string, number>): T {
+  return mapTree(node, (child) => {
+    if (child.type !== "footnoteReference") return child;
+    const number = numbers.get(child.identifier);
+    return {
+      type: "emphasis",
+      data: { hName: "sup" },
+      children: [{ type: "text", value: number === undefined ? "*" : String(number) }],
+    };
+  });
 }
 
 function textOf(title: ContentPage["title"]): string {

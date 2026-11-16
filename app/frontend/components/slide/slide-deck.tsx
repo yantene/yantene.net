@@ -4,11 +4,11 @@ import { SlidePage, numbered } from "./slide-page";
 import {
   FIRST_POSITION,
   crossesChapter,
-  goTo,
   hashOf,
   next,
   positionFromHash,
   previous,
+  targetForKey,
 } from "./slide-navigation";
 import type { SlideContext } from "./slide-page";
 import type { SlidePosition } from "./slide-navigation";
@@ -29,9 +29,8 @@ export interface SlideDeckProps {
 /** 指で払ったとみなす、横の動きの下限 (px)。 */
 const SWIPE_THRESHOLD = 40;
 
-/** 送るキーと戻すキー。PageDown / PageUp は発表用のリモコンが送る。 */
-const NEXT_KEYS = new Set(["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"]);
-const PREVIOUS_KEYS = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
+/** 焦点のある要素を働かせるキー。押せる要素に焦点がある間は、送るのに使わない。 */
+const ACTIVATION_KEYS = new Set(["Enter", " "]);
 
 /** 押したときにページを送らない場所。そこ自身の働き (リンク・拡大・コピー) を優先する。 */
 const INTERACTIVE = "a, button, summary, input, textarea, select, [role='dialog']";
@@ -101,21 +100,35 @@ export function SlideDeck({ context, labels }: SlideDeckProps): React.JSX.Elemen
     if (globalThis.location.hash !== hash) globalThis.history.replaceState(null, "", hash);
   }, [playing, position]);
 
+  /*
+   * 読み手がスライドに向き合っているか。最後に押した場所がスライドの中なら真。
+   * スクロールにも使うキー (Space、PageDown、上下の矢印、Home / End) を取ってよいかを
+   * これで決める。いつでも取ると、下の読み物へキーボードで降りられなくなる。
+   */
+  const deckRef = useRef<HTMLDivElement>(null);
+  const engagedRef = useRef(false);
+  useEffect(() => {
+    function onPointerDownAnywhere(event: PointerEvent): void {
+      engagedRef.current =
+        event.target instanceof Node && deckRef.current?.contains(event.target) === true;
+    }
+    document.addEventListener("pointerdown", onPointerDownAnywhere);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDownAnywhere);
+    };
+  }, []);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (isTyping(event) || event.metaKey || event.ctrlKey || event.altKey) return;
-      const current = positionRef.current;
-      const target = targetFor(event.key, current);
+      // リンクやボタンに焦点があるときの Enter / Space は、その要素のもの。
+      if (ACTIVATION_KEYS.has(event.key) && isOnControl(event)) return;
+
+      const engaged = engagedRef.current || document.fullscreenElement !== null;
+      const target = targetForKey(deck, positionRef.current, event.key, engaged);
       if (target === undefined) return;
       event.preventDefault();
       move(target);
-    }
-    function targetFor(key: string, current: SlidePosition): SlidePosition | undefined {
-      if (NEXT_KEYS.has(key)) return next(deck, current);
-      if (PREVIOUS_KEYS.has(key)) return previous(deck, current);
-      if (key === "Home") return goTo(deck, 0);
-      if (key === "End") return goTo(deck, deck.pages.length - 1);
-      return undefined;
     }
     globalThis.addEventListener("keydown", onKeyDown);
     return () => {
@@ -159,7 +172,7 @@ export function SlideDeck({ context, labels }: SlideDeckProps): React.JSX.Elemen
   }, []);
 
   return (
-    <div className="slide-deck" data-playing={playing ? "" : undefined}>
+    <div ref={deckRef} className="slide-deck" data-playing={playing ? "" : undefined}>
       {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- 同じ働きはキー (window の keydown) と下の操作の並びが持つ */}
       <div
         ref={stageRef}
@@ -238,6 +251,11 @@ function isTyping(event: KeyboardEvent): boolean {
     if (target.closest("input, textarea, select, [role='dialog'], dialog") !== null) return true;
   }
   return document.querySelector("dialog[open], [role='dialog']") !== null;
+}
+
+/** 押せる要素 (リンク・ボタン) に焦点があるか。 */
+function isOnControl(event: KeyboardEvent): boolean {
+  return event.target instanceof Element && event.target.closest(INTERACTIVE) !== null;
 }
 
 /**

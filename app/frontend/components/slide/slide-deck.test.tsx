@@ -62,9 +62,18 @@ describe("SlideDeck のサーバー出力", () => {
     expect(document.querySelectorAll(".slide-deck [style]:not(math, math *)")).toHaveLength(0);
   });
 
+  /*
+   * 脚注の参照はリンクにしない。同じ原文を下の読み物も描くので、スライドの側も id を
+   * 出すと 1 つのページに同じ id が 2 つ並ぶ。
+   */
+  it("shows footnote references as plain numbers without ids", () => {
+    expect(document.querySelectorAll(".slide-deck [id^='user-content-fn']")).toHaveLength(0);
+    expect(document.querySelector(".slide-layout-quote sup")?.textContent).toBe("1");
+  });
+
   it("names each page for assistive technology", () => {
     const first = document.querySelector(".slide-page");
     expect(first?.getAttribute("aria-roledescription")).toBe("slide");
-    expect(first?.getAttribute("aria-label")).toBe("1 / 13");
+    expect(first?.getAttribute("aria-label")).toBe("1 / 15");
   });
 });

@@ -79,6 +79,22 @@ $$
 w(d) = 2^{(d - d_0) / h}
 $$
 
+## 同期のしくみ
+
+\`\`\`mermaid
+flowchart LR
+  push[git push] --> queue[Queue] --> worker[Worker] --> d1[(D1)]
+  worker --> r2[(R2)]
+\`\`\`
+
+## 使っているもの
+
+- 動かす場所
+  - Cloudflare Workers
+  - D1 と R2
+- 描くもの
+  - React Router
+
 ## ご清聴ありがとうございました
 
 [^clean]: Robert C. Martin『Clean Architecture』

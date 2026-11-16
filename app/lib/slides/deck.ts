@@ -294,3 +294,23 @@ export function titleTextOf(page: SlidePage): string {
   if (page.kind === "cover" || page.kind === "references") return "";
   return mdastToString({ type: "paragraph", children: [...page.title] });
 }
+
+/**
+ * 「間」の印 (`. . .`) を除いた原文。読み物として描くときに使う。
+ *
+ * 間はスライドの時間の話で、上から下へ読む文章には意味が無い。残すと `. . .` が
+ * 字としてそのまま出る。
+ */
+export function withoutPauses(mdast: Root): Root {
+  return { ...mdast, children: mdast.children.filter((node) => !isPause(node)) };
+}
+
+/**
+ * 脚注の番号。References のページに並ぶ順 (定義を書いた順) で 1 から振る。
+ * スライドの中の参照を、リンクではなく番号だけで出すために使う。
+ */
+export function footnoteNumbers(deck: SlideDeck): ReadonlyMap<string, number> {
+  const references = deck.pages.find((page) => page.kind === "references");
+  const footnotes = references?.kind === "references" ? references.footnotes : [];
+  return new Map(footnotes.map((footnote, index) => [footnote.identifier, index + 1]));
+}
