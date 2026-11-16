@@ -1,5 +1,6 @@
 import { InvalidHistoryDateError } from "./history-date.vo";
 import { InvalidHistoryEntryError } from "./history-entry.vo";
+import { InvalidProfileIdentityError } from "./profile-identity.vo";
 import { InvalidProfileNameError } from "./profile-name.vo";
 import { InvalidSocialUrlError, UnknownSocialPlatformError } from "./social-account.vo";
 import { InvalidTaglineError } from "./tagline.vo";
@@ -25,6 +26,7 @@ const profileDataErrors = [
   InvalidHistoryDateError,
   InvalidHistoryEntryError,
   InvalidImageUrlError,
+  InvalidProfileIdentityError,
   InvalidProfileNameError,
   InvalidSocialUrlError,
   InvalidTaglineError,

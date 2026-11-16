@@ -183,6 +183,13 @@
       "when": 1794845470972,
       "tag": "0025_create_content_reactions_and_views",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1794846574668,
+      "tag": "0026_add_profile_identity_fields",
+      "breakpoints": true
     }
   ]
 }

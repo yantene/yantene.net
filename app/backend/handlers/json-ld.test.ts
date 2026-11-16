@@ -16,6 +16,16 @@ const ORIGIN = "https://yantene.net";
 
 const PROFILE: PublicProfile = {
   name: "やんてね",
+  displayName: "やんてね",
+  identity: {
+    nameEn: null,
+    familyName: null,
+    givenName: null,
+    alternateNames: [],
+    jobTitle: null,
+    description: null,
+    descriptionEn: null,
+  },
   tagline: ["東京で Web 開発者を", "やっています。"],
   socials: [
     { platform: "github", url: "https://github.com/yantene", isMe: true },
@@ -63,6 +73,63 @@ describe("personNode", () => {
       // 相互リンクのある先だけ。メールは sameAs ではなく email へ回す。
       sameAs: ["https://github.com/yantene"],
       email: "contact@example.com",
+    });
+  });
+
+  /*
+   * 名前は本名だけ。ハンドルネームと別の表記は `alternateName` に並べる。括弧つきの
+   * 表示用の名前 (`displayName`) は機械に名乗らない。
+   */
+  it("names the author by the real name and lists the other names as alternateName", () => {
+    const node = personNode(ORIGIN, {
+      ...PROFILE,
+      name: "吉田 周平",
+      displayName: "吉田 周平 (Shuhei YOSHIDA)",
+      identity: {
+        nameEn: "Shuhei YOSHIDA",
+        familyName: "吉田",
+        givenName: "周平",
+        // 本名と同じ字と、英語名と重なる字は落ちる。
+        alternateNames: ["やんてね", "yantene", "Shuhei YOSHIDA", "吉田 周平"],
+        jobTitle: "Web Developer",
+        description: "吉田 周平 (よしだ しゅうへい) の個人サイト。",
+        descriptionEn: "Personal website of Shuhei YOSHIDA.",
+      },
+    });
+
+    expect(node).toMatchObject({
+      name: "吉田 周平",
+      alternateName: ["Shuhei YOSHIDA", "やんてね", "yantene"],
+      givenName: "周平",
+      familyName: "吉田",
+      jobTitle: "Web Developer",
+      // 機械向けの説明文が、短い自己紹介より先に採られる。
+      description: "吉田 周平 (よしだ しゅうへい) の個人サイト。",
+    });
+  });
+
+  /* 書いていない欄は欄ごと出さない。空の `alternateName` は「別名は無い」と名乗ることになる。 */
+  it("omits the identity fields the writer left out", () => {
+    const node = personNode(ORIGIN, PROFILE);
+
+    for (const field of ["alternateName", "givenName", "familyName", "jobTitle"]) {
+      expect(node).not.toHaveProperty(field);
+    }
+  });
+
+  /* 記事と作品が運ぶ参照は、名前と行き先だけ。別名や説明文を記事の数だけ運ばない。 */
+  it("keeps the identity fields out of the reference", () => {
+    const reference = personReference(ORIGIN, {
+      ...PROFILE,
+      name: "吉田 周平",
+      identity: { ...PROFILE.identity, nameEn: "Shuhei YOSHIDA", alternateNames: ["yantene"] },
+    });
+
+    expect(reference).toEqual({
+      "@type": "Person",
+      "@id": `${ORIGIN}/#person`,
+      name: "吉田 周平",
+      url: `${ORIGIN}/about`,
     });
   });
 

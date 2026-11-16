@@ -8,6 +8,16 @@ import type { PublicHistoryChapter, PublicProfile } from "~/backend/handlers/pro
  */
 export const sampleProfile: PublicProfile = {
   name: "やんてね",
+  displayName: "やんてね",
+  identity: {
+    nameEn: null,
+    familyName: null,
+    givenName: null,
+    alternateNames: [],
+    jobTitle: null,
+    description: null,
+    descriptionEn: null,
+  },
   tagline: [
     "現実に屈しかけている自由ソフトウェア主義者^H^H^H愛好家です。",
     "東京で Web 開発者をやっています。",

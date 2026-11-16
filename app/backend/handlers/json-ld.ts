@@ -98,11 +98,30 @@ function sameAsFor(profile: PublicProfile): { sameAs?: readonly string[] } {
  */
 function profileFields(profile: PublicProfile | null): JsonLdNode {
   if (profile === null) return {};
+  const { identity } = profile;
   return {
-    description: profile.tagline.join(" "),
+    ...alternateNameFor(profile),
+    ...(identity.givenName === null ? {} : { givenName: identity.givenName }),
+    ...(identity.familyName === null ? {} : { familyName: identity.familyName }),
+    ...(identity.jobTitle === null ? {} : { jobTitle: identity.jobTitle }),
+    // 機械向けの説明文があればそれを、無ければ短い自己紹介を出す。
+    description: identity.description ?? profile.tagline.join(" "),
     ...sameAsFor(profile),
     ...emailFor(profile),
   };
+}
+
+/**
+ * 別名。英語名と、書き手が並べた別名 (ハンドルネームと別の表記) を 1 つの並びにする。
+ *
+ * 本名と同じ字と、重なった字は落とす。**無ければ欄ごと出さない** (空の配列は「別名は無いと
+ * 分かっている」という主張になる)。
+ */
+function alternateNameFor(profile: PublicProfile): JsonLdNode {
+  const { nameEn, alternateNames } = profile.identity;
+  const names = [...(nameEn === null ? [] : [nameEn]), ...alternateNames];
+  const distinct = [...new Set(names)].filter((name) => name !== profile.name);
+  return distinct.length === 0 ? {} : { alternateName: distinct };
 }
 
 /**

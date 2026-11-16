@@ -3,6 +3,7 @@ import {
   HistoryDate,
   HistoryEntry,
   Profile,
+  ProfileIdentity,
   ProfileName,
   SocialAccount,
   Tagline,
@@ -26,6 +27,7 @@ export function rowsToProfile(
   return Profile.reconstruct({
     id: entityId<"Profile">(row.id),
     name: ProfileName.create(row.name),
+    identity: rowToIdentity(row),
     tagline: Tagline.create(row.tagline),
     socials: socialRows.map((social) =>
       SocialAccount.create({ platform: social.platform, url: social.url, isMe: social.isMe }),
@@ -33,6 +35,25 @@ export function rowsToProfile(
     sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
+  });
+}
+
+/**
+ * 名前まわりの欄を復元する。書いていない欄は NULL で入っている。
+ *
+ * 別名は JSON の配列。配列でない・文字列でない要素は、VO が読めない値として弾く
+ * (`isProfileDataError` が拾い、読めないプロフィールとして倒れる)。
+ */
+function rowToIdentity(row: typeof profile.$inferSelect): ProfileIdentity {
+  const alternateNames: unknown = row.alternateNames;
+  return ProfileIdentity.create({
+    ...(row.nameEn === null ? {} : { nameEn: row.nameEn }),
+    ...(row.familyName === null ? {} : { familyName: row.familyName }),
+    ...(row.givenName === null ? {} : { givenName: row.givenName }),
+    alternateNames: Array.isArray(alternateNames) ? alternateNames.map(String) : [],
+    ...(row.jobTitle === null ? {} : { jobTitle: row.jobTitle }),
+    ...(row.description === null ? {} : { description: row.description }),
+    ...(row.descriptionEn === null ? {} : { descriptionEn: row.descriptionEn }),
   });
 }
 

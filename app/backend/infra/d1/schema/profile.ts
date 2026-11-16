@@ -13,6 +13,20 @@ import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core"
 export const profile = sqliteTable("profile", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  /*
+   * 機械 (検索エンジンと AI) に名乗るための、名前まわりの欄 (`ProfileIdentity`)。
+   * どれも省略でき、書いていなければ NULL。別名だけは JSON の配列で、無ければ `[]`。
+   */
+  nameEn: text("name_en"),
+  familyName: text("family_name"),
+  givenName: text("given_name"),
+  alternateNames: text("alternate_names", { mode: "json" })
+    .$type<readonly string[]>()
+    .notNull()
+    .default([]),
+  jobTitle: text("job_title"),
+  description: text("description"),
+  descriptionEn: text("description_en"),
   tagline: text("tagline").notNull(),
   /*
    * ⚠️ **読み書きしていない。次のリリースで落とす (#507)。**

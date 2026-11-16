@@ -64,7 +64,7 @@ describe("プロフィールがまだ無いとき", () => {
   it("代表 h-card の殻は立てる", () => {
     const card = renderHero(null).querySelector(":scope .h-card");
     expect(card).not.toBeNull();
-    expect(card?.querySelector(":scope .p-name")?.textContent).toBe("やんてね");
+    expect(card?.querySelector(":scope .p-name")?.textContent).toBe("吉田 周平");
     expect(card?.querySelector(":scope .u-url")?.getAttribute("href")).toBe("/");
     expect(card?.querySelector(":scope .u-photo")?.getAttribute("src")).toBe(PROFILE_PHOTO);
   });

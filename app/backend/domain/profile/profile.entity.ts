@@ -1,4 +1,5 @@
 import type { ProfileName } from "./profile-name.vo";
+import { ProfileIdentity } from "./profile-identity.vo";
 import type { SocialAccount } from "./social-account.vo";
 import type { Tagline } from "./tagline.vo";
 import type { Temporal } from "@js-temporal/polyfill";
@@ -17,7 +18,10 @@ export const PROFILE_ID = "profile" as ProfileId;
 
 interface ProfileFields<T extends IPersisted | IUnpersisted> {
   readonly id: T["id"] extends string ? ProfileId : undefined;
+  /** 本名。読み手に見せ、機械にも名乗る。 */
   readonly name: ProfileName;
+  /** 英語名・姓名・別名・肩書き・機械向けの説明文。どれも省略できる。 */
+  readonly identity: ProfileIdentity;
   /** 短い自己紹介。3 か所 (トップ・記事末尾・`/about`) が同じものを出す。 */
   readonly tagline: Tagline;
   /** 出ていく先。フロントマターに書いた順に出す。 */
@@ -48,6 +52,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
 
   static create(params: {
     name: ProfileName;
+    identity?: ProfileIdentity;
     tagline: Tagline;
     socials: readonly SocialAccount[];
     sourceHash: string;
@@ -55,6 +60,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
     return new Profile({
       id: undefined,
       name: params.name,
+      identity: params.identity ?? ProfileIdentity.empty(),
       tagline: params.tagline,
       socials: params.socials,
       sourceHash: params.sourceHash,
@@ -66,6 +72,7 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
   static reconstruct(params: {
     id: ProfileId;
     name: ProfileName;
+    identity: ProfileIdentity;
     tagline: Tagline;
     socials: readonly SocialAccount[];
     sourceHash: string;
@@ -81,6 +88,10 @@ export class Profile<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get name(): ProfileName {
     return this.fields.name;
+  }
+
+  get identity(): ProfileIdentity {
+    return this.fields.identity;
   }
 
   get tagline(): Tagline {

@@ -109,7 +109,7 @@ describe("ArticleHeader の microformats2", () => {
     expect(authors).toHaveLength(1);
     expect(authors[0].classList.contains("h-card")).toBe(true);
     expect(authors[0].getAttribute("href")).toBe(`${ORIGIN}/`);
-    expect(authors[0].textContent).toBe("やんてね");
+    expect(authors[0].textContent).toBe("吉田 周平");
     // 見出しの中には無い。
     expect(container.querySelector("header .p-author")).toBeNull();
   });
@@ -132,7 +132,7 @@ describe("ArticleHeader の microformats2", () => {
 
     const mention = readMention(html, source, [target]);
 
-    expect(mention.author.name).toBe("やんてね");
+    expect(mention.author.name).toBe("吉田 周平");
     expect(mention.author.url?.toString()).toBe(`${ORIGIN}/`);
     expect(mention.publishedAt?.toString()).toBe("2026-05-08T00:00:00Z");
   });

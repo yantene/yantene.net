@@ -5,6 +5,7 @@ import {
   HistoryDate,
   HistoryEntry,
   Profile,
+  ProfileIdentity,
   ProfileName,
   SocialAccount,
   Tagline,
@@ -146,8 +147,44 @@ describe("loadAboutPage", () => {
     const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
 
     expect(data.profile?.name).toBe("やんてね");
+    // 英語名を書いていなければ、画面に出す名前は本名そのまま。
+    expect(data.profile?.displayName).toBe("やんてね");
     expect(data.profile?.tagline).toEqual(["東京で Web 開発者をやっています。"]);
     expect(data.mdast).toEqual(BODY);
+  });
+
+  /*
+   * 英語名があれば、画面に出す名前は本名の後ろに括弧で添える。**機械に名乗る名前
+   * (JSON-LD の `name`) は本名だけ**で、英語名は `alternateName` へ回る。
+   */
+  it("shows the English name beside the real name but names the Person by the real name", async () => {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await new D1ProfileCommandRepository(d1).upsert(
+      Profile.create({
+        name: ProfileName.create("吉田 周平"),
+        identity: ProfileIdentity.create({
+          nameEn: "Shuhei YOSHIDA",
+          alternateNames: ["やんてね", "yantene"],
+        }),
+        tagline: Tagline.create("あいさつ"),
+        socials: [],
+        sourceHash: "h1",
+      }),
+      [],
+    );
+    await new R2ProfileContentCache(bucket).putMdast(BODY);
+
+    const data = await loadAboutPage(envWith(d1, bucket), ORIGIN);
+
+    expect(data.profile?.name).toBe("吉田 周平");
+    expect(data.profile?.displayName).toBe("吉田 周平 (Shuhei YOSHIDA)");
+    expect(data.jsonLd).toMatchObject({
+      mainEntity: {
+        name: "吉田 周平",
+        alternateName: ["Shuhei YOSHIDA", "やんてね", "yantene"],
+      },
+    });
   });
 
   /**

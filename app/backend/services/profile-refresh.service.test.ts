@@ -183,6 +183,51 @@ describe("ProfileRefreshService", () => {
     expect(cache.assets.get("diagram.png")).toBeDefined();
   });
 
+  /*
+   * 名前まわりの欄 (英語名・姓名・別名・肩書き・機械向けの説明文)。どれも省略でき、
+   * 書いていないプロフィールは何も持たない。
+   */
+  it("holds no identity fields when none are written", async () => {
+    await service.refresh();
+
+    expect((await query.find())?.identity.toJSON()).toEqual({ alternateNames: [] });
+  });
+
+  it("syncs the identity fields and drops them again when the writer removes them", async () => {
+    const identity = [
+      "name: 吉田 周平",
+      "nameEn: Shuhei YOSHIDA",
+      "familyName: 吉田",
+      "givenName: 周平",
+      "alternateNames: [やんてね, yantene]",
+      "jobTitle: Web Developer",
+      "description: 吉田 周平 (よしだ しゅうへい) の個人サイト。",
+      "descriptionEn: Personal website of Shuhei YOSHIDA.",
+    ].join("\n");
+    files.set("profile.md", {
+      hash: "h-identity",
+      bytes: bytes(PROFILE_MD.replace("name: やんてね", identity)),
+    });
+    await service.refresh();
+
+    const profile = await query.find();
+    expect(profile?.name.toString()).toBe("吉田 周平");
+    expect(profile?.identity.toJSON()).toEqual({
+      nameEn: "Shuhei YOSHIDA",
+      familyName: "吉田",
+      givenName: "周平",
+      alternateNames: ["やんてね", "yantene"],
+      jobTitle: "Web Developer",
+      description: "吉田 周平 (よしだ しゅうへい) の個人サイト。",
+      descriptionEn: "Personal website of Shuhei YOSHIDA.",
+    });
+
+    // 消したら消える。前の push で書いた値を残さない。
+    files.set("profile.md", { hash: "h-md-again", bytes: bytes(PROFILE_MD) });
+    await service.refresh();
+    expect((await query.find())?.identity.toJSON()).toEqual({ alternateNames: [] });
+  });
+
   /** 記事の同期と同じツリーを見るので、articles/ を拾わないことを押さえておく。 */
   it("does not read files outside profile.md and profile/", async () => {
     await service.refresh();
@@ -320,6 +365,16 @@ describe("読めないプロフィール", () => {
      * 文字列として渡してくるので、通してしまうと「引用符を付けた年だけ静かに落ちる」
      * ことになる。
      */
+    ["空の英語名", '---\nname: やんてね\ntagline: あいさつ\nnameEn: ""\n---\n'],
+    ["並びでない別名", "---\nname: やんてね\ntagline: あいさつ\nalternateNames: yantene\n---\n"],
+    [
+      "文字列でない別名",
+      "---\nname: やんてね\ntagline: あいさつ\nalternateNames: [yantene, 42]\n---\n",
+    ],
+    [
+      "同じ別名を 2 回",
+      "---\nname: やんてね\ntagline: あいさつ\nalternateNames: [yantene, yantene]\n---\n",
+    ],
     [
       "章の名前が無い",
       "---\nname: やんてね\ntagline: あいさつ\nhistory:\n  - entries:\n      - date: 2012\n        text: 卒業\n---\n",

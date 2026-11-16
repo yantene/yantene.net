@@ -52,6 +52,14 @@ export class D1ProfileCommandRepository implements IProfileCommandRepository {
     const nowUnix = instantToUnix(Temporal.Now.instant());
     const content = {
       name: source.name.toString(),
+      // 書いていない欄は NULL にする。前の push で書いた値を残さない。
+      nameEn: source.identity.nameEn ?? null,
+      familyName: source.identity.familyName ?? null,
+      givenName: source.identity.givenName ?? null,
+      alternateNames: source.identity.alternateNames,
+      jobTitle: source.identity.jobTitle ?? null,
+      description: source.identity.description ?? null,
+      descriptionEn: source.identity.descriptionEn ?? null,
       tagline: source.tagline.toString(),
       sourceHash: source.sourceHash,
       updatedAt: nowUnix,
