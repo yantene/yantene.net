@@ -1,14 +1,15 @@
+import { RouterContextProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { meta as aboutMeta } from "./about";
 import { meta as articlesMeta } from "./articles";
 import { meta as articleMeta } from "./articles.$slug";
 import { meta as homeMeta } from "./home";
-import { meta as legalMeta } from "./legal";
-import { meta as notesMeta } from "./notes";
-import { meta as signInMeta } from "./sign-in";
-import { meta as signInConfirmMeta } from "./sign-in.confirm";
-import { meta as signInSentMeta } from "./sign-in.sent";
-import { meta as slidesMeta } from "./slides";
+import * as legal from "./legal";
+import * as notes from "./notes";
+import * as signIn from "./sign-in";
+import * as signInConfirm from "./sign-in.confirm";
+import * as signInSent from "./sign-in.sent";
+import * as slides from "./slides";
 import { meta as worksMeta } from "./works";
 import { meta as workMeta } from "./works.$slug";
 import {
@@ -17,13 +18,15 @@ import {
   profilePageJsonLd,
   webPageJsonLd,
 } from "~/backend/handlers/json-ld";
+import { cloudflareContext } from "~/frontend/lib/route-context";
 import routes from "~/frontend/routes";
 
 /*
  * どのページも構造化データを HTML まで運ぶこと (ADR 0048)。
  *
- * 中身を組むのは `backend/handlers/json-ld` で、形はそちらのテストが固定している。ここが
- * 見るのは**配線**。React Router の meta は最も深いルートのものだけが採用されるので、
+ * 中身を組むのは `backend/handlers/json-ld` で、形はそちらのテストが固定している。組むのを
+ * 呼ぶのは loader で、`meta` は運ぶだけ (`meta` はブラウザでも走るので、そこで組むと組み
+ * 立ての側がクライアントのバンドルに入る)。ここが見るのは**配線**。React Router の meta は最も深いルートのものだけが採用されるので、
  * ルートの `meta` が `jsonLd` を `buildPageMeta` に渡し忘れると、どれだけ正しく組んで
  * いても HTML には 1 文字も出ない。画面には何も出ないので、気づく手立てがここにしか無い。
  */
@@ -87,19 +90,40 @@ const PASSED_THROUGH = {
   },
 } as const;
 
-/** ルート自身が組む型のページ。その場所の URL で、サイトの一部だと名乗ること。 */
-const SELF_DESCRIBED = {
-  "routes/notes.tsx": { meta: notesMeta, path: "/notes", build: collectionPageJsonLd },
-  "routes/slides.tsx": { meta: slidesMeta, path: "/slides", build: collectionPageJsonLd },
-  "routes/legal.tsx": { meta: legalMeta, path: "/legal", build: webPageJsonLd },
-  "routes/sign-in.tsx": { meta: signInMeta, path: "/sign-in", build: webPageJsonLd },
-  "routes/sign-in.sent.tsx": { meta: signInSentMeta, path: "/sign-in/sent", build: webPageJsonLd },
+/**
+ * 中身がその場所の URL だけで決まるページ。loader が自分で組むので、ここでは loader を
+ * 実際に走らせて、組んだものが `meta` を通って出てくるところまでを通しで見る。
+ */
+const BUILT_IN_THE_LOADER = {
+  "routes/notes.tsx": { route: notes, path: "/notes", build: collectionPageJsonLd },
+  "routes/slides.tsx": { route: slides, path: "/slides", build: collectionPageJsonLd },
+  "routes/legal.tsx": { route: legal, path: "/legal", build: webPageJsonLd },
+  "routes/sign-in.tsx": { route: signIn, path: "/sign-in", build: webPageJsonLd },
+  "routes/sign-in.sent.tsx": { route: signInSent, path: "/sign-in/sent", build: webPageJsonLd },
   "routes/sign-in.confirm.tsx": {
-    meta: signInConfirmMeta,
+    route: signInConfirm,
     path: "/sign-in/confirm",
     build: webPageJsonLd,
   },
 } as const;
+
+type AnyLoader = (args: never) => unknown;
+
+/** loader を、cookie の無い読み手の要求で走らせる。`data()` で包まれていれば中身を取り出す。 */
+async function loaderDataOf(loader: AnyLoader, path: string): Promise<object> {
+  const context = new RouterContextProvider();
+  context.set(cloudflareContext, {
+    env: { APP_ENV: "test" } as unknown as Env,
+    ctx: {} as unknown as ExecutionContext,
+  });
+  // クエリを付けておく。構造化データの `url` に、絞り込みやトークンを載せないこと。
+  const request = new Request(`${ORIGIN}${path}?token=secret&page=2`);
+  const result = (await loader({ request, context, params: {} } as never)) as object;
+
+  return "data" in result && typeof result.data === "object" && result.data !== null
+    ? result.data
+    : result;
+}
 
 describe("ルートの meta は構造化データを HTML まで運ぶ", () => {
   it.each(Object.entries(PASSED_THROUGH))("%s: loader が組んだものをそのまま出す", (_, run) => {
@@ -108,16 +132,23 @@ describe("ルートの meta は構造化データを HTML まで運ぶ", () => {
     expect(actual).toEqual([expected]);
   });
 
-  it.each(Object.entries(SELF_DESCRIBED))("%s: サイトの一部だと名乗る", (_, page) => {
-    expect(ldJsonOf(page.meta, page.path, BASE)).toEqual([page.build(ORIGIN, page.path)]);
-  });
+  it.each(Object.entries(BUILT_IN_THE_LOADER))(
+    "%s: loader がその場所の URL で組み、meta がそのまま出す",
+    async (_, page) => {
+      const loaderData = await loaderDataOf(page.route.loader, page.path);
+
+      expect(ldJsonOf(page.route.meta, page.path, loaderData)).toEqual([
+        page.build(ORIGIN, page.path),
+      ]);
+    },
+  );
 
   /*
    * **ルートを足したら、ここにも足す。** 足し忘れると、そのページだけ構造化データが無い
    * まま出る。それは画面からは見えない。
    */
   it("どのルートも、上のどちらかで確かめてある", () => {
-    const covered = [...Object.keys(PASSED_THROUGH), ...Object.keys(SELF_DESCRIBED)];
+    const covered = [...Object.keys(PASSED_THROUGH), ...Object.keys(BUILT_IN_THE_LOADER)];
 
     expect(routes.map((entry) => entry.file).toSorted()).toEqual(covered.toSorted());
   });

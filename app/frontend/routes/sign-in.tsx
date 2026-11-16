@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/sign-in";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import type { JsonLdData, PageMetaBase } from "~/frontend/lib/page-meta";
 import { currentAccount } from "~/backend/handlers/auth/current-account";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -20,7 +20,7 @@ import { signInInvalidParam } from "~/lib/constants/sign-in";
  * Sign in / Sign out (#491) か、渡されたリンクから直接。
  */
 
-interface SignInData extends PageMetaBase, CopyrightData {
+interface SignInData extends PageMetaBase, CopyrightData, JsonLdData {
   /** 打ち間違いを弾いて戻ってきたか。 */
   readonly invalid: boolean;
 }
@@ -47,17 +47,18 @@ export async function loader({
     origin: url.origin,
     copyright: resolveCopyrightYears(),
     invalid: url.searchParams.has(signInInvalidParam),
+    jsonLd: webPageJsonLd(url.origin, "/sign-in"),
   };
 }
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const translations = translationsFor(locale);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    jsonLd: webPageJsonLd(origin, location.pathname),
+    jsonLd,
     title: translations.signIn.title,
     description: translations.signIn.lead,
     /*

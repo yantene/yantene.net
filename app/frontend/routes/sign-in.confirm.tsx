@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { data } from "react-router";
 import type { Route } from "./+types/sign-in.confirm";
 import type { CopyrightData } from "~/backend/handlers/copyright-years";
-import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import type { JsonLdData, PageMetaBase } from "~/frontend/lib/page-meta";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import {
   hasPendingSignInToken,
@@ -25,7 +25,7 @@ import { signInConfirmPath, signInExpiredParam, signInPath } from "~/lib/constan
  * 頼んだブラウザ自身から踏まれたときは受け口が近道を通すので、この画面は出ない。
  */
 
-interface SignInConfirmData extends PageMetaBase, CopyrightData {
+interface SignInConfirmData extends PageMetaBase, CopyrightData, JsonLdData {
   /** 押してもらえる状態か。cookie にトークンが載っているかだけで決める。 */
   readonly pending: boolean;
   /** 使えないリンクだったことを伝えて戻ってきたか。 */
@@ -45,6 +45,7 @@ export function loader({
       copyright: resolveCopyrightYears(),
       pending: hasPendingSignInToken(context.get(cloudflareContext).env, request),
       expired: url.searchParams.has(signInExpiredParam),
+      jsonLd: webPageJsonLd(url.origin, "/sign-in/confirm"),
     },
     // 人によって中身が変わる。経路のどこかに載ると他人に配られる。
     { headers: PRIVATE_CACHE_HEADERS },
@@ -61,13 +62,13 @@ export function loader({
 export const headers: Route.HeadersFunction = () => PRIVATE_CACHE_HEADERS;
 
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin } = loaderData;
+  const { locale, origin, jsonLd } = loaderData;
   const translations = translationsFor(locale);
   return buildPageMeta({
     locale,
     origin,
     pathname: location.pathname,
-    jsonLd: webPageJsonLd(origin, location.pathname),
+    jsonLd,
     title: translations.signIn.title,
     description: translations.signIn.lead,
     noindex: true,
