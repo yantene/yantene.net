@@ -84,7 +84,10 @@ interface SlideSource {
  * 検出し、変わっていれば読み直して MDAST と原文とアセットを R2 に、メタデータを D1 に
  * 書く。コンテンツリポジトリから消えたスライドは D1 / R2 から掃除する。
  *
- * 作品と同じく**公開範囲を持たず、検索の索引と埋め込みを作らない**。
+ * 公開範囲は記事と同じ `status` で持つ。**どの status のスライドも同期する** (ADR 0040)。
+ * 読み手から隠すのは配信の時点なので、ここに渡す読み取り口は `forAdmin` であること
+ * (読み手向けを渡すと、下書きが「D1 に無い」ように見えて毎回読み直され、消えた下書きが
+ * 掃除されない)。作品と同じく検索の索引と埋め込みは作らない。
  *
  * コンテンツ不正 (フロントマターが読めない等) はそのスライドだけをスキップして結果に
  * 記録し、**前回同期した内容を残す**。infra 障害 (コンテンツリポジトリ / R2 / D1) は
@@ -328,6 +331,8 @@ function buildSlide(
     event: parsed.event,
     summary: summarizeNarration(mdast),
     pageCount: paginate(mdast).pages.length,
+    // status で分岐しない。どの段階のスライドも同期し、隠すのは配信の時点 (ADR 0040)。
+    status: parsed.status,
     sourceHash: group.contentHash,
   });
 }

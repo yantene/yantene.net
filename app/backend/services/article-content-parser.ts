@@ -150,8 +150,11 @@ function asOptionalString(value: unknown): string | undefined {
  * `status = 'published'` が入っているため)。画面は正常に見えるのに更新だけが
  * 反映されなくなるので、気づく手立ては refresh の応答の `skipped` しか無い。
  * コンテンツリポジトリ側の書き換えは、取りこぼさず一度に済ませること。
+ *
+ * スライドのフロントマターも同じ関数で読む (slide-content-parser.ts)。読み方を 2 つ
+ * 持つと、片方だけが `visibility` を素通しする。
  */
-function asStatus(rawMatter: Record<string, unknown>): ContentStatus {
+export function asStatus(rawMatter: Record<string, unknown>): ContentStatus {
   if ("visibility" in rawMatter) {
     throw new StatusValueError(
       "frontmatter still has the former `visibility` key; rename it to `status` (ADR 0040)",

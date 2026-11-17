@@ -44,14 +44,37 @@ describe("parseSlideContent", () => {
     expect(parsed.event?.toJSON()).toEqual({ name: "社内 LT", date: null, url: null });
   });
 
-  /*
-   * 公開範囲は持たない (出したくないものは push しない)。記事の欄が書いてあっても
-   * 読まないし、弾きもしない。
-   */
-  it("ignores status and visibility", () => {
-    const parsed = parseSlideContent(slideWith(`${REQUIRED}status: draft\nvisibility: private\n`));
+  /* 公開範囲は記事と同じ `status` (ADR 0040)。読み方も同じ関数。 */
+  describe("status", () => {
+    it("書かなければ published", () => {
+      expect(parseSlideContent(slideWith(REQUIRED)).status).toBe("published");
+    });
 
-    expect(parsed.title.toString()).toBe("意味だけで書くスライド");
+    it.each(["published", "unlisted", "withdrawn", "draft", "idea"] as const)(
+      "%s を読む",
+      (status) => {
+        expect(parseSlideContent(slideWith(`${REQUIRED}status: ${status}\n`)).status).toBe(status);
+      },
+    );
+
+    it("前後の空白と大文字小文字を均す", () => {
+      expect(parseSlideContent(slideWith(`${REQUIRED}status: " Draft "\n`)).status).toBe("draft");
+    });
+
+    /*
+     * 読めない値を既定の published に倒さない。誤って公開するほうが、誤って隠すより
+     * 取り返しがつかない。
+     */
+    it.each([
+      ["打ち間違い", "status: pubished\n"],
+      ["字でない", "status: 1\n"],
+      ["空の字", 'status: ""\n'],
+      ["旧書式の visibility", "visibility: private\n"],
+      ["visibility が public でも", "visibility: public\n"],
+      ["status と visibility の両方", "status: draft\nvisibility: private\n"],
+    ])("%s のときは SlideContentError", (_label, extra) => {
+      expect(() => parseSlideContent(slideWith(`${REQUIRED}${extra}`))).toThrow(SlideContentError);
+    });
   });
 
   it.each([

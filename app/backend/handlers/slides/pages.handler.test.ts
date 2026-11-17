@@ -1,9 +1,11 @@
 import type { Root } from "mdast";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadSlideDetailPage, loadSlides, loadSlidesPage } from "./pages.handler";
 import { seedSlide } from "./test-seed";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
+import { contentStatuses } from "~/backend/domain/shared";
 import { SlideSlug } from "~/backend/domain/slide";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { personId } from "~/backend/handlers/json-ld";
 import { D1ProfileCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
@@ -12,6 +14,23 @@ import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { FALLBACK_PROFILE_NAME } from "~/lib/profile-fallback";
 
 const ORIGIN = "https://yantene.net";
+
+/** cookie を持たない読み手の要求。 */
+function readerRequest(): Request {
+  return new Request(`${ORIGIN}/slides/semantic-slides`);
+}
+
+/** ログインしている管理者として振る舞わせる。 */
+function asAdmin(): void {
+  vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+    email: { toString: () => "admin@example.test" } as never,
+    admin: true,
+  });
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const BODY: Root = {
   type: "root",
@@ -42,7 +61,7 @@ async function loadDetail(
   const { bucket } = createTestR2();
   await seedSlide(d1, slide);
   await new R2SlideContentCache(bucket).putMdast(SlideSlug.create("semantic-slides"), BODY);
-  return loadSlideDetailPage(envWith(d1, bucket), "semantic-slides", ORIGIN);
+  return loadSlideDetailPage(envWith(d1, bucket), readerRequest(), "semantic-slides", ORIGIN);
 }
 
 describe("loadSlides", () => {
@@ -141,6 +160,7 @@ describe("loadSlideDetailPage", () => {
   it("returns null for an unknown slug", async () => {
     const data = await loadSlideDetailPage(
       envWith(createTestD1(), createTestR2().bucket),
+      readerRequest(),
       "missing",
       ORIGIN,
     );
@@ -151,6 +171,8 @@ describe("loadSlideDetailPage", () => {
       linkCards: {},
       author: FALLBACK_PROFILE_NAME,
       jsonLd: null,
+      noindex: false,
+      privateResponse: false,
     });
   });
 
@@ -158,6 +180,7 @@ describe("loadSlideDetailPage", () => {
   it("returns null for an unreadable slug", async () => {
     const data = await loadSlideDetailPage(
       envWith(createTestD1(), createTestR2().bucket),
+      readerRequest(),
       "Bad--Name",
       ORIGIN,
     );
@@ -175,7 +198,12 @@ describe("loadSlideDetailPage", () => {
     await seedSlide(d1);
 
     await expect(
-      loadSlideDetailPage(envWith(d1, createTestR2().bucket), "semantic-slides", ORIGIN),
+      loadSlideDetailPage(
+        envWith(d1, createTestR2().bucket),
+        readerRequest(),
+        "semantic-slides",
+        ORIGIN,
+      ),
     ).rejects.toThrow("MDAST cache is missing for an indexed slide: semantic-slides");
   });
 });
@@ -234,5 +262,111 @@ describe("loadSlideDetailPage: JSON-LD", () => {
 
     expect(JSON.stringify(jsonLd)).not.toContain("yantene.rb");
     expect(jsonLd).not.toHaveProperty("recordedAt");
+  });
+});
+
+/*
+ * 公開範囲 (ADR 0040)。記事と同じ表になること。
+ */
+describe("status ごとの一覧 (loadSlides)", () => {
+  async function seedEvery(d1: D1Database): Promise<void> {
+    for (const status of contentStatuses) {
+      await seedSlide(d1, { slug: `a-${status}`, status });
+    }
+  }
+
+  it("published だけを返す", async () => {
+    const d1 = createTestD1();
+    await seedEvery(d1);
+
+    const slides = await loadSlides(envWith(d1, createTestR2().bucket));
+
+    expect(slides.map((slide) => slide.slug)).toEqual(["a-published"]);
+  });
+
+  /* 一覧は env しか受け取らない。誰が見ていても同じものが返る作りになっている。 */
+  it("管理者がログインしていても published だけを返す", async () => {
+    const d1 = createTestD1();
+    await seedEvery(d1);
+    asAdmin();
+
+    const slides = await loadSlides(envWith(d1, createTestR2().bucket));
+
+    expect(slides.map((slide) => slide.slug)).toEqual(["a-published"]);
+  });
+
+  /* status は読み手に配る形に載せない。 */
+  it("配る形に status を載せない", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1);
+
+    const [slide] = await loadSlides(envWith(d1, createTestR2().bucket));
+
+    expect(slide).not.toHaveProperty("status");
+  });
+});
+
+describe("status ごとのスライドのページ (loadSlideDetailPage)", () => {
+  it.each(["withdrawn", "draft", "idea"] as const)("%s は読み手には無い", async (status) => {
+    const data = await loadDetail(createTestD1(), { status });
+
+    expect(data.slide).toBeNull();
+    expect(data.mdast).toBeNull();
+    expect(data.jsonLd).toBeNull();
+    expect(data.privateResponse).toBe(false);
+  });
+
+  it("unlisted は読み手も読めて、noindex を伝える", async () => {
+    const data = await loadDetail(createTestD1(), { status: "unlisted" });
+
+    expect(data.slide?.slug).toBe("semantic-slides");
+    expect(data.noindex).toBe(true);
+    expect(data.privateResponse).toBe(false);
+  });
+
+  it("published に noindex は立てない", async () => {
+    const data = await loadDetail(createTestD1(), { status: "published" });
+
+    expect(data.noindex).toBe(false);
+    expect(data.privateResponse).toBe(false);
+  });
+
+  /* 管理者は下書きを読めるが、その応答は共有キャッシュに載ってはいけない。 */
+  it.each(["withdrawn", "draft", "idea"] as const)(
+    "管理者は %s を読めて、応答を共有キャッシュから遠ざける",
+    async (status) => {
+      asAdmin();
+
+      const data = await loadDetail(createTestD1(), { status });
+
+      expect(data.slide?.slug).toBe("semantic-slides");
+      expect(data.privateResponse).toBe(true);
+      // 見えているのは本人だけ。クローラーは辿り着けないので noindex は立てない。
+      expect(data.noindex).toBe(false);
+    },
+  );
+
+  /* 読み手も辿り着けるものは中身が同じなので、管理者が見ていても遠ざけない。 */
+  it.each(["published", "unlisted"] as const)(
+    "管理者が %s を読んでも遠ざけない",
+    async (status) => {
+      asAdmin();
+
+      const data = await loadDetail(createTestD1(), { status });
+
+      expect(data.slide?.slug).toBe("semantic-slides");
+      expect(data.privateResponse).toBe(false);
+    },
+  );
+
+  it("ログインしていても管理者でなければ draft は無い", async () => {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "reader@example.test" } as never,
+      admin: false,
+    });
+
+    const data = await loadDetail(createTestD1(), { status: "draft" });
+
+    expect(data.slide).toBeNull();
   });
 });

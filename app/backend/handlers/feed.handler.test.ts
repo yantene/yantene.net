@@ -1,5 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { IUnpersisted } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
@@ -7,6 +7,7 @@ import {
   D1ArticleCommandRepository,
   D1ProfileCommandRepository,
 } from "~/backend/infra/d1/repositories";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { seedSlide } from "~/backend/handlers/slides/test-seed";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { createTestApp } from "~/backend/test-app";
@@ -300,5 +301,44 @@ describe("スライドのフィード (ADR 0052)", () => {
     expect(body).toContain("/slides/newest-slide");
     // いちばん古い記事が押し出される。
     expect(body).not.toContain("/articles/article-0<");
+  });
+});
+
+/* 公開範囲 (ADR 0040)。フィードに出るスライドは published だけ。ログインしていても同じ。 */
+describe("スライドの status とフィード", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function seedEvery(d1: D1Database): Promise<void> {
+    for (const status of ["published", "unlisted", "withdrawn", "draft", "idea"] as const) {
+      await seedSlide(d1, { slug: `a-${status}`, status });
+    }
+  }
+
+  it.each(["/feed/slides.xml", "/feed.xml"])("%s は published だけを載せる", async (path) => {
+    const d1 = createTestD1();
+    await seedEvery(d1);
+
+    const body = await (await createTestApp().request(path, {}, env(d1))).text();
+
+    expect(body).toContain("/slides/a-published");
+    for (const hidden of ["unlisted", "withdrawn", "draft", "idea"]) {
+      expect(body).not.toContain(`/slides/a-${hidden}`);
+    }
+  });
+
+  it("管理者がログインしていても published だけを載せる", async () => {
+    const d1 = createTestD1();
+    await seedEvery(d1);
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "admin@example.test" } as never,
+      admin: true,
+    });
+
+    const body = await (await createTestApp().request("/feed/slides.xml", {}, env(d1))).text();
+
+    expect(body.match(/<entry>/g)).toHaveLength(1);
+    expect(body).toContain("/slides/a-published");
   });
 });

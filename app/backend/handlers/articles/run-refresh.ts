@@ -81,13 +81,14 @@ export async function runRefresh(
 
   /*
    * スライドも同じツリーから同期する (`slides/<slug>.md` + `slides/<slug>/`。ADR 0052)。
-   * 形も経路も作品と同じで、ツリーごと空に見える事故は自前のガードで止める。
+   * 経路は作品と同じで、ツリーごと空に見える事故は自前のガードで止める。公開範囲は
+   * 記事と同じ `status` で持ち、どの status も同期するので読み取り口は `forAdmin`。
    * 1 ページに入りきらない量は `slides.warnings` に出る (同期は止めない)。
    */
   const slides = await new SlidesRefreshService(
     contentStore,
     new D1SlideCommandRepository(env.D1),
-    new D1SlideQueryRepository(env.D1),
+    D1SlideQueryRepository.forAdmin(env.D1),
     new R2SlideContentCache(env.R2),
   ).refresh({ force });
 

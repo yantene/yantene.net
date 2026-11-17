@@ -2,7 +2,8 @@ import { Temporal } from "@js-temporal/polyfill";
 import { beforeEach, describe, expect, it } from "vitest";
 import { D1SlideCommandRepository } from "./slide.command-repository";
 import { D1SlideQueryRepository } from "./slide.query-repository";
-import type { IUnpersisted } from "~/backend/domain/shared";
+import type { ContentStatus, IUnpersisted } from "~/backend/domain/shared";
+import { contentStatuses } from "~/backend/domain/shared";
 import { Slide, SlideEvent, SlideSlug, SlideTitle } from "~/backend/domain/slide";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
@@ -14,6 +15,7 @@ function slideOf(
     event?: SlideEvent;
     summary?: string;
     pageCount?: number;
+    status?: ContentStatus;
     sourceHash?: string;
   } = {},
 ): Slide<IUnpersisted> {
@@ -24,6 +26,7 @@ function slideOf(
     event: params.event,
     summary: params.summary ?? "語りの書き出し。",
     pageCount: params.pageCount ?? 12,
+    status: params.status ?? "published",
     sourceHash: params.sourceHash ?? "h1",
   });
 }
@@ -35,7 +38,7 @@ let query: D1SlideQueryRepository;
 beforeEach(() => {
   d1 = createTestD1();
   command = new D1SlideCommandRepository(d1);
-  query = new D1SlideQueryRepository(d1);
+  query = D1SlideQueryRepository.forAdmin(d1);
 });
 
 describe("D1 slide repositories", () => {
@@ -146,5 +149,100 @@ describe("D1 slide repositories", () => {
 
   it("does nothing when deleting a slug that is not stored", async () => {
     await expect(command.deleteBySlug(SlideSlug.create("missing"))).resolves.toBeUndefined();
+  });
+});
+
+/*
+ * 読み取り口の分け方 (ADR 0040)。記事の読み取り口と同じ表になること。
+ *
+ * | status    | 一覧 | URL 直打ち | 管理者 |
+ * | published | 出る | 見える     | 見える |
+ * | unlisted  | 出ない | 見える   | 見える |
+ * | それ以外  | 出ない | 見えない | 見える |
+ */
+describe("D1SlideQueryRepository の読み取り口 (ADR 0040)", () => {
+  beforeEach(async () => {
+    for (const status of contentStatuses) {
+      await command.upsert(slideOf({ slug: `a-${status}`, status, sourceHash: `h-${status}` }));
+    }
+  });
+
+  it("status を保存して読み戻す", async () => {
+    for (const status of contentStatuses) {
+      const slide = await query.findBySlug(SlideSlug.create(`a-${status}`));
+      expect(slide?.status).toBe(status);
+    }
+  });
+
+  it("status を書き換えると上書きされる (公開 → 取り下げ)", async () => {
+    await command.upsert(slideOf({ slug: "a-published", status: "withdrawn" }));
+
+    const slide = await query.findBySlug(SlideSlug.create("a-published"));
+    expect(slide?.status).toBe("withdrawn");
+  });
+
+  describe("forReaders", () => {
+    it("list は published だけを返す", async () => {
+      const slides = await D1SlideQueryRepository.forReaders(d1).list();
+
+      expect(slides.map((slide) => slide.slug.toString())).toEqual(["a-published"]);
+    });
+
+    it.each(["published", "unlisted"] as const)("findBySlug は %s を返す", async (status) => {
+      const slide = await D1SlideQueryRepository.forReaders(d1).findBySlug(
+        SlideSlug.create(`a-${status}`),
+      );
+
+      expect(slide?.status).toBe(status);
+    });
+
+    it.each(["withdrawn", "draft", "idea"] as const)(
+      "findBySlug は %s を返さない",
+      async (status) => {
+        const slide = await D1SlideQueryRepository.forReaders(d1).findBySlug(
+          SlideSlug.create(`a-${status}`),
+        );
+
+        expect(slide).toBeUndefined();
+      },
+    );
+
+    /* 例外を作らない。refresh が使うのは forAdmin のほう。 */
+    it("listSourceHashes も published だけを返す", async () => {
+      const hashes = await D1SlideQueryRepository.forReaders(d1).listSourceHashes();
+
+      expect([...hashes.keys()]).toEqual(["a-published"]);
+    });
+  });
+
+  describe("forAdmin", () => {
+    it("list はすべての status を返す", async () => {
+      const slides = await D1SlideQueryRepository.forAdmin(d1).list();
+
+      expect(slides.map((slide) => slide.status).toSorted()).toEqual(
+        [...contentStatuses].toSorted(),
+      );
+    });
+
+    it.each(contentStatuses)("findBySlug は %s を返す", async (status) => {
+      const slide = await D1SlideQueryRepository.forAdmin(d1).findBySlug(
+        SlideSlug.create(`a-${status}`),
+      );
+
+      expect(slide?.status).toBe(status);
+    });
+
+    it("listSourceHashes はすべての status を返す", async () => {
+      const hashes = await D1SlideQueryRepository.forAdmin(d1).listSourceHashes();
+
+      expect(hashes.size).toBe(contentStatuses.length);
+    });
+  });
+
+  /* 読めない値を「隠す」に倒さない。破損した行が黙って一覧から消えないように。 */
+  it("保存された status が読めなければ投げる", async () => {
+    await d1.prepare("UPDATE slides SET status = 'pubished' WHERE slug = 'a-published'").run();
+
+    await expect(D1SlideQueryRepository.forAdmin(d1).list()).rejects.toThrow(/slides\.status/);
   });
 });

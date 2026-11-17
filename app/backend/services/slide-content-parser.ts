@@ -1,6 +1,7 @@
 import type { Root } from "mdast";
 import { Temporal } from "@js-temporal/polyfill";
-import { asDateString, extractSummary } from "./article-content-parser";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { asDateString, asStatus, extractSummary, StatusValueError } from "./article-content-parser";
 import { MathSyntaxError } from "./latex-to-mathml";
 import { parseMarkdownBody } from "./markdown-body";
 import { SlideEvent, SlideTitle } from "~/backend/domain/slide";
@@ -22,6 +23,8 @@ export interface ParsedSlideContent {
   readonly publishedOn: Temporal.PlainDate;
   /** 発表の場。書いていなければ undefined。 */
   readonly event: SlideEvent | undefined;
+  /** 段階と公開範囲。書いていなければ `published` (記事と同じ。ADR 0040)。 */
+  readonly status: ContentStatus;
   /** フロントマターを除いた本文の MDAST。 */
   readonly mdast: Root;
 }
@@ -32,8 +35,9 @@ export interface ParsedSlideContent {
  * 読めない値はすべて {@link SlideContentError} に包んで送出する。読めない LaTeX
  * (MathSyntaxError) も同じ扱い。それ以外の失敗はパーサの不具合なので握りつぶさない。
  *
- * **公開範囲の欄は読まない。** 出したくないものは push しなければよい (作品と同じ)。
- * `status` や `visibility` が書いてあっても無視する。
+ * **`status` は記事と同じ関数で読む** (ADR 0040)。書かなければ `published`。読めない値と
+ * 旧書式の `visibility` は、公開せずにスライドごと諦める。誤って公開するほうが、誤って
+ * 隠すより取り返しがつかない。
  */
 export function parseSlideContent(markdown: string): ParsedSlideContent {
   let parsed;
@@ -50,10 +54,16 @@ export function parseSlideContent(markdown: string): ParsedSlideContent {
       title: SlideTitle.create(requireString(frontmatter.title, "title")),
       publishedOn: requireDate(frontmatter.publishedOn, "publishedOn"),
       event: readEvent(frontmatter.event),
+      status: asStatus(frontmatter),
       mdast: parsed.mdast,
     };
   } catch (error) {
     if (error instanceof SlideContentError) throw error;
+    /*
+     * 読めない status もここで包む。包まずに通すと同期全体が落ち、ほかの種別まで
+     * 巻き込む。
+     */
+    if (error instanceof StatusValueError) throw new SlideContentError(error.message);
     // VO の検証はここで包む。書かれた値に起因する失敗しかここを通らないよう、
     // VO の factory は値の検証だけを行う (work-content-parser.ts と同じ)。
     throw new SlideContentError(error instanceof Error ? error.message : String(error));

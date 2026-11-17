@@ -1,8 +1,11 @@
 import type { PublicSlide } from "./slide-view";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { Root } from "mdast";
+import { resolveSlideReadAccess } from "./slide-read-access";
 import { toPublicSlide } from "./slide-view";
+import { shouldTellRobotsNoindex } from "~/backend/domain/shared";
 import { slidePath, SlideSlug } from "~/backend/domain/slide";
+import { shouldKeepResponsePrivate } from "~/backend/handlers/articles/article-read-access";
 import {
   collectionPageJsonLd,
   personReference,
@@ -31,16 +34,28 @@ export interface SlideDetailPageData {
   /** 表紙に出す書き手の名前 (プロフィールの displayName。同期前は FALLBACK_PROFILE_NAME)。 */
   readonly author: string;
   readonly jsonLd: Record<string, unknown> | null;
+  /**
+   * 検索エンジンに載せないよう伝えるか。`unlisted` のときだけ真 (記事のページと同じ欄。
+   * ADR 0040)。隠す status は読み手に 404 を返すので、伝える相手がいない。
+   */
+  readonly noindex: boolean;
+  /**
+   * この応答を共有キャッシュから遠ざけるか。**真なら loader が `PRIVATE_CACHE_HEADERS` を
+   * 付ける。** 管理者にしか見えない status を管理者に返したときだけ真になる。
+   */
+  readonly privateResponse: boolean;
 }
 
 /**
- * スライドの一覧を引く。`/slides` と sitemap とフィードが使う。
+ * スライドの一覧を引く。`/slides` と sitemap が使う。
+ *
+ * **ログインしていても読み手向けで固定する** (`published` だけ。ADR 0040)。
  *
  * **切らずに全件返す。** 発表のたびに 1 本増えるもので、数十本に育つのは何年も先になる
  * (作品と同じ決め)。
  */
 export async function loadSlides(env: Env): Promise<readonly PublicSlide[]> {
-  const slides = await new D1SlideQueryRepository(env.D1).list();
+  const slides = await D1SlideQueryRepository.forReaders(env.D1).list();
   return slides.map((slide) => toPublicSlide(slide));
 }
 
@@ -55,21 +70,26 @@ export async function loadSlidesPage(env: Env, origin: string): Promise<SlidesPa
 /**
  * `/slides/<slug>` のデータを揃える (Composition Root)。
  *
- * - D1 にメタデータが無い = そもそも存在しないスライド → null (呼び出し側で 404)。
+ * 管理者なら全 status を引く。読み手には `published` + `unlisted` だけ (ADR 0040)。
+ *
+ * - D1 にメタデータが無い (か、読み手に見せない status) → null (呼び出し側で 404)。
  * - D1 に在るのに R2 の MDAST が無い = キャッシュ不整合。静かに 404 で隠さず throw する
  *   (fail-loud)。出ているスライドが消えて見えるより、不整合を表面化させる。
  */
 export async function loadSlideDetailPage(
   env: Env,
+  request: Request,
   slugParam: string,
   origin: string,
 ): Promise<SlideDetailPageData> {
   const slug = SlideSlug.parse(slugParam);
   if (slug === undefined) return notFound();
 
+  const access = await resolveSlideReadAccess(env, request);
+
   // 3 つは互いに独立なので並行に読む。プロフィールは、表紙の名前と JSON-LD の筆者に要る。
   const [slide, mdast, profile] = await Promise.all([
-    new D1SlideQueryRepository(env.D1).findBySlug(slug),
+    access.query.findBySlug(slug),
     new R2SlideContentCache(env.R2).getMdast(slug),
     loadProfile(env),
   ]);
@@ -87,6 +107,8 @@ export async function loadSlideDetailPage(
     // h-card・記事末尾・フィードと同じ 1 つの出どころ。同期前は既定の名前に倒れる。
     author: profile?.displayName ?? FALLBACK_PROFILE_NAME,
     jsonLd: slideJsonLd(publicSlide, personReference(origin, profile), origin),
+    noindex: shouldTellRobotsNoindex(slide.status),
+    privateResponse: shouldKeepResponsePrivate(access, slide.status),
   };
 }
 
@@ -121,5 +143,13 @@ function slideJsonLd(
  * プロフィールを引かない (読めないスラグは D1 に触らずに返す)。
  */
 function notFound(): SlideDetailPageData {
-  return { slide: null, mdast: null, linkCards: {}, author: FALLBACK_PROFILE_NAME, jsonLd: null };
+  return {
+    slide: null,
+    mdast: null,
+    linkCards: {},
+    author: FALLBACK_PROFILE_NAME,
+    jsonLd: null,
+    noindex: false,
+    privateResponse: false,
+  };
 }

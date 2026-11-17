@@ -6,6 +6,7 @@ import type { CopyrightData } from "~/backend/handlers/copyright-years";
 import type { SlideDetailPageData } from "~/backend/handlers/slides/pages.handler";
 import type { SlideContext } from "~/frontend/components/slide/slide-page";
 import type { PageMetaBase } from "~/frontend/lib/page-meta";
+import { PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { loadSlideDetailPage } from "~/backend/handlers/slides/pages.handler";
 import { Footer } from "~/frontend/components/layout/footer";
@@ -25,6 +26,8 @@ import { paginate, withoutPauses } from "~/lib/slides/deck";
  * スライドを開かない読み手とクローラーには、読み物がそのまま届く。
  *
  * 見つからないときは 404 のステータスで「無い」ことを描く (記事・作品と同じ決め)。
+ * 読み手に見せない status (`withdrawn` / `draft` / `idea`) も、読み手には同じ 404 になる
+ * (記事と同じ。ADR 0040)。
  */
 export async function loader({
   request,
@@ -36,6 +39,7 @@ export async function loader({
   const url = new URL(request.url);
   const detail = await loadSlideDetailPage(
     context.get(cloudflareContext).env,
+    request,
     params.slug,
     url.origin,
   );
@@ -46,11 +50,40 @@ export async function loader({
   };
 
   if (detail.slide === null) return data({ ...base, ...detail }, { status: 404 });
-  return data({ ...base, ...detail });
+
+  const headers = new Headers();
+  // 管理者にしか見えないスライドは共有キャッシュに載せない。載った写しを剥がす手立ては無い。
+  if (detail.privateResponse) {
+    for (const [name, value] of Object.entries(PRIVATE_CACHE_HEADERS)) {
+      headers.set(name, value);
+    }
+  }
+  // 限定公開は検索エンジンに載せない。meta の robots だけだと、ヘッダーだけを見る収集に
+  // 伝わらない。
+  if (detail.noindex) {
+    headers.set("X-Robots-Tag", "noindex");
+  }
+  return data({ ...base, ...detail }, { headers });
 }
 
+/*
+ * loader が付けたヘッダーを文書の応答まで運ぶ。
+ *
+ * ⚠️ **`headers` を export しないと捨てられる** (articles.$slug.tsx の同じ export を参照)。
+ * 管理者向けの `Cache-Control: private, no-store` も限定公開の `X-Robots-Tag` も黙って
+ * 消える。
+ */
+export const headers: Route.HeadersFunction = ({ loaderHeaders, parentHeaders }) => {
+  const merged = new Headers(parentHeaders);
+  for (const name of ["Cache-Control", "Vary", "X-Robots-Tag"]) {
+    const value = loaderHeaders.get(name);
+    if (value !== null) merged.set(name, value);
+  }
+  return merged;
+};
+
 export const meta: Route.MetaFunction = ({ loaderData, location }) => {
-  const { locale, origin, slide, jsonLd } = loaderData;
+  const { locale, origin, slide, jsonLd, noindex } = loaderData;
   const translations = translationsFor(locale);
 
   if (slide === null) {
@@ -71,6 +104,7 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
     title: slide.title,
     description: slide.summary === "" ? translations.slides.lead : slide.summary,
     imagePath: `/og/slides/${slide.slug}`,
+    noindex,
     ...(jsonLd === null ? {} : { jsonLd }),
   });
 };

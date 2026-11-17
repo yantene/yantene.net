@@ -114,14 +114,15 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
    * スライドのカード。絵は記事と同じもので、題と日付だけがスライドのもの。
    * スライド専用の絵 (表紙をそのまま焼くなど) を作るときは、ここを差し替える。
    *
-   * 公開範囲を持たない (出ているものはすべて読み手に見せてよい) ので、`noindex` は
-   * 付けない。
+   * 隠したスライドの扱いは記事のカードと同じ (ADR 0040)。ログインしていても読み手向けで
+   * 引くので、隠した status は 404。限定公開の絵には題が焼き込んであるので `noindex` を
+   * 付ける。
    */
   router.get("/slides/:slug", async (c) => {
     const slug = SlideSlug.parse(c.req.param("slug"));
     if (slug === undefined) return notFoundResponse("slide not found");
 
-    const slide = await new D1SlideQueryRepository(c.env.D1).findBySlug(slug);
+    const slide = await D1SlideQueryRepository.forReaders(c.env.D1).findBySlug(slug);
     if (slide === undefined) return notFoundResponse("slide not found");
 
     const card = cardElement({
@@ -132,6 +133,7 @@ export function createOgRouter(): Hono<{ Bindings: Env }> {
       c.env,
       `og/slides/${slug.toString()}-${slide.sourceHash}-${OG_TEMPLATE_VERSION}.png`,
       card,
+      shouldTellRobotsNoindex(slide.status) ? { "X-Robots-Tag": "noindex" } : {},
     );
   });
 

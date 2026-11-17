@@ -1,7 +1,9 @@
 import { Hono } from "hono";
+import { resolveSlideReadAccess } from "./slide-read-access";
+import { shouldTellRobotsNoindex } from "~/backend/domain/shared";
 import { SlideSlug } from "~/backend/domain/slide";
+import { privateCacheHeadersFor } from "~/backend/handlers/articles/article-read-access";
 import { contentCacheControlFor } from "~/backend/handlers/articles/content-cache-control";
-import { D1SlideQueryRepository } from "~/backend/infra/d1/repositories";
 import { R2SlideContentCache } from "~/backend/infra/r2/r2-slide-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";
 
@@ -10,6 +12,9 @@ const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
 
 /**
  * スライドの原文 Markdown を返す公開ルータ。認証不要。
+ *
+ * 読み手に返すのは `published` と `unlisted` だけ。管理者にはどの status も返し、
+ * 管理者にしか見えないものは共有キャッシュから遠ざける (記事と同じ。ADR 0040)。
  *
  * `/slides/<slug>.md` で、書かれたそのまま (フロントマター込み・画像の相対パスも
  * 書き換えない) を返す。記事の `/articles/<slug>.md` と同じ決め (ADR 0009)。スライドは
@@ -38,9 +43,12 @@ export function createSlideMarkdownRouter(): Hono<{ Bindings: Env }> {
     const slug = SlideSlug.parse(file.slice(0, -MARKDOWN_SUFFIX.length));
     if (slug === undefined) return notFoundResponse("slide not found");
 
+    // 管理者なら全 status を引く (ADR 0040)。読み手には published + unlisted だけ。
+    const access = await resolveSlideReadAccess(c.env, c.req.raw);
+
     // D1 と R2 は共に slug 依存で互いに独立なので並行に読む。
     const [slide, markdown] = await Promise.all([
-      new D1SlideQueryRepository(c.env.D1).findBySlug(slug),
+      access.query.findBySlug(slug),
       new R2SlideContentCache(c.env.R2).getSource(slug),
     ]);
 
@@ -60,6 +68,11 @@ export function createSlideMarkdownRouter(): Hono<{ Bindings: Env }> {
         // ヘッダー生成が落ちる)。
         "Content-Disposition": `inline; filename="${slug.toString()}${MARKDOWN_SUFFIX}"`,
         "Cache-Control": contentCacheControlFor(c.env),
+        // 限定公開は検索エンジンに載せない。原文もページと同じものの別表現。
+        ...(shouldTellRobotsNoindex(slide.status) ? { "X-Robots-Tag": "noindex" } : {}),
+        // 管理者にしか見えないスライドの原文は共有キャッシュに載せない。後に置いて
+        // 上のキャッシュ指定を上書きする。
+        ...privateCacheHeadersFor(access, slide.status),
       },
     });
   });

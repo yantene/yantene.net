@@ -29,6 +29,8 @@ export class D1SlideCommandRepository implements ISlideCommandRepository {
       eventUrl: slide.event?.url ?? null,
       summary: slide.summary,
       pageCount: slide.pageCount,
+      // status は content に入れる。書き換えたら上書きされてほしい (公開 → 取り下げ)。
+      status: slide.status,
       sourceHash: slide.sourceHash,
       updatedAt: nowUnix,
     };

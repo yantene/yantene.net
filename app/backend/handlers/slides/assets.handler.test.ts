@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSlideAssetsRouter } from "./assets.handler";
+import type { ContentStatus } from "~/backend/domain/shared";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { Temporal } from "@js-temporal/polyfill";
 import { Slide, SlideSlug, SlideTitle } from "~/backend/domain/slide";
 import { D1SlideCommandRepository } from "~/backend/infra/d1/repositories";
@@ -13,7 +15,7 @@ function envWith(d1: D1Database, bucket: R2Bucket): Env {
 }
 
 /** 索引にスライドを入れる。配信はこの行が在ることを条件にする (#316)。 */
-async function seedSlide(d1: D1Database): Promise<void> {
+async function seedSlide(d1: D1Database, status: ContentStatus = "published"): Promise<void> {
   await new D1SlideCommandRepository(d1).upsert(
     Slide.create({
       slug: SlideSlug.create("semantic-slides"),
@@ -21,6 +23,7 @@ async function seedSlide(d1: D1Database): Promise<void> {
       publishedOn: Temporal.PlainDate.from("2026-11-14"),
       summary: "",
       pageCount: 2,
+      status,
       sourceHash: "h1",
     }),
   );
@@ -147,4 +150,74 @@ describe("createSlideAssetsRouter GET /:slug/assets/:path", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("image/png");
   });
+});
+
+/*
+ * status ごとのアセットの配信 (ADR 0040)。下書きを確かめるときに絵だけ 404 に
+ * ならないよう、ページと同じ判定を通す。記事のアセットと同じ表になること。
+ */
+describe("status ごとのアセットの配信 (ADR 0040)", () => {
+  async function fetchAsset(status: ContentStatus): Promise<Response> {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedSlide(d1, status);
+    await seedAsset(bucket);
+    return createSlideAssetsRouter().request(
+      "/semantic-slides/assets/diagram.png",
+      {},
+      envWith(d1, bucket),
+    );
+  }
+
+  /** ログインしている管理者として振る舞わせる。 */
+  function asAdmin(): void {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "admin@example.test" } as never,
+      admin: true,
+    });
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)("%s の絵は読み手に 404", async (status) => {
+    expect((await fetchAsset(status)).status).toBe(404);
+  });
+
+  it("unlisted の絵は読み手も取れるが noindex を伝える", async () => {
+    const response = await fetchAsset("unlisted");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("published の絵に noindex は付けない", async () => {
+    expect((await fetchAsset("published")).headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)(
+    "管理者は %s の絵を取れて、応答は共有キャッシュに載らない",
+    async (status) => {
+      asAdmin();
+
+      const response = await fetchAsset(status);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("Vary")).toContain("Cookie");
+    },
+  );
+
+  it.each(["published", "unlisted"] as const)(
+    "管理者が %s の絵を取っても共有キャッシュから遠ざけない",
+    async (status) => {
+      asAdmin();
+
+      const response = await fetchAsset(status);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toContain("max-age");
+    },
+  );
 });

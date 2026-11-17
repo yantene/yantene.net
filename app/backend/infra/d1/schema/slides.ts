@@ -15,7 +15,10 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
  *   不一致になる (書き損じた行が「同じ内容」として素通りしない)
  * - created_at / updated_at: D1 行の作成・更新時刻 (Unix 秒)
  *
- * **公開範囲の列は持たない。** 出したくないものは push しない (作品と同じ決め)。
+ * - status: 段階と公開範囲 (ADR 0040)。`published` / `unlisted` / `withdrawn` / `draft` /
+ *   `idea` のいずれか。**どの status のスライドもこの表に載る。** 読み手から隠すのは
+ *   配信の時点で行う (D1SlideQueryRepository.forReaders)。既定の `published` は、書き手が
+ *   `status` を省いたときの既定と同じ
  */
 export const slides = sqliteTable(
   "slides",
@@ -29,11 +32,16 @@ export const slides = sqliteTable(
     eventUrl: text("event_url"),
     summary: text("summary").notNull(),
     pageCount: integer("page_count").notNull(),
+    status: text("status").notNull().default("published"),
     sourceHash: text("source_hash").notNull().default(""),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
   // 一覧は常にこの順で引く。並びが索引に載っていれば「どの順で出るのか」が
   // スキーマから読める (works と同じ理由)。
-  (table) => [index("slides_published_on_idx").on(table.publishedOn)],
+  (table) => [
+    index("slides_published_on_idx").on(table.publishedOn),
+    // 読み手向けの経路はすべて status で絞る (articles_status_idx と同じ理由)。
+    index("slides_status_idx").on(table.status),
+  ],
 );

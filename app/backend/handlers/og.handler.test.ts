@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOgRouter } from "./og.handler";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { OG_TEMPLATE_VERSION } from "./og-card";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
+import { seedSlide } from "~/backend/handlers/slides/test-seed";
+import { createTestR2 } from "~/backend/infra/r2/test-helper";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 /** カードを描くところまでは行かないので、D1 だけあればよい。 */
@@ -109,5 +114,64 @@ describe("createOgRouter GET /slides/:slug が見つからないとき", () => {
     const response = await createOgRouter().request("/slides/missing", {}, envWith(createTestD1()));
 
     await expect(refusalOf(response)).resolves.toEqual(slideNotFound);
+  });
+});
+
+/*
+ * スライドのカードと status (ADR 0040)。記事のカードと同じ扱い — ログインしていても
+ * 読み手向けで引き、限定公開の絵には noindex を付ける。
+ *
+ * 絵を描くところ (WASM) までは行かせない。蓄えに置いておけば、引いたうえで蓄えを
+ * 返す経路を通る。
+ */
+describe("createOgRouter GET /slides/:slug と status", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  async function fetchCard(status: ContentStatus): Promise<Response> {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedSlide(d1, { status, sourceHash: "h1" });
+    await bucket.put(
+      `og/slides/semantic-slides-h1-${OG_TEMPLATE_VERSION}.png`,
+      new Uint8Array([1, 2, 3]),
+    );
+    return createOgRouter().request(
+      "/slides/semantic-slides",
+      {},
+      {
+        D1: d1,
+        R2: bucket,
+      },
+    );
+  }
+
+  it("published のカードを返し、noindex は付けない", async () => {
+    const response = await fetchCard("published");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  /* 絵には題が焼き込んである。画像検索に出ると題と存在が漏れる。 */
+  it("unlisted のカードは返すが noindex を付ける", async () => {
+    const response = await fetchCard("unlisted");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)("%s のカードは 404", async (status) => {
+    expect((await fetchCard(status)).status).toBe(404);
+  });
+
+  it("管理者がログインしていても draft のカードは 404", async () => {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "admin@example.test" } as never,
+      admin: true,
+    });
+
+    expect((await fetchCard("draft")).status).toBe(404);
   });
 });

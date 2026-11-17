@@ -2,7 +2,7 @@ import type { SlideEvent } from "./slide-event.vo";
 import type { SlideSlug } from "./slide-slug.vo";
 import type { SlideTitle } from "./slide-title.vo";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
+import type { ContentStatus, EntityId, IPersisted, IUnpersisted } from "~/backend/domain/shared";
 
 export type SlideId = EntityId<"Slide">;
 
@@ -26,6 +26,13 @@ interface SlideFields<T extends IPersisted | IUnpersisted> {
    */
   readonly pageCount: number;
   /**
+   * 段階と公開範囲。記事と同じ語彙で、読み手への振る舞いも同じ (ADR 0040)。
+   *
+   * **この値は「同期するか」を決めない。** どの status のスライドも D1 / R2 に載る。
+   * 読み手から隠すのは読み取り口 (`forReaders`) の役目。
+   */
+  readonly status: ContentStatus;
+  /**
    * コンテンツリポジトリ (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
    * (md + アセットの合成ハッシュ)。
    */
@@ -41,7 +48,7 @@ interface SlideFields<T extends IPersisted | IUnpersisted> {
  * 本文 (MDAST) と画像は R2 にあり、このエンティティが表すのは D1 に置くメタデータ。
  * 要約とページの数をここに持つのは、`/slides` とフィードが本文を読まずに並べるため。
  *
- * **公開範囲を持たない。** 出したくないものは push しない (作品と同じ決め)。
+ * 公開範囲は記事と同じ `status` で持つ (ADR 0040)。
  */
 export class Slide<T extends IPersisted | IUnpersisted = IPersisted> {
   private constructor(private readonly fields: SlideFields<T>) {}
@@ -53,6 +60,7 @@ export class Slide<T extends IPersisted | IUnpersisted = IPersisted> {
     event?: SlideEvent;
     summary: string;
     pageCount: number;
+    status: ContentStatus;
     sourceHash: string;
   }): Slide<IUnpersisted> {
     return new Slide({
@@ -63,6 +71,7 @@ export class Slide<T extends IPersisted | IUnpersisted = IPersisted> {
       event: params.event,
       summary: params.summary,
       pageCount: params.pageCount,
+      status: params.status,
       sourceHash: params.sourceHash,
       createdAt: undefined,
       updatedAt: undefined,
@@ -77,6 +86,7 @@ export class Slide<T extends IPersisted | IUnpersisted = IPersisted> {
     event: SlideEvent | undefined;
     summary: string;
     pageCount: number;
+    status: ContentStatus;
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -110,6 +120,10 @@ export class Slide<T extends IPersisted | IUnpersisted = IPersisted> {
 
   get pageCount(): number {
     return this.fields.pageCount;
+  }
+
+  get status(): ContentStatus {
+    return this.fields.status;
   }
 
   get sourceHash(): string {

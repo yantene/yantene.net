@@ -1,5 +1,6 @@
 import type { slides } from "~/backend/infra/d1/schema";
-import { entityId } from "~/backend/domain/shared";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { entityId, isContentStatus } from "~/backend/domain/shared";
 import { Slide, SlideEvent, SlideSlug, SlideTitle } from "~/backend/domain/slide";
 import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
 
@@ -19,10 +20,20 @@ export function rowToSlide(row: SlideRow): Slide {
     event: toEvent(row),
     summary: row.summary,
     pageCount: row.pageCount,
+    status: toContentStatus(row.status),
     sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
   });
+}
+
+/**
+ * 保存された status を読む。**読めない値を「隠す」に倒さない** (article-row.ts と同じ)。
+ * 倒すと、破損した行が黙って一覧から消える。
+ */
+function toContentStatus(value: string): ContentStatus {
+  if (isContentStatus(value)) return value;
+  throw new Error(`slides.status has an unreadable value: ${JSON.stringify(value)}`);
 }
 
 /** 場の名前が無ければ、発表しなかったスライド。日付と URL は名前に従う。 */

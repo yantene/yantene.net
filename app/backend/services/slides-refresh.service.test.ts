@@ -152,7 +152,7 @@ beforeEach(() => {
   const d1 = createTestD1();
   content = new MockContentStore(files);
   cache = new InMemoryCache();
-  query = new D1SlideQueryRepository(d1);
+  query = D1SlideQueryRepository.forAdmin(d1);
   service = new SlidesRefreshService(content, new D1SlideCommandRepository(d1), query, cache);
 });
 
@@ -460,5 +460,149 @@ describe("Overfull の警告", () => {
     expect(result.warnings).toEqual([
       { path: "slides/crowded.md", reason: "MDAST cache is missing; run a force refresh" },
     ]);
+  });
+});
+
+/*
+ * 公開範囲 (ADR 0040)。**どの status のスライドも同期する。** 読み手から隠すのは配信の
+ * 時点で、同期は status で分岐しない。
+ */
+describe("status", () => {
+  function withStatus(line: string): Uint8Array {
+    return bytes(SLIDE_MD.replace("publishedOn: 2026-11-14\n", `publishedOn: 2026-11-14\n${line}`));
+  }
+
+  it("書かなければ published として同期する", async () => {
+    await service.refresh();
+
+    expect((await query.list())[0]?.status).toBe("published");
+  });
+
+  it.each(["published", "unlisted", "withdrawn", "draft", "idea"] as const)(
+    "%s も D1 と R2 に載る",
+    async (status) => {
+      files.set("slides/semantic-slides.md", {
+        hash: `h-${status}`,
+        bytes: withStatus(`status: ${status}\n`),
+      });
+
+      const result = await service.refresh();
+
+      expect(result.processed).toEqual(["semantic-slides"]);
+      expect((await query.list())[0]?.status).toBe(status);
+      expect(cache.sources.has("semantic-slides")).toBe(true);
+      expect(cache.mdasts.has("semantic-slides")).toBe(true);
+      expect(cache.assets.has("semantic-slides/diagram.png")).toBe(true);
+    },
+  );
+
+  /* status を書き換えれば原文のハッシュが変わるので、段階の移り変わりは必ず拾える。 */
+  it("status を書き換えると読み直して、段階が移る", async () => {
+    await service.refresh();
+
+    files.set("slides/semantic-slides.md", {
+      hash: "h-withdrawn",
+      bytes: withStatus("status: withdrawn\n"),
+    });
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual(["semantic-slides"]);
+    expect(result.deleted).toEqual([]);
+    expect((await query.list())[0]?.status).toBe("withdrawn");
+    // 取り下げても写しは消さない。出し直せば元に戻る。
+    expect(cache.sources.has("semantic-slides")).toBe(true);
+  });
+
+  /* 下書きは「D1 に在る」うち。変更が無ければ読み直さず、消えたものとして掃除もしない。 */
+  it("下書きも、変更が無ければ読み直さないし消さない", async () => {
+    files.set("slides/semantic-slides.md", {
+      hash: "h-draft",
+      bytes: withStatus("status: draft\n"),
+    });
+    await service.refresh();
+    content.reads.length = 0;
+
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.deleted).toEqual([]);
+    expect(content.reads).toEqual([]);
+  });
+
+  it("下書きでも、コンテンツリポジトリから消えれば掃除する", async () => {
+    files.set("slides/semantic-slides.md", {
+      hash: "h-draft",
+      bytes: withStatus("status: draft\n"),
+    });
+    files.set("slides/another.md", { hash: "h-another", bytes: slideWith("語り。\n") });
+    await service.refresh();
+
+    files.delete("slides/semantic-slides.md");
+    const result = await service.refresh();
+
+    expect(result.deleted).toEqual(["semantic-slides"]);
+  });
+
+  /* 最後の 1 本を取り下げるときは消さずに withdrawn にする。全件削除のガードには掛からない。 */
+  it("最後の 1 本も withdrawn にすれば取り下げられる", async () => {
+    await service.refresh();
+
+    files.set("slides/semantic-slides.md", {
+      hash: "h-withdrawn",
+      bytes: withStatus("status: withdrawn\n"),
+    });
+
+    await expect(service.refresh()).resolves.toMatchObject({ processed: ["semantic-slides"] });
+  });
+
+  /*
+   * 読めない値を published に倒さない。スキップして前の姿 (前の status) を残す。
+   * **投げずにスキップであること** — 投げると同期全体が落ち、ほかの種別を巻き込む。
+   */
+  it.each([
+    ["打ち間違い", "status: pubished\n"],
+    ["旧書式の visibility", "visibility: private\n"],
+  ])("%s はスキップして前の姿を残す", async (_label, line) => {
+    files.set("slides/semantic-slides.md", {
+      hash: "h-draft",
+      bytes: withStatus("status: draft\n"),
+    });
+    await service.refresh();
+
+    files.set("slides/semantic-slides.md", { hash: "h-broken", bytes: withStatus(line) });
+    const result = await service.refresh();
+
+    expect(result.processed).toEqual([]);
+    expect(result.skipped).toHaveLength(1);
+    expect(result.skipped[0]?.path).toBe("slides/semantic-slides.md");
+    expect((await query.list())[0]?.status).toBe("draft");
+  });
+
+  /* まだ同期していないスライドが読めなければ、どこにも載らない (公開しない)。 */
+  it("初めての同期で status が読めなければ、載せない", async () => {
+    files.set("slides/semantic-slides.md", {
+      hash: "h-broken",
+      bytes: withStatus("status: 公開\n"),
+    });
+
+    const result = await service.refresh();
+
+    expect(result.skipped).toHaveLength(1);
+    expect(await query.list()).toEqual([]);
+    expect(cache.sources.size).toBe(0);
+  });
+
+  /* Overfull の警告は書き手に向けたもの。下書きのぶんも出す。 */
+  it("下書きにも Overfull の警告を出す", async () => {
+    files.set("slides/semantic-slides.md", {
+      hash: "h-draft",
+      bytes: bytes(
+        `---\ntitle: 題\npublishedOn: 2026-11-14\nstatus: draft\n---\n\n${OVERFULL_BODY}`,
+      ),
+    });
+
+    const result = await service.refresh();
+
+    expect(result.warnings.length).toBeGreaterThan(0);
   });
 });

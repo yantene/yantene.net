@@ -133,7 +133,7 @@ async function recentArticles(db: D1Database): Promise<readonly FeedEntry[]> {
 
 /** スライドは全件が出した日の新しい順で返るので、頭から切るだけでよい。 */
 async function recentSlides(db: D1Database): Promise<readonly FeedEntry[]> {
-  const slides = await new D1SlideQueryRepository(db).list();
+  const slides = await D1SlideQueryRepository.forReaders(db).list();
   return slides.slice(0, FEED_LIMIT).map((slide) => slideEntry(toPublicSlide(slide)));
 }
 

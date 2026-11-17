@@ -1,4 +1,5 @@
 import { Temporal } from "@js-temporal/polyfill";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { Slide, SlideEvent, SlideSlug, SlideTitle } from "~/backend/domain/slide";
 import { D1SlideCommandRepository } from "~/backend/infra/d1/repositories";
 
@@ -12,6 +13,7 @@ export async function seedSlide(
     summary?: string;
     event?: { name: string; date?: string; url?: string };
     pageCount?: number;
+    status?: ContentStatus;
     sourceHash?: string;
   } = {},
 ): Promise<void> {
@@ -33,6 +35,7 @@ export async function seedSlide(
       event,
       summary: params.summary ?? "語りの書き出し。",
       pageCount: params.pageCount ?? 12,
+      status: params.status ?? "published",
       sourceHash: params.sourceHash ?? "h1",
     }),
   );

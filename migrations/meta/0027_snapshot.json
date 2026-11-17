@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "08360748-3e45-4861-a472-130a1e63e1a5",
+  "id": "a6d35aa8-b165-484a-a4f2-47ba580a0cba",
   "prevId": "45d06a9c-9fc0-420b-92d8-dcb81cdc73ce",
   "tables": {
     "article_embeddings": {
@@ -914,6 +914,14 @@
           "notNull": true,
           "autoincrement": false
         },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'published'"
+        },
         "source_hash": {
           "name": "source_hash",
           "type": "text",
@@ -946,6 +954,11 @@
         "slides_published_on_idx": {
           "name": "slides_published_on_idx",
           "columns": ["published_on"],
+          "isUnique": false
+        },
+        "slides_status_idx": {
+          "name": "slides_status_idx",
+          "columns": ["status"],
           "isUnique": false
         }
       },

@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSlideMarkdownRouter } from "./markdown.handler";
 import { seedSlide } from "./test-seed";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { SlideSlug } from "~/backend/domain/slide";
+import * as currentAccountModule from "~/backend/handlers/auth/current-account";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 import { R2SlideContentCache } from "~/backend/infra/r2/r2-slide-content-cache";
 import { createTestR2 } from "~/backend/infra/r2/test-helper";
@@ -188,5 +190,86 @@ describe("slide markdown (full app)", () => {
     await app.request("/slides/semantic-slides.md", {}, env(d1, bucket), executionCtx());
 
     expect(app.router.name).toBe("SmartRouter + RegExpRouter");
+  });
+});
+
+/*
+ * status ごとの原文の配信 (ADR 0040)。原文はページと同じものの別表現なので、
+ * ページと同じ判定を通す。記事の原文と同じ表になること。
+ */
+describe("status ごとの原文の配信 (ADR 0040)", () => {
+  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ContentStatus): Promise<void> {
+    await seedSlide(d1, { status });
+    await new R2SlideContentCache(bucket).putSource(SlideSlug.create("semantic-slides"), SOURCE);
+  }
+
+  async function fetchSource(status: ContentStatus): Promise<Response> {
+    const d1 = createTestD1();
+    const { bucket } = createTestR2();
+    await seedWith(d1, bucket, status);
+    return createSlideMarkdownRouter().request("/semantic-slides.md", {}, env(d1, bucket));
+  }
+
+  /** ログインしている管理者として振る舞わせる。 */
+  function asAdmin(): void {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "admin@example.test" } as never,
+      admin: true,
+    });
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)("%s は読み手に 404 を返す", async (status) => {
+    expect((await fetchSource(status)).status).toBe(404);
+  });
+
+  it("unlisted は読み手も読めるが noindex を伝える", async () => {
+    const response = await fetchSource("unlisted");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("published に noindex は付けない", async () => {
+    expect((await fetchSource("published")).headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it.each(["withdrawn", "draft", "idea"] as const)(
+    "管理者は %s を読めて、応答は共有キャッシュに載らない",
+    async (status) => {
+      asAdmin();
+
+      const response = await fetchSource(status);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("Vary")).toContain("Cookie");
+      expect(await response.text()).toBe(SOURCE);
+    },
+  );
+
+  /* 読み手も辿り着けるものは中身が同じなので、管理者が見ていても遠ざけない。 */
+  it.each(["published", "unlisted"] as const)(
+    "管理者が %s を読んでも共有キャッシュから遠ざけない",
+    async (status) => {
+      asAdmin();
+
+      const response = await fetchSource(status);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).not.toBe("private, no-store");
+    },
+  );
+
+  it("ログインしていても管理者でなければ draft は 404", async () => {
+    vi.spyOn(currentAccountModule, "currentAccount").mockResolvedValue({
+      email: { toString: () => "reader@example.test" } as never,
+      admin: false,
+    });
+
+    expect((await fetchSource("draft")).status).toBe(404);
   });
 });

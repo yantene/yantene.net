@@ -156,4 +156,36 @@ describe("GET /sitemap.xml", () => {
       "<url><loc>https://yantene.net/slides/semantic-slides</loc><lastmod>2026-11-14</lastmod></url>",
     );
   });
+
+  /* 公開範囲 (ADR 0040)。sitemap に載せるスライドは published だけ。 */
+  it("published 以外のスライドは載せない", async () => {
+    const d1 = createTestD1();
+    for (const status of ["published", "unlisted", "withdrawn", "draft", "idea"] as const) {
+      await seedSlide(d1, { slug: `a-${status}`, status });
+    }
+    const response = await createTestApp().request(
+      "https://yantene.net/sitemap.xml",
+      {},
+      { D1: d1, APP_ENV: "test" },
+    );
+    const body = await response.text();
+
+    expect(body).toContain("https://yantene.net/slides/a-published<");
+    for (const hidden of ["unlisted", "withdrawn", "draft", "idea"]) {
+      expect(body).not.toContain(`/slides/a-${hidden}`);
+    }
+  });
+
+  /* 出しているものが 1 本も無ければ `/slides` は「準備中」。下書きだけでは載せない。 */
+  it("下書きしか無ければ /slides も載せない", async () => {
+    const d1 = createTestD1();
+    await seedSlide(d1, { status: "draft" });
+    const response = await createTestApp().request(
+      "https://yantene.net/sitemap.xml",
+      {},
+      { D1: d1, APP_ENV: "test" },
+    );
+
+    expect(await response.text()).not.toContain("/slides");
+  });
 });
