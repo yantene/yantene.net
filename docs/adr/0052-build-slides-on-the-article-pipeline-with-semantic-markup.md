@@ -109,10 +109,29 @@
 ページの下には、同じ原文を記事と同じ描き方で読める形にして置く (Transcript)。語りは
 ここにだけ出る。
 
-### 公開範囲を持たない
+### 公開範囲は記事と同じ `status` で持つ
 
-作品 ([ADR 0042](0042-keep-works-as-their-own-content-kind.md)) と同じで、出したくない
-スライドは push しない。作品と違い、フィードには流す (時系列に増えるものなので)。
+フロントマターの `status` (`published` / `unlisted` / `withdrawn` / `draft` / `idea`) が
+段階と公開範囲を持つ。語彙も、読み手への振る舞いも、読めない値と旧書式 `visibility` の
+扱いも、記事 ([ADR 0040](0040-article-status-and-reader-facing-repository.md)) と同じにする。
+型と判定は記事と 1 つを共有する (`domain/shared/content-status.ts`)。
+
+- **どの `status` のスライドも同期する。** 隠すのは配信の時点
+- 読み取り口は `D1SlideQueryRepository.forReaders` / `.forAdmin` の 2 つ。コンストラクタは
+  private で、`forReaders` が通す `status` はメソッドごとに固定してある
+- **管理者に見せるのは slug で 1 本引く経路だけ** (ページ・原文・アセット)。一覧・フィード・
+  sitemap・OG は、ログインしていても読み手向けで固定する
+- 管理者にしか見えない応答には `Cache-Control: private, no-store` を付ける。`unlisted` は
+  ページ・原文・アセット・OG に `noindex` を立てる
+
+記事と揃えるのは、スライドも書きかけを持ち、発表が済むまで出したくないものだから。
+同じ書き手が同じリポジトリで書くものに、段階の語彙を 2 つ持たせない。**コンテンツ
+リポジトリから消すことを「取り下げ」にしない**のも同じ理由で、消すと全件削除のガード
+(ツリーに `slides/*.md` が 1 つも無ければ同期を止める) に掛かり、最後の 1 本を下げられない。
+`status: withdrawn` なら掛からない。
+
+作品 ([ADR 0042](0042-keep-works-as-their-own-content-kind.md)) は公開範囲を持たないが、
+あちらは出来上がったものを手で選んで置く種別で、書きかけの段階が無い。
 
 ## 帰結 / Consequences
 
@@ -133,5 +152,6 @@
 
 ## 参考 / More Information
 
+- [ADR 0040](0040-article-status-and-reader-facing-repository.md) — `status` と、読み取り口を 2 つに分ける作り
 - Issue [#415](https://github.com/yantene/yantene.net/issues/415)
 - 書き手向けの書式は、コンテンツリポジトリの `.agents/references/site.md`
