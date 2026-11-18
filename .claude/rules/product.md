@@ -613,7 +613,9 @@ JSON-LD の `Person` は、どのページに出ても `<origin>/#person` とい
   欄は持たない」と経歴の節) はそのまま。`alumniOf` / `award` / `birthDate` / `birthPlace` /
   `worksFor` はどの場所にも足さない
 - `WebSite` の `name` は「やんてね」で固定する。**翻訳リソースから引かない** (クローラーは
-  既定の英語で読みに来るので、引くとサイト名が `yantene` になる)
+  既定の英語で読みに来るので、引くとサイト名が `yantene` になる)。英語で読む相手の
+  `<title>` は `yantene` のままなので、`alternateName` に `yantene` と `yantene.net` を
+  並べ、どちらで呼ばれても同じサイトだと言っておく
 - 同期の前は、どのページも同じ `@id` のまま名前だけ既定値に倒れる。`/about` も
   `ProfilePage` を名乗り、書き手は殻だけになる
 

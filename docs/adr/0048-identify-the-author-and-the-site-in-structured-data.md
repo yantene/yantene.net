@@ -105,7 +105,7 @@ JSON-LD はページごとに閉じている。別々のページに同じ名前
 - **トップには本体を置く。** トップは `WebSite` の `publisher` が指す先を同じ `@graph` の
   中に持つ。本体は `/about` と同じ関数から出るので、同じ `@id` の節が場所によって違う
   ことを言わない
-- **`WebSite` の `name` は「やんてね」、`alternateName` は `yantene.net` で固定する。**
+- **`WebSite` の `name` は「やんてね」、`alternateName` は `yantene` と `yantene.net` で固定する。**
   翻訳リソースからは引かない。サイトの名前は 1 つで、読み手の言語で変わるものではない
 - **`sameAs` に並べるのは相互リンクのある先 (`isMe`) だけ。** h-card の `rel="me"` と同じ
   線引きで、メールは `sameAs` ではなく `email` に置く。並べる先が 1 つも無ければ、

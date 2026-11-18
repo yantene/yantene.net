@@ -173,8 +173,15 @@ export function personReference(origin: string, profile: PublicProfile | null): 
  */
 const SITE_NAME = "やんてね";
 
-/** サイトの別名。ドメインで呼ばれることがあるので、そちらでも同じサイトだと分かるようにする。 */
-const SITE_ALTERNATE_NAME = "yantene.net";
+/**
+ * サイトの別名。どちらで呼ばれても同じサイトだと分かるようにする。
+ *
+ * - `yantene`: 英語で読みに来た相手の `<title>` と `og:site_name` はこの字になる (翻訳
+ *   リソースの `meta.title`)。クローラーは言語を指定せずに読むことが多いので、構造化データの
+ *   名前 (「やんてね」) とページの見える側の名前が食い違って見える。別名として名乗っておく
+ * - `yantene.net`: ドメインで呼ばれることがある
+ */
+const SITE_ALTERNATE_NAMES = ["yantene", "yantene.net"] as const;
 
 /**
  * `/about` の構造化データ。ページを `ProfilePage` として名乗り、その主題に書き手を置く。
@@ -248,7 +255,7 @@ export function homeJsonLd(origin: string, profile: PublicProfile | null): JsonL
         "@type": "WebSite",
         "@id": websiteId(origin),
         name: SITE_NAME,
-        alternateName: SITE_ALTERNATE_NAME,
+        alternateName: SITE_ALTERNATE_NAMES,
         url: `${origin}/`,
         // 本体が同じ `@graph` のすぐ隣にあるので、ここは `@id` だけで指す。
         publisher: { "@id": personId(origin) },

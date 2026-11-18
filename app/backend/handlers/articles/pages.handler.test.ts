@@ -77,7 +77,7 @@ describe("loadHomePage の JSON-LD (ADR 0048)", () => {
           "@type": "WebSite",
           "@id": `${ORIGIN}/#website`,
           name: "やんてね",
-          alternateName: "yantene.net",
+          alternateName: ["yantene", "yantene.net"],
           url: `${ORIGIN}/`,
           publisher: { "@id": PERSON_ID },
         },
