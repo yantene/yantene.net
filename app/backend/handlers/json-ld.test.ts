@@ -283,7 +283,7 @@ describe("homeJsonLd", () => {
           "@type": "WebSite",
           "@id": `${ORIGIN}/#website`,
           name: "やんてね",
-          alternateName: "yantene.net",
+          alternateName: ["yantene", "yantene.net"],
           url: `${ORIGIN}/`,
           publisher: { "@id": `${ORIGIN}/#person` },
         },

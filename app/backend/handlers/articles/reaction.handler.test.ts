@@ -6,7 +6,7 @@
  * ヘッダーをそのまま通す node で走らせる。
  */
 import { Temporal } from "@js-temporal/polyfill";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ReactionsPayload } from "./reaction.handler";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { viewWeightLog } from "~/backend/domain/content-view";
@@ -144,16 +144,28 @@ describe("リアクション API", () => {
    * 順位を動かせてしまう。
    */
   it("押して消すとスコアが元に戻る", async () => {
-    const harness = await setup();
-    const before = await logScore(harness);
+    /*
+     * ⚠️ **今日の日付を止める。** 押した日の重みは日が進むほど大きくなり (30 日で 2 倍)、
+     * 公開日の重みとの開きが広がるほど、足して引いたあとの丸めの誤差も大きくなる。実物の
+     * 時計で流すと、公開日を固定したこのテストは日が経つだけで落ちるようになる (#565 の
+     * 作業中に実際に落ちた)。止めるのは Date だけ (D1 の待ちに使うタイマーは動かす)。
+     */
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-02-01T00:00:00Z"));
+    try {
+      const harness = await setup();
+      const before = await logScore(harness);
 
-    await put(harness, "❤️");
-    const reacted = await logScore(harness);
-    await remove(harness);
-    const after = await logScore(harness);
+      await put(harness, "❤️");
+      const reacted = await logScore(harness);
+      await remove(harness);
+      const after = await logScore(harness);
 
-    expect(reacted).toBeGreaterThan(before ?? 0);
-    expect(after).toBeCloseTo(before ?? 0, 10);
+      expect(reacted).toBeGreaterThan(before ?? 0);
+      expect(after).toBeCloseTo(before ?? 0, 10);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   /*
