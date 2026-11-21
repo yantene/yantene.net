@@ -74,6 +74,24 @@
       "backToList": "Back to works"
     }
   },
+  "slides": {
+    "title": "Slides",
+    "heading": "Slides",
+    "lead": "Slides from talks. Each deck also reads as an article.",
+    "transcript": "Transcript",
+    "pages": "{{count}} pages",
+    "previous": "Previous",
+    "next": "Next",
+    "fullscreen": "Fullscreen",
+    "controls": "Slide controls",
+    "source": "Markdown",
+    "notFound": {
+      "title": "Slides not found",
+      "heading": "Slides not found",
+      "description": "The slides you are looking for do not exist or are no longer available.",
+      "backToList": "Back to slides"
+    }
+  },
   "history": {
     "heading": "History"
   },

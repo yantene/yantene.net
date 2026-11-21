@@ -3,16 +3,16 @@ import { describe, expect, it } from "vitest";
 import { D1ArticleSearchIndex } from "./article-search-index";
 import { D1ArticleCommandRepository } from "./article.command-repository";
 import { D1ArticleQueryRepository } from "./article.query-repository";
-import type { IUnpersisted } from "~/backend/domain/shared";
-import type { ArticleStatus } from "~/backend/domain/article";
-import { Article, ArticleSlug, ArticleTitle, articleStatuses } from "~/backend/domain/article";
+import type { IUnpersisted, ContentStatus } from "~/backend/domain/shared";
+import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { contentStatuses } from "~/backend/domain/shared";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
 
 function seed(params: {
   slug: string;
   publishedOn: string;
   lastModifiedOn?: string;
-  status?: ArticleStatus;
+  status?: ContentStatus;
 }): Article<IUnpersisted> {
   return Article.create({
     slug: ArticleSlug.create(params.slug),
@@ -203,10 +203,10 @@ describe("D1ArticleQueryRepository", () => {
  * 何も間違えていないのに下書きが漏れる。
  */
 describe("forReaders / forAdmin (ADR 0040)", () => {
-  const hidden = articleStatuses.filter((status) => status !== "published");
+  const hidden = contentStatuses.filter((status) => status !== "published");
 
   /** published 1 本と、指定した status の 1 本を入れる。 */
-  async function seedPair(status: ArticleStatus): Promise<D1Database> {
+  async function seedPair(status: ContentStatus): Promise<D1Database> {
     const d1 = createTestD1();
     const cmd = new D1ArticleCommandRepository(d1);
     await cmd.upsert(seed({ slug: "shown", publishedOn: "2026-01-10" }));

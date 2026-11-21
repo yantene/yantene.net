@@ -10,3 +10,4 @@ export { signInTokens } from "./sign-in-tokens";
 export { webmentionBlocks } from "./webmention-blocks";
 export { webmentions } from "./webmentions";
 export { workArticles, workScreenshots, works } from "./works";
+export { slides } from "./slides";

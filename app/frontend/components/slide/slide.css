@@ -1,0 +1,506 @@
+/*
+ * スライド (slide-deck.tsx / slide-page.tsx、ADR 0052)。
+ *
+ * **これがテーマ。** 原文には意味しか書かれていないので、置き方・大きさ・色・動きは
+ * すべてここが決める。直せば、過去のデッキ全部の見た目が揃って変わる。
+ *
+ * 大きさは枠の幅に対する比 (`cqw`) で決める。枠を 16:9 に保ち、字も余白も `cqw` で
+ * 組んであるので、どの幅でも同じ絵が拡大縮小されるだけになる。JavaScript で縮めないので
+ * `style` 属性も要らない。
+ *
+ * 出し分けは 3 つ。
+ * - 再生していない (JavaScript が動かない・クローラー): 全ページを縦に並べる
+ * - 再生中 (`data-playing`): いまのページだけを見せ、まだ出していない段を隠す
+ * - 印刷: 全ページを 1 枚ずつ。段はすべて出す
+ */
+
+.slide-deck {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.slide-stage {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.slide-frame {
+  container-type: inline-size;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.5rem;
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+/* 再生中は 1 ページずつ。押すと送れるので、押せる場所だと分かるようにする。 */
+.slide-deck[data-playing] .slide-frame:not(.is-current) {
+  display: none;
+}
+
+.slide-deck[data-playing] .slide-stage {
+  cursor: pointer;
+  view-transition-name: slide-stage;
+}
+
+/* 全画面。枠を画面いっぱいに、縦横比は保ったまま。 */
+.slide-stage:fullscreen {
+  place-items: center;
+  background: var(--color-base-100);
+}
+
+.slide-stage:fullscreen .slide-frame {
+  width: min(100vw, calc(100vh * 16 / 9));
+  border: 0;
+  border-radius: 0;
+}
+
+/* ---- ページ ---- */
+
+.slide-page {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 3cqw;
+  height: 100%;
+  padding: 5cqw 6.5cqw 5.5cqw;
+  font-size: 2.7cqw;
+  line-height: 1.5;
+  /* 入りきらない量は切る。縮めて押し込まない (同期のときに警告を出してある)。 */
+  overflow: hidden;
+}
+
+.slide-title {
+  font-size: 1.55em;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  /* 日本語の題を、文節の切れ目で折り返す (語の途中で割らない)。 */
+  word-break: auto-phrase;
+}
+
+.slide-folio {
+  position: absolute;
+  right: 3cqw;
+  bottom: 2cqw;
+  font-size: 0.5em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklch, currentcolor 45%, transparent);
+}
+
+.slide-body {
+  display: grid;
+  gap: 2.5cqw;
+  min-height: 0;
+  align-content: start;
+}
+
+.slide-blocks {
+  display: grid;
+  gap: 2cqw;
+  min-height: 0;
+  align-content: start;
+}
+
+/* ---- 本文の塊 (記事と同じ描画を、枠の大きさに従わせる) ---- */
+
+.slide-page .mdast-prose {
+  max-width: none;
+  font-size: 1em;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  --tw-prose-body: var(--color-base-content);
+  --tw-prose-bold: var(--color-primary);
+  --tw-prose-bullets: var(--color-primary);
+  --tw-prose-counters: var(--color-primary);
+}
+
+.slide-page .mdast-prose > :first-child {
+  margin-top: 0;
+}
+
+.slide-page .mdast-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.slide-page .mdast-prose :is(ul, ol) {
+  margin-block: 0;
+  padding-inline-start: 1.3em;
+}
+
+.slide-page .mdast-prose li {
+  margin-block: 0.3em;
+  padding-inline-start: 0.2em;
+}
+
+.slide-page .mdast-prose li > :is(ul, ol) {
+  font-size: 0.85em;
+}
+
+/* 強調は色で言う (Beamer の \alert)。太さは変えない字面のまま。 */
+.slide-page .mdast-prose strong {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.slide-page .mdast-prose :is(h3, h4, h5, h6) {
+  margin-block: 0 0.4em;
+  font-size: 1.05em;
+  color: color-mix(in oklch, var(--color-base-content) 70%, transparent);
+}
+
+.slide-page .mdast-prose pre,
+.slide-page .mdast-prose pre code {
+  font-size: 0.78em;
+  line-height: 1.55;
+}
+
+.slide-page .mdast-prose pre {
+  margin-block: 0;
+  padding: 1.2em 1.5em;
+}
+
+.slide-page .mdast-prose :not(pre) > code {
+  font-size: 0.9em;
+}
+
+.slide-page .mdast-prose table {
+  margin-block: 0;
+  font-size: 0.82em;
+  line-height: 1.4;
+}
+
+.slide-page .mdast-prose :is(th, td) {
+  padding: 0.4em 0.8em;
+}
+
+.slide-page .mdast-prose blockquote {
+  margin-block: 0;
+}
+
+.slide-page .mdast-prose img {
+  margin-block: 0;
+}
+
+.slide-page .mdast-prose p {
+  margin-block: 0 0.6em;
+}
+
+.slide-page .mdast-prose math[display="block"] {
+  font-size: 1.7em;
+}
+
+/* 見出しの脇のリンク (記事用) は、スライドでは出さない。 */
+.slide-page .heading-link {
+  display: none;
+}
+
+/* ---- 置き方 ---- */
+
+/* 一言のページ。題だけなので、枠の真ん中に大きく置く。 */
+.slide-layout-statement {
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+}
+
+.slide-layout-statement .slide-title {
+  font-size: 2.2em;
+  text-align: center;
+}
+
+.slide-layout-statement .slide-body {
+  display: none;
+}
+
+/* 図だけ。残りの高さを図に全部渡す。 */
+.slide-layout-figure .slide-body {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* 横長の図と、ほかの塊。上下に積む。 */
+.slide-layout-figure-over .slide-body {
+  /* 図には少なくとも半分ほどを残す。下が増えても図を潰さず、溢れるのは下の側にする。 */
+  grid-template-rows: minmax(45%, 1fr) auto;
+}
+
+/* 縦長の図と、ほかの塊。左右に並べる。 */
+.slide-layout-figure-beside .slide-body {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  gap: 4cqw;
+}
+
+/*
+ * 図は、渡された枠の中に縦横比を保って収める。中に挟まる器 (記事の描画の article、
+ * 段落、拡大のボタン) は高さを持たないので、図まで高さを通す。
+ */
+.slide-figure,
+.slide-figure .mdast-prose,
+.slide-figure .mdast-prose > p,
+.slide-figure .lightbox-trigger {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.slide-figure img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.6cqw;
+}
+
+/* 引用だけ。引用を大きく、真ん中に。 */
+.slide-layout-quote .slide-body {
+  align-content: center;
+}
+
+.slide-layout-quote .mdast-prose blockquote {
+  font-size: 1.45em;
+  line-height: 1.5;
+  font-style: normal;
+  font-weight: 500;
+  quotes: none;
+}
+
+/* 表だけ。表を真ん中に。 */
+.slide-layout-table .slide-body {
+  align-content: center;
+}
+
+/* ---- 表紙・章の扉・参考 ---- */
+
+.slide-page-cover {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 1.5cqw;
+  align-items: end;
+  background: linear-gradient(
+    160deg,
+    var(--color-base-100) 55%,
+    color-mix(in oklch, var(--color-primary) 12%, var(--color-base-100))
+  );
+}
+
+.slide-page-cover .slide-title {
+  font-size: 2.6em;
+  line-height: 1.2;
+}
+
+.slide-cover-author {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.slide-cover-event {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1em;
+  font-size: 0.8em;
+  color: color-mix(in oklch, currentcolor 65%, transparent);
+}
+
+.slide-cover-event time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 章の扉。地の色を反転させて、章が変わったことを色で言う。 */
+.slide-page-chapter {
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 1cqw;
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.slide-chapter-position {
+  align-self: end;
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: color-mix(in oklch, currentcolor 70%, transparent);
+}
+
+.slide-page-chapter .slide-title {
+  font-size: 2.4em;
+}
+
+.slide-references {
+  display: grid;
+  gap: 1cqw;
+  padding-inline-start: 1.4em;
+  list-style: decimal;
+  font-size: 0.75em;
+  align-content: start;
+}
+
+/* ---- 段 (fragment)。隠すのは再生中だけ ---- */
+
+.slide-block,
+.slide-figure,
+.slide-block .mdast-prose > ol > li {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.slide-deck[data-playing] .is-pending {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(0.6cqw);
+}
+
+/*
+ * 番号付きリストは 1 項目ずつ出す。`data-revealed` がいま出している数で、それより
+ * 後ろの項目を隠す。連続値は使えないので、段階を並べてある (slide-page.tsx の
+ * MAX_REVEALED_ITEMS と揃える)。
+ */
+.slide-deck[data-playing] [data-revealed="0"] .mdast-prose > ol > li:nth-child(n + 1),
+.slide-deck[data-playing] [data-revealed="1"] .mdast-prose > ol > li:nth-child(n + 2),
+.slide-deck[data-playing] [data-revealed="2"] .mdast-prose > ol > li:nth-child(n + 3),
+.slide-deck[data-playing] [data-revealed="3"] .mdast-prose > ol > li:nth-child(n + 4),
+.slide-deck[data-playing] [data-revealed="4"] .mdast-prose > ol > li:nth-child(n + 5),
+.slide-deck[data-playing] [data-revealed="5"] .mdast-prose > ol > li:nth-child(n + 6),
+.slide-deck[data-playing] [data-revealed="6"] .mdast-prose > ol > li:nth-child(n + 7),
+.slide-deck[data-playing] [data-revealed="7"] .mdast-prose > ol > li:nth-child(n + 8),
+.slide-deck[data-playing] [data-revealed="8"] .mdast-prose > ol > li:nth-child(n + 9),
+.slide-deck[data-playing] [data-revealed="9"] .mdast-prose > ol > li:nth-child(n + 10),
+.slide-deck[data-playing] [data-revealed="10"] .mdast-prose > ol > li:nth-child(n + 11),
+.slide-deck[data-playing] [data-revealed="11"] .mdast-prose > ol > li:nth-child(n + 12) {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(0.6cqw);
+}
+
+/* ---- 操作の並び ---- */
+
+.slide-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.slide-control {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.375rem;
+  background: var(--color-base-100);
+}
+
+.slide-control:disabled {
+  opacity: 0.4;
+}
+
+.slide-position {
+  min-width: 5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted-foreground);
+}
+
+/* JavaScript が動くまで、送る操作は働かない。出さない。 */
+.slide-deck:not([data-playing]) .slide-controls {
+  display: none;
+}
+
+/* ---- ページの入れ替え (View Transitions) ---- */
+
+::view-transition-old(slide-stage),
+::view-transition-new(slide-stage) {
+  animation-duration: 0.22s;
+}
+
+/* 章をまたぐときは横に送る。章の中は既定の重ね替えのまま、控えめに。 */
+html:active-view-transition-type(slide-chapter)::view-transition-old(slide-stage) {
+  animation: 0.38s ease both slide-leave;
+}
+
+html:active-view-transition-type(slide-chapter)::view-transition-new(slide-stage) {
+  animation: 0.38s ease both slide-enter;
+}
+
+@keyframes slide-leave {
+  to {
+    opacity: 0;
+    transform: translateX(-6%);
+  }
+}
+
+@keyframes slide-enter {
+  from {
+    opacity: 0;
+    transform: translateX(6%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-block,
+  .slide-figure,
+  .slide-block .mdast-prose > ol > li {
+    transition: none;
+  }
+}
+
+/* ---- 印刷。1 ページ 1 枚、段はすべて出す ---- */
+
+@page slide {
+  size: 13.333in 7.5in;
+  margin: 0;
+}
+
+@media print {
+  /* スライドのページでは、スライドのほかは刷らない (サイトの帯、操作、読み物)。 */
+  .slide-screen-only,
+  .slide-controls {
+    display: none !important;
+  }
+
+  /*
+   * スライドを包む器 (ページの main と article) の余白と幅の上限を外す。余白が残ると、
+   * それだけが載った空の 1 枚が先頭に出る。
+   */
+  .slide-print-root,
+  .slide-deck,
+  .slide-stage {
+    display: block;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    page: slide;
+  }
+
+  /* 枠を用紙と同じ大きさにする。中身は枠の幅に対する比で組んであるので、そのまま拡大される。 */
+  .slide-deck .slide-frame,
+  .slide-deck[data-playing] .slide-frame:not(.is-current) {
+    display: block;
+    page: slide;
+    break-after: page;
+    break-inside: avoid;
+    width: 13.333in;
+    height: 7.5in;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .slide-deck .slide-frame:last-child {
+    break-after: auto;
+  }
+
+  .slide-deck[data-playing] .is-pending,
+  .slide-deck[data-playing] [data-revealed] .mdast-prose > ol > li {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+}

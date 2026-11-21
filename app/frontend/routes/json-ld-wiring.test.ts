@@ -9,7 +9,8 @@ import * as notes from "./notes";
 import * as signIn from "./sign-in";
 import * as signInConfirm from "./sign-in.confirm";
 import * as signInSent from "./sign-in.sent";
-import * as slides from "./slides";
+import { meta as slidesMeta } from "./slides";
+import { meta as slideMeta } from "./slides.$slug";
 import { meta as worksMeta } from "./works";
 import { meta as workMeta } from "./works.$slug";
 import {
@@ -80,6 +81,21 @@ const PASSED_THROUGH = {
       expected: jsonLd,
     };
   },
+  "routes/slides.tsx": () => {
+    const jsonLd = collectionPageJsonLd(ORIGIN, "/slides");
+    return {
+      actual: ldJsonOf(slidesMeta, "/slides", { ...BASE, slides: [], jsonLd }),
+      expected: jsonLd,
+    };
+  },
+  "routes/slides.$slug.tsx": () => {
+    const jsonLd = { "@type": "PresentationDigitalDocument" };
+    const slide = { slug: "workers-site", title: "題", summary: "要約。" };
+    return {
+      actual: ldJsonOf(slideMeta, "/slides/workers-site", { ...BASE, slide, jsonLd }),
+      expected: jsonLd,
+    };
+  },
   "routes/works.$slug.tsx": () => {
     const jsonLd = { "@type": "CreativeWork" };
     const work = { slug: "infoholick", name: "infoholick", summary: "概要。", url: null };
@@ -96,7 +112,6 @@ const PASSED_THROUGH = {
  */
 const BUILT_IN_THE_LOADER = {
   "routes/notes.tsx": { route: notes, path: "/notes", build: collectionPageJsonLd },
-  "routes/slides.tsx": { route: slides, path: "/slides", build: collectionPageJsonLd },
   "routes/legal.tsx": { route: legal, path: "/legal", build: webPageJsonLd },
   "routes/sign-in.tsx": { route: signIn, path: "/sign-in", build: webPageJsonLd },
   "routes/sign-in.sent.tsx": { route: signInSent, path: "/sign-in/sent", build: webPageJsonLd },
@@ -161,6 +176,10 @@ describe("ルートの meta は構造化データを HTML まで運ぶ", () => {
 describe("見つからなかったページは構造化データを出さない", () => {
   it("記事", () => {
     expect(ldJsonOf(articleMeta, "/articles/nope", { ...BASE, found: false })).toEqual([]);
+  });
+
+  it("スライド", () => {
+    expect(ldJsonOf(slideMeta, "/slides/nope", { ...BASE, slide: null, jsonLd: null })).toEqual([]);
   });
 
   it("作品", () => {

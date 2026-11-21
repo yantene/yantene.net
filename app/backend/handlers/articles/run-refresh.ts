@@ -11,6 +11,8 @@ import {
   D1ArticleSearchIndex,
   D1ProfileCommandRepository,
   D1ProfileQueryRepository,
+  D1SlideCommandRepository,
+  D1SlideQueryRepository,
   D1WorkCommandRepository,
   D1WorkQueryRepository,
 } from "~/backend/infra/d1/repositories";
@@ -19,11 +21,13 @@ import { OgpLinkCardFetcher } from "~/backend/infra/http/ogp-link-card-fetcher";
 import { R2LinkCardAssetCache } from "~/backend/infra/r2/r2-link-card-asset-cache";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { R2ProfileContentCache } from "~/backend/infra/r2/r2-profile-content-cache";
+import { R2SlideContentCache } from "~/backend/infra/r2/r2-slide-content-cache";
 import { R2WorkContentCache } from "~/backend/infra/r2/r2-work-content-cache";
 import { LinkCardsRefreshService } from "~/backend/services/link-cards-refresh.service";
 import { ArticleEmbeddingsRefreshService } from "~/backend/services/article-embeddings-refresh.service";
 import { ArticlesRefreshService } from "~/backend/services/articles-refresh.service";
 import { ProfileRefreshService } from "~/backend/services/profile-refresh.service";
+import { SlidesRefreshService } from "~/backend/services/slides-refresh.service";
 import { WorksRefreshService } from "~/backend/services/works-refresh.service";
 
 /**
@@ -75,13 +79,31 @@ export async function runRefresh(
     D1ArticleQueryRepository.forAdmin(env.D1),
   ).refresh({ force });
 
+  /*
+   * スライドも同じツリーから同期する (`slides/<slug>.md` + `slides/<slug>/`。ADR 0052)。
+   * 経路は作品と同じで、ツリーごと空に見える事故は自前のガードで止める。公開範囲は
+   * 記事と同じ `status` で持ち、どの status も同期するので読み取り口は `forAdmin`。
+   * 1 ページに入りきらない量は `slides.warnings` に出る (同期は止めない)。
+   */
+  const slides = await new SlidesRefreshService(
+    contentStore,
+    new D1SlideCommandRepository(env.D1),
+    D1SlideQueryRepository.forAdmin(env.D1),
+    new R2SlideContentCache(env.R2),
+  ).refresh({ force });
+
   // 本文に貼られた URL のカードを揃える。記事の同期とは失敗の扱いが違う
   // (外部サイトが落ちていることは異常ではない) ので、別のサービスに分けている。
-  // 長い自己紹介と作品の説明が貼った URL も同じ表に入れる
-  // (`/about` と `/works/<slug>` だけカードにならない、を避ける)。
+  // 長い自己紹介と作品の説明とスライドが貼った URL も同じ表に入れる
+  // (`/about` と `/works/<slug>` と `/slides/<slug>` だけカードにならない、を避ける)。
   const logger = new ConsoleLogger({ component: "link-cards" });
   const linkedUrls = [
-    ...new Set([...result.linkedUrls, ...profile.linkedUrls, ...works.linkedUrls]),
+    ...new Set([
+      ...result.linkedUrls,
+      ...profile.linkedUrls,
+      ...works.linkedUrls,
+      ...slides.linkedUrls,
+    ]),
   ];
   const linkCards = await new LinkCardsRefreshService(
     new OgpLinkCardFetcher(logger),
@@ -116,8 +138,8 @@ export async function runRefresh(
     new ConsoleLogger({ component: "article-embeddings" }),
   ).sync({ force });
 
-  // linkedUrls は 3 つを合わせたもの (カードの同期に渡したものと同じ) を返す。
-  // 記事の分だけを返すと、`/about` と `/works/<slug>` のカードが取れたか取れなかったかを
-  // 結果から辿れない。
-  return { ...result, linkedUrls, profile, works, linkCards, embeddings };
+  // linkedUrls は 4 つを合わせたもの (カードの同期に渡したものと同じ) を返す。
+  // 記事の分だけを返すと、`/about` や `/works/<slug>` や `/slides/<slug>` のカードが
+  // 取れたか取れなかったかを結果から辿れない。
+  return { ...result, linkedUrls, profile, works, slides, linkCards, embeddings };
 }

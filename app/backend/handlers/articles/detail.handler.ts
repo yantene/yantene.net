@@ -10,20 +10,15 @@ import {
 import { recordArticleView, type ArticleViewRecording } from "./view-recording";
 import type { ArticleDetail, PublicArticleMeta } from "./article-detail-view";
 import type { ArticleReadAccess } from "./article-read-access";
-import type { Article, ArticleStatus } from "~/backend/domain/article";
+import type { Article } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import type { TocHeading } from "./toc-headings";
 import type { Root } from "mdast";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
 import type { PublicProfile } from "~/backend/handlers/profile/profile-view";
 import type { WebmentionGroups } from "~/backend/handlers/webmentions/webmention-view";
-import {
-  articlePath,
-  ArticleNotFoundError,
-  ArticleSlug,
-  isReachableByReaders,
-  shouldTellRobotsNoindex,
-} from "~/backend/domain/article";
-import { entityId } from "~/backend/domain/shared";
+import { articlePath, ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
+import { isReachableByReaders, shouldTellRobotsNoindex, entityId } from "~/backend/domain/shared";
 import { isBlockedSource } from "~/backend/domain/webmention";
 import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
@@ -57,7 +52,7 @@ interface ResolvedArticle {
   readonly detail: ArticleDetail;
   readonly articleId: string;
   /** 引いた記事の段階 (ADR 0040)。noindex を立てるかの判断に使う。 */
-  readonly status: ArticleStatus;
+  readonly status: ContentStatus;
 }
 
 async function loadArticleDetail(

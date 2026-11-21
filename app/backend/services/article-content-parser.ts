@@ -1,8 +1,8 @@
 import { toString as mdastToString } from "mdast-util-to-string";
 import { ALERT_TAG_NAME, parseMarkdownBody } from "./markdown-body";
 import type { Nodes, Root, RootContent } from "mdast";
-import type { ArticleStatus } from "~/backend/domain/article";
-import { DEFAULT_ARTICLE_STATUS, isArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { DEFAULT_CONTENT_STATUS, isContentStatus } from "~/backend/domain/shared";
 import { collectBareLinkParagraphs } from "~/lib/link-card/bare-link";
 
 const SUMMARY_MAX_CHARS = 160;
@@ -28,7 +28,7 @@ export interface ArticleFrontmatter {
   readonly imageUrl: string | undefined;
   readonly publishedOn: string | undefined;
   readonly lastModifiedOn: string | undefined;
-  readonly status: ArticleStatus;
+  readonly status: ContentStatus;
 }
 
 export interface ParsedArticleContent {
@@ -150,8 +150,11 @@ function asOptionalString(value: unknown): string | undefined {
  * `status = 'published'` が入っているため)。画面は正常に見えるのに更新だけが
  * 反映されなくなるので、気づく手立ては refresh の応答の `skipped` しか無い。
  * コンテンツリポジトリ側の書き換えは、取りこぼさず一度に済ませること。
+ *
+ * スライドのフロントマターも同じ関数で読む (slide-content-parser.ts)。読み方を 2 つ
+ * 持つと、片方だけが `visibility` を素通しする。
  */
-function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
+export function asStatus(rawMatter: Record<string, unknown>): ContentStatus {
   if ("visibility" in rawMatter) {
     throw new StatusValueError(
       "frontmatter still has the former `visibility` key; rename it to `status` (ADR 0040)",
@@ -159,10 +162,10 @@ function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
   }
 
   const value = rawMatter.status;
-  if (value === undefined || value === null) return DEFAULT_ARTICLE_STATUS;
+  if (value === undefined || value === null) return DEFAULT_CONTENT_STATUS;
   if (typeof value === "string") {
     const normalized = value.trim().toLowerCase();
-    if (isArticleStatus(normalized)) return normalized;
+    if (isContentStatus(normalized)) return normalized;
   }
   throw new StatusValueError(`frontmatter has unreadable status: ${JSON.stringify(value)}`);
 }
@@ -170,8 +173,10 @@ function asStatus(rawMatter: Record<string, unknown>): ArticleStatus {
 /**
  * フロントマターの日付を ISO 日付文字列にそろえる。YAML パーサが文字列で返す場合と
  * Date で返す場合の両方に備える。
+ *
+ * スライドのフロントマター (slide-content-parser.ts) も同じ読み方をする。
  */
-function asDateString(value: unknown): string | undefined {
+export function asDateString(value: unknown): string | undefined {
   if (typeof value === "string" && value.length > 0) return value;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return undefined;

@@ -5,8 +5,7 @@ import { D1ArticleEmbeddingQueryRepository } from "./article-embedding.query-rep
 import { D1ArticleCommandRepository } from "./article.command-repository";
 import { D1ArticleQueryRepository } from "./article.query-repository";
 import type { ArticleEmbedding } from "~/backend/domain/article-embedding";
-import type { EntityId } from "~/backend/domain/shared";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { EntityId, ContentStatus } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { EmbeddingVector } from "~/backend/domain/article-embedding";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
@@ -17,7 +16,7 @@ const MODEL = "@cf/pfnet/plamo-embedding-1b";
 async function seedArticle(
   d1: D1Database,
   slug: string,
-  status: ArticleStatus = "published",
+  status: ContentStatus = "published",
 ): Promise<EntityId<"Article">> {
   await new D1ArticleCommandRepository(d1).upsert(
     Article.create({

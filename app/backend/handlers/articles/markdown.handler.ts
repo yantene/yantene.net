@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { contentCacheControlFor, NEGOTIATED_CONTENT_CACHE_CONTROL } from "./content-cache-control";
 import { isMarkdownPreferred } from "./markdown-negotiation";
-import { articlePath, ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
+import { articlePath, ArticleSlug } from "~/backend/domain/article";
+import { shouldTellRobotsNoindex } from "~/backend/domain/shared";
 import { privateCacheHeadersFor, resolveArticleReadAccess } from "./article-read-access";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { httpStatus } from "~/lib/constants/http-status";

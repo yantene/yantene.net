@@ -1,8 +1,13 @@
 import type { ArticleSlug } from "./article-slug.vo";
 import type { ArticleTitle } from "./article-title.vo";
-import type { ArticleStatus } from "./article-status";
 import type { Temporal } from "@js-temporal/polyfill";
-import type { EntityId, ImageUrl, IPersisted, IUnpersisted } from "~/backend/domain/shared";
+import type {
+  ContentStatus,
+  EntityId,
+  ImageUrl,
+  IPersisted,
+  IUnpersisted,
+} from "~/backend/domain/shared";
 
 export type ArticleId = EntityId<"Article">;
 
@@ -24,7 +29,7 @@ interface ArticleFields<T extends IPersisted | IUnpersisted> {
    * **この値は「同期するか」を決めない。** どの status の記事も D1 / R2 に載る。
    * 読み手から隠すのは配信の時点で行う。
    */
-  readonly status: ArticleStatus;
+  readonly status: ContentStatus;
   /**
    * コンテンツリポジトリ (Markdown) のリビジョン識別子。refresh 時の変更検出に使う
    * (コンテンツリポジトリのツリーが返すファイルハッシュ)。
@@ -50,7 +55,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl?: ImageUrl;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
-    status: ArticleStatus;
+    status: ContentStatus;
     sourceHash: string;
   }): Article<IUnpersisted> {
     return new Article({
@@ -76,7 +81,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
     imageUrl: ImageUrl | undefined;
     publishedOn: Temporal.PlainDate;
     lastModifiedOn: Temporal.PlainDate;
-    status: ArticleStatus;
+    status: ContentStatus;
     sourceHash: string;
     createdAt: Temporal.Instant;
     updatedAt: Temporal.Instant;
@@ -112,7 +117,7 @@ export class Article<T extends IPersisted | IUnpersisted = IPersisted> {
     return this.fields.lastModifiedOn;
   }
 
-  get status(): ArticleStatus {
+  get status(): ContentStatus {
     return this.fields.status;
   }
 

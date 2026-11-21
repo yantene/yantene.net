@@ -18,3 +18,5 @@ export { D1WebmentionQueryRepository } from "./webmention.query-repository";
 export { D1WebmentionBlocklist } from "./webmention-blocklist";
 export { D1WorkCommandRepository } from "./work.command-repository";
 export { D1WorkQueryRepository } from "./work.query-repository";
+export { D1SlideCommandRepository } from "./slide.command-repository";
+export { D1SlideQueryRepository } from "./slide.query-repository";

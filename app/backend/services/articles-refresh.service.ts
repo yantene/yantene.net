@@ -21,13 +21,8 @@ import type {
   IArticleSearchIndex,
 } from "~/backend/domain/article";
 import type { IUnpersisted } from "~/backend/domain/shared";
-import {
-  ImageUrl,
-  Article,
-  ArticleSlug,
-  ArticleTitle,
-  isListedToReaders,
-} from "~/backend/domain/article";
+import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { isListedToReaders } from "~/backend/domain/shared";
 import { collectBareLinkUrls } from "~/lib/link-card/bare-link";
 
 /**

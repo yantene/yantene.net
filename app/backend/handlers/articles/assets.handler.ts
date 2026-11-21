@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { contentCacheControlFor } from "./content-cache-control";
-import { ArticleSlug, shouldTellRobotsNoindex } from "~/backend/domain/article";
+import { ArticleSlug } from "~/backend/domain/article";
+import { shouldTellRobotsNoindex } from "~/backend/domain/shared";
 import { privateCacheHeadersFor, resolveArticleReadAccess } from "./article-read-access";
 import { R2ArticleContentCache } from "~/backend/infra/r2/r2-article-content-cache";
 import { notFoundResponse } from "~/lib/problem-details";

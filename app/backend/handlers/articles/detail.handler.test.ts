@@ -1,7 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ArticleDetail } from "./article-detail-view";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { Profile, ProfileName, Tagline } from "~/backend/domain/profile";
 import {
@@ -123,7 +123,7 @@ describe("createArticleDetailApiRouter GET /:slug", () => {
  * `noindex` は meta と X-Robots-Tag の両方の元になる 1 つの真実なので、ここで固定する。
  */
 describe("loadArticleDetailPage の status (ADR 0040)", () => {
-  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ArticleStatus): Promise<void> {
+  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ContentStatus): Promise<void> {
     await new D1ArticleCommandRepository(d1).upsert(
       Article.create({
         slug: ArticleSlug.create("hello"),

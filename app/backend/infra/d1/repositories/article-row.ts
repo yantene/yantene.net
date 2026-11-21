@@ -1,13 +1,7 @@
 import type { articles } from "~/backend/infra/d1/schema";
-import type { ArticleStatus } from "~/backend/domain/article";
-import {
-  ImageUrl,
-  Article,
-  ArticleSlug,
-  ArticleTitle,
-  isArticleStatus,
-} from "~/backend/domain/article";
-import { entityId } from "~/backend/domain/shared";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { ImageUrl, Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
+import { isContentStatus, entityId } from "~/backend/domain/shared";
 import { isoToPlainDate, unixToInstant } from "~/backend/infra/d1/temporal";
 
 /**
@@ -24,7 +18,7 @@ export function rowToArticle(row: typeof articles.$inferSelect): Article {
     imageUrl: row.imageUrl === null ? undefined : ImageUrl.create(row.imageUrl),
     publishedOn: isoToPlainDate(row.publishedOn),
     lastModifiedOn: isoToPlainDate(row.lastModifiedOn),
-    status: toArticleStatus(row.status),
+    status: toContentStatus(row.status),
     sourceHash: row.sourceHash,
     createdAt: unixToInstant(row.createdAt),
     updatedAt: unixToInstant(row.updatedAt),
@@ -37,7 +31,7 @@ export function rowToArticle(row: typeof articles.$inferSelect): Article {
  * **読めない値を「隠す」に倒さない。** 倒すと、破損した行が黙って一覧から消え、
  * 気づく手立ては「記事が減ったこと」しか無くなる (fail-loud)。
  */
-function toArticleStatus(value: string): ArticleStatus {
-  if (isArticleStatus(value)) return value;
+function toContentStatus(value: string): ContentStatus {
+  if (isContentStatus(value)) return value;
   throw new Error(`articles.status has an unreadable value: ${JSON.stringify(value)}`);
 }

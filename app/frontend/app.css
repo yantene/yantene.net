@@ -50,6 +50,8 @@
 @import "./components/work/work-list.css";
 @import "./components/work/work-gallery.css";
 @import "./components/work/work-facts.css";
+@import "./components/slide/slide.css";
+@import "./components/slide/slide-list.css";
 @import "./components/profile/author-note.css";
 @import "./components/profile/profile-history.css";
 @import "./components/social/social-links.css";

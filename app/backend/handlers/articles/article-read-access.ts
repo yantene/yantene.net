@@ -1,5 +1,5 @@
-import type { ArticleStatus } from "~/backend/domain/article";
-import { isReachableByReaders } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
+import { isReachableByReaders } from "~/backend/domain/shared";
 import { currentAccount, PRIVATE_CACHE_HEADERS } from "~/backend/handlers/auth/current-account";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
 
@@ -50,10 +50,13 @@ export async function resolveArticleReadAccess(
  * 記事を開くだけで**その記事の画像を毎回落とし直す**ことになる。
  *
  * 遠ざけるのは、管理者にしか見えない中身を返したときだけ。
+ *
+ * スライドも同じ判定を通す (slide-read-access.ts) ので、受け取るのは「管理者として
+ * 引いたか」だけにしてある。
  */
 export function shouldKeepResponsePrivate(
-  access: ArticleReadAccess,
-  status: ArticleStatus,
+  access: { readonly admin: boolean },
+  status: ContentStatus,
 ): boolean {
   return access.admin && !isReachableByReaders(status);
 }
@@ -65,8 +68,8 @@ export function shouldKeepResponsePrivate(
  * ヘッダーを別に組むので、あちらは述語のほうを使う。
  */
 export function privateCacheHeadersFor(
-  access: ArticleReadAccess,
-  status: ArticleStatus,
+  access: { readonly admin: boolean },
+  status: ContentStatus,
 ): Readonly<Record<string, string>> {
   return shouldKeepResponsePrivate(access, status) ? PRIVATE_CACHE_HEADERS : {};
 }

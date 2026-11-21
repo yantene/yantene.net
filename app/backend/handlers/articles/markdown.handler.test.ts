@@ -2,7 +2,7 @@ import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createArticleMarkdownRouter } from "./markdown.handler";
-import type { ArticleStatus } from "~/backend/domain/article";
+import type { ContentStatus } from "~/backend/domain/shared";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
 import { createTestD1 } from "~/backend/infra/d1/test-helper";
@@ -555,7 +555,7 @@ describe("article markdown negotiation (full app)", () => {
  */
 describe("status ごとの原文の配信 (ADR 0040)", () => {
   /** 指定した status の記事を D1 と R2 に揃える。 */
-  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ArticleStatus): Promise<void> {
+  async function seedWith(d1: D1Database, bucket: R2Bucket, status: ContentStatus): Promise<void> {
     await new D1ArticleCommandRepository(d1).upsert(
       Article.create({
         slug: ArticleSlug.create("hello"),

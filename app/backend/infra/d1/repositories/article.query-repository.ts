@@ -10,7 +10,7 @@ import type {
   ArticleSlug,
   ArticleSortField,
 } from "~/backend/domain/article";
-import { articleStatuses, isListedToReaders, isReachableByReaders } from "~/backend/domain/article";
+import { contentStatuses, isListedToReaders, isReachableByReaders } from "~/backend/domain/shared";
 import { articles } from "~/backend/infra/d1/schema";
 
 const sortColumns = {
@@ -19,10 +19,10 @@ const sortColumns = {
 } as const satisfies Record<ArticleSortField, unknown>;
 
 /** 読み手に差し出してよい status (一覧・検索・関連記事・人気順)。 */
-const LISTED_STATUSES = articleStatuses.filter((status) => isListedToReaders(status));
+const LISTED_STATUSES = contentStatuses.filter((status) => isListedToReaders(status));
 
 /** URL を直に打った読み手に見せてよい status。 */
-const REACHABLE_STATUSES = articleStatuses.filter((status) => isReachableByReaders(status));
+const REACHABLE_STATUSES = contentStatuses.filter((status) => isReachableByReaders(status));
 
 /**
  * 記事の読み取り口 (ADR 0040)。

@@ -7,16 +7,13 @@ import type {
 } from "~/backend/domain/article-embedding";
 import type { ArticleSlug } from "~/backend/domain/article";
 import type { EntityId } from "~/backend/domain/shared";
-import {
-  ArticleSlug as ArticleSlugVo,
-  articleStatuses,
-  isListedToReaders,
-} from "~/backend/domain/article";
+import { ArticleSlug as ArticleSlugVo } from "~/backend/domain/article";
+import { contentStatuses, isListedToReaders } from "~/backend/domain/shared";
 import { EmbeddingVector } from "~/backend/domain/article-embedding";
 import { articleEmbeddings, articleSimilarities, articles } from "~/backend/infra/d1/schema";
 
 /** 関連記事として差し出してよい status (ADR 0040)。 */
-const LISTED_STATUSES = articleStatuses.filter((status) => isListedToReaders(status));
+const LISTED_STATUSES = contentStatuses.filter((status) => isListedToReaders(status));
 
 export class D1ArticleEmbeddingQueryRepository implements IArticleEmbeddingQueryRepository {
   private readonly db;
