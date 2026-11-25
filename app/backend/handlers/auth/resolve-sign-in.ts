@@ -62,7 +62,7 @@ function resolveAllowedEmails(env: Env): readonly EmailAddress[] {
  * **ここでは投げない。** 投げると、配信と関係の無い経路 (ログイン中かを見るだけの
  * 要求) まで巻き込まれる。足りないことに気づかせるのは送る直前 (CloudflareMailer)。
  */
-function resolveMailFrom(env: Env): string {
+export function resolveMailFrom(env: Env): string {
   const from = env.MAIL_FROM;
   return typeof from === "string" ? from : "";
 }

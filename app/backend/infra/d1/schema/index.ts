@@ -5,6 +5,7 @@ export { articleSimilarities } from "./article-similarities";
 export { articles } from "./articles";
 export { contentReactions } from "./content-reactions";
 export { contentViews } from "./content-views";
+export { notificationQuotas } from "./notification-quotas";
 export { profile, profileHistory, profileSocials } from "./profile";
 export { signInTokens } from "./sign-in-tokens";
 export { webmentionBlocks } from "./webmention-blocks";

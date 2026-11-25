@@ -23,12 +23,13 @@
     "ARTIFACTS_REPO": "yantene-staging",
     "ARTIFACTS_BRANCH": "main",
     // ログイン (ADR 0039)。ここに書いたアドレスだけが入れて、管理者として扱われる。
+    // リアクションの通知 (#593) の宛先も兼ねる。
     "ADMIN_EMAIL": "contact@yantene.net",
-    // マジックリンクの差出人。送信専用のサブドメインで、返信は受け取らない。
+    // メールの差出人。送信専用のサブドメインで、返信は受け取らない。
     "MAIL_FROM": "no-reply@mail.yantene.net",
   },
-  // Email Sending: マジックリンクの配信 (ADR 0039)。送信元のドメインは
-  // `wrangler email sending enable <domain>` で先に有効にしておくこと。
+  // Email Sending: マジックリンク (ADR 0039) とリアクションの通知 (#593) の配信。
+  // 送信元のドメインは `wrangler email sending enable <domain>` で先に有効にしておくこと。
   "send_email": [
     {
       "name": "EMAIL",

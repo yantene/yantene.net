@@ -8,6 +8,7 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it, vi } from "vitest";
 import type { ReactionsPayload } from "./reaction.handler";
+import { REACTION_MAIL_DAILY_LIMIT } from "./reaction-notification";
 import { Article, ArticleSlug, ArticleTitle } from "~/backend/domain/article";
 import { viewWeightLog } from "~/backend/domain/content-view";
 import { D1ArticleCommandRepository } from "~/backend/infra/d1/repositories";
@@ -22,6 +23,11 @@ interface Harness {
   readonly articleId: string;
   /** 応答が返した cookie。次のリクエストへ持ち回る。 */
   cookie: string;
+  /** 書き手へ送った通知。 */
+  readonly mailed: { readonly to: string; readonly subject: string; readonly text: string }[];
+  readonly executionCtx: ExecutionContext;
+  /** 応答のあとに回した処理 (通知の送信) を待つ。 */
+  readonly settle: () => Promise<void>;
 }
 
 async function setup(): Promise<Harness> {
@@ -40,10 +46,35 @@ async function setup(): Promise<Harness> {
     }),
   );
 
+  const mailed: Harness["mailed"][number][] = [];
+  const pending: Promise<unknown>[] = [];
+
   return {
-    env: { D1: d1, SESSIONS: kv, APP_ENV: "test" } as unknown as Env,
+    env: {
+      D1: d1,
+      SESSIONS: kv,
+      APP_ENV: "test",
+      ADMIN_EMAIL: "admin@example.com",
+      MAIL_FROM: "no-reply@example.com",
+      EMAIL: {
+        send: async (message: { to: string; subject: string; text: string }) => {
+          mailed.push({ to: message.to, subject: message.subject, text: message.text });
+        },
+      },
+    } as unknown as Env,
     articleId: article.id,
     cookie: "",
+    mailed,
+    executionCtx: {
+      waitUntil: (promise: Promise<unknown>) => {
+        pending.push(promise);
+      },
+      passThroughOnException: () => {},
+      props: {},
+    } as unknown as ExecutionContext,
+    settle: async () => {
+      await Promise.all(pending);
+    },
   };
 }
 
@@ -61,6 +92,7 @@ async function put(
       headers: harness.cookie === "" ? {} : { cookie: harness.cookie },
     },
     harness.env,
+    harness.executionCtx,
   );
 
   const issued = res.headers.get("set-cookie");
@@ -80,6 +112,7 @@ async function remove(harness: Harness): Promise<ReactionsPayload> {
       headers: harness.cookie === "" ? {} : { cookie: harness.cookie },
     },
     harness.env,
+    harness.executionCtx,
   );
   return await res.json();
 }
@@ -249,5 +282,90 @@ describe("リアクション API", () => {
     const payload = await remove(harness);
 
     expect(payload).toEqual({ reactions: [], mine: null });
+  });
+});
+
+describe("リアクションの通知メール", () => {
+  it("新しく付いたら書き手に 1 通送る", async () => {
+    const harness = await setup();
+
+    await put(harness, "❤️");
+    await harness.settle();
+
+    expect(harness.mailed).toHaveLength(1);
+    expect(harness.mailed[0]?.to).toBe("admin@example.com");
+    expect(harness.mailed[0]?.subject).toBe("[test] 「Alpha」に ❤️ が付きました");
+    expect(harness.mailed[0]?.text).toContain("http://localhost/articles/alpha");
+  });
+
+  it("付け替えたら前の絵文字を添えて送る", async () => {
+    const harness = await setup();
+
+    await put(harness, "❤️");
+    await put(harness, "🎉");
+    await harness.settle();
+
+    expect(harness.mailed).toHaveLength(2);
+    expect(harness.mailed[1]?.text).toContain("❤️ から 🎉 に付け替えられました。");
+  });
+
+  it("同じ絵文字の押し直しでは送らない", async () => {
+    const harness = await setup();
+
+    await put(harness, "❤️");
+    await put(harness, "❤️");
+    await harness.settle();
+
+    expect(harness.mailed).toHaveLength(1);
+  });
+
+  it("取り消しでは送らない", async () => {
+    const harness = await setup();
+
+    await put(harness, "❤️");
+    await remove(harness);
+    await harness.settle();
+
+    expect(harness.mailed).toHaveLength(1);
+  });
+
+  /*
+   * いまは cookie を持たない POST も新しいリアクションとして受けるので、ボットが押すと
+   * そのたびに通知が出る。受信箱を守っているのは 1 日の上限だけなので、ボットと同じ
+   * 形 (毎回 cookie 無し) で上限を越えて押し、届く数が上限で止まることを確かめる。
+   */
+  it("cookie を持たない相手が押し続けても、1 日の上限より多くは送らない", async () => {
+    const harness = await setup();
+
+    for (let i = 0; i < REACTION_MAIL_DAILY_LIMIT + 1; i++) {
+      harness.cookie = "";
+      await put(harness, "❤️");
+    }
+    await harness.settle();
+
+    expect(harness.mailed).toHaveLength(REACTION_MAIL_DAILY_LIMIT);
+  });
+
+  it("送れなくてもリアクションは記録される", async () => {
+    const harness = await setup();
+    const env = {
+      ...harness.env,
+      EMAIL: {
+        send: async () => {
+          throw new Error("boom");
+        },
+      },
+    } as unknown as Env;
+
+    const res = await createTestApp().request(
+      "/api/v1/articles/alpha/reaction",
+      { method: "PUT", body: JSON.stringify({ emoji: "❤️" }) },
+      env,
+      harness.executionCtx,
+    );
+    await harness.settle();
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ reactions: [{ emoji: "❤️", count: 1 }], mine: "❤️" });
   });
 });

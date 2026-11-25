@@ -1,7 +1,8 @@
 import { Hono } from "hono";
-import { deleteReaction, putReaction } from "./reaction-recording";
+import { resolveReactionNotifier } from "./reaction-notification";
+import { deleteReaction, putReaction, type PutReactionResult } from "./reaction-recording";
 import type { Context } from "hono";
-import { ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
+import { ArticleNotFoundError, ArticleSlug, articlePath } from "~/backend/domain/article";
 import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/content-reaction";
 import { SessionId } from "~/backend/domain/session";
 import { articleRef } from "~/backend/domain/shared";
@@ -75,10 +76,27 @@ export interface ReactionOutcome {
 }
 
 /**
+ * リアクションの要求から、入り口ごとに預かるもの。
+ *
+ * 通知のメールは応答を返し終えてから送る (waitUntil)。省略できる形にしていないのは、
+ * 渡し忘れで静かに通知が落ちるのを防ぐため (閲覧の記録の `ArticleViewRecording` と同じ)。
+ */
+export interface ReactionRequest {
+  /** 受け取った Cookie ヘッダー。セッション識別子を取り出すのに使う。 */
+  readonly cookie: string | null;
+  /** 記事へのリンクを組むのに使う (`https://yantene.net`)。 */
+  readonly origin: string;
+  readonly waitUntil: (promise: Promise<unknown>) => void;
+}
+
+/**
  * リアクションを置く / 外す。
  *
  * API ルータ (JSON) とページの action (フォーム) の両方から呼ぶ。押した人の判定・
  * セッションの発行・数とスコアの更新はどちらでも同じなので、入り口の形だけを分ける。
+ *
+ * 新しく付いたときと付け替えたときは、書き手にメールで知らせる。取り消しと、同じ
+ * 絵文字の押し直しでは知らせない (#593)。
  *
  * **記事が見つからないときは投げずに undefined を返す。** 投げると、Hono の外にいる
  * ページの action では onError に届かず ErrorBoundary のエラー画面 (500) になる
@@ -91,7 +109,7 @@ export async function applyReaction(
   env: Env,
   slugParam: string,
   emoji: ReactionEmoji | undefined,
-  cookie: string | null,
+  request: ReactionRequest,
 ): Promise<ReactionOutcome | undefined> {
   const slug = ArticleSlug.parse(slugParam);
   if (slug === undefined) return undefined;
@@ -99,7 +117,7 @@ export async function applyReaction(
   const article = await D1ArticleQueryRepository.forReaders(env.D1).findBySlug(slug);
   if (article === undefined) return undefined;
 
-  const existingId = readSessionId(cookie);
+  const existingId = readSessionId(request.cookie);
   // 取り消しは、持っていない相手には効かせようがない。発行もしない。
   if (emoji === undefined && existingId === undefined) {
     return {
@@ -109,15 +127,49 @@ export async function applyReaction(
   }
 
   const sessionId = existingId ?? SessionId.issue();
-  const session =
-    emoji === undefined
-      ? await deleteReaction(env, { id: article.id, slug }, sessionId)
-      : await putReaction(env, { id: article.id, slug }, sessionId, emoji);
+  const ref = { id: article.id, slug };
 
-  return {
-    payload: await buildPayload(env, article.id, session.reactionFor(slug)?.emoji),
-    setCookie: sessionCookieFor(env, sessionId),
-  };
+  if (emoji === undefined) {
+    const session = await deleteReaction(env, ref, sessionId);
+    return {
+      payload: await buildPayload(env, article.id, session.reactionFor(slug)?.emoji),
+      setCookie: sessionCookieFor(env, sessionId),
+    };
+  }
+
+  const result = await putReaction(env, ref, sessionId, emoji);
+  const payload = await buildPayload(env, article.id, result.session.reactionFor(slug)?.emoji);
+
+  if (result.change !== "unchanged") {
+    const notice = {
+      articleTitle: article.title.toString(),
+      articleUrl: `${request.origin}${articlePath(slug.toString())}`,
+      emoji,
+      reactions: payload.reactions,
+    };
+    request.waitUntil(notifyReaction(env, result, notice));
+  }
+
+  return { payload, setCookie: sessionCookieFor(env, sessionId) };
+}
+
+/** 付いた / 付け替えたリアクションを書き手に知らせる。応答のあとに回す。 */
+function notifyReaction(
+  env: Env,
+  result: Exclude<PutReactionResult, { change: "unchanged" }>,
+  notice: {
+    readonly articleTitle: string;
+    readonly articleUrl: string;
+    readonly emoji: ReactionEmoji;
+    readonly reactions: ReactionsPayload["reactions"];
+  },
+): Promise<void> {
+  return resolveReactionNotifier(env).notify({
+    ...notice,
+    emoji: notice.emoji.toString(),
+    previous: result.change === "replaced" ? result.previous.toString() : undefined,
+    day: result.on.toString(),
+  });
 }
 
 /**
@@ -164,7 +216,13 @@ async function apply(
   slugParam: string,
   emoji: ReactionEmoji | undefined,
 ): Promise<ReactionOutcome> {
-  const outcome = await applyReaction(c.env, slugParam, emoji, c.req.header("cookie") ?? null);
+  const outcome = await applyReaction(c.env, slugParam, emoji, {
+    cookie: c.req.header("cookie") ?? null,
+    origin: new URL(c.req.url).origin,
+    waitUntil: (promise) => {
+      c.executionCtx.waitUntil(promise);
+    },
+  });
   if (outcome === undefined) throw new ArticleNotFoundError(slugParam);
   return outcome;
 }

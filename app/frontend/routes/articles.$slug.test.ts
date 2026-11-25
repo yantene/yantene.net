@@ -30,6 +30,10 @@ interface Harness {
   readonly articleId: string;
   /** 応答が返した cookie。次の押下へ持ち回る。 */
   cookie: string;
+  /** 書き手へ送った通知の件名。 */
+  readonly mailed: string[];
+  /** 応答のあとに回した処理 (通知の送信) を待つ。 */
+  readonly settle: () => Promise<void>;
 }
 
 async function setup(): Promise<Harness> {
@@ -48,15 +52,41 @@ async function setup(): Promise<Harness> {
     }),
   );
 
-  const env = { D1: d1, SESSIONS: kv, APP_ENV: "test" } as unknown as Env;
+  const mailed: string[] = [];
+  const pending: Promise<unknown>[] = [];
+  const env = {
+    D1: d1,
+    SESSIONS: kv,
+    APP_ENV: "test",
+    ADMIN_EMAIL: "admin@example.com",
+    MAIL_FROM: "no-reply@example.com",
+    EMAIL: {
+      send: async (message: { subject: string }) => {
+        mailed.push(message.subject);
+      },
+    },
+  } as unknown as Env;
   const context = new RouterContextProvider();
-  // action は ctx を使わない (waitUntil が要るのは閲覧を数える loader のほう)。
+  // action は通知のメールを応答のあとに回す。
   context.set(cloudflareContext, {
     env,
-    ctx: {} as unknown as ExecutionContext,
+    ctx: {
+      waitUntil: (promise: Promise<unknown>) => {
+        pending.push(promise);
+      },
+    } as unknown as ExecutionContext,
   });
 
-  return { env, context, articleId: article.id, cookie: "" };
+  return {
+    env,
+    context,
+    articleId: article.id,
+    cookie: "",
+    mailed,
+    settle: async () => {
+      await Promise.all(pending);
+    },
+  };
 }
 
 /** リアクションの行から押下を 1 つ送る。空文字は取り消し。 */
@@ -163,6 +193,16 @@ describe("記事ページの action", () => {
 
     expect(response.status).toBe(303);
     expect(await listReactions(harness)).toEqual([]);
+  });
+
+  /* JS の無い環境から押されても、API から押されたときと同じく書き手に知らせる (#593)。 */
+  it("フォームから押されても書き手にメールで知らせる", async () => {
+    const harness = await setup();
+
+    await submit(harness, "❤️");
+    await harness.settle();
+
+    expect(harness.mailed).toEqual(["[test] 「Alpha」に ❤️ が付きました"]);
   });
 });
 

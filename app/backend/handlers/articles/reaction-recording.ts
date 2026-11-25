@@ -35,26 +35,46 @@ async function loadSession(
 }
 
 /**
+ * リアクションを付けた結果。
+ *
+ * - `added`: 新しく付いた
+ * - `replaced`: 別の絵文字から付け替えた。`previous` に前の絵文字が入る
+ * - `unchanged`: 同じ絵文字を押し直しただけで、何も動いていない
+ *
+ * 呼び出し側は、何かが動いたときだけ書き手に知らせる。動いたときは、記録に使った日 (UTC) を
+ * `on` で返す。通知の枠を数える日をここに揃え、時計を 2 度読んで日付がずれるのを避ける。
+ */
+export type PutReactionResult =
+  | { readonly change: "added"; readonly session: Session; readonly on: Temporal.PlainDate }
+  | {
+      readonly change: "replaced";
+      readonly session: Session;
+      readonly on: Temporal.PlainDate;
+      readonly previous: ReactionEmoji;
+    }
+  | { readonly change: "unchanged"; readonly session: Session };
+
+/**
  * リアクションを付ける (すでに押していれば差し替える)。
  *
  * 数は「旧を減らして新を増やす」。スコアは初めて押したときだけ足し、差し替えでは
  * 動かさない。リアクションしている事実自体は続いているためで、ここで今日の重みに
  * 付け替えると、押し直すだけでスコアを積める抜け道になる。
  *
- * @returns 保存後のセッション。押している絵文字を呼び出し側が返せるようにする。
+ * @returns 保存後のセッションと、何が動いたか。
  */
 export async function putReaction(
   env: Env,
   article: ReactedArticleRef,
   sessionId: SessionId,
   emoji: ReactionEmoji,
-): Promise<Session> {
+): Promise<PutReactionResult> {
   const today = Temporal.Now.plainDateISO("UTC");
   const session = await loadSession(env, sessionId, today);
   const existing = session.reactionFor(article.slug);
 
   // 同じ絵文字を押し直しても何も起きない (取り消しは別の入り口が持つ)。
-  if (existing?.emoji.equals(emoji) === true) return session;
+  if (existing?.emoji.equals(emoji) === true) return { change: "unchanged", session };
 
   const reactions = new D1ContentReactionCommandRepository(env.D1);
   const content = articleRef(article.id);
@@ -72,9 +92,10 @@ export async function putReaction(
   if (existing === undefined) {
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
     await reactions.addLogScore(content, reactionWeightLog(today.toString()));
+    return { change: "added", session: next, on: today };
   }
 
-  return next;
+  return { change: "replaced", session: next, on: today, previous: existing.emoji };
 }
 
 /**
