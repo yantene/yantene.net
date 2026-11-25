@@ -319,9 +319,18 @@
  *
  * 見出しを 1 行に固める (`white-space: nowrap`) のは採らない。見出しが幅を取った
  * ぶん本文の列が押され、`anywhere` の下では本文の単語が途中で折れる。
+ *
+ * セルには 4em の下限を置く。`break-word` で英数字の列が単語の幅を譲らなくなると、
+ * 足りない幅は日本語の列から削られる。日本語はどの字の間でも折れるので、下限が
+ * 無いと「上限を超えたとき」のような列が 1 字幅の縦書きになる。下限があれば
+ * 日本語の列も 4 字を保ち、収まらない表は器の中で横に送れる。
  */
 .mdast-prose .mdast-table-scroll > table {
   overflow-wrap: break-word;
+}
+
+.mdast-prose .mdast-table-scroll > table :is(th, td) {
+  min-width: 4em;
 }
 
 /*
