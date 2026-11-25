@@ -168,5 +168,16 @@
     "notes": "Short posts, the kind that do not need a title.",
     "slides": "Slides from talks, and the decks that never became one.",
     "works": "Things I have made, and why I made them."
+  },
+  "skipLink": {
+    "label": "Skip to content"
+  },
+  "codeBlock": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy"
+  },
+  "hero": {
+    "timeLabel": "Time of day"
   }
 }

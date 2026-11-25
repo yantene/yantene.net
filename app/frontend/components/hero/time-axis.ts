@@ -60,6 +60,32 @@ export function dragDistanceToElapsed(
   return (-distancePx / dayWidthPx) * dayMs;
 }
 
+/** 目盛りの端。Home は 1 日の始まり (0:00)、End は終わり (23:59)。 */
+export type DayEdge = "start" | "end";
+
+/*
+ * 端へ寄せるときに狙う、分の頭からの僅かなずれ。
+ *
+ * ちょうど分の頭を狙うと、ミリ秒への換算と位相の計算の誤差で狙いの手前に落ちることがある。
+ * 0:00 の手前は前の日の 23:59 なので、Home を押したのに 23:59 と読み上げられてしまう。
+ * 分の内側へ少しだけ入れておけば、どちらへ転んでも同じ分に収まる。
+ */
+const EDGE_MARGIN_MINUTES = 0.001;
+
+/**
+ * いまの時刻 (分) から、その日の端までを何分動かせばよいか。符号付きで返す。
+ *
+ * 端は aria-valuemin / aria-valuemax と同じ 0:00 と 23:59。**日は跨がない。** 跨ぐと
+ * 月の満ち欠けまで変わり、「最小値 / 最大値へ寄せる」というスライダーの約束を超えるため。
+ * すでにその分にいるときは 0 を返して時計を動かさない。
+ */
+export function minutesToDayEdge(currentMinutes: number, edge: DayEdge): number {
+  const current = modulo(currentMinutes, MINUTES_PER_DAY);
+  const targetMinute = edge === "start" ? 0 : MINUTES_PER_DAY - 1;
+  if (Math.floor(current) === targetMinute) return 0;
+  return targetMinute + EDGE_MARGIN_MINUTES - current;
+}
+
 /** 負の値でも正の剰余を返す (JS の % は符号が被除数に従うため)。 */
 function modulo(value: number, divisor: number): number {
   return ((value % divisor) + divisor) % divisor;

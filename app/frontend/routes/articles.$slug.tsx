@@ -22,6 +22,7 @@ import { InlineTocRegistry } from "~/frontend/components/toc/inline-toc-registry
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { WEBMENTION_PATH } from "~/lib/constants/webmention";
@@ -202,13 +203,13 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
     return (
       <AppLayout>
         <Header />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
+        <MainContent className="mx-auto w-full max-w-3xl flex-1 px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">{t("articles.notFound.heading")}</h1>
           <p className="mt-4 text-base-content/60">{t("articles.notFound.description")}</p>
           <Link to="/articles" className="btn btn-primary press-control mt-8">
             {t("articles.notFound.backToList")}
           </Link>
-        </main>
+        </MainContent>
         <Footer copyright={copyright} />
       </AppLayout>
     );
@@ -231,7 +232,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
       */}
       <CurrentSection headings={headings} tocElement={tocElement} />
       <div className="mx-auto flex w-full max-w-6xl flex-1 justify-center gap-10 px-6 py-10">
-        <main className="w-full min-w-0 max-w-3xl h-entry">
+        <MainContent className="w-full min-w-0 max-w-3xl h-entry">
           <ArticleHeader
             slug={article.slug}
             title={article.title}
@@ -286,7 +287,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
               <ArticleBranches articles={related} />
             </section>
           )}
-        </main>
+        </MainContent>
         {headings.length >= 2 && (
           <aside className="hidden w-60 shrink-0 lg:block">
             <div className="sticky top-24">

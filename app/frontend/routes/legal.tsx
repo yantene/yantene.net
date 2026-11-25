@@ -7,6 +7,7 @@ import { resolveCopyrightYears } from "~/backend/handlers/copyright";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
@@ -102,7 +103,7 @@ export default function Legal({ loaderData }: Route.ComponentProps): React.JSX.E
   return (
     <AppLayout>
       <Header />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+      <MainContent className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("legal.title")}</h1>
 
         <h2 className="mt-8 text-lg font-semibold text-foreground">{t("licenses.title")}</h2>
@@ -164,7 +165,7 @@ export default function Legal({ loaderData }: Route.ComponentProps): React.JSX.E
         <p lang="ja" className="mt-2 text-sm leading-relaxed text-foreground">
           {AMAZON_ASSOCIATES_STATEMENT}
         </p>
-      </main>
+      </MainContent>
       <Footer copyright={copyright} />
     </AppLayout>
   );

@@ -10,6 +10,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { WorkList } from "~/frontend/components/work/work-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -63,7 +64,7 @@ export default function WorksIndex({ loaderData }: Route.ComponentProps): React.
   return (
     <AppLayout>
       <Header />
-      <main className="flex flex-1 flex-col">
+      <MainContent className="flex flex-1 flex-col">
         {works.length === 0 ? (
           <ComingSoon heading={t("navigation.works")} description={t("comingSoon.works")} />
         ) : (
@@ -80,7 +81,7 @@ export default function WorksIndex({ loaderData }: Route.ComponentProps): React.
             <WorkList works={works} />
           </div>
         )}
-      </main>
+      </MainContent>
       <Footer copyright={copyright} />
     </AppLayout>
   );

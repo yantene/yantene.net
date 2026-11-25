@@ -1,0 +1,45 @@
+/*
+ * スキップリンク (skip-link.tsx) と、その行き先 (main-content.tsx)。
+ */
+
+/*
+ * 焦点が当たっていないあいだは画面から隠す。`display: none` にはしない (タブ順から
+ * 消えてしまう)。
+ */
+.skip-link:where(:not(:focus, :active)) {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/*
+ * 焦点が当たったら左上に出す。fixed にするのは、出た拍子にページの中身を押し下げない
+ * ため。ヘッダー (z-index: 40) とその中で開く板より手前に置く。
+ */
+.skip-link:is(:focus, :active) {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 60;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-base-content);
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.375rem;
+}
+
+/*
+ * 本文の器は、スキップリンクから焦点を受けるあいだだけ `tabindex="-1"` を持つ。押せる
+ * ものではないので、ページ全体を囲む輪郭は出さない (interaction.css の既定を打ち消す)。
+ */
+.main-content:focus {
+  outline: none;
+}

@@ -15,6 +15,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { MdastRenderer } from "~/frontend/components/mdast/mdast-renderer";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -83,13 +84,13 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
     return (
       <AppLayout>
         <Header />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-24 text-center">
+        <MainContent className="mx-auto w-full max-w-3xl flex-1 px-6 py-24 text-center">
           <h1 className="text-3xl font-bold">{t("works.notFound.heading")}</h1>
           <p className="mt-4 text-base-content/60">{t("works.notFound.description")}</p>
           <Link to="/works" className="btn btn-primary press-control mt-8">
             {t("works.notFound.backToList")}
           </Link>
-        </main>
+        </MainContent>
         <Footer copyright={copyright} />
       </AppLayout>
     );
@@ -98,7 +99,7 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
   return (
     <AppLayout>
       <Header />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+      <MainContent className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
         {/*
           頭に画面を置く。**どんなものかは、名前より先に見て分かるほうが早い。**
           1 枚も無い作品では何も出ず、名前から始まる。
@@ -174,7 +175,7 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
             <ArticleTimeline articles={articles} />
           </section>
         )}
-      </main>
+      </MainContent>
       <Footer copyright={copyright} />
     </AppLayout>
   );

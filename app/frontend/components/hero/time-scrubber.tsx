@@ -1,11 +1,14 @@
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { advanceDayClock, readDayClockPhase, readDayDurationMs } from "./day-clock";
 import { Daywalker } from "./daywalker";
 import {
   dayTickMinutes,
   dragDistanceToElapsed,
+  type DayEdge,
   formatClock,
   MINUTES_PER_DAY,
+  minutesToDayEdge,
   phaseToMinutes,
 } from "./time-axis";
 
@@ -40,6 +43,7 @@ interface TimeScrubberProps {
  * 掴めなくなるだけで、時計は止まらない。
  */
 export function TimeScrubber({ initialMinutes }: TimeScrubberProps): React.JSX.Element {
+  const { t } = useTranslation();
   const [minutes, setMinutes] = useState(initialMinutes);
   const dayRef = useRef<HTMLDivElement>(null);
   const walkerRef = useRef<HTMLDivElement>(null);
@@ -119,8 +123,16 @@ export function TimeScrubber({ initialMinutes }: TimeScrubberProps): React.JSX.E
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>): void => {
-      const step = stepMinutesFor(event.key);
-      if (step === 0) return;
+      const edge = edgeFor(event.key);
+      /*
+       * Home / End は、すでに端にいて動かす量が 0 でも既定の動作 (ページの頭・末尾への
+       * スクロール) を止める。スライダーに焦点があるあいだ、このキーはスライダーのもの。
+       */
+      const step =
+        edge === undefined
+          ? stepMinutesFor(event.key)
+          : minutesToDayEdge(phaseToMinutes(readDayClockPhase()), edge);
+      if (step === 0 && edge === undefined) return;
 
       event.preventDefault();
       scrub((step / MINUTES_PER_DAY) * readDayDurationMs());
@@ -135,12 +147,15 @@ export function TimeScrubber({ initialMinutes }: TimeScrubberProps): React.JSX.E
       {/*
         値は 1 日内の時刻。日を跨ぐと 0:00 に戻るが、何日目かは月の満ち欠けが示すので
         値としては持たせていない。
+
+        Home / End はその日の 0:00 / 23:59 へ寄せる (aria-valuemin / aria-valuemax と同じ端)。
+        日は跨がないので、月の満ち欠けは変わらない。
       */}
       <div
         className="time-axis"
         role="slider"
         tabIndex={0}
-        aria-label="時刻"
+        aria-label={t("hero.timeLabel")}
         aria-valuemin={0}
         aria-valuemax={MINUTES_PER_DAY - 1}
         aria-valuenow={Math.floor(minutes)}
@@ -175,4 +190,11 @@ function stepMinutesFor(key: string): number {
   if (key === "PageUp") return PAGE_STEP_MINUTES;
   if (key === "PageDown") return -PAGE_STEP_MINUTES;
   return 0;
+}
+
+/** Home / End が指す端。扱わないキーは undefined。 */
+function edgeFor(key: string): DayEdge | undefined {
+  if (key === "Home") return "start";
+  if (key === "End") return "end";
+  return undefined;
 }

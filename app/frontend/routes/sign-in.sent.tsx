@@ -7,6 +7,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { SignInPanel } from "~/frontend/components/sign-in/sign-in-panel";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
@@ -52,11 +53,11 @@ export default function SignInSent({ loaderData }: Route.ComponentProps): React.
   return (
     <AppLayout>
       <Header />
-      <main className="flex flex-1 flex-col">
+      <MainContent className="flex flex-1 flex-col">
         <SignInPanel lead={t("signIn.sent")}>
           <p className="text-sm text-muted-foreground">{t("signIn.sentNote")}</p>
         </SignInPanel>
-      </main>
+      </MainContent>
       <Footer copyright={loaderData.copyright} />
     </AppLayout>
   );

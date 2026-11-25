@@ -15,6 +15,7 @@ import { ProfileCard } from "~/frontend/components/profile/profile-card";
 import { ProfileHistory } from "~/frontend/components/profile/profile-history";
 import { WorkList } from "~/frontend/components/work/work-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -85,7 +86,7 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
   return (
     <AppLayout>
       <Header />
-      <main className="flex flex-1 flex-col">
+      <MainContent className="flex flex-1 flex-col">
         {/*
           「準備中」に倒れるのはプロフィールがまだ同期されていないときだけ。`mdast` の側は
           型を絞るために並べてある (ローダは片方だけ null を返さない。D1 に行があるのに
@@ -162,7 +163,7 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
             )}
           </div>
         )}
-      </main>
+      </MainContent>
       <Footer copyright={copyright} />
     </AppLayout>
   );

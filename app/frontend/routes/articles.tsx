@@ -13,6 +13,7 @@ import { InfiniteArticleTimeline } from "~/frontend/components/article-timeline/
 import { parseArticleListPayload } from "~/frontend/components/article-timeline/article-list-payload";
 import { Pagination } from "~/frontend/components/pagination/pagination";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 import { feedIdentity } from "~/lib/feed";
@@ -121,7 +122,7 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps): Rea
   return (
     <AppLayout>
       <Header />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+      <MainContent className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
         {/*
           ページの名乗り。**何の場所なのかを先に書く。**
 
@@ -181,7 +182,7 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps): Rea
             />
           </div>
         </noscript>
-      </main>
+      </MainContent>
       <Footer copyright={copyright} />
     </AppLayout>
   );
