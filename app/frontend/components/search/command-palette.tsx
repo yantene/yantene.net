@@ -294,6 +294,7 @@ export function CommandPalette({
               id={optionId(index)}
               to={articlePagePath(result.slug)}
               role="option"
+              lang={result.language}
               aria-selected={index === activeIndex}
               /*
                * 焦点は入力欄に据え置く。タブ順から外しておかないと、結果が出るたびに

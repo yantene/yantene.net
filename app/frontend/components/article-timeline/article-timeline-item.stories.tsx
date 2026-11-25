@@ -10,6 +10,7 @@ const meta: Meta<typeof ArticleTimelineItem> = {
     summary: "これは記事の要約です。一覧やホームの新着に、先頭 160 文字ほどが表示されます。",
     imageUrl: "https://picsum.photos/seed/yantene/640/400",
     publishedOn: "2026-05-08",
+    language: "ja",
   },
   decorators: [
     // 単体でも縦線とドットの位置関係が見えるよう、リストの文脈を与える。

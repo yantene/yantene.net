@@ -7,6 +7,8 @@ export interface ArticleHeaderProps {
   readonly title: string;
   readonly imageUrl: string | null;
   readonly publishedOn: string;
+  /** 表題の言語 (BCP 47)。記事の DTO の `language` を渡す。日付や種別の札は UI の言語のまま。 */
+  readonly language: string;
   /** 絶対 URL を組むための出どころ。microformats の `u-url` に使う。 */
   readonly origin: string;
 }
@@ -33,6 +35,7 @@ export function ArticleHeader({
   title,
   imageUrl,
   publishedOn,
+  language,
   origin,
 }: ArticleHeaderProps): React.JSX.Element {
   const { t } = useTranslation();
@@ -62,7 +65,9 @@ export function ArticleHeader({
         </time>
         <span className="article-header-kind">ARTICLE</span>
       </p>
-      <h1 className="article-header-title p-name">{title}</h1>
+      <h1 lang={language} className="article-header-title p-name">
+        {title}
+      </h1>
       {/*
         理由は上の JSDoc に書いた。`u-url` は相手のサイトで解決されるので絶対 URL にする。
 
@@ -74,6 +79,7 @@ export function ArticleHeader({
         到達できる要素は、焦点が当たっても何も読まれない状態になる。
       */}
       <a
+        lang={language}
         className="sr-only u-url"
         href={`${origin}/articles/${slug}`}
         aria-hidden="true"

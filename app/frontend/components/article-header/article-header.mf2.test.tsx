@@ -49,6 +49,7 @@ function renderHeader(): HTMLElement {
         title={TITLE}
         imageUrl={null}
         publishedOn={PUBLISHED_ON}
+        language="ja"
         origin={ORIGIN}
       />
       <article className="e-content">

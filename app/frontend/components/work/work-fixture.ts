@@ -32,6 +32,7 @@ const blank = {
   role: null,
   featured: false,
   screenshots: [],
+  language: "ja",
 } as const satisfies Partial<PublicWork>;
 
 /** stories が共有する作品の見本。`.ts` なので stories は要らない。 */
@@ -46,6 +47,7 @@ export const sampleWorks: readonly PublicWork[] = [
     role: "設計から運用まで 1 人で担当",
     featured: true,
     screenshots: sampleScreenshots,
+    language: "ja",
   },
   {
     ...blank,

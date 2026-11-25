@@ -130,7 +130,12 @@ export default function About({ loaderData }: Route.ComponentProps): React.JSX.E
               microformats の印は付けない。ここは h-entry ではないので、`e-content` を
               置くと「何の本文か」を指さない印だけが残る。
             */}
-            <MdastRenderer node={mdast} linkCards={linkCards} siteOrigin={origin} />
+            <MdastRenderer
+              node={mdast}
+              linkCards={linkCards}
+              siteOrigin={origin}
+              lang={profile.language}
+            />
 
             {/*
               作ったもの。**自己紹介の本文より後に置く。**

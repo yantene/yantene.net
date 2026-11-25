@@ -22,7 +22,8 @@ export function WorkList({ works }: WorkListProps): React.JSX.Element {
     <ul className="work-list">
       {works.map((work) => (
         <li key={work.slug} className="work-list-item">
-          <h3 className="work-list-name">
+          {/* 名前と概要は作品の言語で読ませる。在り処 (URL) と矢印は言語を持たない。 */}
+          <h3 lang={work.language} className="work-list-name">
             <Link
               to={`/works/${work.slug}`}
               className="press-control group inline-flex items-center gap-1.5 transition-colors hover:text-primary"
@@ -37,7 +38,9 @@ export function WorkList({ works }: WorkListProps): React.JSX.Element {
             </Link>
           </h3>
 
-          <p className="work-list-summary">{work.summary}</p>
+          <p lang={work.language} className="work-list-summary">
+            {work.summary}
+          </p>
 
           {work.url !== null && (
             <a

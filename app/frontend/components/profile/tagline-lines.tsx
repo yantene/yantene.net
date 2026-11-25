@@ -1,6 +1,11 @@
 export interface TaglineLinesProps {
   /** 短い自己紹介を行に分けたもの。 */
   readonly lines: readonly string[];
+  /**
+   * 自己紹介の言語 (BCP 47)。プロフィールの DTO の `language` を渡す。
+   * `<html lang>` は UI の言語なので、ここで言い直す。
+   */
+  readonly lang: string;
   readonly className?: string;
 }
 
@@ -18,6 +23,10 @@ export interface TaglineLinesProps {
  * それにあたる)、位置を key にするのは並べ替えに弱い書き方として避けたい。
  * 段落 1 つにテキストを流し込めば、どちらの悩みも持たなくて済む。
  */
-export function TaglineLines({ lines, className }: TaglineLinesProps): React.JSX.Element {
-  return <p className={`whitespace-pre-line ${className ?? ""}`}>{lines.join("\n")}</p>;
+export function TaglineLines({ lines, lang, className }: TaglineLinesProps): React.JSX.Element {
+  return (
+    <p lang={lang} className={`whitespace-pre-line ${className ?? ""}`}>
+      {lines.join("\n")}
+    </p>
+  );
 }

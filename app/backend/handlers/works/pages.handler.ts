@@ -11,6 +11,7 @@ import { loadLinkCards } from "~/backend/handlers/link-cards/load-link-cards";
 import { loadProfile } from "~/backend/handlers/profile/pages.handler";
 import {
   collectionPageJsonLd,
+  inLanguage,
   personReference,
   websiteReference,
 } from "~/backend/handlers/json-ld";
@@ -144,6 +145,7 @@ function workJsonLd(
     "@type": "CreativeWork",
     name: work.name,
     description: work.summary,
+    ...inLanguage(work.language),
     url: `${origin}${workPath(work.slug)}`,
     // 外の在り処は「同じものを指す別の URL」。正規の URL はこちらなので url とは分ける。
     ...(work.url === null ? {} : { sameAs: [work.url] }),

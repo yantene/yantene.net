@@ -15,6 +15,7 @@ const articles: ArticleTimelineItemProps[] = [
     summary: "ようこそ",
     imageUrl: null,
     publishedOn: "2026-08-01",
+    language: "ja",
   },
   {
     slug: "older",
@@ -55,5 +56,23 @@ describe("ArticleTimeline の microformats2", () => {
     expect(first.querySelector(":scope .dt-published")?.getAttribute("datetime")).toBe(
       "2026-08-01",
     );
+  });
+});
+
+describe("ArticleTimeline の言語", () => {
+  it("題と要約を記事の言語で包み、日付には付けない", () => {
+    const [first] = renderTimeline(false).querySelectorAll(":scope .h-entry");
+
+    expect(first.querySelector(":scope .p-name")?.closest("[lang]")?.getAttribute("lang")).toBe(
+      "ja",
+    );
+    expect(first.querySelector(":scope .dt-published")?.closest("[lang]")).toBeNull();
+  });
+
+  /* 言語の欄が無い (この欄を足す前の応答を継ぎ足した) 項目は、外側の言語に任せる。 */
+  it("言語を知らない項目には付けない", () => {
+    const [, second] = renderTimeline(false).querySelectorAll(":scope .h-entry");
+
+    expect(second.querySelector(":scope [lang]")).toBeNull();
   });
 });

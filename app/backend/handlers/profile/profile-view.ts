@@ -1,5 +1,6 @@
 import type { HistoryEntry, Profile } from "~/backend/domain/profile";
 import type { SocialPlatform } from "~/lib/social-platforms";
+import { DEFAULT_CONTENT_LANGUAGE } from "~/lib/content-language";
 
 export interface PublicSocialAccount {
   readonly platform: SocialPlatform;
@@ -65,6 +66,11 @@ export interface PublicProfile {
   /** 短い自己紹介。行に分けてある (描画側が改行を保ったまま 1 つの段落に流す)。 */
   readonly tagline: readonly string[];
   readonly socials: readonly PublicSocialAccount[];
+  /**
+   * 短い自己紹介と長い自己紹介 (`/about` の本文) の言語 (BCP 47)。画面はこれを器の
+   * `lang` に付ける (`<html lang>` は UI の言語なので、コンテンツの言語とは別に持つ)。
+   */
+  readonly language: string;
 }
 
 export function toPublicProfile(profile: Profile): PublicProfile {
@@ -88,6 +94,7 @@ export function toPublicProfile(profile: Profile): PublicProfile {
       url: social.url,
       isMe: social.isMe,
     })),
+    language: DEFAULT_CONTENT_LANGUAGE,
   };
 }
 

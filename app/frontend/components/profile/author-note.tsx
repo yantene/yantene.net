@@ -80,7 +80,11 @@ export function AuthorNote({ profile, origin }: AuthorNoteProps): React.JSX.Elem
             {origin}
           </a>
 
-          <TaglineLines lines={profile.tagline} className="author-note-tagline p-note" />
+          <TaglineLines
+            lines={profile.tagline}
+            lang={profile.language}
+            className="author-note-tagline p-note"
+          />
 
           <div className="author-note-links">
             {profile.socials.length > 0 && (

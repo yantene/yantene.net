@@ -1,4 +1,5 @@
 import type { Work, WorkScreenshot, WorkScreenshotKind } from "~/backend/domain/work";
+import { DEFAULT_CONTENT_LANGUAGE } from "~/lib/content-language";
 
 /** 読み手に出すスクリーンショット 1 枚。 */
 export interface PublicWorkScreenshot {
@@ -45,6 +46,11 @@ export interface PublicWork {
   readonly featured: boolean;
   /** スクリーンショット。書いた順。 */
   readonly screenshots: readonly PublicWorkScreenshot[];
+  /**
+   * 名前・概要・詳しい説明の言語 (BCP 47)。画面はこれを器の `lang` に付ける
+   * (`<html lang>` は UI の言語なので、コンテンツの言語とは別に持つ)。
+   */
+  readonly language: string;
 }
 
 function toPublicScreenshot(screenshot: WorkScreenshot): PublicWorkScreenshot {
@@ -71,5 +77,6 @@ export function toPublicWork(work: Work): PublicWork {
     role: work.role?.toString() ?? null,
     featured: work.featured,
     screenshots: work.screenshots.map((screenshot) => toPublicScreenshot(screenshot)),
+    language: DEFAULT_CONTENT_LANGUAGE,
   };
 }

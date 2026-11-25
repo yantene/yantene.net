@@ -36,6 +36,7 @@ function loaderData(): unknown {
       tags: ["エッセイ"],
       publishedOn: "2026-05-08",
       lastModifiedOn: "2026-05-08",
+      language: "ja",
     },
     mdast: {
       type: "root",
@@ -111,5 +112,24 @@ describe("記事ページの microformats2", () => {
     for (const marker of ["u-url", "p-name", "dt-published", "p-author"]) {
       expect(entry?.querySelector(`:scope .${marker}`)).not.toBeNull();
     }
+  });
+});
+
+/*
+ * 本文の言語は器に付ける。**ページ全体 (`<html lang>`) は UI の言語のまま**で、記事を包む
+ * `<main>` にも付けない (反応や共有の手、関連記事の見出しは UI の言語で出る)。
+ */
+describe("記事ページの言語", () => {
+  it("題と本文に記事の言語を付ける", async () => {
+    const container = await renderPage();
+
+    expect(container.querySelector(":scope h1.p-name")?.getAttribute("lang")).toBe("ja");
+    expect(container.querySelector(":scope article.e-content")?.getAttribute("lang")).toBe("ja");
+  });
+
+  it("記事を包む h-entry には付けない", async () => {
+    const container = await renderPage();
+
+    expect(container.querySelector(":scope .h-entry")?.hasAttribute("lang")).toBe(false);
   });
 });

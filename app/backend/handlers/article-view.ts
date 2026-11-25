@@ -4,6 +4,7 @@ import type {
   ArticleSortField,
   SortDirection,
 } from "~/backend/domain/article";
+import { DEFAULT_CONTENT_LANGUAGE } from "~/lib/content-language";
 
 /**
  * 外部 (JSON API / ページ props) に公開してよい Article の表現。
@@ -17,6 +18,11 @@ export interface PublicArticle {
   readonly imageUrl: string | null;
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
+  /**
+   * 題・要約・本文の言語 (BCP 47)。画面はこれを本文の器の `lang` に付ける
+   * (`<html lang>` は UI の言語なので、コンテンツの言語とは別に持つ)。
+   */
+  readonly language: string;
 }
 
 export interface Pagination {
@@ -40,6 +46,7 @@ export function toPublicArticle(article: Article): PublicArticle {
     imageUrl: article.imageUrl?.toJSON() ?? null,
     publishedOn: article.publishedOn.toString({ calendarName: "never" }),
     lastModifiedOn: article.lastModifiedOn.toString({ calendarName: "never" }),
+    language: DEFAULT_CONTENT_LANGUAGE,
   };
 }
 

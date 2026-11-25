@@ -8,6 +8,13 @@ export interface ArticleTimelineItemProps {
   readonly summary: string;
   readonly imageUrl: string | null;
   readonly publishedOn: string;
+  /**
+   * 題と要約の言語 (BCP 47)。記事の DTO の `language` を渡す。
+   *
+   * 省略できるのは、続きを API から継ぎ足すときに古い応答 (この欄の無いもの) を
+   * 読むことがあるため。無ければ `lang` を付けず、外側の言語に任せる。
+   */
+  readonly language?: string;
 }
 
 interface ArticleTimelineItemOptions {
@@ -36,6 +43,7 @@ export function ArticleTimelineItem({
   summary,
   imageUrl,
   publishedOn,
+  language,
   omitYear = false,
   rank,
 }: ArticleTimelineItemProps & ArticleTimelineItemOptions): React.JSX.Element {
@@ -69,7 +77,8 @@ export function ArticleTimelineItem({
           {shownDate}
         </time>
 
-        <div className="article-timeline-body flex flex-col gap-1">
+        {/* 日付は UI の言語のまま。題と要約は記事の言語で読ませる。 */}
+        <div lang={language} className="article-timeline-body flex flex-col gap-1">
           <h3 className="p-name font-bold leading-snug transition-colors group-hover:text-primary">
             {title}
           </h3>

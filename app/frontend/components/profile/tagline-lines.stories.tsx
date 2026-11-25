@@ -7,6 +7,7 @@ const meta: Meta<typeof TaglineLines> = {
   component: TaglineLines,
   args: {
     lines: sampleProfile.tagline,
+    lang: sampleProfile.language,
     className: "max-w-xl text-[0.95rem] leading-relaxed text-foreground/85",
   },
   decorators: [

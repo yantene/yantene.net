@@ -3,6 +3,7 @@ import { contentCacheControlFor } from "./content-cache-control";
 import type { Article } from "~/backend/domain/article";
 import { ArticleNotFoundError, ArticleSlug } from "~/backend/domain/article";
 import { D1ArticleQueryRepository } from "~/backend/infra/d1/repositories";
+import { DEFAULT_CONTENT_LANGUAGE } from "~/lib/content-language";
 
 /**
  * 本文の内部リンクに添えるプレビュー。リンク先が何の記事かを一目で伝えるだけのもの。
@@ -16,6 +17,8 @@ export interface ArticlePreview {
   readonly summary: string;
   readonly publishedOn: string;
   readonly imageUrl: string | null;
+  /** 題と要約の言語 (BCP 47)。チップはこれを中身の `lang` に付ける。 */
+  readonly language: string;
 }
 
 function toArticlePreview(article: Article): ArticlePreview {
@@ -25,6 +28,7 @@ function toArticlePreview(article: Article): ArticlePreview {
     summary: article.summary,
     publishedOn: article.publishedOn.toString({ calendarName: "never" }),
     imageUrl: article.imageUrl?.toJSON() ?? null,
+    language: DEFAULT_CONTENT_LANGUAGE,
   };
 }
 

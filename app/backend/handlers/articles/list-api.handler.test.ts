@@ -98,6 +98,7 @@ describe("createArticlesApiRouter GET /", () => {
 
     expect(Object.keys(first).toSorted((a, b) => a.localeCompare(b))).toEqual([
       "imageUrl",
+      "language",
       "lastModifiedOn",
       "publishedOn",
       "slug",
@@ -105,6 +106,8 @@ describe("createArticlesApiRouter GET /", () => {
       "title",
     ]);
     expect(first.imageUrl).toBeNull();
+    // 題と要約の言語。画面はこれを器の lang に付ける (<html lang> は UI の言語)。
+    expect(first.language).toBe("ja");
     expect(first.publishedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

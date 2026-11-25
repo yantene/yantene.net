@@ -10,6 +10,11 @@ export interface SearchResult {
   readonly slug: string;
   readonly title: string;
   readonly summary: string;
+  /**
+   * 題と要約の言語 (BCP 47)。無ければ `lang` を付けず、外側の言語に任せる (この欄を
+   * 足す前の応答がキャッシュに残っていることがある)。
+   */
+  readonly language?: string;
 }
 
 /** 記事の一覧ページ。パレットで決めきれないときの行き先。 */
@@ -46,12 +51,14 @@ export function parseSearchPayload(value: unknown): readonly SearchResult[] | nu
 function parseResult(value: unknown): SearchResult | null {
   if (!isRecord(value)) return null;
 
-  const { slug, title, summary } = value;
+  const { slug, title, summary, language } = value;
   if (typeof slug !== "string") return null;
   if (typeof title !== "string") return null;
   if (typeof summary !== "string") return null;
+  // どの言語があるかはバックエンドが決めるので、ここでは値を選ばない。
+  if (language !== undefined && typeof language !== "string") return null;
 
-  return { slug, title, summary };
+  return { slug, title, summary, ...(language === undefined ? {} : { language }) };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

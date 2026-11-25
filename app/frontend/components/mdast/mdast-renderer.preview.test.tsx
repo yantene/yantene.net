@@ -39,7 +39,7 @@ describe("MdastRenderer: プレビューを足しても SSR の出力は今ど�
   function ssr(markdown: string): Document {
     const html = renderToStaticMarkup(
       <MemoryRouter initialEntries={["/articles/foo"]}>
-        <MdastRenderer node={md(markdown)} className="e-content" />
+        <MdastRenderer lang="ja" node={md(markdown)} className="e-content" />
       </MemoryRouter>,
     );
     return new DOMParser().parseFromString(html, "text/html");
@@ -88,6 +88,14 @@ describe("MdastRenderer: プレビューを足しても SSR の出力は今ど�
    * 本文 (`e-content`) の中に脚注の写しを置くと、microformats のパーサが読む記事の
    * 中身に同じ文が 2 回入る。
    */
+  /*
+   * 本文の言語は器に付く。`<html lang>` は UI の言語なので、ここで言い直さないと英語の UI で
+   * 日本語の本文が英語の声で読まれる。
+   */
+  it("puts the content language on the article", () => {
+    expect(ssr(article).querySelector("article")?.getAttribute("lang")).toBe("ja");
+  });
+
   it("does not copy the footnote into the content", () => {
     const content = ssr(article).querySelector(".e-content")?.textContent ?? "";
 
@@ -149,7 +157,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("shows the footnote only after the cursor has rested on the reference", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(299);
@@ -161,7 +169,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("does not show a chip for a cursor that only passes over", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(200);
@@ -172,7 +180,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("opens the chip as a popover, outside the content", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(300);
@@ -182,11 +190,24 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   /*
+   * チップは `<article lang>` の外 (body の下) に出るので、言語を継げない。脚注の中身に
+   * 本文と同じ言語を付け直す。
+   */
+  it("gives the footnote in the chip the language of the body", async () => {
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
+
+    fireEvent.pointerEnter(reference(container));
+    await advance(300);
+
+    expect(chip()?.querySelector(".preview-footnote")?.getAttribute("lang")).toBe("ja");
+  });
+
+  /*
    * 位置合わせは CSS が持つ。JavaScript が渡すのは「どのリンクを指しているか」の印だけで、
    * 座標は書かない。
    */
   it("marks the hovered reference as the anchor without writing any position", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(300);
@@ -197,7 +218,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("renders the footnote as the body does, without the way back", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(300);
@@ -212,7 +233,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("does not duplicate ids that already live in the footnote list", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(300);
@@ -223,7 +244,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   it("renders math in the footnote as the body does", async () => {
     // 数式は refresh のときに MathML へ組まれる。本番と同じ経路で MDAST を作る。
     const { mdast } = parseArticleContent("本文[^1]\n\n[^1]: 注の式 $x^2$ を置く。\n");
-    const { container } = renderWithI18n(<MdastRenderer node={mdast} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={mdast} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(300);
@@ -232,7 +253,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("stays open while the cursor moves from the reference onto the chip", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
     fireEvent.pointerEnter(reference(container));
     await advance(300);
 
@@ -247,7 +268,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("closes soon after the cursor leaves", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
     fireEvent.pointerEnter(reference(container));
     await advance(300);
 
@@ -259,7 +280,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("closes on Escape and does not come back while the cursor is still there", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
     fireEvent.pointerEnter(reference(container));
     await advance(300);
 
@@ -272,7 +293,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   });
 
   it("shows the footnote on keyboard focus too", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.focus(reference(container));
     await advance(300);
@@ -286,7 +307,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
   it("does not open chips from links inside the chip", async () => {
     const nested = "本文[^1]\n\n[^1]: 注から[別の記事](/articles/nested-in-chip)へ。\n";
     const fetchMock = stubPreview(null);
-    const { container } = renderWithI18n(<MdastRenderer node={md(nested)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(nested)} />);
     fireEvent.pointerEnter(reference(container));
     await advance(300);
 
@@ -305,8 +326,11 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
       summary: "リンク先の要約。",
       publishedOn: "2026-01-15",
       imageUrl: "/api/v1/articles/hover-once/assets/cover.png",
+      language: "ja",
     });
-    const { container } = renderWithI18n(<MdastRenderer node={md("[x](/articles/hover-once)")} />);
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/hover-once)")} />,
+    );
     const link = internalLink(container, "hover-once");
 
     fireEvent.pointerEnter(link);
@@ -323,6 +347,29 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
     expect(chip()?.querySelector("img")).toBeNull();
   });
 
+  /* 題と要約の言語はリンク先の記事のもの。いま開いている本文の言語ではない。 */
+  it("labels the previewed title and summary with the language of the linked article", async () => {
+    stubPreview({
+      slug: "in-english",
+      title: "An English title",
+      summary: "An English summary.",
+      publishedOn: "2026-01-15",
+      imageUrl: null,
+      language: "en",
+    });
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/in-english)")} />,
+    );
+
+    fireEvent.pointerEnter(internalLink(container, "in-english"));
+    await advance(300);
+
+    expect(chip()?.querySelector(".article-preview-title")?.getAttribute("lang")).toBe("en");
+    expect(chip()?.querySelector(".article-preview-summary")?.getAttribute("lang")).toBe("en");
+    // 日付は UI の言語のまま。
+    expect(chip()?.querySelector("time")?.hasAttribute("lang")).toBe(false);
+  });
+
   it("does not fetch the same preview twice", async () => {
     const fetchMock = stubPreview({
       slug: "hover-twice",
@@ -330,9 +377,13 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
       summary: "",
       publishedOn: "2026-01-15",
       imageUrl: null,
+      language: "ja",
     });
     const { container } = renderWithI18n(
-      <MdastRenderer node={md("[x](/articles/hover-twice) [y](/articles/hover-twice)")} />,
+      <MdastRenderer
+        lang="ja"
+        node={md("[x](/articles/hover-twice) [y](/articles/hover-twice)")}
+      />,
     );
     const [first, second] = container.querySelectorAll("a");
     if (first === undefined || second === undefined) throw new Error("リンクが 2 本無い");
@@ -353,7 +404,9 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
 
   it("leaves a link to an article readers cannot see as a plain link", async () => {
     stubPreview(null);
-    const { container } = renderWithI18n(<MdastRenderer node={md("[x](/articles/a-draft)")} />);
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/a-draft)")} />,
+    );
 
     fireEvent.pointerEnter(internalLink(container, "a-draft"));
     await advance(5000);
@@ -372,7 +425,9 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
           }),
       ),
     );
-    const { container } = renderWithI18n(<MdastRenderer node={md("[x](/articles/slow-one)")} />);
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/slow-one)")} />,
+    );
     const link = internalLink(container, "slow-one");
 
     fireEvent.pointerEnter(link);
@@ -388,7 +443,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
 
   it("does not offer chips for external links", async () => {
     const fetchMock = stubPreview(null);
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
     const external = container.querySelector('a[href="https://example.com/"]');
     if (external === null) throw new Error("外部リンクが描かれていない");
 
@@ -401,7 +456,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
 
   it("does nothing where the Popover API is missing", async () => {
     Reflect.deleteProperty(HTMLElement.prototype, "showPopover");
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 
     fireEvent.pointerEnter(reference(container));
     await advance(5000);
@@ -423,7 +478,7 @@ describe("MdastRenderer: タッチでは脚注をドロワーで出す", () => {
   function renderArticle(): HTMLElement {
     return renderWithI18n(
       <>
-        <MdastRenderer node={md(article)} />
+        <MdastRenderer lang="ja" node={md(article)} />
         <Hash />
       </>,
     ).container;
@@ -468,6 +523,16 @@ describe("MdastRenderer: タッチでは脚注をドロワーで出す", () => {
 
     expect(drawer()?.getAttribute("aria-label")).toBe("脚注");
     expect(drawer()?.querySelector("button")?.textContent).toBe("閉じる");
+  });
+
+  /* ドロワーも body の下に出る。脚注の中身は本文の言語で、閉じるボタンは UI の言語のまま。 */
+  it("gives the footnote in the drawer the language of the body", () => {
+    const container = renderArticle();
+
+    fireEvent.click(reference(container));
+
+    expect(drawer()?.querySelector(".preview-footnote")?.getAttribute("lang")).toBe("ja");
+    expect(drawer()?.hasAttribute("lang")).toBe(false);
   });
 
   it("closes with the close button", () => {
@@ -557,7 +622,7 @@ describe("MdastRenderer: ホバーできる環境で脚注の参照を押す", (
     }
     const { container } = renderWithI18n(
       <>
-        <MdastRenderer node={md(article)} />
+        <MdastRenderer lang="ja" node={md(article)} />
         <Hash />
       </>,
     );

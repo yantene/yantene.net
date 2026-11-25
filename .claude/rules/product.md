@@ -810,6 +810,26 @@ React の外から引けないため。ja.json を書き換えたらあちらも
 - JavaScript が動かなくても切り替わる (器は popover、送るのは素のフォームで
   `POST /locale`)
 
+#### `<html lang>` は UI の言語。コンテンツの言語はその器に付ける
+
+`<html lang>` は読み手が選んだ UI の言語に従う。記事・プロフィール・作品は書かれた言語の
+まま出るので、**その中身を包む要素に `lang` を付け直す** ([#582](https://github.com/yantene/yantene.net/issues/582))。
+付けないと、英語の UI で読み上げを使う人に日本語の本文が英語の声で読まれる。
+
+- **値は DTO の `language` から取る。** 画面は `app/lib/content-language.ts` の定数を
+  直に読まない。いまは全部 `ja` だが、いずれ `<slug>.<lang>.md` で多言語にするときに
+  直すのがバックエンドだけで済むようにしてある。D1 に列はまだ無い (そのとき主キーごと
+  作り直す)
+- 付けるのは**中身の字を持つ要素**で、UI の字と混ざった器には付けない。記事なら表題と
+  本文 (`<article>`) で、日付・`ARTICLE` の札・反応や共有の手は UI の言語のまま。一覧・
+  関連記事・検索パレット・内部リンクのチップでは題と要約、プロフィールでは短い自己紹介と
+  長い自己紹介、作品では名前・概要・本文
+- **`document.body` の下に出すもの (脚注のチップとドロワー) は器から外れる**ので、
+  言語を継げない。中身に付け直す (`PreviewLayer`)
+- 機械向けにも同じ値を言う。JSON-LD の `BlogPosting` / `CreativeWork` / `ProfilePage` に
+  `inLanguage` (`json-ld.ts` の `inLanguage`)、Atom の `<entry>` に `xml:lang`
+- 経歴、作品の役割 (`role`)、スクリーンショットの `alt`、名前にはまだ付けていない
+
 ### フィードは種別ごとに分かれている
 
 ヘッダーの RSS の絵を押すと、All / Articles / Slides から選べる。設計判断の

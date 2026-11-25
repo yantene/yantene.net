@@ -111,10 +111,19 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
         */}
         <header className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+            {/*
+              名前と概要は作品の言語で読ませる。`<header>` ごとには付けない (諸元の札は
+              UI の言語で出る)。
+            */}
+            <h1
+              lang={work.language}
+              className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl"
+            >
               {work.name}
             </h1>
-            <p className="mt-3 text-base leading-relaxed text-base-content/70">{work.summary}</p>
+            <p lang={work.language} className="mt-3 text-base leading-relaxed text-base-content/70">
+              {work.summary}
+            </p>
           </div>
 
           {/*
@@ -145,7 +154,12 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
           microformats の印は付けない。ここは h-entry ではないので、`e-content` を
           置くと「何の本文か」を指さない印だけが残る (`/about` と同じ扱い)。
         */}
-        <MdastRenderer node={mdast} linkCards={linkCards} siteOrigin={origin} />
+        <MdastRenderer
+          node={mdast}
+          linkCards={linkCards}
+          siteOrigin={origin}
+          lang={work.language}
+        />
 
         {/*
           この作品について書いた記事。**記事の一覧と同じ器で出す** (同じ「記事 1 本」が
