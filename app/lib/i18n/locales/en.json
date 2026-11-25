@@ -58,6 +58,9 @@
     "footnoteLabel": "Footnote",
     "close": "Close"
   },
+  "prose": {
+    "tableLabel": "Table"
+  },
   "works": {
     "title": "Works",
     "heading": "Works",

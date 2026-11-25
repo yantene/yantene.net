@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef } from "react";
 
 export interface PreviewChipProps {
+  /** 引き金のリンクが `aria-describedby` で指す名札。 */
+  readonly id: string;
   /** カーソルがチップに乗った。乗っている間は閉じない。 */
   readonly onPointerEnter?: () => void;
   readonly onPointerLeave?: () => void;
@@ -19,8 +21,15 @@ export interface PreviewChipProps {
  * (PreviewLayer) の仕事になる。
  *
  * 画面に入った時点で開く。閉じるときは要素ごと外れる。
+ *
+ * **支援技術には「リンクの説明」として渡す** (`role="tooltip"`)。開いている間だけ、
+ * 引き金のリンクが `aria-describedby` でこの id を指す (preview-context.ts)。リンクを
+ * 押せば行き先へ移るので、`aria-expanded` は付けない。「折りたたまれている」と読まれると、
+ * Enter で開くものだと受け取られる。中身はリンク先へ行けば読めるもので、読み飛ばされて
+ * 困るものは置かない。
  */
 export function PreviewChip({
+  id,
   onPointerEnter,
   onPointerLeave,
   children,
@@ -34,6 +43,8 @@ export function PreviewChip({
   return (
     <div
       ref={ref}
+      id={id}
+      role="tooltip"
       popover="manual"
       className="preview-chip"
       onPointerEnter={onPointerEnter}

@@ -8,7 +8,14 @@
   font-size: 1.0625rem;
   line-height: 2;
   letter-spacing: 0.02em;
-  word-break: break-word;
+  /*
+   * 長い URL や英単語が行に収まらないときは、どこででも折る。非推奨の
+   * `word-break: break-word` と同じ振る舞いで、見た目は変わらない。
+   *
+   * `overflow-wrap: break-word` ではない。あちらは折り位置が最小幅の計算に入らず、
+   * 表や flex の中で長い URL が器ごとはみ出す。
+   */
+  overflow-wrap: anywhere;
   /* 本文は真っ黒を避け、柔らかいダークグレーに (長文でも目が疲れにくい)。 */
   --tw-prose-body: color-mix(in oklch, var(--color-base-content) 85%, transparent);
   --tw-prose-headings: var(--color-base-content);
@@ -266,6 +273,64 @@
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
 .mdast-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;
+}
+
+/*
+ * 見出しが 2 行に割れたとき、2 行目に 1 〜 2 字だけが残らないよう行の長さを揃える。
+ * 見出しは枠を持たないので、揃えて右に余白が空いても見た目は崩れない。
+ *
+ * 日本語の見出しは、文節の切れ目で折る (`auto-phrase`)。字の途中で「る」だけが次の行に
+ * 落ちる、といった割れ方をしなくなる。効くのは `lang="ja"` の中だけなので、`:lang(ja)` で
+ * 絞る。使えないブラウザでは、今までどおり字単位で折れる。
+ *
+ * 本文 (段落) には当てない。どちらも行を測り直すぶん重く、長い文には要らない。
+ */
+.mdast-prose :is(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+}
+
+.mdast-prose :is(h1, h2, h3, h4, h5, h6):lang(ja) {
+  word-break: auto-phrase;
+}
+
+/*
+ * 本文の表を収める器 (scrollable-table.tsx)。はみ出す表だけが、器の中で横に送れる。
+ *
+ * 表の上下の余白は器が持つ。表に残すと、焦点の輪郭 (interaction.css) が表から離れた
+ * 位置に描かれる。
+ *
+ * 余白の 1.75em は、typography が表に置いていた 2em を本文の字の大きさで測り直したもの
+ * (表の字は本文の 0.875 倍)。器に移しても、表の上下の空きは今までと同じ。
+ */
+.mdast-prose .mdast-table-scroll {
+  overflow-x: auto;
+  margin-block: 1.75em;
+}
+
+.mdast-prose .mdast-table-scroll > table {
+  margin-block: 0;
+}
+
+/*
+ * 表の中だけ `overflow-wrap` を `break-word` に戻す。本文の `anywhere` は折り位置が
+ * 最小幅の計算に入るので、表の列が単語の途中まで痩せる (「SR Latc / h」)。そうなると
+ * 表は器の幅に収まってしまい、横に送る器が働かない。`break-word` なら列は最も長い
+ * 単語より細くならず、収まらない表は器の中で横に送れる。
+ *
+ * 見出しを 1 行に固める (`white-space: nowrap`) のは採らない。見出しが幅を取った
+ * ぶん本文の列が押され、`anywhere` の下では本文の単語が途中で折れる。
+ *
+ * セルには 4em の下限を置く。`break-word` で英数字の列が単語の幅を譲らなくなると、
+ * 足りない幅は日本語の列から削られる。日本語はどの字の間でも折れるので、下限が
+ * 無いと「上限を超えたとき」のような列が 1 字幅の縦書きになる。下限があれば
+ * 日本語の列も 4 字を保ち、収まらない表は器の中で横に送れる。
+ */
+.mdast-prose .mdast-table-scroll > table {
+  overflow-wrap: break-word;
+}
+
+.mdast-prose .mdast-table-scroll > table :is(th, td) {
+  min-width: 4em;
 }
 
 /*

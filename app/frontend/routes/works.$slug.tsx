@@ -118,7 +118,7 @@ export default function WorkShow({ loaderData }: Route.ComponentProps): React.JS
             */}
             <h1
               lang={work.language}
-              className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl"
+              className="text-3xl font-bold leading-tight tracking-tight text-balance sm:text-4xl"
             >
               {work.name}
             </h1>

@@ -9,6 +9,8 @@ export type PreviewTarget =
 export interface PreviewController {
   /** いまチップが指しているリンク。チップの位置合わせの錨になる。 */
   readonly anchor: Element | null;
+  /** チップの id。チップが指しているリンクだけが `aria-describedby` でこれを指す。 */
+  readonly chipId: string;
   /** リンクに乗った・焦点が当たった。 */
   readonly intend: (target: PreviewTarget, element: Element) => void;
   /** リンクから離れた。 */
@@ -71,10 +73,19 @@ export interface PreviewTrigger {
   /** リンクにそのまま広げる。 */
   readonly props: Partial<PreviewTriggerProps>;
   readonly onClick: (event: React.MouseEvent<HTMLAnchorElement>) => void;
+  /**
+   * リンクの `aria-describedby` を組む。書き手 (remark) が付けた値を受け取り、チップが
+   * このリンクを指している間だけ、その後ろにチップの id を足して返す。
+   *
+   * **元の値は消さない。** 脚注の参照は、脚注一覧の見出し (`footnote-label`) を既に
+   * 指している。チップの id で置き換えると、開いている間だけその説明が失われる。
+   * 閉じている間は受け取った値をそのまま返すので、サーバーの出力は変わらない。
+   */
+  readonly describedBy: (own: string | undefined) => string | undefined;
 }
 
 /** 持ち主が居ないときの引き金。リンクに何も足さない。 */
-const IDLE_TRIGGER: PreviewTrigger = { props: {}, onClick: () => {} };
+const IDLE_TRIGGER: PreviewTrigger = { props: {}, onClick: () => {}, describedBy: (own) => own };
 
 /**
  * 本文のリンクを、プレビューの引き金にする。
@@ -90,6 +101,8 @@ export function usePreviewTrigger(target: PreviewTarget | null): PreviewTrigger 
   const [element, setElement] = useState<Element | null>(null);
 
   if (controller === null || target === null) return IDLE_TRIGGER;
+
+  const isAnchor = element !== null && controller.anchor === element;
 
   const intend = (own: Element): void => {
     if (!prefersHover()) return;
@@ -108,7 +121,11 @@ export function usePreviewTrigger(target: PreviewTarget | null): PreviewTrigger 
         intend(event.currentTarget);
       },
       onBlur: controller.relent,
-      ...(element !== null && controller.anchor === element && { "data-preview-anchor": "" }),
+      ...(isAnchor && { "data-preview-anchor": "" }),
+    },
+    describedBy: (own) => {
+      if (!isAnchor) return own;
+      return own === undefined || own === "" ? controller.chipId : `${own} ${controller.chipId}`;
     },
     onClick: (event) => {
       // 押したら行き先へ移る。移った先にチップを残さない。

@@ -55,6 +55,13 @@
   font-size: 2.25rem;
   font-weight: 700;
   line-height: 1.3;
+  /* 2 行目に数字だけが残らないよう、行の長さを揃える (本文の見出しと同じ。mdast-renderer.css)。 */
+  text-wrap: balance;
+}
+
+/* 日本語の題は文節の切れ目で折る。効くのは `lang="ja"` の中だけ。 */
+.article-header-title:lang(ja) {
+  word-break: auto-phrase;
 }
 
 @media (width < 40rem) {

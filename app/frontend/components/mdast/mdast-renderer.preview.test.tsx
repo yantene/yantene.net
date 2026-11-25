@@ -217,6 +217,52 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
     expect(document.querySelector("[style]")).toBeNull();
   });
 
+  /*
+   * 支援技術には、チップをリンクの説明として渡す。押せば行き先へ移るリンクなので、
+   * `aria-expanded` は付けない。
+   */
+  it("describes the reference with the chip only while it is shown", async () => {
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
+    const own = reference(container).getAttribute("aria-describedby");
+
+    fireEvent.pointerEnter(reference(container));
+    await advance(300);
+
+    const id = chip()?.id ?? "";
+    expect(id).not.toBe("");
+    expect(chip()?.getAttribute("role")).toBe("tooltip");
+    // 脚注一覧の見出しを指す元の説明は残したまま、後ろに足す。
+    expect(reference(container).getAttribute("aria-describedby")).toBe(`${own} ${id}`);
+    expect(reference(container).hasAttribute("aria-expanded")).toBe(false);
+
+    fireEvent.pointerLeave(reference(container));
+    await advance(150);
+    expect(reference(container).getAttribute("aria-describedby")).toBe(own);
+  });
+
+  it("describes an internal link with its preview only while it is shown", async () => {
+    stubPreview({
+      slug: "described",
+      title: "題",
+      summary: "",
+      publishedOn: "2026-01-15",
+      imageUrl: null,
+      language: "ja",
+    });
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/described)")} />,
+    );
+    const link = internalLink(container, "described");
+
+    fireEvent.focus(link);
+    await advance(300);
+    expect(link.getAttribute("aria-describedby")).toBe(chip()?.id);
+
+    fireEvent.blur(link);
+    await advance(150);
+    expect(link.hasAttribute("aria-describedby")).toBe(false);
+  });
+
   it("renders the footnote as the body does, without the way back", async () => {
     const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
 

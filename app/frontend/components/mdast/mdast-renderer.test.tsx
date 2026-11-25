@@ -10,6 +10,9 @@ import { MdastRenderer } from "./mdast-renderer";
 import type { ElementContent, Properties } from "hast";
 import type { Root as MdastRoot } from "mdast";
 import { parseArticleContent } from "~/backend/services/article-content-parser";
+import { withI18n } from "~/frontend/lib/test-render";
+
+const renderWithI18n = withI18n("ja");
 
 function md(markdown: string): MdastRoot {
   return unified().use(remarkParse).use(remarkGfm).parse(markdown);
@@ -205,12 +208,65 @@ describe("MdastRenderer", () => {
     expect(img?.getAttribute("loading")).toBe("lazy");
   });
 
+  /*
+   * カバー画像の無い記事では、本文の最初の画像がファーストビューの絵になる。そこだけは
+   * 遅延させず、優先して取りに行かせる。2 枚目以降は今までどおり遅延する。
+   */
+  describe("firstImage", () => {
+    const twoImages = "![a](/a.png)\n\n![b](/b.png)";
+
+    it("lazy-loads every image by default", () => {
+      const html = ssr(twoImages);
+      expect(html.match(/loading="lazy"/g)).toHaveLength(2);
+      expect(html).not.toContain("fetchpriority");
+    });
+
+    it("loads the first image eagerly with high priority, and leaves the rest lazy", () => {
+      const html = renderToStaticMarkup(
+        <MdastRenderer lang="ja" node={md(twoImages)} firstImage="priority" />,
+      );
+      const document = new DOMParser().parseFromString(html, "text/html");
+      const [first, second] = document.querySelectorAll("img");
+
+      expect(first?.getAttribute("src")).toBe("/a.png");
+      expect(first?.hasAttribute("loading")).toBe(false);
+      expect(first?.getAttribute("fetchpriority")).toBe("high");
+      expect(second?.getAttribute("loading")).toBe("lazy");
+      expect(second?.hasAttribute("fetchpriority")).toBe(false);
+    });
+
+    it("gives the browser-rendered image the same attributes as the server HTML", () => {
+      const { container } = render(
+        <MdastRenderer lang="ja" node={md(twoImages)} firstImage="priority" />,
+      );
+      const first = container.querySelector("img");
+
+      expect(first?.hasAttribute("loading")).toBe(false);
+      expect(first?.getAttribute("fetchpriority")).toBe("high");
+    });
+  });
+
   it("renders GFM tables", () => {
     const { container } = render(
       <MdastRenderer lang="ja" node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />,
     );
     expect(container.querySelectorAll("th")).toHaveLength(2);
     expect(container.querySelectorAll(":scope tbody td")).toHaveLength(2);
+  });
+
+  /*
+   * 列の多い表は、表の中だけで横に送る。キーボードでも送れるよう、器が焦点と名前を持つ。
+   */
+  it("wraps tables in a named, focusable region that scrolls on its own", () => {
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />,
+    );
+    const region = container.querySelector(".mdast-table-scroll");
+
+    expect(region?.getAttribute("role")).toBe("region");
+    expect(region?.getAttribute("tabindex")).toBe("0");
+    expect(region?.getAttribute("aria-label")).toBe("表");
+    expect(region?.firstElementChild?.tagName).toBe("TABLE");
   });
 
   it("renders a raw YouTube iframe as a cookie-less embed", () => {
