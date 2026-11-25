@@ -5,7 +5,7 @@
  * そうしているので、器の外で使う予定ができたら詳細度から見直すこと。
  */
 
-/* コードブロックのコピーボタン (ホバー/フォーカスで出現)。 */
+/* コードブロックのコピーボタン (ホバー/フォーカスで出現。hover の無い端末では常に出す)。 */
 .mdast-prose .code-block {
   position: relative;
   margin: 1.25rem 0;
@@ -28,7 +28,20 @@
   opacity: 0;
   transition: opacity 0.15s ease;
 }
+/*
+ * 焦点がブロックの中にあるあいだも出す。ボタン自身に限らないのは、横に長いコードの
+ * pre に焦点を移して読んでいる最中にも、押せるものがそこにあると分かるように。
+ */
 .mdast-prose .code-block:hover .code-copy,
-.mdast-prose .code-copy:focus-visible {
+.mdast-prose .code-block:focus-within .code-copy {
   opacity: 1;
+}
+/*
+ * hover の無い端末 (タッチ) では常に出す。透明なままだと、押せる場所があることに
+ * 気づく手立てが無い (触れば押せてしまうのに、見えない)。
+ */
+@media (hover: none) {
+  .mdast-prose .code-copy {
+    opacity: 1;
+  }
 }

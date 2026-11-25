@@ -8,6 +8,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { SignInForm } from "~/frontend/components/sign-in/sign-in-form";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { webPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
@@ -73,9 +74,9 @@ export default function SignIn({ loaderData }: Route.ComponentProps): React.JSX.
   return (
     <AppLayout>
       <Header />
-      <main className="flex flex-1 flex-col">
+      <MainContent className="flex flex-1 flex-col">
         <SignInForm invalid={loaderData.invalid} />
-      </main>
+      </MainContent>
       <Footer copyright={loaderData.copyright} />
     </AppLayout>
   );

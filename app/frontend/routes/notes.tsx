@@ -7,6 +7,7 @@ import { ComingSoon } from "~/frontend/components/coming-soon/coming-soon";
 import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { collectionPageJsonLd } from "~/backend/handlers/json-ld";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { localeRouteContext } from "~/frontend/lib/route-context";
@@ -61,9 +62,9 @@ export default function Notes({ loaderData }: Route.ComponentProps): React.JSX.E
   return (
     <AppLayout>
       <Header />
-      <main className="flex flex-1 flex-col">
+      <MainContent className="flex flex-1 flex-col">
         <ComingSoon heading={t("navigation.notes")} description={t("comingSoon.notes")} />
-      </main>
+      </MainContent>
       <Footer copyright={loaderData.copyright} />
     </AppLayout>
   );

@@ -13,6 +13,7 @@ import { Footer } from "~/frontend/components/layout/footer";
 import { Header } from "~/frontend/components/layout/header";
 import { ArticleTimeline } from "~/frontend/components/article-timeline/article-timeline";
 import { AppLayout } from "~/frontend/layouts/app-layout";
+import { MainContent } from "~/frontend/components/layout/main-content";
 import { buildPageMeta, translationsFor } from "~/frontend/lib/page-meta";
 import { cloudflareContext, localeRouteContext } from "~/frontend/lib/route-context";
 
@@ -62,44 +63,50 @@ export default function Home({ loaderData }: Route.ComponentProps): React.JSX.El
         決まるので、React からは渡さない。
       */}
       <Header variant="transparent" />
-      <HeroSection clockOrigin={clockOrigin} profile={profile} />
+      {/*
+        ヒーローも本文に含める。名乗り (h-card) と自己紹介がここにあり、トップで最初に
+        読むものだから。スキップリンクはヘッダーを飛ばしてここへ来る。
+      */}
+      <MainContent className="flex flex-1 flex-col">
+        <HeroSection clockOrigin={clockOrigin} profile={profile} />
 
-      {recent.length > 0 && (
-        <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-          {/*
+        {recent.length > 0 && (
+          <section className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+            {/*
             主 (時間軸) と従 (よく読まれている) を並べる。記事ページの「本文 + 右の目次」と
             同じ骨格にして、サイト内で構成を揃える。狭い画面では柱が下に落ちる。
           */}
-          {/*
+            {/*
             よく読まれている記事を先に置く。初めて来た人が知りたいのは「何が面白いか」で、
             時系列の羅列ではないため。最近の記事はその後ろで、一覧へ送り出す。
           */}
-          {popular.length > 0 && (
-            <div className="mb-16">
-              <h2 className="text-2xl font-bold">{t("home.popular")}</h2>
-              <div className="mt-8">
-                <ArticleTimeline articles={popular} ranked />
+            {popular.length > 0 && (
+              <div className="mb-16">
+                <h2 className="text-2xl font-bold">{t("home.popular")}</h2>
+                <div className="mt-8">
+                  <ArticleTimeline articles={popular} ranked />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div>
-            <h2 className="text-2xl font-bold">{t("home.latest")}</h2>
-            <div className="mt-8">
-              <ArticleTimeline articles={recent} groupByYear />
-            </div>
-            {/*
+            <div>
+              <h2 className="text-2xl font-bold">{t("home.latest")}</h2>
+              <div className="mt-8">
+                <ArticleTimeline articles={recent} groupByYear />
+              </div>
+              {/*
               ホームは入口なので、ここで打ち切って一覧へ送る。全件を辿る導線と
               絞り込みは /articles が持つ。線の続きに見えるよう、時間軸と同じ側に置く。
             */}
-            <p className="home-view-all">
-              <Link to="/articles" className="link link-primary press-control text-sm">
-                {t("home.viewAll")}
-              </Link>
-            </p>
-          </div>
-        </section>
-      )}
+              <p className="home-view-all">
+                <Link to="/articles" className="link link-primary press-control text-sm">
+                  {t("home.viewAll")}
+                </Link>
+              </p>
+            </div>
+          </section>
+        )}
+      </MainContent>
 
       <Footer copyright={copyright} />
     </AppLayout>

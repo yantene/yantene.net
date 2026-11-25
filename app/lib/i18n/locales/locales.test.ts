@@ -119,6 +119,8 @@ describe("翻訳リソース", () => {
       "articles.author",
       // 作品のスクリーンショットの並びの名前。画面には出ない。
       "works.screenshotsLabel",
+      // ヒーローの時刻のスライダーの名前。目盛りの字はあるが、名前そのものは画面に出ない。
+      "hero.timeLabel",
     ]) {
       expect(valueAt(ja, key)).not.toBe(valueAt(en, key));
     }

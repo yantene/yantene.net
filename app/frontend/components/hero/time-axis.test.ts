@@ -5,6 +5,7 @@ import {
   elapsedToPhase,
   formatClock,
   MINUTES_PER_DAY,
+  minutesToDayEdge,
   phaseToMinutes,
 } from "./time-axis";
 
@@ -78,5 +79,48 @@ describe("dragDistanceToElapsed", () => {
 
   it("幅が測れないときは時計を動かさない", () => {
     expect(dragDistanceToElapsed(100, 0, dayMs)).toBe(0);
+  });
+});
+
+describe("minutesToDayEdge", () => {
+  it("Home はその日の 0:00 まで戻す", () => {
+    const delta = minutesToDayEdge(600, "start");
+
+    expect(delta).toBeLessThan(0);
+    expect(formatClock(600 + delta)).toBe("00:00");
+  });
+
+  it("End はその日の 23:59 まで進める", () => {
+    const delta = minutesToDayEdge(600, "end");
+
+    expect(delta).toBeGreaterThan(0);
+    expect(formatClock(600 + delta)).toBe("23:59");
+  });
+
+  /*
+   * 0:00 の手前は前の日の 23:59。ちょうど分の頭を狙うと、換算の誤差でそちらへ落ちて
+   * Home なのに 23:59 と読まれる。狙いを分の内側へ入れてあること。
+   */
+  it("誤差で少し手前に落ちても同じ分に収まる", () => {
+    const current = 600;
+    const delta = minutesToDayEdge(current, "start");
+    const slightlyShort = current + delta - 1e-6;
+
+    expect(formatClock(slightlyShort)).toBe("00:00");
+  });
+
+  it("すでにその分にいれば動かさない", () => {
+    expect(minutesToDayEdge(0.4, "start")).toBe(0);
+    expect(minutesToDayEdge(1439.7, "end")).toBe(0);
+  });
+
+  /*
+   * 端に近いときに、反対向きへ 1 日ぶん回って隣の日の端へ行かないこと。回ると月の
+   * 満ち欠けまで変わる。
+   */
+  it("日は跨がない", () => {
+    expect(minutesToDayEdge(1, "start")).toBeCloseTo(-1, 2);
+    expect(minutesToDayEdge(1438, "end")).toBeCloseTo(1, 2);
+    expect(Math.abs(minutesToDayEdge(1439.5, "start"))).toBeLessThan(MINUTES_PER_DAY);
   });
 });
