@@ -9,9 +9,11 @@
   line-height: 2;
   letter-spacing: 0.02em;
   /*
-   * 長い URL や英単語が行に収まらないときは、どこででも折る。`break-word` (非推奨の
-   * `word-break: break-word` と同じ振る舞い) にすると、折り位置が最小幅の計算に
-   * 入らなくなり、表や flex の中で長い URL が器ごとはみ出す。
+   * 長い URL や英単語が行に収まらないときは、どこででも折る。非推奨の
+   * `word-break: break-word` と同じ振る舞いで、見た目は変わらない。
+   *
+   * `overflow-wrap: break-word` ではない。あちらは折り位置が最小幅の計算に入らず、
+   * 表や flex の中で長い URL が器ごとはみ出す。
    */
   overflow-wrap: anywhere;
   /* 本文は真っ黒を避け、柔らかいダークグレーに (長文でも目が疲れにくい)。 */
@@ -296,10 +298,13 @@
  *
  * 表の上下の余白は器が持つ。表に残すと、焦点の輪郭 (interaction.css) が表から離れた
  * 位置に描かれる。
+ *
+ * 余白の 1.75em は、typography が表に置いていた 2em を本文の字の大きさで測り直したもの
+ * (表の字は本文の 0.875 倍)。器に移しても、表の上下の空きは今までと同じ。
  */
 .mdast-prose .mdast-table-scroll {
   overflow-x: auto;
-  margin-block: 2em;
+  margin-block: 1.75em;
 }
 
 .mdast-prose .mdast-table-scroll > table {

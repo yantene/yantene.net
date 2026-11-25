@@ -235,7 +235,7 @@ describe("MdastRenderer", () => {
       expect(second?.hasAttribute("fetchpriority")).toBe(false);
     });
 
-    it("keeps the same attributes after hydration in the browser", () => {
+    it("gives the browser-rendered image the same attributes as the server HTML", () => {
       const { container } = render(<MdastRenderer node={md(twoImages)} firstImage="priority" />);
       const first = container.querySelector("img");
 
