@@ -62,6 +62,11 @@
  * (docs/adr/0043-show-social-marks-as-each-brand-requires.md)。
  */
 @import "./brand-marks.css";
+/*
+ * モーダルが後ろのページを止めている間、スクロールバーの場所を空けておく。
+ * 検索パレットと脚注のドロワーが共有する (lib/scrollbar-gutter.ts)。
+ */
+@import "./scrollbar-gutter.css";
 
 /*
  * 押下・フォーカスの作法はサイト全体で 1 つ。個別のコンポーネントには持たせない。

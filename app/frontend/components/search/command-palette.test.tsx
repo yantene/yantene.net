@@ -1,6 +1,6 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CommandPalette } from "./command-palette";
 import type { SearchArticles, SearchResult } from "./search-results";
 import { withI18n } from "~/frontend/lib/test-render";
@@ -123,5 +123,57 @@ describe("CommandPalette", () => {
     await userEvent.click(screen.getAllByRole("option")[0]);
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  describe("暗がりを押したとき", () => {
+    afterEach(() => {
+      Reflect.deleteProperty(HTMLDialogElement.prototype, "closedBy");
+    });
+
+    /** 暗がりの押下は dialog 自身に届く (`::backdrop` は要素ではない)。 */
+    function pressBackdrop(): void {
+      fireEvent.click(screen.getByRole("dialog", { hidden: true }));
+    }
+
+    it("閉じるのをブラウザに任せる印を付ける", () => {
+      open(findAll);
+
+      expect(screen.getByRole("dialog", { hidden: true })).toHaveAttribute("closedby", "any");
+    });
+
+    /*
+     * `closedby` を知っているブラウザでは、ブラウザが閉じて `close` を送ってくる。
+     * こちらからも閉じに行くと、1 回の押下で 2 度閉じることになる。
+     */
+    it("closedby を知っているブラウザでは、自分では閉じない", () => {
+      Object.defineProperty(HTMLDialogElement.prototype, "closedBy", {
+        configurable: true,
+        value: "any",
+      });
+      const onClose = vi.fn();
+      open(findAll, onClose);
+
+      pressBackdrop();
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("知らないブラウザ (Safari) では、自分で閉じる", () => {
+      const onClose = vi.fn();
+      open(findAll, onClose);
+
+      pressBackdrop();
+
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it("中身を押しても閉じない", () => {
+      const onClose = vi.fn();
+      open(findAll, onClose);
+
+      fireEvent.click(screen.getByRole("combobox"));
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 });

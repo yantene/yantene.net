@@ -229,29 +229,29 @@
 /*
  * パレットが開いている間、後ろのページを動かさない。
  *
- * `<dialog>` を modal で開いても背後のスクロールまでは止まらないため、印を見て止める
- * (印を立てるのは command-palette.tsx)。
+ * 本筋は下の `overscroll-behavior: contain` で、暗がりの上で巻いても、板の中で巻き切っても、
+ * 後ろのページへ伝わらない。ただし**巻けない入れ物 (`::backdrop` や、中身が溢れていない板) で
+ * これを守るのは新しいブラウザだけ**で、Safari は守らない。しかも対応を確かめる手立てが無い
+ * (`@supports` はどのブラウザでも真を返す)。
+ *
+ * そのため `html` の `overflow: hidden` も残す (印を立てるのは command-palette.tsx)。
+ * これだけだとスクロールバーが消えて中身が横へ寄るので、その場所を空ける印も一緒に立てる
+ * (scrollbar-gutter.css)。
  */
 html[data-modal-open] {
   overflow: hidden;
 }
 
+.command-palette::backdrop {
+  /* `::backdrop` は既定では巻ける入れ物ではなく、overscroll-behavior を無視する。 */
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
 /*
- * 止めているあいだだけ、消えたスクロールバーの場所を空けておく。
- *
- * 空けないと、スクロールバーの幅 (GNU/Linux と Windows で 15px 前後) のぶん中身が横へ
- * 寄る。中央に寄せた本文もヘッダーも一緒に動くので、**パレットを開閉するたびにページが
- * 左右に跳ねて見える**。
- *
- * **常に空けるのではなく、この印が立っているあいだだけ。** 常に空けると、短いページの
- * 右端に何も無い帯が残る。印は「いまスクロールバーが出ている」と測れたときにしか立たない
- * (command-palette.tsx)。
- *
- * ⚠️ **daisyUI が `:root` に同じ property を置いている** (base/rootscrollgutter)。向こうの
- * 値は daisyUI 自身の modal が開いたときにしか有効にならず、`:root` は `html` より詳細度が
- * 高い。**同じ層の中に書くと必ず負ける**ので、ここは層の外 (このファイルは `@layer` に
- * 入っていない) に置いてあることが効いている。`@layer` で囲まないこと。
+ * 板の側は、dialog ではなく中の箱に置く。dialog は影を切らないよう `overflow: visible`
+ * にしてあり、巻ける入れ物でないので効かない。箱は角で中身を切るため既に `overflow: hidden`。
  */
-html[data-modal-gutter] {
-  scrollbar-gutter: stable;
+.command-palette:modal .command-palette-panel {
+  overscroll-behavior: contain;
 }

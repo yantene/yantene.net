@@ -2,7 +2,7 @@
  * 本文画像のクリック拡大 (lightbox-image.tsx)。
  *
  * 押す側 (`.lightbox-trigger`) は **`.mdast-prose` の中に置かれている前提**で書いてある。
- * 暗幕 (`.lightbox-overlay`) のほうは createPortal で body の下に出るので器を持たない。
+ * 拡大したもの (`.lightbox`) のほうは createPortal で body の下に出るので器を持たない。
  */
 
 /*
@@ -22,25 +22,59 @@
   background: none;
   cursor: zoom-in;
 }
+
+/*
+ * 拡大したもの。`<dialog>` を `showModal()` で開くので top layer に出る。**z-index は
+ * 置かない** (top layer はどの重なりよりも上に来る)。
+ *
+ * dialog の既定の枠・余白・白地・最大寸法 (画面より一回り小さい) を消し、画面いっぱいに
+ * 広げる。暗幕は `::backdrop` が描き、dialog 自身は透かしておく。
+ */
+.lightbox {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+/*
+ * 開いている間、後ろのページを巻かせない。暗幕の上で巻いても、拡大画像の上で巻いても
+ * 伝わらない。巻けない入れ物でこれを守るのは新しいブラウザだけで、Safari では後ろの
+ * ページが動く。それでも後ろは inert なので、押したり焦点が移ったりはしない。
+ */
+.lightbox:modal {
+  overscroll-behavior: contain;
+}
+
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 0.85);
+  /* `::backdrop` は既定では巻ける入れ物ではなく、overscroll-behavior を無視する。 */
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/* dialog の中身はこの button だけで、dialog いっぱいに広がる。どこを押しても閉じる。 */
 .lightbox-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100%;
   padding: 2rem;
-  background: rgb(0 0 0 / 0.85);
+  border: 0;
+  appearance: none;
+  background: none;
   cursor: zoom-out;
 }
+
 .lightbox-full {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   border-radius: 0.25rem;
-}
-.lightbox-overlay {
-  border: 0;
-  appearance: none;
-  width: 100%;
 }
