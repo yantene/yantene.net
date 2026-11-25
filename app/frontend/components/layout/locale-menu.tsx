@@ -1,6 +1,6 @@
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineGlobeAlt } from "react-icons/hi2";
-import { headerMenuGroupName, useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
 import { useLocaleForm } from "~/frontend/lib/use-locale-form";
 import {
   localeField,
@@ -19,7 +19,9 @@ import {
  *
  * **中身は素の `<form method="post">`。** React Router の `<Form>` ではなく生の
  * フォームを使うのは、JavaScript が動かない環境でも切り替わるようにするため。器も
- * `<details>` なので、その環境でも開いて選べる。送り先の `POST /locale` は Hono が
+ * Popover API (`popover="auto"` + `popovertarget`) で、開閉は属性だけで決まるので、
+ * その環境でも開いて選べる。外押し・Esc で畳むこと、焦点を押し場所へ戻すこと、隣の
+ * フィードと同時に開かないことはブラウザが持つ (FeedMenu と同じ作り)。送り先の `POST /locale` は Hono が
  * 受けて cookie を置き、元のページへ 303 で戻す (backend/handlers/locale.handler.ts)。
  *
  * 選んだ結果は次の描画に効く。ページ全体を読み直すので、`<html lang>` と meta と本文が
@@ -31,24 +33,25 @@ import {
  */
 export function LocaleMenu({ className = "" }: { readonly className?: string }): React.JSX.Element {
   const { t } = useTranslation();
-  const { ref } = useDismissableDetails();
+  const panelId = useId();
   /* いま選ばれているものと帰り先は、ドロワーの LocaleSwitch と同じものを使う。 */
   const { current, returnTo } = useLocaleForm();
 
   return (
-    /*
-      `name` で隣のフィードと排他にする (理由は feed-menu.tsx に書いてある)。
-    */
-    <details ref={ref} name={headerMenuGroupName} className={`header-menu ${className}`}>
-      <summary
-        className="header-menu-trigger press-control"
+    <div className={`header-menu ${className}`}>
+      {/* 名前と開閉の伝え方は FeedMenu と同じ (理由は feed-menu.tsx に書いてある)。 */}
+      <button
+        type="button"
+        popoverTarget={panelId}
+        aria-controls={panelId}
+        className="header-menu-trigger locale-menu-trigger press-control"
         aria-label={t("locale.label")}
         title={t("locale.label")}
       >
         <HiOutlineGlobeAlt className="header-menu-icon" aria-hidden />
-      </summary>
+      </button>
 
-      <div className="header-menu-panel">
+      <div id={panelId} popover="auto" className="header-menu-panel locale-menu-panel">
         <p className="header-menu-title">{t("locale.label")}</p>
         <form method="post" action={localePath} aria-label={t("locale.label")}>
           <input type="hidden" name={localeReturnToField} value={returnTo} />
@@ -75,6 +78,6 @@ export function LocaleMenu({ className = "" }: { readonly className?: string }):
           </ul>
         </form>
       </div>
-    </details>
+    </div>
   );
 }

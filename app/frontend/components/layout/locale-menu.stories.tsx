@@ -5,8 +5,8 @@ const meta: Meta<typeof LocaleMenu> = {
   title: "Layout/LocaleMenu",
   component: LocaleMenu,
   /*
-   * 板は押した絵の直下に落ちる (.header-menu が基準を持つ)。Storybook にはヘッダーが
-   * 無いので、帯に見立てた囲みを立てて、その中で開かせる。
+   * 板は最前面 (top layer) に出て、押した絵の直下に寄る (CSS anchor positioning)。
+   * Storybook にはヘッダーが無いので、帯に見立てた囲みを立てて、その中に絵を置く。
    */
   decorators: [
     (Story) => (
@@ -34,7 +34,7 @@ export const Closed: Story = {};
  */
 export const Open: Story = {
   play: ({ canvasElement }) => {
-    canvasElement.querySelector("details")?.setAttribute("open", "");
+    canvasElement.querySelector<HTMLElement>("[popover]")?.showPopover();
   },
 };
 

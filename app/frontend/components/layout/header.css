@@ -14,6 +14,15 @@
   --horizon-ink: #9488d3;
 }
 
+/*
+ * 帯の下端は、狭い画面のドロワー (.site-menu-panel) を吊るす錨になる。
+ *
+ * 名前は 1 つで足りる。ヘッダーはページに 1 つしか無い。
+ */
+.site-header-band {
+  anchor-name: --site-header-band;
+}
+
 .site-header::after,
 .site-header-overlay::after {
   content: "";
@@ -216,7 +225,7 @@
  * 表示する言語の切り替え — **ドロワーの中に置く平らな姿** (LocaleSwitch)。
  *
  * 帯のほうは globe の絵から開く板になっている (LocaleMenu / .header-menu)。ドロワーは
- * 既に `<details>` の中なので、そこで更に畳まず、2 つしかない選択肢を出したままにする。
+ * 既に畳んだ板 (popover) の中なので、そこで更に畳まず、2 つしかない選択肢を出したままにする。
  *
  * **器は与えない。** 塗り分けたセグメントにしていたときは、2 番目に重いものが
  * 「一度決めたらほとんど触らない設定」になっていた。字として置けば、いちばん重いのが
@@ -302,20 +311,15 @@
 /*
  * 帯の絵から開く小さな板 — フィードの選び場所 (FeedMenu) と、表示する言語 (LocaleMenu)。
  *
- * **器は `<details>`。** JavaScript が動かなくても開ける。足しているのは Esc と外押しで
- * 畳むことだけ (useDismissableDetails)。
+ * **器は Popover API** (`popover="auto"` + `popovertarget`)。JavaScript が動かなくても
+ * 開ける。外押し・Esc で畳むこと、焦点を絵へ戻すこと、2 つが同時に開かないことは
+ * ブラウザが持つ。板は最前面 (top layer) に出るので、帯の重なりや `backdrop-filter` に
+ * 切り取られることもない。
  *
- * ドロワー (.site-menu) と違い、板は押した絵の直下に落とす。**そのための基準をここに
- * 置く。** ドロワーのほうは帯いっぱいに広げたいので、逆に `position` を持たせては
- * いけない (下のコメントを参照)。
- *
- * **display はここで決めない。** 出し隠しは Tailwind の hidden / lg:block が持つ。
- * ここで display を書くと、素の CSS は Tailwind の層より後に読まれるので、
- * 使う側の `hidden` が効かなくなる。
+ * 囲み (.header-menu) に規則は置かない。**display を決めないこと。** 出し隠しは
+ * Tailwind の hidden / lg:block が持ち、素の CSS は Tailwind の層より後に読まれるので、
+ * ここで書くと使う側の `hidden` が効かなくなる。
  */
-.header-menu {
-  position: relative;
-}
 
 /*
  * 押し場所。**器は与えない。** 帯で面を持つのは検索だけ (interaction.css)。縁付きの箱に
@@ -342,12 +346,6 @@
    */
   color: color-mix(in oklab, var(--color-base-content) var(--header-ink-dim, 62%), transparent);
   cursor: pointer;
-  /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
-  list-style: none;
-}
-
-.header-menu-trigger::-webkit-details-marker {
-  display: none;
 }
 
 .header-menu-trigger:hover {
@@ -359,21 +357,60 @@
 }
 
 /*
- * 並びの終端に来る板は、右端を絵に揃える。左へ開くのは、帯の右端から溢れさせないため。
+ * 押し場所ごとに錨の名前を振る。名前は CSS にしか書けない (`style` 属性は使わない) ので、
+ * 1 ページに 1 つずつしか無い 2 つの板に、それぞれ固定の名前を与える。
+ *
+ * `popovertarget` が作る暗黙の錨には頼らない。名前を書かずに済む形だが、読める
+ * ブラウザがまだ限られている。
+ */
+.locale-menu-trigger {
+  anchor-name: --locale-menu-trigger;
+}
+
+.locale-menu-panel {
+  position-anchor: --locale-menu-trigger;
+}
+
+.feed-menu-trigger {
+  anchor-name: --feed-menu-trigger;
+}
+
+.feed-menu-panel {
+  position-anchor: --feed-menu-trigger;
+}
+
+/*
+ * 板は絵の真下に落とし、右端を絵に揃える。左へ開くのは、帯の右端から溢れさせないため。
  *
  * 幅は中身なり。ただし狭すぎると 1 項目が 2 行になるので下限を置く。
+ *
+ * ⚠️ **位置は宣言を 2 つ重ねて書く。** 先に書いた値は、CSS anchor positioning の
+ * 読めないブラウザのための落とし先。そこでは後ろの `anchor()` が読めずに捨てられ、
+ * 前の値が残る — 帯をよける位置 (app.css の --header-clearance。帯の 4rem に 0.5rem を
+ * 足した値) で、帯の中身の右端 (6xl の升に px-6) に揃う。
+ * 絵の真下ではないが、押した絵のすぐそばに出る。`@supports` で囲まないのは、
+ * 捨てられる宣言を捨てさせるだけで足りるため。
+ *
+ * `inset: auto` と `margin: 0` は、ブラウザが `[popover]` に既定で当てる
+ * `inset: 0; margin: auto` (画面の中央) を外すため。どちらの姿でも要る。
  */
 .header-menu-panel {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  inset-inline-end: 0;
-  z-index: 40;
+  position: fixed;
+  inset: auto;
+  top: var(--header-clearance);
+  top: calc(anchor(bottom) + 0.5rem);
+  inset-inline-end: max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem));
+  inset-inline-end: anchor(end);
+  width: auto;
+  height: auto;
   min-width: 11rem;
+  margin: 0;
   padding: 0.5rem;
   border: 1px solid var(--color-base-300);
   border-radius: 0.75rem;
   /* トップでは動く空の上に降りてくる。透かすと字が読めない。 */
   background-color: var(--color-base-100);
+  color: var(--color-base-content);
   box-shadow: 0 16px 32px rgb(11 18 33 / 0.12);
 }
 
@@ -453,10 +490,8 @@
 /*
  * 狭い画面のドロワー。
  *
- * 器は `<details>`。**位置決めのための `position` をここに置かないこと。** 開いた板は
- * ヘッダーの帯いっぱいに広げたいので、囲みではなくヘッダー (sticky / absolute) を
- * 基準にして置いている。ここに `position: relative` を足すと、板がハンバーガーの
- * 幅まで縮む。
+ * 器は Popover API (`popover="auto"` + `popovertarget`)。板は最前面 (top layer) に出て、
+ * 帯の下端 (--site-header-band) を錨に、画面の幅いっぱいに広がる。
  */
 .site-menu-trigger {
   display: inline-flex;
@@ -470,12 +505,6 @@
   border-radius: var(--control-radius);
   color: inherit;
   cursor: pointer;
-  /* 開閉の三角は出さない (器が details であることは見た目の主題ではない)。 */
-  list-style: none;
-}
-
-.site-menu-trigger::-webkit-details-marker {
-  display: none;
 }
 
 .site-menu-icon {
@@ -487,11 +516,11 @@
   display: none;
 }
 
-.site-menu[open] .site-menu-icon-closed {
+.site-menu:has(> .site-menu-panel:popover-open) .site-menu-icon-closed {
   display: none;
 }
 
-.site-menu[open] .site-menu-icon-opened {
+.site-menu:has(> .site-menu-panel:popover-open) .site-menu-icon-opened {
   display: block;
 }
 
@@ -510,7 +539,7 @@
  * 持っているため (site-header-overlay-band-in)。アニメーションの値は普通の宣言より強いので、
  * 止めないと下の background-color が効かない。
  */
-.site-header-band:has(.site-menu[open]) {
+.site-header-band:has(.site-menu-panel:popover-open) {
   animation-name: none;
   background-color: var(--color-base-100);
   backdrop-filter: none;
@@ -526,18 +555,32 @@
  * ここも地と同じで、アニメーションを止めると `to` ではなく素の姿 (= 見えている状態) に
  * 戻る。`site-header-overlay-mark-in` は `from` で隠しているだけなので、止めれば出る。
  */
-.site-header-band:has(.site-menu[open]) .site-header-mark {
+.site-header-band:has(.site-menu-panel:popover-open) .site-header-mark {
   animation-name: none;
 }
 
+/*
+ * ⚠️ **位置は宣言を 2 つ重ねて書く** (.header-menu-panel と同じ理由)。先の値は CSS anchor
+ * positioning の読めないブラウザのための落とし先で、狭い画面の帯の高さ (68px) ちょうど。
+ *
+ * ⚠️ **display をここで書かないこと。** 閉じている板を隠しているのはブラウザの既定の
+ * `[popover]:not(:popover-open) { display: none }` で、作者の CSS はそれより必ず強い。
+ * ここに `display: flex` を書くと、閉じたドロワーが出たままになる。並べ方は開いている
+ * ときの規則 (すぐ下) に置く。
+ */
 .site-menu-panel {
-  position: absolute;
-  inset-inline: 0;
-  top: 100%;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  position: fixed;
+  inset: auto 0;
+  top: 4.25rem;
+  top: anchor(--site-header-band bottom);
+  width: auto;
+  height: auto;
+  /* 画面より長くなったら板の中で巻く。帯は上に残っているので、そのぶんを引いておく。 */
+  max-height: calc(100dvh - 4.25rem);
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 0;
   /*
    * 横の余白は、帯の px-6 (1.5rem) から行の内側の余白 (0.5rem) を引いた値。こうすると
    * ドロワーの字の左端が、帯のロゴの左端と揃う。
@@ -546,7 +589,14 @@
   border-block-end: 1px solid var(--color-base-300);
   /* トップでは動く空の上に降りてくる。透かすと字が読めない。 */
   background-color: var(--color-base-100);
+  color: var(--color-base-content);
   box-shadow: 0 16px 32px rgb(11 18 33 / 0.12);
+}
+
+.site-menu-panel:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .site-menu-list {
@@ -581,8 +631,8 @@
 /*
  * ドロワーのフィード。**畳んだ中で更に畳まないので、4 つを横に並べる。**
  *
- * 帯では絵を押して開く形 (FeedMenu) だが、ここは既に `<details>` の中。入れ子の開閉に
- * すると開くのに 2 手かかり、支援技術にもそのまま伝わる。
+ * 帯では絵を押して開く形 (FeedMenu) だが、ここは既に畳んだ板 (popover) の中。入れ子の
+ * 開閉にすると開くのに 2 手かかり、支援技術にもそのまま伝わる。
  */
 .site-menu-feeds {
   display: flex;
@@ -619,4 +669,18 @@
 
 .site-menu-feed-link:hover {
   color: var(--color-primary);
+}
+
+/*
+ * Popover API の無いブラウザ (2024 年より前のもの) では、畳んだ道具を出さない。
+ *
+ * そこでは `popover` 属性が読まれず、板が閉じられないまま出続ける。押し場所を押しても
+ * 何も起きないので、押し場所ごと伏せる。⚠️ **狭い画面ではドロワーの行き先に届かなく
+ * なる**が、閉じられない板がページの頭を覆い続けるよりは害が小さいと判断した。
+ */
+@supports not selector(:popover-open) {
+  .header-menu,
+  .site-menu {
+    display: none;
+  }
 }

@@ -1,14 +1,16 @@
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineRss } from "react-icons/hi2";
-import { headerMenuGroupName, useDismissableDetails } from "~/frontend/lib/use-dismissable-details";
 import { listedFeedIdentities } from "~/lib/feed";
 
 /**
  * フィードの選び場所。帯の絵を押すと、種別ごとのフィードが開く。
  *
- * **器は `<details>`。** JavaScript が動かない環境でも開けて、中のリンクを踏める
- * (SiteMenu と同じ作り)。足しているのは Esc と外押しで畳むことだけ。
+ * **器は Popover API** (`popover="auto"` と、それを指す `popovertarget` の押し場所)。
+ * 開閉は属性だけで決まるので、JavaScript が動かない環境でも開けて、中のリンクを踏める。
+ * 外押し・Esc で畳むこと、畳んだあと焦点を押し場所へ戻すこと、隣の表示する言語と
+ * 同時に開かないこと (auto の popover は互いを閉じ合う) は、どれもブラウザが持つ
+ * (SiteMenu / LocaleMenu と同じ作り)。
  *
  * 並べる中身は `~/lib/feed` の表がそのまま持つ。**ここで行き先を書かない** —
  * 書くと、フィード本体 (backend/handlers/feed.handler) が生やす URL と、ここに出る
@@ -23,33 +25,31 @@ import { listedFeedIdentities } from "~/lib/feed";
  */
 export function FeedMenu({ className = "" }: { readonly className?: string }): React.JSX.Element {
   const { t } = useTranslation();
-  const { ref } = useDismissableDetails();
+  const panelId = useId();
   const titleId = useId();
 
   return (
-    /*
-      `name` を与えて排他にする。**同じ名前の `<details>` は 1 つしか開かない**ので、
-      隣の表示する言語を開けばこちらは畳まれる。
-
-      外押しで畳む仕掛け (useDismissableDetails) は `pointerdown` で受けているため、
-      キーボードで開いたとき (summary で Enter) には走らない。両方が開いて板が重なる
-      のを、JavaScript を足さずに止められるのがこれ。**対応していないブラウザでは
-      両方開くだけ**で、押せなくなるものは無い。
-    */
-    <details ref={ref} name={headerMenuGroupName} className={`header-menu ${className}`}>
+    <div className={`header-menu ${className}`}>
       {/*
-        絵しか出さないので名前は aria-label で渡す。開いているかどうかは <details> の
-        summary が持つ既定の状態 (aria-expanded) がそのまま伝える。
+        絵しか出さないので名前は aria-label で渡す。開いているかどうかは、popovertarget を
+        持つ押し場所としてブラウザが伝える (aria-expanded を手で書かない)。
       */}
-      <summary
-        className="header-menu-trigger press-control"
+      <button
+        type="button"
+        popoverTarget={panelId}
+        aria-controls={panelId}
+        className="header-menu-trigger feed-menu-trigger press-control"
         aria-label={t("feed.label")}
         title={t("feed.label")}
       >
         <HiOutlineRss className="header-menu-icon" aria-hidden />
-      </summary>
+      </button>
 
-      <div className="header-menu-panel">
+      {/*
+        板は押し場所のすぐ後ろに置く。離すと、ブラウザが押し場所に暗黙の
+        aria-details を足し、読み上げに余計な繋がりが 1 つ増える。
+      */}
+      <div id={panelId} popover="auto" className="header-menu-panel feed-menu-panel">
         {/*
           見出しを 1 つ置く。絵だけの押し場所から開くので、開いた板の中に「これは
           フィードの一覧である」と書いてある字が無いと、名前だけが宙に浮く。
@@ -80,15 +80,15 @@ export function FeedMenu({ className = "" }: { readonly className?: string }): R
           ))}
         </ul>
       </div>
-    </details>
+    </div>
   );
 }
 
 /**
  * ドロワー (狭い画面) に置くフィードの一覧。
  *
- * **畳んだ中で更に畳まない。** ドロワー自身が `<details>` なので、この中にもう 1 枚
- * `<details>` を入れると、支援技術には入れ子の開閉として伝わり、開くのに 2 手かかる。
+ * **畳んだ中で更に畳まない。** ドロワー自身が畳んだ板 (popover) なので、この中に
+ * もう 1 枚開閉を入れると、支援技術には入れ子の開閉として伝わり、開くのに 2 手かかる。
  * 行き先は同じ表から引くので、帯とドロワーで出来ることは変わらない。
  */
 export function FeedMenuList(): React.JSX.Element {

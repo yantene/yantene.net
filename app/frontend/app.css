@@ -126,6 +126,9 @@
  * 少しの余裕を足した値。**数を各所に書き写さない** — 写すと、帯の高さを変えたときに
  * 片方だけ直り、もう片方は帯に潜るか浮く。しかも何も落ちない
  * (`header-clearance.test.ts` が見張る)。
+ *
+ * 帯の絵から開く板も、CSS anchor positioning が読めないブラウザではこの位置に出る
+ * (`header.css` の .header-menu-panel)。
  */
 :root {
   --header-clearance: 4.5rem;

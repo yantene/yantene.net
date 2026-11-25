@@ -228,7 +228,7 @@ export function Header({ variant = "solid", showLogo = true }: HeaderProps): Rea
 
                 出し隠しは `hidden lg:block` で載せる。**器の側の display と喧嘩しない**
                 ように、LocaleMenu は自前の CSS で display を決めない (header.css の
-                .header-menu は position だけを持つ)。
+                .header-menu には規則を置いていない)。
               */}
               <LocaleMenu className="hidden lg:block" />
 
