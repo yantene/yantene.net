@@ -312,12 +312,16 @@
 }
 
 /*
- * 列の見出しは 1 行に保つ。本文は `overflow-wrap: anywhere` でどこででも折れるので、
- * 何もしないと列の多い表は器からはみ出す代わりに 1 字幅まで痩せ、横に送る器が
- * 働かない。見出しの幅が、その列の下限になる。
+ * 表の中だけ `overflow-wrap` を `break-word` に戻す。本文の `anywhere` は折り位置が
+ * 最小幅の計算に入るので、表の列が単語の途中まで痩せる (「SR Latc / h」)。そうなると
+ * 表は器の幅に収まってしまい、横に送る器が働かない。`break-word` なら列は最も長い
+ * 単語より細くならず、収まらない表は器の中で横に送れる。
+ *
+ * 見出しを 1 行に固める (`white-space: nowrap`) のは採らない。見出しが幅を取った
+ * ぶん本文の列が押され、`anywhere` の下では本文の単語が途中で折れる。
  */
-.mdast-prose .mdast-table-scroll th {
-  white-space: nowrap;
+.mdast-prose .mdast-table-scroll > table {
+  overflow-wrap: break-word;
 }
 
 /*
