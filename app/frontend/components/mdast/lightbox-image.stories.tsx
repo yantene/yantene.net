@@ -2,14 +2,15 @@ import { LightboxImage } from "./lightbox-image";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 /*
- * 押すと拡大する。閉じるのは背景を押すか Esc。
+ * 押すと拡大する。閉じるのは拡大画像か背景を押すか、Esc。
  *
- * 暗幕は createPortal で document.body の下に出るので、Storybook の枠を突き抜けて
- * 画面いっぱいに広がる。それでよい (記事でも同じ出方をする)。
+ * 拡大したものは `<dialog>` を `showModal()` で開くので top layer に出て、Storybook の枠を
+ * 突き抜けて画面いっぱいに広がる。それでよい (記事でも同じ出方をする)。
  *
- * **焦点の動きはここで確かめる。** Tab で拡大ボタンへ移り、Enter で開くと焦点が暗幕へ
+ * **焦点の動きはここで確かめる。** Tab で拡大ボタンへ移り、Enter で開くと焦点が拡大画像へ
  * 渡ること、開いている間 Tab を押しても後ろの本文へ抜けないこと、Esc で閉じると元の
- * ボタンへ戻ること (#304)。読み上げの名前は ImagesInOneArticle で見るのが早い。
+ * ボタンへ戻ること (#304)。どれもブラウザの `<dialog>` が持つ。読み上げの名前は
+ * ImagesInOneArticle で見るのが早い。
  */
 const meta: Meta<typeof LightboxImage> = {
   title: "Mdast/LightboxImage",

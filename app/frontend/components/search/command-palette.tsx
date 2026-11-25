@@ -9,6 +9,7 @@ import {
   type SearchArticles,
   type SearchResult,
 } from "./search-results";
+import { reserveScrollbarGutter } from "~/frontend/lib/scrollbar-gutter";
 
 /**
  * 打ち終わるのを待つ時間。
@@ -26,17 +27,6 @@ const DEBOUNCE_MS = 150;
  * 置いておくため (rules/architecture.md)。
  */
 const SCROLL_LOCK_ATTRIBUTE = "data-modal-open";
-
-/*
- * スクロールバーの場所を空けておく印。**錠と分けてあるのは、空けるべき場面が狭いため。**
- *
- * 錠を掛けるとスクロールバーが消えるので、その幅のぶん中身が横へ寄る。空けておけば
- * 寄らない。ただし**そもそもスクロールバーが出ていないページで空けると、今度は逆へ
- * 寄る**。だから「いま出ているか」を見てから立てる。
- *
- * スクロールバーが画面に重なる環境 (macOS の既定など) では幅が 0 なので、印は立たない。
- */
-const SCROLL_GUTTER_ATTRIBUTE = "data-modal-gutter";
 
 type Status = "idle" | "loading" | "ready" | "failed";
 
@@ -142,18 +132,17 @@ export function CommandPalette({
     }
     if (!open && dialog.open) dialog.close();
 
-    /*
-     * **測るのは錠を掛ける前。** 掛けたあとはスクロールバーが消えているので、何を測っても
-     * 0 になる。`innerWidth` は画面の幅、`clientWidth` はスクロールバーを除いた幅。
-     */
-    const root = document.documentElement;
-    root.toggleAttribute(SCROLL_GUTTER_ATTRIBUTE, open && globalThis.innerWidth > root.clientWidth);
-    root.toggleAttribute(SCROLL_LOCK_ATTRIBUTE, open);
+    if (!open) return;
 
-    // 開いたまま外されたときのため。印だけが残ると、ページが二度と動かなくなる。
+    // スクロールバーの場所を空けるかは、錠を掛ける前に測る (掛けたあとは消えている)。
+    const releaseGutter = reserveScrollbarGutter();
+    const root = document.documentElement;
+    root.setAttribute(SCROLL_LOCK_ATTRIBUTE, "");
+
+    // 閉じたときと、開いたまま外されたときのため。印だけが残ると、ページが二度と動かなくなる。
     return () => {
       root.removeAttribute(SCROLL_LOCK_ATTRIBUTE);
-      root.removeAttribute(SCROLL_GUTTER_ATTRIBUTE);
+      releaseGutter();
     };
   }, [open]);
 
@@ -240,25 +229,36 @@ export function CommandPalette({
   };
 
   /*
-   * 暗がりを押したら閉じる。
+   * 暗がりを押したら閉じる。**ブラウザが閉じてくれるので、ここは控え。**
+   *
+   * `closedby="any"` を知っているブラウザでは、暗がりの押下で `cancel` と `close` が
+   * 来る (上の `handleDialogClose` に集まる)。知らないブラウザ (Safari) でだけ、ここが
+   * 代わりに閉じる。両方が閉じに行くと 1 回の押下で 2 度閉じることになるので分けてある。
+   *
+   * 見分けは `event.target` で足りる。dialog には余白を置いておらず (command-palette.css)、
+   * 中身への押下では target が中の要素になる。暗がりのときだけ dialog 自身と一致する。
    *
    * jsx-a11y の 2 つを外している。キーボードからの同じ操作 (Esc) はブラウザ既定が
    * 受け持っていて、こちらから足す余地が無い。規則はそれを見られず、「押せるのに
    * キーで操作できない」と読んでしまう。
    */
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDialogElement>): void => {
+    if (supportsClosedBy()) return;
+    if (event.target === dialogRef.current) onClose();
+  };
+
   return (
     // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- Esc はブラウザ既定が受け持つ
     <dialog
       ref={dialogRef}
       className="command-palette"
       aria-label={t("search.title")}
+      /* 暗がりを押しても閉じる。知らないブラウザ向けの控えは handleBackdropClick。 */
+      closedby="any"
       onClose={handleDialogClose}
-      /* Esc。既定の動き (板を閉じる) は止めない — 止めると Esc で閉じられなくなる。 */
+      /* Esc と暗がりの押下。既定の動き (板を閉じる) は止めない — 止めると閉じられなくなる。 */
       onCancel={handleDialogClose}
-      onClick={(event) => {
-        // 中身への押下では target が中の要素になる。暗がりのときだけ一致する。
-        if (event.target === dialogRef.current) onClose();
-      }}
+      onClick={handleBackdropClick}
     >
       <div className="command-palette-panel">
         <div className="command-palette-field">
@@ -347,6 +347,16 @@ export function CommandPalette({
       </div>
     </dialog>
   );
+}
+
+/**
+ * `closedby` を知っているブラウザか。
+ *
+ * 呼ぶのは押されたときだけ。モジュールの頭で見ると、`HTMLDialogElement` の無いサーバー
+ * (SSR) で落ちる。
+ */
+function supportsClosedBy(): boolean {
+  return "closedBy" in HTMLDialogElement.prototype;
 }
 
 /** いまの語に対して、どこまで進んでいるか。 */

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LightboxImage } from "./lightbox-image";
 
 /** 拡大を開く。 */
@@ -7,12 +7,21 @@ function open(): void {
   fireEvent.click(screen.getByRole("button", { name: /画像を拡大/ }));
 }
 
-/** 暗幕 (閉じるボタン)。開いていなければ落ちる。 */
+/** 拡大画像 (閉じるボタン)。開いていなければ落ちる。 */
 function overlay(): HTMLElement {
-  return screen.getByRole("button", { name: "拡大画像を閉じる" });
+  return screen.getByRole("button", { name: "拡大画像を閉じる", hidden: true });
+}
+
+/** 拡大したもの。開いているときに探す。 */
+function shown(name: string): HTMLDialogElement {
+  return screen.getByRole("dialog", { name, hidden: true }) as HTMLDialogElement;
 }
 
 describe("LightboxImage", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   /*
    * 包みのボタンに aria-label だけを置くと、中身から名前を計算する経路が塞がる。
    * 図が 3 つある記事では 3 つとも「画像を拡大」になり、書き手の alt がどこにも出ない (#304)。
@@ -31,67 +40,69 @@ describe("LightboxImage", () => {
     expect(screen.getByRole("button", { name: "画像を拡大" })).toBeInTheDocument();
   });
 
-  it("拡大したものは alt で名前の付いた dialog になる", () => {
+  it("拡大したものは alt で名前の付いたモーダルの dialog で開く", () => {
+    const showModal = vi.spyOn(HTMLDialogElement.prototype, "showModal");
     render(<LightboxImage src="/a.png" alt="関係図" />);
 
     open();
 
-    const dialog = screen.getByRole("dialog", { name: "関係図" });
-    expect(dialog).toHaveAttribute("aria-modal", "true");
+    const dialog = shown("関係図");
+    expect(dialog.tagName).toBe("DIALOG");
+    expect(dialog.open).toBe(true);
+    expect(showModal).toHaveBeenCalledOnce();
   });
 
   /*
-   * 焦点を置いていくと、キーボードの利用者は見えなくなった本文を Tab で辿ることになる。
+   * モーダルであることは `showModal()` が支援技術へ伝える。役割を書き足すと二重になる。
    */
-  it("開いたら焦点を暗幕へ移す", () => {
+  it("役割と aria-modal を自分では書かない", () => {
     render(<LightboxImage src="/a.png" alt="関係図" />);
 
     open();
 
-    expect(overlay()).toHaveFocus();
+    const dialog = shown("関係図");
+    expect(dialog).not.toHaveAttribute("role");
+    expect(dialog).not.toHaveAttribute("aria-modal");
   });
 
-  it("閉じたら焦点を元のボタンへ戻す", () => {
-    render(<LightboxImage src="/a.png" alt="関係図" />);
-    const trigger = screen.getByRole("button", { name: /画像を拡大/ });
+  it("alt が無ければ、拡大したものを用向きで名乗る", () => {
+    render(<LightboxImage src="/a.png" />);
+
     open();
+
+    expect(shown("拡大画像").open).toBe(true);
+  });
+
+  it("拡大画像を押したら閉じる", () => {
+    render(<LightboxImage src="/a.png" alt="関係図" />);
+    open();
+
+    const dialog = shown("関係図");
 
     fireEvent.click(overlay());
 
-    expect(trigger).toHaveFocus();
-  });
-
-  it("Esc で閉じたときも焦点を戻す", () => {
-    render(<LightboxImage src="/a.png" alt="関係図" />);
-    const trigger = screen.getByRole("button", { name: /画像を拡大/ });
-    open();
-
-    fireEvent.keyDown(document, { key: "Escape" });
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(trigger).toHaveFocus();
+    expect(dialog.open).toBe(false);
   });
 
   /*
-   * 暗幕の中で焦点を受けるのは閉じるボタンだけなので、Tab の送り先が無い。
-   * 止めないと後ろの本文へ抜けていく。
+   * 閉じたあとも dialog は外さない。外す合図を `close` に頼ると、Esc で `close` が来ない
+   * ブラウザで「開いている」ままになり、二度と開けなくなる。ここではブラウザが閉じた
+   * (Esc・戻る操作) ことを `close()` で写す。
    */
-  it("開いている間は Tab で外へ出さない", () => {
+  it("ブラウザが閉じたあとも、もう一度開ける", () => {
     render(<LightboxImage src="/a.png" alt="関係図" />);
     open();
+    shown("関係図").close();
 
-    const didMove = fireEvent.keyDown(document, { key: "Tab" });
+    open();
 
-    // preventDefault されていれば dispatchEvent は false を返す。
-    expect(didMove).toBe(false);
-    expect(overlay()).toHaveFocus();
+    expect(shown("関係図").open).toBe(true);
   });
 
-  it("閉じていれば Tab を止めない", () => {
+  /* 拡大画像を読みに行くのは押されてから。本文の `<p>` の中に `<dialog>` を描かないためでもある。 */
+  it("押されるまで dialog を描かない", () => {
     render(<LightboxImage src="/a.png" alt="関係図" />);
 
-    const didMove = fireEvent.keyDown(document, { key: "Tab" });
-
-    expect(didMove).toBe(true);
+    expect(document.querySelector("dialog")).toBeNull();
   });
 });

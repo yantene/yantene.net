@@ -163,6 +163,17 @@
 
 .footnote-drawer::backdrop {
   background: rgb(0 0 0 / 0.4);
+  /* `::backdrop` は既定では巻ける入れ物ではなく、overscroll-behavior を無視する。 */
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/*
+ * 背景の上で払っても、シートの上で払っても、後ろの本文を巻かせない。dialog は
+ * `overflow: hidden` なので、中身が溢れていなくても巻ける入れ物として扱われる。
+ */
+.footnote-drawer:modal {
+  overscroll-behavior: contain;
 }
 
 .footnote-drawer-sheet {
@@ -203,7 +214,17 @@
   color: var(--color-base-content);
 }
 
-/* 開いている間は、後ろの本文を巻かせない。 */
+/*
+ * 開いている間は、後ろの本文を巻かせない。
+ *
+ * 本筋は上の `overscroll-behavior: contain` だが、**巻けない入れ物でそれを守るのは新しい
+ * ブラウザだけ**で、Safari は守らない。ドロワーはタッチの環境でしか出ないので、iPhone の
+ * Safari が主な読み手になる。対応を確かめる手立ても無い (`@supports` はどのブラウザでも
+ * 真を返す) ので、`html` を止めるこちらも残す。
+ *
+ * 止めるとスクロールバーが消えて本文が横へ寄るので、その場所を空ける印を
+ * footnote-drawer.tsx が立てる (scrollbar-gutter.css)。
+ */
 html:has(.footnote-drawer[open]) {
   overflow: hidden;
 }
