@@ -223,7 +223,7 @@ describe("MdastRenderer", () => {
 
     it("loads the first image eagerly with high priority, and leaves the rest lazy", () => {
       const html = renderToStaticMarkup(
-        <MdastRenderer node={md(twoImages)} firstImage="priority" />,
+        <MdastRenderer lang="ja" node={md(twoImages)} firstImage="priority" />,
       );
       const document = new DOMParser().parseFromString(html, "text/html");
       const [first, second] = document.querySelectorAll("img");
@@ -236,7 +236,9 @@ describe("MdastRenderer", () => {
     });
 
     it("gives the browser-rendered image the same attributes as the server HTML", () => {
-      const { container } = render(<MdastRenderer node={md(twoImages)} firstImage="priority" />);
+      const { container } = render(
+        <MdastRenderer lang="ja" node={md(twoImages)} firstImage="priority" />,
+      );
       const first = container.querySelector("img");
 
       expect(first?.hasAttribute("loading")).toBe(false);
@@ -257,7 +259,7 @@ describe("MdastRenderer", () => {
    */
   it("wraps tables in a named, focusable region that scrolls on its own", () => {
     const { container } = renderWithI18n(
-      <MdastRenderer node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />,
+      <MdastRenderer lang="ja" node={md("| a | b |\n| - | - |\n| 1 | 2 |")} />,
     );
     const region = container.querySelector(".mdast-table-scroll");
 

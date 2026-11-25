@@ -222,7 +222,7 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
    * `aria-expanded` は付けない。
    */
   it("describes the reference with the chip only while it is shown", async () => {
-    const { container } = renderWithI18n(<MdastRenderer node={md(article)} />);
+    const { container } = renderWithI18n(<MdastRenderer lang="ja" node={md(article)} />);
     const own = reference(container).getAttribute("aria-describedby");
 
     fireEvent.pointerEnter(reference(container));
@@ -247,8 +247,11 @@ describe("MdastRenderer: ホバーとフォーカスで出るチップ", () => {
       summary: "",
       publishedOn: "2026-01-15",
       imageUrl: null,
+      language: "ja",
     });
-    const { container } = renderWithI18n(<MdastRenderer node={md("[x](/articles/described)")} />);
+    const { container } = renderWithI18n(
+      <MdastRenderer lang="ja" node={md("[x](/articles/described)")} />,
+    );
     const link = internalLink(container, "described");
 
     fireEvent.focus(link);
