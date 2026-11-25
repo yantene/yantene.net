@@ -301,6 +301,7 @@ describe("loadAboutPage", () => {
     expect(Object.keys(jsonLd ?? {}).toSorted()).toEqual([
       "@context",
       "@type",
+      "inLanguage",
       "isPartOf",
       "mainEntity",
       "url",

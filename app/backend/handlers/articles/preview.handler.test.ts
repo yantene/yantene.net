@@ -54,6 +54,7 @@ describe("createArticlePreviewApiRouter GET /:slug/preview", () => {
       summary: "A summary.",
       publishedOn: "2026-01-15",
       imageUrl: "/api/v1/articles/hello/assets/cover.png",
+      language: "ja",
     });
   });
 

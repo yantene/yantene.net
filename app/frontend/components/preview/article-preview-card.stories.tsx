@@ -27,6 +27,7 @@ export const Default: Story = {
       summary: "記事の要約。一覧に出るものと同じ文が入る。",
       publishedOn: "2026-11-16",
       imageUrl: null,
+      language: "ja",
     },
   },
 };
@@ -41,6 +42,7 @@ export const LongSummary: Story = {
         "要約は先頭 160 文字まで入る。チップにそのまま流すと高さが記事ごとに変わるので、3 行で切って揃える。続きは記事を開けば読める。ここから先は切られて見えないはずの文で、見えていたら行数の上限が効いていない。",
       publishedOn: "2026-01-05",
       imageUrl: null,
+      language: "ja",
     },
   },
 };
@@ -54,6 +56,7 @@ export const WithoutSummary: Story = {
       summary: "",
       publishedOn: "2026-03-20",
       imageUrl: null,
+      language: "ja",
     },
   },
 };

@@ -16,11 +16,19 @@ export interface ArticlePreviewCardProps {
 export function ArticlePreviewCard({ preview }: ArticlePreviewCardProps): React.JSX.Element {
   return (
     <div className="article-preview-card">
+      {/* 日付は UI の言語のまま。題と要約は記事の言語で読ませる。 */}
       <time className="article-preview-date" dateTime={preview.publishedOn}>
         {toDisplayDate(preview.publishedOn)}
       </time>
-      <p className="article-preview-title">{preview.title}</p>
-      {preview.summary !== "" && <p className="article-preview-summary">{preview.summary}</p>}
+      {/* 包む要素を足すと flex の間隔が崩れるので、1 つずつ付ける。 */}
+      <p lang={preview.language} className="article-preview-title">
+        {preview.title}
+      </p>
+      {preview.summary !== "" && (
+        <p lang={preview.language} className="article-preview-summary">
+          {preview.summary}
+        </p>
+      )}
     </div>
   );
 }

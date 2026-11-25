@@ -73,7 +73,7 @@ describe("MermaidDiagram", () => {
   it("mermaid のコードフェンスを、組み上がった SVG に差し替える", async () => {
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    const { container } = render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     // 差し替わる前 (= サーバーが返す形) はソースがそのまま出ている。
     expect(container.querySelector(":scope pre code")?.textContent).toContain("graph TD;");
@@ -88,7 +88,7 @@ describe("MermaidDiagram", () => {
   it("フェンスの中身をそのまま Mermaid に渡す", async () => {
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     await waitFor(() => {
       expect(mermaid.render).toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe("MermaidDiagram", () => {
       return Promise.resolve({ svg: SVG, diagramType: "flowchart" });
     });
 
-    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    const { container } = render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     await waitFor(() => {
       expect(container.querySelector(":scope .mermaid-diagram svg")).not.toBeNull();
@@ -129,7 +129,7 @@ describe("MermaidDiagram", () => {
   it("Mermaid に渡す id に、セレクタを壊す記号を混ぜない", async () => {
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     await waitFor(() => {
       expect(mermaid.render).toHaveBeenCalled();
@@ -141,7 +141,9 @@ describe("MermaidDiagram", () => {
   it("図に組めなければ、元のコードブロックをそのまま残す", async () => {
     mermaid.render.mockRejectedValue(new Error("Parse error on line 1"));
 
-    const { container } = render(<MdastRenderer node={fence("mermaid", "graph TD; A-->")} />);
+    const { container } = render(
+      <MdastRenderer lang="ja" node={fence("mermaid", "graph TD; A-->")} />,
+    );
 
     // 読み込み中の印が下りたら決着が付いている。
     await waitFor(() => {
@@ -197,7 +199,7 @@ describe("MermaidDiagram", () => {
   });
 
   it("mermaid 以外の言語のコードブロックには手を触れない", () => {
-    const { container } = render(<MdastRenderer node={fence("ts", "const x = 1;")} />);
+    const { container } = render(<MdastRenderer lang="ja" node={fence("ts", "const x = 1;")} />);
 
     expect(container.querySelector(".mermaid-source")).toBeNull();
     expect(container.querySelector(".mermaid-diagram")).toBeNull();
@@ -210,7 +212,7 @@ describe("MermaidDiagram", () => {
    * 動いたとしても読者に届く前に図を作る意味がない (ADR 0023)。
    */
   it("SSR ではソースをそのまま返し、Mermaid を呼ばない", () => {
-    const html = renderToStaticMarkup(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    const html = renderToStaticMarkup(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     expect(html).toContain('class="mermaid-source"');
     expect(html).toContain("graph TD;");
@@ -223,7 +225,7 @@ describe("MermaidDiagram", () => {
    * 無く、図に差し替わることも無いのに「永遠に読み込み中」と支援技術に伝わるため。
    */
   it("SSR では読み込み中の印を立てない", () => {
-    const html = renderToStaticMarkup(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    const html = renderToStaticMarkup(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     expect(html).toContain('class="mermaid-source"');
     expect(html).not.toContain('aria-busy="true"');
@@ -240,7 +242,7 @@ describe("字の到着待ち", () => {
   it("図のソースを名指しして読ませてから組む", async () => {
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     await waitFor(() => {
       expect(mermaid.render).toHaveBeenCalled();
@@ -259,7 +261,7 @@ describe("字の到着待ち", () => {
     });
     mermaid.render.mockResolvedValue({ svg: SVG, diagramType: "flowchart" });
 
-    const { container } = render(<MdastRenderer node={fence("mermaid", DIAGRAM)} />);
+    const { container } = render(<MdastRenderer lang="ja" node={fence("mermaid", DIAGRAM)} />);
 
     await vi.advanceTimersByTimeAsync(3000);
     vi.useRealTimers();

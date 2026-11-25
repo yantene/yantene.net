@@ -591,6 +591,17 @@ export interface MdastRendererProps {
    * **渡さなければ絶対 URL はすべて外部** (別タブ + `rel`) になる (#318)。
    */
   readonly siteOrigin?: string;
+  /**
+   * 本文の言語 (BCP 47)。器の `<article>` に `lang` として付ける。
+   *
+   * 渡すのは中身の DTO が持つ `language` (記事・プロフィール・作品)。**UI の言語では
+   * ない。** `<html lang>` は読み手が選んだ UI の言語に従うので、ここで言い直さないと
+   * 英語の UI で読み上げを使う人に日本語の本文が英語の声で読まれる。
+   *
+   * 脚注のチップとドロワーは `document.body` の下に出て `<article>` から外れるので、
+   * そちらにも同じ値を渡す (PreviewLayer)。
+   */
+  readonly lang: string;
 }
 
 /**
@@ -604,6 +615,7 @@ export function MdastRenderer({
   linkCards,
   headings,
   siteOrigin,
+  lang,
 }: MdastRendererProps): React.JSX.Element {
   const cardsByUrl = useMemo(() => new Map(Object.entries(linkCards ?? {})), [linkCards]);
 
@@ -676,10 +688,12 @@ export function MdastRenderer({
   }, [node, transformImageUrl, cardsByUrl, hasToc, siteOrigin]);
 
   return (
-    <article className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>
+    <article lang={lang} className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>
       <LinkCardsContext value={cardsByUrl}>
         <TocHeadingsContext value={headings ?? EMPTY_HEADINGS}>
-          <PreviewLayer footnotes={content.footnotes}>{content.body}</PreviewLayer>
+          <PreviewLayer footnotes={content.footnotes} lang={lang}>
+            {content.body}
+          </PreviewLayer>
         </TocHeadingsContext>
       </LinkCardsContext>
     </article>

@@ -26,6 +26,7 @@ const loadArticlePreview: ArticlePreviewLoader = (slug) =>
             "位置合わせを JavaScript から CSS へ移すと、スクロールにもリサイズにも勝手に付いてくる。inline style を書かない規約とも相性がよい。その代わり、対応していないブラウザでの倒し方を先に決めておく必要がある。",
           publishedOn: "2026-11-16",
           imageUrl: null,
+          language: "ja",
         },
   );
 

@@ -1,5 +1,6 @@
 import type { Article } from "~/backend/domain/article";
 import type { LinkCardMap } from "~/backend/handlers/link-cards/link-card-view";
+import { DEFAULT_CONTENT_LANGUAGE } from "~/lib/content-language";
 
 /** 記事詳細で公開するメタデータ (内部 id は出さない)。 */
 export interface PublicArticleMeta {
@@ -9,6 +10,11 @@ export interface PublicArticleMeta {
   readonly imageUrl: string | null;
   readonly publishedOn: string;
   readonly lastModifiedOn: string;
+  /**
+   * 題・要約・本文の言語 (BCP 47)。画面はこれを本文の器の `lang` に付ける
+   * (`<html lang>` は UI の言語なので、コンテンツの言語とは別に持つ)。
+   */
+  readonly language: string;
 }
 
 /** 詳細レスポンス / ページ props。メタデータ + パース済み MDAST。 */
@@ -37,6 +43,7 @@ export function toArticleDetail(
       imageUrl: article.imageUrl?.toJSON() ?? null,
       publishedOn: article.publishedOn.toString({ calendarName: "never" }),
       lastModifiedOn: article.lastModifiedOn.toString({ calendarName: "never" }),
+      language: DEFAULT_CONTENT_LANGUAGE,
     },
     mdast,
     linkCards,

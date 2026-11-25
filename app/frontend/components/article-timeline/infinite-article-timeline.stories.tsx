@@ -18,6 +18,7 @@ function articlesFor(page: number): ArticleTimelineItemProps[] {
       imageUrl: nth % 3 === 0 ? null : `https://picsum.photos/seed/${String(nth)}/640/400`,
       tags: nth % 2 === 0 ? ["日記"] : ["プログラミング", "備忘録"],
       publishedOn: `2026-${month}-15`,
+      language: "ja",
     };
   });
 }

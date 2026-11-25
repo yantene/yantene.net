@@ -35,8 +35,11 @@ function entryXml(origin: string, article: PublicArticle): string {
   /*
    * `<id>` は記事の URL そのもの。URL を動かせば id も動き、購読者には 1 回だけ全件が
    * 新着に見える (ADR 0032)。それを飲んで、URL と別の識別子を持たない。
+   *
+   * `xml:lang` は feed 全体ではなく entry ごとに付ける。言語は記事ごとに DTO が持つ
+   * もので、いずれ記事によって違う言語になる (`<slug>.<lang>.md`)。
    */
-  return `  <entry>
+  return `  <entry xml:lang="${escapeXml(article.language)}">
     <title>${escapeXml(article.title)}</title>
     <link href="${url}"/>
     <id>${url}</id>

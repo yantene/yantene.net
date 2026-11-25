@@ -21,6 +21,13 @@ export interface PreviewLayerProps {
   readonly footnotes: ReadonlyMap<string, React.ReactNode>;
   /** 記事のプレビューの取り方。省略時はプレビュー API を引く (ページの中で覚える)。 */
   readonly loadArticlePreview?: ArticlePreviewLoader;
+  /**
+   * 本文の言語。脚注の中身に `lang` として付ける。
+   *
+   * チップとドロワーは `document.body` の下に出るので、本文の器 (`<article lang>`) から
+   * 言語を継げない。付けないと `<html lang>` (UI の言語) で読まれる。
+   */
+  readonly lang: string;
   /** 本文。この中の FootnoteReference / ArticleLink が引き金になる。 */
   readonly children: React.ReactNode;
 }
@@ -46,9 +53,19 @@ function supportsModalDialog(): boolean {
   );
 }
 
-/** 脚注の中身を、本文と同じ組版 (prose) の中に置く。チップとドロワーで共有する。 */
-function FootnoteBody({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
-  return <div className="preview-footnote mdast-prose prose max-w-none">{children}</div>;
+/** 脚注の中身を、本文と同じ組版 (prose) と言語の中に置く。チップとドロワーで共有する。 */
+function FootnoteBody({
+  lang,
+  children,
+}: {
+  readonly lang: string;
+  readonly children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <div lang={lang} className="preview-footnote mdast-prose prose max-w-none">
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -71,6 +88,7 @@ function FootnoteBody({ children }: { readonly children: React.ReactNode }): Rea
 export function PreviewLayer({
   footnotes,
   loadArticlePreview = loadFromApi,
+  lang,
   children,
 }: PreviewLayerProps): React.JSX.Element {
   const [chip, setChip] = useState<OpenChip | null>(null);
@@ -82,7 +100,7 @@ export function PreviewLayer({
     const contentOf = async (target: PreviewTarget): Promise<React.ReactNode> => {
       if (target.kind === "footnote") {
         const body = footnotes.get(target.id);
-        return body === undefined ? null : <FootnoteBody>{body}</FootnoteBody>;
+        return body === undefined ? null : <FootnoteBody lang={lang}>{body}</FootnoteBody>;
       }
       const preview = await loadArticlePreview(target.slug);
       return preview === null ? null : <ArticlePreviewCard preview={preview} />;
@@ -112,7 +130,7 @@ export function PreviewLayer({
     });
 
     return { intent, targets };
-  }, [footnotes, loadArticlePreview]);
+  }, [footnotes, loadArticlePreview, lang]);
 
   /*
    * 本文が差し替わったら、前の本文を指したままのチップとドロワーを残さない。脚注の id は
@@ -193,7 +211,7 @@ export function PreviewLayer({
         {drawerId !== null &&
           createPortal(
             <FootnoteDrawer onClose={closeDrawer}>
-              <FootnoteBody>{footnotes.get(drawerId)}</FootnoteBody>
+              <FootnoteBody lang={lang}>{footnotes.get(drawerId)}</FootnoteBody>
             </FootnoteDrawer>,
             document.body,
           )}

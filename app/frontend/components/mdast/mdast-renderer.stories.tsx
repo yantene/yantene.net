@@ -49,6 +49,7 @@ export function greet(name: string): string {
 const meta: Meta<typeof MdastRenderer> = {
   title: "Mdast/MdastRenderer",
   component: MdastRenderer,
+  args: { lang: "ja" },
   parameters: { layout: "padded" },
 };
 

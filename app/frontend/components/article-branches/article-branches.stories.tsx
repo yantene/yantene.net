@@ -8,12 +8,14 @@ const articles = [
     summary:
       "この記事は TUT Advent Calendar 2016 の 9 日目の記事です。みなさん、技科大の VPN を使ってますか。",
     publishedOn: "2016-12-09",
+    language: "ja",
   },
   {
     slug: "tut-tani-checker",
     title: "技科大の成績確認ツールを作ってみた",
     summary: "豊橋技科大では、明日 (8 月 28 日) の午前 9 時より今年度前期の成績発表が行われます。",
     publishedOn: "2015-08-27",
+    language: "ja",
   },
   {
     slug: "install-arch-linux-on-uefi-machine",
@@ -21,6 +23,7 @@ const articles = [
     summary:
       "もうすぐ(既に？)年末ですね。年末は何かと忙しくなりますよね。だったら暇で退屈なクリスマスのうちに面倒ごとは済ませておきたいですよね！！！",
     publishedOn: "2014-12-25",
+    language: "ja",
   },
 ];
 

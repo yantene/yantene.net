@@ -9,6 +9,7 @@ const articles = [
     imageUrl: "https://picsum.photos/seed/article-a/640/400",
     tags: ["Web", "プログラミング"],
     publishedOn: "2026-05-08",
+    language: "ja",
   },
   {
     slug: "clean-architecture",
@@ -17,6 +18,7 @@ const articles = [
     imageUrl: "https://picsum.photos/seed/article-b/640/400",
     tags: ["プログラミング", "備忘録"],
     publishedOn: "2026-04-21",
+    language: "ja",
   },
   {
     slug: "type-safety",
@@ -25,6 +27,7 @@ const articles = [
     imageUrl: null,
     tags: ["プログラミング"],
     publishedOn: "2026-01-02",
+    language: "ja",
   },
   {
     slug: "adr-for-adr",
@@ -33,6 +36,7 @@ const articles = [
     imageUrl: "https://picsum.photos/seed/article-d/640/400",
     tags: ["備忘録", "日記"],
     publishedOn: "2025-10-15",
+    language: "ja",
   },
 ];
 
@@ -92,6 +96,7 @@ export const UnevenYears: Story = {
         imageUrl: null,
         tags: ["日記"],
         publishedOn: `2026-0${String(index + 1)}-10`,
+        language: "ja",
       })),
       ...Array.from({ length: 9 }, (_, index) => ({
         slug: `burst-${String(index)}`,
@@ -100,6 +105,7 @@ export const UnevenYears: Story = {
         imageUrl: null,
         tags: ["日記"],
         publishedOn: `2020-${String(index + 1).padStart(2, "0")}-05`,
+        language: "ja",
       })),
     ],
   },
@@ -117,6 +123,7 @@ export const EveryMonth: Story = {
         imageUrl: null,
         tags: ["日記"],
         publishedOn: `2026-${month}-15`,
+        language: "ja",
       };
     }),
   },

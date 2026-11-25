@@ -265,7 +265,7 @@ describe("loadArticleDetailPage の JSON-LD (ADR 0048)", () => {
       name: "書き手",
       url: `${ORIGIN}/about`,
     };
-    expect(jsonLd).toMatchObject({ "@type": "BlogPosting", headline: "Hello" });
+    expect(jsonLd).toMatchObject({ "@type": "BlogPosting", headline: "Hello", inLanguage: "ja" });
     // `@id` だけの裸の参照にしない。Google の Article が author に name を求める。
     expect(jsonLd.author).toEqual(person);
     expect(jsonLd.publisher).toEqual(person);

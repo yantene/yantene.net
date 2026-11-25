@@ -28,6 +28,7 @@ export const Article: Story = {
           summary: "記事の要約。一覧に出るものと同じ文が入る。",
           publishedOn: "2026-11-16",
           imageUrl: null,
+          language: "ja",
         }}
       />
     ),

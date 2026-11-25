@@ -82,6 +82,7 @@ export function HeroSection({ clockOrigin, profile }: HeroSectionProps): React.J
         {profile !== null && (
           <TaglineLines
             lines={profile.tagline}
+            lang={profile.language}
             className="max-w-xl text-[0.95rem] leading-relaxed text-foreground/85"
           />
         )}

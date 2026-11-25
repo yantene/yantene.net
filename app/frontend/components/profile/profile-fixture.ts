@@ -35,6 +35,7 @@ export const sampleProfile: PublicProfile = {
      */
     { platform: "email", url: "mailto:contact@example.com", isMe: true },
   ],
+  language: "ja",
 };
 
 /*

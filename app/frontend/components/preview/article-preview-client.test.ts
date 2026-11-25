@@ -8,6 +8,7 @@ const preview: ArticlePreview = {
   summary: "A summary.",
   publishedOn: "2026-01-15",
   imageUrl: null,
+  language: "ja",
 };
 
 const ok = (): Promise<Response> => Promise.resolve(Response.json(preview));

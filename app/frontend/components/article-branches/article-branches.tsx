@@ -5,6 +5,8 @@ export interface ArticleBranchItem {
   readonly title: string;
   readonly summary: string;
   readonly publishedOn: string;
+  /** 題と要約の言語 (BCP 47)。記事の DTO の `language` を渡す。 */
+  readonly language: string;
 }
 
 interface ArticleBranchesProps {
@@ -29,7 +31,7 @@ export function ArticleBranches({ articles }: ArticleBranchesProps): React.JSX.E
             to={`/articles/${article.slug}`}
             className="article-branch-link press-surface group"
           >
-            <span className="article-branch-body">
+            <span lang={article.language} className="article-branch-body">
               <span className="article-branch-title">{article.title}</span>
               <span className="article-branch-summary">{article.summary}</span>
             </span>

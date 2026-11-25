@@ -44,6 +44,7 @@ export function ProfileCard({ profile }: ProfileCardProps): React.JSX.Element {
         */}
         <TaglineLines
           lines={profile.tagline}
+          lang={profile.language}
           className="p-note max-w-2xl text-[0.95rem] leading-relaxed text-foreground/85"
         />
 

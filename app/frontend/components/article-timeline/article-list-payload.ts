@@ -36,14 +36,19 @@ export function parseArticleListPayload(value: unknown): ArticleListPayload | nu
 function parseArticle(value: unknown): ArticleTimelineItemProps | null {
   if (!isRecord(value)) return null;
 
-  const { slug, title, summary, imageUrl, publishedOn } = value;
+  const { slug, title, summary, imageUrl, publishedOn, language } = value;
   if (typeof slug !== "string") return null;
   if (typeof title !== "string") return null;
   if (typeof summary !== "string") return null;
   if (typeof publishedOn !== "string") return null;
   // 画像はないこともある。文字列か null 以外は形が違うとみなす。
   if (imageUrl !== null && typeof imageUrl !== "string") return null;
-  // タグは 0 個のこともあるが、配列でないなら形が違う。
+  /*
+   * 言語は無くても読める。この欄を足す前の応答がキャッシュに残っていることがあり、
+   * それを形違いとして弾くと続きの継ぎ足しが止まる。無ければ `lang` を付けないだけ。
+   * どの言語があるかはバックエンドが決めるので、ここでは値を選ばない。
+   */
+  if (language !== undefined && typeof language !== "string") return null;
 
   return {
     slug,
@@ -51,6 +56,7 @@ function parseArticle(value: unknown): ArticleTimelineItemProps | null {
     summary,
     imageUrl,
     publishedOn,
+    ...(language === undefined ? {} : { language }),
   };
 }
 

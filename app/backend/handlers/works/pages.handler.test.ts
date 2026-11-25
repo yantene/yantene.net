@@ -125,6 +125,7 @@ describe("loadWorksPage", () => {
         role: null,
         featured: false,
         screenshots: [],
+        language: "ja",
       },
     ]);
   });
@@ -288,6 +289,7 @@ describe("loadWorkDetailPage", () => {
       description: "読んだものを覚えておくやつ。",
       url: `${ORIGIN}/works/infoholick`,
       sameAs: ["https://github.com/yantene/infoholick"],
+      inLanguage: "ja",
     });
   });
 

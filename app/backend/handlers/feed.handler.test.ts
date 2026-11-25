@@ -70,7 +70,9 @@ describe("GET /feed.xml", () => {
     const res = await createTestApp().request("https://example.test/feed.xml", {}, env(d1));
     const body = await res.text();
 
-    expect(body).toContain("<entry>");
+    // 中身の言語は entry ごとに言う。feed 全体の言語ではない。
+    expect(body).toContain('<entry xml:lang="ja">');
+    expect(body).not.toMatch(/<feed[^>]*xml:lang/);
     expect(body).toContain("https://example.test/articles/hello-world");
     // XML エスケープされていること
     expect(body).toContain("Hello &amp; World");

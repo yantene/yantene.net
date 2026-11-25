@@ -9,6 +9,7 @@ const meta: Meta<typeof ArticleHeader> = {
     title: "はじめての記事",
     imageUrl: "https://picsum.photos/seed/yantene/1200/514",
     publishedOn: "2026-05-08",
+    language: "ja",
     origin: "https://yantene.net",
   },
   decorators: [

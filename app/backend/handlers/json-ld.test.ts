@@ -32,6 +32,7 @@ const PROFILE: PublicProfile = {
     { platform: "x", url: "https://x.com/yantene", isMe: false },
     { platform: "email", url: "mailto:contact@example.com", isMe: true },
   ],
+  language: "ja",
 };
 
 /**
@@ -220,6 +221,8 @@ describe("profilePageJsonLd", () => {
       "@type": "ProfilePage",
       url: `${ORIGIN}/about`,
       isPartOf: { "@id": `${ORIGIN}/#website` },
+      // 中身 (自己紹介) の言語。UI の言語ではない。
+      inLanguage: "ja",
       mainEntity: personNode(ORIGIN, PROFILE),
     });
   });

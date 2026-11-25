@@ -237,6 +237,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             title={article.title}
             imageUrl={article.imageUrl}
             publishedOn={article.publishedOn}
+            language={article.language}
             origin={origin}
           />
           {/*
@@ -262,6 +263,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
               headings={headings}
               className="e-content"
               siteOrigin={origin}
+              lang={article.language}
             />
           </InlineTocRegistry>
           <ArticleActions

@@ -49,6 +49,17 @@ export function websiteReference(origin: string): JsonLdNode {
 }
 
 /**
+ * 中身の言語 (`inLanguage`)。記事 (`BlogPosting`)・作品 (`CreativeWork`)・`/about`
+ * (`ProfilePage`) が、中身の DTO が持つ `language` をそのまま渡す。
+ *
+ * **UI の言語 (`<html lang>`) を渡さないこと。** 英語の UI で開いても、本文は書かれた
+ * 言語のまま出ている。構造化データが言うのは中身のほうの言語。
+ */
+export function inLanguage(language: string): JsonLdNode {
+  return { inLanguage: language };
+}
+
+/**
  * 書き手についてのページ (`/about`) の URL。Person の `url` と、そのページ自身
  * (`ProfilePage`) の `url` が指す先。
  */
@@ -199,6 +210,8 @@ export function profilePageJsonLd(origin: string, profile: PublicProfile | null)
     "@type": "ProfilePage",
     url: aboutUrl(origin),
     isPartOf: websiteReference(origin),
+    // 中身の言語はプロフィールから来る。同期の前は中身が無いので言わない (profileFields と同じ)。
+    ...(profile === null ? {} : inLanguage(profile.language)),
     mainEntity: personNode(origin, profile),
   };
 }
