@@ -13,6 +13,7 @@ export { D1SignInTokenCommandRepository } from "./sign-in-token.command-reposito
 export { D1SignInTokenQueryRepository } from "./sign-in-token.query-repository";
 export { D1ContentViewCommandRepository } from "./content-view.command-repository";
 export { D1ContentViewQueryRepository } from "./content-view.query-repository";
+export { D1NotificationQuotaCommandRepository } from "./notification-quota.command-repository";
 export { D1WebmentionCommandRepository } from "./webmention.command-repository";
 export { D1WebmentionQueryRepository } from "./webmention.query-repository";
 export { D1WebmentionBlocklist } from "./webmention-blocklist";

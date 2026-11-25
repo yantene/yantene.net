@@ -58,12 +58,14 @@ export async function action({ request, params, context }: Route.ActionArgs): Pr
     return new Response(null, { status: 400 });
   }
 
-  const outcome = await applyReaction(
-    context.get(cloudflareContext).env,
-    params.slug,
-    emoji,
-    request.headers.get("cookie"),
-  );
+  const cloudflare = context.get(cloudflareContext);
+  const outcome = await applyReaction(cloudflare.env, params.slug, emoji, {
+    cookie: request.headers.get("cookie"),
+    origin: new URL(request.url).origin,
+    waitUntil: (promise) => {
+      cloudflare.ctx.waitUntil(promise);
+    },
+  });
 
   /*
    * 記事が無ければ 404。ここも 400 と同じく return で返す (#269)。

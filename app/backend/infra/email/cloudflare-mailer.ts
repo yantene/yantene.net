@@ -24,7 +24,7 @@ export class CloudflareMailer implements IMailer {
    */
   async send(message: MailMessage): Promise<void> {
     if (this.from.length === 0) {
-      throw new Error("MAIL_FROM is not set; the sign-in mail cannot be sent.");
+      throw new Error("MAIL_FROM is not set; the mail cannot be sent.");
     }
 
     await this.binding.send({
