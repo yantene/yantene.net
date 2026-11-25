@@ -51,18 +51,8 @@ export class ReactionNotificationService {
       return;
     }
 
-    let taken: boolean;
-    try {
-      taken = await this.deps.quota.tryTake({
-        channel: CHANNEL,
-        day: notice.day,
-        limit: this.deps.dailyLimit,
-      });
-    } catch (error) {
-      // 枠を数えられないときは送らない側に倒す。上限が受信箱を守る唯一の歯止めなので。
-      logger.error("failed to take the reaction mail quota", errorToContext(error));
-      return;
-    }
+    const taken = await this.takeQuota(notice.day);
+    if (taken === "failed") return;
     if (!taken) {
       logger.warn("the daily limit of reaction mails is reached; the mail is not sent", {
         day: notice.day,
@@ -77,6 +67,24 @@ export class ReactionNotificationService {
       );
     } catch (error) {
       logger.error("failed to send the reaction mail", errorToContext(error));
+    }
+  }
+
+  /**
+   * その日の枠を 1 通ぶん取る。数えられなければ記録を残して "failed" を返す。
+   *
+   * 数えられないときは送らない側に倒す。上限が受信箱を守る唯一の歯止めなので。
+   */
+  private async takeQuota(day: string): Promise<boolean | "failed"> {
+    try {
+      return await this.deps.quota.tryTake({
+        channel: CHANNEL,
+        day,
+        limit: this.deps.dailyLimit,
+      });
+    } catch (error) {
+      this.deps.logger.error("failed to take the reaction mail quota", errorToContext(error));
+      return "failed";
     }
   }
 }

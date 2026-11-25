@@ -1,7 +1,6 @@
-import { Temporal } from "@js-temporal/polyfill";
 import { Hono } from "hono";
 import { resolveReactionNotifier } from "./reaction-notification";
-import { deleteReaction, putReaction } from "./reaction-recording";
+import { deleteReaction, putReaction, type PutReactionResult } from "./reaction-recording";
 import type { Context } from "hono";
 import { ArticleNotFoundError, ArticleSlug, articlePath } from "~/backend/domain/article";
 import { InvalidReactionEmojiError, ReactionEmoji } from "~/backend/domain/content-reaction";
@@ -142,19 +141,35 @@ export async function applyReaction(
   const payload = await buildPayload(env, article.id, result.session.reactionFor(slug)?.emoji);
 
   if (result.change !== "unchanged") {
-    request.waitUntil(
-      resolveReactionNotifier(env).notify({
-        articleTitle: article.title.toString(),
-        articleUrl: `${request.origin}${articlePath(slug.toString())}`,
-        emoji: emoji.toString(),
-        previous: result.change === "replaced" ? result.previous.toString() : undefined,
-        reactions: payload.reactions,
-        day: Temporal.Now.plainDateISO("UTC").toString(),
-      }),
-    );
+    const notice = {
+      articleTitle: article.title.toString(),
+      articleUrl: `${request.origin}${articlePath(slug.toString())}`,
+      emoji,
+      reactions: payload.reactions,
+    };
+    request.waitUntil(notifyReaction(env, result, notice));
   }
 
   return { payload, setCookie: sessionCookieFor(env, sessionId) };
+}
+
+/** 付いた / 付け替えたリアクションを書き手に知らせる。応答のあとに回す。 */
+function notifyReaction(
+  env: Env,
+  result: Exclude<PutReactionResult, { change: "unchanged" }>,
+  notice: {
+    readonly articleTitle: string;
+    readonly articleUrl: string;
+    readonly emoji: ReactionEmoji;
+    readonly reactions: ReactionsPayload["reactions"];
+  },
+): Promise<void> {
+  return resolveReactionNotifier(env).notify({
+    ...notice,
+    emoji: notice.emoji.toString(),
+    previous: result.change === "replaced" ? result.previous.toString() : undefined,
+    day: result.on.toString(),
+  });
 }
 
 /**

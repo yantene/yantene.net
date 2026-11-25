@@ -41,11 +41,17 @@ async function loadSession(
  * - `replaced`: 別の絵文字から付け替えた。`previous` に前の絵文字が入る
  * - `unchanged`: 同じ絵文字を押し直しただけで、何も動いていない
  *
- * 呼び出し側は、何かが動いたときだけ書き手に知らせる。
+ * 呼び出し側は、何かが動いたときだけ書き手に知らせる。動いたときは、記録に使った日 (UTC) を
+ * `on` で返す。通知の枠を数える日をここに揃え、時計を 2 度読んで日付がずれるのを避ける。
  */
 export type PutReactionResult =
-  | { readonly change: "added"; readonly session: Session }
-  | { readonly change: "replaced"; readonly session: Session; readonly previous: ReactionEmoji }
+  | { readonly change: "added"; readonly session: Session; readonly on: Temporal.PlainDate }
+  | {
+      readonly change: "replaced";
+      readonly session: Session;
+      readonly on: Temporal.PlainDate;
+      readonly previous: ReactionEmoji;
+    }
   | { readonly change: "unchanged"; readonly session: Session };
 
 /**
@@ -86,10 +92,10 @@ export async function putReaction(
   if (existing === undefined) {
     // 重みは日付だけから決まる。足すのは SQL 側で、いまの値から作らせる。
     await reactions.addLogScore(content, reactionWeightLog(today.toString()));
-    return { change: "added", session: next };
+    return { change: "added", session: next, on: today };
   }
 
-  return { change: "replaced", session: next, previous: existing.emoji };
+  return { change: "replaced", session: next, on: today, previous: existing.emoji };
 }
 
 /**
