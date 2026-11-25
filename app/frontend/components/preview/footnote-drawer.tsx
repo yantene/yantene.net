@@ -63,6 +63,18 @@ export function FootnoteDrawer({ onClose, children }: FootnoteDrawerProps): Reac
       const pressedBackdrop = !browserClosesOnBackdrop && event.target === dialog;
       if (pressedLink || pressedBackdrop) dialog?.close();
     }
+    /*
+     * Esc・戻る操作・背景の押下 (`closedby`) は、ブラウザの「閉じてほしい」の経路を通る。
+     * この経路では `cancel` だけが来て `close` が来ないブラウザがある (command-palette.tsx の
+     * 注意)。来ないと親がドロワーを外さず、同じ脚注を押し直しても開かなくなる。ここで自分で
+     * 閉じて、どの経路も閉じるボタンと同じ `close()` に集める。
+     *
+     * 親の `onClose` を直に呼ばないのは、親がそこでドロワーを外すため。ブラウザが閉じ終わる
+     * (焦点をリンクへ返す) 前に要素が消える。
+     */
+    function onCancel(): void {
+      dialog?.close();
+    }
     function onTouchStart(event: TouchEvent): void {
       const y = event.touches[0]?.clientY;
       swipe = y === undefined ? null : { y, scrolledToTop: (body?.scrollTop ?? 0) <= 0 };
@@ -76,10 +88,12 @@ export function FootnoteDrawer({ onClose, children }: FootnoteDrawerProps): Reac
     }
 
     dialog.addEventListener("click", onClick);
+    dialog.addEventListener("cancel", onCancel);
     dialog.addEventListener("touchstart", onTouchStart, { passive: true });
     dialog.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       dialog.removeEventListener("click", onClick);
+      dialog.removeEventListener("cancel", onCancel);
       dialog.removeEventListener("touchstart", onTouchStart);
       dialog.removeEventListener("touchend", onTouchEnd);
       releaseGutter();

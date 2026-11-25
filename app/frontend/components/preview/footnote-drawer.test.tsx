@@ -74,6 +74,25 @@ describe("FootnoteDrawer", () => {
     expect(dialog.open).toBe(false);
   });
 
+  /*
+   * Esc・戻る操作・背景の押下 (`closedby`) では、`cancel` だけが来て `close` が来ない
+   * ブラウザがある。来ないと親がドロワーを外さず、同じ脚注を押し直しても開かない。
+   */
+  it("cancel だけが来ても閉じきって、閉じたことを親へ伝える", () => {
+    const onClose = vi.fn();
+    renderWithI18n(
+      <FootnoteDrawer onClose={onClose}>
+        <p>注の中身。</p>
+      </FootnoteDrawer>,
+    );
+    const dialog = screen.getByRole("dialog", { hidden: true }) as HTMLDialogElement;
+
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+
+    expect(dialog.open).toBe(false);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("スクロールバーが出ていれば、開いている間その場所を空けておく", () => {
     vi.spyOn(globalThis, "innerWidth", "get").mockReturnValue(1024);
     vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(1009);
