@@ -34,7 +34,7 @@ function block(selector: string): string {
  * 「閉じる × だけが違う地の上に乗る」姿が出荷されていた。
  */
 describe("ドロワーを開いたときの帯", () => {
-  const open = ".site-header-band:has(.site-menu[open])";
+  const open = ".site-header-band:has(.site-menu-panel:popover-open)";
 
   /*
    * トップの帯はスクロール 0 で完全に透明で、見えているのはヒーローの動く空。板は
@@ -76,6 +76,52 @@ describe("ドロワーの字の左端", () => {
     "%s は押し代を負の余白で戻さない",
     (selector) => {
       expect(block(selector)).not.toMatch(/margin-inline:\s*-/u);
+    },
+  );
+});
+
+/**
+ * 畳んだ板 (popover) の置き方の見張り。
+ *
+ * ⚠️ **どれも見た目でしか気づけない。** テストの DOM には CSS が無く、popover の既定の
+ * 姿 (閉じていれば隠す、開けば画面の中央) も当たらない。
+ */
+describe("畳んだ板の置き方", () => {
+  /*
+   * 閉じた板を隠しているのはブラウザの既定 `[popover]:not(:popover-open) { display: none }`。
+   * 作者の CSS はそれより必ず強いので、板の規則に display を書くと閉じたまま出続ける。
+   */
+  it.each([".site-menu-panel", ".header-menu-panel"])(
+    "%s は閉じているときの display を決めない",
+    (selector) => {
+      expect(block(selector)).not.toMatch(/(?:^|\s)display:/mu);
+    },
+  );
+
+  /*
+   * 先に書いた値は、CSS anchor positioning の読めないブラウザの落とし先。後ろの
+   * `anchor()` だけにすると、そこでは板がブラウザの既定 (画面の中央) に浮く。
+   */
+  it.each([".site-menu-panel", ".header-menu-panel"])(
+    "%s は anchor() の前に、読めないブラウザのための位置を書いている",
+    (selector) => {
+      const rule = block(selector);
+      const fallback = rule.search(/\btop: (?:[\d.]+rem|var\(--header-clearance\));/u);
+      const anchored = rule.search(/\btop: [^;]*anchor\(/u);
+
+      expect(fallback, "落とし先の top が無い").toBeGreaterThan(-1);
+      expect(anchored, "anchor() の top が無い").toBeGreaterThan(fallback);
+    },
+  );
+
+  /* ブラウザは `[popover]` を画面の中央に置く (`inset: 0; margin: auto`)。外さないと寄らない。 */
+  it.each([".site-menu-panel", ".header-menu-panel"])(
+    "%s はブラウザの既定の中央寄せを外す",
+    (selector) => {
+      const rule = block(selector);
+
+      expect(rule).toMatch(/\binset: auto/u);
+      expect(rule).toMatch(/\bmargin: 0;/u);
     },
   );
 });

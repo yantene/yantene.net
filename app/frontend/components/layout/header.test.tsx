@@ -1,11 +1,22 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { I18nextProvider } from "react-i18next";
+import { MemoryRouter } from "react-router";
+import { beforeAll, describe, expect, it } from "vitest";
 import { Header } from "./header";
+import type { i18n } from "i18next";
 import { withI18n } from "~/frontend/lib/test-render";
 import { listedFeedIdentities } from "~/lib/feed";
+import { createI18nInstance } from "~/lib/i18n/init";
 
 const renderWithI18n = withI18n();
+
+/* サーバー描画のぶんは testing-library を通さないので、i18n を別に用意する。 */
+const ssrI18n: { current?: i18n } = {};
+beforeAll(async () => {
+  ssrI18n.current = await createI18nInstance("ja");
+});
 
 /** パレットの `<dialog>`。開いているかどうかは DOM の側が持つ。 */
 function palette(): HTMLDialogElement {
@@ -129,15 +140,51 @@ describe("Header の作り", () => {
   });
 
   /*
-   * 帯の開閉 (フィード・表示する言語) とドロワーは、どれも `<details>`。JavaScript が
-   * 動かない環境でも開けるようにするためで、`<dialog>` や自前の開閉状態にすると、
-   * その環境では押しても何も起きない飾りになる。
+   * 帯の開閉 (フィード・表示する言語) とドロワーは、どれも Popover API。開閉は属性だけで
+   * 決まるので、JavaScript が動かない環境でも開ける。`<dialog>` を `showModal()` で開く形
+   * や自前の開閉状態にすると、その環境では押しても何も起きない飾りになる。
+   *
+   * どれも `auto` にする。**auto の popover は互いを閉じ合う**ので、1 つ開けば他が閉じ、
+   * 板が重なることがない (ブラウザがやるので JavaScript は要らない)。
    */
   it("帯の畳んだ道具は、JavaScript 無しでも開ける器で作る", () => {
     const { container } = renderWithI18n(<Header />);
 
     // フィード・表示する言語・ドロワーの 3 つ。
-    expect(container.querySelectorAll("details")).toHaveLength(3);
+    const triggers = [...container.querySelectorAll("button[popovertarget]")];
+    expect(triggers).toHaveLength(3);
+    for (const trigger of triggers) {
+      const panel = container.querySelector(`[id="${trigger.getAttribute("popovertarget")}"]`);
+      expect(panel).toHaveAttribute("popover", "auto");
+      expect(trigger.nextElementSibling).toBe(panel);
+    }
+    expect(container.querySelectorAll("[popover]")).toHaveLength(3);
+    expect(container.querySelector("details")).toBeNull();
+  });
+
+  /*
+   * JavaScript が動かない環境で届くのはサーバーが描いた HTML だけ。そこに `popovertarget`
+   * が載っていなければ、押し場所は何もしない。描画のあとで足される属性ではないことを、
+   * サーバー描画の文字列で確かめる。
+   */
+  it("サーバーが描いた HTML に popovertarget が載っている", () => {
+    const instance = ssrI18n.current;
+    if (instance === undefined) throw new Error("i18n is not ready");
+    const html = renderToStaticMarkup(
+      <I18nextProvider i18n={instance}>
+        <MemoryRouter>
+          <Header />
+        </MemoryRouter>
+      </I18nextProvider>,
+    );
+    const document = new DOMParser().parseFromString(html, "text/html");
+
+    const triggers = [...document.querySelectorAll("button[popovertarget]")];
+    expect(triggers).toHaveLength(3);
+    for (const trigger of triggers) {
+      const panel = document.getElementById(trigger.getAttribute("popovertarget") ?? "");
+      expect(panel?.getAttribute("popover")).toBe("auto");
+    }
   });
 
   /*

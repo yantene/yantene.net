@@ -8,16 +8,20 @@ const renderWithI18n = withI18n();
 
 describe("LocaleMenu", () => {
   /*
-   * 器は `<details>`、中身は素の `<form method="post">`。**どちらも JavaScript が
-   * 動かない環境で切り替えられるようにするため。** `<dialog>` や自前の開閉状態、
-   * React Router の `<Form>` にすると、その環境では開けないか送れないかになる。
+   * 器は Popover API、中身は素の `<form method="post">`。**どちらも JavaScript が
+   * 動かない環境で切り替えられるようにするため。** `<dialog>` を `showModal()` で開く形や
+   * 自前の開閉状態、React Router の `<Form>` にすると、その環境では開けないか送れないかになる。
    */
-  it("器は details で、はじめは畳まれている", () => {
+  it("押し場所が popovertarget で板を指し、板は auto の popover", () => {
     const { container } = renderWithI18n(<LocaleMenu />);
 
-    const details = container.querySelector("details");
-    expect(details).not.toBeNull();
-    expect(details?.open).toBe(false);
+    const trigger = screen.getByRole("button", { name: "表示する言語" });
+    const panelId = trigger.getAttribute("popovertarget");
+    expect(panelId).toBeTruthy();
+    const panel = container.querySelector(`[id="${panelId}"]`);
+    expect(panel).toHaveAttribute("popover", "auto");
+    expect(trigger.nextElementSibling).toBe(panel);
+    expect(container.querySelector("details")).toBeNull();
   });
 
   it("JavaScript 無しでも切り替わるフォームで送る", () => {

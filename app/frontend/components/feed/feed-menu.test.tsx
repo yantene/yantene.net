@@ -13,15 +13,21 @@ function feedHrefs(): (string | null)[] {
 
 describe("FeedMenu", () => {
   /*
-   * 器は `<details>`。**JavaScript が動かない環境でも開ける**ようにするためで、
-   * `<dialog>` や自前の開閉状態にすると、その環境では押しても何も起きない飾りになる。
+   * 器は Popover API。**開閉は属性だけで決まるので、JavaScript が動かない環境でも
+   * 開ける。** `<dialog>` を `showModal()` で開く形や自前の開閉状態にすると、その環境
+   * では押しても何も起きない飾りになる。
    */
-  it("器は details で、はじめは畳まれている", () => {
+  it("押し場所が popovertarget で板を指し、板は auto の popover", () => {
     const { container } = renderWithI18n(<FeedMenu />);
 
-    const details = container.querySelector("details");
-    expect(details).not.toBeNull();
-    expect(details?.open).toBe(false);
+    const trigger = screen.getByRole("button", { name: "Feed" });
+    const panelId = trigger.getAttribute("popovertarget");
+    expect(panelId).toBeTruthy();
+    const panel = container.querySelector(`[id="${panelId}"]`);
+    expect(panel).toHaveAttribute("popover", "auto");
+    // 板は押し場所のすぐ後ろ (離すとブラウザが暗黙の aria-details を足す)。
+    expect(trigger.nextElementSibling).toBe(panel);
+    expect(container.querySelector("details")).toBeNull();
   });
 
   it("選び場所に出す行き先をすべて並べる", () => {
@@ -86,13 +92,13 @@ describe("FeedMenuList (ドロワー)", () => {
   });
 
   /*
-   * ドロワー自身が `<details>`。この中で更に畳むと、開くのに 2 手かかり、支援技術にも
-   * 入れ子の開閉として伝わる。
+   * ドロワー自身が畳んだ板 (popover)。この中で更に畳むと、開くのに 2 手かかり、支援技術
+   * にも入れ子の開閉として伝わる。
    */
-  it("畳まない (入れ子の details にしない)", () => {
+  it("畳まない (入れ子の開閉にしない)", () => {
     const { container } = renderWithI18n(<FeedMenuList />);
 
-    expect(container.querySelector("details")).toBeNull();
+    expect(container.querySelector("details, [popover], [popovertarget]")).toBeNull();
   });
 });
 

@@ -53,6 +53,8 @@ describe("ヘッダーをよける位置", () => {
 
     expect(users.map((file) => file.name).toSorted()).toEqual([
       "components/article-timeline/article-timeline.css",
+      // 帯の板を anchor positioning の読めないブラウザで帯のすぐ下に置く落とし先。
+      "components/layout/header.css",
       "components/profile/profile-history.css",
     ]);
   });
