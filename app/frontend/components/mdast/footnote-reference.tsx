@@ -22,7 +22,13 @@ export function FootnoteReference({
   const trigger = usePreviewTrigger(id === undefined ? null : { kind: "footnote", id });
 
   return (
-    <Link to={href ?? ""} {...rest} {...trigger.props} onClick={trigger.onClick}>
+    <Link
+      to={href ?? ""}
+      {...rest}
+      {...trigger.props}
+      aria-describedby={trigger.describedBy(rest["aria-describedby"])}
+      onClick={trigger.onClick}
+    >
       {children}
     </Link>
   );

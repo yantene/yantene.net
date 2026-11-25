@@ -12,6 +12,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 const meta: Meta<typeof PreviewChip> = {
   title: "Preview/PreviewChip",
   component: PreviewChip,
+  args: { id: "preview-chip" },
 };
 
 export default meta;

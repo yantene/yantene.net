@@ -28,6 +28,7 @@ import {
   FOOTNOTE_REFERENCE_TAG,
   markPreviewAnchors,
 } from "./preview-targets";
+import { ScrollableTable } from "./scrollable-table";
 import { PreviewLayer } from "~/frontend/components/preview/preview-layer";
 import { InlineTableOfContents } from "~/frontend/components/toc/inline-table-of-contents";
 import { TOC_TAG, TocHeadingsContext } from "~/frontend/components/toc/toc-context";
@@ -244,6 +245,34 @@ function transformImage(element: Element, resolve: ((src: string) => string) | u
   element.properties.loading = "lazy";
   element.properties.decoding = "async";
   element.properties.alt ??= "";
+}
+
+/** 木の中で最初に現れる img 要素。文書の順 (深さ優先・行きがけ) で探す。 */
+function findFirstImage(node: HastRoot | RootContent): Element | undefined {
+  if (node.type === "element" && node.tagName === "img") return node;
+  if (!("children" in node)) return undefined;
+  for (const child of node.children) {
+    const found = findFirstImage(child);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+/**
+ * 本文の最初の画像を、遅延させずに優先して取りに行かせる。
+ *
+ * カバー画像の無い記事では、本文の最初の画像がファーストビューでいちばん大きな絵
+ * (LCP の候補) になりやすい。`loading="lazy"` のままだと、ブラウザは配置が決まるまで
+ * 取りに行かず、表示が遅れる。カバー画像のある記事ではそちらが最優先を持つので、
+ * 呼ばない (優先を 2 枚に割ると、どちらも速くならない)。
+ *
+ * transformImage の後に呼ぶこと。先に呼ぶと `loading="lazy"` で上書きされる。
+ */
+function prioritizeFirstImage(tree: HastRoot): void {
+  const image = findFirstImage(tree);
+  if (image === undefined) return;
+  delete image.properties.loading;
+  image.properties.fetchPriority = "high";
 }
 
 /** hast の className (配列とも文字列とも取れる) をクラスの列に均す。 */
@@ -602,6 +631,13 @@ export interface MdastRendererProps {
    * そちらにも同じ値を渡す (PreviewLayer)。
    */
   readonly lang: string;
+  /**
+   * 本文の最初の画像の読み込み方。既定の `lazy` では、すべての画像を遅延して読む。
+   *
+   * `priority` にすると、最初の 1 枚だけは遅延させず、優先して取りに行く。**カバー画像の
+   * 無い記事で使う。** カバー画像があればそれが先頭の絵なので、本文の画像は既定のまま。
+   */
+  readonly firstImage?: "lazy" | "priority";
 }
 
 /**
@@ -616,6 +652,7 @@ export function MdastRenderer({
   headings,
   siteOrigin,
   lang,
+  firstImage = "lazy",
 }: MdastRendererProps): React.JSX.Element {
   const cardsByUrl = useMemo(() => new Map(Object.entries(linkCards ?? {})), [linkCards]);
 
@@ -645,6 +682,7 @@ export function MdastRenderer({
     lowercaseSchemes(expanded);
     const transformed = hastProcessor.runSync(expanded);
     applyElementTransforms(transformed, transformImageUrl, siteOrigin);
+    if (firstImage === "priority") prioritizeFirstImage(transformed);
     // リンクの付け替え (press-control・外部リンクの rel) を終えてから印を付ける。
     markPreviewAnchors(transformed, siteOrigin);
     wrapMermaidBlocks(transformed);
@@ -662,6 +700,7 @@ export function MdastRenderer({
         jsxs,
         components: {
           pre: CodeBlock,
+          table: ScrollableTable,
           img: LightboxImage,
           iframe: EmbedFrame,
           a: Anchor,
@@ -685,7 +724,7 @@ export function MdastRenderer({
     );
 
     return { body: toElement(transformed), footnotes };
-  }, [node, transformImageUrl, cardsByUrl, hasToc, siteOrigin]);
+  }, [node, transformImageUrl, cardsByUrl, hasToc, siteOrigin, firstImage]);
 
   return (
     <article lang={lang} className={`mdast-prose prose max-w-none ${className ?? ""}`.trim()}>

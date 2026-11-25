@@ -265,6 +265,11 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
               className="e-content"
               siteOrigin={origin}
               lang={article.language}
+              /*
+                カバー画像の無い記事では、本文の最初の画像がファーストビューの絵になる。
+                カバー画像があれば、そちらが最優先を持つ (article-header.tsx)。
+              */
+              firstImage={article.imageUrl === null ? "priority" : "lazy"}
             />
           </InlineTocRegistry>
           <ArticleActions

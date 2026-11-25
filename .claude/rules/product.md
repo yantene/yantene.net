@@ -399,6 +399,9 @@ Accept は必ず `*/*` を含み、ワイルドカードは Markdown 側に数�
 - **サーバーは何も足さない。** チップもドロワーも読み手が触ってから本文の外に出すので、
   SSR の HTML はプレビューの無い形のまま (`mdast-renderer.preview.test.tsx` が見張っている)
 - 位置合わせは CSS (Popover API + anchor positioning)。`style` 属性は書かない
+- チップは `role="tooltip"` で、**出ている間だけ**リンクの `aria-describedby` がチップを指す。
+  脚注の参照が元から持つ `aria-describedby` (`footnote-label`) は消さず、後ろに足す。
+  押せば移るリンクなので `aria-expanded` は付けない
 - 対象は記事へのリンクと脚注だけ。外部リンクにはリンクカードがある。`/works/<slug>` と
   `/about` へのリンクには出さない
 

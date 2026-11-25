@@ -121,6 +121,8 @@ describe("翻訳リソース", () => {
       "works.screenshotsLabel",
       // ヒーローの時刻のスライダーの名前。目盛りの字はあるが、名前そのものは画面に出ない。
       "hero.timeLabel",
+      // 本文の表を収める横送りの器の名前。画面には出ない。
+      "prose.tableLabel",
     ]) {
       expect(valueAt(ja, key)).not.toBe(valueAt(en, key));
     }

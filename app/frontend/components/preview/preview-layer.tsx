@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArticlePreviewCard } from "./article-preview-card";
 import { articlePreviews } from "./article-preview-client";
@@ -92,6 +92,7 @@ export function PreviewLayer({
   children,
 }: PreviewLayerProps): React.JSX.Element {
   const [chip, setChip] = useState<OpenChip | null>(null);
+  const chipId = useId();
   const [drawerId, setDrawerId] = useState<string | null>(null);
 
   const hover = useMemo(() => {
@@ -163,6 +164,7 @@ export function PreviewLayer({
   const controller = useMemo<PreviewController>(
     () => ({
       anchor,
+      chipId,
       intend: (target, element) => {
         if (!supportsPopover()) return;
         hover.targets.set(element, target);
@@ -180,7 +182,7 @@ export function PreviewLayer({
         return true;
       },
     }),
-    [anchor, hover, footnotes],
+    [anchor, chipId, hover, footnotes],
   );
 
   const holdChip = useCallback(() => {
@@ -203,7 +205,7 @@ export function PreviewLayer({
       <PreviewContext value={null}>
         {chip !== null &&
           createPortal(
-            <PreviewChip onPointerEnter={holdChip} onPointerLeave={releaseChip}>
+            <PreviewChip id={chipId} onPointerEnter={holdChip} onPointerLeave={releaseChip}>
               {chip.content}
             </PreviewChip>,
             document.body,

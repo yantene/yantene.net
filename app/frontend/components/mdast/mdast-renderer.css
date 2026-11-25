@@ -8,7 +8,12 @@
   font-size: 1.0625rem;
   line-height: 2;
   letter-spacing: 0.02em;
-  word-break: break-word;
+  /*
+   * 長い URL や英単語が行に収まらないときは、どこででも折る。`break-word` (非推奨の
+   * `word-break: break-word` と同じ振る舞い) にすると、折り位置が最小幅の計算に
+   * 入らなくなり、表や flex の中で長い URL が器ごとはみ出す。
+   */
+  overflow-wrap: anywhere;
   /* 本文は真っ黒を避け、柔らかいダークグレーに (長文でも目が疲れにくい)。 */
   --tw-prose-body: color-mix(in oklch, var(--color-base-content) 85%, transparent);
   --tw-prose-headings: var(--color-base-content);
@@ -266,6 +271,48 @@
 /* ToC / パーマリンクで見出しへ飛んだとき sticky ヘッダーに隠れないよう余白を確保。 */
 .mdast-prose :is(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: 5rem;
+}
+
+/*
+ * 見出しが 2 行に割れたとき、2 行目に 1 〜 2 字だけが残らないよう行の長さを揃える。
+ * 見出しは枠を持たないので、揃えて右に余白が空いても見た目は崩れない。
+ *
+ * 日本語の見出しは、文節の切れ目で折る (`auto-phrase`)。字の途中で「る」だけが次の行に
+ * 落ちる、といった割れ方をしなくなる。効くのは `lang="ja"` の中だけなので、`:lang(ja)` で
+ * 絞る。使えないブラウザでは、今までどおり字単位で折れる。
+ *
+ * 本文 (段落) には当てない。どちらも行を測り直すぶん重く、長い文には要らない。
+ */
+.mdast-prose :is(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+}
+
+.mdast-prose :is(h1, h2, h3, h4, h5, h6):lang(ja) {
+  word-break: auto-phrase;
+}
+
+/*
+ * 本文の表を収める器 (scrollable-table.tsx)。はみ出す表だけが、器の中で横に送れる。
+ *
+ * 表の上下の余白は器が持つ。表に残すと、焦点の輪郭 (interaction.css) が表から離れた
+ * 位置に描かれる。
+ */
+.mdast-prose .mdast-table-scroll {
+  overflow-x: auto;
+  margin-block: 2em;
+}
+
+.mdast-prose .mdast-table-scroll > table {
+  margin-block: 0;
+}
+
+/*
+ * 列の見出しは 1 行に保つ。本文は `overflow-wrap: anywhere` でどこででも折れるので、
+ * 何もしないと列の多い表は器からはみ出す代わりに 1 字幅まで痩せ、横に送る器が
+ * 働かない。見出しの幅が、その列の下限になる。
+ */
+.mdast-prose .mdast-table-scroll th {
+  white-space: nowrap;
 }
 
 /*

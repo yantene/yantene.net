@@ -58,6 +58,9 @@
     "footnoteLabel": "脚注",
     "close": "閉じる"
   },
+  "prose": {
+    "tableLabel": "表"
+  },
   "works": {
     "title": "Works",
     "heading": "Works",

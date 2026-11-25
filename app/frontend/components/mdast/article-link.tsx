@@ -23,7 +23,13 @@ export function ArticleLink({
   const trigger = usePreviewTrigger(slug === undefined ? null : { kind: "article", slug });
 
   return (
-    <a href={href} {...rest} {...trigger.props} onClick={trigger.onClick}>
+    <a
+      href={href}
+      {...rest}
+      {...trigger.props}
+      aria-describedby={trigger.describedBy(rest["aria-describedby"])}
+      onClick={trigger.onClick}
+    >
       {children}
     </a>
   );
