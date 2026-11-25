@@ -17,17 +17,19 @@ interface MainContentProps {
 /**
  * ページの本文の器 (`<main>`)。どのページもこれを通す。
  *
- * `tabIndex={-1}` はスキップリンクが焦点を移すため。タブ順には入らない。焦点を移さずに
- * スクロールだけさせると、次の Tab がヘッダーの中へ戻ってしまう。また、拡大鏡の中には
- * 焦点を追うものがあり、焦点の当たらない行き先にはついて来ない。
+ * スキップリンクはここへ焦点を移す (skip-link.tsx)。焦点を移さずにスクロールだけさせると、
+ * 次の Tab がヘッダーの中へ戻ってしまう。また、拡大鏡の中には焦点を追うものがあり、焦点の
+ * 当たらない行き先にはついて来ない。
  *
- * 焦点が当たっても輪郭は出さない (skip-link.css)。押せるものではないので、ページ全体を
- * 囲む輪郭は現在地の印として役に立たない。
+ * ただし `tabIndex={-1}` はここに書かない。焦点を受けられるのは、スキップリンクが移す
+ * あいだだけにしてある (理由は skip-link.tsx)。焦点が当たっても輪郭は出さない
+ * (skip-link.css)。押せるものではないので、ページ全体を囲む輪郭は現在地の印として役に
+ * 立たない。
  */
 export function MainContent({ className, children }: MainContentProps): React.JSX.Element {
   const classes = className === undefined ? "main-content" : `main-content ${className}`;
   return (
-    <main id={MAIN_CONTENT_ID} tabIndex={-1} className={classes}>
+    <main id={MAIN_CONTENT_ID} className={classes}>
       {children}
     </main>
   );

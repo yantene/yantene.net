@@ -69,4 +69,26 @@ describe("SkipLink", () => {
 
     expect(screen.getByRole("link", { name: "Skip to content" })).toBeInTheDocument();
   });
+
+  /*
+   * `<main>` に `tabindex="-1"` を置きっぱなしにすると、本文の字をクリックしただけで
+   * `<main>` に焦点が移り、次の Tab がクリックした場所ではなく本文の頭から始まる。
+   */
+  it("本文をクリックしても <main> に焦点は移らない", async () => {
+    renderPage(renderJa);
+
+    await userEvent.click(screen.getByRole("heading", { name: "Title" }));
+
+    expect(document.activeElement).not.toBe(screen.getByRole("main"));
+  });
+
+  it("焦点が本文から離れたら、焦点を受ける印を外す", async () => {
+    renderPage(renderJa);
+    await userEvent.tab();
+    await userEvent.keyboard("{Enter}");
+
+    await userEvent.tab();
+
+    expect(screen.getByRole("main")).not.toHaveAttribute("tabindex");
+  });
 });

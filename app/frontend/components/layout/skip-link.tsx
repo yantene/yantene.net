@@ -27,5 +27,12 @@ function handleClick(event: React.MouseEvent<HTMLAnchorElement>): void {
   if (target === null) return;
 
   event.preventDefault();
+  /*
+   * 焦点を受けられるのは移すあいだだけにする。`<main>` に `tabindex="-1"` を常に置くと、
+   * 本文の字をクリックするたびに `<main>` に焦点が移り、次の Tab がクリックした場所では
+   * なく本文の頭から始まってしまう。
+   */
+  target.setAttribute("tabindex", "-1");
+  target.addEventListener("blur", () => target.removeAttribute("tabindex"), { once: true });
   target.focus();
 }
