@@ -1,7 +1,14 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { HiOutlineLink, HiOutlineShare } from "react-icons/hi2";
-import { SiBluesky, SiX } from "react-icons/si";
+import {
+  SiBluesky,
+  SiFacebook,
+  SiHatenabookmark,
+  SiMastodon,
+  SiThreads,
+  SiX,
+} from "react-icons/si";
 import { buildClipboardPayload, buildShareTargets } from "./share-targets";
 import type { ShareTarget } from "./share-targets";
 
@@ -17,10 +24,30 @@ type BrandIcon = React.ComponentType<{
   readonly "aria-hidden"?: boolean;
 }>;
 
-const icons = {
-  x: SiX,
-  bluesky: SiBluesky,
-} as const satisfies Record<ShareTarget["key"], BrandIcon>;
+/*
+ * 印と、その色を決めるクラス。
+ *
+ * **色は社ごとの規定で決まる。** 黒を許す社は `brand-mark` だけで黒になり、黒を許さない
+ * 社 (Facebook とはてブ) だけが色のクラスを足す。クラス名は組み立てずに書き切る
+ * (grep で見つからない場所を作らないため)。出典は brand-marks.css。
+ */
+const marks = {
+  x: { Icon: SiX, className: "brand-mark" },
+  facebook: { Icon: SiFacebook, className: "brand-mark brand-mark-facebook" },
+  bluesky: { Icon: SiBluesky, className: "brand-mark" },
+  mastodon: { Icon: SiMastodon, className: "brand-mark" },
+  threads: { Icon: SiThreads, className: "brand-mark" },
+  hatenaBookmark: { Icon: SiHatenabookmark, className: "brand-mark brand-mark-hatena-bookmark" },
+} as const satisfies Record<
+  ShareTarget["key"],
+  { readonly Icon: BrandIcon; readonly className: string }
+>;
+
+/** 共有先の名前。はてなだけは言語で呼び名が変わる (日本語では「はてなブックマーク」)。 */
+function serviceName(target: ShareTarget, t: (key: string) => string): string {
+  if (target.key === "hatenaBookmark") return t("share.hatenaBookmark");
+  return target.label;
+}
 
 type ShareMenuProps = {
   /** 共有する絶対 URL。相対パスだと貼った先で開けない。 */
@@ -145,7 +172,7 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
 
       <div className="share-menu-panel">
         {buildShareTargets(url, title).map((target) => {
-          const Icon = icons[target.key];
+          const { Icon, className } = marks[target.key];
           return (
             <a
               key={target.key}
@@ -156,12 +183,12 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
               className="share-menu-item press-control"
             >
               {/*
-                印には `brand-mark` を付ける。付けないと、行の字の色 (紺) と hover の
-                primary がそのまま印に流れ、各社の recolor 禁止に当たる。
-                字のほうはこちらの文言なので、これまでどおり色が変わってよい。
+                印には必ず `brand-mark` を付ける (marks の className に入っている)。付けないと、
+                行の字の色 (紺) と hover の primary がそのまま印に流れ、各社の recolor 禁止に
+                当たる。字のほうはこちらの文言なので、これまでどおり色が変わってよい。
               */}
-              <Icon className="brand-mark" aria-hidden />
-              {t("share.shareOn", { service: target.label })}
+              <Icon className={className} aria-hidden />
+              {t("share.shareOn", { service: serviceName(target, t) })}
             </a>
           );
         })}

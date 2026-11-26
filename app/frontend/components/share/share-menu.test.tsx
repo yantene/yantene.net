@@ -58,10 +58,26 @@ describe("ShareMenu", () => {
       "href",
       expect.stringContaining("x.com/intent/post"),
     );
-    expect(screen.getByRole("link", { name: "Share on Bluesky" })).toBeInTheDocument();
+    for (const service of ["Facebook", "Bluesky", "Mastodon", "Threads", "Hatena Bookmark"]) {
+      expect(screen.getByRole("link", { name: `Share on ${service}` })).toBeInTheDocument();
+    }
+  });
 
-    /* Facebook は外してある (#512、ADR 0043)。戻すなら印の色から考え直すこと。 */
-    expect(screen.queryByRole("link", { name: "Share on Facebook" })).not.toBeInTheDocument();
+  /*
+   * 黒を許さない社の印だけが色のクラスを持つ (ADR 0052)。ほかに色を付けると、Bluesky の
+   * 「他の SNS の印と並べるときは単色に」に当たる。
+   */
+  it("colors only the marks whose brands forbid black", () => {
+    renderMenu();
+
+    const markOf = (service: string): Element | null =>
+      screen.getByRole("link", { name: `Share on ${service}` }).querySelector("svg");
+
+    expect(markOf("Facebook")).toHaveClass("brand-mark", "brand-mark-facebook");
+    expect(markOf("Hatena Bookmark")).toHaveClass("brand-mark", "brand-mark-hatena-bookmark");
+    for (const service of ["X", "Bluesky", "Mastodon", "Threads"]) {
+      expect(markOf(service)?.getAttribute("class")).toBe("brand-mark");
+    }
   });
 
   /*

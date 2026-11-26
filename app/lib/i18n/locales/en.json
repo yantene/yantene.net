@@ -98,7 +98,8 @@
     "copyLink": "Copy link",
     "copied": "Copied",
     "copyFailed": "Couldn't copy",
-    "shareOn": "Share on {{service}}"
+    "shareOn": "Share on {{service}}",
+    "hatenaBookmark": "Hatena Bookmark"
   },
   "reaction": {
     "like": "Like",

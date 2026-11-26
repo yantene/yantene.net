@@ -22,10 +22,24 @@
  *   「Please do not edit, change, distort, recolor, or reconfigure the Discord logo」
  *   https://discord.com/branding
  *
- * ⚠️ **黒を許さない会社もある。** Meta は Facebook の印について、許す形を
- * 「Facebook Blue の丸に白い f」と「白い丸に透明な f」の 2 つだけに定めており、
- * 黒の単色版が無い。**そのため共有先から Facebook を外した** (#512)。同じ性質の印を
- * 足すときは、ここに黒で並べれば済む話ではないので注意すること。
+ * - Threads は色の規定を書いていない。印そのものが黒と白で描かれていて、
+ *   「only use the logos found on our Brand Resource Center site」とだけ言う
+ *   https://www.meta.com/brand/resources/threads/
+ *
+ * ⚠️ **黒を許さない会社もある。** その 2 社だけ、下で正式な色を名指しする
+ * ([ADR 0052](../../docs/adr/0052-show-share-marks-in-each-brands-required-color.md))。
+ *
+ * - Meta は Facebook の印について、許す形を「Facebook Blue の丸に白い f」と
+ *   「白い丸に透明な f」の 2 つだけに定めている。黒の単色版が無い。
+ *   「A Facebook Blue logo on a white background is our primary logo use」
+ *   https://www.meta.com/brand/resources/facebook/logo/
+ * - はてなは「原則として、データの編集、変更、改変等はせず、そのまま利用してください」。
+ *   単色は「カラーのロゴマークを利用することが困難な掲載場所」に限られ、並びを揃えたい
+ *   という理由はそこに当たらない。ブランドカラーは #00A4DE
+ *   https://brand.hatena.co.jp/hatenabookmark
+ *
+ * **同じ性質の印を足すときは、黒で並べれば済む話ではない。** 先にその社が黒を
+ * 許しているかを確かめること。
  */
 
 /*
@@ -49,4 +63,25 @@
 a:hover > .brand-mark,
 button:hover > .brand-mark {
   fill: #000;
+}
+
+/*
+ * 黒を許さない社の印。どちらも**抜き (f と B!) から後ろが透ける**ので、白の上に置くこと。
+ * 規定の言う「白い f」は、白地が透けて白く見えることで成り立っている。
+ *
+ * hover の規則より後ろに、同じ形の hover を並べて書く。詳細度が同じなので、前に書くか
+ * 形を 1 つでも欠くと、その hover で黒に戻る。
+ */
+.brand-mark-facebook,
+.brand-mark-facebook:hover,
+a:hover > .brand-mark-facebook,
+button:hover > .brand-mark-facebook {
+  fill: #0866ff;
+}
+
+.brand-mark-hatena-bookmark,
+.brand-mark-hatena-bookmark:hover,
+a:hover > .brand-mark-hatena-bookmark,
+button:hover > .brand-mark-hatena-bookmark {
+  fill: #00a4de;
 }

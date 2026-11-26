@@ -1,6 +1,6 @@
 # 0043. 出ていく先の絵は黒 1 色で、不透明な台の上に出す
 
-- Status: Accepted
+- Status: Accepted (「Facebook は黒を許していないので、共有先から外した」の節のみ [0052](0052-show-share-marks-in-each-brands-required-color.md) で置き換え)
 - Date: 2026-09-16
 - Deciders: @yantene
 

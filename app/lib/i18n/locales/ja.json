@@ -98,7 +98,8 @@
     "copyLink": "リンクをコピー",
     "copied": "コピーしました",
     "copyFailed": "コピーできませんでした",
-    "shareOn": "{{service}} で共有"
+    "shareOn": "{{service}} で共有",
+    "hatenaBookmark": "はてなブックマーク"
   },
   "reaction": {
     "like": "いいね",
