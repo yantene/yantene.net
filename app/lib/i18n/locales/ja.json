@@ -96,8 +96,8 @@
   "share": {
     "title": "Share",
     "copyLink": "リンクをコピー",
-    "copied": "コピーした",
-    "copyFailed": "コピーできなかった",
+    "copied": "コピーしました",
+    "copyFailed": "コピーできませんでした",
     "shareOn": "{{service}} で共有"
   },
   "reaction": {
