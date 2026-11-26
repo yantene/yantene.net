@@ -35,7 +35,7 @@ function hatenaEntryUrl(url: string): string {
  * 公式のボタン (widget.js など) は CSP の `script-src 'self'` で読めないので使わない。
  * どのサービスも素のリンクで共有画面を開けるため、それで足りる。
  *
- * 並びは読み手の多い順ではなく、書き手が決めた順。印の色は描画側 (share-menu.tsx) と
+ * 並びは読み手の多い順ではなく、書き手が決めた順。印の色は描画側 (share-bar.tsx) と
  * brand-marks.css が持つ ([ADR 0052](../../../../docs/adr/0052-show-share-marks-in-each-brands-required-color.md))。
  */
 export function buildShareTargets(url: string, title: string): readonly ShareTarget[] {

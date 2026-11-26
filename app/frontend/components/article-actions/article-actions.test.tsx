@@ -68,8 +68,8 @@ describe("ArticleActions", () => {
 
     expect(screen.getByRole("button", { name: "いいね" })).toBeTruthy();
     expect(screen.getByRole("form", { name: "リアクション" })).toBeTruthy();
-    // 共有はメニューの入口が出ていればよい (中身は share-menu のテストが見る)。
-    expect(screen.getByRole("button", { name: /共有|コピー/ })).toBeTruthy();
+    // 共有は帯が出ていればよい (中身は share-bar のテストが見る)。
+    expect(screen.getByRole("group", { name: "Share" })).toBeTruthy();
   });
 
   it("置き場所で読み上げの名前を分ける", () => {

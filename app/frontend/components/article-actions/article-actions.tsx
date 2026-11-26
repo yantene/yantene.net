@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { ReactionState } from "~/frontend/components/reaction/reaction-state";
 import { ReactionBar } from "~/frontend/components/reaction/reaction-bar";
-import { ShareMenu } from "~/frontend/components/share/share-menu";
+import { ShareBar } from "~/frontend/components/share/share-bar";
 
 /** 置き場所。上下で余白と主張の強さを変えるだけで、中身は同じ。 */
 export type ArticleActionsPlacement = "top" | "bottom";
@@ -47,7 +47,7 @@ export function ArticleActions({
         mine={mine}
         shouldPromptReaction={placement === "bottom"}
       />
-      <ShareMenu url={url} title={title} />
+      <ShareBar url={url} title={title} />
     </section>
   );
 }

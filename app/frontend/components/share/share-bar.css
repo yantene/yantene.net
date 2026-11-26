@@ -1,0 +1,96 @@
+/*
+ * 記事の上と下に置く共有の帯。共有先の印を横 1 列に並べる。
+ *
+ * **印の色は `brand-marks.css` が持つ** (各社のブランド規定。ADR 0043 / 0052)。ここが
+ * 持つのは押し場所の大きさと、印の下に敷く台だけ。
+ */
+
+.share-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* 置かれた側の幅まで縮めるようにする (既定の min-width: auto だと並びの幅で止まる)。 */
+  min-width: 0;
+}
+
+/*
+ * 押し場所の並び。**折り返さず、狭ければ箱の幅を詰める。**
+ *
+ * スマホの本文の幅 (390px の端末で 342px) に 44px の箱は 7 つしか入らず、共有シートの
+ * 押し場所が出る端末では 8 つ目が次の行に 1 つだけ落ちる。印は箱より十分に小さいので、
+ * 幅を詰めても印どうしがくっつくことはない。高さは 44px のまま残す。
+ *
+ * 押し場所どうしは詰める (gap 0)。箱の余白がそのまま印どうしの間隔になる。
+ */
+.share-bar-items {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/*
+ * 1 つの押し場所。**台は不透明な白にする。**
+ *
+ * Facebook の f とはてブの B! は抜きで、規定の言う「白い f」は白地が透けて成り立って
+ * いる (ADR 0052)。いまのページは白地だが、置き場所の地に頼らず、印は必ず白の上に乗る
+ * ようにしておく (social-links.css の台と同じ考え方)。
+ */
+.share-bar-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /*
+   * 指で押せる大きさ。このリポジトリの押し場所の下限 (44px) に揃える。幅だけは、
+   * 狭い本文で並びが溢れるときに 32px まで縮んでよい (上の .share-bar-items)。
+   */
+  width: 2.75rem;
+  flex-shrink: 1;
+  min-width: 2rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background-color: var(--color-base-100);
+  font-size: 1.125rem;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
+  cursor: pointer;
+}
+
+/*
+ * hover。**染めるのは台で、印ではない** (印を染めると各社の recolor 禁止に当たる)。
+ * 半透明の色を重ねると抜きから後ろが透けるので、白と混ぜた不透明な色で塗る。
+ */
+.share-bar-item:hover {
+  background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+}
+
+/*
+ * 押している間も台は不透明に保つ。press-control は :active で opacity を落とすが、
+ * 台ごと薄くなると抜きから後ろが透ける。手応えは 1px の沈み込みと濃いめの台で出す。
+ *
+ * 要素で詳細度を 1 つ上げておく (0,2,1)。`.share-bar-item:active` だけだと
+ * `.press-control:active` と並び、後に import される interaction.css が勝つ。
+ */
+a.share-bar-item:active,
+button.share-bar-item:active {
+  opacity: 1;
+  background-color: color-mix(in oklab, var(--color-primary) 20%, var(--color-base-100));
+}
+
+/* 印でない道具 (コピー・共有シート) の絵は、こちらの文言と同じく hover で色が変わってよい。 */
+.share-bar-tool:hover {
+  color: var(--color-primary);
+}
+
+/*
+ * コピーの結果。入れ物は畳まず置いたままにするので (読み上げのため)、何も無いときは
+ * 場所を取らせない。
+ */
+.share-bar-feedback {
+  padding-inline: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+}
+
+.share-bar-feedback:empty {
+  display: none;
+}

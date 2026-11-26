@@ -99,7 +99,8 @@
     "copied": "コピーしました",
     "copyFailed": "コピーできませんでした",
     "shareOn": "{{service}} で共有",
-    "hatenaBookmark": "はてなブックマーク"
+    "hatenaBookmark": "はてなブックマーク",
+    "more": "ほかのアプリで共有"
   },
   "reaction": {
     "like": "いいね",

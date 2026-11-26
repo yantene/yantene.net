@@ -8,7 +8,7 @@ import { Link } from "react-router";
  *
  * どちらのキーで開くかは読み手の OS で決まり、サーバーには分からない。effect で
  * 書き換えると余分な描画が挟まるので、サーバー用のスナップショットを持てる
- * useSyncExternalStore で受ける (share-menu.tsx と同じ作り)。
+ * useSyncExternalStore で受ける (share-bar.tsx と同じ作り)。
  *
  * 購読はしない。読み込んだ後に OS が変わることはない。参照が変わると購読し直しに
  * なるので、関数はモジュールに置いて固定する。

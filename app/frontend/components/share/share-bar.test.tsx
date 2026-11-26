@@ -1,7 +1,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ShareMenu } from "./share-menu";
+import { ShareBar } from "./share-bar";
 import { withI18n } from "~/frontend/lib/test-render";
 
 const renderWithI18n = withI18n("en");
@@ -11,7 +11,7 @@ const title = "記事の題";
 
 /*
  * navigator ごと差し替える。丸ごと置き換わることで share が消えるので、共有シートを
- * 呼べない環境 (一覧が出る側) をそのまま再現できる。
+ * 呼べない環境 (共有シートの押し場所が出ない側) をそのまま再現できる。
  */
 function stubClipboard(clipboard: Record<string, unknown>): void {
   vi.stubGlobal("navigator", { clipboard });
@@ -37,22 +37,22 @@ function stubClipboardItem(): readonly Record<string, Blob>[] {
 }
 
 /**
- * 共有シートを呼べない環境 (デスクトップの一部) の姿を確かめる。
+ * 共有の帯の中身を確かめる。
  *
  * 呼べる環境の分岐は navigator.share の有無で決まり、判定そのものはブラウザに委ねている。
- * ここで見るのは「呼べないときに一覧とコピーが使えること」。
+ * ここで見るのは「共有先とコピーが常に並び、共有シートは呼べるときだけ足されること」。
  */
-describe("ShareMenu", () => {
+describe("ShareBar", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  const renderMenu = (): void => {
-    renderWithI18n(<ShareMenu url={url} title={title} />, { router: false });
+  const renderBar = (): void => {
+    renderWithI18n(<ShareBar url={url} title={title} />, { router: false });
   };
 
   it("offers every share target as a plain link", () => {
-    renderMenu();
+    renderBar();
 
     expect(screen.getByRole("link", { name: "Share on X" })).toHaveAttribute(
       "href",
@@ -64,11 +64,40 @@ describe("ShareMenu", () => {
   });
 
   /*
+   * 印だけで字を出さないので、名前は aria-label と title で持つ。どちらかが欠けると、
+   * 読み上げかマウスの読み手のどちらかが行き先を知る手立てを失う。
+   */
+  it("names each icon-only control for screen readers and pointer users", () => {
+    renderBar();
+
+    const x = screen.getByRole("link", { name: "Share on X" });
+    expect(x).toHaveAttribute("title", "Share on X");
+    expect(x).toHaveTextContent("");
+    expect(screen.getByRole("button", { name: "Copy link" })).toHaveAttribute("title", "Copy link");
+  });
+
+  it("leaves out the system share sheet where the browser has none", () => {
+    stubClipboard({});
+    renderBar();
+    expect(screen.queryByRole("button", { name: "Share via other apps" })).toBeNull();
+  });
+
+  it("hands the article to the system share sheet when it exists", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: {}, share });
+
+    renderBar();
+    await userEvent.click(screen.getByRole("button", { name: "Share via other apps" }));
+
+    expect(share).toHaveBeenCalledWith({ title, url });
+  });
+
+  /*
    * 黒を許さない社の印だけが色のクラスを持つ (ADR 0052)。ほかに色を付けると、Bluesky の
    * 「他の SNS の印と並べるときは単色に」に当たる。
    */
   it("colors only the marks whose brands forbid black", () => {
-    renderMenu();
+    renderBar();
 
     const markOf = (service: string): Element | null =>
       screen.getByRole("link", { name: `Share on ${service}` }).querySelector("svg");
@@ -89,7 +118,7 @@ describe("ShareMenu", () => {
     const write = vi.fn().mockResolvedValue(undefined);
     stubClipboard({ write });
 
-    renderMenu();
+    renderBar();
     await userEvent.click(screen.getByRole("button", { name: "Copy link" }));
 
     expect(write).toHaveBeenCalledOnce();
@@ -106,7 +135,7 @@ describe("ShareMenu", () => {
     stubClipboard({ writeText });
     vi.stubGlobal("ClipboardItem", undefined);
 
-    renderMenu();
+    renderBar();
     await userEvent.click(screen.getByRole("button", { name: "Copy link" }));
 
     expect(writeText).toHaveBeenCalledWith(`[${title}](${url})`);
@@ -119,7 +148,7 @@ describe("ShareMenu", () => {
       writeText: vi.fn().mockRejectedValue(new Error("denied")),
     });
 
-    renderMenu();
+    renderBar();
     await userEvent.click(screen.getByRole("button", { name: "Copy link" }));
 
     expect(await screen.findByText("Couldn't copy")).toBeInTheDocument();

@@ -18,7 +18,7 @@ interface Feedback {
 
 /*
  * 翻訳のキーは組み立てず、そのまま書く。`codeBlock.${outcome}` のように綴ると、キーを
- * grep しても見つからない場所ができる (share-menu.tsx と同じ)。
+ * grep しても見つからない場所ができる (share-bar.tsx と同じ)。
  */
 function feedbackText(feedback: Feedback | null, t: (key: string) => string): string | undefined {
   if (feedback === null) return undefined;

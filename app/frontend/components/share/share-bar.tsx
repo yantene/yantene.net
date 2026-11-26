@@ -49,7 +49,7 @@ function serviceName(target: ShareTarget, t: (key: string) => string): string {
   return target.label;
 }
 
-type ShareMenuProps = {
+type ShareBarProps = {
   /** 共有する絶対 URL。相対パスだと貼った先で開けない。 */
   readonly url: string;
   readonly title: string;
@@ -106,16 +106,20 @@ function feedbackText(state: CopyState, t: (key: string) => string): string | un
 }
 
 /**
- * 記事の末尾に置く共有の導線。
+ * 記事の上と下に置く共有の帯。共有先の印を横 1 列に並べる。
  *
- * OS の共有シートを呼べる環境ではそれに任せ、呼べない環境では共有先の一覧を開く。
- * 畳む器に `<details>` を使うのは、JS が動かない環境でも開いて素のリンクを踏めるため。
+ * **畳まない。** 押すまで行き先が見えない作りだと、共有先を選ぶ前に「共有するか」を
+ * 一度決めさせることになる。6 つの印と「リンクをコピー」なら 44px の押し場所で並べても
+ * 本文の幅に収まる。
  *
- * 出し分けは描画では行わない。`navigator.share` の有無はクライアントでしか分からず、
- * SSR と食い違うと hydration mismatch になる (#156)。SSR とハイドレーション直後は必ず
- * 一覧側を描き、判定は effect の後に効かせて、trigger の振る舞いだけを差し替える。
+ * 印だけで字は出さないので、**名前は `aria-label` と `title` で持たせる** (読み上げと、
+ * マウスを載せたときの手がかり)。
+ *
+ * OS の共有シートは、呼べる環境でだけ末尾に押し場所を足す。`navigator.share` の有無は
+ * クライアントでしか分からないので、SSR とハイドレーション直後は出さず、判定は
+ * useSyncExternalStore のクライアント側の答えで効かせる (#156)。
  */
-export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
+export function ShareBar({ url, title }: ShareBarProps): React.JSX.Element {
   const { t } = useTranslation();
   const canUseSystemShare = useSyncExternalStore(
     subscribeToNothing,
@@ -136,11 +140,7 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
     };
   }, [copyState]);
 
-  const handleTriggerClick = (event: React.MouseEvent<HTMLElement>): void => {
-    if (!canUseSystemShare) return;
-
-    // 共有シートを開くので、一覧は開かない。
-    event.preventDefault();
+  const handleSystemShareClick = (): void => {
     /*
      * 共有シートを閉じただけでも reject する。利用者が自分で閉じた結果に文句を
      * 言っても仕方がないので、ここは黙って戻る。
@@ -164,15 +164,11 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
   };
 
   return (
-    <details className="share-menu">
-      <summary className="share-menu-trigger press-control" onClick={handleTriggerClick}>
-        <HiOutlineShare aria-hidden />
-        {t("share.title")}
-      </summary>
-
-      <div className="share-menu-panel">
+    <div className="share-bar" role="group" aria-label={t("share.title")}>
+      <div className="share-bar-items">
         {buildShareTargets(url, title).map((target) => {
           const { Icon, className } = marks[target.key];
+          const name = t("share.shareOn", { service: serviceName(target, t) });
           return (
             <a
               key={target.key}
@@ -180,32 +176,50 @@ export function ShareMenu({ url, title }: ShareMenuProps): React.JSX.Element {
               target="_blank"
               // 開いた先から window.opener を辿られないようにする。
               rel="noreferrer"
-              className="share-menu-item press-control"
+              className="share-bar-item press-control"
+              aria-label={name}
+              title={name}
             >
               {/*
-                印には必ず `brand-mark` を付ける (marks の className に入っている)。付けないと、
-                行の字の色 (紺) と hover の primary がそのまま印に流れ、各社の recolor 禁止に
-                当たる。字のほうはこちらの文言なので、これまでどおり色が変わってよい。
-              */}
+              印には必ず `brand-mark` を付ける (marks の className に入っている)。付けないと、
+              帯の字の色 (紺) と hover の primary がそのまま印に流れ、各社の recolor 禁止に
+              当たる。hover で染めるのは印ではなく台のほう (share-bar.css)。
+            */}
               <Icon className={className} aria-hidden />
-              {t("share.shareOn", { service: serviceName(target, t) })}
             </a>
           );
         })}
 
-        <button type="button" onClick={handleCopyClick} className="share-menu-item press-control">
+        <button
+          type="button"
+          onClick={handleCopyClick}
+          className="share-bar-item share-bar-tool press-control"
+          aria-label={t("share.copyLink")}
+          title={t("share.copyLink")}
+        >
           <HiOutlineLink aria-hidden />
-          {t("share.copyLink")}
         </button>
 
-        {/*
-          結果は読み上げにも届ける。入れ物は畳まず置いたままにしておくこと
-          (現れる作りにすると、読み上げが落ちる読み手がいる)。
-        */}
-        <p className="share-menu-feedback" role="status">
-          {feedbackText(copyState, t)}
-        </p>
+        {canUseSystemShare && (
+          <button
+            type="button"
+            onClick={handleSystemShareClick}
+            className="share-bar-item share-bar-tool press-control"
+            aria-label={t("share.more")}
+            title={t("share.more")}
+          >
+            <HiOutlineShare aria-hidden />
+          </button>
+        )}
       </div>
-    </details>
+
+      {/*
+        結果は読み上げにも届ける。入れ物は畳まず置いたままにしておくこと
+        (現れる作りにすると、読み上げが落ちる読み手がいる)。
+      */}
+      <p className="share-bar-feedback" role="status">
+        {feedbackText(copyState, t)}
+      </p>
+    </div>
   );
 }

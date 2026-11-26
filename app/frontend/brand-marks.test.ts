@@ -113,7 +113,7 @@ describe("ブランドの印", () => {
 
       /*
        * ⚠️ **表から引いて `<Icon />` で描くファイルは、上の検査では追えない**
-       * (social-links.tsx と share-menu.tsx がそれ)。せめて、印を扱うファイルが
+       * (social-links.tsx と share-bar.tsx がそれ)。せめて、印を扱うファイルが
        * `brand-mark` に一度も触れていない状態は落とす。
        */
       expect(code).toContain("brand-mark");
@@ -123,7 +123,7 @@ describe("ブランドの印", () => {
   it("印を置いているファイルの顔ぶれが変わっていない", () => {
     expect(brandFiles.map(({ file }) => file)).toEqual([
       "./components/article-header/article-header.tsx",
-      "./components/share/share-menu.tsx",
+      "./components/share/share-bar.tsx",
       "./components/social/social-links.tsx",
       "./routes/legal.tsx",
     ]);

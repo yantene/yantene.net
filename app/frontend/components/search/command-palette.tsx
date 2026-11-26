@@ -372,7 +372,7 @@ function resolveStatus(trimmed: string, settled: Outcome | null): Status {
  * いまの状況を表す一文。
  *
  * 翻訳のキーは組み立てず、そのまま書く。`search.${status}` のように綴ると、キーを
- * grep しても見つからない場所ができる (share-menu.tsx に同じ注意がある)。
+ * grep しても見つからない場所ができる (share-bar.tsx に同じ注意がある)。
  */
 function statusText(
   t: (key: string, options?: Record<string, unknown>) => string,

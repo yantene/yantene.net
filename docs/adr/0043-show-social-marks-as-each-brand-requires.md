@@ -95,7 +95,7 @@ displaying alongside other social media icons」** と、まさにこの用途�
   印を置いているファイルの顔ぶれが変わっていないこと。新しい場所に印を足した人は、
   最後の 1 つで必ず落ちる。
 
-  ⚠️ **表から引いて `<Icon />` で描くファイル (social-links.tsx・share-menu.tsx) は、
+  ⚠️ **表から引いて `<Icon />` で描くファイル (social-links.tsx・share-bar.tsx) は、
   1 つずつの照合ができない。** そこは「ファイルが `brand-mark` に一度も触れていない」
   状態だけを落とす。
 

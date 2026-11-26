@@ -99,7 +99,8 @@
     "copied": "Copied",
     "copyFailed": "Couldn't copy",
     "shareOn": "Share on {{service}}",
-    "hatenaBookmark": "Hatena Bookmark"
+    "hatenaBookmark": "Hatena Bookmark",
+    "more": "Share via other apps"
   },
   "reaction": {
     "like": "Like",

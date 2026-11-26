@@ -54,7 +54,8 @@ when displaying alongside other social media icons」と、他社の印と並べ
 - hover で色を変えないことは黒の印と同じ。色の規則は hover の形も揃えて持ち、黒の規則より
   後ろに置く (詳細度が同じなので、欠けた hover では黒が勝つ)
 - **2 社の印は白の上に置く。** f と B! は抜きなので、規定の言う「白い f」は白地が透けて
-  成り立っている。共有の一覧は白いパネルなので、いまはそれで足りている
+  成り立っている。共有の帯は印ごとに不透明な白い台を敷き、hover でも台を白と混ぜた
+  不透明な色で塗る (`share-bar.css`)
 - ADR 0043 の残り (出ていく先の黒と台、Facebook 以外の話) はそのまま
 
 ## 帰結 / Consequences
@@ -70,7 +71,7 @@ when displaying alongside other social media icons」と、他社の印と並べ
 - 検証方法 / 今後の宣言:
   - `brand-marks.test.ts` が、2 つの色の規則が正式な値と hover の形をすべて持ち、黒の規則
     より後ろにあることを固定する
-  - `share-menu.test.tsx` が、色のクラスを持つのが Facebook とはてブの印だけであることを
+  - `share-bar.test.tsx` が、色のクラスを持つのが Facebook とはてブの印だけであることを
     固定する。ほかに色を付けると Bluesky の規定に当たる
   - 共有先を足すときは、**先にその社が黒を許しているかを確かめる**。許していなければ
     ここの表に足し、`brand-marks.css` に色の規則を足す
