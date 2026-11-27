@@ -20,6 +20,7 @@ import { ArticleHeader } from "~/frontend/components/article-header/article-head
 import { AuthorNote } from "~/frontend/components/profile/author-note";
 import { InlineTocRegistry } from "~/frontend/components/toc/inline-toc-registry";
 import { TableOfContents } from "~/frontend/components/toc/table-of-contents";
+import { RelatedArticlesCard } from "~/frontend/components/related-articles/related-articles-card";
 import { WebmentionList } from "~/frontend/components/webmention/webmention-list";
 import { AppLayout } from "~/frontend/layouts/app-layout";
 import { MainContent } from "~/frontend/components/layout/main-content";
@@ -235,6 +236,11 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
    * 何も無い列が空いて見える)。目次そのものは狭い画面では出ないので、広げるのも lg から。
    */
   const hasToc = headings.length >= 2;
+  /*
+   * 右の列を出すか。目次か関連記事のどちらかがあれば出す。関連記事は右の列にあるときは
+   * 末尾の分かれ道を広い画面で伏せる (同じ記事を 1 画面に 2 度並べない)。
+   */
+  const hasSidebar = hasToc || related.length > 0;
 
   return (
     <AppLayout>
@@ -259,7 +265,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
         (routes/articles.$slug.mf2.test.tsx が見張っている)。
       */}
       <MainContent
-        className={`mx-auto w-full flex-1 px-6 py-10 h-entry ${hasToc ? "max-w-3xl lg:max-w-6xl" : "max-w-3xl"}`}
+        className={`mx-auto w-full flex-1 px-6 py-10 h-entry ${hasSidebar ? "max-w-3xl lg:max-w-6xl" : "max-w-3xl"}`}
       >
         <ArticleHeader
           slug={article.slug}
@@ -268,7 +274,8 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
           publishedOn={article.publishedOn}
           language={article.language}
           origin={origin}
-          authorName={profile?.displayName ?? FALLBACK_PROFILE_NAME}
+          realName={profile?.name ?? FALLBACK_PROFILE_NAME}
+          realNameEn={profile?.identity.nameEn ?? null}
           readingMinutes={readingMinutes}
           actions={
             /*
@@ -322,20 +329,33 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             {/* 届いた反応。1 件も無ければ何も描かない。 */}
             <WebmentionList webmentions={webmentions} />
             {related.length > 0 && (
-              <section className="article-related">
+              <section className={`article-related ${hasSidebar ? "lg:hidden" : ""}`}>
                 <h2 className="article-related-heading">{t("articles.related")}</h2>
                 <ArticleBranches articles={related} />
               </section>
             )}
           </div>
-          {hasToc && (
+          {hasSidebar && (
             <aside className="hidden w-60 shrink-0 lg:block">
               {/*
-                目次はカードに収める。頭が 2 列をまたぐ形になったので、目次の列の頭が
-                名乗りの行の線の下から始まる。地のままだと本文との境が無く、続きに見える。
+                目次と関連記事はカードに収め、まとめて追従させる。頭が 2 列をまたぐ形なので、
+                右の列の頭は名乗りの行の線の下から始まる。地のままだと本文との境が無く、
+                続きに見える。
+
+                2 枚が画面の丈を超えたら、列の中で送る (追従する箱がはみ出すと、下の端に
+                もう届かない)。
               */}
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-xl border border-base-300/70 bg-base-100 p-5 shadow-sm">
-                <TableOfContents title={t("articles.toc")} headings={headings} />
+              <div className="sticky top-24 flex max-h-[calc(100vh-7rem)] flex-col gap-4 overflow-y-auto">
+                {hasToc && (
+                  <div className="rounded-xl border border-base-300/70 bg-base-100 p-5 shadow-sm">
+                    <TableOfContents title={t("articles.toc")} headings={headings} />
+                  </div>
+                )}
+                {related.length > 0 && (
+                  <div className="rounded-xl border border-base-300/70 bg-base-100 p-5 shadow-sm">
+                    <RelatedArticlesCard title={t("articles.related")} articles={related} />
+                  </div>
+                )}
               </div>
             </aside>
           )}

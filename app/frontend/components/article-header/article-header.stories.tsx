@@ -11,7 +11,8 @@ const meta: Meta<typeof ArticleHeader> = {
     publishedOn: "2026-05-08",
     language: "ja",
     origin: "https://yantene.net",
-    authorName: "吉田 周平",
+    realName: "吉田 周平",
+    realNameEn: "Shuhei YOSHIDA",
     readingMinutes: 8,
     // 道具の帯 (ArticleActions) はデータルータの中でしか動かないので、ここでは置かない。
     actions: null,

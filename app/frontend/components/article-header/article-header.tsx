@@ -13,8 +13,10 @@ export interface ArticleHeaderProps {
   readonly language: string;
   /** 絶対 URL を組むための出どころ。microformats の `u-url` に使う。 */
   readonly origin: string;
-  /** 書き手の名前 (画面に出す名前)。プロフィールが無ければ既定の名前を渡す。 */
-  readonly authorName: string;
+  /** 書き手の本名。プロフィールが無ければ既定の名前 (FALLBACK_PROFILE_NAME) を渡す。 */
+  readonly realName: string;
+  /** 書き手の英語名。英語の画面では本名の代わりに添える。書いていなければ null。 */
+  readonly realNameEn: string | null;
   /** 本文を読み終えるまでのおおよその分数。 */
   readonly readingMinutes: number;
   /** 名乗りの行の右に並べる道具の帯 (ArticleActions)。 */
@@ -48,11 +50,19 @@ export function ArticleHeader({
   publishedOn,
   language,
   origin,
-  authorName,
+  realName,
+  realNameEn,
   readingMinutes,
   actions,
 }: ArticleHeaderProps): React.JSX.Element {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  /*
+   * 筆者は「サイトの名前 (本名)」で名乗る (`やんてね (吉田 周平)` / `yantene (Shuhei YOSHIDA)`)。
+   * サイトの名前は画面の言語に従うので翻訳リソース (`meta.title`) から引き、本名も英語の
+   * 画面では英語名に替える。英語名が無ければ本名のまま。
+   */
+  const personalName = i18n.language === "en" ? (realNameEn ?? realName) : realName;
+  const authorName = `${t("meta.title")} (${personalName})`;
 
   return (
     <header className="article-header mb-8">

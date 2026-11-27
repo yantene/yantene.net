@@ -1,0 +1,80 @@
+/*
+ * 目次の下に置く関連記事のカード。目次のカード (routes/articles.$slug.tsx) と同じ
+ * 縁と影で揃える。
+ */
+
+.related-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: color-mix(in oklab, var(--color-base-content) 80%, transparent);
+}
+
+.related-card-heading > svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.related-card-list > li + li {
+  border-top: 1px solid var(--color-base-300);
+}
+
+.related-card-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.625rem;
+  border-radius: 0.5rem;
+}
+
+.related-card-link:hover .related-card-title {
+  color: var(--color-primary);
+}
+
+/* 絵の枠。どの記事も同じ大きさにして、題の頭を揃える。 */
+.related-card-thumb {
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.related-card-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in oklab, var(--color-primary) 8%, var(--color-base-100));
+  color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+}
+
+.related-card-thumb-empty > svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.related-card-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.related-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-base-content);
+}
+
+.related-card-date {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
