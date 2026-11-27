@@ -32,7 +32,7 @@ type Story = StoryObj<typeof meta>;
 
 /** 本文の手前。主張を抑え、細い線で本文と隔てる。 */
 export const Top: Story = {
-  args: { placement: "top" },
+  args: { placement: "top", markdownHref: "/articles/hacku-2016.md" },
 };
 
 /** 読み終えた足元。本文との間を広く取る。 */

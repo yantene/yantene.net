@@ -11,7 +11,11 @@ import type { ArticleActionsPlacement } from "./article-actions";
  * 中の ReactionBar が useFetcher を使うので、データルータの中でしか描けない。
  * 押した結果までは見ず、置き場所ごとの区別と、両方の手が揃っていることを確かめる。
  */
-function renderActions(placement: ArticleActionsPlacement, mine: string | null = null): void {
+function renderActions(
+  placement: ArticleActionsPlacement,
+  mine: string | null = null,
+  markdownHref?: string,
+): void {
   const router = createMemoryRouter(
     [
       {
@@ -23,6 +27,7 @@ function renderActions(placement: ArticleActionsPlacement, mine: string | null =
             mine={mine}
             url="https://yantene.net/articles/hello"
             title="題"
+            markdownHref={markdownHref}
           />
         ),
         action: () => null,
@@ -106,5 +111,18 @@ describe("ArticleActions", () => {
     renderActions("bottom", "❤️");
 
     expect(screen.queryByRole("note")).toBeNull();
+  });
+
+  it("原文 Markdown の行き先を渡したときだけ、帯にリンクを出す", () => {
+    renderActions("top", null, "/articles/hello.md");
+    expect(screen.getByRole("link", { name: "Markdown で見る" })).toHaveAttribute(
+      "href",
+      "/articles/hello.md",
+    );
+  });
+
+  it("行き先を渡さなければ原文 Markdown のリンクは出さない", () => {
+    renderActions("bottom");
+    expect(screen.queryByRole("link", { name: "Markdown で見る" })).toBeNull();
   });
 });

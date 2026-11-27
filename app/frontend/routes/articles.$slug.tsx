@@ -254,6 +254,7 @@ export default function ArticleShow({ loaderData }: Route.ComponentProps): React
             mine={reactions.mine}
             url={`${origin}/articles/${article.slug}`}
             title={article.title}
+            markdownHref={`/articles/${article.slug}.md`}
           />
           {/*
             headings は本文に差し込む目次のため (右カラムに目次を出せない幅の代わり)。

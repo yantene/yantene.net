@@ -122,7 +122,7 @@ describe("ブランドの印", () => {
 
   it("印を置いているファイルの顔ぶれが変わっていない", () => {
     expect(brandFiles.map(({ file }) => file)).toEqual([
-      "./components/article-header/article-header.tsx",
+      "./components/article-actions/article-actions.tsx",
       "./components/share/share-bar.tsx",
       "./components/social/social-links.tsx",
       "./routes/legal.tsx",

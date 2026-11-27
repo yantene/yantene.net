@@ -41,6 +41,42 @@
     flex-basis: 100%;
     margin-inline-start: 0;
   }
+
+  /*
+   * 原文 Markdown はリアクションの行の右端に上げる。DOM の順のまま共有の後ろに置くと、
+   * 3 行目に印 1 つだけが落ちる。
+   */
+  .article-actions-markdown {
+    order: -1;
+  }
+
+  .article-actions .reaction-bar {
+    order: -2;
+  }
+}
+
+/*
+ * 原文 Markdown へのリンク。帯の右端に寄せる (共有とは別の、読み手自身が使う道具なので)。
+ * 箱の大きさと台は共有の印 (share-bar.css の .share-bar-item) に揃える。
+ */
+.article-actions-markdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-inline-start: auto;
+  border-radius: 9999px;
+  background-color: var(--color-base-100);
+  font-size: 1.25rem;
+}
+
+.article-actions-markdown:hover {
+  background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+}
+
+a.article-actions-markdown:active {
+  opacity: 1;
 }
 
 /*

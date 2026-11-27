@@ -1,5 +1,3 @@
-import { useTranslation } from "react-i18next";
-import { SiMarkdown } from "react-icons/si";
 import { toDisplayDate } from "~/frontend/lib/display-date";
 
 export interface ArticleHeaderProps {
@@ -14,7 +12,9 @@ export interface ArticleHeaderProps {
 }
 
 /**
- * 記事の頭。カバー画像・日付・表題・タグと、microformats2 の印を持つ。
+ * 記事の頭。カバー画像・日付・表題と、microformats2 の印を持つ。
+ *
+ * 原文 Markdown へのリンクはここではなく、すぐ下の道具の帯 (ArticleActions) の右端にある。
  *
  * **この記事を指す `u-url` はここにある。** Webmention を送る側・読む側のパーサ (Bridgy 等) が
  * 「何という記事への言及か」を辿るのに要る印で、消えても画面には何も出ない。
@@ -38,8 +38,6 @@ export function ArticleHeader({
   language,
   origin,
 }: ArticleHeaderProps): React.JSX.Element {
-  const { t } = useTranslation();
-
   return (
     <header className="article-header mb-8">
       {/*
@@ -87,19 +85,6 @@ export function ArticleHeader({
       >
         {title}
       </a>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/60">
-        {/*
-          原文 Markdown は React Router のルートではなく Hono が返すので、
-          Link ではなく素の <a> にする (クライアント遷移させない)。
-        */}
-        <a
-          href={`/articles/${slug}.md`}
-          className="press-control inline-flex items-center gap-1 hover:text-primary hover:underline"
-        >
-          <SiMarkdown className="brand-mark" aria-hidden="true" />
-          {t("articles.viewMarkdown")}
-        </a>
-      </div>
       {/*
         タグは廃止した (ADR 0029) が、microformats2 のカテゴリは `article` で固定して残す。
         Post Type Discovery が `p-name` と `e-content` から導く型と同じ語なので、
