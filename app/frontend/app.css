@@ -47,7 +47,8 @@
 @import "./components/article-branches/article-branches.css";
 @import "./components/reaction/reaction-bar.css";
 @import "./components/reaction/reaction-hint.css";
-@import "./components/share/share-menu.css";
+@import "./components/share/share-bar.css";
+@import "./components/related-articles/related-articles-card.css";
 @import "./components/work/work-list.css";
 @import "./components/work/work-gallery.css";
 @import "./components/work/work-facts.css";

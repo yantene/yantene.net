@@ -7,13 +7,26 @@
 
 /** 共有先 1 つぶん。アイコンは描画側が名前で引く (ここに JSX を持ち込まない)。 */
 export interface ShareTarget {
-  readonly key: "x" | "bluesky";
+  readonly key: "x" | "facebook" | "bluesky" | "mastodon" | "threads" | "hatenaBookmark";
   readonly label: string;
   readonly href: string;
 }
 
-function blueskyQuery(url: string, title: string): string {
-  return new URLSearchParams({ text: `${title} ${url}` }).toString();
+function query(params: Record<string, string>): string {
+  return new URLSearchParams(params).toString();
+}
+
+/**
+ * はてなブックマークの、その URL のエントリーページ。
+ *
+ * ブクマする手と、既に付いたコメントの両方がここにある。`add?mode=confirm` だと
+ * ブクマの画面にしか行けない。https の URL は `/entry/s/` の下にスキームを落として
+ * 置く (はてな自身がエントリーページをこの形で出している)。
+ */
+function hatenaEntryUrl(url: string): string {
+  const { protocol, host, pathname, search } = new URL(url);
+  const scheme = protocol === "https:" ? "s/" : "";
+  return `https://b.hatena.ne.jp/entry/${scheme}${host}${pathname}${search}`;
 }
 
 /**
@@ -22,17 +35,21 @@ function blueskyQuery(url: string, title: string): string {
  * 公式のボタン (widget.js など) は CSP の `script-src 'self'` で読めないので使わない。
  * どのサービスも素のリンクで共有画面を開けるため、それで足りる。
  *
- * ⚠️ **Facebook は置かない。** Meta が許している印の形は「Facebook Blue の丸に白い f」と
- * 「白い丸に透明な f」の 2 つだけで、**黒の単色版が無い**。共有先を白いパネルに並べる
- * この作りでは、他が黒で揃うなかで Facebook だけ色が付くことになる。共有先を 1 つ
- * 減らすほうを選んだ (#512、[ADR 0043](../../../../docs/adr/0043-show-social-marks-as-each-brand-requires.md))。
+ * 並びは読み手の多い順ではなく、書き手が決めた順。印の色は描画側 (share-bar.tsx) と
+ * brand-marks.css が持つ ([ADR 0052](../../../../docs/adr/0052-show-share-marks-in-each-brands-required-color.md))。
  */
 export function buildShareTargets(url: string, title: string): readonly ShareTarget[] {
   return [
     {
       key: "x",
       label: "X",
-      href: `https://x.com/intent/post?${new URLSearchParams({ url, text: title }).toString()}`,
+      href: `https://x.com/intent/post?${query({ url, text: title })}`,
+    },
+    {
+      // 題は渡せない。Facebook はリンク先の OGP から題と絵を読む。
+      key: "facebook",
+      label: "Facebook",
+      href: `https://www.facebook.com/sharer/sharer.php?${query({ u: url })}`,
     },
     {
       /*
@@ -41,7 +58,29 @@ export function buildShareTargets(url: string, title: string): readonly ShareTar
        */
       key: "bluesky",
       label: "Bluesky",
-      href: `https://bsky.app/intent/compose?${blueskyQuery(url, title)}`,
+      href: `https://bsky.app/intent/compose?${query({ text: `${title} ${url}` })}`,
+    },
+    {
+      /*
+       * Mastodon は読み手ごとにサーバーが違うので、公式の中継 (share.joinmastodon.org) に
+       * 任せる。初回にサーバーを聞き、2 回目からは覚えている。受け取るのは `text` だけで、
+       * **クエリではなくフラグメントに置く** (公式の案内がこの形。中継のサーバーに
+       * 本文が届かない)。
+       */
+      key: "mastodon",
+      label: "Mastodon",
+      href: `https://share.joinmastodon.org/#${query({ text: `${title} ${url}` })}`,
+    },
+    {
+      key: "threads",
+      label: "Threads",
+      href: `https://www.threads.com/intent/post?${query({ url, text: title })}`,
+    },
+    {
+      // 表示する名前は言語で変わるので、描画側が翻訳リソースから引く。
+      key: "hatenaBookmark",
+      label: "Hatena Bookmark",
+      href: hatenaEntryUrl(url),
     },
   ];
 }

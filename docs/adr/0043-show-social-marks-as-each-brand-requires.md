@@ -1,6 +1,6 @@
 # 0043. 出ていく先の絵は黒 1 色で、不透明な台の上に出す
 
-- Status: Accepted
+- Status: Accepted (「Facebook は黒を許していないので、共有先から外した」の節のみ [0052](0052-show-share-marks-in-each-brands-required-color.md) で置き換え)
 - Date: 2026-09-16
 - Deciders: @yantene
 
@@ -95,7 +95,7 @@ displaying alongside other social media icons」** と、まさにこの用途�
   印を置いているファイルの顔ぶれが変わっていないこと。新しい場所に印を足した人は、
   最後の 1 つで必ず落ちる。
 
-  ⚠️ **表から引いて `<Icon />` で描くファイル (social-links.tsx・share-menu.tsx) は、
+  ⚠️ **表から引いて `<Icon />` で描くファイル (social-links.tsx・share-bar.tsx) は、
   1 つずつの照合ができない。** そこは「ファイルが `brand-mark` に一度も触れていない」
   状態だけを落とす。
 

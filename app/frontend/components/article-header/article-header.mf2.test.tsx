@@ -51,6 +51,10 @@ function renderHeader(): HTMLElement {
         publishedOn={PUBLISHED_ON}
         language="ja"
         origin={ORIGIN}
+        realName="吉田 周平"
+        realNameEn="Shuhei YOSHIDA"
+        readingMinutes={3}
+        actions={null}
       />
       <article className="e-content">
         <p>

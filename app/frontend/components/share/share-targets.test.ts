@@ -28,12 +28,52 @@ describe("buildShareTargets", () => {
     expect(`${bluesky.origin}${bluesky.pathname}`).toBe("https://bsky.app/intent/compose");
     expect(bluesky.searchParams.get("text")).toBe(`記事の題 ${url}`);
 
-    /*
-     * Facebook は置かない。Meta が許す印の形は「Facebook Blue の丸に白い f」と
-     * 「白い丸に透明な f」の 2 つだけで、黒の単色版が無い (#512、ADR 0043)。
-     * 共有先を 1 つ減らすほうを選んだので、ここも 2 つで揃っていること。
-     */
-    expect(targets.map((target) => target.key)).toEqual(["x", "bluesky"]);
+    const threads = composeUrlOf(targets, "threads");
+    expect(`${threads.origin}${threads.pathname}`).toBe("https://www.threads.com/intent/post");
+    expect(threads.searchParams.get("url")).toBe(url);
+    expect(threads.searchParams.get("text")).toBe("記事の題");
+
+    // Facebook は題を受け取らない (OGP から読む)。
+    const facebook = composeUrlOf(targets, "facebook");
+    expect(`${facebook.origin}${facebook.pathname}`).toBe(
+      "https://www.facebook.com/sharer/sharer.php",
+    );
+    expect(facebook.searchParams.get("u")).toBe(url);
+  });
+
+  it("follows the order the writer chose", () => {
+    expect(buildShareTargets(url, "記事の題").map((target) => target.key)).toEqual([
+      "x",
+      "facebook",
+      "bluesky",
+      "mastodon",
+      "threads",
+      "hatenaBookmark",
+    ]);
+  });
+
+  /*
+   * 公式の中継は本文をフラグメントで受ける。クエリに置くと中継のサーバーに本文が届き、
+   * 中継の側も読まない。
+   */
+  it("hands the text to the Mastodon relay in the fragment", () => {
+    const mastodon = composeUrlOf(buildShareTargets(url, "記事の題 & 続き"), "mastodon");
+
+    expect(`${mastodon.origin}${mastodon.pathname}`).toBe("https://share.joinmastodon.org/");
+    expect(mastodon.search).toBe("");
+    expect(new URLSearchParams(mastodon.hash.slice(1)).get("text")).toBe(`記事の題 & 続き ${url}`);
+  });
+
+  it("points Hatena Bookmark at the entry page of the url", () => {
+    expect(composeUrlOf(buildShareTargets(url, "記事の題"), "hatenaBookmark").href).toBe(
+      "https://b.hatena.ne.jp/entry/s/yantene.net/articles/hacku-2016",
+    );
+
+    // https でない URL はスキームの印を付けない。
+    expect(
+      composeUrlOf(buildShareTargets("http://localhost:5173/articles/a", "題"), "hatenaBookmark")
+        .href,
+    ).toBe("https://b.hatena.ne.jp/entry/localhost:5173/articles/a");
   });
 
   it("escapes characters that would otherwise break out of the query", () => {

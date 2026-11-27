@@ -54,6 +54,30 @@ describe("ブランドの印", () => {
   });
 
   /*
+   * 黒を許さない社 (ADR 0052)。色はその社の正式な色で、hover の形をすべて揃えて持つ。
+   * 1 つでも欠けると、その hover で上の黒の規則が勝ち、規定にない黒い Facebook が出る。
+   */
+  it.each([
+    ["facebook", "#0866ff"],
+    ["hatena-bookmark", "#00a4de"],
+  ])("brand-mark-%s は正式な色を持ち、hover でも変わらない", (name, color) => {
+    const selectors = [
+      `.brand-mark-${name}`,
+      `.brand-mark-${name}:hover`,
+      `a:hover > .brand-mark-${name}`,
+      `button:hover > .brand-mark-${name}`,
+    ];
+    // 空白の入れ方に左右されないよう、空白を落として突き合わせる。
+    const compact = css.replaceAll(/\s+/g, "");
+    expect(compact).toContain(`${selectors.join(",")}{fill:${color};}`.replaceAll(" ", ""));
+
+    // 黒の規則より後ろにあること (詳細度が同じなので、後ろのほうが勝つ)。
+    expect(css.indexOf(`.brand-mark-${name}`)).toBeGreaterThan(
+      css.indexOf("button:hover > .brand-mark"),
+    );
+  });
+
+  /*
    * `react-icons/si` (Simple Icons) から持ってきた素材は、すべてよその会社の印である。
    *
    * **素材の名前は import 文から取る。** `<Si[A-Za-z]+` のような綴りで JSX を探すと、
@@ -89,7 +113,7 @@ describe("ブランドの印", () => {
 
       /*
        * ⚠️ **表から引いて `<Icon />` で描くファイルは、上の検査では追えない**
-       * (social-links.tsx と share-menu.tsx がそれ)。せめて、印を扱うファイルが
+       * (social-links.tsx と share-bar.tsx がそれ)。せめて、印を扱うファイルが
        * `brand-mark` に一度も触れていない状態は落とす。
        */
       expect(code).toContain("brand-mark");
@@ -98,8 +122,8 @@ describe("ブランドの印", () => {
 
   it("印を置いているファイルの顔ぶれが変わっていない", () => {
     expect(brandFiles.map(({ file }) => file)).toEqual([
-      "./components/article-header/article-header.tsx",
-      "./components/share/share-menu.tsx",
+      "./components/article-actions/article-actions.tsx",
+      "./components/share/share-bar.tsx",
       "./components/social/social-links.tsx",
       "./routes/legal.tsx",
     ]);

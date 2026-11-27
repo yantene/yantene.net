@@ -64,6 +64,7 @@ ADR は「いま、この設計がどうなっていて、なぜそうなのか�
 | [0049](0049-preview-links-on-demand-and-position-them-in-css.md)     | 本文のリンクのプレビューは触ったときに取り、位置は CSS で決める        | Accepted   |
 | [0050](0050-show-works-with-screenshots-and-linked-articles.md)      | 作品にスクリーンショットと関連記事を持たせ、記事は描画のたびに引き直す | Accepted   |
 | [0051](0051-keep-reactions-and-views-per-content-kind.md)            | リアクションと閲覧数を、種別と id の対で指す表に持つ                   | Accepted   |
+| [0052](0052-show-share-marks-in-each-brands-required-color.md)       | 共有先の印は、黒を許す社は黒、許さない社は正式な色で出す               | Accepted   |
 
 ## 統合した番号
 

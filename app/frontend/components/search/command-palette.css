@@ -168,7 +168,7 @@
 
 /*
  * 状況の一文。読み上げのために入れ物は畳まず置いたままにするので、何も無いときは
- * 高さを持たせない (share-menu.css と同じ作り)。
+ * 高さを持たせない (share-bar.css と同じ作り)。
  */
 .command-palette-status {
   padding: 0.875rem 1.125rem;

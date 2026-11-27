@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
+import { SiMarkdown } from "react-icons/si";
 import type { ReactionState } from "~/frontend/components/reaction/reaction-state";
 import { ReactionBar } from "~/frontend/components/reaction/reaction-bar";
-import { ShareMenu } from "~/frontend/components/share/share-menu";
+import { ShareBar } from "~/frontend/components/share/share-bar";
 
 /** 置き場所。上下で余白と主張の強さを変えるだけで、中身は同じ。 */
 export type ArticleActionsPlacement = "top" | "bottom";
@@ -11,6 +12,11 @@ export interface ArticleActionsProps extends ReactionState {
   readonly url: string;
   readonly title: string;
   readonly placement: ArticleActionsPlacement;
+  /**
+   * 原文 Markdown の行き先 (`/articles/<slug>.md`)。渡したときだけ帯の右端に出す。
+   * 記事の頭に置く帯だけが渡す (読み終えた足元で原文を開く用は薄い)。
+   */
+  readonly markdownHref?: string;
 }
 
 /**
@@ -30,6 +36,7 @@ export function ArticleActions({
   url,
   title,
   placement,
+  markdownHref,
 }: ArticleActionsProps): React.JSX.Element {
   const { t } = useTranslation();
 
@@ -47,7 +54,22 @@ export function ArticleActions({
         mine={mine}
         shouldPromptReaction={placement === "bottom"}
       />
-      <ShareMenu url={url} title={title} />
+      <ShareBar url={url} title={title} />
+      {markdownHref !== undefined && (
+        /*
+          原文 Markdown は React Router のルートではなく Hono が返すので、Link ではなく
+          素の <a> にする (クライアント遷移させない)。見える字は「Markdown」だけなので、
+          読み上げには何が起きるかまで言う (見える字を含む名前にする。WCAG 2.5.3)。
+        */
+        <a
+          href={markdownHref}
+          className="article-actions-markdown press-control"
+          aria-label={t("articles.viewMarkdown")}
+        >
+          <SiMarkdown className="brand-mark" aria-hidden />
+          Markdown
+        </a>
+      )}
     </section>
   );
 }

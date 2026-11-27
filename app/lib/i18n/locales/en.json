@@ -39,6 +39,7 @@
     "author": "About the author",
     "toc": "Contents",
     "viewMarkdown": "View as Markdown",
+    "readingTime": "{{count}} min read",
     "clearFilter": "Show all",
     "pagination": {
       "label": "Pagination",
@@ -98,7 +99,9 @@
     "copyLink": "Copy link",
     "copied": "Copied",
     "copyFailed": "Couldn't copy",
-    "shareOn": "Share on {{service}}"
+    "shareOn": "Share on {{service}}",
+    "hatenaBookmark": "Hatena Bookmark",
+    "more": "Share via other apps"
   },
   "reaction": {
     "like": "Like",
