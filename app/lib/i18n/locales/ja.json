@@ -39,6 +39,7 @@
     "author": "この記事を書いた人",
     "toc": "Contents",
     "viewMarkdown": "Markdown で見る",
+    "readingTime": "約 {{count}} 分で読めます",
     "clearFilter": "すべて表示",
     "pagination": {
       "label": "ページ送り",

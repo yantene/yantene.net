@@ -1,13 +1,16 @@
 /*
- * 記事に対して手を動かす場所 (リアクションと共有)。記事の上と下の両方に出る。
+ * 記事に対して手を動かす場所 (リアクション・共有・原文)。記事の上と下の両方に出る。
  *
+ * 上は記事の頭の名乗りの行の右に置かれ (article-header.css)、下は本文の直後に置かれる。
  * 中の部品は単体でも使えるよう自前の余白を持っているが、ここでは並べ方をこちらが
- * 決めるので打ち消す。上下の違いは、このまとまりが持つ余白と区切りだけで表す。
+ * 決めるので打ち消す。
+ *
+ * ⚠️ **`.article-actions` 自身に `container-type` を付けないこと。** 上の帯は中身なりの
+ * 幅で名乗りの行に並ぶので、大きさの封じ込めを掛けると幅が 0 に潰れる。幅の問い合わせは
+ * 外側の器 (上は .article-header-meta、下は .article-actions-bottom) に向ける。
  */
 
 .article-actions {
-  /* 共有の帯を、本文の幅 (= この囲みの幅) で出し分けるため。 */
-  container-type: inline-size;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -19,74 +22,56 @@
 }
 
 /*
- * 共有だけ、リアクションとの間を広く空ける。
+ * まとまりの間に縦の細い線を引く (リアクション │ 共有 │ 原文)。線は共有の帯の両脇が持つ。
  *
- * **形は同じでも別のまとまり。** リアクションはこの記事に手を残すもの、共有はこの記事を
- * 外へ持ち出すもので、並んではいるが続きではない。大きさの差で表すと「揃え損ね」に見える
- * ので、間隔で表す。囲みの gap (0.75rem) と合わせて 20px。
- *
- * 折り返して行が変わったときは効かなくてよい。行が分かれた時点で、間隔より強く分かれる。
+ * **形は似ていても別のまとまり。** リアクションはこの記事に手を残すもの、共有は外へ
+ * 持ち出すもの、原文は読み手が自分で使うもの。大きさの差で表すと「揃え損ね」に見えるので、
+ * 線で区切る。右の線は原文の札があるとき (上の帯) だけ引く。
  */
 .article-actions .share-bar {
-  margin-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--color-base-300);
+  padding-inline-start: 0.5rem;
+}
+
+.article-actions .share-bar:has(+ .article-actions-markdown) {
+  border-inline-end: 1px solid var(--color-base-300);
+  padding-inline-end: 0.5rem;
 }
 
 /*
- * リアクションと共有が 1 行に収まらない幅 (スマホ) では、共有を最初から次の行に置く。
- * 上の間隔を残したまま折り返すと、共有の行だけ左に 8px 引っ込んで揃わない。
- * 境目はリアクション 2 つ (約 130px) + 間隔 + 共有 7 つ (308px) から。
- */
-@container (width < 30rem) {
-  .article-actions .share-bar {
-    flex-basis: 100%;
-    margin-inline-start: 0;
-  }
-
-  /*
-   * 原文 Markdown はリアクションの行の右端に上げる。DOM の順のまま共有の後ろに置くと、
-   * 3 行目に印 1 つだけが落ちる。
-   */
-  .article-actions-markdown {
-    order: -1;
-  }
-
-  .article-actions .reaction-bar {
-    order: -2;
-  }
-}
-
-/*
- * 原文 Markdown へのリンク。帯の右端に寄せる (共有とは別の、読み手自身が使う道具なので)。
- * 箱の大きさと台は共有の印 (share-bar.css の .share-bar-item) に揃える。
+ * 原文 Markdown へのリンク。字つきの札にする (印だけだと、Markdown の印を知らない人には
+ * 何の押し場所か分からない)。見た目は 32px、押せる範囲は ::before で 44px に広げる
+ * (リアクションの札と同じ作り。reaction-bar.css)。
  */
 .article-actions-markdown {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  margin-inline-start: auto;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-base-300);
   border-radius: 9999px;
   background-color: var(--color-base-100);
-  font-size: 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--color-base-content) 80%, transparent);
+}
+
+.article-actions-markdown::before {
+  content: "";
+  position: absolute;
+  inset: -0.375rem 0;
 }
 
 .article-actions-markdown:hover {
-  background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-a.article-actions-markdown:active {
-  opacity: 1;
-}
-
-/*
- * 上に置くもの。本文の手前なので主張を抑え、細い線で本文と隔てる
- * (記事の頭が重くならないように)。
- */
-.article-actions-top {
-  margin-bottom: 2rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--color-border);
+.article-actions-markdown > svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 /*
@@ -96,5 +81,34 @@ a.article-actions-markdown:active {
  * 行との間 (0.5rem) を空けておく。足りないと**本文の最終行に重なって隠す**。
  */
 .article-actions-bottom {
+  /* 共有の帯を、本文の幅 (= この囲みの幅) で出し分けるため。 */
+  container-type: inline-size;
   margin-top: 4rem;
+}
+
+/*
+ * リアクションと共有が 1 行に収まらない幅 (スマホ) では、共有を最初から次の行に置き、
+ * 区切りの線は外す (行が分かれた時点で、線より強く分かれる)。
+ * 境目はリアクション 2 つ (約 100px) + 間隔 + 共有 7 つ (308px) から。
+ */
+@container (width < 30rem) {
+  .article-actions .share-bar,
+  .article-actions .share-bar:has(+ .article-actions-markdown) {
+    flex-basis: 100%;
+    border-inline: 0;
+    padding-inline: 0;
+  }
+
+  /*
+   * 原文 Markdown はリアクションの行の右端に上げる。DOM の順のまま共有の後ろに置くと、
+   * 3 行目に札 1 つだけが落ちる。
+   */
+  .article-actions-markdown {
+    order: -1;
+    margin-inline-start: auto;
+  }
+
+  .article-actions .reaction-bar {
+    order: -2;
+  }
 }

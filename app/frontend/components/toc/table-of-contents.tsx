@@ -1,3 +1,4 @@
+import { HiOutlineListBullet } from "react-icons/hi2";
 import { Link } from "react-router";
 import { toSections } from "./sections";
 import { useActiveHeading } from "./use-active-heading";
@@ -30,7 +31,10 @@ export function TableOfContents({
   const sections = toSections(headings);
   return (
     <nav aria-label={title} className="text-sm">
-      <p className="mb-3 font-bold text-base-content/70">{title}</p>
+      <p className="mb-3 flex items-center gap-2 font-bold text-base-content/80">
+        <HiOutlineListBullet aria-hidden className="size-4" />
+        {title}
+      </p>
       <ul className="border-l border-base-300">
         {sections.map((section) => {
           const isActiveSection =

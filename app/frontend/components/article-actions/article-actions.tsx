@@ -58,16 +58,16 @@ export function ArticleActions({
       {markdownHref !== undefined && (
         /*
           原文 Markdown は React Router のルートではなく Hono が返すので、Link ではなく
-          素の <a> にする (クライアント遷移させない)。印だけで字は出さないので、名前は
-          aria-label と title で持つ (共有の印と同じ)。
+          素の <a> にする (クライアント遷移させない)。見える字は「Markdown」だけなので、
+          読み上げには何が起きるかまで言う (見える字を含む名前にする。WCAG 2.5.3)。
         */
         <a
           href={markdownHref}
           className="article-actions-markdown press-control"
           aria-label={t("articles.viewMarkdown")}
-          title={t("articles.viewMarkdown")}
         >
           <SiMarkdown className="brand-mark" aria-hidden />
+          Markdown
         </a>
       )}
     </section>

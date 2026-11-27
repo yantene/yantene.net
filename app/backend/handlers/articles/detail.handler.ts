@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { toArticleDetail } from "./article-detail-view";
 import { buildPayload, type ReactionsPayload } from "./reaction.handler";
+import { estimateReadingMinutes } from "./reading-time";
 import { extractHeadings } from "./toc-headings";
 import {
   privateCacheHeadersFor,
@@ -148,6 +149,8 @@ export type ArticleDetailPageData =
       readonly webmentions: WebmentionGroups;
       readonly related: readonly PublicArticle[];
       readonly headings: readonly TocHeading[];
+      /** 本文を読み終えるまでのおおよその分数 (reading-time.ts)。記事の頭に出す。 */
+      readonly readingMinutes: number;
       /**
        * 検索エンジンに載せないよう伝えるか (ADR 0040)。`unlisted` のときだけ真。
        *
@@ -278,6 +281,7 @@ export async function loadArticleDetailPage(
     webmentions: toWebmentionGroups(shown),
     related: related.map((article) => toPublicArticle(article)),
     headings: extractHeadings(mdast),
+    readingMinutes: estimateReadingMinutes(mdast),
     noindex: shouldTellRobotsNoindex(resolved.status),
     admin: access.admin,
     privateResponse: shouldKeepResponsePrivate(access, resolved.status),
